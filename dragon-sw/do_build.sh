@@ -1,6 +1,16 @@
 #!/bin/sh
 #
 
+# determine a valid path for net-snmp header files
+if test -f /usr/include/net-snmp/net-snmp-config.h; then
+    SNMP_PATH=/usr
+elif test -f /usr/local/include/net-snmp/net-snmp-config.h; then
+    SNMP_PATH=/usr/local
+else
+    echo 'dragon-sw: could not find net-snmp header files -- is Net-SNMP installed?'
+    exit 1
+fi
+
 case `uname` in
   *BSD)
     echo This is BSD Unix
