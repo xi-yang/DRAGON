@@ -1,6 +1,14 @@
 #!/bin/sh
 #
 
+# This script must be run as root.
+if test "$USER" != "root"; then
+  echo '' && \
+   echo "You must be root to run this script." && \
+   echo ''
+  exit 1
+fi  
+
 case `uname` in
   *BSD)
     echo This is BSD Unix
