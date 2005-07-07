@@ -15,17 +15,21 @@ RSVP_ARGS="-c /usr/local/etc/RSVPD.conf -d select"
 DRAGON_DAEMON=$PREFIX/bin/dragon
 DRAGON_ARGS="-d -f /usr/local/etc/dragon.conf"
 
+# for NARBs we need 2 ospfd instances.  the above
+# OSPF_DAEMON/OSPF_ARGS variables are not used for NARBs:
+
+OSPF_INTER_DAEMON=$PREFIX/sbin/ospfd
+OSPF_INTER_ARGS="-d -I -P 2604 -f /usr/local/etc/ospfd-inter.conf"
+
+OSPF_INTRA_DAEMON=$PREFIX/sbin/ospfd
+OSPF_INTRA_ARGS="-d -P 2614 -f /usr/local/etc/ospfd-intra.conf"
+
 NARB_DAEMON=$PREFIX/sbin/narb
 NARB_ARGS="-d"
 
-# in the case of the narb, start ospfd like this:
 #
-# ./ospfd -d -I -P 2604 -f ospfd-inter.conf
-# ./ospfd -d -P 2614 -f ospfd-intra.conf
-# sleep 10
-# ./narb -d
+# need to have a way for 'stop' to recognize/kill both ospfd instances...
 #
-# need to have a way for 'stop' to kill both ospfd instances...
 
 #
 # See which daemons are already running...
@@ -115,15 +119,24 @@ case $1 in
         if test "$ospf_pid" != ""; then
 	    kill $ospf_pid
 	fi
-	$OSPF_DAEMON $OSPF_ARGS
+	$OSPF_INTER_DAEMON $OSPF_INTER_ARGS
 	if test $? != 0; then
-	    echo "dragon-sw: unable to $1 ospf daemon."
+	    echo "dragon-sw: unable to $1 ospf inter-domain daemon."
 	    exit 1
 	fi
-	echo "dragon-sw: started ospf daemon."
+	echo "dragon-sw: started ospf inter-domain daemon."
 
-        # XXX need a way to start both OSPF daemons here!
-        echo "sleeping for 10 seconds before starting narb...please stand by."
+        if test "$ospf_pid" != ""; then
+	    kill $ospf_pid
+	fi
+	$OSPF_INTRA_DAEMON $OSPF_INTRA_ARGS
+	if test $? != 0; then
+	    echo "dragon-sw: unable to $1 ospf intra-domain daemon."
+	    exit 1
+	fi
+	echo "dragon-sw: started ospf intra-domain daemon."
+
+        echo "sleeping for 10 seconds before starting narb daemon...please stand by."
         sleep 10
     
         if test "$narb_pid" != ""; then
