@@ -1,4 +1,3 @@
-
 #!/bin/sh
 
 PREFIX=/usr/local
@@ -37,15 +36,20 @@ NARB_ARGS="-d"
 
 case "`uname`" in
         Linux* | *BSD* | Darwin*)
-                zebra_pid=`ps  ax | awk '{if (match($5, ".*/zebra$")  || $5 == "zebra")  print $1}'`
-                ospf_pid=`ps   ax | awk '{if (match($5, ".*/ospfd$")  || $5 == "ospfd")  print $1}'`
-                rsvp_pid=`ps   ax | awk '{if (match($5, ".*/RSVPD$")  || $5 == "RSVPD")  print $1}'`
-                dragon_pid=`ps ax | awk '{if (match($5, ".*/dragon$") || $5 == "dragon") print $1}'`
-                narb_pid=`ps   ax | awk '{if (match($5, ".*/narb$")   || $5 == "narb")   print $1}'`
+                zebra_pid=`ps      ax | awk '{if (match($5, ".*/zebra$")       || $5 == "zebra")  print $1}'`
+                rsvp_pid=`ps       ax | awk '{if (match($5, ".*/RSVPD$")       || $5 == "RSVPD")  print $1}'`
+                dragon_pid=`ps     ax | awk '{if (match($5, ".*/dragon$")      || $5 == "dragon") print $1}'`
+                narb_pid=`ps       ax | awk '{if (match($5, ".*/narb$")        || $5 == "narb")   print $1}'`
+
+                # XXX ugh...there must be a better way to do this...this is a kludge
+                # maybe search for OSPF_INTER_ARGS and OSPF_INTRA_ARGS...or OSPF_ARGS?
+                ospf_intra_pid=`ps ax | awk '{if (match($0, ".*/ospfd-intra")  || match($0, ".*/ospfd\.conf")) print $1}'`
+                ospf_inter_pid=`ps ax | awk '{if (match($0, ".*/ospfd-inter")) print $1}'`
                 ;;
         *)
                 zebra_pid=""
-                ospf_pid=""
+                ospf_intra_pid=""
+                ospf_inter_pid=""
                 rsvp_pid=""
                 dragon_pid=""
                 narb_pid=""
@@ -58,25 +62,23 @@ esac
 
 case $1 in
     start-vlsr | startvlsr | restart-vlsr)
-        # start the daemons in this order:
-        #  zebra ospf rsvp dragon
-
         if test "$zebra_pid" != ""; then
 	    kill $zebra_pid
 	fi
 	$ZEBRA_DAEMON $ZEBRA_ARGS
 	if test $? != 0; then
-	    echo "dragon-sw: unable to $1 zebra daemon."
+	    echo "dragon-sw: unable to start zebra daemon."
 	    exit 1
 	fi
 	echo "dragon-sw: started zebra daemon."
     
-        if test "$ospf_pid" != ""; then
-	    kill $ospf_pid
+        # XXX again, a bit of a hack here...
+        if test "$ospf_intra_pid" != ""; then
+	    kill $ospf_intra_pid
 	fi
 	$OSPF_DAEMON $OSPF_ARGS
 	if test $? != 0; then
-	    echo "dragon-sw: unable to $1 ospf daemon."
+	    echo "dragon-sw: unable to start ospf daemon."
 	    exit 1
 	fi
 	echo "dragon-sw: started ospf daemon."
@@ -86,7 +88,7 @@ case $1 in
 	fi
 	$RSVP_DAEMON $RSVP_ARGS
 	if test $? != 0; then
-	    echo "dragon-sw: unable to $1 rsvp daemon."
+	    echo "dragon-sw: unable to start rsvp daemon."
 	    exit 1
 	fi
 	echo "dragon-sw: started rsvp daemon."
@@ -96,42 +98,39 @@ case $1 in
 	fi
 	$DRAGON_DAEMON $DRAGON_ARGS
 	if test $? != 0; then
-	    echo "dragon-sw: unable to $1 dragon daemon."
+	    echo "dragon-sw: unable to start dragon daemon."
 	    exit 1
 	fi
 	echo "dragon-sw: started dragon daemon."
 	;;
     
     start-narb | startnarb | restart-narb)
-        # start the daemons in this order:
-        #  zebra ospf-inter ospfd-intra --sleep 10-- narb
-
         if test "$zebra_pid" != ""; then
 	    kill $zebra_pid
 	fi
 	$ZEBRA_DAEMON $ZEBRA_ARGS
 	if test $? != 0; then
-	    echo "dragon-sw: unable to $1 zebra daemon."
+	    echo "dragon-sw: unable to start zebra daemon."
 	    exit 1
 	fi
 	echo "dragon-sw: started zebra daemon."
 
-        if test "$ospf_pid" != ""; then
-	    kill $ospf_pid
+        if test "$ospf_inter_pid" != ""; then
+	    kill $ospf_inter_pid
 	fi
 	$OSPF_INTER_DAEMON $OSPF_INTER_ARGS
 	if test $? != 0; then
-	    echo "dragon-sw: unable to $1 ospf inter-domain daemon."
+	    echo "dragon-sw: unable to start ospf inter-domain daemon."
 	    exit 1
 	fi
 	echo "dragon-sw: started ospf inter-domain daemon."
 
-        if test "$ospf_pid" != ""; then
-	    kill $ospf_pid
+        if test "$ospf_intra_pid" != ""; then
+	    kill $ospf_intra_pid
 	fi
 	$OSPF_INTRA_DAEMON $OSPF_INTRA_ARGS
 	if test $? != 0; then
-	    echo "dragon-sw: unable to $1 ospf intra-domain daemon."
+	    echo "dragon-sw: unable to start ospf intra-domain daemon."
 	    exit 1
 	fi
 	echo "dragon-sw: started ospf intra-domain daemon."
@@ -144,7 +143,7 @@ case $1 in
 	fi
 	$NARB_DAEMON $NARB_ARGS
 	if test $? != 0; then
-	    echo "dragon-sw: unable to $1 narb daemon."
+	    echo "dragon-sw: unable to start narb daemon."
 	    exit 1
 	fi
 	echo "dragon-sw: started narb daemon."
@@ -161,9 +160,14 @@ case $1 in
 	    echo "dragon-sw: stopped rsvp daemon."
 	fi
 
-        if test "$ospf_pid" != ""; then
-	    kill $ospf_pid
-	    echo "dragon-sw: stopped ospf daemon."
+        if test "$ospf_intra_pid" != ""; then
+	    kill $ospf_intra_pid
+	    echo "dragon-sw: stopped intra-domain ospf daemon."
+	fi
+
+        if test "$ospf_inter_pid" != ""; then
+	    kill $ospf_inter_pid
+	    echo "dragon-sw: stopped inter-domain ospf daemon."
 	fi
 
         if test "$dragon_pid" != ""; then
@@ -190,10 +194,12 @@ case $1 in
 	    echo "dragon-sw: rsvp daemon is NOT running."
 	fi
 
-        if test "$ospf_pid" != ""; then
-	    echo "dragon-sw: ospf daemon is running."
-	else
-	    echo "dragon-sw: ospf daemon is NOT running."
+        if test "$ospf_inter_pid" != ""; then
+	    echo "dragon-sw: inter-domain ospf daemon is running."
+	fi
+
+        if test "$ospf_intra_pid" != ""; then
+	    echo "dragon-sw: intra-domain ospf daemon is running."
 	fi
 
         if test "$dragon_pid" != ""; then
