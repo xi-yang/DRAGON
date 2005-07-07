@@ -53,7 +53,7 @@ esac
 #
 
 case $1 in
-    start-vlsr | startvlsr)
+    start-vlsr | startvlsr | restart-vlsr)
         # start the daemons in this order:
         #  zebra ospf rsvp dragon
 
@@ -98,7 +98,7 @@ case $1 in
 	echo "dragon-sw: started dragon daemon."
 	;;
     
-    start-narb | startnarb)
+    start-narb | startnarb | restart-narb)
         # start the daemons in this order:
         #  zebra ospf-inter ospfd-intra --sleep 10-- narb
 
@@ -197,7 +197,7 @@ case $1 in
 	;;
     
     *)
-        echo "Usage: $0 {start-vlsr|start-narb|status|stop}"
+        echo "Usage: $0 {start-vlsr|restart-vlsr|start-narb|restart-narb|status|stop}"
 	exit 1
 	;;
 esac
