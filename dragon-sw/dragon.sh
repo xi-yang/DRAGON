@@ -1,11 +1,12 @@
+
 #!/bin/sh
 
 PREFIX=/usr/local
 
-ZEBRA_DAEMON=$PREFIX/bin/zebra
+ZEBRA_DAEMON=$PREFIX/sbin/zebra
 ZEBRA_ARGS="-d -f /usr/local/etc/zebra.conf"
 
-OSPF_DAEMON=$PREFIX/bin/ospfd
+OSPF_DAEMON=$PREFIX/sbin/ospfd
 OSPF_ARGS="-d -f /usr/local/etc/ospfd.conf"
 
 RSVP_DAEMON=$PREFIX/rsvp/bin/RSVPD
@@ -14,7 +15,7 @@ RSVP_ARGS="-c /usr/local/etc/RSVPD.conf -d select"
 DRAGON_DAEMON=$PREFIX/bin/dragon
 DRAGON_ARGS="-d -f /usr/local/etc/dragon.conf"
 
-NARB_DAEMON=$PREFIX/bin/narb
+NARB_DAEMON=$PREFIX/sbin/narb
 NARB_ARGS="-d"
 
 # in the case of the narb, start ospfd like this:
@@ -32,11 +33,11 @@ NARB_ARGS="-d"
 
 case "`uname`" in
         Linux* | *BSD* | Darwin*)
-                zebra_pid= `ps ax | awk '{if (match($5, ".*/zebra$")  || $5 == "zebra")  print $1}'`
-                ospf_pid=  `ps ax | awk '{if (match($5, ".*/ospfd$")  || $5 == "ospfd")  print $1}'`
-                rsvp_pid=  `ps ax | awk '{if (match($5, ".*/RSVPD$")  || $5 == "RSVPD")  print $1}'`
+                zebra_pid=`ps  ax | awk '{if (match($5, ".*/zebra$")  || $5 == "zebra")  print $1}'`
+                ospf_pid=`ps   ax | awk '{if (match($5, ".*/ospfd$")  || $5 == "ospfd")  print $1}'`
+                rsvp_pid=`ps   ax | awk '{if (match($5, ".*/RSVPD$")  || $5 == "RSVPD")  print $1}'`
                 dragon_pid=`ps ax | awk '{if (match($5, ".*/dragon$") || $5 == "dragon") print $1}'`
-                narb_pid=  `ps ax | awk '{if (match($5, ".*/narb$")   || $5 == "narb")   print $1}'`
+                narb_pid=`ps   ax | awk '{if (match($5, ".*/narb$")   || $5 == "narb")   print $1}'`
                 ;;
         *)
                 zebra_pid=""
@@ -52,7 +53,7 @@ esac
 #
 
 case $1 in
-    start-vlsr)
+    start-vlsr | startvlsr)
         # start the daemons in this order:
         #  zebra ospf rsvp dragon
 
@@ -64,8 +65,7 @@ case $1 in
 	    echo "dragon-sw: unable to $1 zebra daemon."
 	    exit 1
 	fi
-	echo "dragon-sw: ${1}ed zebra daemon."
-	;;
+	echo "dragon-sw: started zebra daemon."
     
         if test "$ospf_pid" != ""; then
 	    kill $ospf_pid
@@ -75,8 +75,7 @@ case $1 in
 	    echo "dragon-sw: unable to $1 ospf daemon."
 	    exit 1
 	fi
-	echo "dragon-sw: ${1}ed ospf daemon."
-	;;
+	echo "dragon-sw: started ospf daemon."
     
         if test "$rsvp_pid" != ""; then
 	    kill $rsvp_pid
@@ -86,8 +85,7 @@ case $1 in
 	    echo "dragon-sw: unable to $1 rsvp daemon."
 	    exit 1
 	fi
-	echo "dragon-sw: ${1}ed rsvp daemon."
-	;;
+	echo "dragon-sw: started rsvp daemon."
     
         if test "$dragon_pid" != ""; then
 	    kill $dragon_pid
@@ -97,10 +95,10 @@ case $1 in
 	    echo "dragon-sw: unable to $1 dragon daemon."
 	    exit 1
 	fi
-	echo "dragon-sw: ${1}ed dragon daemon."
+	echo "dragon-sw: started dragon daemon."
 	;;
     
-    start-narb)
+    start-narb | startnarb)
         # start the daemons in this order:
         #  zebra ospf-inter ospfd-intra --sleep 10-- narb
 
@@ -112,9 +110,8 @@ case $1 in
 	    echo "dragon-sw: unable to $1 zebra daemon."
 	    exit 1
 	fi
-	echo "dragon-sw: ${1}ed zebra daemon."
-	;;
-    
+	echo "dragon-sw: started zebra daemon."
+
         if test "$ospf_pid" != ""; then
 	    kill $ospf_pid
 	fi
@@ -123,8 +120,7 @@ case $1 in
 	    echo "dragon-sw: unable to $1 ospf daemon."
 	    exit 1
 	fi
-	echo "dragon-sw: ${1}ed ospf daemon."
-	;;
+	echo "dragon-sw: started ospf daemon."
 
         # XXX need a way to start both OSPF daemons here!
         echo "sleeping for 10 seconds before starting narb...please stand by."
@@ -138,7 +134,7 @@ case $1 in
 	    echo "dragon-sw: unable to $1 narb daemon."
 	    exit 1
 	fi
-	echo "dragon-sw: ${1}ed narb daemon."
+	echo "dragon-sw: started narb daemon."
 	;;
     
     stop)   
