@@ -9,7 +9,7 @@ OSPF_DAEMON=$PREFIX/sbin/ospfd
 OSPF_ARGS="-d -f /usr/local/etc/ospfd.conf"
 
 RSVP_DAEMON=$PREFIX/rsvp/bin/RSVPD
-RSVP_ARGS="-c /usr/local/etc/RSVPD.conf -d select"
+RSVP_ARGS="-c /usr/local/etc/RSVPD.conf -d -o /var/log/RSVPD.log -L select"
 
 DRAGON_DAEMON=$PREFIX/bin/dragon
 DRAGON_ARGS="-d -f /usr/local/etc/dragon.conf"
