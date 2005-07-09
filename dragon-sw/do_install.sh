@@ -2,7 +2,8 @@
 #
 
 # This script must be run as root.
-if test "$USER" != "root"; then
+WHOAMI=`whoami`
+if test "$WHOAMI" != "root"; then
   echo '' && \
    echo "You must be root to run this script." && \
    echo ''
