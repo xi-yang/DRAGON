@@ -3,25 +3,25 @@
 PREFIX=/usr/local/dragon
 
 ZEBRA_DAEMON=$PREFIX/sbin/zebra
-ZEBRA_ARGS="-d -f /usr/local/etc/zebra.conf"
+ZEBRA_ARGS="-d -f /usr/local/dragon/etc/zebra.conf"
 
 OSPF_DAEMON=$PREFIX/sbin/ospfd
-OSPF_ARGS="-d -f /usr/local/etc/ospfd.conf"
+OSPF_ARGS="-d -f /usr/local/dragon/etc/ospfd.conf"
 
 RSVP_DAEMON=$PREFIX/bin/RSVPD
-RSVP_ARGS="-c /usr/local/etc/RSVPD.conf -d -o /var/log/RSVPD.log -L select"
+RSVP_ARGS="-c /usr/local/dragon/etc/RSVPD.conf -d -o /var/log/RSVPD.log -L select"
 
 DRAGON_DAEMON=$PREFIX/bin/dragon
-DRAGON_ARGS="-d -f /usr/local/etc/dragon.conf"
+DRAGON_ARGS="-d -f /usr/local/dragon/etc/dragon.conf"
 
 # for NARBs we need 2 ospfd instances.  the above
 # OSPF_DAEMON/OSPF_ARGS variables are not used for NARBs:
 
 OSPF_INTER_DAEMON=$PREFIX/sbin/ospfd
-OSPF_INTER_ARGS="-d -I -P 2604 -f /usr/local/etc/ospfd-inter.conf"
+OSPF_INTER_ARGS="-d -I -P 2604 -f /usr/local/dragon/etc/ospfd-inter.conf"
 
 OSPF_INTRA_DAEMON=$PREFIX/sbin/ospfd
-OSPF_INTRA_ARGS="-d -P 2614 -f /usr/local/etc/ospfd-intra.conf"
+OSPF_INTRA_ARGS="-d -P 2614 -f /usr/local/dragon/etc/ospfd-intra.conf"
 
 NARB_DAEMON=$PREFIX/sbin/narb
 NARB_ARGS="-d"
