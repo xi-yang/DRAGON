@@ -1,0 +1,15 @@
+The DRAGON GMPLS software suite is free software that combines an
+open-source routing package with an open-source signaling package and
+extends both to support GMPLS routing and signaling.
+
+For GMPLS routing, we have extended the open-source Zebra software
+(http://www.zebra.org).  For GMPLS signaling, we have extending the
+KOM-RSVP implementation from Darmstadt University of Technology.  This
+includes extending these software components to include the MPLS/GMPLS
+RFCs and drafts such as RFC3630, RFC3477, RFC3471, RFC3473,
+draft-ietf-ccamp-ospf-gmpls-extensions-12.txt and others.
+
+See the file INSTALL for building and installation instructions.
+
+See the docs directory for configuration and detailed usage
+information.

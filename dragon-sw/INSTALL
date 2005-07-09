@@ -1,0 +1,22 @@
+The do_build.sh script does everything except the install, so please
+try it first:
+
+        $ ./do_build.sh
+
+The do_install script then takes care of installing everything:
+
+        $ sudo ./do_install.sh
+
+If you prefer to perform the installation manually, the following
+should work, assuming the net-snmp header files can be found in
+/usr/local/include:
+
+	$ cd kom-rsvp
+	$ ./configure --prefix=/usr/local/dragon --with-snmp=/usr/local CFLAG=-g CPPFLAG=-g
+	$ gmake
+	$ sudo gmake install
+	$ cd ../zebra
+	$ ./configure --prefix=/usr/local/dragon --enable-dragon CFLAG=-g CPPFLAG=-g
+	$ make
+	$ sudo make install
+
