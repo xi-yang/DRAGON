@@ -12,11 +12,11 @@ should work, assuming the net-snmp header files can be found in
 /usr/local/include:
 
 	$ cd kom-rsvp
-	$ ./configure --prefix=/usr/local/dragon --with-snmp=/usr/local CFLAG=-g CPPFLAG=-g
+	$ ./configure --prefix=/usr/local/dragon --with-snmp=/usr/local
 	$ gmake
 	$ sudo gmake install
 	$ cd ../zebra
-	$ ./configure --prefix=/usr/local/dragon --enable-dragon CFLAG=-g CPPFLAG=-g
+	$ ./configure --prefix=/usr/local/dragon --enable-dragon
 	$ make
 	$ sudo make install
 
