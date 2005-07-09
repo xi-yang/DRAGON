@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PREFIX=/usr/local
+PREFIX=/usr/local/dragon
 
 ZEBRA_DAEMON=$PREFIX/sbin/zebra
 ZEBRA_ARGS="-d -f /usr/local/etc/zebra.conf"
@@ -8,7 +8,7 @@ ZEBRA_ARGS="-d -f /usr/local/etc/zebra.conf"
 OSPF_DAEMON=$PREFIX/sbin/ospfd
 OSPF_ARGS="-d -f /usr/local/etc/ospfd.conf"
 
-RSVP_DAEMON=$PREFIX/rsvp/bin/RSVPD
+RSVP_DAEMON=$PREFIX/bin/RSVPD
 RSVP_ARGS="-c /usr/local/etc/RSVPD.conf -d -o /var/log/RSVPD.log -L select"
 
 DRAGON_DAEMON=$PREFIX/bin/dragon
