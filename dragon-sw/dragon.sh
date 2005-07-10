@@ -37,15 +37,15 @@ NARB_ARGS="-d -f $ETC_DIR/narb.conf"
 
 case "`uname`" in
         Linux* | *BSD* | Darwin*)
-                zebra_pid=`ps      ax | awk '{if (match($5, ".*/zebra$")       || $5 == "zebra")  print $1}'`
-                rsvp_pid=`ps       ax | awk '{if (match($5, ".*/RSVPD$")       || $5 == "RSVPD")  print $1}'`
-                dragon_pid=`ps     ax | awk '{if (match($5, ".*/dragon$")      || $5 == "dragon") print $1}'`
-                narb_pid=`ps       ax | awk '{if (match($5, ".*/narb$")        || $5 == "narb")   print $1}'`
+                zebra_pid=`ps  ax | grep -v awk | awk '{if (match($5, ".*/zebra$")       || $5 == "zebra")  print $1}'`
+                rsvp_pid=`ps   ax | grep -v awk | awk '{if (match($5, ".*/RSVPD$")       || $5 == "RSVPD")  print $1}'`
+                dragon_pid=`ps ax | grep -v awk | awk '{if (match($5, ".*/dragon$")      || $5 == "dragon") print $1}'`
+                narb_pid=`ps   ax | grep -v awk | awk '{if (match($5, ".*/narb$")        || $5 == "narb")   print $1}'`
 
                 # XXX ugh...there must be a better way to do this...this is a kludge
                 # maybe search for OSPF_INTER_ARGS and OSPF_INTRA_ARGS...or OSPF_ARGS?
-                ospf_intra_pid=`ps ax | awk '{if (match($0, ".*/ospfd-intra")  || match($0, ".*/ospfd\.conf")) print $1}'`
-                ospf_inter_pid=`ps ax | awk '{if (match($0, ".*/ospfd-inter")) print $1}'`
+                ospf_intra_pid=`ps ax | grep -v awk | awk '{if (match($0, ".*/ospfd-intra")  || match($0, ".*/ospfd\.conf")) print $1}'`
+                ospf_inter_pid=`ps ax | grep -v awk | awk '{if (match($0, ".*/ospfd-inter")) print $1}'`
                 ;;
         *)
                 zebra_pid=""
@@ -184,33 +184,33 @@ case $1 in
     
     status) 
         if test "$zebra_pid" != ""; then
-	    echo "dragon-sw: zebra daemon is running."
+	    echo "dragon-sw: zebra daemon is running, pid=$zebra_pid."
 	else
 	    echo "dragon-sw: zebra daemon is NOT running."
 	fi
 
         if test "$rsvp_pid" != ""; then
-	    echo "dragon-sw: rsvp daemon is running."
+	    echo "dragon-sw: rsvp daemon is running, pid=$rsvp_pid."
 	else
 	    echo "dragon-sw: rsvp daemon is NOT running."
 	fi
 
         if test "$ospf_inter_pid" != ""; then
-	    echo "dragon-sw: inter-domain ospf daemon is running."
+	    echo "dragon-sw: inter-domain ospf daemon is running, pid=$ospf_inter_pid."
 	fi
 
         if test "$ospf_intra_pid" != ""; then
-	    echo "dragon-sw: intra-domain ospf daemon is running."
+	    echo "dragon-sw: intra-domain ospf daemon is running, pid=$ospf_intra_pid."
 	fi
 
         if test "$dragon_pid" != ""; then
-	    echo "dragon-sw: dragon daemon is running."
+	    echo "dragon-sw: dragon daemon is running, pid=$dragon_pid."
 	else
 	    echo "dragon-sw: dragon daemon is NOT running."
 	fi
 
         if test "$narb_pid" != ""; then
-	    echo "dragon-sw: narb daemon is running."
+	    echo "dragon-sw: narb daemon is running, pid=$narb_pid."
 	else
 	    echo "dragon-sw: narb daemon is NOT running."
 	fi
