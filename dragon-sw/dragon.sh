@@ -37,15 +37,15 @@ NARB_ARGS="-d -f $ETC_DIR/narb.conf"
 
 case "`uname`" in
         Linux* | *BSD* | Darwin*)
-                zebra_pid=`ps  ax | grep -v awk | awk '{if (match($5, ".*/zebra$")       || $5 == "zebra")  print $1}'`
-                rsvp_pid=`ps   ax | grep -v awk | awk '{if (match($5, ".*/RSVPD$")       || $5 == "RSVPD")  print $1}'`
-                dragon_pid=`ps ax | grep -v awk | awk '{if (match($5, ".*/dragon$")      || $5 == "dragon") print $1}'`
-                narb_pid=`ps   ax | grep -v awk | awk '{if (match($5, ".*/narb$")        || $5 == "narb")   print $1}'`
+                zebra_pid=`ps  axwww | grep -v awk | awk '{if (match($5, ".*/zebra$")       || $5 == "zebra")  print $1}'`
+                rsvp_pid=`ps   axwww | grep -v awk | awk '{if (match($5, ".*/RSVPD$")       || $5 == "RSVPD")  print $1}'`
+                dragon_pid=`ps axwww | grep -v awk | awk '{if (match($5, ".*/dragon$")      || $5 == "dragon") print $1}'`
+                narb_pid=`ps   axwww | grep -v awk | awk '{if (match($5, ".*/narb$")        || $5 == "narb")   print $1}'`
 
                 # XXX ugh...there must be a better way to do this...this is a kludge
                 # maybe search for OSPF_INTER_ARGS and OSPF_INTRA_ARGS...or OSPF_ARGS?
-                ospf_intra_pid=`ps ax | grep -v awk | awk '{if (match($0, ".*/ospfd-intra")  || match($0, ".*/ospfd\.conf")) print $1}'`
-                ospf_inter_pid=`ps ax | grep -v awk | awk '{if (match($0, ".*/ospfd-inter")) print $1}'`
+                ospf_intra_pid=`ps axwww | grep -v awk | awk '{if (match($0, ".*/ospfd-intra")  || match($0, ".*/ospfd\.conf")) print $1}'`
+                ospf_inter_pid=`ps axwww | grep -v awk | awk '{if (match($0, ".*/ospfd-inter")) print $1}'`
                 ;;
         *)
                 zebra_pid=""
