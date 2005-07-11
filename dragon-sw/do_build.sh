@@ -20,7 +20,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring kom-rsvp...'
     cd kom-rsvp
-    ./configure --prefix=$PREFIX --with-snmp=/usr/local CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --with-snmp=$SNMP_PATH CFLAG=-g CPPFLAG=-g
     if test $? != 0; then
 	echo "dragon-sw: kom-rsvp configure error!"
 	exit 1
@@ -63,7 +63,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring kom-rsvp...'
     cd kom-rsvp
-    ./configure --with-snmp=/usr/local CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --with-snmp=$SNMP_PATH CFLAG=-g CPPFLAG=-g
     if test $? != 0; then
 	echo "dragon-sw: kom-rsvp configure error!"
 	exit 1
@@ -80,7 +80,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring zebra...'
     cd ../zebra
-    ./configure --enable-dragon CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --enable-dragon CFLAG=-g CPPFLAG=-g
     if test $? != 0; then
         echo "dragon-sw: zebra configure error!"
         exit 1
