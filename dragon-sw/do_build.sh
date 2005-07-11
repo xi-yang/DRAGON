@@ -95,7 +95,7 @@ case `uname` in
     fi
 
     echo '' && \
-	echo "dragon-sw: zebra make error!"
+	echo 'dragon-sw build finished.'
 
     echo '' && \
         echo "Now, as root, run 'sh do_install.sh' to complete the installation."
