@@ -4,10 +4,10 @@
 PREFIX=/usr/local/dragon
 
 # determine a valid path for net-snmp header files
-if test -f /usr/include/net-snmp/net-snmp-config.h; then
-    SNMP_PATH=/usr
-elif test -f /usr/local/include/net-snmp/net-snmp-config.h; then
+if test -f /usr/local/include/net-snmp/net-snmp-config.h; then
     SNMP_PATH=/usr/local
+elif test -f /usr/include/net-snmp/net-snmp-config.h; then
+    SNMP_PATH=/usr
 else
     echo 'dragon-sw: could not find net-snmp header files -- is Net-SNMP installed?'
     exit 1
