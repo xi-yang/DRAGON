@@ -497,6 +497,7 @@ const LogicalInterface* NetworkServiceDaemon::receiveRawPacketIP4( InterfaceHand
 	iov.iov_base = (char*)buffer.getWriteBuffer();
 	iov.iov_len = buffer.getSize();
 	int length = CHECK( recvmsg( fd, &hdr, 0 ) );
+	String ifname;
 	if ( fd != globalVirtualInterface->fd ) {
 		buffer.setWriteLength( (uint16)length );
 		return NULL;
@@ -507,12 +508,17 @@ const LogicalInterface* NetworkServiceDaemon::receiveRawPacketIP4( InterfaceHand
 			if (chdr->cmsg_len != 0 && chdr->cmsg_level == IPPROTO_IP && chdr->cmsg_type == IP_RECVIF) {
 				struct sockaddr_dl* sdl = (sockaddr_dl*)CMSG_DATA(chdr);
 				uint32 index = sdl->sdl_index;
+				ifname = (char*)sdl->sdl_data;
+                            	//hacked @@@@
+                                realLif =RSVP_Global::rsvp->findInterfaceByName(ifname);
 #elif defined(Linux)
 			if (chdr->cmsg_len != 0 && chdr->cmsg_level == SOL_IP && chdr->cmsg_type == IP_PKTINFO) {
 				struct in_pktinfo* ipi = (in_pktinfo*)CMSG_DATA(chdr);
 				uint32 index = ipi->ipi_ifindex;
 #endif
 				LOG(2)( Log::Msg, "interface system index is", index );
+                           //hacked @@@@
+                            if (!realLif)
 				realLif = indexToInterfaceTable[index];
 		break;
 			}

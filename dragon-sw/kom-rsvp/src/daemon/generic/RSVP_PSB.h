@@ -172,7 +172,7 @@ public:
 	void setInLabelRequested() { inLabelRequested = true; }
 	void setOutLabel( uint32 l ) { outLabel = l; }
 	const uint32 getOutLabel() const { return outLabel; }
-	void setDataChannelInfo(VLSRRoute v, RSVP_HOP_Object& in, RSVP_HOP_Object& out) {vlsrt = v; dataInRsvpHop = in; dataOutRsvpHop = out; }
+	void setDataChannelInfo(VLSRRoute v, RSVP_HOP_Object& in, RSVP_HOP_Object& out) { if (v.size() > 0) vlsrt = v; dataInRsvpHop = in; dataOutRsvpHop = out; }
 	VLSRRoute& getVLSR_Route() { return vlsrt; }
 	const RSVP_HOP_Object& getDataInRsvpHop() const { return dataInRsvpHop; }
 	const RSVP_HOP_Object& getDataOutRsvpHop() const {return dataOutRsvpHop;}

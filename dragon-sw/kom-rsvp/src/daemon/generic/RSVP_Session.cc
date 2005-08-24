@@ -186,11 +186,21 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	if (!fromLocalAPI){
 		if (!RSVP_Global::rsvp->getRoutingService().findDataByInterface(hop.getLogicalInterface(), inRtId, inUnumIfID))
 			return false;
-
-		if (!inUnumIfID) //numbered interface
+		
+                //E2E tagged VLAN processing (inbound) @@@@ hacked
+		if (explicitRoute->getAbstractNodeList().size() > 1 
+		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
+		&& explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+		{
+			inUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
 			tlv = RSVP_HOP_TLV_SUB_Object(inRtId);
-		else //un-numbered interface
-			tlv = msg.getRSVP_HOP_Object().getTLV();
+		}
+		else {
+			if (!inUnumIfID) //numbered interface
+				tlv = RSVP_HOP_TLV_SUB_Object(inRtId);
+			else //un-numbered interface
+				tlv = msg.getRSVP_HOP_Object().getTLV();
+		}
 		dataInRsvpHop = RSVP_HOP_Object(hop.getLogicalInterface().getAddress(), msg.getRSVP_HOP_Object().getLIH(), tlv);
 	}
        else  //ingress localID processing @@@@ hacked
@@ -205,6 +215,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	while (explicitRoute->getAbstractNodeList().size() )
 	{
 		ifId = explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::IPv4?0:explicitRoute->getAbstractNodeList().front().getInterfaceID();
+		if ((ifId >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+			ifId = 0;
 		NetAddress hopAddr = explicitRoute->getAbstractNodeList().front().getAddress();
 		outLif = RSVP_Global::rsvp->getRoutingService().findInterfaceByData(hopAddr, ifId); 
 		if (!outLif)
@@ -222,6 +234,11 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
                     }
               }
 		explicitRoute->popFront();
+		// E2E tagged VLAN processing (outbound) @@@@ hacked
+		if (explicitRoute->getAbstractNodeList().size() > 1 
+		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
+		&& explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+			outUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
 	}
 	//process loose hop
 	if (!explicitRoute->getAbstractNodeList().empty()){
@@ -254,6 +271,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		}
 		
 		ifId = explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::IPv4?0:explicitRoute->getAbstractNodeList().front().getInterfaceID();
+		if ((ifId >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+			ifId = 0;
 		outLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
 			     explicitRoute->getAbstractNodeList().front().getAddress(),ifId, gw);
 		if (!outLif)
@@ -263,7 +282,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			return false;
 
 		phopLoopBackAddr = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
-		if (!outUnumIfID) //numbered interface
+		if (!outUnumIfID || ifId == 0) //numbered interface
 			tlv = RSVP_HOP_TLV_SUB_Object(outRtId);
 		else //un-numbered interface
 			tlv = RSVP_HOP_TLV_SUB_Object(outRtId, outUnumIfID);
@@ -292,7 +311,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			snmpIter = RSVP_Global::snmp->getSNMPSessionList().begin();
 			foundSNMPSession = false;
 			for (; snmpIter != RSVP_Global::snmp->getSNMPSessionList().end(); ++snmpIter ) {
-				if ((*snmpIter).getSwitchInetAddr()==vlsr.switchID && (*snmpIter).isValidSession()){
+				if ((*snmpIter)->getSwitchInetAddr()==vlsr.switchID && (*snmpIter)->isValidSession()){
 					foundSNMPSession = true;
 					break;
 				}
@@ -306,7 +325,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					return false;
 				}
 				else{
-					RSVP_Global::snmp->addSNMPSession(*ssNew);
+					RSVP_Global::snmp->addSNMPSession(ssNew);
 				}
 			}
 			vLSRoute.push_back(vlsr);                    
@@ -408,7 +427,9 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 #if defined(WITH_API)
 	if ( fromLocalAPI ) {
 		// message is from local API -> set sender address if not set
-		if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4)
+		if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
+		|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
+		&& (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL))
 			defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, 0, gateway);
 		else if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID)
 		{
@@ -468,7 +489,9 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			}
 		} else {
 			RtInIf = &hop.getLogicalInterface();
-			if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4)
+			if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
+			|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
+			&& (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL))
 				defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, 0, gateway);
 			else if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID)
 			{

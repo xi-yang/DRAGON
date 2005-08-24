@@ -380,8 +380,10 @@ bool RoutingService::findDataByInterface(const LogicalInterface& lif, NetAddress
 	INetworkBuffer ibuffer(msgLength-sizeof(uint8));
 	msgLength = read(ospf_socket, ibuffer.getWriteBuffer(), ibuffer.getSize());
 	ibuffer.setWriteLength(msgLength);
-
-	ibuffer >> ip >> ifID;	
+	uint32 aid;
+	ibuffer >> ip >> aid;	
+	if ((ifID >> 16) == 0)
+		ifID = aid;
 	return true;
 }
 
@@ -445,7 +447,7 @@ const void RoutingService::getVLSRRoutebyOSPF(const NetAddress& inRtID, const Ne
 	ibuffer.setWriteLength(msgLength);
 	
 	//Process response messages
-	ibuffer >> message >> vlsr.switchID >> vlsr.inPort >> vlsr.outPort;	
+	ibuffer >> message >> vlsr.switchID >> vlsr.inPort >> vlsr.outPort>>vlsr.vlanTag;
 
 	return;
 
@@ -461,6 +463,16 @@ const void RoutingService::notifyOSPF(uint8 msgType, const NetAddress& ctrlIfIP,
 		obuffer << msgLength << msgType << ctrlIfIP << bw;
 		CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 	}
+}
+
+//Hold or release VLAN Tag
+const void RoutingService::holdVtagbyOSPF(u_int32_t vtag, bool hold) const {
+	uint8 message = HoldVtagbyOSPF;
+	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32) + sizeof(uint8);
+	uint8 c_hold = hold ? 1 : 0;
+	ONetworkBuffer obuffer(msgLength);
+	obuffer << msgLength << message << vtag <<c_hold;
+	CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 }
 
 // Get its loopback address

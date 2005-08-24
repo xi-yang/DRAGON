@@ -22,6 +22,7 @@ class SNMP_Session{
 	String sessionName;
 	NetAddress switchInetAddr;
 	uint32 portList[MAX_VLAN+1];
+	uint32 portListUntagged[MAX_VLAN+1];
 	struct snmp_session* sessionHandle;	
 	bool active;
 	uint32 vendor;
@@ -77,8 +78,17 @@ public:
 	}
 	bool setVLANPVID(uint32 port, uint32 vlanID); // A hack to Dell 5324 switch
 	bool setVLANPortTag(uint32 portListNew, uint32 vlanID); // A hack to Dell 5324 switch
-	bool movePortToVLAN(uint32 port, uint32 vlanID);
+	bool movePortToVLANAsTagged(uint32 port, uint32 vlanID);
+	bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
+	bool removePortFromVLAN(uint32 port, uint32 vlanID);
 	bool movePortToDefaultVLAN(uint32 port);
+	uint32 getVLANbyUntaggedPort(uint32 port){
+		for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
+			if(portListUntagged[i]&(1<<(32-port)))
+			      return i;
+		}
+		return 0;
+	}
 	uint32 getVLANbyPort(uint32 port){
 		for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
 			if(portList[i]&(1<<(32-port)))
@@ -86,12 +96,21 @@ public:
 		}
 		return 0;
 	}
+	uint32 getVLANListbyPort(uint32 port, SimpleList<uint32> &vlan_list){
+		vlan_list.clear();
+		for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
+			if(portList[i]&(1<<(32-port)))
+			      vlan_list.push_back(i);
+		}
+		return vlan_list.size();
+	}
 	bool readVLANFromSwitch();
 	String& getSessionName() {return sessionName;}
 	NetAddress& getSwitchInetAddr() {return switchInetAddr;}
 	bool isValidSession() const {return active;}
-        bool verifyVLAN(uint32& vlanID);
-        bool setSingleVLANPortTagged(uint32 port, uint32 vlanID);
+        bool verifyVLAN(uint32 vlanID);
+        bool setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID);
+        bool VLANHasTaggedPort(uint32 vlanID);
 };
 
 struct LocalId {
@@ -105,16 +124,16 @@ typedef SimpleList<LocalId> LocalIdList;
 #define LOCAL_ID_TYPE_PORT (uint16)0x1
 #define LOCAL_ID_TYPE_GROUP (uint16)0x2
 #define LOCAL_ID_TYPE_TAGGED_GROUP (uint16)0x3
+#define LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL (uint16)0x4
 
-
-typedef SimpleList<SNMP_Session> SNMPSessionList;
+typedef SimpleList<SNMP_Session*> SNMPSessionList;
 class SNMP_Global{
 	SNMPSessionList snmpSessionList;
 
 public:
-	SNMP_Global() { init_snmp("VLSRCtrl");} 
+	SNMP_Global() { snmpSessionList.clear(); init_snmp("VLSRCtrl");} 
 	~SNMP_Global();
-	bool addSNMPSession(SNMP_Session& addSS);
+	bool addSNMPSession(SNMP_Session* addSS);
 	SNMPSessionList& getSNMPSessionList() { return snmpSessionList; }
 public:
         static LocalIdList localIdList;
@@ -140,17 +159,20 @@ public:
             }
             lid.type = type;
             lid.value = value;
-            lid.group = new SimpleList<uint16>;
             localIdList.push_back(lid);
+            localIdList.back().group = new SimpleList<uint16>;
+            if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP) && tag != 0)
+                localIdList.back().group->push_back(tag);
             }
         static void deleteLocalId(uint16 type, uint16 value, uint16  tag = 0) {
             LocalIdList::Iterator it;
             LocalId lid;
             if (type == 0xffff && value == 0xffff) {
-                    for (it = localIdList.begin(); it != localIdList.end(); ++it)
-                        if (lid.group)
-                            delete lid.group;
+                    //for (it = localIdList.begin(); it != localIdList.end(); ++it)
+                     //   if (lid.group)
+                     //       delete lid.group;
                     localIdList.clear();
+                    return;
                 }
             for (it = localIdList.begin(); it != localIdList.end(); ++it) {
                 lid = *it;

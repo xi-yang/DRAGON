@@ -41,37 +41,69 @@ bool SNMP_Session::connectSwitch()
 	return true;
 }
 
-bool SNMP_Session::movePortToVLAN(uint32 port, uint32 vlanID)
+bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 {
 	uint32 mask;
 	bool ret = true;
 	
 	if ((!active) || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
 		return false; //don't touch the control port!
-	int old_vlan = getVLANbyPort(port);
-	if (old_vlan) //not in default control VLAN
+	int old_vlan = getVLANbyUntaggedPort(port);
+	if (old_vlan) //Remove untagged port from old VLAN
 	{
 		mask=(~(1<<(32-port))) & 0xFFFFFFFF;	
+		portListUntagged[old_vlan]&=mask;
 		portList[old_vlan]&=mask;
-		mask = 1<<(32-port);
-		portList[vlanID]|=mask;
 		if (vendor == RFC2674) 
-			ret&=setVLANPortTag(portList[old_vlan], old_vlan); //Set back to "tagged"
-		ret&=setVLANPort(portList[old_vlan], old_vlan); //remove untagged port out of the old VLAN
-		ret = setVLANPort(portList[vlanID], vlanID); // move port to the new VLAN
-		if (vendor == RFC2674){
-			ret&=setVLANPortTag(portList[vlanID], vlanID); //Set to "untagged"
-			ret&=setVLANPVID(port, vlanID); //Set pvid
-		}
+			ret&=setVLANPortTag(portListUntagged[old_vlan], old_vlan); //Set back to "tagged"
+		ret&=setVLANPort(portListUntagged[old_vlan], old_vlan); //remove untagged port out of the old VLAN
+       }
+	mask = 1<<(32-port);
+	portListUntagged[vlanID]|=mask;
+	portList[vlanID]|=mask;
+	ret&=setVLANPort(portList[vlanID], vlanID) ;
+	if (vendor == RFC2674){
+		ret&=setVLANPortTag(portListUntagged[vlanID], vlanID); //Set to "untagged"
+		ret&=setVLANPVID(port, vlanID); //Set pvid
 	}
-	else{ //in default VLAN, so just need to set ports for vlanID
-		mask = 1<<(32-port);
-		portList[vlanID]|=mask;
-		ret&=setVLANPort(portList[vlanID], vlanID) ;
-		if (vendor == RFC2674){
-			ret&=setVLANPortTag(portList[vlanID], vlanID); //Set to "untagged"
-			ret&=setVLANPVID(port, vlanID); //Set pvid
+	return ret;
+}
+
+bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
+{
+	uint32 mask;
+	bool ret = true;
+	
+	if ((!active) || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
+		return false; //don't touch the control port!
+
+       //there is no need to remove a to-be-tagged-in-new-VLAN port from old VLAN
+	mask = 1<<(32-port);
+	portList[vlanID]|=mask;
+	ret&=setVLANPort(portList[vlanID], vlanID) ;
+	if (vendor == RFC2674){
+		ret&=setVLANPVID(port, vlanID); //Set pvid
+	}
+	return ret;
+}
+
+
+
+bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
+{
+	bool ret = true;
+	
+	if ((!active) || port==SWITCH_CTRL_PORT)
+		return false; //don't touch the control port!
+
+	if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN){
+		uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF;	
+		portList[vlanID]&=mask;
+		portListUntagged[vlanID]&=mask;
+		if (vendor == RFC2674) {
+			ret&=setVLANPortTag(portList[vlanID], vlanID); //Set back to "tagged"
 		}
+		ret &= setVLANPort(portList[vlanID], vlanID) ;
 	}
 	return ret;
 }
@@ -86,6 +118,7 @@ bool SNMP_Session::movePortToDefaultVLAN(uint32 port)
 	if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN){
 		uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF;	
 		portList[vlanID]&=mask;
+		portListUntagged[vlanID]&=mask;
 		if (vendor == RFC2674) {
 			//ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID
 			ret&=setVLANPortTag(portList[vlanID], vlanID); //Set back to "tagged"
@@ -111,11 +144,10 @@ bool SNMP_Session::readVLANFromSwitch()
 	if (vendor != RFC2674)
 		return true;
 	
-	// Create the PDU for the data for our request. 
-
 	uint32 vlan = MIN_VLAN;
 
 	while (vlan <= MAX_VLAN){
+		// Create the PDU for the data for our request. 
 		pdu = snmp_pdu_create(SNMP_MSG_GET);
 		sprintf(oid_str, "%s.%d", read_oid_str, vlan);
 		status = read_objid(oid_str, anOID, &anOID_len);
@@ -137,6 +169,35 @@ bool SNMP_Session::readVLANFromSwitch()
 		if(response) snmp_free_pdu(response);
 		vlan++;
 	}
+
+	const char* read_oid_str_untagged = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
+
+	vlan = MIN_VLAN;
+
+	while (vlan <= MAX_VLAN){
+		// Create the PDU for the data for our request. 
+		pdu = snmp_pdu_create(SNMP_MSG_GET);
+		sprintf(oid_str, "%s.%d", read_oid_str_untagged, vlan);
+		status = read_objid(oid_str, anOID, &anOID_len);
+		snmp_add_null_var(pdu, anOID, anOID_len);
+		// Send the Request out. 
+		status = snmp_synch_response(sessionHandle, pdu, &response);
+		if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
+			if (response->variables->val.integer){
+				ports = ntohl(*(response->variables->val.integer));
+				if (response->variables->val_len < 4){
+					uint32 mask = (uint32)0xFFFFFFFF << ((4-response->variables->val_len)*8); 
+					ports &= mask; 
+				}
+			}
+			else
+				ports = 0;
+			portListUntagged[vlan] = ports;
+		}
+		if(response) snmp_free_pdu(response);
+		vlan++;
+	}
+
        return true;
 }
 
@@ -278,7 +339,7 @@ bool SNMP_Session::setVLANPortTag(uint32 portListNew, uint32 vlanID)
 	  return true;
 }
 
-bool SNMP_Session::verifyVLAN(uint32& vlanID)
+bool SNMP_Session::verifyVLAN(uint32 vlanID)
 {
     struct snmp_pdu *pdu;
     struct snmp_pdu *response;
@@ -286,7 +347,7 @@ bool SNMP_Session::verifyVLAN(uint32& vlanID)
     size_t anOID_len = MAX_OID_LEN;
     char type, value[128], oid_str[128];
     int status;
-    String tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
+    String tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
     uint32 ports = 0;
 
     if (!active || vendor!=RFC2674) //not initialized or session has been disconnected
@@ -300,16 +361,15 @@ bool SNMP_Session::verifyVLAN(uint32& vlanID)
     // Send the Request out. 
     status = snmp_synch_response(sessionHandle, pdu, &response);
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
-    	if (response->variables->val.integer)
+        	snmp_free_pdu(response);
                 return true;
     	}
     if(response) 
         snmp_free_pdu(response);
-    vlanID = 0;
     return false;
 }
 
-bool SNMP_Session::setSingleVLANPortTagged(uint32 port, uint32 vlanID)
+bool SNMP_Session::setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID)
 {
     struct snmp_pdu *pdu;
     struct snmp_pdu *response;
@@ -342,13 +402,13 @@ bool SNMP_Session::setSingleVLANPortTagged(uint32 port, uint32 vlanID)
     if(response) 
         snmp_free_pdu(response);
 
-    ports &= (~(1<<(32-port))) & 0xFFFFFFFF; //take port away from those untagged
+    ports &= (~taggedPorts) & 0xFFFFFFFF; //take port away from those untagged
     pdu = snmp_pdu_create(SNMP_MSG_SET);
     // vlan port list 
     type='x';   
     sprintf(value, "%.8lx", 0); // set all ports tagged
     status = snmp_add_var(pdu, anOID, anOID_len, type, value);
-    sprintf(value, "%.8lx", ports); //restore those originally untagged ports execept the 'port'
+    sprintf(value, "%.8lx", ports); //restore those originally untagged ports execept the 'taggedPorts'
     status = snmp_add_var(pdu, anOID, anOID_len, type, value);
     // Send the Request out. 
     status = snmp_synch_response(sessionHandle, pdu, &response);
@@ -361,10 +421,68 @@ bool SNMP_Session::setSingleVLANPortTagged(uint32 port, uint32 vlanID)
     	}
     	else
       		snmp_sess_perror("snmpset", sessionHandle);
+    	if(response)
+        	snmp_free_pdu(response);
         return false;
     }
-    if(response)
-        snmp_free_pdu(response);
+    return true;
+}
+
+
+bool SNMP_Session::VLANHasTaggedPort(uint32 vlanID)
+{
+    struct snmp_pdu *pdu;
+    struct snmp_pdu *response;
+    oid anOID[MAX_OID_LEN];
+    size_t anOID_len = MAX_OID_LEN;
+    char type, value[128], oid_str[128];
+    int status;
+    long int ports_all = 0, ports_untagged = 0;
+    String oid_str_all = ".1.3.6.1.2.1.17.7.1.4.3.1.2";    
+    String oid_str_untagged = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
+
+    if (!active || vendor!=RFC2674) //not initialized or session has been disconnected
+      return false;
+
+    pdu = snmp_pdu_create(SNMP_MSG_GET);
+    // all vlan ports list 
+    sprintf(oid_str, "%s.%d", oid_str_all.chars(), vlanID);
+    status = read_objid(oid_str, anOID, &anOID_len);
+    snmp_add_null_var(pdu, anOID, anOID_len);
+    // Send the Request out. 
+    status = snmp_synch_response(sessionHandle, pdu, &response);
+    if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
+        if (response && response->variables->val.integer)
+            ports_all = ntohl(*(response->variables->val.integer));
+        else
+            return false;
+    }
+    else 
+        return false;
+    if(response) 
+      snmp_free_pdu(response);
+
+    pdu = snmp_pdu_create(SNMP_MSG_GET);
+    // untagged vlan ports list 
+    sprintf(oid_str, "%s.%d", oid_str_untagged.chars(), vlanID);
+    status = read_objid(oid_str, anOID, &anOID_len);
+    snmp_add_null_var(pdu, anOID, anOID_len);
+    // Send the Request out. 
+    status = snmp_synch_response(sessionHandle, pdu, &response);
+    if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
+        if (response && response->variables->val.integer)
+            ports_untagged = ntohl(*(response->variables->val.integer));
+        else
+            return false;
+    }
+    else 
+        return false;
+    if(response) 
+      snmp_free_pdu(response);
+
+    if (ports_all == ports_untagged)
+        return false;
+
     return true;
 }
 
@@ -415,18 +533,18 @@ bool SNMP_Session::setVLANPort(uint32 portListNew, uint32 vlanID)
 SNMP_Global::~SNMP_Global() {
 		SNMPSessionList::Iterator snmpIter = snmpSessionList.begin();
 		for ( ; snmpIter != snmpSessionList.end(); ++snmpIter){
-			(*snmpIter).disconnectSwitch();
+			(*snmpIter)->disconnectSwitch();
 			snmpSessionList.erase(snmpIter);
 		}
 	}
 
 
 //One unique SNMP session per switch
-bool SNMP_Global::addSNMPSession(SNMP_Session& addSS)
+bool SNMP_Global::addSNMPSession(SNMP_Session* addSS)
 {
 	SNMPSessionList::Iterator iter = snmpSessionList.begin();
 	for (; iter != snmpSessionList.end(); ++iter ) {
-		if ((*iter)==addSS)
+		if ((*(*iter))==(*addSS))
 			return false;
 	}
 
@@ -487,7 +605,7 @@ void SNMP_Global::getPortsByLocalId(SimpleList<uint32>&portList, uint32 port)
                 return;
             SimpleList<uint16>::Iterator it_uint16;
             for (it_uint16 = lid.group->begin(); it_uint16 != lid.group->end(); ++it_uint16) 
-                   portList.push_back(value); //add ports
+                   portList.push_back(*it_uint16); //add ports
              return;
         }
     }

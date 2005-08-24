@@ -111,6 +111,7 @@ public:
 		if ( LIH < interfaceCount ) return lifArray[LIH];
 		return NULL;
 	}
+
 #if defined(NS2)
 	const LogicalInterface* findInterfaceByOif( const String& ) const;
 #endif

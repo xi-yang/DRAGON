@@ -57,6 +57,7 @@ typedef struct _vlsr_route_{
 	NetAddress switchID;
 	uint32 inPort;
 	uint32 outPort;
+	uint32 vlanTag;
 }VLSR_Route;
 typedef SimpleList<VLSR_Route> VLSRRoute;
 
@@ -90,6 +91,7 @@ public:
 		FindOutLifByOSPF = 131,			//Find outgoing control logical interface by next hop data plane IP / interface ID
 		GetVLSRRoutebyOSPF = 132,		//Get VLSR route
 		GetLoopbackAddress = 133, 		// Get its loopback address
+		HoldVtagbyOSPF = 134, 		// Hold or release a VLAN Tag
 	};
 	RoutingService();
 	~RoutingService();
@@ -104,6 +106,7 @@ public:
 	const void notifyOSPF(uint8 msgType, const NetAddress& ctrlIfIP, ieee32float bw  ) const;
 	const LogicalInterface* findOutLifByOSPF( const NetAddress& , const uint32 , NetAddress& ) const;
 	const void getVLSRRoutebyOSPF(const NetAddress& inRtID, const NetAddress& outRtID, const uint32 inIfId, const uint32 outIfId, VLSR_Route& vlsr) const ;
+	const void RoutingService::holdVtagbyOSPF(u_int32_t vtag, bool hold = true) const;
 	NetAddress getLoopbackAddress() const;
 	const LogicalInterface* getUnicastRoute( const NetAddress&, NetAddress& ) const;
 	const LogicalInterface* getMulticastRoute( const NetAddress&, const NetAddress&, LogicalInterfaceSet& ) const;
