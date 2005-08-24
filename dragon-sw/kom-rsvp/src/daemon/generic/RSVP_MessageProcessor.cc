@@ -43,6 +43,7 @@
 #include "RSVP_RoutingService.h"
 #include "RSVP_Session.h"
 #include "RSVP_OutISB.h"
+#include "SNMP_Global.h"
 
 MessageProcessor::MessageProcessor() : ibuffer(LogicalInterface::maxPayloadLength),
 	sendingHop(NULL), currentLif(NULL), incomingLif(NULL),
@@ -69,8 +70,16 @@ void MessageProcessor::processMessage() {
 	}
 	if ( currentMessage.getMsgType() == Message::InitAPI || currentMessage.getMsgType() == Message::RemoveAPI ) {
 		RSVP::getApiServer().processMessage( currentMessage, *this );
-	return;
+		return;
 	}
+
+	if ( currentMessage.getMsgType() == Message::AddLocalId || currentMessage.getMsgType() == Message::DeleteLocalId) {
+		LocalId *lid = currentMessage.getLocalIdObject();
+		SNMP_Global::processLocalIdMessage(currentMessage.getMsgType(), *lid);
+		delete lid;
+		return;
+	}
+
 #endif
 
 	if ( currentMessage.getMsgType() == Message::ResvConf ) {
@@ -191,6 +200,10 @@ void MessageProcessor::processMessage() {
 		refreshReservations();
 		B_Merge = true;
 		fullRefresh = true;
+		break;
+	//@@@@hacked
+	case Message::AddLocalId:
+	case Message::DeleteLocalId:
 		break;
 	default:
 		LOG(2)( Log::Msg, "ignoring unknown message type:", currentMessage.getMsgType() );

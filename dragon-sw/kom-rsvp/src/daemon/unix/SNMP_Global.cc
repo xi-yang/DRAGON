@@ -7,6 +7,9 @@ To be incorporated into KOM-RSVP-TE package
 ****************************************************************************/
 #include "SNMP_Global.h"
 #include "RSVP_Log.h"
+#include "RSVP_Message.h"
+
+LocalIdList SNMP_Global::localIdList;
 
 bool SNMP_Session::connectSwitch()
 {
@@ -275,6 +278,96 @@ bool SNMP_Session::setVLANPortTag(uint32 portListNew, uint32 vlanID)
 	  return true;
 }
 
+bool SNMP_Session::verifyVLAN(uint32& vlanID)
+{
+    struct snmp_pdu *pdu;
+    struct snmp_pdu *response;
+    oid anOID[MAX_OID_LEN];
+    size_t anOID_len = MAX_OID_LEN;
+    char type, value[128], oid_str[128];
+    int status;
+    String tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
+    uint32 ports = 0;
+
+    if (!active || vendor!=RFC2674) //not initialized or session has been disconnected
+    	return false;
+
+    pdu = snmp_pdu_create(SNMP_MSG_GET);
+    // vlan port list 
+    sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
+    status = read_objid(oid_str, anOID, &anOID_len);
+    snmp_add_null_var(pdu, anOID, anOID_len);
+    // Send the Request out. 
+    status = snmp_synch_response(sessionHandle, pdu, &response);
+    if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
+    	if (response->variables->val.integer)
+                return true;
+    	}
+    if(response) 
+        snmp_free_pdu(response);
+    vlanID = 0;
+    return false;
+}
+
+bool SNMP_Session::setSingleVLANPortTagged(uint32 port, uint32 vlanID)
+{
+    struct snmp_pdu *pdu;
+    struct snmp_pdu *response;
+    oid anOID[MAX_OID_LEN];
+    size_t anOID_len = MAX_OID_LEN;
+    char type, value[128], oid_str[128];
+    int status;
+    String tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
+    uint32 ports = 0;
+
+    if (!active || vendor!=RFC2674) //not initialized or session has been disconnected
+    	return false;
+
+    pdu = snmp_pdu_create(SNMP_MSG_GET);
+    // vlan port list 
+    sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
+    status = read_objid(oid_str, anOID, &anOID_len);
+    snmp_add_null_var(pdu, anOID, anOID_len);
+    // Send the Request out. 
+    status = snmp_synch_response(sessionHandle, pdu, &response);
+    if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
+    	if (response->variables->val.integer){
+    		ports = ntohl(*(response->variables->val.integer));
+    		if (response->variables->val_len < 4){
+    			uint32 mask = (uint32)0xFFFFFFFF << ((4-response->variables->val_len)*8); 
+    			ports &= mask; 
+    		}
+    	}
+    }
+    if(response) 
+        snmp_free_pdu(response);
+
+    ports &= (~(1<<(32-port))) & 0xFFFFFFFF; //take port away from those untagged
+    pdu = snmp_pdu_create(SNMP_MSG_SET);
+    // vlan port list 
+    type='x';   
+    sprintf(value, "%.8lx", 0); // set all ports tagged
+    status = snmp_add_var(pdu, anOID, anOID_len, type, value);
+    sprintf(value, "%.8lx", ports); //restore those originally untagged ports execept the 'port'
+    status = snmp_add_var(pdu, anOID, anOID_len, type, value);
+    // Send the Request out. 
+    status = snmp_synch_response(sessionHandle, pdu, &response);
+    if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
+    	snmp_free_pdu(response);
+    }
+    else {
+    	if (status == STAT_SUCCESS){
+    	LOG(2)( Log::MPLS, "VLSR: SNMP: Setting VLAN Tag failed. Reason : ", snmp_errstring(response->errstat));
+    	}
+    	else
+      		snmp_sess_perror("snmpset", sessionHandle);
+        return false;
+    }
+    if(response)
+        snmp_free_pdu(response);
+    return true;
+}
+
 bool SNMP_Session::setVLANPort(uint32 portListNew, uint32 vlanID)
 {
 	struct snmp_pdu *pdu;
@@ -340,6 +433,64 @@ bool SNMP_Global::addSNMPSession(SNMP_Session& addSS)
 	//adding new SNMP session
 	snmpSessionList.push_back(addSS);
 	return  true;
+}
+
+void SNMP_Global::processLocalIdMessage(uint8 msgType, LocalId& lid)
+{
+    switch(msgType)
+    {
+    case Message::AddLocalId:
+        if (lid.group->size() > 0)
+            while (lid.group->size()) {
+                addLocalId(lid.type, lid.value, lid.group->front());
+                lid.group->pop_front();
+            }
+        else
+            addLocalId(lid.type, lid.value);
+        break;
+    case Message::DeleteLocalId:
+        if (lid.group->size() > 0)
+            while (lid.group->size()) {
+                deleteLocalId(lid.type, lid.value, lid.group->front());
+                lid.group->pop_front();
+            }
+        else
+            deleteLocalId(lid.type, lid.value);
+        break;
+    default:
+        break;
+    }
+}
+void SNMP_Global::getPortsByLocalId(SimpleList<uint32>&portList, uint32 port)
+{
+    portList.clear();
+    uint16 type = (uint16)(port >> 16);
+    uint16 value =(uint16)(port & 0xffff) ;
+    if (!hasLocalId(type, value))
+        return;
+    if (type == LOCAL_ID_TYPE_PORT)
+    {
+        portList.push_back(value);
+        return;
+    }
+    else if (type != LOCAL_ID_TYPE_GROUP && type != LOCAL_ID_TYPE_TAGGED_GROUP)
+        return;
+            
+    LocalIdList::Iterator it;
+    LocalId lid;
+    for (it = localIdList.begin(); it != localIdList.end(); ++it) 
+    {
+        lid = *it;
+        if (lid.type == type && lid.value == value) 
+        {
+            if (!lid.group || lid.group->size() == 0)
+                return;
+            SimpleList<uint16>::Iterator it_uint16;
+            for (it_uint16 = lid.group->begin(); it_uint16 != lid.group->end(); ++it_uint16) 
+                   portList.push_back(value); //add ports
+             return;
+        }
+    }
 }
 
 //End of file : SNMP_Global.cc

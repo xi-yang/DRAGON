@@ -786,6 +786,10 @@ void Message::checkStatus() const {
 	case Message::Ack:
 		break;
 #endif
+	//@@@@hacked
+	case Message::AddLocalId:
+	case Message::DeleteLocalId:
+		break;
 	default:
 		ERROR(2)( Log::Error, "ERROR in Message: unknown message type: ", (uint16)msgType );
 		status = Drop;

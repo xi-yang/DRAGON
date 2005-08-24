@@ -209,6 +209,10 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 					msg.getSTYLE_Object(), msg.getERROR_SPEC_Object(),
 					msg.getFlowDescriptorList().front(), msg.getPolicyList() );
 				break;
+			//@@@@ hacked
+			case Message::AddLocalId:
+			case Message::DeleteLocalId:
+				break;
 			default:
 				FATAL(2)( Log::Fatal, "FATAL INTERNAL ERROR: daemon sent unknown message with type:", msg.getMsgType() );
 				abortProcess();
@@ -286,7 +290,29 @@ RSVP_API::SessionId RSVP_API::createSession( const NetAddress& dest, uint16 tunn
 	return result;
 }
 
+//@@@@ hacked
+void RSVP_API::addLocalId(uint16 type, uint16 value, uint16 tag)
+{
+	uint8 msgType = Message::AddLocalId;
+	uint8 TTL = 1;
+	SESSION_Object session(NetAddress(0), 0, 0);	
+	Message msg( msgType, TTL, session);
+	msg.setRSVP_HOP_Object( *apiLif );
+	msg.setLocalIdObject(type, value, tag);
+	apiLif->sendMessage( msg, NetAddress(0), apiLif->getLocalAddress() );
+}
 
+//@@@@ hacked
+void RSVP_API::deleteLocalId(uint16 type, uint16 value, uint16 tag)
+{
+	uint8 msgType = Message::DeleteLocalId;
+	uint8 TTL = 1;
+	SESSION_Object session(NetAddress(0), 0, 0);	
+	Message msg( msgType, TTL, session);
+	msg.setRSVP_HOP_Object( *apiLif );
+	msg.setLocalIdObject(type, value, tag);        
+	apiLif->sendMessage( msg, NetAddress(0), apiLif->getLocalAddress() );
+}
 
 // the ip address in SENDER_TEMPLATE is set to 0, if no explicit one is given.
 // this is adjusted by message processing in the daemon
@@ -664,3 +690,11 @@ void* zInitRsvpApiInstance()
 	return api;
 }
 
+void zAddLocalId(void* api, uint16 type, uint16 value, uint16 tag)
+{
+    ((RSVP_API *)api)->addLocalId(type, value, tag);
+}
+void zDeleteLocalId(void* api, uint16 type, uint16 value, uint16 tag)
+{
+    ((RSVP_API *)api)->deleteLocalId(type, value, tag);
+}

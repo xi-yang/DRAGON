@@ -90,7 +90,22 @@ public:
 	String& getSessionName() {return sessionName;}
 	NetAddress& getSwitchInetAddr() {return switchInetAddr;}
 	bool isValidSession() const {return active;}
+        bool verifyVLAN(uint32& vlanID);
+        bool setSingleVLANPortTagged(uint32 port, uint32 vlanID);
 };
+
+struct LocalId {
+       uint16 type;
+       uint16 value;
+       SimpleList<uint16>* group;
+};
+typedef SimpleList<LocalId> LocalIdList;
+
+#define LOCAL_ID_TYPE_NONE (uint16)0x0
+#define LOCAL_ID_TYPE_PORT (uint16)0x1
+#define LOCAL_ID_TYPE_GROUP (uint16)0x2
+#define LOCAL_ID_TYPE_TAGGED_GROUP (uint16)0x3
+
 
 typedef SimpleList<SNMP_Session> SNMPSessionList;
 class SNMP_Global{
@@ -101,6 +116,97 @@ public:
 	~SNMP_Global();
 	bool addSNMPSession(SNMP_Session& addSS);
 	SNMPSessionList& getSNMPSessionList() { return snmpSessionList; }
+public:
+        static LocalIdList localIdList;
+        static void addLocalId(uint16 type, uint16 value, uint16  tag = 0) {
+        LocalIdList::Iterator it;
+        LocalId lid;
+
+        for (it = localIdList.begin(); it != localIdList.end(); ++it) {
+            lid = *it;
+            if (lid.type == type && lid.value == value) {
+                if (type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)  {
+                    SimpleList<uint16>::Iterator it_uint16;
+                    for (it_uint16 = lid.group->begin(); it_uint16 != lid.group->end(); ++it_uint16) {
+                        if (*it_uint16 == tag)
+                            return;
+                        }
+                    lid.group->push_back(tag);
+                    return;
+                    }
+                else
+                    return;
+                }
+            }
+            lid.type = type;
+            lid.value = value;
+            lid.group = new SimpleList<uint16>;
+            localIdList.push_back(lid);
+            }
+        static void deleteLocalId(uint16 type, uint16 value, uint16  tag = 0) {
+            LocalIdList::Iterator it;
+            LocalId lid;
+            if (type == 0xffff && value == 0xffff) {
+                    for (it = localIdList.begin(); it != localIdList.end(); ++it)
+                        if (lid.group)
+                            delete lid.group;
+                    localIdList.clear();
+                }
+            for (it = localIdList.begin(); it != localIdList.end(); ++it) {
+                lid = *it;
+                if (lid.type == type && lid.value == value) {
+                    if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)) {
+                        if (tag == 0 && lid.group) {
+                            delete lid.group;
+                            localIdList.erase(it);
+                            }
+                        else {
+                            SimpleList<uint16>::Iterator it_uint16;
+                            for (it_uint16 = lid.group->begin(); it_uint16 != lid.group->end(); ++it_uint16) {
+                                if (*it_uint16 == tag)
+                                    lid.group->erase(it_uint16);
+                                }
+                            if (lid.group->size() == 0) {
+                                delete lid.group;
+                                localIdList.erase(it);
+                                }
+                            }
+                        return;
+                        }
+                    else {
+                            delete lid.group;
+                            localIdList.erase(it);
+                            return;
+                        }
+                    }
+                }
+            }
+        static bool hasLocalId(uint16 type, uint16 value, uint16  tag = 0) {
+            LocalIdList::Iterator it;
+            LocalId lid;
+            for (it = localIdList.begin(); it != localIdList.end(); ++it) {
+                lid = *it;
+                if (lid.type == type && lid.value == value) {
+                    if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP) && tag != 0) {
+                        SimpleList<uint16>::Iterator it_uint16;
+                        for (it_uint16 = lid.group->begin(); it_uint16 != lid.group->end(); ++it_uint16) {
+                            if (*it_uint16 == tag)
+                                return true;;
+                            }
+                        return false;
+                        }
+                    else
+                        return true;
+                    }
+                }
+                return false;
+            }
+        static void clearLocalIdList( ) {
+            localIdList.clear();
+            }
+        static void processLocalIdMessage(uint8 msgType, LocalId& lid);
+        static void getPortsByLocalId(SimpleList<uint32>&portList, uint32 port);
+
 };
 
 #endif /* _SNMP_Global_h_ */

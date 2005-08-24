@@ -37,12 +37,13 @@
 #include "RSVP_Lists.h"
 #include "RSVP_PolicyObjects.h"
 #include "RSVP_ProtocolObjects.h"
+#include "SNMP_Global.h"
 
 class Message {
 
 public:
 	enum Type { InitAPI = 0, Path = 1, Resv, PathErr, ResvErr, PathTear, ResvTear, ResvConf, Ack = 13, Srefresh = 15, Load = 126, PathResv = 127,
-				  RemoveAPI = 255 };
+				  RemoveAPI = 255, /*hacked*/ AddLocalId = 201, DeleteLocalId = 202, };
 	enum Flag { RefreshReduction = 0x01 };
 	enum Status { Correct, Drop, Reject };
 
@@ -107,6 +108,11 @@ protected:
 	MESSAGE_ID_ACK_List          ackList;
 	MESSAGE_ID_NACK_List         nackList;
 #endif
+
+        //@@@@ hacked
+        uint16 localIdType;
+        uint16 localIdValue;
+        uint16 localIdTag;
 
 	bool checkFlowdescList() const;
 
@@ -206,6 +212,19 @@ public:
 	const MESSAGE_ID_NACK_List& getMESSAGE_ID_NACK_List() const { return nackList; }
 	const MESSAGE_ID_LIST_Object& getMESSAGE_ID_LIST_Object() const { assert(objectFlags & MESSAGE_ID_LIST); return MESSAGE_ID_LIST_Object_O; }
 #endif
+
+        //@@@@ hacked
+        LocalId* getLocalIdObject() { 
+            LocalId* lid = new LocalId; 
+            lid->type = localIdType; 
+            lid->value = localIdValue;
+            lid->group = new SimpleList<uint16>;
+            if (localIdTag != 0)
+                lid->group->push_back(localIdTag);
+            return lid; 
+            }
+        void setLocalIdObject(uint16 t, uint16 v, uint16 g) 
+            {localIdType = t; localIdValue = v; localIdTag = g;}
 
 #define Message_CHECK_OBJECT(XXX) \
                                               assert( !(objectFlags & XXX) ); \

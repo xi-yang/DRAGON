@@ -181,7 +181,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	uint32 outUnumIfID = 0;
 	NetAddress inRtId = NetAddress(0);
 	NetAddress outRtId = NetAddress(0);
-
+       NetAddress gw;
 
 	if (!fromLocalAPI){
 		if (!RSVP_Global::rsvp->getRoutingService().findDataByInterface(hop.getLogicalInterface(), inRtId, inUnumIfID))
@@ -193,13 +193,34 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			tlv = msg.getRSVP_HOP_Object().getTLV();
 		dataInRsvpHop = RSVP_HOP_Object(hop.getLogicalInterface().getAddress(), msg.getRSVP_HOP_Object().getLIH(), tlv);
 	}
+       else  //ingress localID processing @@@@ hacked
+       {
+           if (explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::UNumIfID)
+           {
+               if (explicitRoute->getAbstractNodeList().front().getAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
+                    inUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
+           }
+       }
 
 	while (explicitRoute->getAbstractNodeList().size() )
 	{
 		ifId = explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::IPv4?0:explicitRoute->getAbstractNodeList().front().getInterfaceID();
-		outLif = RSVP_Global::rsvp->getRoutingService().findInterfaceByData(explicitRoute->getAbstractNodeList().front().getAddress(), ifId); 
-		if (!outLif) 
-			break;
+		NetAddress hopAddr = explicitRoute->getAbstractNodeList().front().getAddress();
+		outLif = RSVP_Global::rsvp->getRoutingService().findInterfaceByData(hopAddr, ifId); 
+		if (!outLif)
+		{
+			outLif = RSVP_Global::rsvp->findInterfaceByAddress(hopAddr);
+			if (!outLif && hopAddr != RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
+				break;
+		}
+              //egress localID processing @@@@ hacked
+              if (explicitRoute->getAbstractNodeList().size() == 1)
+              {
+                    if(explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::UNumIfID && hopAddr == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
+                    {
+                        outUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
+                    }
+              }
 		explicitRoute->popFront();
 	}
 	//process loose hop
@@ -233,7 +254,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		}
 		
 		ifId = explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::IPv4?0:explicitRoute->getAbstractNodeList().front().getInterfaceID();
-		NetAddress gw;
 		outLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
 			     explicitRoute->getAbstractNodeList().front().getAddress(),ifId, gw);
 		if (!outLif)
@@ -252,13 +272,13 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		else
 			dataOutRsvpHop = RSVP_HOP_Object(outLif->getAddress(), outLif->getLIH(), tlv );		
 
-
-
 		if (dataOutRsvpHop.getAddress() ==NetAddress(0) || ((!fromLocalAPI) && dataOutRsvpHop.getAddress()==NetAddress(0)))
 			return false;		
 	}
 	//check if this represents a VLSR route
-	if ((!fromLocalAPI) && inRtId != NetAddress(0) && outRtId != NetAddress(0) && (inRtId != outRtId))
+	if ((fromLocalAPI && inUnumIfID!= 0 && outRtId != NetAddress(0)) ||
+          (!fromLocalAPI && inRtId != NetAddress(0) && outUnumIfID != 0) ||
+	   (((!fromLocalAPI) && inRtId != NetAddress(0) && outRtId != NetAddress(0)) || (inRtId == outRtId && outUnumIfID != 0)) )
 	{	
 		SNMPSessionList::Iterator snmpIter;
 		bool foundSNMPSession;
@@ -289,10 +309,16 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					RSVP_Global::snmp->addSNMPSession(*ssNew);
 				}
 			}
-			vLSRoute.push_back(vlsr);
+			vLSRoute.push_back(vlsr);                    
 		}
 	}
-	
+       // local-id processing for ingress => allocation of inLabel for local ingress port(s) @@@@ hacked
+	if (fromLocalAPI && inUnumIfID!= 0 && outRtId != NetAddress(0))
+       {   
+            LogicalInterface *lif = (LogicalInterface*)&hop.getLogicalInterface();
+            lif->setMPLS(true);
+       }
+    
 	return true;
 }
 
@@ -418,7 +444,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		if ( senderTemplate.getSrcAddress() == NetAddress(0) ) {
 			senderTemplate.setSrcAddress( hop.getAddress() );
 		}
-	}
+       }
 #if !defined(BETWEEN_APIS)
 	else
 #endif
@@ -584,7 +610,7 @@ search_psb:
 
 	// TODO: we should check the MPLS protocol type here
 	if ( msg.hasLABEL_REQUEST_Object() ) {
-		if ( hop.getLogicalInterface().hasEnabledMPLS() && !getDestAddress().isMulticast() && (!fromLocalAPI)) {
+		if ( hop.getLogicalInterface().hasEnabledMPLS() && !getDestAddress().isMulticast()) { //&& (!fromLocalAPI) @@@@ hacked
 			cPSB->setInLabelRequested();
 		}
 		cPSB->updateLABEL_REQUEST_Object(msg.getLABEL_REQUEST_Object());

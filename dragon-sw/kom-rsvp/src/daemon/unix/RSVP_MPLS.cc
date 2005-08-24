@@ -258,11 +258,67 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			for (; snmpIter != RSVP_Global::snmp->getSNMPSessionList().end(); ++snmpIter ) {
 				if ((*snmpIter).getSwitchInetAddr()==ethSw && (*snmpIter).isValidSession()){
 					noError = true;
-					uint32 vlan = (*snmpIter).findEmptyVLAN();
+					uint32 vlan;
+                                   if ((*iter).inPort >> 16 != LOCAL_ID_TYPE_NONE)
+                                    {
+                                      vlan =   (*iter).inPort & 0xffff;
+                                    }
+                                   else if ((*iter).outPort >> 16 != LOCAL_ID_TYPE_NONE)
+                                    {
+                                      vlan =   (*iter).inPort & 0xffff;
+                                    }
+                                   else
+                                        vlan = (*snmpIter).findEmptyVLAN();
+
+                                   if (!(*snmpIter).verifyVLAN(vlan))
+                                    {
+        					LOG(4)( Log::MPLS, "VLSR: Cannot verify VLAN Tag(ID): ", vlan, " on Switch: ", ethSw);
+                                          continue;
+                                    }
+
 					if (vlan){
-						(*snmpIter).movePortToVLAN((*iter).inPort, vlan);
-						(*snmpIter).movePortToVLAN((*iter).outPort, vlan);
-						LOG(6)(Log::MPLS, "VLSR: Moving port ", (*iter).inPort, "and " , (*iter).outPort, "to VLAN #", vlan);
+        					SimpleList<uint32> portList;
+                                          uint32 port = (*iter).inPort;
+                                          if (port >> 16 != LOCAL_ID_TYPE_NONE)
+                                              SNMP_Global::getPortsByLocalId(portList, port);
+                                          else
+                                              portList.push_back(port);
+                                          if (portList.size() == 0){
+        					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress.");
+                                                return false;
+                                          }
+                                          while (portList.size()) {
+                                                port = portList.front();
+                                                (*snmpIter).movePortToVLAN(port, vlan);
+        						LOG(4)(Log::MPLS, "VLSR: Moving ingress port#",  port, " to VLAN #", vlan);
+                                                 if (port >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP)
+                                                    {
+                                        			(*snmpIter).setSingleVLANPortTagged(port & 0xffff, vlan); //Set a single vlan port to "tagged"
+                						LOG(4)(Log::MPLS, "VLSR: Set tagged port:",  port, " in VLAN #", vlan);
+                                                    }
+                                                portList.pop_front();
+                                          }
+                                          portList.clear();
+                                          port = (*iter).outPort;
+                                          if (port >> 16 != LOCAL_ID_TYPE_NONE)
+                                              SNMP_Global::getPortsByLocalId(portList, port);
+                                          else
+                                              portList.push_back(port);
+                                          if (portList.size() == 0){
+        					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
+                                                return false;
+                                          }
+                                          while (portList.size()) {
+                                                port = portList.front();
+                                                (*snmpIter).movePortToVLAN(port, vlan);
+        						LOG(4)(Log::MPLS, "VLSR: Moving egress port#",  port, " to VLAN #", vlan);
+                                                 if (port >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP)
+                                                    {
+                                        			(*snmpIter).setSingleVLANPortTagged(port & 0xffff, vlan); //Set a single vlan port to "tagged"
+                						LOG(4)(Log::MPLS, "VLSR: Set tagged port:",  port, " in VLAN #", vlan);
+                                                    }
+                                                portList.pop_front();
+                                          }
 					}
 					else{
 						noError = false;
@@ -373,12 +429,41 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 			SNMPSessionList::Iterator snmpIter = RSVP_Global::snmp->getSNMPSessionList().begin();
 			for (; snmpIter != RSVP_Global::snmp->getSNMPSessionList().end(); ++snmpIter ) {
 				if ((*snmpIter).getSwitchInetAddr()==ethSw && (*snmpIter).isValidSession()){
-					(*snmpIter).movePortToDefaultVLAN((*iter).inPort);
-					(*snmpIter).movePortToDefaultVLAN((*iter).outPort);
-					LOG(7)(Log::MPLS, "VLSR: Moving Ethernet switch ", ethSw, " port ", (*iter).inPort, "and " , (*iter).outPort, "to default VLAN");
+    					SimpleList<uint32> portList;
+                                      uint32 port = (*iter).inPort;
+                                      if (port >> 16 != LOCAL_ID_TYPE_NONE)
+                                          SNMP_Global::getPortsByLocalId(portList, port);
+                                      else
+                                          portList.push_back(port);
+                                      if (portList.size() == 0){
+    					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress.");
+                                            return;
+                                      }
+                                      while (portList.size()) {
+                                            port = portList.front();
+                                            (*snmpIter).movePortToDefaultVLAN(port);
+    						LOG(3)(Log::MPLS, "VLSR: Moving ingress port#",  port, " back to Default VLAN #");
+                                            portList.pop_front();
+                                      }
+                                      portList.clear();
+                                      port = (*iter).outPort;
+                                      if (port >> 16 != LOCAL_ID_TYPE_NONE)
+                                          SNMP_Global::getPortsByLocalId(portList, port);
+                                      else
+                                          portList.push_back(port);
+                                      if (portList.size() == 0){
+    					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
+                                            return;
+                                      }
+                                      while (portList.size()) {
+                                            port = portList.front();
+                                            (*snmpIter).movePortToDefaultVLAN(port);
+    						LOG(3)(Log::MPLS, "VLSR: Moving egress port#",  port, " back to Default VLAN #");
+                                            portList.pop_front();
+                                      }
 					break;
-				}
-			}
+                        }
+                     }
 			psb.getVLSR_Route().erase(iter); //???
 		}
 	}

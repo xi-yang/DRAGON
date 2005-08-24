@@ -329,9 +329,15 @@ void PSB::updateRoutingInfo( const LogicalInterfaceSet& lifList,
 
 bool PSB::addReservation( OutISB* oisb, const Hop& nhop ) {
 	OIatPSB* oiatpsb = getOIatPSB( oisb->getOI().getLIH() );
-                                                             assert( oiatpsb );
+       assert( oiatpsb );
 	if ( oiatpsb->addRSB( oisb ) ) {
 		if ( inLabelRequested && !inLabel ) inLabel = RSVP_Global::rsvp->getMPLS().setInLabel( *this );
+
+              if (outLabel == 0 && vlsrt.size() > 0 && vlsrt.back().outPort != 0) //@@@@ hacked
+              {
+                     outLabel = vlsrt.back().outPort; //@@@@ hacked
+              }
+  
 		if ( outLabel ) {
 			if ( oiatpsb->getOutLabel() && oiatpsb->getOutLabel()->getLabel() ) {
 				if ( oiatpsb->getOutLabel()->getLabel() == outLabel ) {
@@ -415,12 +421,12 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 		message.setMESSAGE_ID_Object( MESSAGE_ID_Object( 0, nextHop->getEpoch(), sendID->id ) );
 	}
 #endif
-	if (( outLif.hasEnabledMPLS() && !getSession().getDestAddress().isMulticast() ) ) {
+	if (( outLif.hasEnabledMPLS() && !getSession().getDestAddress().isMulticast() )  ||
+            ( outLif == *RSVP_Global::rsvp->getApiLif() && vlsrt.size() > 0)) {//hacked @@@@
 		message.setLABEL_REQUEST_Object( getLABEL_REQUEST_Object());
 		getOIatPSB( outLif.getLIH() )->setOutLabelRequested();
 		getOIatPSB( outLif.getLIH() )->setOutLabelRequestedType(getLABEL_REQUEST_Object().getRequestedLabelType());
-	}
-	if (outLif == *(RSVP_Global::rsvp->getApiLif())){
+	} else if (outLif == *(RSVP_Global::rsvp->getApiLif())){
 		message.setLABEL_REQUEST_Object( getLABEL_REQUEST_Object());
 	}	
 	if ( explicitRoute && explicitRoute->getAbstractNodeList().size() >= 1 ) {
