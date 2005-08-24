@@ -1139,7 +1139,19 @@ ospf_apiserver_handle_register_opaque_type (struct ospf_apiserver *apiserv,
   opaque_type = rmsg->opaquetype;
 
   rc = ospf_apiserver_register_opaque_type (apiserv, lsa_type, opaque_type);
-
+  /*@@@Make sure that the registered opaque type shows up in apiserver->opaque_types
+             no matter if anybody else has registered it.
+   */
+  if (rc < 0)
+  {
+      regtype = XMALLOC (MTYPE_OSPF_APISERVER, sizeof (struct registered_opaque_type));
+      memset (regtype, 0, sizeof (struct registered_opaque_type));
+      regtype->lsa_type = lsa_type;
+      regtype->opaque_type = opaque_type;
+      /*@@@yet to check duplcates*/
+      listnode_add(apiserv->opaque_types, regtype);
+      rc = 0;
+  }
   if (rc < 0)
   {
       regtype = XMALLOC (MTYPE_OSPF_APISERVER, sizeof (struct registered_opaque_type));

@@ -423,6 +423,34 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		 	 }
 		}
 	}
+       else if (inRtId->s_addr==0 && inPort != 0 && outRtId->s_addr != 0 ){
+              /* local-id configured at ingress */
+		if ( om->ospf)
+		LIST_LOOP(om->ospf, ospf, node1)
+		{
+			if (ospf->oiflist)
+			LIST_LOOP(ospf->oiflist, oi, node2){
+				if (INTERFACE_GMPLS_ENABLED(oi) &&
+					ntohs(oi->te_para.lclif_ipaddr.header.type)!=0 &&
+					ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(outRtId->s_addr))
+					out_oi = oi;
+		 	 }
+		}       
+       }
+       else if (inRtId->s_addr!=0 && outRtId->s_addr == 0 && outPort != 0){
+              /* local-id configured at ingress */
+		if ( om->ospf)
+		LIST_LOOP(om->ospf, ospf, node1)
+		{
+			if (ospf->oiflist)
+			LIST_LOOP(ospf->oiflist, oi, node2){
+				if (INTERFACE_GMPLS_ENABLED(oi) &&
+					ntohs(oi->te_para.lclif_ipaddr.header.type)!=0 &&
+					ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(inRtId->s_addr))
+					in_oi = oi;
+		 	 }
+		}              
+       }
 	else if (ntohl(inRtId->s_addr)!=ntohl(outRtId->s_addr) && inPort==0 && outPort==0){
 		/* numbered interface */
 		if (om->ospf)
@@ -456,9 +484,33 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		/* Send message.  */
 		write (fd, STREAM_DATA(s), length);
 	}
-	else
+	else if (outPort != 0 && in_oi && in_oi->vlsr_if.switch_ip.s_addr!=0 && in_oi->vlsr_if.switch_port != 0)
+       {
+		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*2;
+		s = stream_new(length);
+		stream_putc(s, length);
+		stream_putc(s, GetVLSRRoutebyOSPF);
+		stream_put_ipv4(s, in_oi->vlsr_if.switch_ip.s_addr);
+		stream_putl(s, in_oi->vlsr_if.switch_port);
+		stream_putl(s, outPort);
+		/* Send message.  */
+		write (fd, STREAM_DATA(s), length);             
+       }
+	else if (inPort != 0 && out_oi && out_oi->vlsr_if.switch_ip.s_addr!=0 && out_oi->vlsr_if.switch_port != 0)
+       {
+		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*2;
+		s = stream_new(length);
+		stream_putc(s, length);
+		stream_putc(s, GetVLSRRoutebyOSPF);
+		stream_put_ipv4(s, out_oi->vlsr_if.switch_ip.s_addr);
+		stream_putl(s, inPort);
+		stream_putl(s, out_oi->vlsr_if.switch_port);
+		/* Send message.  */
+		write (fd, STREAM_DATA(s), length);             
+       }
+       else
 	{
-		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int8_t)*2;
+		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*2;
 		s = stream_new(length);
 		stream_putc(s, length);
 		stream_putc(s, GetVLSRRoutebyOSPF);

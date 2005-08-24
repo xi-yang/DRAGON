@@ -603,13 +603,24 @@ ospf_packet_ls_ack_dump (struct stream *s, u_int16_t length)
 }
 
 void
-ospf_ip_header_dump (struct ip *iph)
+ospf_ip_header_dump (struct stream *s)
 {
+  u_int16_t length;
+  struct ip *iph;
+
+  iph = (struct ip *) STREAM_PNT (s);
+
+#ifdef GNU_LINUX
+  length = ntohs (iph->ip_len);
+#else /* GNU_LINUX */
+  length = iph->ip_len;
+#endif /* GNU_LINUX */
+
   /* IP Header dump. */
   zlog_info ("ip_v %d", iph->ip_v);
   zlog_info ("ip_hl %d", iph->ip_hl);
   zlog_info ("ip_tos %d", iph->ip_tos);
-  zlog_info ("ip_len %d", iph->ip_len);
+  zlog_info ("ip_len %d", length);
   zlog_info ("ip_id %u", (u_int32_t) iph->ip_id);
   zlog_info ("ip_off %u", (u_int32_t) iph->ip_off);
   zlog_info ("ip_ttl %d", iph->ip_ttl);

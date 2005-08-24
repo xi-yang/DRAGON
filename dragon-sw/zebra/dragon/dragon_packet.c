@@ -485,7 +485,9 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 	struct dragon_tlv_header *tlvh;
 	u_int32_t read_len;
 	struct lsp *lsp = NULL;
-	
+       struct _EROAbstractNode_Para *srcLocalId=NULL, *destLocalId=NULL;
+       struct _EROAbstractNode_Para *temp_ero = NULL;
+
 	/* Look for the corresponding LSP request according to the sequence number */
 	if (!(lsp = dragon_find_lsp_by_seqno(ntohl(amsgh->seqnum))))
 		return;
@@ -502,6 +504,69 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				if (lsp->common.EROAbstractNode_Para)
 					XFREE(MTYPE_OSPF_DRAGON, lsp->common.EROAbstractNode_Para);
 				lsp->common.EROAbstractNode_Para = dragon_narb_topo_rsp_proc_ero(tlvh, &lsp->common.ERONodeNumber);
+
+                            /*Create source localID subobj */
+                            if(lsp->dragon.srcLocalId >> 16 != LOCAL_ID_TYPE_NONE)
+                            {
+                                srcLocalId = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
+                                memset(srcLocalId, 0, sizeof(struct _EROAbstractNode_Para));
+                                srcLocalId->type = UNumIfID;
+                                srcLocalId->isLoose = 1;
+                                memcpy(&srcLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.srcAddr, sizeof(struct in_addr));
+                                srcLocalId->data.uNumIfID.interfaceID = lsp->dragon.srcLocalId;
+                            }
+                            /*Create source localID subobj */
+                            if(lsp->dragon.destLocalId >> 16 != LOCAL_ID_TYPE_NONE)
+                            {
+
+                                destLocalId = XMALLOC(MTYPE_TMP, sizeof(struct AbstractNode_UnNumIfID));
+                                memset(destLocalId, 0, sizeof(struct AbstractNode_UnNumIfID));
+                                destLocalId->type = UNumIfID;
+                                destLocalId->isLoose = 1;
+                                memcpy(&destLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.destAddr, sizeof(struct in_addr));
+                                destLocalId->data.uNumIfID.interfaceID = lsp->dragon.destLocalId;
+                            }
+                            /*
+                            if (srcLocalId && destLocalId)
+                            {
+                                temp_ero = lsp->common.EROAbstractNode_Para;
+                                lsp->common.EROAbstractNode_Para = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*lsp->common.ERONodeNumber);
+                                memcpy(lsp->common.EROAbstractNode_Para, srcLocalId, sizeof(struct _EROAbstractNode_Para));
+                                memcpy(lsp->common.EROAbstractNode_Para + 1, temp_ero, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber-2));
+                                memcpy(lsp->common.EROAbstractNode_Para + lsp->common.ERONodeNumber-1, destLocalId, sizeof(struct _EROAbstractNode_Para));
+                                XFREE(MTYPE_TMP, temp_ero);
+                                XFREE(MTYPE_TMP, srcLocalId);
+                                XFREE(MTYPE_TMP, destLocalId);
+                            }
+                            else if (srcLocalId)
+                            {
+                                temp_ero = lsp->common.EROAbstractNode_Para;
+                                lsp->common.EROAbstractNode_Para = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*lsp->common.ERONodeNumber);
+                                memcpy(lsp->common.EROAbstractNode_Para, srcLocalId, sizeof(struct _EROAbstractNode_Para));
+                                memcpy(lsp->common.EROAbstractNode_Para + 1, temp_ero, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber-1));
+                                XFREE(MTYPE_TMP, temp_ero);
+                                XFREE(MTYPE_TMP, srcLocalId);
+                            }
+                            else if (destLocalId)
+                            {
+                                temp_ero = lsp->common.EROAbstractNode_Para;
+                                lsp->common.EROAbstractNode_Para = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*lsp->common.ERONodeNumber);                              
+                                memcpy(lsp->common.EROAbstractNode_Para, temp_ero, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber-1));
+                                memcpy(lsp->common.EROAbstractNode_Para + lsp->common.ERONodeNumber-1, destLocalId, sizeof(struct _EROAbstractNode_Para));
+                                XFREE(MTYPE_TMP, temp_ero);
+                                XFREE(MTYPE_TMP, destLocalId);
+                            }
+                            */
+                            if (srcLocalId)
+                            {
+                                memcpy(lsp->common.EROAbstractNode_Para, srcLocalId, sizeof(struct _EROAbstractNode_Para));
+                                XFREE(MTYPE_TMP, srcLocalId);
+                            }
+                            if (destLocalId)
+                            {
+                                memcpy(lsp->common.EROAbstractNode_Para + lsp->common.ERONodeNumber-1, destLocalId, sizeof(struct _EROAbstractNode_Para));
+                                XFREE(MTYPE_TMP, destLocalId);
+                            }
 				break;
 
 			default: /* Unrecognized tlv from NARB, just ignore it */
@@ -555,10 +620,6 @@ dragon_narb_socket_init()
 
 	  return fd;
 }
-
-
-
-
 
 int
 dragon_read (struct thread *thread)

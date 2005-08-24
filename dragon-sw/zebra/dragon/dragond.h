@@ -482,6 +482,8 @@ struct lsp_dragon_para {
     time_t lsp_start_time;		/* Scheduled establishment time of the LSP */
     time_t lsp_duration;		/* Duration of the LSP */
     u_int32_t AAA;				/* A(uthentication), A(uthorization), and A(ccounting) */
+    u_int32_t srcLocalId;         /* Source is (port|group-port|vlan-tag|tag-group) */
+    u_int32_t destLocalId;       /* Destination is (port|group-port|vlan-tag|tag-group) */
 };
 
 /* Structure of the LSP */
@@ -552,6 +554,24 @@ struct dragon_master {
 
 };
 
+/* Structure for localID */
+struct local_id {
+        u_int16_t type;
+        u_int16_t value;
+        list group;
+};
+#define LOCAL_ID_TYPE_NONE (u_int16_t)0x0
+#define LOCAL_ID_TYPE_PORT (u_int16_t)0x1
+#define LOCAL_ID_TYPE_GROUP (u_int16_t)0x2
+#define LOCAL_ID_TYPE_TAGGED_GROUP (u_int16_t)0x3
+
+
+/* local_id_group_mapping operators */
+void local_id_group_add(struct local_id *lid, u_int16_t  tag);
+void local_id_group_delete(struct local_id *lid, u_int16_t  tag);
+void local_id_group_free(struct local_id *lid);
+void  local_id_group_show(struct vty *vty, struct local_id *lid);
+
 /* Structure for string<-->value conversion */
 struct string_value_conversion {
 	u_char 	   number;
@@ -564,7 +584,6 @@ struct string_value_conversion {
 
 extern u_int32_t string_to_value(struct string_value_conversion *db, const char *str);
 extern const char *value_to_string(struct string_value_conversion *db, u_int32_t value);
-
 
 extern struct dragon_master dmaster;
 extern struct thread_master *master; /* master == dmaster.master */
@@ -609,6 +628,8 @@ extern void zTearRsvpResvRequest(void* api, struct _sessionParameters* para);
 extern int zGetApiFileDesc(void *api);
 extern void zApiReceiveAndProcess(void *api, zUpcall upcall);
 extern void zInitRsvpResvRequest(void* api, struct _rsvp_upcall_parameter* upcallPara);
+extern void zAddLocalId(void* api, u_int16_t type, u_int16_t value, u_int16_t tag);
+extern void zDeleteLocalId(void* api, u_int16_t type, u_int16_t value, u_int16_t tag);
 
 #endif /* _ZEBRA_DRAGOND_H */
 

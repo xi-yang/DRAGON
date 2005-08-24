@@ -191,6 +191,95 @@ struct string_value_conversion conv_lsp_status =
 	{ "Listening", 			LSP_LISTEN, 		1}} 
 };
 
+/* registerred local_id's */
+static list registered_local_ids;
+
+char *lid_types[] = {"single port", "port group", "vlan tag", "tag group"};
+
+/* local_id_group_mapping operators */
+void local_id_group_add(struct local_id *lid, u_int16_t  tag)
+{
+    u_int16_t * ptag = NULL;
+    listnode node;
+    assert(lid);
+    if (lid->type != LOCAL_ID_TYPE_GROUP && lid->type != LOCAL_ID_TYPE_TAGGED_GROUP)
+        return;
+
+    if (!lid->group)
+        lid->group = list_new();
+    LIST_LOOP(lid->group, ptag, node)
+    {
+        if (*ptag == tag)
+            return;
+    }
+
+    ptag = XMALLOC(MTYPE_TMP, 2);
+    *ptag = tag;
+    listnode_add(lid->group, ptag);
+}
+
+void local_id_group_delete(struct local_id *lid, u_int16_t  tag)
+{
+    u_int16_t * ptag = NULL;
+    listnode node;
+    assert(lid);
+    if (lid->type != LOCAL_ID_TYPE_GROUP && lid->type != LOCAL_ID_TYPE_TAGGED_GROUP)
+        return;
+
+    if (!lid->group)
+        return;
+
+    LIST_LOOP(lid->group, ptag, node)
+    {
+        if (*ptag == tag)
+        {
+            listnode_delete(lid->group, ptag);
+            XFREE(MTYPE_TMP, ptag);
+            if (lid->group->count == 0)
+            {
+                list_free(lid->group);
+                lid->group = NULL;
+            }
+            return;
+        }
+    }
+
+}
+ 
+void local_id_group_free(struct local_id *lid)
+{
+    u_int16_t * ptag = NULL;
+    listnode node;
+    assert(lid);
+    if (lid->type != LOCAL_ID_TYPE_GROUP && lid->type != LOCAL_ID_TYPE_TAGGED_GROUP)
+        return;
+
+    LIST_LOOP(lid->group, ptag, node)
+    {
+        listnode_delete(lid->group, ptag);
+        XFREE(MTYPE_TMP, ptag);
+    }
+
+    list_free(lid->group);
+    lid->group = NULL;
+}
+
+void local_id_group_show(struct vty *vty, struct local_id *lid)
+{
+    u_int16_t * ptag = NULL;
+    listnode node;
+    assert(lid);
+    if (lid->type != LOCAL_ID_TYPE_GROUP && lid->type != LOCAL_ID_TYPE_TAGGED_GROUP)
+        return;
+
+    LIST_LOOP(lid->group, ptag, node)
+    {
+        vty_out(vty, "  %d", *ptag);
+    }
+    vty_out(vty, "%s", VTY_NEWLINE);
+}
+
+
 /* Making connection to protocol daemon. */
 int
 dragon_module_connect (struct dragon_module *module)
@@ -702,7 +791,7 @@ DEFUN (dragon_set_label_set,
 
 DEFUN (dragon_set_lsp_ip,
        dragon_set_lsp_ip_cmd,
-       "set source ip-address A.B.C.D destination ip-address A.B.C.D tunnel-id <1-65535> lsp-id <1-65535>",
+       "set source ip-address A.B.C.D (port|group|tagged-group|none) <0-65535> destination ip-address A.B.C.D  (port|group|tagged-group|none) <0-65535>",
        "Set LSP parameters\n"
        "Source and destination nodes\n"
        "source node IP address"
@@ -719,19 +808,49 @@ DEFUN (dragon_set_lsp_ip,
 {
   struct lsp *lsp = (struct lsp *)(vty->index);
   struct in_addr ip_src, ip_dst;
-  int port_src, port_dst;
+  u_int16_t type_src, type_dest;
+  int port_src, port_dest;
   struct lsp *l;
+  struct local_id * lid = NULL;
   listnode node;
   u_int8_t find = 0;
   
   inet_aton(argv[0], &ip_src);
-  if (sscanf (argv[3], "%d", &port_src) != 1)
+  if (strcmp(argv[1], "port") == 0)
+      type_src = LOCAL_ID_TYPE_PORT;
+  else if (strcmp(argv[1], "group") == 0)
+      type_src = LOCAL_ID_TYPE_GROUP;
+  else if (strcmp(argv[1], "tagged-group") == 0)
+      type_src = LOCAL_ID_TYPE_TAGGED_GROUP;
+  else
+      type_src = LOCAL_ID_TYPE_NONE;
+  if (sscanf (argv[2], "%d", &port_src) != 1)
   {
       vty_out (vty, "Invalid source port: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
   }
-  inet_aton(argv[1], &ip_dst);
-  if (sscanf (argv[2], "%d", &port_dst) != 1)
+  /*check type_src /port against registered_local_ids*/
+  LIST_LOOP(registered_local_ids, lid, node)
+  {
+      if (lid->type == type_src && lid->value == port_src)
+          break;
+  }    
+  if (node == NULL && type_src != LOCAL_ID_TYPE_NONE)
+  {
+      vty_out (vty, "Unregistered source %s: %s.%s",  argv[1], argv[2], VTY_NEWLINE);
+      return CMD_WARNING;
+  }
+
+  inet_aton(argv[3], &ip_dst);
+  if (strcmp(argv[4], "port") == 0)
+      type_dest = LOCAL_ID_TYPE_PORT;
+  else if (strcmp(argv[4], "group") == 0)
+      type_dest = LOCAL_ID_TYPE_GROUP;
+  else if (strcmp(argv[1], "tagged-group") == 0)
+      type_dest = LOCAL_ID_TYPE_TAGGED_GROUP;
+  else
+      type_dest = LOCAL_ID_TYPE_NONE;
+  if (sscanf (argv[5], "%d", &port_dest) != 1)
   {
       vty_out (vty, "Invalid destination port: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
@@ -756,7 +875,9 @@ DEFUN (dragon_set_lsp_ip,
   lsp->common.Session_Para.srcAddr.s_addr = ip_src.s_addr;
   lsp->common.Session_Para.srcPort = (u_int16_t)port_src;
   lsp->common.Session_Para.destAddr.s_addr = ip_dst.s_addr;
-  lsp->common.Session_Para.destPort = (u_int16_t)port_dst;
+  lsp->common.Session_Para.destPort = (u_int16_t)port_dest;
+  lsp->dragon.srcLocalId = ((u_int32_t)type_src)<<16 |port_src;
+  lsp->dragon.destLocalId = ((u_int32_t)type_dest)<<16 |port_dest;
 
   return CMD_SUCCESS;
 }
@@ -873,6 +994,11 @@ DEFUN (dragon_commit_lsp_sender,
   {
   	  /* NARB address/port is not configured, try sending PATH requests without ERO */
 	  /* call RSVPD to set up the path */
+         if (lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE || lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE)
+         {
+          	vty_out (vty, "NARB is required to setup LSP with localId.%s", VTY_NEWLINE);
+        	return CMD_WARNING;
+         }
 	  zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
   }
   else{
@@ -1178,7 +1304,6 @@ dragon_master_init()
 
   /* Init RSVP API instance (socket connection to RSVPD) */
   dmaster.api = zInitRsvpApiInstance();
-
   dmaster.rsvp_fd = zGetApiFileDesc(dmaster.api);
   if (!dmaster.rsvp_fd)
   {
@@ -1192,6 +1317,8 @@ dragon_master_init()
   default_session.Session_Para.destPort = 0; 
   default_session.Session_Para.srcAddr.s_addr = 0;
   zInitRsvpPathRequest(dmaster.api, &default_session, 0);
+  //clear current localId list in RSVPD
+  zDeleteLocalId(dmaster.api, 0xffff, 0xffff, 0xffff);
 
   return 0;
 }
@@ -1293,11 +1420,180 @@ value_to_string(struct string_value_conversion *db, u_int32_t value)
 	return def_string;
 }
 
+DEFUN (dragon_set_local_id,
+       dragon_set_local_id_cmd,
+       "set local-id port <0-65535>",
+       SET_STR
+       "A local ingress/egress port identifier\n"
+       "Pick a LocalId type\n"
+       "Port number in the range <0-65535>\n")
+{
+    u_int16_t type = LOCAL_ID_TYPE_PORT;
+    u_int16_t  tag = atoi(argv[0]);
+    struct local_id * lid = NULL;
+    listnode node;
+    LIST_LOOP(registered_local_ids, lid, node)
+    {
+        if (lid->type == type && lid->value == tag)
+        {
+            vty_out (vty, "localID %s (port) has already existed... %s", argv[0], VTY_NEWLINE);
+            return CMD_WARNING;
+        }
+    }
+
+    lid = XMALLOC(MTYPE_TMP, sizeof(struct local_id));
+    memset(lid, 0, sizeof(struct local_id));
+    lid->type = type;
+    lid->value = tag;
+    listnode_add(registered_local_ids, lid);
+    zAddLocalId(dmaster.api, type, tag, 0);
+    return CMD_SUCCESS;
+}
+
+DEFUN (dragon_set_local_id_group,
+       dragon_set_local_id_group_cmd,
+       "set local-id (group|tagged-group) <0-65535> (add|delete) <0-65535>",
+       SET_STR
+       "A local ingress/egress port identifier\n"
+       "Is the localId associated with a group of untagged or tagged ports?\n"
+       "Port number in the range <0-65535>\n"
+       "Add or Delete a port from the tagged/untagged group?\n"
+       "Port number in the range <0-65535>\n" )
+{
+    u_int16_t type = strcmp(argv[0], "group") == 0 ? LOCAL_ID_TYPE_GROUP: LOCAL_ID_TYPE_TAGGED_GROUP;
+    u_int16_t  tag = atoi(argv[1]);
+    u_int16_t sub_tag = atoi(argv[3]), *iter_tag;
+    struct local_id * lid = NULL;
+    listnode node, node_inner;
+
+    LIST_LOOP(registered_local_ids, lid, node)
+    {
+        if (lid->type == type && lid->value == tag)
+        {
+            if (strcmp(argv[2], "add") == 0)
+            {
+                LIST_LOOP(lid->group, iter_tag, node_inner)
+                {
+                    if (*iter_tag == sub_tag)
+                    {
+                        vty_out (vty, "localID %d (group) has already had a member %d ... %s", tag, sub_tag, VTY_NEWLINE);
+                        return CMD_WARNING;
+                    }
+                }
+                local_id_group_add(lid, sub_tag);
+                zAddLocalId(dmaster.api, type, tag, sub_tag);
+            }
+            else
+            {
+                LIST_LOOP(lid->group, iter_tag, node_inner)
+                {
+                    if (*iter_tag == sub_tag)
+                        break;
+                }
+                if (node_inner == NULL)
+                {
+                    vty_out (vty, "localID %d (group) does not have the member %d ... %s", tag, sub_tag, VTY_NEWLINE);
+                    return CMD_WARNING;
+                }
+                local_id_group_delete(lid, sub_tag);
+                if (!lid->group)
+                {
+                    listnode_delete(registered_local_ids, lid);
+                    XFREE(MTYPE_TMP, lid);
+                }
+                zDeleteLocalId(dmaster.api, type, tag, sub_tag);
+            }
+
+            return CMD_SUCCESS;
+        }
+    }
+
+    if (strcmp(argv[2], "delete") == 0)
+    {
+        vty_out (vty, "localID %d (group) does not exist... %s", tag, VTY_NEWLINE);
+        return CMD_WARNING;
+    }
+
+    lid = XMALLOC(MTYPE_TMP, sizeof(struct local_id));
+    memset(lid, 0, sizeof(struct local_id));
+    lid->type = type;
+    lid->value = tag;
+    local_id_group_add(lid, sub_tag);
+    listnode_add(registered_local_ids, lid);
+    zAddLocalId(dmaster.api, type, tag, sub_tag);
+    return CMD_SUCCESS;
+}
+
+DEFUN (dragon_delete_local_id,
+       dragon_delete_local_id_cmd,
+       "delete local-id (port|group|tagged-group) <0-65535>",
+       SET_STR
+       "A local ingress/egress port identifier\n"
+       "Pick a LocalId type\n"
+       "Port number in the range <0-65535>\n" )
+{
+    u_int16_t type;
+    u_int16_t  tag = atoi(argv[1]);
+    struct local_id * lid = NULL;
+    listnode node;
+
+    if (strcmp(argv[0], "port") == 0)
+        type = LOCAL_ID_TYPE_PORT;
+    else if (strcmp(argv[0], "group") == 0)
+        type = LOCAL_ID_TYPE_GROUP;
+    else
+        type = LOCAL_ID_TYPE_TAGGED_GROUP;
+
+    LIST_LOOP(registered_local_ids, lid, node)
+    {
+        if (lid->type == type && lid->value == tag)
+        {
+            if (type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)
+                local_id_group_free(lid);
+            listnode_delete(registered_local_ids, lid);
+            XFREE(MTYPE_TMP, lid);
+            zDeleteLocalId(dmaster.api, type, tag, 0);
+            return CMD_SUCCESS;
+        }
+    }
+
+    vty_out (vty, "localID %s of type '%s' does not exist... %s", argv[1], argv[0], VTY_NEWLINE);
+    return CMD_WARNING;
+}
+    
+DEFUN (dragon_show_local_id,
+       dragon_show_local_id_cmd,
+       "show local-id",
+       SHOW_STR
+       "A local ingress/egress port identifier\n")
+{
+    struct local_id * lid = NULL;
+    listnode node;
+
+    if ( registered_local_ids->count == 0)
+    {
+        vty_out(vty, "No localID configured ...%s", VTY_NEWLINE);
+        return CMD_WARNING;
+    }
+
+    vty_out(vty, "%sDisplaying %d registered localID(s)%s", VTY_NEWLINE, registered_local_ids->count, VTY_NEWLINE);
+    vty_out(vty, " LocalID  Type         (Tags/Ports in Group)%s", VTY_NEWLINE);
+    LIST_LOOP(registered_local_ids, lid, node)
+    {
+         vty_out(vty, "  %d\t[%s]    ", lid->value, lid_types[lid->type]);
+         if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
+            local_id_group_show(vty, lid);
+         else
+            vty_out(vty, "%s", VTY_NEWLINE);
+    }
+    return CMD_SUCCESS;
+}
+
 void
 dragon_supp_vty_init ()
 {
   install_node(&lsp_node, NULL);
-
+  
   install_element(VIEW_NODE, &dragon_telnet_module_cmd);
   install_element(VIEW_NODE, &dragon_telnet_module_narb_cmd);
   install_element(VIEW_NODE, &dragon_set_pce_para_cmd);
@@ -1313,6 +1609,12 @@ dragon_supp_vty_init ()
   install_element(VIEW_NODE, &dragon_commit_lsp_default_cmd);
   install_element(VIEW_NODE, &dragon_delete_lsp_cmd);
 
+  registered_local_ids = list_new();
+  install_element(VIEW_NODE, &dragon_set_local_id_cmd);
+  install_element(VIEW_NODE, &dragon_set_local_id_group_cmd);
+  install_element(VIEW_NODE, &dragon_delete_local_id_cmd);
+  install_element(VIEW_NODE, &dragon_show_local_id_cmd);
+  
   install_element(CONFIG_NODE, &dragon_set_pce_para_cmd);
   install_element(CONFIG_NODE, &dragon_set_pce_para_ip_cmd);
   install_element(CONFIG_NODE, &dragon_set_narb_para_cmd);
