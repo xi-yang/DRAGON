@@ -1,0 +1,30 @@
+! -*- zebra -*-
+!
+! zebra sample configuration file
+!
+! $Id: zebra.conf.sample,v 1.14 1999/02/19 17:26:38 developer Exp $
+!
+hostname Router
+password zebra
+enable password zebra
+!
+! Interface's description. 
+!
+!interface lo
+! description test of desc.
+!
+!interface sit0
+! multicast
+!
+!interface gre1
+! ipv6 nd suppress-ra
+!
+!interface gre2
+! ipv6 nd suppress-ra
+!
+! Static default route sample.
+!
+!ip route 0.0.0.0/0 203.181.89.241
+!
+!line vty
+!log file /var/log/zebra.log

@@ -1,0 +1,6 @@
+! -*- dragon -*-
+!
+! DRAGON sample configuration file
+!
+hostname dragon-vlsr
+password dragon
