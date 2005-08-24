@@ -1,0 +1,21 @@
+estimator receiver 1.0
+dcounter receiver 0.005 50
+
+flow udp localhost 2001 localhost 2000
+recv stamp rate receiver delay receiver rsvp
+#send cbr 100 5000 1.0 stamp at 1.0
+
+#flow tcp localhost localhost 2010 1.0
+#recv stamp
+#send cbr 100 100 1.0 stamp
+
+#flowset 20 udp localhost 5000 localhost 3000
+#recv stamp
+#send cbr 200 40 1.0 fixed 3.0 fixed 20 stamp at 3.0
+
+#flowset 20 udp localhost 5000 map localhost 3000
+#send cbr 200 40 fixed 1.0 3.0 60 stamp rsvp 1.0 at 3.0
+
+#flowset 20 tcp localhost localhost 7000 1.0
+#recv stamp
+#send cbr 200 40 0.2 3.0 20 stamp at 2.0

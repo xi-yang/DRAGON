@@ -1,0 +1,13 @@
+session 192.168.10.5 0 17
+waitpath any
+reserve wf cl 200000 800000 400000 100 1500
+waitpath any
+reserve wf cl 100000 400000 200000 100 1500
+close
+session 192.168.10.5 0 17
+sleep 1
+reserve wf cl 50000 200000 100000 100 1500
+sleep 1
+reserve wf cl 300000 1200000 600000 100 1500
+sleep 6
+close

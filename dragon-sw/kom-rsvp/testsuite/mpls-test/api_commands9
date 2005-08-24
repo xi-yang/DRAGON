@@ -1,0 +1,5 @@
+session 192.168.9.5 0 17
+waitpath any
+reserve ff cl 192.168.7.4 4711 100000 400000 200000 100 1500
+sleep 56
+close

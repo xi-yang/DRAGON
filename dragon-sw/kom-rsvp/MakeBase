@@ -1,0 +1,11 @@
+ifneq ($(strip $(RSVP_BUILD_DIR)),)
+-include $(RSVP_BUILD_DIR)/MakeConfig
+else
+ERROR:
+	@echo
+	@echo "Cannot find MakeConfig. Did you configure the package?"
+	@echo "Compile from the directory where configure has been executed, or set"
+	@echo "RSVP_BUILD_DIR to that directory to compile from an arbitrary directory."
+	@echo
+	@exit 1
+endif

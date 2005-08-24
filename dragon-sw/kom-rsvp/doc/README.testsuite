@@ -1,0 +1,162 @@
+Configuration Overview of RSVP testsuite
+========================================
+
+                        7     8
+                         \   /
+                          \ /
+                           4  
+                           | 
+                           |
+                           1
+                          / \
+                         /   \
+             12--|      /     \
+                 |     2-------3
+             13--|    /         \
+                 |   /           \
+             14--|--6             5--9
+                 |  |             |
+             15--|  |             |
+                 |  11            10
+             16--|
+
+
+All Links are configured to have 10 Mbit/sec available. The following
+table lists host and network address for each node. Routing tables are
+configured accordingly.
+
+Node	Address		Network
+1	130.83.1.x	130.83.1.0
+2	130.83.2.x	130.83.2.0
+3	130.83.3.x	130.83.3.0
+4	130.83.4.x	130.83.4.0
+5	130.83.5.x	130.83.5.0
+6	130.83.6.x	130.83.6.0
+7	130.83.7.x	130.83.7.0
+8	130.83.8.x	130.83.8.0
+9	130.83.9.x	130.83.9.0
+10	130.83.10.x	130.83.10.0
+11	130.83.11.x	130.83.11.0
+12	130.83.12.x	130.83.12.0
+13	130.83.12.x	130.83.12.0
+14	130.83.12.x	130.83.12.0
+15	130.83.12.x	130.83.12.0
+16	130.83.12.x	130.83.12.0
+
+The following multicast groups are configured:
+Group address		Senders			Receivers
+239.1.1.1		7,8			9,10,11,12,13,14,15,16
+239.1.1.2		9,10			7,8,11,12,13,14,15,16
+239.1.1.3		11,12,13,14,15,16	7,8,9,10
+
+
+API commands
+------------
+session dest-addr dest-port proto-id
+close
+sender src-port <tspec> {adspec}
+reserve wf [cl|g] <flowspec>
+reserve ff [cl|g] [<filtspec> <flowspec>] ...
+reserve se [cl|g] <flowspec> [<filtspec>] ...
+sleep <seconds>
+waitpath <sender-addr src-port> | any
+ucpe <account> <payment>
+
+tspec := p b r m M
+flowspec := <tspec> R S
+filtspec := src-addr src-port
+
+
+Running the testsuite
+---------------------
+Do 'make conf', followed by 'testsuite'. The call syntax for testsuite is:
+
+testsuite {-d directory} <number> <number> <number> ...
+
+Each listed number will start an RSVP daemon in a debugging window with gdb.
+Numbers must be given in numerical order.
+The -d option causes the testsuite script to read 'api_command' files and
+write logging out into a different directory.
+
+A configuration for a test consists of a number of 'conf*' files, which are
+used to create respective 'rsvp.conf*' files. They must be numbered
+consecutively.
+A test setup is built by creating 'api_commands*' files. For each of those,
+a dummy application instance is created, performing RSVP requests as
+programmed in the file.
+
+Besides the test setup in this directory, which particulary triggers some
+of RSVP error messages, 3 additional tests are preconfigured, for FF, SE and
+WF filter style, respectively. These can be executed by issuing
+
+testsuite -d ff-test     for FF
+testsuite -d se-test     for SE
+testsuite -d wf-test     for WF
+
+
+Virtual routing
+---------------
+In order to support a scenario of multiple PHOPs/NHOPs for a single
+interface, it is important to carefully set the virtual routing entries.
+A host with such a region (for example a LAN) must *only* have a routing
+entry to the gateway and not to other hosts, otherwise messages from the
+gateway to the other hosts will be duplicated.
+
+Multicast loop avoidance must be done by correctly configuring the routing
+tables.
+
+
+Syntax of high level config files
+-----------------------------------
+net <net-number>
+link <interface-number> <peer-number>[/<peer-interface>] ... {x} {<bandwidth>} {<price>}
+route <dest-number> <interface-number>
+route mc <dest-address> <interface-number>
+rem <comment>
+
+
+Script for validation test
+--------------------------
+Note that the automatic validation might report differences between produced
+and reference output, because confirm messages from multiple senders are
+non-deterministically reordered. This might happen in seconds 2,11 and 14.
+
+WARNING:
+For validation, timers are turned off in order to prohibit further
+randomness. This and other restrictions allow to test only a subset of the
+full functionality!
+
+second	action
+  0	node 7/4711 sends PATH for 239.1.1.1
+  1	node 8/4711 sends PATH for 239.1.1.1
+  1	node 8/4712 sends PATH for 239.1.1.1
+  1	node 7/0 sends PATH -> ConflictingSenderPorts at node 7
+  1	node 8/4713 sends PATH for 239.1.1.1/1 -> ConflictingDestPorts at node 8
+  2	node 10 sends RESV/WF for 239.1.1.1 -> confirm from nodes 7 and 8
+  2	node 11 sends RESV/WF for 239.1.1.2 -> NoPathInformation at node 11
+  3	node 13/4711 sends PATH for 239.1.1.3
+  4	node 7 sends RESV/FF for 239.1.1.3 for 13/4711 -> confirm from node 13
+  5	node 9 sends RESV/SE for 239.1.1.3 for 13/4711 -> ConflictingReservationStyle at node 2
+  6	node 10 sends RESV/FF for 239.1.1.3 for 14/4711 -> NoSenderInformation at node 10
+  7	node 10 sends RESV/FF for 239.1.1.3, too much bandwidth -> ConflictingReservationStyle at node 5
+  8	node 9 sends RTEAR for 239.1.1.3 for 13/4711
+  8	node 9/4711 sends PATH for for 239.1.1.2
+  8	node 9/4712 sends PATH for for 239.1.1.2
+  9	node 14 sends RESV/SE for 239.1.1.2 for 9/4711 -> confirm from node 9
+ 10	node 10 sends RESV/FF for 239.1.1.3, too much bandwidth -> AdmissionControlFailure at node 5
+ 10	node 10/4711 sends PATH for for 239.1.1.2
+ 11	node 15 sends RESV/SE for 239.1.1.2 for 9/4711 and 10/4711 -> confirm from nodes 6 and 10
+ 12	node 10 sends RTEAR for 239.1.1.1
+ 13	node 11 sends RESV for 239.1.1.2 -> confirm from nodes 9 and 10
+ 14	node 16 sends RESV for 239.1.1.1, higher bandwidth -> confirm from nodes 7 and 8
+ 15	node 12 sends RESV for 239.1.1.1 -> confirm from node 6
+ 16	node 9 sends RESV for 239.1.1.1 -> confirm from node 1
+ 32	node 8/4711 sends PTEAR
+ 32	node 8/4712 sends PTEAR
+ 33	node 12 sends RTEAR
+ 34	node 14 sends RTEAR
+ 35	node 7/4711 sends PTEAR
+ 36	node 13/4711 sends PTEAR
+ 37	node 10 sends PTEAR
+ 38	node 9/4711 sends PTEAR
+ 38	node 9/4712 sends PTEAR

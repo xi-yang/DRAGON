@@ -1,0 +1,22 @@
+--- ns-default.tcl.orig	2003-02-26 17:09:37.000000000 -0500
++++ ns-default.tcl	2003-11-17 23:56:56.000000000 -0500
+@@ -95,6 +95,7 @@
+ 
+ Queue/DropTail set drop_front_ false
+ Queue/DropTail set summarystats_ false
++Queue/DropTail set timestamp_ false
+ Queue/DropTail set queue_in_bytes_ false
+ Queue/DropTail set mean_pktsize_ 500
+ 
+@@ -1174,3 +1175,11 @@
+ Queue set util_weight_ 0.8
+ 
+ # Quick Start definitions end here
++
++################################################################
++# RSVP
++################################################################
++
++Agent/UDPSource set packetSize_     1000
++Agent/RSVP set class_               10000
++Agent/RSVPApi set debug_            false

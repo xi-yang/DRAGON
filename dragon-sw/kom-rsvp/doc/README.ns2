@@ -1,0 +1,251 @@
+Installing RSVP for ns-2
+========================
+
+- go to the the 'ns-allinone-2.1b9' directory and type
+	./install
+
+- in the rsvp directory type
+	make configure
+
+- in the build directory type
+	<path-to-rsvp>/configure --with-ns2dir=<dir>/ns-allinone-2.1b9 --disable-virt --disable-real
+	make ns2prep
+	make ns2dep
+	make dep
+	make all
+
+
+Usage of RSVP Signaling
+=======================
+
+- Enable RSVP in ns-2 with
+
+	set ns [new Simulator]
+	$ns enable-rsvp
+
+  This makes sure that packets arriving on a node are labeled with
+  the ID of the incoming interface.
+
+- Create the topology as usual and then add RSVP daemons
+  and APIs to nodes:
+
+	$node1 add-rsvp-daemon
+	$node1 add-rsvp-api
+	$node2 add-rsvp-daemon
+	...
+
+  Note that adding an API to a node adds an RSVP daemon as well.
+
+- You can send RSVP messages by retrieving a node's API with
+
+	set api [$node1 get-rsvp-api]
+
+  and then using the following commands:
+
+	$api session <dest node addr> <flow-id> 42
+	Registers API with the node's RSVP daemon for the given session.
+	Sessions are identified by destination address and flow-id, the
+	last value is a dummy value (representing the protocol id in a
+	real implementation).
+
+	$api sender <flow id> <tspec>
+	Advertises a flow with the given TSpec.
+	Note: Refers to the last session registered with the daemon.
+
+	$api reserve { wf <service class> <fspec> }
+	           | { ff <service class> <sender> <fspec> }
+	           | { se <service class> <fspec> <sender> [<sender2> [<sender...>]] }
+	Sends a reservation message for the currently registered session
+	with the given filter style, service class and flow-spec. If
+	<sender> is given as {-1 0} then the values of the sender that
+	most recently sent a PATH message are being used.
+
+	$api close
+	Tears the path for the currently registered session.
+
+
+	<service class> ::= {cl|g}
+	<sender> ::= { <sender addr> <flow id> }
+	<sender addr> ::= int
+	<flow id> ::= int
+	<fspec> ::= { <tspec> [<rspec>] }
+	<tspec> ::= <r> <b> <p> <m> <M>
+	<r> ::= float     # bits/sec
+	<b> ::= float     # bits
+	<p> ::= float     # bits/sec
+	<m> ::= int       # bytes
+	<M> ::= int       # bytes
+	<rspec> ::= <R> <S>
+	<R> ::= float
+	<S> ::= int
+
+- There are two methods to process the RSVP messages a node
+  receives.
+
+  1) Define the procedure 'user-upcall' for the class Agent/RSVPApi.
+     It will be called whenever a node's API receives an RSVP message.
+     $msg will contain a string with the type of message received (see <msg>)
+     and args will contain a string with the message data which needs to
+     be parsed (e.g. w/regular expressions) to extract the needed fields.
+     Example:
+
+	Agent/RSVPApi instproc user-upcall { msg args } {
+		set node [[$self set node_] node-addr]
+		regexp {\(node ([0-9]+)\)/([0-9]+)} $args dummy dst fid
+		...
+	}
+
+  2) Register an upcall-procedure for a specific flow of a single node's
+     API. This method is more comfortable, but a little less efficient.
+     The API offeres two procedures to register upcalls:
+
+	$api add-upcall-once <msg> <dest addr> <flow id> 42 <upcall proc>
+
+     and
+
+	$api add-upcall {<msg>|ALL} <dest addr> <flow id> 42 <upcall proc>
+
+     The first procedure executes <upcall proc> once, the next time the API
+     receives the message <msg> for the given session.
+     The second procedure does the same, but everytime the message and
+     the session match the given parameters. Instead of a message type
+     'add-upcall' can take the option 'ALL' which matches any received
+     message for the given session.
+
+	<msg> ::= { PATH | RESV | PATH_TEAR | RESV_TEAR | PATH_ERROR | RESV_ERROR | RESV_CONFIRM }
+
+     The upcall procedures can use the contents of the variables $node,
+     $dst, $fid, and (if it's a PATH message) $rate, which contain pre-
+     parsed values of the message. For example:
+
+	$api add-upcall PATH 2 100 "puts \"Advertised flow rate is \$rate.\""
+
+- You can configure RSVP with the following commands (here with default values):
+
+	Agent/RSVP set class_ 10000          ;# flow-id for RSVP messages
+	Agent/RSVP defaultRefresh 30s
+	Agent/RSVP defaultRapidRefresh 0.5s
+	Agent/RSVP logfile <enable> <disable> <filename> ;# see usage message of RSVPD for details
+	Agent/RSVPApi set debug_ false
+
+
+current limitations:
+- no multicast supported
+- no one-pass reservations supported
+
+
+
+Using CBQ-Scheduling with RSVP for ns-2
+=======================================
+
+- Currently RSVP for ns-2 implements a very simple traffic admission
+  control based on ns-2's CBQ implementation. To enable it simply activate
+  CBQ on a link connected to a node with RSVP daemon, e.g.
+
+	$ns simplex-link $n(1) $n(2) 10Mb 2ms CBQ
+	$n(1) add-rsvp-daemon
+
+- The link's bandwidth is shared according to the following tree:
+
+  ROOT (100%)-+-- default traffic (40%)
+              |
+              +-- rsvp control traffic (3%)
+              |
+              '-- reserved traffic (57%) -+-- flow1
+                                          |
+                                          +-- flow2
+                                          |
+                                         ...
+
+
+- Note that in ns-2, the only relevant information to classify flows is the
+flow-id.
+
+
+Using the FlowGenerator
+=======================
+
+- The class flow encapsulates ns-2's traffic generators and adds the functionality
+  of RSVP signaling. Example:
+
+	set f [new Flow]
+	$f set fid_ 2
+	$f connect $n(1) $n(2) UDP
+	$f traffic CBR 512
+
+	$ns at 1.0 "$f start"
+	$ns at 5.0 "$f stop"
+
+  It supports the following procedures:
+
+	$flow connect <source node> <sink node> {UDP|TCP}
+	Creates transport agents of the specified type and attaches them to source
+	and sink. Then adds a FlowReceiver application to the sink which answers
+	incoming PATH messages by sending a reservation with the full advertised
+	bandwidth. It also logs some statistics for the flow. If the flow uses TCP,
+	the flow's goodput is being logged. If the flow uses UDP, special agents
+	are used to log sender rate, receiver rate, rate of ect marked traffic
+	and the end-to-end delay.
+
+	$flow traffic { CBR <packet size> <bit rate> <randomJitter?> }
+	            | { Trace <tracefile> }
+	            | { Pareto <packet size> <bit rate> <burst time> <idle time> <shape factor> }
+	            | { Greedy }
+	Specifies the traffic characteristics. See ns-2 manual for description of
+	the used traffic generators.
+
+	$flow start {0|1|2 <delay>|3}
+	Starts a flow in one of four modes:
+	0: traffic starts immediately; no PATH message is being sent
+	1: a PATH message is sent and traffic starts immediately afterwards
+	2: a PATH message is sent and traffic starts <delay> seconds afterwards
+	3: a PATH message is sent and traffic starts after the first reservation
+
+	$flow stop
+	Stops the flow's traffic and sends a PATH_TEAR message.
+
+	$flow started
+	Returns true if the flow has been started, otherwise returns false.
+
+- The class FlowGenerator creates and starts a number of flows with specified
+  inter arrival time and flow duration which can be fixed or exponentially distributed.
+  Example:
+
+	set fg [new FlowGenerator]
+	$fg connect $n(1) $n(2)
+	$fg initFlows 1 100 UDP CBR 200 10kb 0
+
+	$ns at 1.0 "$fg start 0.5 fixed 50 fixed 3"
+	$ns at 5.0 "$fg stop immediately"
+
+  It supports the following procedures:
+
+	$flowgenerator connect <source node> <sink node>
+	Sets the nodes that will be connected by the flows.
+
+	$flowgenerator initFlows <first flow id> <numFlows> { \
+	      { UDP CBR <packetSize> <rate> <randomJitter?> } \
+	    | { UDP Trace <tracefile> } \
+	    | { UDP Pareto <packetSize> <rate> <burstTime> <idleTime> <shape> } \
+	    | { TCP Greedy } }
+	Creates and initialises <numFlows> flows. Flows are assigned a unique ID
+	which starts with <first flow id> and ends with (<first flow id>+<numFlows>-1).
+	Sets up the traffic characteristic of the generated flows. See ns-2 manual for
+	a description of the generators' parameters.
+
+	$flowgenerator start <avg. inter arrival time> {fixed|exp} <avg. flow duration> {fixed|exp} <flow start mode> [<delay>]
+	Starts the generation of flows with the specified inter arrival time and flow duration.
+	These times can be fixed or exponentially distributed. <flow start mode> and the optional
+	delay are identical to those for the procedure 'start' of class Flow.
+
+	$flowgenerator stop [immediately]
+	Stops the creation of new flows. By default existing flows continue for the remainder
+	of their lifetime (duration); if the option 'immediately' is given, flows are cancelled.
+
+	$flowgenerator started
+	Returns whether flow generation is started.
+
+- Statistics of the FlowReceiver application are logged to RSVP's default
+  log. See file <rsvp path>/src/ns2/generic/RSVP_Wrapper.cc.
+
+

@@ -1,0 +1,12 @@
+*** options.old	Fri Nov  9 16:56:17 2001
+--- options	Fri Nov  9 16:56:27 2001
+***************
+*** 243,248 ****
+--- 243,249 ----
+  ALTQ_PRIQ		opt_altq.h
+  ALTQ_NOPCC		opt_altq.h
+  ALTQ_DEBUG		opt_altq.h
++ ALTQ_STAMP		opt_altq.h  
+   
+  ACCEPT_FILTER_DATA
+  ACCEPT_FILTER_HTTP

@@ -1,0 +1,27 @@
+TERMINOLOGY
+weak = created through onepass resp. duplex request
+
+SEMANTICS
+- mandate FF for onepass, mandate unicast for duplex
+- PATHRESV creates PSB and RSB, RSB is flagged as 'weak' through nhop=0,0
+- RESV adds distinct RSB (different next hop)
+- weak and regular RSB coexist
+- several PATH messages from distinct senders might create the "same" RSB
+  -> that's why only FF can be supported
+
+- DUPLEX creates reverse weak PSB, flagged through phop=0,0 and RSB as above
+  . reverse PSB bound to original (not forwarded through TTL=0)
+  . ignore DUPLEX PSB, if PSB already exists
+- PATH, PTEAR, timeout, no DUPLEX removes reverse PSB (and consequently RSB)
+- reverse regular PSB finds weak PSB and changes relationship to PHopSB
+  . routing must be symmetrical, if not -> bad luck
+
+forwarding of reservations
+- merge 'weak' indication of RSB into OutISB by AND -> onepassAll
+  . explicitly triggered new updateTC
+- merge OutISBs' indication into PSB and then PHopSB by AND
+  . during calculateForwardFlowspec
+- forward reservation, only if PSB/PHopSB is not 'onepassAll'
+- remove reservation, only if PSB is not 'onepass'
+  . TODO: this has to be improved (deciding on onepassAll triggers RTEAR on
+    failed PATHRESV)

@@ -1,0 +1,69 @@
+Determinig the incoming interface
+---------------------------------
+Conceptually, it would be nice to have one function call 'queryInterface' to
+determine the LogicalInterface object that has a packet waiting for arrival.
+Unfortunately, this is not easily possible, since either a raw socket is
+unbound, in which case it receives each RSVP packet or it is bound to an
+interface address. In the second case however, it is only possible to
+receive packets which are destined to this address, i.e., no packets that
+have to be forwarded. On FreeBSD, if an mrouted is running, it is possible
+to receive incoming packet on the respective virtual interface, if enabled.
+This is done by setting the socket option IP_RSVP_VIF_ON. For disabled (in
+terms of mrouted) interfaces and for other operating systems (Linux,
+Solaris), a single dedicated raw socket is used to receive all packet. Then,
+on FreeBSD and Linux the option RECVIF can be used to determine the real
+incoming interface. If that doesn't work out either, a unicast routing
+lookup is done for the phop address (PATH,PTEAR) in the hope that unicast
+routing matches the reverse multicast routing. In case of RESV,RTEAR,RERR
+and PERR, the destination address must match the interface anyway. For
+RCONF, the incoming interface is not needed.
+
+However, there remains a slight problem on FreeBSD. When using the socket
+option IP_RSVP_ON, this option is recognized by the kernel *before* checking
+for any listener that has set IP_RSVP_VIF_ON. The ISI code solves this
+problem by disabling the dedicated listen socket as soon as virtual
+interfaces are detected. However, if an interface is disabled by mrouted, no
+packets can be received on this interface. Therefore, a kernel patch is
+necessary to place processing of IP_RSVP_ON sockets *after* IP_RSVP_VIF_ON.
+NOTE: This problem is fixed since FreeBSD 4.2.
+
+Problem with 'InPlace' in RERR (AdmissionControlFailure) messages
+-----------------------------------------------------------------
+The InPlace flag should be replaced by "InPlace-FLOWSPEC" in an RERR
+message. Then the next hop could more reliably determine which reservations
+are already created and to which RSBs the RERR message applies. The InPlace
+flag, as currently defined, doesn't make sense in the presence of packet
+losses.
+
+Scenario: Suppose two reservations with flowspecs F1 and F2 are created
+consucutively and F1 < F2 and both are larger than an existing reservation.
+Both fail at the PHOP. F1 triggers RERR with InPlace=true and F2 triggers
+RERR with InPlace=true. If the RERR packet for F1 gets lost, then, according
+to the current mechanism, the responsible RSB for F1 won't get a RERR
+message.
+
+Open Issue about RERR and RCONF
+-------------------------------
+If a router receives a reservation F1 from a NHOP and and this fails at a
+another router upstream and subsequently NHOP send a reservation F2,
+strictly smaller than F1: Since the first reservation is still existing at
+this router, is it suitable to already generate a confirm message? For now,
+it is done that way.
+
+Definition of order of flowspecs
+--------------------------------
+Currently, the following definition of "strictly smaller" for FLOWSPECs is
+adopted:
+Guaranteed Service:
+FSpec1 < FSpec2   iff   TSpec1 <= TSpec2 and RSpec1 <= RSpec2 and RSpec1.R < RSpec2.R
+FSpec1 > FSpec2   iff   TSpec1 >= TSpec2 and RSpec1 >= RSpec2 and RSpec1.R > RSpec2.R
+Controlled Load Service (to be done):
+FSpec1 < FSpec2   iff   TSpec1 <= TSpec2 and TSpec1.r < TSpec2.r
+FSpec1 > FSpec2   iff   TSpec1 >= TSpec2 and TSpec1.r > TSpec2.r
+i.e. every parameter except the essential rate has to obey only a weak order.
+This makes sense when processing a RERR indicating an admission control
+failure. It is very likely that MTU values are all the same for different
+reservations as well as parameter m (smalles packet size). When using a
+piecewise "strictly smaller" definition however, a certain flowspec can
+never be strictly smaller than another on.
+TODO: G service -> slackterm should be considered.

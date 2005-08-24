@@ -1,0 +1,14 @@
+#!/bin/sh
+usage() {
+	echo usage: $0 filename old-text new-text
+	exit 1
+}
+
+if [ $# -ne 3 ]; then
+	usage
+fi
+echo changing $1
+sed -e "/$2/s//$3/" $1 > /tmp/change.$$
+cat /tmp/change.$$ > $1
+rm -f /tmp/change.$$
+exit 0

@@ -1,0 +1,106 @@
+Commands
+--------
+
+flow <flow description>
+ recv <receive description>
+ send { cbr <packet size> <packet rate> { <filename> | <duration> } }
+   | { trace <filename> }
+   | { pareto <packet size> <packet rate> <duration> <source-count> <hurst> }
+   | { greedy <packet size> <packet rate> <total size> <duration> }
+ [vary <period> <packet rate> <packet rate> ...] <send description> }
+
+flowset <flow count> <flowset description>
+ recv <receive description>
+ send { cbr <packet size> <packet rate> }
+   | { trace <filename> }
+   | { pareto <packet size> <packet rate> <source-count> <hurst> }
+   | { greedy <packet size> <packet rate> <total size> }
+ <flow creation> <send description>
+
+estimator <name> <rate averaging time>
+
+dcounter <name> <max delay> <slot count>
+
+pcounter <name>
+
+alias <name> <ip address>
+
+seed <seed value>
+
+
+Parameters and Options
+----------------------
+
+NOTE: Option 'vary' is only valid for CBR sources.
+
+<flow description> ::=
+	{ udp <local> <remote> [map <flow count>] } |
+	{ tcp <ip address> <remote> [<connect-time>] } |
+	{ tcp server <local> }
+
+<flowset description> ::=
+	{ udp <local> [map] <remote> } |
+	{ tcp <ip address> [map] <remote> [<connect-time>] } |
+	{ tcp server <local> }
+
+NOTE: tcp servers cannot send data!
+
+<receive description> ::=
+	[stamp] [rate <estimator>] [dcounter <dcounter>] [rsvp [ {<rspec> | <delay> | wtp <wtp factor> } ] ]
+
+<send description> ::=
+	[stamp] [rate <estimator>] [pcounter <pcounter>] [rsvp <wait time> [<tspec>] [sync [<backoff time>]]] [at <time>] [repeat <count>]
+
+<flow creation> ::=
+	[fixed] <flow arrival> [fixed] <flow duration> [fixed] <create count>
+
+<proto> ::= tcp | udp
+<local> ::= { <ip address> | <host name> } <port>
+<remote> ::= { <ip address> | <host name> } <port>
+<ip address> ::= a.b.c.d
+<host name> ::= string
+<port> ::= int
+<connect-time> ::= float				# seconds
+<rspec> ::= <R> <S>
+<R> ::= float						# bytes/sec
+<S> ::= int						# microseconds
+<delay> ::= int						# microseconds
+<packet size> ::= int					# bytes
+<packet rate> ::= int					# packets/sec
+<tspec> ::= <r> <b> <p> <m> <M>
+<r> ::= float						# bytes/sec
+<b> ::= float						# bytes
+<p> ::= float						# bytes/sec
+<m> ::= int						# bytes
+<M> ::= int						# bytes
+<wtp factor> ::= float					# [0,1]
+<time> ::= float					# seconds
+<filename> ::= string
+<duration> ::= float					# seconds
+<period> ::= float					# seconds
+<backoff time> ::= float				# seconds
+<wait time> ::= float					# seconds
+<count> ::= int
+<create count> ::= int
+<flow count> ::= int
+<flow arrival> ::= float				# seconds
+<flow duration> ::= float				# seconds
+<rate time> ::= float					# seconds
+<source count> ::= int
+<hurst> ::= float					# [0,1[
+<name> ::= string
+<seed value> ::= int
+<estimator> ::= string
+<rate averaging time> ::= float				# seconds
+<dcounter> ::= string
+<max delay> ::= float					# seconds
+<slot count> ::= int
+<pcounter> ::= string
+
+
+RSVP Interaction
+----------------
+
+sync =0 means that sender will no start if RSVP signalling does not complete
+sync <time> means that sender will retry signalling after waiting period
+(random exponential with mean <time>)

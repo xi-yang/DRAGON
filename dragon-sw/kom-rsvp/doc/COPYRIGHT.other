@@ -1,0 +1,41 @@
+Other copyrights are applicable to code in the following files, which is
+distributed as part of this package for convenience reasons. Please see the
+respective files for details.
+
+src/daemon/unix/rsrr.h
+src/daemon/SunOS/cbqio.h
+src/common/generic/RSVP_Set.h
+src/daemon/Linux/libnetlink.{h,cc}
+src/daemon/Linux/LLInfoManager.{h,cc}
+src/daemon/unix/RSVP_SchedulerHFSC.{h,cc}
+altq/sys-altq/altq/altq.h
+altq/sys-altq/altq/if_altq.h
+altq/sys-altq/altq/altq_conf.c
+src/extern/generic/*
+
+The file rsrr.h is taken from the mrouted distribution, copyright by the
+University of Southern California, and released "for any purpose".
+
+The file cbqio.h is taken from Sun's CBQ distribution, copyright Sun
+Microsystems, Inc. It is released for any purpose, given that certain
+conditions are met.
+
+The implementation in RSVP_Set.h is derived from the respective STL
+implemenations from HP and SGI. The code allows usage "for any purpose".
+
+The files libnetlink.{h,cc} and LLInfoManager.{h,cc} are written by Aart van
+Halteren (based on earlier code from Alexey Kuznetsov) and contributed by to
+the RSVP distribution under the GNU General Public License.
+
+The code for the addition of service curves in RSVP_SchedulerHFSC.{h,cc} is
+taken from the ALTQ distribution.
+
+The files altq.h and altq_conf.c are taken from the ALTQ distribution and
+slightly modified to incorporate new modules.
+
+The files in src/extern/generic/* are taken from Glen Kramer (and include
+further indirectly contributed code). The code from Glen does not specify a
+specific license, but is freely available from
+http://wwwcsif.cs.ucdavis.edu/~kramer/code/trf_gen2.html
+Indirectly contributed code is in src/extern/generic/MersenneTwister.h and
+available through the GNU Lesser General Public License.

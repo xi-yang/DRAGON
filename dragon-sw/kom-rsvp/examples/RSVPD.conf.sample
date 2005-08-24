@@ -1,0 +1,4 @@
+interface gre1 tc none mpls
+interface gre2 tc none mpls
+interface gre3 tc none mpls
+api 4000

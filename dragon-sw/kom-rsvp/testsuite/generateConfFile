@@ -1,0 +1,159 @@
+#/bin/sh
+
+error() {
+	echo "ERROR in line $lineCounter"
+	echo $1
+	exit 1
+}
+
+net() {
+	if [ $# -lt 1 ]; then
+		error "usage: net <netNumber> ..."
+	fi
+	netNumber=$1
+}
+
+link() {
+	is_lan=0
+	if [ $# -lt 2 ]; then
+		error "usage: link <interface> <peer>[/<peer-interface>] ... {x} {<bandwidth>} {<latency>}"
+	fi
+	interface=$1
+	shift
+	formattedIfaceNumber=$interface
+	if [ $formattedIfaceNumber -lt 10 ]; then
+		formattedIfaceNumber=0$formattedIfaceNumber
+	fi
+	printf "interface virt$interface refresh 10000\n"
+	printf "\tencap 1$nodeNumber$formattedIfaceNumber 127.0.0.1"
+	while [ -n "$1" -a "$1" != "x" ]; do
+		echo $1 | fgrep "/" 2>&1 >/dev/null
+		if [ $? -eq 0 ]; then
+			is_lan=1
+			remoteNumber=`echo $1 | cut -f 2 -d'/'`
+			if [ $remoteNumber -lt 10 ]; then 
+				remoteNumber=0$remoteNumber
+			fi
+			peerNumber=`echo $1 | cut -f 1 -d'/'`
+		else
+			remoteNumber=$nodeNumber
+			peerNumber=$1
+		fi
+		if [ $peerNumber -lt 10 ]; then
+			peerNumber=0$peerNumber;
+		fi
+		printf " 1$peerNumber$remoteNumber"
+		shift
+	done
+	if [ "$1" = "x" ]; then
+		shift
+	fi
+	if [ -n "$1" ]; then
+		bandwidth=$1
+	else
+		bandwidth=$default_bandwidth
+	fi
+	if [ -n "$2" ]; then
+		latency=$2
+	else
+		latency=$default_latency
+	fi
+	printf "\n"
+	printf "\tvirt 192.168.$netNumber.$interface 1500\n"
+	printf "\ttc cbq $bandwidth $latency\n"
+	printf "\n"
+	if [ $is_lan -eq 0 ]; then
+		gateway=192.168.$interface.$netNumber
+	else
+		gateway=0.0.0.0
+	fi
+	printf "route 192.168.$interface.0 255.255.255.0 $gateway virt$interface\n"
+	printf "\n"
+}
+
+route() {
+	dest=$1
+	if [ "$dest" = "mc" ]; then
+		if [ $# -ne 4 ]; then
+			error "usage: route mc <dest address> <interface number>"
+		fi
+		dest=$2
+		iface=$3
+		gateway=0.0.0.0
+		mask=255.255.255.255
+	else
+		if [ $# -ne 3 ]; then
+			error "usage: route <dest number> <interface number> <own number>"
+		fi
+		iface=$2
+		gateway=192.168.$iface.$3
+		dest=192.168.$dest.0
+		mask=255.255.255.0
+	fi
+	printf "route $dest $mask $gateway virt$iface\n"
+}
+
+if [ $# -lt 1 ] ; then
+        echo usage: $0 nodeNumber
+        exit 1
+fi
+
+nodeNumber=$1
+default_bandwidth=10000000
+default_latency=2500
+netNumber=$nodeNumber
+if [ $nodeNumber -lt 10 ] ; then
+        nodeNumber=0$nodeNumber
+fi
+lineCounter=0
+
+printf "api 1$nodeNumber"
+printf "00\n"
+printf "\n"
+printf "id_hash_send 1024\n"
+printf "id_hash_recv 1024\n"
+printf "\n"
+
+#echo interface eth0 disable
+#echo interface lo disable  
+#echo interface hme0 disable
+#echo interface lo0 disable 
+#echo interface dummy0 disable
+#echo interface ippp0 disable 
+#echo interface ippp1 disable 
+#echo interface ippp2 disable 
+#echo interface fa0 disable   
+#echo interface qaa0 disable  
+#echo
+
+exec 0<conf$1
+read line
+lineCounter=`expr $lineCounter + 1`
+while [ -n "$line" ] ; do
+	command=`echo $line | cut -f 1 -d ' '`
+	args=`echo $line | cut -f 2- -d ' '`
+
+# enable/ignore 'rem' command lines
+#	if [ "$command" = "rem" ]; then
+#		command=`echo $args | cut -f 1 -d ' '`
+#		args=`echo $args | cut -f 2- -d ' '`
+#	fi
+
+	case "$command" in
+	  net)
+		net $args
+		;;
+	  link)
+		link $args
+		;;
+	  route)
+		route $args $1
+		;;
+	  rem)
+		;;
+	  *)
+		error "unknown command: $command"
+	esac
+	read line
+done
+exit 0

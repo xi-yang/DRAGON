@@ -1,0 +1,7 @@
+interface xl0 tc hfsc 100000000 10000
+interface xl1 tc hfsc 100000000 10000
+interface xl2 tc hfsc 100000000 10000
+interface ep0 tc hfsc 10000000 10000
+interface ed0 tc hfsc 10000000 10000
+
+api 4000

@@ -1,0 +1,12 @@
+--- drop-tail.cc.orig	2003-02-26 17:09:12.000000000 -0500
++++ drop-tail.cc	2003-11-17 23:52:57.000000000 -0500
+@@ -105,6 +105,9 @@
+         if (summarystats && &Scheduler::instance() != NULL) {
+                 Queue::updateStats(qib_?q_->byteLength():q_->length());
+         }
++  if (timestamp && q_->head()) {
++  	hdr_cmn::access(q_->head())->timestamp() = Scheduler::instance().clock();
++  }
+ 	return q_->deque();
+ }
+ 

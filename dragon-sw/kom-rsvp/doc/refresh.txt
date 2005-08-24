@@ -1,0 +1,62 @@
+Partial Refresh && FF:
+- new ID for each reservation (RSB) => association of existing RSBs with new ID??
+- same ID for additional reservation => conflict with RFC 2961?? CHECK!
+- alternatively: increase ID on partial reservation -> use timer for full
+  refresh
+
+Unreliable operation:
+
+Only PATH and RESV carry a MESSAGE_ID (increasing, unique per hop).
+
+ID overflow -> increase epoch
+=> summary refresh messages are not affected (no MESSAGE_ID)
+=> individual PATH/RESV refresh messages (should be rare) are fully
+   processed, instead of ignored (same as RSVP operation without refresh
+   reduction)
+
+Hop reboot -> change epoch
+=> summary refresh messages are sent only after new state is established
+=> establishment PATH/RESV messages are fully processed
+   (same as RSVP operation without refresh reduction)
+PROBLEM: state establishment message is lost after reboot and old state with
+same ID still exists at adjacent hop -> summary refresh message refreshes
+stale state
+OR: All state must be fully refreshed after epoch change
+
+
+Reliable operation:
+
+All messages carry a MESSAGE_ID.
+
+ID overflow -> increase epoch
+=> can ignore epoch value for summary refresh messages
+
+Hop reboot -> change epoch
+=> no loss of state establishment message
+
+
+Usage of MESSGE_ID
+------------------
+sender:
+refresh -> use same id as before
+
+receiver:
+"out of order" means received_id < old_id
+"out of order" => if any state exists -> ignore message
+
+receive_id = old_id => refresh (PATH: senderTemplate must be equal, as well)
+receive_id > old_id => trigger
+
+RESV message:
+id might denote several RSBs...
+General: hash value might point to multiple RSBs and/or PSBs
+
+Usage of Srefresh(unicast)
+--------------------------
+sender:
+include all IDs to next hop
+when receiving NACK => send full refresh message! via PSB or PHopSB
+
+receiver:
+lookup all state -> refresh
+send NACK for those that cannot be found

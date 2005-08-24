@@ -1,0 +1,14 @@
+--- ns-lib.tcl.orig	2003-02-26 17:09:37.000000000 -0500
++++ ns-lib.tcl	2003-11-17 23:57:06.000000000 -0500
+@@ -222,6 +222,11 @@
+ 
+ source ns-qsnode.tcl
+ 
++# RSVP
++source ns-rsvp.tcl
++source ns-cbq.tcl
++source ns-flowgen.tcl
++
+ # Obsolete modules
+ #source ns-wireless-mip.tcl
+ #source ns-nam.tcl

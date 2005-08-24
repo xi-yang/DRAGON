@@ -1,0 +1,6 @@
+interface eth0 tc cbq 10000000 10
+interface eth1 tc cbq 10000000 10
+
+peer 1.2.3.4 130.83.139.45 3
+
+api 4000

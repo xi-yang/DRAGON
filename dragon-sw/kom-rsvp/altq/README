@@ -1,0 +1,20 @@
+Initial Kernel Modification
+---------------------------
+(all as root)
+1) install FreeBSD 4.5
+2) install ALTQ 3.1   (kernel build not necessary, will be done later)
+3) edit KERNEL_NAME, ALTQ_HEADER_DIR and SYS_ALTQ in <rsvp_dir>/altq/Makefile
+4) cd <rsvp_dir>/altq ; find . -type f -exec touch {} \; ; gmake kernel
+5) reboot
+
+
+Userland
+--------
+1) configure, build (and potentially install) rsvp
+2) cd <rsvp_dir>/altq ; gmake all
+
+
+Update Kernel Modules (only necessary after code modification)
+---------------------
+(all as root)
+1) cd <rsvp_dir>/altq ; gmake modules

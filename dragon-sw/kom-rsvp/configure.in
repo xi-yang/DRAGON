@@ -1,0 +1,750 @@
+AC_INIT(src/main/unix/RSVPD.cc)
+AC_PREFIX_DEFAULT(/usr/local/rsvp)
+AC_CONFIG_HEADER(RSVP_config.h)
+AC_CONFIG_AUX_DIR(autoconf_in)
+
+AC_PROG_CC
+export CC
+AC_PROG_CXX
+AC_PROG_CPP
+AC_CHECK_PROGS(YACC, byacc yacc, bison -y)
+AC_PROG_LEX
+# AC_PROG_MAKE_SET
+AC_PROG_RANLIB
+AC_PROG_INSTALL
+
+cross_compiling=no
+
+# AC_HEADER_STDC
+# AC_CHECK_HEADERS(fcntl.h limits.h sys/file.h sys/ioctl.h sys/time.h syslog.h unistd.h)
+
+# AC_C_CONST
+# AC_C_INLINE
+# AC_TYPE_PID_T
+# AC_TYPE_SIZE_T
+# AC_HEADER_TIME
+# AC_STRUCT_TM
+
+# AC_PROG_GCC_TRADITIONAL
+# AC_TYPE_SIGNAL
+# AC_FUNC_VPRINTF
+
+AC_CANONICAL_HOST
+# AC_SYS_RESTARTABLE_SYSCALLS
+
+if echo $host | fgrep linux >/dev/null 2>/dev/null; then
+	AC_DEFINE(Linux)
+	AC_DEFINE(HTONS_IP_HEADER)
+	AC_DEFINE(RSRR_SERV_PATH,"/tmp/.rsrr_svr")
+	AC_DEFINE(PIDFILE,"/var/run/RSVPD.pid")
+	OS_NAME=Linux
+	SHARED_LD="$CXX -shared"
+	NUMCPUS=`more /proc/cpuinfo|fgrep processor|tail -1|cut -c13-`
+	NUMCPUS=`expr 1 + $NUMCPUS`
+elif echo $host | fgrep solaris >/dev/null 2>/dev/null; then
+	AC_DEFINE(SunOS)
+	AC_DEFINE(CBQ_DEVICE,"/dev/cbqctl")
+	AC_DEFINE(NEED_MULTICAST_TTL)
+	AC_DEFINE(NEED_UNICAST_TTL)
+	AC_DEFINE(NEED_RA_SOCKOPT)
+	AC_DEFINE(RSRR_SERV_PATH,"/tmp/.rsrr_svr")
+	AC_DEFINE(PIDFILE,"/var/RSVPD.pid")
+	OS_NAME=SunOS
+	SHARED_LD="$CXX -G"
+	NUMCPUS=`/usr/sbin/psrinfo|wc -l|cut -c8-`
+elif echo $host | fgrep bsd >/dev/null 2>/dev/null; then
+	AC_DEFINE(FreeBSD)
+	AC_DEFINE(ALTQ_DEVICE,"/dev/altq/altq")
+	AC_DEFINE(CBQ_DEVICE,"/dev/altq/cbq")
+	AC_DEFINE(HFSC_DEVICE,"/dev/altq/hfsc")
+	AC_DEFINE(STAMP_DEVICE,"/dev/altq/stamp")
+	AC_DEFINE(HAVE_KLD)
+	AC_DEFINE(NEED_MULTICAST_TTL)
+	AC_DEFINE(RSRR_SERV_PATH,"/var/run/rsrr_svr")
+	AC_DEFINE(PIDFILE,"/var/run/RSVPD.pid")
+	OS_NAME=FreeBSD
+	SHARED_LD="$CXX -shared"
+	NUMCPUS=`/sbin/sysctl -n hw.ncpu`
+fi
+AC_DEFINE(RSRR_CLI_PATH,"/tmp/.rsrr_cli")
+AC_SUBST(SHARED_LD)
+if test $NUMCPUS && test $NUMCPUS -gt 1; then
+	MAKEFLAGS="-j $NUMCPUS"
+fi
+AC_SUBST(MAKEFLAGS)
+AC_SUBST(OS_NAME)
+
+AC_C_BIGENDIAN
+
+AC_CHECK_FUNCS(inet_aton inet_pton inet_ntop)
+
+AC_LANG_CPLUSPLUS
+
+AC_CHECK_FUNC(gethostbyname,, LIBS="$LIBS -lnsl")
+AC_CHECK_FUNC(connect,, LIBS="-lsocket $LIBS")
+
+AC_CHECK_HEADERS(sstream)
+
+AC_CACHE_CHECK(whether in_pktinfo is needed, ac_cv_need_in_pktinfo, \
+	if echo $host | fgrep linux >/dev/null 2>/dev/null; then
+		AC_TRY_COMPILE(
+		[#include <sys/types.h>
+		#include <netinet/in.h>], \
+		[ in_pktinfo jofel; ], \
+		ac_cv_need_in_pktinfo=no, \
+		ac_cv_need_in_pktinfo=yes )
+	else
+		ac_cv_need_in_pktinfo=no
+	fi
+)
+if test "$ac_cv_need_in_pktinfo" = "yes"; then
+	AC_DEFINE(NEED_IN_PKTINFO)
+fi
+
+MN_HAVE_SIN_LEN
+MN_GETSOCKOPT_P5
+MN_GETSOCKNAME_P3
+MN_RECVFROM_P2
+MN_RECVFROM_P6
+MN_SENDTO_P2
+MN_HAS_SO_REUSEPORT
+
+AC_CACHE_CHECK(for GNU make, ac_cv_gnu_make, \
+	if make --version 2>/dev/null | fgrep GNU >/dev/null; then
+		ac_cv_gnu_make=make
+	elif gmake --version 2>/dev/null | fgrep GNU >/dev/null; then
+		ac_cv_gnu_make=gmake
+	else
+		ac_cv_gnu_make="GNU_MAKE_NOT_FOUND"
+	fi
+)
+
+AC_ARG_ENABLE(virt,
+	[ --enable-virt		compile virtual networking (disabled by default)],,
+	enable_virt=no)
+AC_MSG_CHECKING(for virtual networking)
+if test "$enable_virt" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(VIRT_NETWORK)
+else
+	AC_MSG_RESULT(disabled)
+fi
+
+AC_ARG_ENABLE(real,
+	[ --disable-real		do not compile real networking (enabled by default)],,
+	enable_real=yes)
+AC_MSG_CHECKING(for real networking)
+if test "$enable_real" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(REAL_NETWORK)
+	BUILD_NS2=no
+else
+	AC_MSG_RESULT(disabled)
+	if test "$enable_virt" = "no"; then
+		BUILD_NS2=yes
+		AC_MSG_RESULT([compiling for ns-2])
+		AC_DEFINE(NS2)
+	else
+		BUILD_NS2=no
+	fi
+fi
+AC_SUBST(BUILD_NS2)
+
+AC_ARG_ENABLE(performance,
+	[ --enable-performance	build for performance tests (disabled by default)],,
+	enable_performance=no)
+AC_MSG_CHECKING(for performance mode)
+if test "$enable_performance" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(SESSION_HASH_PORTS)
+	COMPILE_FLAGS="-g -Wall -O2"
+else
+	COMPILE_FLAGS="-g -Wall"
+	AC_MSG_RESULT(disabled)
+fi
+AC_SUBST(COMPILE_FLAGS)
+
+SAVE_LIBS=$LIBS
+LIBS=
+AC_CHECK_HEADERS(pthread.h)
+if test "$ac_cv_header_pthread_h" = "no"; then
+	AC_CHECK_HEADERS(pthreads.h)
+	if test "$ac_cv_header_pthreads_h" = "no"; then
+		enable_threads=no
+	fi
+fi
+AC_CHECK_LIB(pthread, pthread_mutex_init)
+if test "$ac_cv_lib_pthread_pthread_mutex_init" = "no"; then
+	AC_CHECK_LIB(pthreads, pthread_mutex_init)
+	if test "$ac_cv_lib_pthreads_pthread_mutex_init" = "no"; then
+		AC_MSG_CHECKING(for -pthreads linking option)
+		LIBS=-pthread
+		AC_LANG_SAVE
+		AC_LANG_C
+		AC_TRY_LINK(,pthread_mutex_init(),\
+			ac_cv_pthread_pthread_mutex_init=yes, \
+			ac_cv_pthread_pthread_mutex_init=no)
+		AC_LANG_RESTORE
+		AC_MSG_RESULT("$ac_cv_pthread_pthread_mutex_init")
+		if test "$ac_cv_pthread_pthread_mutex_init" = "no"; then
+			LIBS=
+		fi
+	fi
+fi
+PTHREAD_LIB=$LIBS
+LIBS=$SAVE_LIBS
+
+AC_ARG_ENABLE(checking,
+	[ --disable-checking	disable runtime checks (enabled by default)],,
+	enable_checking=yes)
+AC_MSG_CHECKING(whether to compile checking mode)
+if test "$enable_checking" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(CHECK_ON)
+	AC_DEFINE(RSVP_CHECKS)
+else
+	AC_MSG_RESULT(disabled)
+	AC_DEFINE(NDEBUG)
+fi
+
+AC_ARG_ENABLE(logging,
+	[ --disable-logging	disable log output (enabled by default)],,
+	enable_logging=yes)
+AC_MSG_CHECKING(whether to compile logging mode)
+if test "$enable_logging" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(FATAL_ON)
+	AC_DEFINE(ERROR_ON)
+	AC_DEFINE(LOG_ON)
+else
+	AC_MSG_RESULT(disabled)
+	AC_DEFINE(FATAL_ON)
+	AC_DEFINE(ERROR_ON)
+fi
+
+AC_ARG_ENABLE(api,
+	[ --disable-api		do not build API support (enabled by default)],,
+	enable_api=yes)
+AC_MSG_CHECKING(whether to compile api support)
+if test "$BUILD_NS2" = "yes"; then enable_api=yes; fi
+if test "$enable_api" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(WITH_API)
+	BUILD_API=yes
+else
+	BUILD_API=no
+	AC_MSG_RESULT(disabled)
+fi
+AC_SUBST(BUILD_API)
+
+AC_ARG_ENABLE(java_api,
+	[ --disable-java-api	do not build Java API support (enabled by default)],,
+	enable_java_api=yes)
+if test "$BUILD_NS2" = "yes"; then enable_java_api=no; fi
+if test "$enable_api" = "yes" -a "$enable_java_api" = "yes"; then
+	AC_PATH_PROG(JAVAC, javac, "no")
+	AC_PATH_PROG(JAVAH, javah, "no")
+	AC_PATH_PROG(JAR, jar, "no")
+	if test "$JAVAH" = "no" -o "$JAVAC" = "no" -o "$JAR" = "no"; then
+		enable_java_api=no
+	fi
+else
+	enable_java_api=no
+fi
+if test "$enable_java_api" = "yes"; then
+	AC_CACHE_CHECK(for jdk 1.2 or higher, ac_cv_jdk12, \
+		cat <<EOF >conftest.java
+public class conftest {
+	public static void main(String[] args) {
+		java.util.Vector test = new java.util.Vector();
+		Object dummy = new Object();
+		test.add(dummy);
+	}
+}
+EOF
+		if $JAVAC conftest.java >/dev/null 2>/dev/null; then
+			ac_cv_jdk12=yes
+		else
+			ac_cv_jdk12=no
+		fi
+		rm -f conftest.java conftest.class)
+	enable_java_api=$ac_cv_jdk12
+fi
+AC_MSG_CHECKING(whether to compile java api support)
+if test "$enable_java_api" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(WITH_JAVA_API)
+	JAVA_INCLUDE=`dirname $JAVAC`
+	JAVA_INCLUDE="-I`dirname $JAVA_INCLUDE`/include"
+if echo $host | fgrep linux >/dev/null 2>/dev/null; then
+	JAVA_INCLUDE="$JAVA_INCLUDE $JAVA_INCLUDE/linux"
+elif echo $host | fgrep solaris >/dev/null 2>/dev/null; then
+	JAVA_INCLUDE="$JAVA_INCLUDE $JAVA_INCLUDE/solaris"
+elif echo $host | fgrep freebsd  >/dev/null 2>/dev/null; then
+	JAVA_INCLUDE="$JAVA_INCLUDE $JAVA_INCLUDE/freebsd"
+fi
+	BUILD_JAVA_API=yes
+else
+	BUILD_JAVA_API=no
+	AC_MSG_RESULT(disabled)
+fi
+AC_SUBST(JAVA_INCLUDE)
+AC_SUBST(BUILD_JAVA_API)
+
+AC_ARG_ENABLE(active_api,
+	[ --enable-active-api	build interactive API client (disabled by default)],,
+	enable_active_api=no)
+if test "$BUILD_NS2" = "yes"; then enable_active_api=no; fi
+AC_MSG_CHECKING(whether to build interactive api client)
+if test "$enable_active_api" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	BUILD_ACTIVE_API=yes
+else
+	AC_MSG_RESULT(disabled)
+	BUILD_ACTIVE_API=no
+fi
+AC_SUBST(BUILD_ACTIVE_API)
+
+AC_MSG_CHECKING(whether to build testsuite)
+if test "$enable_real" = "no" -a "$enable_virt" = "yes" -a "$enable_active_api" = "yes"; then
+	BUILD_TESTSUITE=yes
+	AC_MSG_RESULT(yes)
+else
+	BUILD_TESTSUITE=no
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(BUILD_TESTSUITE)
+
+AC_ARG_ENABLE(api_clients,
+	[ --disable-api-clients	do not build example API clients (enabled by default)],,
+	enable_api_clients=yes)
+if test "$BUILD_NS2" = "yes"; then enable_api_clients=no; fi
+AC_MSG_CHECKING(whether to build api clients)
+if test "$enable_api_clients" = "yes" && test "$enable_api" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	BUILD_CLIENTS=yes
+else
+	AC_MSG_RESULT(disabled)
+	BUILD_CLIENTS=no
+fi
+AC_SUBST(BUILD_CLIENTS)
+
+AC_ARG_ENABLE(traffgen,
+	[ --disable-traffgen	do not build traffic generator (enabled by default)],,
+	enable_traffgen=yes)
+AC_MSG_CHECKING(whether to build traffic generator)
+if test "$enable_traffgen" = "yes" && test "$enable_api" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	BUILD_TG=yes
+else
+	AC_MSG_RESULT(disabled)
+	BUILD_TG=no
+fi
+AC_SUBST(BUILD_TG)
+
+AC_ARG_ENABLE(refresh_reduction,
+	[ --disable-refresh-reduction	disable refresh reduction (enabled by default)],,
+	enable_refresh_reduction=yes)
+AC_MSG_CHECKING(for refresh reduction)
+if test "$enable_refresh_reduction" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(REFRESH_REDUCTION)
+else
+	AC_MSG_RESULT(disabled)
+fi
+
+AC_ARG_ENABLE(onepass,
+	[ --disable-onepass	disable onepass reservations (enabled by default)],,
+	enable_onepass=yes)
+if test "$enable_performance" = "yes"; then
+	if test "$enable_onepass" = "yes"; then
+		AC_MSG_WARN(enabled performance mode -> disabling onepass)
+	fi
+	enable_onepass=no
+fi
+if test "$BUILD_NS2" = "yes"; then
+	if test "$enable_onepass" = "yes"; then
+		AC_MSG_WARN(enabled ns2 mode -> disabling onepass)
+	fi
+	enable_onepass=no
+fi
+AC_MSG_CHECKING(for onepass reservations)
+if test "$enable_onepass" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(ONEPASS_RESERVATION)
+else
+	AC_MSG_RESULT(disabled)
+fi
+
+AC_ARG_ENABLE(dns,
+	[ --disable-dns		do not use reverse DNS lookups (enabled by default)],,
+	enable_dns=yes)
+if test "$BUILD_NS2" = "yes"; then enable_dns=no; fi
+if test "$enable_performance" = "yes"; then
+	if test "$enable_dns" = "yes"; then
+		AC_MSG_WARN(enabled performance mode -> disabling inverse dns)
+	fi
+	enable_dns=no
+fi
+AC_MSG_CHECKING(for inverse dns)
+if test "$enable_dns" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(INVERSE_DNS)
+else
+	AC_MSG_RESULT(disabled)
+fi
+
+AC_ARG_ENABLE(scope,
+	[ --disable-scope	do not use SCOPE objects (enabled by default)],,
+	enable_scope=yes)
+AC_MSG_CHECKING(whether to use scope object)
+if test "$enable_scope" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(USE_SCOPE_OBJECT)
+else
+	AC_MSG_RESULT(disabled)
+fi
+
+AC_ARG_ENABLE(stats,
+	[ --disable-stats	do not compile simple stats code (enabled by default)],,
+	enable_stats=yes)
+AC_MSG_CHECKING(whether to compile stats code)
+if test "$enable_stats" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(RSVP_STATS)
+else
+	AC_MSG_RESULT(disabled)
+fi
+
+AC_ARG_ENABLE(rand_timers,
+	[ --disable-rand-timers	do not use random timers (enabled by default)],,
+	enable_rand_timers=yes)
+AC_MSG_CHECKING(whether to use random timers)
+if test "$enable_rand_timers" = "yes"; then
+	AC_MSG_RESULT(enabled)
+else
+	AC_DEFINE(FIXED_TIMEOUTS)
+	AC_MSG_RESULT(disabled)
+fi
+
+AC_ARG_ENABLE(timers,
+	[ --disable-timers	do not use timers at all (enabled by default)],,
+	enable_timers=yes)
+AC_MSG_CHECKING(whether to use timers)
+if test "$enable_timers" = "yes"; then
+	AC_MSG_RESULT(enabled)
+else
+	AC_DEFINE(NO_TIMERS)
+	AC_MSG_RESULT(disabled)
+fi
+
+AC_ARG_ENABLE(fuzzy_timers,
+	[ --enable-fuzzy-timers	use fuzzy timers (disabled by default)],,
+	enable_fuzzy_timers=no)
+if test "$enable_performance" = "yes"; then
+	if test "$enable_fuzzy_timers" = "no"; then
+		AC_MSG_WARN(enabled performance mode -> enabling fuzzy timers)
+	fi
+	enable_fuzzy_timers=yes
+fi
+
+AC_MSG_CHECKING(whether to use fuzzy timers)
+if test "$enable_fuzzy_timers" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(FUZZY_TIMERS)
+else
+	AC_MSG_RESULT(disabled)
+fi
+
+AC_ARG_ENABLE(memopt,
+	[ --disable-memopt	do not use memory optimization (enabled by default)],,
+	enable_memopt=yes)
+AC_MSG_CHECKING(whether to use memory optimization)
+if test "$BUILD_NS2" = "yes"; then enable_memopt=no; fi
+if test "$enable_memopt" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(RSVP_MEMORY_MACHINE)
+else
+	AC_MSG_RESULT(disabled)
+fi
+
+AC_ARG_ENABLE(altq,
+	[ --disable-altq		do not use ALTQ on FreeBSD (enabled by default)],,
+	enable_altq=yes)
+if test "$BUILD_NS2" = "yes"; then enable_altq=no; fi
+AC_ARG_WITH(altq_includes,
+	[ --with-altq-includes[=DIR]	ALTQ include files are in non-standard DIR/altq],
+	with_altq_includes=$withval,
+	with_altq_includes="no")
+SAVE_CXXFLAGS=$CXXFLAGS
+if test "$with_altq_includes" != "no"; then
+	ALTQ_INCLUDE=-I`dirname $with_altq_includes`
+	CXXFLAGS=$ALTQ_INCLUDE
+fi
+if test "$enable_altq" = "yes"; then
+	AC_TRY_CPP([#include <altq/altq.h>],enable_altq=yes,enable_altq=no)
+fi
+if test "$enable_altq" = "yes" -a "$enable_real" = "no"; then
+	enable_altq=no
+	AC_MSG_WARN(no ALTQ without real networking)
+fi
+AC_MSG_CHECKING(for altq)
+if test "$enable_altq" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(ENABLE_ALTQ)
+else
+	AC_MSG_RESULT(disabled)
+	ALTQ_INCLUDE=""
+fi
+CXXFLAGS=$SAVE_CXXFLAGS
+AC_SUBST(ALTQ_INCLUDE)
+
+AC_ARG_ENABLE(cbq,
+	[ --disable-cbq		do not use CBQ (enabled by default)],,
+	enable_cbq=yes)
+if test "$BUILD_NS2" = "yes"; then enable_cbq=no; fi
+if test "$enable_cbq" = "yes"; then
+	if echo $host | fgrep solaris >/dev/null 2>/dev/null; then
+		AC_TRY_CPP([#include <cbqio.h>],enable_cbq=yes,enable_cbq=no)
+	elif echo $host | fgrep bsd >/dev/null 2>/dev/null; then
+		enable_cbq=$enable_altq 
+	fi
+fi
+if test "$enable_cbq" = "yes" -a "$enable_real" = "no"; then
+	enable_cbq=no
+	AC_MSG_WARN(no CBQ without real networking)
+fi
+AC_MSG_CHECKING(for cbq)
+if test "$enable_cbq" = "yes"; then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(ENABLE_CBQ)
+else
+	AC_MSG_RESULT(disabled)
+fi
+
+AC_ARG_WITH(mpls,
+	[ --with-mpls[=PATH]		path to MPLS library (disabled by default)],,
+	with_mpls=$withval,
+	with_mpls="no")
+if test "$enable_performance" = "yes"; then
+	if test "$with_mpls" != "no"; then
+		AC_MSG_WARN(enabled performance mode -> disabling mpls)
+	fi
+	with_mpls="no"
+fi
+AC_ARG_WITH(mpls_includes,
+	[ --with-mpls-includes[=DIR]	mpls include files are in non-standard DIR/mpls],
+	with_mpls_includes=$withval,
+	with_mpls_includes="no")
+SAVE_LIBS=$LIBS
+SAVE_CXXFLAGS=$CXXFLAGS
+if test "$with_mpls_includes" != "no"; then
+	MPLS_INCLUDE=-I`dirname $with_mpls_includes`
+	CXXFLAGS=$MPLS_INCLUDE
+fi
+if test "$with_mpls" != "no" -a "$enable_real" = "yes"; then
+	AC_TRY_COMPILE(
+	[#include <linux/mpls.h>], \
+	[ struct mpls_xconnect_req jofel; ], \
+	mpls_wisconsin=yes, \
+	mpls_wisconsin=no )
+	AC_TRY_COMPILE(
+	[#include <linux/mpls.h>], \
+	[ struct switch_mapping_st jofel; ], \
+	mpls_cambridge=yes, \
+	mpls_cambridge=no )
+	LIBS="$LIBS $with_mpls"
+	if test "$mpls_wisconsin" = "yes"; then
+		AC_CHECK_FUNCS(rtnl_open,mpls_wisconsin=yes,mpls_wisconsin=no)
+	elif test "$mpls_cambridge" = "yes"; then
+		AC_CHECK_FUNCS(mpls_init,mpls_cambridge=yes,mpls_cambridge=no)
+	fi
+else
+	mpls_cambridge=no
+	mpls_wisconsin=no
+fi
+AC_MSG_CHECKING(for mpls)
+if test "$with_mpls" != "no"; then
+	printf "enabled "
+	AC_DEFINE(ENABLE_MPLS)
+	if test "$mpls_wisconsin" = "yes"; then
+		AC_MSG_RESULT(and real: wisconsin version)
+		AC_DEFINE(MPLS_WISCONSIN)
+		MPLS_LIB="$with_mpls"
+	elif test "$mpls_cambridge" = "yes"; then
+		AC_MSG_RESULT(and real: cambridge version)
+		AC_DEFINE(MPLS_CAMBRIDGE)
+		MPLS_LIB="$with_mpls"
+	else
+		AC_MSG_RESULT(but not real)
+	fi
+else
+	AC_MSG_RESULT(disabled)
+	MPLS_INCLUDE=""
+fi
+CXXFLAGS=$SAVE_CXXFLAGS
+LIBS=$SAVE_LIBS
+AC_SUBST(MPLS_INCLUDE)
+AC_SUBST(MPLS_LIB)
+
+AC_ARG_WITH(ns2dir,
+	[ --with-ns2dir[=DIR]		ns2-allinone in DIR (disabled by default)],
+	with_ns2dir=$withval,
+	with_ns2dir=no)
+if test "$BUILD_NS2" = "yes" -a "$with_ns2dir" != "no" -a -d $with_ns2dir; then
+	currdir=`pwd`
+	cd $with_ns2dir
+	NS2_DIR=`pwd`
+	cd $currdir
+else
+	NS2_DIR=
+fi
+AC_SUBST(NS2_DIR)
+
+SAVE_LIBS=$LIBS
+LIBS=
+AC_ARG_WITH(snmp,
+	[ --with-snmp[=DIR]		use SNMP in DIR (disabled by default)],
+	with_snmp=$withval,
+	with_snmp=no)
+if test "$BUILD_NS2" = "yes"; then with-snmp=no; fi
+if test "$with_snmp" = "yes"; then
+	with_snmp=/usr
+	LDFLAGS="-lcrypto -lm -lnetsnmp"
+elif test "$with_snmp" != "no"; then
+         LDFLAGS="-L$with_snmp/lib -lcrypto -lm -lnetsnmp"
+fi
+if test "$with_snmp" != "no"; then
+	AC_CHECK_FILE($with_snmp/include/net-snmp/net-snmp-config.h,,\
+	[ AC_MSG_ERROR(didn't find net-snmp-config.h in $with_snmp/include/net-snmp...is Net-SNMP installed?)
+	with_snmp=no ])
+	AC_CHECK_FILE($with_snmp/include/net-snmp/net-snmp-includes.h,,\
+	[ AC_MSG_ERROR(didn't find net-snmp-includes.h in $with_snmp/include/net-snmp...is Net-SNMP installed?)
+	with_snmp=no ])
+	AC_CHECK_FILE($with_snmp/include/net-snmp/session_api.h,,\
+	[ AC_MSG_ERROR(didn't find session_api.h in $with_snmp/include/net-snmp...is Net-SNMP installed?)
+	with_snmp=no ])
+fi
+AC_MSG_CHECKING(for SNMP library files)
+if test "$with_snmp" != "no"; then
+	AC_DEFINE(ENABLE_SNMP)
+	SNMP_INCLUDE="-I$with_snmp/include"
+	LIBS="$LDFLAGS $LIBS"
+	AC_MSG_RESULT(enabled in $with_snmp)
+else
+	AC_MSG_RESULT(disabled)
+	SNMP_INCLUDE=""
+fi
+
+AC_SUBST(SNMP_INCLUDE)
+
+SAVE_LIBS=$LIBS
+LIBS=
+AC_ARG_WITH(,
+	[ --with-dmalloc[=DIR]		use dmalloc in DIR (disabled by default)],
+	with_dmalloc=$withval,
+	with_dmalloc=no)
+if test "$BUILD_NS2" = "yes"; then with_dmalloc=no; fi
+if test "$with_dmalloc" = "yes"; then
+	with_dmalloc=/usr
+elif test "$with_dmalloc" != "no"; then
+	LDFLAGS="-L$with_dmalloc/lib"
+fi
+if test "$with_dmalloc" != "no"; then
+	if test "$enable_threads" = "yes"; then
+		LIBNAME=dmallocthcxx
+	else
+		LIBNAME=dmallocxx
+	fi
+	AC_LANG_SAVE
+	AC_LANG_C
+	AC_CHECK_LIB($LIBNAME,dmalloc_shutdown,,\
+	[ AC_MSG_WARN(didn't find lib$LIBNAME in $with_dmalloc/lib)
+	with_dmalloc=no ])
+	AC_LANG_RESTORE
+fi
+if test "$with_dmalloc" != "no"; then
+	AC_CHECK_FILE($with_dmalloc/include/dmalloc.h,,\
+	[ AC_MSG_WARN(didn't find dmalloc.h in $with_dmalloc/include)
+	with_dmalloc=no ])
+fi
+AC_MSG_CHECKING(for dmalloc)
+if test "$with_dmalloc" != "no"; then
+	DMALLOC_INCLUDE="-include $with_dmalloc/include/dmalloc.h"
+	DMALLOC_LIB="$LDFLAGS $LIBS"
+	AC_MSG_RESULT(enabled in $with_dmalloc)
+else
+	AC_MSG_RESULT(disabled)
+fi
+
+LDFLAGS=
+LIBNAME=
+LIBS=$SAVE_LIBS
+
+AC_ARG_WITH(newmat,
+	[ --with-newmat[=PREFIX]	newmat is in non-standard path (default: /usr/local)],
+	with_newmat=$withval,
+	with_newmat=default)
+if test "$with_newmat" = "default"; then
+	with_newmat=/usr/local
+fi
+if test "$BUILD_NS2" = "yes"; then
+	AC_CHECK_FILE($with_newmat/lib/libnewmat.a,,\
+		[ AC_MSG_WARN(didn't find libnewmat.a in $with_newmat/lib)
+		with_newmat=no ])
+	if test "$with_newmat" != "no"; then
+		AC_CHECK_FILE($with_newmat/include/newmat.h,,\
+		[ AC_MSG_WARN(didn't find newmat.h in $with_newmat/include)
+		with_newmat=no ])
+	fi
+	AC_MSG_CHECKING(for newmat)
+	if test "$with_newmat" != "no"; then
+		NEWMAT_INCLUDE="-I$with_newmat/include"
+		NEWMAT_LIB="-L$with_newmat/lib -lnewmat"
+		AC_MSG_RESULT(enabled in $with_newmat)
+	else
+		AC_MSG_RESULT(disabled)
+	fi
+fi
+
+AC_SUBST(DMALLOC_INCLUDE)
+AC_SUBST(DMALLOC_LIB)
+AC_SUBST(NEWMAT_INCLUDE)
+AC_SUBST(NEWMAT_LIB)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(LIBS)
+AC_SUBST(INCLUDES)
+AC_SUBST(PTHREAD_LIB)
+
+RSVP_BUILD_DIR=`pwd`
+AC_SUBST(RSVP_BUILD_DIR)
+cd `dirname $0`
+PKG_BASEDIR=`pwd`
+cd $RSVP_BUILD_DIR
+AC_SUBST(PKG_BASEDIR)
+
+AC_OUTPUT(
+MakeConfig
+Makefile
+)
+
+rm -rf $RSVP_BUILD_DIR/include
+mkdir -p $RSVP_BUILD_DIR/include
+for i in $PKG_BASEDIR/src/*/*/*.h; do ln -s $i $RSVP_BUILD_DIR/include; done
+
+echo
+echo You can check and potentially change hard-coded configuration settings in
+echo $PKG_BASEDIR/src/common/generic/RSVP_Global.cc
+echo
+if test "$ac_cv_gnu_make" != "make"; then
+	echo This software package can only be compiled using GNU make
+	echo Remember that GNU make is installed as "'"$ac_cv_gnu_make"'" on your system
+	echo
+fi
+echo If you want to invoke compilation from within the source code tree, set
+if echo $SHELL|fgrep -s csh 2>/dev/null ; then
+	echo setenv RSVP_BUILD_DIR $RSVP_BUILD_DIR
+else
+	echo export RSVP_BUILD_DIR=$RSVP_BUILD_DIR
+fi
+echo

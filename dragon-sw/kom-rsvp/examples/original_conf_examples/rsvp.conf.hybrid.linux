@@ -1,0 +1,17 @@
+interface virt0 encap 2001 127.0.0.1 2000
+     virt 192.168.137.133 1500
+     tc cbq 7000000 10
+	refresh 120000
+
+interface virt1 encap 2003 127.0.0.1 2002
+     virt 192.168.138.133 1500
+     tc cbq 8000000 20
+	refresh 120000
+
+interface eth0 tc cbq 8000000 20 refresh 120000
+
+route	192.168.137.0	255.255.255.0	0.0.0.0		virt0
+route	192.168.138.0	255.255.255.0	0.0.0.0		virt1
+route	224.0.0.0	240.0.0.0	0.0.0.0		virt0
+
+api 4002

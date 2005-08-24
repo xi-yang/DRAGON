@@ -1,0 +1,56 @@
+3.0f Release Information
+========================
+This is just a minor update with a few bug fixes and changes, such that the
+code compiles with the latest gcc releases (>= 3.0).
+
+Older Information
+=================
+
+MPLS
+----
+Limited support for MPLS signalling and forwarding has been added, according
+to [1]. The daemon can interact with two open-source MPLS data planes for
+Linux, available from:
+http://www.cl.cam.ac.uk/Research/SRG/netos/netx/index.html
+http://sourceforge.net/projects/mpls-linux
+The mechanisms supported are label distribution and explicit routing.
+
+Refresh Reduction
+-----------------
+Limited support for RSVP Refresh Reduction has been added, according to [2].
+The mechanisms supported are summary refresh and nack messages.
+
+Remote API
+----------
+As an experimental extension to RSVP, a daemon can communicate via a remote
+API mechanism with clients. See [3] for details.
+
+One-pass Signalling
+-------------------
+As an experimental extension to RSVP, it is possible to setup
+sender-oriented one-pass and duplex reservations. See [3] for details.
+
+ns2 Version
+-----------
+The protocol engine has been ported to ns2. See README.ns2 for details.
+
+Traffic Generator
+-----------------
+An RSVP-capable traffic generator has been added. See README.tg_config for
+details. This release also includes a kernel time stamping module, which can
+be used from the traffic generator. See altq/README for details.
+
+Other
+-----
+There have been many bugfixes and internal improvements.
+
+References
+----------
+[1] D. Awduche et al. RSVP-TE: Extensions to RSVP for LSP Tunnels. IETF RFC
+3209. December 2001
+[2] L. Berger et al. RSVP Refresh Overhead Reduction Extensions. IETF RFC   
+2961. April 2001
+[3] Martin Karsten. Experimental Extensions to RSVP - Remote Client and
+One-Pass Signalling. In Proceedings of the Ninth IEEE/IFIP International
+Workshop on Quality of Service (IWQoS'01), Karlsruhe, Germany, pages
+269-274. Springer LNCS 2092, June 2001.

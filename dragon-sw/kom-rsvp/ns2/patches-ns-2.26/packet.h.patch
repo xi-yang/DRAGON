@@ -1,0 +1,44 @@
+--- packet.h.orig	2003-02-26 17:07:40.000000000 -0500
++++ packet.h	2003-11-17 23:54:20.000000000 -0500
+@@ -153,6 +153,20 @@
+ 	PT_LMS,
+ 	PT_LMS_SETUP,
+ 
++	PT_RSVP_UNKNOWN,
++	PT_RSVP_INIT_API,
++	PT_RSVP_PATH,
++	PT_RSVP_RESV,
++	PT_RSVP_PATH_ERR,
++	PT_RSVP_RESV_ERR,
++	PT_RSVP_PATH_TEAR,
++	PT_RSVP_RESV_TEAR,
++	PT_RSVP_RESV_CONF,
++	PT_RSVP_ACK,
++	PT_RSVP_SREFRESH,
++	PT_RSVP_LOAD,
++	PT_RSVP_PATH_RESV,
++
+ 	// insert new packet types here
+ 	PT_NTYPE // This MUST be the LAST one
+ };
+@@ -237,6 +251,20 @@
+ 		name_[PT_LMS]="LMS";
+ 		name_[PT_LMS_SETUP]="LMS_SETUP";
+ 
++		name_[PT_RSVP_UNKNOWN]   = "RSVP_unknown";
++		name_[PT_RSVP_INIT_API]  = "RSVP_InitAPI";
++		name_[PT_RSVP_PATH]      = "RSVP_Path";
++		name_[PT_RSVP_RESV]      = "RSVP_Resv";
++		name_[PT_RSVP_PATH_ERR]  = "RSVP_PathErr";
++		name_[PT_RSVP_RESV_ERR]  = "RSVP_ResvErr";
++		name_[PT_RSVP_PATH_TEAR] = "RSVP_PathTear";
++		name_[PT_RSVP_RESV_TEAR] = "RSVP_ResvTear";
++		name_[PT_RSVP_RESV_CONF] = "RSVP_ResvConf";
++		name_[PT_RSVP_ACK]       = "RSVP_Ack";
++		name_[PT_RSVP_SREFRESH]  = "RSVP_SRefresh";
++		name_[PT_RSVP_LOAD]      = "RSVP_Load";
++		name_[PT_RSVP_PATH_RESV] = "RSVP_PathResv";
++  
+ 		name_[PT_NTYPE]= "undefined";
+ 	}
+ 	const char* name(packet_t p) const { 

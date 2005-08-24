@@ -1,0 +1,72 @@
+Systems:
+- 'linux' denots a Linux system using interface eth0,
+- 'ultra' denotes a Solaris system using interface hme0
+- 'freebsd' denotes a FreeBSD system using interface xl0
+
+
+Scenario 1: simple interoprability test with ISI code
+-----------------------------------------------------
+
+<dest-address> = interface address of host A
+or
+<dest-address> = multicast address
+
+Host A:
+RSVPD -c <path_to_config>/rsvp.conf.{linux|ultra|freebsd}
+recvapi <dest-address> <dest-port>
+
+Host B:
+rsvpd -D
+rtap:
+session udp <dest-address>/<dest-port>
+sender 10000 [ t 100000 200000 200000 100 1500 ]
+
+
+
+Scenario 2: virtual nodes on a single machine
+---------------------------------------------
+
+Host A:
+RSVPD -c <path_to_config>/rsvp.conf1
+recvapi 130.83.138.134 <dest-port> localhost 4001
+
+Host A:
+RSVPD -c <path_to_config>/rsvp.conf2
+
+Host A:
+RSVPD -c <path_to_config>/rsvp.conf3
+sendapi 130.83.138.134 <dest-port>
+
+
+
+Scenario 3: hybrid interoperability with ISI rsvpd
+--------------------------------------------------
+
+<dest-address> = local address of host 2
+
+Host A:
+RSVPD -c <path_to_config>/rsvp.conf.hybrid.{linux|ultra}
+
+Host B:
+rsvpd -D
+rtap:
+session udp <dest-address>/<dest-port>
+reserve...
+
+Host A:
+RSVPD -c <path_to_config>/rsvp.conf.hybrid.1
+sendapi <dest-address> <dest-port> localhost 4003
+
+Host A:
+RSVPD -c <path_to_config>/rsvp.conf.hybrid.2
+sendapi <dest-address> <dest-port> localhost 4001
+
+
+Info
+----
+
+snoop RSVP packets using 'snoop':
+snoop -d hme0 -x 14 "ip[9] = 46"
+
+snoop RSVP packets using 'tcpdump':
+tcpdump -i eth0 -s 1500 -x ip proto 46

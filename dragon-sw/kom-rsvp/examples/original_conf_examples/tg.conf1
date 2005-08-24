@@ -1,0 +1,22 @@
+alias sender 127.0.0.1
+
+estimator sender 1
+
+flow udp sender 2000 localhost 2001
+#recv stamp
+send pareto 100 2000 480.0 32 0.9 stamp rate sender rsvp 1.0 at 1.0
+
+#flow tcp server localhost 2010
+#send cbr 100 100 1.0 stamp at 5.0
+#recv stamp
+
+#flowset 20 udp localhost 3000 localhost 5000
+#recv stamp
+#send cbr 200 40 1.0 fixed 3.0 fixed 20 stamp at 3.0
+
+#flow udp localhost 3000 localhost 5000 map 20
+#recv stamp rsvp
+
+#flowset 20 tcp server localhost 7000
+#recv stamp
+#send cbr 200 40 0.20 3.0 20 stamp at 5.0

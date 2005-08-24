@@ -1,0 +1,618 @@
+/****************************************************************************
+
+  KOM RSVP Engine (release version 3.0f)
+  Copyright (C) 1999-2004 Martin Karsten
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+  Contact:	Martin Karsten
+		TU Darmstadt, FG KOM
+		Merckstr. 25
+		64283 Darmstadt
+		Germany
+		Martin.Karsten@KOM.tu-darmstadt.de
+
+  Other copyrights might apply to parts of this package and are so
+  noted when applicable. Please see file COPYRIGHT.other for details.
+
+****************************************************************************/
+#include "RSVP_ProtocolObjects.h"
+
+INetworkBuffer& operator>> ( INetworkBuffer& buffer, SESSION_Object& o ) {
+	uint16 dummy;
+	buffer >> o.tunnelAddress >> dummy >> o.tunnelID >> o.extendedTunnelID;
+  return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const SESSION_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::SESSION, 7);
+	buffer << o.tunnelAddress << (uint16)0 << o.tunnelID << o.extendedTunnelID;
+	return buffer;
+}
+
+ostream& operator<< ( ostream& os, const SESSION_Object& o ) {
+	os << o.tunnelAddress << "/" << o.tunnelID << "/" << o.extendedTunnelID;
+	return os;
+}
+
+void SESSION_ATTRIBUTE_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len, uint8 C_Type)
+{
+	switch (C_Type){
+		case 1:  buffer >> excludeAny >> includeAny >> includeAll; break;
+		case 7:  break;
+		default: buffer.skip(len); return;
+	}	
+	buffer >> setupPri >> holdingPri >> flags >> nameLength;
+	String ssName;
+	char s;
+	for (int i = 0; i < nameLength; i++){
+		buffer >> (uint8)s; 
+		if (s!=0) ssName += String(s);
+	}
+	sessionName = ssName;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const SESSION_ATTRIBUTE_Object& o ) {
+	if (o.hasRA()){
+		buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::SESSION_ATTRIBUTE, 1);
+		buffer << o.excludeAny << o.includeAny << o.includeAll;
+	}
+	else
+		buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::SESSION_ATTRIBUTE, 7);
+	buffer << o.setupPri << o.holdingPri << o.flags << o.nameLength;
+	for (uint32 i = 0; i < o.sessionName.length(); i++) buffer << (uint8)o.sessionName[i];
+	for (uint32 j = 0; j<o.nameLength-o.sessionName.length(); j++)  buffer << (uint8)0;
+	return buffer;
+}
+
+ostream& operator<< ( ostream& os, const SESSION_ATTRIBUTE_Object& o ) {
+	if (o.hasRA())
+		os << "ExcludeAny: " << o.excludeAny << " IncludeAny: " << o.includeAny << " IncludeAll: " << o.includeAll;
+	os << " SetupPriority: " << (uint32)o.setupPri << " HoldingPriority: " << (uint32)o.holdingPri << " Flags: " << (uint32)o.flags << " NameLength: " << (uint32)o.nameLength;
+	os << " SessionName: " << o.sessionName;
+	return os;
+}
+
+INetworkBuffer& operator>> ( INetworkBuffer& buffer, RSVP_HOP_TLV_SUB_Object& o ) {
+	buffer >> o.type >> o.length;
+	switch (o.type){
+		case RSVP_HOP_TLV_SUB_Object::IPv4:
+			buffer >> o.value.ip4;
+			break;
+		case RSVP_HOP_TLV_SUB_Object::IfIndex:
+			buffer >> o.value.ifIndex.addr >> o.value.ifIndex.interfaceID;
+			break;
+		default:
+			buffer.skip(o.length-4);
+			break;		
+	}
+	return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const RSVP_HOP_TLV_SUB_Object& o ) {
+	buffer << o.type << o.length;
+	switch (o.type){
+		case RSVP_HOP_TLV_SUB_Object::IPv4:
+			buffer << o.value.ip4;
+			break;
+		case RSVP_HOP_TLV_SUB_Object::IfIndex:
+			buffer << o.value.ifIndex.addr << o.value.ifIndex.interfaceID;
+			break;
+		default:
+			break;		
+	}
+	
+  return buffer;
+}
+
+ostream& operator<< ( ostream& os, const RSVP_HOP_TLV_SUB_Object& o ) {
+	os << " TLV: " << " Type: " << o.type  << " Length: " << o.length << " Value: ";
+	switch (o.type){
+		case RSVP_HOP_TLV_SUB_Object::IPv4:
+			os << "IPv4: " << o.value.ip4;
+			break;
+		case RSVP_HOP_TLV_SUB_Object::IfIndex:
+			os << "IfIndex Addr: " << o.value.ifIndex.addr << " IfID: " << o.value.ifIndex.interfaceID;
+			break;
+		default:
+			break;		
+	}
+	return os;
+}
+
+void RSVP_HOP_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len, uint8 C_Type)
+{
+	buffer >> hopAddress >> LIH;
+	switch (C_Type){
+		case 1:  break;
+		case 3:	buffer >> tlv; break;
+		default: buffer.skip(len); break;
+	}	
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const RSVP_HOP_Object& o ) {
+	if (o.tlv.getType()!=RSVP_HOP_TLV_SUB_Object::Illegal)
+		buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::RSVP_HOP, 3 );
+	else
+		buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::RSVP_HOP, 1 );
+	buffer << o.hopAddress << o.LIH;
+	if (o.tlv.getType()!=RSVP_HOP_TLV_SUB_Object::Illegal)
+	 	buffer << o.tlv;
+ return buffer;
+}
+
+ostream& operator<< ( ostream& os, const RSVP_HOP_Object& o ) {
+	os << "Hop address: " << o.getAddress() << "LIH: " << (uint32)o.getLIH();
+	if (o.tlv.getType()!=RSVP_HOP_TLV_SUB_Object::Illegal)
+		os << o.getTLV();
+	return os;
+}
+
+INetworkBuffer& operator>> ( INetworkBuffer& buffer, TIME_VALUES_Object& o ) {
+	buffer >> o.refreshPeriod;
+	return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const TIME_VALUES_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::TIME_VALUES, 1 );
+	buffer << o.refreshPeriod;
+  return buffer;
+}
+
+ostream& operator<< ( ostream& os, const TIME_VALUES_Object& o ) {
+	os << (uint32)o.refreshPeriod;
+	return os;
+}
+
+INetworkBuffer& operator>> ( INetworkBuffer& buffer, ERROR_SPEC_Object& o ) {
+	buffer >> o.nodeAddress >> o.flags >> o.errorCode >> o.errorValue;
+	return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const ERROR_SPEC_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::ERROR_SPEC, 1 );
+	buffer << o.nodeAddress << o.flags << o.errorCode << o.errorValue;
+  return buffer;
+}
+
+ostream& operator<< ( ostream& os, const ERROR_SPEC_Object& o ) {
+	os << o.nodeAddress << " ";
+	switch (o.errorCode) {
+		case ERROR_SPEC_Object::Confirmation: os << "Confirmation:" << o.errorValue; break;
+		case ERROR_SPEC_Object::AdmissionControlFailure: os << "AdmissionControlFailure:" << o.errorValue; break;
+		case ERROR_SPEC_Object::PolicyControlFailure: os << "PolicyControlFailure:" << o.errorValue; break;
+		case ERROR_SPEC_Object::NoPathInformation: os << "NoPathInformation:" << o.errorValue; break;
+		case ERROR_SPEC_Object::NoSenderInformation: os << "NoSenderInformation:" << o.errorValue; break;
+		case ERROR_SPEC_Object::ConflictingReservationStyle: os << "ConflictingReservationStyle:" << o.errorValue; break;
+		case ERROR_SPEC_Object::UnknownReservationStyle: os << "UnknownReservationStyle:" << o.errorValue; break;
+		case ERROR_SPEC_Object::ConflictingDestPorts: os << "ConflictingDestPorts:" << o.errorValue; break;
+		case ERROR_SPEC_Object::ConflictingSenderPorts: os << "ConflictingSenderPorts:" << o.errorValue; break;
+		case ERROR_SPEC_Object::ServicePreempted: os << "ServicePreempted:" << o.errorValue; break;
+		case ERROR_SPEC_Object::UnknownObjectClass: os << "UnknownObjectClass:" << o.errorValue; break;
+		case ERROR_SPEC_Object::UnknownObjectCType: os << "UnknownObjectCType:" << o.errorValue; break;
+		case ERROR_SPEC_Object::ErrorAPI: os << "ErrorAPI" << o.errorValue << o.errorValue; break;
+		case ERROR_SPEC_Object::TrafficControlError: os << "TrafficControlError:" << o.errorValue; break;
+		case ERROR_SPEC_Object::TrafficControlSystemError: os << "TrafficControlSystemError:" << o.errorValue; break;
+		case ERROR_SPEC_Object::RSVPSystemError: os << "RSVPSystemError:" << o.errorValue; break;
+		case ERROR_SPEC_Object::RoutingProblem: os << "RoutingProblem:";
+								switch (o.errorValue){
+									case ERROR_SPEC_Object::BadExplicitRoute: os << " BadExplicitRoute "; break;
+									case ERROR_SPEC_Object::BadStrictNode: os << " BadStrictNode "; break;
+									case ERROR_SPEC_Object::BadLooseNode: os << " BadLooseNode "; break;
+									case ERROR_SPEC_Object::BadInitiaSubobject: os << " BadInitiaSubobject "; break;
+									case ERROR_SPEC_Object::NoRouteAvailToDest: os << " NoRouteAvailToDest "; break;
+									case ERROR_SPEC_Object::UnacceptableLabel: os << " UnacceptableLabel "; break;
+									case ERROR_SPEC_Object::RROIndicatedRoutingLoops: os << " RROIndicatedRoutingLoops "; break;
+									case ERROR_SPEC_Object::NonRSVPCapableRouterPresent: os << " NonRSVPCapableRouterPresent "; break;
+									case ERROR_SPEC_Object::MPLSLabelAllocationFailure: os << " MPLSLabelAllocationFailure "; break;
+									case ERROR_SPEC_Object::UnsupportedL3PID: os << " UnsupportedL3PID "; break;
+									default: os << o.errorValue; break;
+								}
+								break;
+		case ERROR_SPEC_Object::Notify: os << "Notify:";
+								switch (o.errorValue){
+									case ERROR_SPEC_Object::RROtooLargeForMTU: os << " RROtooLargeForMTU "; break;
+									case ERROR_SPEC_Object::RRONotification: os << " RRONotification "; break;
+									case ERROR_SPEC_Object::TunnelLocallyRepaired: os << " TunnelLocallyRepaired "; break;
+									default: os << o.errorValue; break;
+								}
+								break;
+		default: os << "unknown Error:" << o.errorValue; break;
+	};
+	switch (o.flags) {
+		case ERROR_SPEC_Object::InPlace: os << " InPlace "; break;
+		case ERROR_SPEC_Object::NotGuilty: os << " NotGuilty "; break;
+		default: os << " no flags "; break;
+	}
+	return os;
+}
+
+// according to RFC 2205, addresses must be sorted, so 'push_back' can
+// be used. This can be changed in order be "liberal on receive".
+void SCOPE_Object::readFromBuffer( INetworkBuffer& buffer, uint16 len ) {
+	uint16 count = (len - RSVP_ObjectHeader::size()) / NetAddress::size();
+	NetAddress addr;
+	for ( ; count > 0; count -= 1 ) {
+		buffer >> addr;
+		addressList.push_back(addr);
+	}
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const SCOPE_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::SCOPE, 1 );
+	AddressList::ConstIterator iter = o.addressList.begin();
+	for ( ;iter != o.addressList.end(); ++iter ) {
+		buffer << *iter;
+	}
+  return buffer;
+}
+
+ostream& operator<< ( ostream& os, const SCOPE_Object& o ) {
+	AddressList::ConstIterator iter = o.addressList.begin();
+	for ( ;iter != o.addressList.end(); ++iter ) {
+		os << " " << *iter;
+	}
+	return os;
+}
+
+INetworkBuffer& operator>> ( INetworkBuffer& buffer, STYLE_Object& o ) {
+	buffer >> o.optionVector;
+	o.optionVector = o.optionVector % (1<<24);
+	return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const STYLE_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::STYLE, 1 );
+	buffer << o.optionVector;
+  return buffer;
+}
+
+ostream& operator<< ( ostream& os, const STYLE_Object& o ) {
+	switch (o.optionVector) {
+		case FF: os << "FF";
+		break;
+		case WF: os << "WF";
+		break;
+		case SE: os << "SE";
+		break;
+		default: os << "UNKNOWN";
+		break;
+	}
+	return os;
+}
+
+INetworkBuffer& operator>> ( INetworkBuffer& buffer, SENDER_Object& o ) {
+	uint16 undefined;
+	buffer >> o.srcAddress >>	undefined >> o.srcPort;
+	return buffer;
+}
+
+ostream& operator<< ( ostream& os, const SENDER_Object& o ) {
+  os << o.srcAddress << "/" << (uint32)o.srcPort;
+	return os;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const SENDER_TEMPLATE_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::SENDER_TEMPLATE, 7 );
+	buffer << o.srcAddress << (uint16)0 << o.srcPort;
+  return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const FILTER_SPEC_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::FILTER_SPEC, 7 );
+	buffer << o.srcAddress << (uint16)0 << o.srcPort;
+	if ( o.label.getLabel() ) buffer << o.label;
+  return buffer;
+}
+
+ostream& operator<< ( ostream& os, const FILTER_SPEC_Object& f ) {
+	os << (SENDER_Object&)f;
+	if (f.label.getLabel()) os << " L:" << f.label;
+	return os;
+}
+
+
+const FILTER_SPEC_Object FILTER_SPEC_Object::anyFilter = FILTER_SPEC_Object( NetAddress(0), 0 );
+
+INetworkBuffer& operator>> ( INetworkBuffer& buffer, RESV_CONFIRM_Object& o ) {
+	buffer >> o.recvAddress;
+	return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const RESV_CONFIRM_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::RESV_CONFIRM, 1 );
+	buffer << o.recvAddress;
+  return buffer;
+}	
+
+ostream& operator<< ( ostream& os, const RESV_CONFIRM_Object& o ) {
+	os << o.recvAddress;
+	return os;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const UNKNOWN_Object& o ) {
+	buffer << o.header;
+	buffer << o.content;
+	return buffer;
+}
+
+ostream& operator<< ( ostream& os, const UNKNOWN_Object& o ) {
+	os << o.header;
+	return os;
+}
+
+void EXPLICIT_ROUTE_Object::readFromBuffer( INetworkBuffer& buffer, uint16 len ) {
+	length = len -= RSVP_ObjectHeader::size();
+	AbstractNode a;
+	while ( len > 0 ) {
+		buffer >> a;
+		if ( a.getType() != AbstractNode::Illegal ) abstractNodeList.push_back(a);
+		len -= a.getLength();
+	}
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const EXPLICIT_ROUTE_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::EXPLICIT_ROUTE, 1 );
+	AbstractNodeList::ConstIterator iter = o.abstractNodeList.begin();
+	for ( ; iter != o.abstractNodeList.end(); ++iter ) {
+		buffer << *iter;
+	}
+	return buffer;
+}
+
+ostream& operator<< ( ostream& os, const EXPLICIT_ROUTE_Object& o ) {
+	AbstractNodeList::ConstIterator iter = o.abstractNodeList.begin();
+	for ( ; iter != o.abstractNodeList.end(); ++iter ) {
+		os << *iter << "--";
+	}
+	return os;
+}
+
+void LABEL_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len, uint8 C_Type)
+{
+	switch (C_Type){
+		case LABEL_MPLS:  
+		case LABEL_GENERALIZED: 	
+			buffer >> label; labelCType = C_Type; break;
+		default: 
+			buffer.skip(len); labelCType = 0; return;
+	}	
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const LABEL_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::LABEL, o.labelCType);
+	buffer << o.label;
+  return buffer;
+}
+
+ostream& operator<< ( ostream& os, const LABEL_Object& o ) {
+	os << (uint32)o.label;
+	return os;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const SUGGESTED_LABEL_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::SUGGESTED_LABEL, o.labelCType );
+	buffer << o.label;
+  return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const UPSTREAM_LABEL_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::UPSTREAM_LABEL, o.labelCType );
+	buffer << o.label;
+  return buffer;
+}
+
+void LABEL_REQUEST_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len, uint8 C_Type)
+{
+	switch (C_Type){
+		case 1:  buffer >> l3pid; labelType = LABEL_Object::LABEL_MPLS; break;
+		case 4:  	buffer >> lspEncodingType >> switchingType >> gPid; labelType = LABEL_Object::LABEL_GENERALIZED; break;
+		default: buffer.skip(len); labelType = 0; return;
+	}	
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const LABEL_REQUEST_Object& o ) {
+	if (o.labelType == LABEL_Object::LABEL_MPLS){
+		buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::LABEL_REQUEST, 1 );
+		buffer << o.l3pid;
+	}
+	else{
+		buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::LABEL_REQUEST, 4 );
+		buffer << o.lspEncodingType << o.switchingType << o.gPid;
+	}
+  return buffer;
+}
+
+ostream& operator<< ( ostream& os, const LABEL_REQUEST_Object& o ) {
+	if (o.labelType == LABEL_Object::LABEL_MPLS)
+		os << "L3_Pid: " << o.l3pid;
+	else
+		os << "LSP_Enc: " << (uint32)o.lspEncodingType <<" Sw_Type: "<< (uint32)o.switchingType << " G_Pid: " << (uint32)o.gPid;
+	return os;
+}
+
+void LABEL_SET_Object::readFromBuffer( INetworkBuffer& buffer, uint16 len ) {
+	uint16 dummy;
+	buffer >> action >> dummy >> labelType;
+
+	uint16 count = (len - 4 - RSVP_ObjectHeader::size()) / 4;
+	uint32 subChannel;
+	for ( ; count > 0; count -= 1 ) {
+		buffer >> subChannel;
+		subChannelList.push_back(subChannel);
+	}
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const LABEL_SET_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::LABEL_SET, 1 );
+	buffer << o.action << (uint16)0 << o.labelType;
+	SortableList<uint32, uint32>::ConstIterator iter = o.subChannelList.begin();
+	for ( ;iter != o.subChannelList.end(); ++iter ) {
+		buffer << *iter;
+	}
+  return buffer;
+}
+
+ostream& operator<< ( ostream& os, const LABEL_SET_Object& o ) {
+	os << "Action: " << (uint32)o.action << "LabelType: " << (uint32)o.labelType << "SubChannels:";
+	SortableList<uint32, uint32>::ConstIterator iter = o.subChannelList.begin();
+	for ( ;iter != o.subChannelList.end(); ++iter ) {
+		os << " " << *iter;
+	}
+	return os;
+}
+
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const AbstractNode& a ) {
+	buffer << a.typeOrLoose;
+	switch (a.getType()) {
+		case AbstractNode::IPv4:
+			buffer << uint8(8) << NetAddress(a.data.ip4.addr) << a.data.ip4.prefix << uint8(0);
+			break;
+		case AbstractNode::AS:
+			buffer << uint8(4) << a.data.asNum;
+			break;
+		case AbstractNode::UNumIfID:
+			buffer<<uint8(12)<<a.data.uNumIfID.reserved << NetAddress(a.data.uNumIfID.routeID) << a.data.uNumIfID.interfaceID;
+			break;
+		default:
+			FATAL(2)( Log::Fatal, "unrecognized abstract node type:", a.getType() );
+			abortProcess();
+	}
+	return buffer;
+}
+
+INetworkBuffer& operator>> ( INetworkBuffer& buffer, AbstractNode& a ) {
+	uint8 length, dummy;
+	NetAddress addr, rtID, swID;
+	
+	buffer >> a.typeOrLoose >> length;
+	// TODO: check length field
+	switch (a.getType()) {
+		case AbstractNode::IPv4:
+			buffer >> addr >> a.data.ip4.prefix >> length;
+			a.data.ip4.addr = addr.rawAddress();
+			break;
+		case AbstractNode::AS:
+			buffer >> a.data.asNum;
+			break;
+		case AbstractNode::UNumIfID:
+			buffer >> a.data.uNumIfID.reserved>> rtID>>a.data.uNumIfID.interfaceID;
+			a.data.uNumIfID.routeID = rtID.rawAddress();
+			break;
+		default:
+			ERROR(2)( Log::Error, "skipping unrecognized abstract node type:", a.getType() );
+			buffer.skip( dummy - 2 );
+			a.typeOrLoose = AbstractNode::Illegal;
+			break;
+	}
+	return buffer;
+}
+
+ostream& operator<< ( ostream& os, const AbstractNode& a ) {
+	switch (a.getType()) {
+		case AbstractNode::IPv4:
+			os << "IP4:" << NetAddress(a.data.ip4.addr) << "/" << uint32(a.data.ip4.prefix);
+			break;
+		case AbstractNode::AS:
+			os << "AS:" << a.data.asNum;
+			break;
+		case AbstractNode::UNumIfID:
+			os<<"UNumIfID:"<< "{" << NetAddress(a.data.uNumIfID.routeID) << "," << a.data.uNumIfID.interfaceID << "}";
+			break;
+		default:
+			FATAL(2)( Log::Fatal, "unrecognized abstract node type:", a.getType() );
+			abortProcess();
+	}
+	return os;
+}
+
+#if defined(ONEPASS_RESERVATION) 
+INetworkBuffer& operator>> ( INetworkBuffer& buffer, DUPLEX_Object& o ) {
+	buffer >> o.senderReceivePort >> o.receiverSendPort;
+	return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DUPLEX_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::DUPLEX, 1 );
+	buffer << o.senderReceivePort << o.receiverSendPort;
+  return buffer;
+}
+
+ostream& operator<< ( ostream& os, const DUPLEX_Object& o ) {
+	os << o.senderReceivePort << " " << o.receiverSendPort;
+	return os;
+}
+#endif
+
+#if defined(REFRESH_REDUCTION)
+ostream& operator<< ( ostream& os, const MESSAGE_ID_BASE_Object& o ) {
+	os << "flags:" << (uint32)o.getFlags() << " epoch:" << o.getEpoch() << " id:" << o.getID();
+	return os;
+}
+
+INetworkBuffer& operator>> ( INetworkBuffer& buffer, MESSAGE_ID_BASE_Object& o ) {
+	buffer >> o.flagsEpoch >> o.id;
+	return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const MESSAGE_ID_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::MESSAGE_ID, 1 );
+	buffer << o.flagsEpoch << o.id;
+  return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const MESSAGE_ID_ACK_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::MESSAGE_ID_ACK, 1 );
+	buffer << o.flagsEpoch << o.id;
+  return buffer;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const class MESSAGE_ID_NACK_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::MESSAGE_ID_ACK, 2 );
+	buffer << o.flagsEpoch << o.id;
+  return buffer;
+}
+
+ostream& operator<< ( ostream& os, const MESSAGE_ID_LIST_Object& o ) {
+	os << "flags:" << (uint32)o.getFlags() << " epoch:" << o.getEpoch();
+	SimpleList<sint32>::ConstIterator iter = o.idList.begin();
+	for ( ; iter != o.idList.end(); ++iter ) {
+		os << " id:" << *iter;
+	}
+	return os;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const MESSAGE_ID_LIST_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::MESSAGE_ID_LIST, 1 );
+	buffer << o.flagsEpoch;
+	SimpleList<sint32>::ConstIterator iter = o.idList.begin();
+	for ( ; iter != o.idList.end(); ++iter ) {
+		buffer << *iter;
+	}
+	return buffer;
+}
+
+void MESSAGE_ID_LIST_Object::readFromBuffer( INetworkBuffer& buffer, uint16 len ) {
+	buffer >> flagsEpoch;
+	uint16 count = (len - (4 + RSVP_ObjectHeader::size())) / sizeof(sint32);
+	sint32 id;
+	for ( ; count > 0; count -= 1 ) {
+		buffer >> id;
+		idList.push_back(id);
+	}
+}
+
+#endif

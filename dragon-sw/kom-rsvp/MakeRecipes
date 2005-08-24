@@ -1,0 +1,92 @@
+.PHONY : warning all clean dep depend gen genclean test
+
+ifeq ($(strip $(OS_NAME)),)
+
+warning all clean dep depend gen genclean test :
+	@echo
+	@echo "run 'configure' in the top-level directory"
+	@echo
+
+else
+
+all : $(GEN_DIR) $(OBJECT_DIR) $(OBJECTS) $(COBJECTS) $(GEN_OBJECTS) $(GEN_COBJECTS) $(CLIENTS) $(MAINS) $(ADD_ONS)
+
+VPATH := $(VPATH_DIR)
+
+$(OBJECT_DIR) $(GEN_DIR) :
+	test -d $@ || mkdir -p $@
+
+$(OBJECTS) :
+	rm -f $(OBJECT_DIR)/$@
+	$(CXX) $($@-CXXFLAGS) $(CXXFLAGS) -o $(OBJECT_DIR)/$@ -c */$(subst .o,.cc,$@)
+
+$(COBJECTS) :
+	rm -f $(OBJECT_DIR)/$@
+	$(CC) $($@-CFLAGS) $(CFLAGS) -o $(OBJECT_DIR)/$@ -c */$(subst .o,.c,$@)
+
+$(GEN_OBJECTS) : $(GEN_FILES)
+	rm -f $(OBJECT_DIR)/$@
+	$(CXX) $($@-CXXFLAGS) $(CXXFLAGS) -o $(OBJECT_DIR)/$@ -c $(GEN_DIR)/$(subst .o,.cc,$@)
+
+$(EXTRA_OBJECTS) :
+	rm -f $(OBJECT_DIR)/$@
+	$(CXX) $($@-CXXFLAGS) $(CXXFLAGS) -o $(OBJECT_DIR)/$@ -c */$(subst .o,.cc,$@)
+
+$(EXTRA_COBJECTS) :
+	rm -f $(OBJECT_DIR)/$@
+	$(CC) $($@-CFLAGS) $(CFLAGS) -o $(OBJECT_DIR)/$@ -c */$(subst .o,.c,$@)
+
+$(CLIENTS) : %: $(LIB_DIR)/libRSVP.a $(notdir $(ADD_OBJECTS)) %.o
+	rm -f $(BIN_DIR)/$@
+	$(CXX) -o $(BIN_DIR)/$@ $(OBJECT_DIR)/$@.o $($@-ADD_OBJECTS) $(ADD_OBJECTS) -L$(LIB_DIR) -lRSVP $($@-ADD_LIBS) $(LIBS)
+
+$(MAINS) : %: $(notdir $(wildcard $(DAEMON_OBJECTS))) %.o
+	$(MAKE) -C $(SRC_DIR)/daemon VersionString.o
+	rm -f $(BIN_DIR)/$@
+	$(CXX) -o $(BIN_DIR)/$@ $(OBJECT_DIR)/$@.o $(DAEMON_OBJECTS) $(ADD_OBJECTS) $(LIBS) $(MAINS_LIBS) 
+
+clean : genclean
+	for i in $(OBJECTS) $(COBJECTS) dummy; do rm -f $(OBJECT_DIR)/$$i; done
+	for i in $(MAINS) dummy; do rm -f $(BIN_DIR)/$$i; done
+	for i in $(CLIENTS) dummy; do rm -f $(BIN_DIR)/$$i; done
+	for i in $(EXTRA_OBJECTS) dummy; do rm -f $(OBJECT_DIR)/$$i; done
+	for i in $(GEN_OBJECTS) dummy; do rm -f $(OBJECT_DIR)/$$i; done
+
+dep depend : gen $(OBJECT_DIR)
+	rm -f $(OBJECT_DIR)/Makefile.dep
+	touch $(OBJECT_DIR)/Makefile.dep
+ifneq ($(strip $(SOURCES)),)
+	$(CXX) $(CXXFLAGS) -MM $(SOURCES) >> $(OBJECT_DIR)/Makefile.dep
+endif
+ifneq ($(strip $(CSOURCES)),)
+	$(CC) $(CFLAGS) -MM $(CSOURCES) >> $(OBJECT_DIR)/Makefile.dep
+endif
+ifneq ($(strip $(GEN_FILES)),)
+	$(CXX) $(CXXFLAGS) -MM $(wildcard $(GEN_DIR)/*.cc) >> $(OBJECT_DIR)/Makefile.dep
+endif
+
+gen : $(GEN_DIR)
+ifneq ($(strip $(GEN_FILES)),)
+	${MAKE} $(GEN_FILES)
+endif
+
+genclean :
+	rm -f $(GEN_FILES)
+
+test :
+	@echo OBJECT_DIR = $(OBJECT_DIR)
+	@echo GEN_DIR = $(GEN_DIR)
+	@echo SOURCES = $(SOURCES)
+	@echo OBJECTS = $(OBJECTS)
+	@echo GEN_OBJECTS = $(GEN_OBJECTS)
+	@echo CSOURCES = $(CSOURCES)
+	@echo COBJECTS = $(COBJECTS)
+	@echo GEN_FILES = $(GEN_FILES)
+	@echo MAINS = $(MAINS)
+	@echo CLIENTS = $(CLIENTS)
+	@echo LIB_OBJECTS = $(LIB_OBJECTS)
+	@echo DAEMON_OBJECTS = $(DAEMON_OBJECTS)
+
+-include $(OBJECT_DIR)/Makefile.dep
+
+endif

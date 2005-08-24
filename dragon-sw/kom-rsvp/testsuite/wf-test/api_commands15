@@ -1,0 +1,9 @@
+session 239.1.1.1 0 17
+waitpath any
+waitpath any
+waitpath any
+sleep 5
+ucpe 0 20
+reserve wf g 500000 2000000 1000000 100 1500 1400000 0
+sleep 10
+close

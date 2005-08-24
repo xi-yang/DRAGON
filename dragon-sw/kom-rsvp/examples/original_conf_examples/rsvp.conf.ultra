@@ -1,0 +1,3 @@
+interface hme0 tc cbq 10000000 10
+
+api 4000

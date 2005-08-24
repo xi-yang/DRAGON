@@ -1,0 +1,28 @@
+--- netmodel.cc.orig	2003-02-26 15:52:53.000000000 -0500
++++ netmodel.cc	2003-11-17 23:57:06.000000000 -0500
+@@ -2047,15 +2047,20 @@
+ 				int n, i;
+ 				for (n = nclass_; n < c; n <<= 1);
+ 				int *p = new int[n];
+-				for (i = 0; i < nclass_; ++i)
+-					p[i] = paint_[i];
++				memcpy((char*)p, (char*)paint_, nclass_ * sizeof(int));
+ 				delete paint_;
+ 				paint_ = p;
+-				nclass_ = n;
+-				paintMask_ = nclass_ - 1;
++				int *o = new int[n];
++				memcpy((char*)o, (char*)oldpaint_, nclass_ * sizeof(int));
++				delete oldpaint_;
++				oldpaint_ = o;
+ 				int pno = paint->thin();
+-				for (; i < n; ++i)
++				for (i = nclass_; i < n; ++i)
+ 					paint_[i] = pno;
++				for (i = nclass_; i < n; ++i)
++					oldpaint_[i] = pno;
++				nclass_ = n;
++				paintMask_ = nclass_ - 1;
+ 			}
+ 			int pno = paint->lookup(argv[3], 1);
+ 			if (pno < 0) {

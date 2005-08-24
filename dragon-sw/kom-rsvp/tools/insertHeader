@@ -1,0 +1,15 @@
+#!/bin/sh
+
+if [ $# -lt 2 ]; then
+	echo usage $0 header-file target-file
+	exit 1
+fi
+
+filename=`basename $2`
+echo -n insert copyright header into $2?
+read answer
+if test "$answer" = "y" -o "$answer" = "Y"; then
+	cat $1 > /tmp/$filename
+	cat $2 >> /tmp/$filename
+	mv /tmp/$filename $2
+fi

@@ -1,0 +1,22 @@
+--- /work/kalli/tmp/ns-allinone-2.26/ns-2.26/common/connector.cc	2003-02-26 17:07:38.000000000 -0500
++++ connector.cc	2003-11-17 23:52:57.000000000 -0500
+@@ -39,6 +39,7 @@
+ 
+ #include "packet.h"
+ #include "connector.h"
++#include <iostream>
+ 
+ static class ConnectorClass : public TclClass {
+ public:
+@@ -105,6 +106,11 @@
+ 
+ void Connector::drop(Packet* p)
+ {
++	hdr_cmn* hcmn = hdr_cmn::access(p);
++	if (hcmn->ptype() >= PT_RSVP_UNKNOWN && hcmn->ptype() <= PT_RSVP_PATH_RESV)
++		cerr << endl << name() << ": WARNING - dropping RSVP packet type "
++			<< (int)(hcmn->ptype() - PT_RSVP_UNKNOWN)
++			<< " destined to " << target_->name() << endl;
+ 	if (drop_ != 0)
+ 		drop_->recv(p);
+ 	else

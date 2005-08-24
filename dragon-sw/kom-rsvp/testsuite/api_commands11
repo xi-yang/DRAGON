@@ -1,0 +1,9 @@
+session 239.1.1.2 0 17
+sleep 2
+# 2 seconds
+reserve wf g 500000 2000000 1000000 100 1500 600000 0
+sleep 11
+# 13 seconds
+reserve wf g 500000 2000000 1000000 100 1500 600000 0
+sleep 26
+# 39 seconds

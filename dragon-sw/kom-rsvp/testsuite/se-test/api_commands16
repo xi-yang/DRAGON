@@ -1,0 +1,9 @@
+session 239.1.1.1 0 17
+waitpath any
+waitpath any
+waitpath any
+sleep 3
+ucpe 0 20
+reserve se g 500000 2000000 1000000 100 1500 1400000 0 192.168.8.4 4711
+sleep 30
+close

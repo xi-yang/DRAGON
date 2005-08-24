@@ -1,0 +1,9 @@
+interface virt0 refresh 120000
+	encap 2000 127.0.0.1 2001
+	virt 192.168.137.134 1500
+	tc cbq 7000000 10
+
+route 224.0.0.0		240.0.0.0	0.0.0.0		virt0
+route 0.0.0.0		0.0.0.0		0.0.0.0		virt0
+
+api 4003

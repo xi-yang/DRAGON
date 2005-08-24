@@ -1,0 +1,169 @@
+/* RSVP_config.h.in.  Generated from configure.in by autoheader.  */
+#ifndef _RSVP_config_h_
+#define _RSVP_config_h_ 1
+
+/* size of label hash container for MPLS */
+#define LABEL_HASH_COUNT 65536
+
+/* size of message id hash container for refresh reduction */
+#define MESSAGE_ID_HASH_COUNT_SEND 131072
+
+/* size of message id hash container for refresh reduction */
+#define MESSAGE_ID_HASH_COUNT_RECV 131072
+
+/* size of api hash container -> useful for large tests with few end systems */
+#define API_HASH_COUNT 1
+
+/* size of session hash container */
+#define SESSION_HASH_COUNT 4096
+
+/* define to include dest port number into hash calculation
+   note: this is useful for certain tests, but prohibits 100%-correct RSVP */
+#undef SESSION_HASH_PORTS
+
+/* default total period which is covered by timer wheel */
+#define TIMER_SLOT_TOTAL_PERIOD 600
+
+#define MPLS_REAL	(defined(ENABLE_MPLS) && (defined(MPLS_WISCONSIN) || defined(MPLS_CAMBRIDGE)))
+
+#undef ALTQ_DEVICE
+#undef CBQ_DEVICE
+#undef ENABLE_ALTQ
+#undef ENABLE_CBQ
+#undef ENABLE_MPLS
+#undef ENABLE_SNMP
+#undef FIXED_TIMEOUTS
+#undef FUZZY_TIMERS
+#undef GETSOCKOPT_SIZE_T
+#undef GETSOCKNAME_SIZE_T
+#undef HAVE_KLD
+#undef HAVE_SIN_LEN
+#undef HFSC_DEVICE
+#undef HTONS_IP_HEADER
+#undef INVERSE_DNS
+#undef MPLS_WISCONSIN
+#undef MPLS_CAMBRIDGE
+#undef NEED_IN_PKTINFO
+#undef NEED_MULTICAST_TTL
+#undef NEED_RA_SOCKOPT
+#undef NEED_UNICAST_TTL
+#undef NO_TIMERS
+#undef ONEPASS_RESERVATION
+#undef PIDFILE
+#undef REAL_NETWORK
+#undef SO_REUSEXXX
+#undef REFRESH_REDUCTION
+#undef RSRR_SERV_PATH
+#undef RSRR_CLI_PATH
+#undef RSVP_MEMORY_MACHINE
+#undef RSVP_STATS
+#undef RECVFROM_BUF_T
+#undef RECVFROM_SIZE_T
+#undef RSVP_CHECKS
+#undef SENDTO_BUF_T
+#undef STAMP_DEVICE
+#undef USE_SCOPE_OBJECT
+#undef VIRT_NETWORK
+#undef WITH_API
+#undef WITH_JAVA_API
+
+#undef Linux
+#undef FreeBSD
+#undef SunOS
+
+#undef FATAL_ON
+#undef ERROR_ON
+#undef CHECK_ON
+#undef LOG_ON
+#undef NDEBUG
+
+#if !defined(REAL_NETWORK) && !defined(VIRT_NETWORK)
+#define NS2	1
+#endif
+
+
+
+/* Define to 1 if you have the `inet_aton' function. */
+#undef HAVE_INET_ATON
+
+/* Define to 1 if you have the `inet_ntop' function. */
+#undef HAVE_INET_NTOP
+
+/* Define to 1 if you have the `inet_pton' function. */
+#undef HAVE_INET_PTON
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
+
+/* Define to 1 if you have the `pthreads' library (-lpthreads). */
+#undef HAVE_LIBPTHREADS
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mpls_init' function. */
+#undef HAVE_MPLS_INIT
+
+/* Define to 1 if you have the <pthreads.h> header file. */
+#undef HAVE_PTHREADS_H
+
+/* Define to 1 if you have the <pthread.h> header file. */
+#undef HAVE_PTHREAD_H
+
+/* Define to 1 if you have the `rtnl_open' function. */
+#undef HAVE_RTNL_OPEN
+
+/* Define to 1 if you have the <sstream> header file. */
+#undef HAVE_SSTREAM
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to the address where bug reports for this package should be sent. */
+// #undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+// #undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+// #undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+// #undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+// #undef PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#undef YYTEXT_POINTER
+
+#endif /* _RSVP_config_h_ */

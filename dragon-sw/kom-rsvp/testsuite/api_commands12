@@ -1,0 +1,11 @@
+session 239.1.1.1 0 17
+waitpath any
+waitpath any
+waitpath any
+# 1 second
+sleep 14
+# 15 seconds
+reserve wf cl 500000 2000000 1000000 100 1500
+sleep 18
+# 33 seconds
+close

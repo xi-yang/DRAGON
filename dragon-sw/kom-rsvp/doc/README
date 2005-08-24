@@ -1,0 +1,169 @@
+                   KOM RSVP Engine (release version: 3.0)
+                   ======================================
+                               Martin Karsten
+                     Martin.Karsten@KOM.tu-darmstadt.de
+
+Web Page
+--------
+http://www.kom.e-technik.tu-darmstadt.de/rsvp
+
+Overview
+--------
+This package provides an implementation of RSVP protocol operations. Note
+that currently, it can only be regarded as almost compliant to [RFC2205],
+because it lacks a few features that would be necessary for a full
+implementation. See files RELEASE_NOTES for the current implementation
+status.
+
+See Section 'Compiling & Running' to find out how to compile and use this
+software.
+
+Please read the files COPYRIGHT, COPYRIGHT.other and LICENSE for copyright
+information.
+
+Compiling & Running
+-------------------
+The software has been developed and tested on Linux 2.4, Solaris 2.{6,7} and
+FreeBSD 4.x using gcc 2.95.3 or gcc 3.0. It should compile and work
+on any Linux 2.X and FreeBSD 3.X/4.X platform. Please note that a kernel
+patch is required for correct operation on FreeBSD versions older than 4.2.
+Note also that some of the employed C++ language features might not (or
+differently) be supported by other compilers (especially in case of older
+versions).
+
+The compilation process is prepared by invoking 'configure', either from the
+main directory or '<path>/configure' from an arbitrary directory (e.g. when
+compiling for multiple platforms). Use 'configure --help' to retrieve a list
+of configuration options.
+
+See the file README.config for a brief description of config files and look
+at the example config files in examples. Please also look at the example
+client applications in src/clients.
+
+For information on how to investigate larger network scenarios using the
+virtual testsuite, see the file README.testsuite. It also contains some
+information about the validation suite.
+
+Packet Scheduling
+-----------------
+The RSVP daemon can inter-operate with CBQ and HFSC scheduling using ALTQ on   
+FreeBSD, as well as CBQ scheduling on Linux and Solaris. On Linux, it is
+usually necessary to execute the script 'tools/cbqinit' first. One should be 
+familiar with ALTQ (FreeBSD), iproute2 (Linux) and CBQ (Solaris),
+respectively, to use this software.
+
+Further Documentation
+---------------------
+A technical report describing the architecture and some implementation
+details can be downloaded from
+http://www.kom.e-technik.tu-darmstadt.de/publications/abstracts/Kar00-2.html
+A paper about the traffic control interface can be downloaded from
+http://www.kom.e-technik.tu-darmstadt.de/publications/abstracts/KSS00-1.html
+A paper about performance evaluations can be downloaded from
+http://www.kom.e-technik.tu-darmstadt.de/publications/abstracts/KSS01-1.html
+A paper about the experimental extensions can be download from
+http://www.kom.e-technik.tu-darmstadt.de/publications/abstracts/Kar01-1.html
+
+Acknowledgements
+----------------
+I gratefully acknowledge the help of Jens Schmitt during many design
+discussions. Jens also implemented the initial CBQ support on Solaris and
+HFSC support on FreeBSD. Frank Zdarsky implemented the port to ns2. Please
+see the web page for further acknowledgements.
+
+References
+----------
+[RFC2205] Robert Braden, Lixia Zhang, Steve Berson, Shai Herzog and Sugih
+Jamin. RFC 2205 - Resource ReSerVation Protocol (RSVP) -- Version 1
+Functional Specification. Proposed Standard, IETF, September 1997.
+
+Limitations
+===========
+
+- No appropriate documentation. ;-(
+
+- No C-Type checking is performed for objects of incoming RSVP messages.
+
+- An interface to real packet scheduling is provided for the CBQ package
+on Solaris and for ALTQ on FreeBSD (CBQ and HFSC scheduling disciplines).
+Because CBQ is not directly targeted to support flow-based services with
+hard real-time guarantees, it is still hard to choose a reasonable parameter
+setting. In case of HFSC, the situation looks better in principle. However,
+in both cases only a very simple admission control has been implemented
+
+- UDP encapsulation is not supported. It is not planned to support this in
+the future, because it does not belong to the core of the specification and
+it is already discussed in the IETF to drop this requirement.
+
+- IPv6 is not supported yet. This is mainly due to a lack of infrastructure
+to properly test such code. If possible, this is definitely planned to be
+integrated in the future.
+
+- Asynchonous route replies are not handled completely proper, especially in
+case of multiple threads. Essentially, all asynchonous route replies
+arriving between the request and reply of a regular route lookup are either
+lost or cause the regular routing lookup to fail (depending on the platform
+and unicast/multicast). They should be buffered instead and delivered later.
+In general, not many tests have been done with respect to asynchronous route
+replies.
+
+
+Features/Characteristics
+========================
+
+- see also file NEW_IN_3.0
+
+Emulation Mode
+--------------
+RSVP can be run in an emulation mode, in which multiple daemons execute on
+the same or differing machines and use a configurable virtual network
+between them, including shared link media and static multicast routing. It
+is for example possible, to start up multiple RSVP daemons on a single
+machine and having them all communication with each other via "virtual"
+interfaces using UDP communication. Without such a feature, examinations of
+RSVP protocol behaviour in non-trivial network topologies are only possible
+by using a simulator or by using real systems. In the second case, it is
+necessary to start multiple processes on multiple machines needing
+super-user privileges and a suitable infrastructure. The emulation mode
+allows to experiment without the need for additional software nor hardware.
+A test-suite can be created by writing high-level configuration files, from
+which detailed configuration files are built by simple scripts. A
+preconfigured test-suite consisting of 16 virtual nodes and including test
+scenarios already exists. Furthermore, the emulation mode can be combined
+with real operation, for example, to test interoperability with other
+implementations. Execute
+  configure --enable-virt --disable-real --enable-active-api \
+  --disable-api-clients
+to select pure emulation mode. As well, it is possible to combine real and
+virtual operation for a hybrid mode. Select '--enable-virt' to activate
+virtual network operation.
+
+Validation Suite
+----------------
+On top of the emulation mode, a validation suite can be run. Execute
+  configure --enable-virt --disable-real --enable-active-api \
+  --disable-api-clients --disable-timers
+to prepare for validation. After compilation, run 'validate' in the
+testsuite directory. Note that only a subset of the code is covered by the
+validation suite, namely the abstract deterministic processing engine
+without timers. Further, not that small differences can still exists,
+because of the non-deterministic order of confirmation message generation.
+Such differences are reported as "weak differences".
+
+Simple API Communication
+------------------------
+Communication between RSVP daemon and API clients uses soft state. This is
+deemed useful to extend communication, such that an RSVP daemon operates on
+a router on behalf of an API client at a different host. There is no need
+for complicated connection management and the API can be treated very
+similar to just another RSVP hop. Refreshing of soft-state is triggered by
+the RSVP daemon, such that no timer management is required at the API
+client.
+
+Other Options
+-------------
+Many other options devised for testing purposes are configurable at
+compile- and run-time, as well. Execute
+  configure --help
+to find about these options. Additionally, have a look at the generated file
+RSVP_config.h

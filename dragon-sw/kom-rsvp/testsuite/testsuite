@@ -1,0 +1,102 @@
+#!/bin/sh
+CURRDIR=`pwd`
+CONFDIR=$CURRDIR
+RUNDIR=$CURRDIR
+if [ -f builddir.conf ]; then
+	RSVP_BUILD_DIR=`cat builddir.conf`
+fi
+BINDIR=$RSVP_BUILD_DIR/bin
+if [ ! -x $BINDIR/RSVPD ]; then
+	echo cannot find $BINDIR/RSVPD
+	echo Did you set RSVP_BUILD_DIR?
+	exit 1
+fi
+# echo $BINDIR
+PATH=$BINDIR:$PATH
+export PATH
+
+if [ "$1" = "-?" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+	echo usage: $0 [-t] [ -c config-dir ] [ -d command-dir ] [ n1 n2 n3 ... ]
+	echo "-t                no debug output for timers and 'select' call"
+	echo "config-dir        directory from which configuration is taken"
+	echo "command-dir       directory from which api commands are read"
+	echo "n?                select daemons to debug"
+	exit 1
+fi
+
+debugstring="-d ref,packet,select"
+if [ $# -ge 1 ]; then
+	if [ "$1" = "-t" ]; then
+		debugstring="$debugstring,timer,reduct"
+		shift
+	fi
+fi
+if [ $# -ge 2 ]; then
+	if [ "$1" = "-c" ]; then
+		cd $2
+		CONFDIR=`pwd`
+		cd $CURRDIR
+		shift
+		shift
+	fi
+fi
+if [ $# -ge 2 ]; then
+	if [ "$1" = "-d" ]; then
+		cd $2
+		RUNDIR=`pwd`
+		cd $CURRDIR
+		if [ $? -ne 0 ]; then exit 1; fi
+		shift
+		shift
+	fi
+fi
+
+echo "killing old processes..."
+gmake xkill
+cd $RUNDIR
+printf "starting RSVPD"
+i=1
+debugging=no
+while [ -f $CONFDIR/rsvp.conf$i ] ; do
+	if [ $1 ]; then
+		debug=$1
+		debugging=yes
+	else
+		debug=0
+	fi
+	printf " $i"
+#	equivalent to dmalloc high -m error-abort -m error-dump -l rsvp.log.dmalloc.$i
+	DMALLOC_OPTIONS="debug=0x4b47d83,log=rsvp.log.dmalloc.$i"
+	export DMALLOC_OPTIONS
+	if [ $i -eq $debug ]; then
+		shift
+		xterm -e sh -c "echo run -c $CONFDIR/rsvp.conf$i $debugstring -o rsvp.log.$i ; gdb $BINDIR/RSVPD" &
+	else
+		RSVPD -c $CONFDIR/rsvp.conf$i $debugstring -o rsvp.log.$i > rsvp.err.$i 2>&1 &
+	fi
+	i=`expr $i + 1`
+done
+maxnumber=0
+maxnumber=`expr $i - 1`
+i=1
+printf "\n"
+printf "starting API clients"
+while [ $i -le $maxnumber ] ; do
+	if [ -f api_commands$i ]; then
+		printf " $i"
+		api $CONFDIR/rsvp.conf$i api_commands$i > api.log.$i 2>&1 &
+	fi
+	i=`expr $i + 1`
+done
+printf "\n"
+if [ "$debugging" = "no" ]; then
+	echo "waiting 3 seconds before starting API clients..."
+	sleep 3
+else
+	printf "press [ENTER] to start API clients!"
+	read dummy
+fi
+echo sending start signal to API clients
+cd $CURRDIR
+gmake start
+exit 0

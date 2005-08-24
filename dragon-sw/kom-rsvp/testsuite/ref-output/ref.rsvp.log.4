@@ -1,0 +1,692 @@
+Created interface: virt1(0) 192.168.4.1 (30.000 sec) MTU: 1500 [UDP:10401 <-> 127.0.0.1:10104] loss:0.000%
+Created interface: virt7(0) 192.168.4.7 (30.000 sec) MTU: 1500 [UDP:10407 <-> 127.0.0.1:10704] loss:0.000%
+Created interface: virt8(0) 192.168.4.8 (30.000 sec) MTU: 1500 [UDP:10408 <-> 127.0.0.1:10804] loss:0.000%
+interface: rsvp-api(0) 0.0.0.0 (0.000 sec) MTU: 8191  [UDP:10400 <-> 0.0.0.0:0] loss:0.000%
+Scheduler: localAdspec: length:40 hops: 1 bw: 10000000.000 lat: 2500 MTU: 1500
+interface: virt1(1) 192.168.4.1 (10.000 sec) MTU: 1500 bw: 10000000.000 lat: 2500 [UDP:10401 <-> 127.0.0.1:10104] loss:0.000%
+Scheduler: localAdspec: length:40 hops: 1 bw: 10000000.000 lat: 2500 MTU: 1500
+interface: virt7(2) 192.168.4.7 (10.000 sec) MTU: 1500 bw: 10000000.000 lat: 2500 [UDP:10407 <-> 127.0.0.1:10704] loss:0.000%
+Scheduler: localAdspec: length:40 hops: 1 bw: 10000000.000 lat: 2500 MTU: 1500
+interface: virt8(3) 192.168.4.8 (10.000 sec) MTU: 1500 bw: 10000000.000 lat: 2500 [UDP:10408 <-> 127.0.0.1:10804] loss:0.000%
+route:  dst: 239.1.1.3 mask: 255.255.255.255 -> virt8
+route:  dst: 239.1.1.3 mask: 255.255.255.255 -> virt7
+route:  dst: 239.1.1.2 mask: 255.255.255.255 -> virt8
+route:  dst: 239.1.1.2 mask: 255.255.255.255 -> virt7
+route:  dst: 239.1.1.1 mask: 255.255.255.255 -> virt1
+route:  dst: 192.168.12.0 mask: 255.255.255.0 gw: 192.168.1.4 -> virt1
+route:  dst: 192.168.11.0 mask: 255.255.255.0 gw: 192.168.1.4 -> virt1
+route:  dst: 192.168.10.0 mask: 255.255.255.0 gw: 192.168.1.4 -> virt1
+route:  dst: 192.168.9.0 mask: 255.255.255.0 gw: 192.168.1.4 -> virt1
+route:  dst: 192.168.6.0 mask: 255.255.255.0 gw: 192.168.1.4 -> virt1
+route:  dst: 192.168.5.0 mask: 255.255.255.0 gw: 192.168.1.4 -> virt1
+route:  dst: 192.168.3.0 mask: 255.255.255.0 gw: 192.168.1.4 -> virt1
+route:  dst: 192.168.2.0 mask: 255.255.255.0 gw: 192.168.1.4 -> virt1
+route:  dst: 192.168.8.0 mask: 255.255.255.0 gw: 192.168.8.4 -> virt8
+route:  dst: 192.168.7.0 mask: 255.255.255.0 gw: 192.168.7.4 -> virt7
+route:  dst: 192.168.1.0 mask: 255.255.255.0 gw: 192.168.1.4 -> virt1
+****************   new message received   ****************
+virt7 received MSG from 192.168.7.4 : PATH 1 1 ttl:127 length:132
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.7.4[1]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.7.4/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 1 bw: 10000000.000 lat: 2500 MTU: 1500
+creating Hop:192.168.7.4 via virt7
+received PATH for 239.1.1.1/0,17
+new Session: 239.1.1.1/0(17)1
+virtual route lookup for 239.1.1.1 -> rsvp-api virt1
+routing result after adjustment: rsvp-api virt1
+creating PSB:192.168.7.4/4711 PHOP not yet set
+creating PHopSB:192.168.7.4[1] via virt7
+setting new PHOP PHopSB:192.168.7.4[1] via virt7
+TSpec changed: r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+creating: OIatPSB:192.168.7.4/4711 -> rsvp-api
+creating: OIatPSB:192.168.7.4/4711 -> virt1
+WARNING: no API client found for 239.1.1.1/0(17)1
+virt1 sends MSG to 239.1.1.1 : PATH 1 1 ttl:126 length:132
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.1[1]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.7.4/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 2 bw: 10000000.000 lat: 5000 MTU: 1500
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 2
+****************   new message received   ****************
+virt8 received MSG from 192.168.8.4 : PATH 1 1 ttl:127 length:132
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.8.4[1]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.8.4/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 1 bw: 10000000.000 lat: 2500 MTU: 1500
+creating Hop:192.168.8.4 via virt8
+received PATH for 239.1.1.1/0,17
+found Session: 239.1.1.1/0(17)1
+virtual route lookup for 239.1.1.1 -> rsvp-api virt1
+routing result after adjustment: rsvp-api virt1
+creating PSB:192.168.8.4/4711 PHOP not yet set
+creating PHopSB:192.168.8.4[1] via virt8
+setting new PHOP PHopSB:192.168.8.4[1] via virt8
+TSpec changed: r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+creating: OIatPSB:192.168.8.4/4711 -> rsvp-api
+creating: OIatPSB:192.168.8.4/4711 -> virt1
+WARNING: no API client found for 239.1.1.1/0(17)1
+virt1 sends MSG to 239.1.1.1 : PATH 1 1 ttl:126 length:132
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.1[1]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.8.4/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 2 bw: 10000000.000 lat: 5000 MTU: 1500
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 2
+****************   new message received   ****************
+virt8 received MSG from 192.168.8.4 : PATH 1 1 ttl:127 length:132
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.8.4[1]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.8.4/4712
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 1 bw: 10000000.000 lat: 2500 MTU: 1500
+received PATH for 239.1.1.1/0,17
+found Session: 239.1.1.1/0(17)1
+virtual route lookup for 239.1.1.1 -> rsvp-api virt1
+routing result after adjustment: rsvp-api virt1
+creating PSB:192.168.8.4/4712 PHOP not yet set
+setting new PHOP PHopSB:192.168.8.4[1] via virt8
+TSpec changed: r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+creating: OIatPSB:192.168.8.4/4712 -> rsvp-api
+creating: OIatPSB:192.168.8.4/4712 -> virt1
+WARNING: no API client found for 239.1.1.1/0(17)1
+virt1 sends MSG to 239.1.1.1 : PATH 1 1 ttl:126 length:132
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.1[1]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.8.4/4712
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 2 bw: 10000000.000 lat: 5000 MTU: 1500
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 2
+****************   new message received   ****************
+virt1 received MSG from 192.168.1.4 : RESV 1 1 ttl:63 length:116
+MESSAGE_ID:flags:0 epoch:4711 id:0
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.1.4[1]
+TIME_VALUES:10000
+RESV_CONFIRM:192.168.10.5
+SCOPE: 192.168.7.4 192.168.8.4
+STYLE:WF
+FDESC:length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+creating Hop:192.168.1.4 via virt1
+received RESV for 239.1.1.1/0,17
+found Session: 239.1.1.1/0(17)1
+processing flow descriptor length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+matched PSB:192.168.7.4/4711 from PHopSB:192.168.7.4[1] via virt7
+matched PSB:192.168.8.4/4711 from PHopSB:192.168.8.4[1] via virt8
+matched PSB:192.168.8.4/4712 from PHopSB:192.168.8.4[1] via virt8
+creating OutISB at virt1
+creating RSB(nhop):192.168.1.4
+OIatPSB:192.168.7.4/4711 -> virt1 addRSB, count is 1
+OIatPSB:192.168.8.4/4711 -> virt1 addRSB, count is 1
+OIatPSB:192.168.8.4/4712 -> virt1 addRSB, count is 1
+Scheduler: admitting 4000000.000 bit/s out of 10000000.000 bit/s.
+Scheduler: netto available rate: 6000000.000 bit/s.
+Scheduler: adding filter for: 0.0.0.0/0 -> 239.1.1.1/0(17)1
+192.168.7.4[1] marked for refresh: PSB:192.168.7.4/4711 from PHopSB:192.168.7.4[1] via virt7
+192.168.8.4[1] marked for refresh: PSB:192.168.8.4/4711 from PHopSB:192.168.8.4[1] via virt8
+192.168.8.4[1] marked for refresh: PSB:192.168.8.4/4712 from PHopSB:192.168.8.4[1] via virt8
+calculating RESV for 192.168.7.4
+PSB PSB:192.168.7.4/4711 from PHopSB:192.168.7.4[1] via virt7 calculated forward flowspec length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+PHopSB:192.168.7.4[1] via virt7 calculated shared forward flowspec length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+creating RESV for PHOP 192.168.7.4
+virt7 sends MSG to 192.168.7.4 : RESV 1 1 ttl:63 length:104
+MESSAGE_ID:flags:0 epoch:4711 id:0
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.7[1]
+TIME_VALUES:10000
+RESV_CONFIRM:192.168.10.5
+STYLE:WF
+FDESC:length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+PHOP: 192.168.7.4 -> full refresh
+calculating RESV for 192.168.8.4
+PSB PSB:192.168.8.4/4711 from PHopSB:192.168.8.4[1] via virt8 calculated forward flowspec length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+PSB PSB:192.168.8.4/4712 from PHopSB:192.168.8.4[1] via virt8 calculated forward flowspec length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+PHopSB:192.168.8.4[1] via virt8 calculated shared forward flowspec length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+creating RESV for PHOP 192.168.8.4
+virt8 sends MSG to 192.168.8.4 : RESV 1 1 ttl:63 length:112
+MESSAGE_ID:flags:0 epoch:4711 id:0
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.8[1]
+TIME_VALUES:10000
+RESV_CONFIRM:192.168.10.5
+SCOPE: 192.168.8.4
+STYLE:WF
+FDESC:length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+PHOP: 192.168.8.4 -> full refresh
+****************   new message received   ****************
+virt7 received MSG from 192.168.7.4 : RCONF 1 1 ttl:63 length:84
+SESSION:239.1.1.1/0(17)1
+ERROR_SPEC:192.168.7.4 Confirmation 0 no flags
+RESV_CONFIRM:192.168.10.5
+STYLE:WF
+FDESC:length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+virtual route lookup for 192.168.10.5 -> virt1
+virt1 sends MSG to 192.168.10.5 : RCONF 1 1 ttl:62 length:84
+SESSION:239.1.1.1/0(17)1
+ERROR_SPEC:192.168.7.4 Confirmation 0 no flags
+RESV_CONFIRM:192.168.10.5
+STYLE:WF
+FDESC:length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+****************   new message received   ****************
+virt8 received MSG from 192.168.8.4 : RCONF 1 1 ttl:63 length:84
+SESSION:239.1.1.1/0(17)1
+ERROR_SPEC:192.168.8.4 Confirmation 0 no flags
+RESV_CONFIRM:192.168.10.5
+STYLE:WF
+FDESC:length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+virtual route lookup for 192.168.10.5 -> virt1
+virt1 sends MSG to 192.168.10.5 : RCONF 1 1 ttl:62 length:84
+SESSION:239.1.1.1/0(17)1
+ERROR_SPEC:192.168.8.4 Confirmation 0 no flags
+RESV_CONFIRM:192.168.10.5
+STYLE:WF
+FDESC:length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+****************   new message received   ****************
+virt1 received MSG from 192.168.12.13 : PATH 1 1 ttl:124 length:132
+SESSION:239.1.1.3/0(17)1
+RSVP_HOP:192.168.1.4[3]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.12.13/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 4 bw: 10000000.000 lat: 10000 MTU: 1500
+received PATH for 239.1.1.3/0,17
+new Session: 239.1.1.3/0(17)1
+virtual route lookup for 239.1.1.3 -> rsvp-api virt7 virt8
+routing result after adjustment: rsvp-api virt7 virt8
+creating PSB:192.168.12.13/4711 PHOP not yet set
+creating PHopSB:192.168.1.4[3] via virt1
+setting new PHOP PHopSB:192.168.1.4[3] via virt1
+TSpec changed: r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+creating: OIatPSB:192.168.12.13/4711 -> rsvp-api
+creating: OIatPSB:192.168.12.13/4711 -> virt7
+creating: OIatPSB:192.168.12.13/4711 -> virt8
+WARNING: no API client found for 239.1.1.3/0(17)1
+virt7 sends MSG to 239.1.1.3 : PATH 1 1 ttl:123 length:132
+SESSION:239.1.1.3/0(17)1
+RSVP_HOP:192.168.4.7[2]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.12.13/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 5 bw: 10000000.000 lat: 12500 MTU: 1500
+virt8 sends MSG to 239.1.1.3 : PATH 1 1 ttl:123 length:132
+SESSION:239.1.1.3/0(17)1
+RSVP_HOP:192.168.4.8[3]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.12.13/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 5 bw: 10000000.000 lat: 12500 MTU: 1500
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 3
+****************   new message received   ****************
+virt7 received MSG from 192.168.7.4 : RESV 1 1 ttl:63 length:116
+MESSAGE_ID:flags:0 epoch:4711 id:0
+SESSION:239.1.1.3/0(17)1
+RSVP_HOP:192.168.7.4[2]
+TIME_VALUES:10000
+RESV_CONFIRM:192.168.7.4
+STYLE:FF
+FDESC:192.168.12.13/4711 length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+received RESV for 239.1.1.3/0,17
+found Session: 239.1.1.3/0(17)1
+processing flow descriptor 192.168.12.13/4711 length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+matched PSB:192.168.12.13/4711 from PHopSB:192.168.1.4[3] via virt1
+creating OutISB at virt7
+creating RSB(nhop):192.168.7.4
+OIatPSB:192.168.12.13/4711 -> virt7 addRSB, count is 1
+Scheduler: admitting 4000000.000 bit/s out of 10000000.000 bit/s.
+Scheduler: netto available rate: 6000000.000 bit/s.
+Scheduler: adding filter for: 192.168.12.13/4711 -> 239.1.1.3/0(17)1
+192.168.1.4[3] marked for refresh: PSB:192.168.12.13/4711 from PHopSB:192.168.1.4[3] via virt1
+calculating RESV for 192.168.1.4
+PSB PSB:192.168.12.13/4711 from PHopSB:192.168.1.4[3] via virt1 calculated forward flowspec length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+creating RESV for PHOP 192.168.1.4
+virt1 sends MSG to 192.168.1.4 : RESV 1 1 ttl:63 length:116
+MESSAGE_ID:flags:0 epoch:4711 id:0
+SESSION:239.1.1.3/0(17)1
+RSVP_HOP:192.168.4.1[3]
+TIME_VALUES:10000
+RESV_CONFIRM:192.168.7.4
+STYLE:FF
+FDESC:192.168.12.13/4711 length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+PHOP: 192.168.1.4 -> full refresh
+****************   new message received   ****************
+virt1 received MSG from 192.168.1.4 : RCONF 1 1 ttl:60 length:96
+SESSION:239.1.1.3/0(17)1
+ERROR_SPEC:192.168.12.13 Confirmation 0 no flags
+RESV_CONFIRM:192.168.7.4
+STYLE:FF
+FDESC:192.168.12.13/4711 length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+virtual route lookup for 192.168.7.4 -> virt7
+virt7 sends MSG to 192.168.7.4 : RCONF 1 1 ttl:59 length:96
+SESSION:239.1.1.3/0(17)1
+ERROR_SPEC:192.168.12.13 Confirmation 0 no flags
+RESV_CONFIRM:192.168.7.4
+STYLE:FF
+FDESC:192.168.12.13/4711 length:32 CLS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+****************   new message received   ****************
+virt1 received MSG from 192.168.9.5 : PATH 1 1 ttl:124 length:132
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.1.4[3]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.9.5/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 4 bw: 10000000.000 lat: 10000 MTU: 1500
+received PATH for 239.1.1.2/0,17
+new Session: 239.1.1.2/0(17)1
+virtual route lookup for 239.1.1.2 -> rsvp-api virt7 virt8
+routing result after adjustment: rsvp-api virt7 virt8
+creating PSB:192.168.9.5/4711 PHOP not yet set
+creating PHopSB:192.168.1.4[3] via virt1
+setting new PHOP PHopSB:192.168.1.4[3] via virt1
+TSpec changed: r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+creating: OIatPSB:192.168.9.5/4711 -> rsvp-api
+creating: OIatPSB:192.168.9.5/4711 -> virt7
+creating: OIatPSB:192.168.9.5/4711 -> virt8
+WARNING: no API client found for 239.1.1.2/0(17)1
+virt7 sends MSG to 239.1.1.2 : PATH 1 1 ttl:123 length:132
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.7[2]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.9.5/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 5 bw: 10000000.000 lat: 12500 MTU: 1500
+virt8 sends MSG to 239.1.1.2 : PATH 1 1 ttl:123 length:132
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.8[3]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.9.5/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 5 bw: 10000000.000 lat: 12500 MTU: 1500
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 3
+****************   new message received   ****************
+virt1 received MSG from 192.168.9.5 : PATH 1 1 ttl:124 length:132
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.1.4[3]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.9.5/4712
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 4 bw: 10000000.000 lat: 10000 MTU: 1500
+received PATH for 239.1.1.2/0,17
+found Session: 239.1.1.2/0(17)1
+virtual route lookup for 239.1.1.2 -> rsvp-api virt7 virt8
+routing result after adjustment: rsvp-api virt7 virt8
+creating PSB:192.168.9.5/4712 PHOP not yet set
+setting new PHOP PHopSB:192.168.1.4[3] via virt1
+TSpec changed: r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+creating: OIatPSB:192.168.9.5/4712 -> rsvp-api
+creating: OIatPSB:192.168.9.5/4712 -> virt7
+creating: OIatPSB:192.168.9.5/4712 -> virt8
+WARNING: no API client found for 239.1.1.2/0(17)1
+virt7 sends MSG to 239.1.1.2 : PATH 1 1 ttl:123 length:132
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.7[2]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.9.5/4712
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 5 bw: 10000000.000 lat: 12500 MTU: 1500
+virt8 sends MSG to 239.1.1.2 : PATH 1 1 ttl:123 length:132
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.8[3]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.9.5/4712
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 5 bw: 10000000.000 lat: 12500 MTU: 1500
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 3
+****************   new message received   ****************
+virt1 received MSG from 192.168.10.5 : PATH 1 1 ttl:124 length:132
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.1.4[3]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.10.5/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 4 bw: 10000000.000 lat: 10000 MTU: 1500
+received PATH for 239.1.1.2/0,17
+found Session: 239.1.1.2/0(17)1
+virtual route lookup for 239.1.1.2 -> rsvp-api virt7 virt8
+routing result after adjustment: rsvp-api virt7 virt8
+creating PSB:192.168.10.5/4711 PHOP not yet set
+setting new PHOP PHopSB:192.168.1.4[3] via virt1
+TSpec changed: r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+creating: OIatPSB:192.168.10.5/4711 -> rsvp-api
+creating: OIatPSB:192.168.10.5/4711 -> virt7
+creating: OIatPSB:192.168.10.5/4711 -> virt8
+WARNING: no API client found for 239.1.1.2/0(17)1
+virt7 sends MSG to 239.1.1.2 : PATH 1 1 ttl:123 length:132
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.7[2]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.10.5/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 5 bw: 10000000.000 lat: 12500 MTU: 1500
+virt8 sends MSG to 239.1.1.2 : PATH 1 1 ttl:123 length:132
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.8[3]
+TIME_VALUES:10000
+SENDER_TEMPLATE:192.168.10.5/4711
+SENDER_TSPEC:r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500
+ADSPEC:length:40 hops: 5 bw: 10000000.000 lat: 12500 MTU: 1500
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 3
+****************   new message received   ****************
+virt1 received MSG from 192.168.1.4 : RTEAR 1 1 ttl:63 length:40
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.1.4[1]
+STYLE:WF
+FDESC:length:32 DS
+received RTEAR for 239.1.1.1/0,17
+found Session: 239.1.1.1/0(17)1
+processing flow descriptor length:32 DS
+matched PSB:192.168.7.4/4711 from PHopSB:192.168.7.4[1] via virt7
+matched PSB:192.168.8.4/4711 from PHopSB:192.168.8.4[1] via virt8
+matched PSB:192.168.8.4/4712 from PHopSB:192.168.8.4[1] via virt8
+deleting RSB(nhop):192.168.1.4
+OIatPSB:192.168.7.4/4711 -> virt1 removeRSB, count is 0
+192.168.7.4[1] marked for remove: PSB:192.168.7.4/4711 from PHopSB:192.168.7.4[1] via virt7
+OIatPSB:192.168.8.4/4711 -> virt1 removeRSB, count is 0
+192.168.8.4[1] marked for remove: PSB:192.168.8.4/4711 from PHopSB:192.168.8.4[1] via virt8
+OIatPSB:192.168.8.4/4712 -> virt1 removeRSB, count is 0
+192.168.8.4[1] marked for remove: PSB:192.168.8.4/4712 from PHopSB:192.168.8.4[1] via virt8
+Scheduler: deleting filter for 0.0.0.0/0 -> 239.1.1.1/0(17)1
+Scheduler: deleting reservation with rate: 4000000.000
+Scheduler: netto available rate: 10000000.000 bit/s.
+deleting OutISB at virt1
+calculating RESV for 192.168.7.4
+PSB PSB:192.168.7.4/4711 from PHopSB:192.168.7.4[1] via virt7 calculated forward flowspec length:32 DS
+PHopSB:192.168.7.4[1] via virt7 calculated shared forward flowspec length:32 DS
+stopping RESV for 192.168.7.4
+creating RTEAR for 192.168.7.4
+virt7 sends MSG to 192.168.7.4 : RTEAR 1 1 ttl:63 length:40
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.7[1]
+STYLE:WF
+calculating RESV for 192.168.8.4
+PSB PSB:192.168.8.4/4711 from PHopSB:192.168.8.4[1] via virt8 calculated forward flowspec length:32 DS
+PSB PSB:192.168.8.4/4712 from PHopSB:192.168.8.4[1] via virt8 calculated forward flowspec length:32 DS
+PHopSB:192.168.8.4[1] via virt8 calculated shared forward flowspec length:32 DS
+stopping RESV for 192.168.8.4
+creating RTEAR for 192.168.8.4
+virt8 sends MSG to 192.168.8.4 : RTEAR 1 1 ttl:63 length:40
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.8[1]
+STYLE:WF
+****************   new message received   ****************
+virt1 received MSG from 192.168.1.4 : RESV 1 1 ttl:63 length:128
+MESSAGE_ID:flags:0 epoch:4711 id:1
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.1.4[1]
+TIME_VALUES:10000
+RESV_CONFIRM:192.168.12.16
+SCOPE: 192.168.7.4 192.168.8.4
+STYLE:WF
+FDESC:length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+received RESV for 239.1.1.1/0,17
+found Session: 239.1.1.1/0(17)1
+processing flow descriptor length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+matched PSB:192.168.7.4/4711 from PHopSB:192.168.7.4[1] via virt7
+matched PSB:192.168.8.4/4711 from PHopSB:192.168.8.4[1] via virt8
+matched PSB:192.168.8.4/4712 from PHopSB:192.168.8.4[1] via virt8
+creating OutISB at virt1
+creating RSB(nhop):192.168.1.4
+OIatPSB:192.168.7.4/4711 -> virt1 addRSB, count is 1
+OIatPSB:192.168.8.4/4711 -> virt1 addRSB, count is 1
+OIatPSB:192.168.8.4/4712 -> virt1 addRSB, count is 1
+Scheduler: admitting 6000000.000 bit/s out of 10000000.000 bit/s.
+Scheduler: netto available rate: 4000000.000 bit/s.
+Scheduler: adding filter for: 0.0.0.0/0 -> 239.1.1.1/0(17)1
+192.168.7.4[1] marked for refresh: PSB:192.168.7.4/4711 from PHopSB:192.168.7.4[1] via virt7
+192.168.8.4[1] marked for refresh: PSB:192.168.8.4/4711 from PHopSB:192.168.8.4[1] via virt8
+192.168.8.4[1] marked for refresh: PSB:192.168.8.4/4712 from PHopSB:192.168.8.4[1] via virt8
+calculating RESV for 192.168.7.4
+PSB PSB:192.168.7.4/4711 from PHopSB:192.168.7.4[1] via virt7 calculated forward flowspec length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+PHopSB:192.168.7.4[1] via virt7 calculated shared forward flowspec length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+creating RESV for PHOP 192.168.7.4
+virt7 sends MSG to 192.168.7.4 : RESV 1 1 ttl:63 length:116
+MESSAGE_ID:flags:0 epoch:4711 id:1
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.7[1]
+TIME_VALUES:10000
+RESV_CONFIRM:192.168.12.16
+STYLE:WF
+FDESC:length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+PHOP: 192.168.7.4 -> full refresh
+calculating RESV for 192.168.8.4
+PSB PSB:192.168.8.4/4711 from PHopSB:192.168.8.4[1] via virt8 calculated forward flowspec length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+PSB PSB:192.168.8.4/4712 from PHopSB:192.168.8.4[1] via virt8 calculated forward flowspec length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+PHopSB:192.168.8.4[1] via virt8 calculated shared forward flowspec length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+creating RESV for PHOP 192.168.8.4
+virt8 sends MSG to 192.168.8.4 : RESV 1 1 ttl:63 length:124
+MESSAGE_ID:flags:0 epoch:4711 id:1
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.8[1]
+TIME_VALUES:10000
+RESV_CONFIRM:192.168.12.16
+SCOPE: 192.168.8.4
+STYLE:WF
+FDESC:length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+PHOP: 192.168.8.4 -> full refresh
+****************   new message received   ****************
+virt7 received MSG from 192.168.7.4 : RCONF 1 1 ttl:63 length:96
+SESSION:239.1.1.1/0(17)1
+ERROR_SPEC:192.168.7.4 Confirmation 0 no flags
+RESV_CONFIRM:192.168.12.16
+STYLE:WF
+FDESC:length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+virtual route lookup for 192.168.12.16 -> virt1
+virt1 sends MSG to 192.168.12.16 : RCONF 1 1 ttl:62 length:96
+SESSION:239.1.1.1/0(17)1
+ERROR_SPEC:192.168.7.4 Confirmation 0 no flags
+RESV_CONFIRM:192.168.12.16
+STYLE:WF
+FDESC:length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+****************   new message received   ****************
+virt8 received MSG from 192.168.8.4 : RCONF 1 1 ttl:63 length:96
+SESSION:239.1.1.1/0(17)1
+ERROR_SPEC:192.168.8.4 Confirmation 0 no flags
+RESV_CONFIRM:192.168.12.16
+STYLE:WF
+FDESC:length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+virtual route lookup for 192.168.12.16 -> virt1
+virt1 sends MSG to 192.168.12.16 : RCONF 1 1 ttl:62 length:96
+SESSION:239.1.1.1/0(17)1
+ERROR_SPEC:192.168.8.4 Confirmation 0 no flags
+RESV_CONFIRM:192.168.12.16
+STYLE:WF
+FDESC:length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+****************   new message received   ****************
+virt1 received MSG from 192.168.1.4 : RESV 1 1 ttl:63 length:120
+MESSAGE_ID:flags:0 epoch:4711 id:1
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.1.4[1]
+TIME_VALUES:10000
+SCOPE: 192.168.7.4 192.168.8.4
+STYLE:WF
+FDESC:length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+received RESV for 239.1.1.1/0,17
+found Session: 239.1.1.1/0(17)1
+processing flow descriptor length:44 GS r:500000.000 b:2000000.000 p:1000000.000 m:100 M:1500 R:750000.000 S:0
+matched PSB:192.168.7.4/4711 from PHopSB:192.168.7.4[1] via virt7
+matched PSB:192.168.8.4/4711 from PHopSB:192.168.8.4[1] via virt8
+matched PSB:192.168.8.4/4712 from PHopSB:192.168.8.4[1] via virt8
+found RSB: RSB(nhop):192.168.1.4
+no TC update for flow descriptor
+****************   new message received   ****************
+virt1 received MSG from 192.168.10.5 : PTEAR 1 1 ttl:124 length:44
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.1.4[3]
+SENDER_TEMPLATE:192.168.10.5/4711
+received PTEAR for 239.1.1.2/0,17
+found Session: 239.1.1.2/0(17)1
+WARNING: no API client found for 239.1.1.2/0(17)1
+virt7 sends MSG to 239.1.1.2 : PTEAR 1 1 ttl:123 length:44
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.7[2]
+SENDER_TEMPLATE:192.168.10.5/4711
+virt8 sends MSG to 239.1.1.2 : PTEAR 1 1 ttl:123 length:44
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.8[3]
+SENDER_TEMPLATE:192.168.10.5/4711
+deleting PSB:192.168.10.5/4711 from PHopSB:192.168.1.4[3] via virt1
+deleting OIatPSB: OIatPSB:192.168.10.5/4711 -> rsvp-api
+deleting OIatPSB: OIatPSB:192.168.10.5/4711 -> virt7
+deleting OIatPSB: OIatPSB:192.168.10.5/4711 -> virt8
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 0
+****************   new message received   ****************
+virt8 received MSG from 192.168.8.4 : PTEAR 1 1 ttl:127 length:44
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.8.4[1]
+SENDER_TEMPLATE:192.168.8.4/4711
+received PTEAR for 239.1.1.1/0,17
+found Session: 239.1.1.1/0(17)1
+WARNING: no API client found for 239.1.1.1/0(17)1
+virt1 sends MSG to 239.1.1.1 : PTEAR 1 1 ttl:126 length:44
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.1[1]
+SENDER_TEMPLATE:192.168.8.4/4711
+deleting PSB:192.168.8.4/4711 from PHopSB:192.168.8.4[1] via virt8
+deleting OIatPSB: OIatPSB:192.168.8.4/4711 -> rsvp-api
+deleting OIatPSB: OIatPSB:192.168.8.4/4711 -> virt1
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 0
+****************   new message received   ****************
+virt8 received MSG from 192.168.8.4 : PTEAR 1 1 ttl:127 length:44
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.8.4[1]
+SENDER_TEMPLATE:192.168.8.4/4712
+received PTEAR for 239.1.1.1/0,17
+found Session: 239.1.1.1/0(17)1
+WARNING: no API client found for 239.1.1.1/0(17)1
+virt1 sends MSG to 239.1.1.1 : PTEAR 1 1 ttl:126 length:44
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.1[1]
+SENDER_TEMPLATE:192.168.8.4/4712
+deleting PSB:192.168.8.4/4712 from PHopSB:192.168.8.4[1] via virt8
+deleting OIatPSB: OIatPSB:192.168.8.4/4712 -> rsvp-api
+deleting OIatPSB: OIatPSB:192.168.8.4/4712 -> virt1
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 0
+deleting PHopSB:192.168.8.4[1] via virt8
+****************   new message received   ****************
+virt7 received MSG from 192.168.7.4 : PTEAR 1 1 ttl:127 length:44
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.7.4[1]
+SENDER_TEMPLATE:192.168.7.4/4711
+received PTEAR for 239.1.1.1/0,17
+found Session: 239.1.1.1/0(17)1
+WARNING: no API client found for 239.1.1.1/0(17)1
+virt1 sends MSG to 239.1.1.1 : PTEAR 1 1 ttl:126 length:44
+SESSION:239.1.1.1/0(17)1
+RSVP_HOP:192.168.4.1[1]
+SENDER_TEMPLATE:192.168.7.4/4711
+deleting PSB:192.168.7.4/4711 from PHopSB:192.168.7.4[1] via virt7
+deleting OIatPSB: OIatPSB:192.168.7.4/4711 -> rsvp-api
+deleting OIatPSB: OIatPSB:192.168.7.4/4711 -> virt1
+deleting RSB(nhop):192.168.1.4
+Scheduler: deleting filter for 0.0.0.0/0 -> 239.1.1.1/0(17)1
+Scheduler: deleting reservation with rate: 6000000.000
+Scheduler: netto available rate: 10000000.000 bit/s.
+deleting OutISB at virt1
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 0
+deleting PHopSB:192.168.7.4[1] via virt7
+delete Session: 239.1.1.1/0(17)1
+****************   new message received   ****************
+virt7 received MSG from 192.168.7.4 : RTEAR 1 1 ttl:63 length:52
+SESSION:239.1.1.3/0(17)1
+RSVP_HOP:192.168.7.4[2]
+STYLE:FF
+FDESC:192.168.12.13/4711 
+received RTEAR for 239.1.1.3/0,17
+found Session: 239.1.1.3/0(17)1
+processing flow descriptor 192.168.12.13/4711 
+matched PSB:192.168.12.13/4711 from PHopSB:192.168.1.4[3] via virt1
+OIatPSB:192.168.12.13/4711 -> virt7 removeRSB, count is 0
+192.168.1.4[3] marked for remove: PSB:192.168.12.13/4711 from PHopSB:192.168.1.4[3] via virt1
+deleting RSB(nhop):192.168.7.4
+Scheduler: deleting filter for 192.168.12.13/4711 -> 239.1.1.3/0(17)1
+Scheduler: deleting reservation with rate: 4000000.000
+Scheduler: netto available rate: 10000000.000 bit/s.
+deleting OutISB at virt7
+calculating RESV for 192.168.1.4
+PSB PSB:192.168.12.13/4711 from PHopSB:192.168.1.4[3] via virt1 calculated forward flowspec length:32 DS
+stopping RESV for 192.168.1.4
+creating RTEAR for 192.168.1.4
+virt1 sends MSG to 192.168.1.4 : RTEAR 1 1 ttl:63 length:52
+SESSION:239.1.1.3/0(17)1
+RSVP_HOP:192.168.4.1[3]
+STYLE:FF
+FDESC:192.168.12.13/4711 
+****************   new message received   ****************
+virt1 received MSG from 192.168.12.13 : PTEAR 1 1 ttl:124 length:44
+SESSION:239.1.1.3/0(17)1
+RSVP_HOP:192.168.1.4[3]
+SENDER_TEMPLATE:192.168.12.13/4711
+received PTEAR for 239.1.1.3/0,17
+found Session: 239.1.1.3/0(17)1
+WARNING: no API client found for 239.1.1.3/0(17)1
+virt7 sends MSG to 239.1.1.3 : PTEAR 1 1 ttl:123 length:44
+SESSION:239.1.1.3/0(17)1
+RSVP_HOP:192.168.4.7[2]
+SENDER_TEMPLATE:192.168.12.13/4711
+virt8 sends MSG to 239.1.1.3 : PTEAR 1 1 ttl:123 length:44
+SESSION:239.1.1.3/0(17)1
+RSVP_HOP:192.168.4.8[3]
+SENDER_TEMPLATE:192.168.12.13/4711
+deleting PSB:192.168.12.13/4711 from PHopSB:192.168.1.4[3] via virt1
+deleting OIatPSB: OIatPSB:192.168.12.13/4711 -> rsvp-api
+deleting OIatPSB: OIatPSB:192.168.12.13/4711 -> virt7
+deleting OIatPSB: OIatPSB:192.168.12.13/4711 -> virt8
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 0
+deleting PHopSB:192.168.1.4[3] via virt1
+delete Session: 239.1.1.3/0(17)1
+****************   new message received   ****************
+virt1 received MSG from 192.168.9.5 : PTEAR 1 1 ttl:124 length:44
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.1.4[3]
+SENDER_TEMPLATE:192.168.9.5/4711
+received PTEAR for 239.1.1.2/0,17
+found Session: 239.1.1.2/0(17)1
+WARNING: no API client found for 239.1.1.2/0(17)1
+virt7 sends MSG to 239.1.1.2 : PTEAR 1 1 ttl:123 length:44
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.7[2]
+SENDER_TEMPLATE:192.168.9.5/4711
+virt8 sends MSG to 239.1.1.2 : PTEAR 1 1 ttl:123 length:44
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.8[3]
+SENDER_TEMPLATE:192.168.9.5/4711
+deleting PSB:192.168.9.5/4711 from PHopSB:192.168.1.4[3] via virt1
+deleting OIatPSB: OIatPSB:192.168.9.5/4711 -> rsvp-api
+deleting OIatPSB: OIatPSB:192.168.9.5/4711 -> virt7
+deleting OIatPSB: OIatPSB:192.168.9.5/4711 -> virt8
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 0
+****************   new message received   ****************
+virt1 received MSG from 192.168.9.5 : PTEAR 1 1 ttl:124 length:44
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.1.4[3]
+SENDER_TEMPLATE:192.168.9.5/4712
+received PTEAR for 239.1.1.2/0,17
+found Session: 239.1.1.2/0(17)1
+WARNING: no API client found for 239.1.1.2/0(17)1
+virt7 sends MSG to 239.1.1.2 : PTEAR 1 1 ttl:123 length:44
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.7[2]
+SENDER_TEMPLATE:192.168.9.5/4712
+virt8 sends MSG to 239.1.1.2 : PTEAR 1 1 ttl:123 length:44
+SESSION:239.1.1.2/0(17)1
+RSVP_HOP:192.168.4.8[3]
+SENDER_TEMPLATE:192.168.9.5/4712
+deleting PSB:192.168.9.5/4712 from PHopSB:192.168.1.4[3] via virt1
+deleting OIatPSB: OIatPSB:192.168.9.5/4712 -> rsvp-api
+deleting OIatPSB: OIatPSB:192.168.9.5/4712 -> virt7
+deleting OIatPSB: OIatPSB:192.168.9.5/4712 -> virt8
+PSB::updateRoutingInfo done, gateway is 0.0.0.0 , new lif count: 0
+deleting PHopSB:192.168.1.4[3] via virt1
+delete Session: 239.1.1.2/0(17)1
+all sessions removed
+deleting Hop:192.168.1.4 via virt1
+deleting Hop:192.168.7.4 via virt7
+deleting Hop:192.168.8.4 via virt8

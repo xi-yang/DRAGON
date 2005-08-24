@@ -1,0 +1,7 @@
+sleep 3
+# 3 seconds
+session 239.1.1.3 0 17
+sender 4711 500000 2000000 1000000 100 1500
+# 36 seconds
+sleep 33
+close

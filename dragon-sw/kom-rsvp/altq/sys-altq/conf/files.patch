@@ -1,0 +1,12 @@
+*** files.old	Fri Nov  9 16:40:06 2001
+--- files	Fri Nov  9 16:55:11 2001
+***************
+*** 54,59 ****
+--- 54,60 ----
+  altq/altq_rmclass.c	optional altq
+  altq/altq_subr.c	optional altq
+  altq/altq_wfq.c		optional altq
++ altq/altq_stamp.c	optional altq
+  coda/coda_namecache.c	optional vcoda
+  coda/coda_fbsd.c	optional vcoda
+  coda/coda_psdev.c	optional vcoda

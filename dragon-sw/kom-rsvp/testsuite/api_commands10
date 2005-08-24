@@ -1,0 +1,34 @@
+session 239.1.1.1 0 17
+waitpath any
+waitpath any
+waitpath any
+# 1 second
+sleep 1
+# 2 seconds
+reserve wf cl 500000 2000000 1000000 100 1500
+session 239.1.1.3 0 17
+sleep 4
+# 6 seconds
+reserve ff cl 192.168.12.14 4711 500000 2000000 1000000 100 1500
+sleep 1
+# 7 seconds
+reserve ff g 192.168.12.13 4711 500000 2000000 1000000 100 1500 12000000 0
+sleep 3
+# 10 seconds
+close
+session 239.1.1.3 0 17
+reserve ff g 192.168.12.13 4711 500000 2000000 1000000 100 1500 12000000 0
+session 239.1.1.2 0 17
+sender 4711 500000 2000000 1000000 100 1500
+sleep 2
+# 12 seconds
+session 239.1.1.1 0 17
+close
+sleep 10
+# 22 seconds
+session 239.1.1.2 0 17
+close
+sleep 17
+# 39 seconds
+session 239.1.1.3 0 17
+close

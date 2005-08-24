@@ -1,0 +1,2 @@
+flow udp localhost 2000 localhost 2001
+send cbr 1236 100 /spare/kalli/video/ericsson.mpg

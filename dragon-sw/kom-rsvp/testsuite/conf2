@@ -1,0 +1,20 @@
+link 1 1
+link 3 3
+link 6 6
+route 4 1
+route 5 3
+route 7 1
+route 8 1
+route 9 3
+route 10 3
+route 11 6
+route 12 6
+rem route mc 239.1.1.1 1
+rem route mc 239.1.1.1 3
+route mc 239.1.1.1 6
+rem route mc 239.1.1.2 1
+rem route mc 239.1.1.2 3
+route mc 239.1.1.2 6
+route mc 239.1.1.3 1
+route mc 239.1.1.3 3
+rem route mc 239.1.1.3 6

@@ -1,0 +1,98 @@
+#!/bin/sh
+notrap=off
+norun=off
+loop=off
+sort=off
+make=off
+TMPFILE=/tmp/diff.rsvp.log.`whoami`.$$
+while [ $# -gt 0 ]; do
+	case "$1" in
+	  notrap)
+		notrap=on
+		;;
+	  norun)
+		norun=on
+		;;
+	  loop)
+		loop=on
+		;;
+	  sort)
+		sort=on
+		;;
+	  make)
+		make=on
+		;;
+	  *)
+		echo "usage: $0 [make|norun|loop|sort] ..."
+		exit 1
+	esac
+	shift
+done
+if [ "$notrap" != "on" ]; then
+	trap "echo;echo exiting...;gmake xkill;rm -f $TMPFILE; exit 0" SIGHUP SIGINT SIGQUIT SIGTERM
+fi
+if [ "$loop" = "on" ]; then
+	run=1
+	while [ 1 -eq 1 ]; do
+		echo "************ test $run  started at `date` ***********"
+		$0 notrap
+		echo "************ test $run finished at `date` ***********"
+		run=`expr $run + 1`
+	done
+fi
+if [ "$norun" != "on" ]; then
+	testsuite -t
+	if [ $? -ne 0 ]; then exit 1; fi
+	count="x"
+	while [ "$count" != "0" ]; do
+		sleep 3
+		count=`gmake count | fgrep api | cut -f2 -d' '`
+#		echo api processes running: $count
+	done
+	gmake kill
+	sleep 3
+fi
+errors=0
+confirms=0
+for i in 1 2 3 4 5 6 ; do
+	cat rsvp.log.$i | cut -f2- -d' ' > rsvp.log.$i.stripped
+	file1=rsvp.log.$i.stripped
+	file2=ref-output/ref.rsvp.log.$i
+	if [ "$sort" = "on" ]; then
+		cat rsvp.log.$i.stripped | sort > rsvp.log.$i.stripped.sorted
+		cat ref-output/ref.rsvp.log.$i | sort > ref.rsvp.log.$i.sorted
+		file1=rsvp.log.$i.stripped.sorted
+		file2=ref.rsvp.log.$i.sorted
+	fi
+	if [ "$make" = "on" ]; then
+		mv rsvp.log.$i.stripped ref-output/ref.rsvp.log.$i
+	elif diff $file1 $file2 > $TMPFILE 2>&1; then
+		rm -f rsvp.log.$i.stripped
+	else
+		count_a=`wc rsvp.log.$i.stripped | awk '{print $2}'`
+		count_b=`wc ref-output/ref.rsvp.log.$i | awk '{print $2}'`
+		jofel=0
+		if ! fgrep "<" $TMPFILE | fgrep -v -i conf >/dev/null; then
+			if ! fgrep ">" $TMPFILE | fgrep -v -i conf >/dev/null; then
+				if [ "$count_a" = "$count_b" ]; then
+#					echo The output of node $i differs, but only confirmation messages are affected.
+#					echo This is likely to be no error.
+					jofel=1
+					confirms=`expr $confirms + 1`
+				fi
+			fi
+		fi
+		if [ $jofel -eq 0 ]; then
+			echo "The output of node $i differs."
+			echo -n "Press [ENTER] to see 'diff rsvp.log.$i.stripped ref-output/ref.rsvp.log.$i'"
+			read jofel
+			more $TMPFILE
+			errors=`expr $errors + 1`
+		fi
+	fi
+	if [ "$sort" = "on" ]; then
+		rm -f rsvp.log.$i.stripped.sorted ref.rsvp.log.$i.sorted
+	fi
+	rm -f $TMPFILE
+done
+echo $errors errors and $confirms weak differences detected.

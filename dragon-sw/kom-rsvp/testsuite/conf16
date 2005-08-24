@@ -1,0 +1,14 @@
+net 12
+link 16 6/12
+route 1 16
+route 2 16
+route 3 16
+route 4 16
+route 5 16
+route 6 16
+route 7 16
+route 8 16
+route 9 16
+route 10 16
+route 11 16
+route mc 239.1.1.3 16
