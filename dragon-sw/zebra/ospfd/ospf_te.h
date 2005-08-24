@@ -249,6 +249,17 @@ struct link_ifswcap_specific_tdm {
 	u_char		padding[3];
 };
 
+/* Link Sub-TLV / Switching Capability-specific information: VLAN/Ethernet*/
+#define IFSWCAP_SPECIFIC_VLAN_VERSION 0x2
+/* Maximum number of available vlan's that a port/IP is assigned to */
+#define MAX_NUM_VLANS 23
+
+struct link_ifswcap_specific_vlan {
+	u_char	 	version;       /*fixed to be 0x2*/
+	u_char	 	vlan_num;   /*up to 255 vlan's in theory*/
+	u_int16_t        vlan_id[MAX_NUM_VLANS]; /*in the current implementation, up to 23 vlan's are assigned*/
+};
+
 /* Link Sub-TLV: Interface Switching Capability Descriptor *//* GMPLS draft-ietf-ccamp-ospf-gmpls-extensions-12.txt*/
 #define	TE_LINK_SUBTLV_LINK_IFSWCAP		15
 struct te_link_subtlv_link_ifswcap
@@ -283,11 +294,11 @@ struct te_link_subtlv_link_ifswcap
        union {
 		struct link_ifswcap_specific_psc  ifswcap_specific_psc;
 		struct link_ifswcap_specific_tdm ifswcap_specific_tdm; 
+       	struct link_ifswcap_specific_vlan ifswcap_specific_vlan; 
        } ifswcap_specific_info;
   } link_ifswcap_data;
   /* More Switching Capability-specific information, defined below */
 };
-
 
 /* Link Sub-TLV: Shared Risk Link Group *//* GMPLS draft-ietf-ccamp-ospf-gmpls-extensions-12.txt*/
 #define	TE_LINK_SUBTLV_LINK_SRLG			16

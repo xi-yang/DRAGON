@@ -549,7 +549,6 @@ set_linkparams_ifsw_cap1 (struct te_link_subtlv_link_ifswcap *para, u_char swcap
 static void
 ospf_te_set_default_link_para (struct ospf_interface *oi)
 {
-  int i;
   /*float default_bw = (float)125000; */ /* default value : 1000Mb/s */
   
   /* Set TE instance */
@@ -2114,6 +2113,40 @@ DEFUN (ospf_te_interface_ifsw_cap3b,
   return CMD_SUCCESS;
 }
 
+DEFUN (ospf_te_interface_ifsw_cap4,
+       ospf_te_interface_ifsw_cap4_cmd,
+       "vlan <1-4095>",
+       "Assign this port/IP to a tagged VLAN\n"
+       "Tagged VLAN ID in the range [1, 4095]\n")
+{
+  u_int32_t vlan;
+  int padding_len = 0;
+ 
+  if (sscanf (argv[0], "%d", &vlan) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap3: fscanf: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+
+  if (te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num == 0)
+      te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version = IFSWCAP_SPECIFIC_VLAN_VERSION;    
+
+  if (te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num >= MAX_NUM_VLANS)
+    {
+      vty_out (vty, "The number of VLAN's assigned to this port exeeds %d%s", MAX_NUM_VLANS, VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.\
+vlan_id[te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num++] = vlan;
+
+  if (te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num % 2 == 0)
+    padding_len = 2;
+  te_config.te_para.link_ifswcap.header.length = htons(ntohs(te_config.te_para.link_ifswcap.header.length) + 2
+      + te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num*2 + padding_len);
+  te_config.configed = 1;
+  return CMD_SUCCESS;
+}
 
 DEFUN (show_ospf_te_router,
        show_ospf_te_router_cmd,
@@ -2396,6 +2429,7 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap2_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap3a_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap3b_cmd);
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4_cmd);
   set_config_end_call_back_func(ospf_te_interface_config_update);
 
   return;

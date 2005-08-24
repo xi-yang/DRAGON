@@ -169,6 +169,7 @@ build_link_subtlv_link_srlg (struct stream *s, struct te_link_subtlv_link_srlg *
 static void 
 build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifswcap *lp) 
 {
+	int i;
 	struct te_tlv_header *tlvh = &lp->header; 
 	
 	if (ntohs(tlvh->type) != 0) 
@@ -189,6 +190,19 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 		else if (lp->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM)
 		{
 			stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm, sizeof(struct link_ifswcap_specific_tdm));
+		}
+		else /*if (lp->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)*/
+		{
+			if (lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION)
+			{
+				int padding_len = 0;
+				if (lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num % 2 == 0)
+					padding_len = 2;
+				assert (lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num <= MAX_NUM_VLANS);
+				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, 8 
+					+ (lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num > 3 ?  
+					((lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num - 3)*2 + padding_len): 0));
+			}
 		}
 	} 
 	return; 

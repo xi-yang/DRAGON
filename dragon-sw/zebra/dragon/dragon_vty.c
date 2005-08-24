@@ -194,7 +194,7 @@ struct string_value_conversion conv_lsp_status =
 /* registerred local_id's */
 static list registered_local_ids;
 
-char *lid_types[] = {"single port", "port group", "vlan tag", "tag group"};
+char *lid_types[] = {"none id", "single port", "untagged group", "tagged group"};
 
 /* local_id_group_mapping operators */
 void local_id_group_add(struct local_id *lid, u_int16_t  tag)
@@ -846,7 +846,7 @@ DEFUN (dragon_set_lsp_ip,
       type_dest = LOCAL_ID_TYPE_PORT;
   else if (strcmp(argv[4], "group") == 0)
       type_dest = LOCAL_ID_TYPE_GROUP;
-  else if (strcmp(argv[1], "tagged-group") == 0)
+  else if (strcmp(argv[4], "tagged-group") == 0)
       type_dest = LOCAL_ID_TYPE_TAGGED_GROUP;
   else
       type_dest = LOCAL_ID_TYPE_NONE;
@@ -882,9 +882,72 @@ DEFUN (dragon_set_lsp_ip,
   return CMD_SUCCESS;
 }
 
+DEFUN (dragon_set_lsp_vtag,
+       dragon_set_lsp_vtag_cmd,
+       "set vtag <1-4095>",
+       "Set LSP VLAN Tag\n"
+       "VLAN Tag from end to end\n"
+       "Tag value\n")
+{
+    struct lsp *lsp = (struct lsp *)(vty->index);
+    u_int32_t vtag = atoi(argv[0]);
+    
+    if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP 
+        && (lsp->dragon.srcLocalId & 0xffff) != vtag)
+    {
+        vty_out(vty, "###Ingress Tag (%d) does not match the LSP Vtag (%d)!%s", 
+            (lsp->dragon.srcLocalId & 0xffff), vtag, VTY_NEWLINE);
+        return CMD_WARNING;
+    }
+
+    if ((lsp->dragon.destLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP 
+        && (lsp->dragon.destLocalId & 0xffff) != vtag)
+    {
+        vty_out(vty, "###Egress Tag (%d) does not match the LSP Vtag (%d)!%s", 
+            (lsp->dragon.destLocalId & 0xffff), vtag, VTY_NEWLINE);
+        return CMD_WARNING;
+    }
+
+    lsp->dragon.lspVtag = vtag;
+    return CMD_SUCCESS;
+}
+
+DEFUN (dragon_set_lsp_vtag_default,
+       dragon_set_lsp_vtag_default_cmd,
+       "set vtag",
+       "Set LSP VLAN Tag\n"
+       "VLAN Tag from end to end; To be computed\n")
+{
+    struct lsp *lsp = (struct lsp *)(vty->index);
+    if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP 
+        && (lsp->dragon.destLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP
+        && (lsp->dragon.srcLocalId & 0xffff) != (lsp->dragon.destLocalId & 0xffff))
+    {
+        vty_out(vty, "###Ingress Tag (%d) and Egress Tag (%d) do not match!%s", 
+            (lsp->dragon.srcLocalId & 0xffff), (lsp->dragon.destLocalId & 0xffff), VTY_NEWLINE);
+        return CMD_WARNING;
+    }
+
+    if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP)
+        lsp->dragon.lspVtag = (lsp->dragon.srcLocalId & 0xffff);
+    else if ((lsp->dragon.destLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP)
+        lsp->dragon.lspVtag = (lsp->dragon.destLocalId & 0xffff);
+    else
+        lsp->dragon.lspVtag = ANY_VTAG;
+
+    return CMD_SUCCESS;
+}
+
+ALIAS (dragon_set_lsp_vtag_default,
+       dragon_set_lsp_vtag_any_cmd,
+       "set vtag any",
+       "Set LSP VLAN Tag\n"
+       "VLAN Tag from end to end\n"
+       "Any Vtag to be computed\n");
+
 DEFUN (dragon_set_lsp_sw,
        dragon_set_lsp_sw_cmd,
-       "set bandwidth (gige_f|hdtv|oc48|10g) swcap (psc1|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
+       "set bandwidth (gige_f|hdtv|oc48|10g) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
        "Set LSP parameters\n"
        "Bandwidth\n"
        "1250.00 Mbps\n"
@@ -893,6 +956,7 @@ DEFUN (dragon_set_lsp_sw,
        "11095.19 Mbps\n"
        "Switching capability\n"
        "Packeting switching capable 1\n"
+       "Layer 2 switching capable\n"
        "Lambda switching capable\n"
        "TDM switching capable\n"
        "Encoding type\n"
@@ -1184,6 +1248,23 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 				    value_to_string (&conv_encoding, lsp->common.LabelRequest_Para.data.gmpls.lspEncodingType),
 				    value_to_string (&conv_swcap, lsp->common.LabelRequest_Para.data.gmpls.switchingType),
 				    value_to_string (&conv_gpid, lsp->common.LabelRequest_Para.data.gmpls.gPid), VTY_NEWLINE);
+
+              if (lsp->dragon.srcLocalId)
+        	    vty_out(vty, "Ingress Local ID Type: %s, Value: %d %s", 
+			    lid_types[lsp->dragon.srcLocalId>>16], lsp->dragon.srcLocalId&0xffff, VTY_NEWLINE);
+              else
+        	    vty_out(vty, "No ingress Local ID configured. %s", VTY_NEWLINE);
+              
+              if (lsp->dragon.destLocalId)
+        	    vty_out(vty, "Egress Local ID Type: %s, Value: %d. %s", 
+			    lid_types[lsp->dragon.destLocalId>>16], lsp->dragon.destLocalId&0xffff, VTY_NEWLINE);
+              else
+        	    vty_out(vty, "No egress Local ID configured. %s", VTY_NEWLINE);
+
+              if (lsp->dragon.lspVtag)
+        	    vty_out(vty, "E2E LSP VLAN Tag: %d. %s", lsp->dragon.lspVtag, VTY_NEWLINE);
+              else
+        	    vty_out(vty, "No E2E LSP VLAN Tag configured. %s", VTY_NEWLINE);
 
 		vty_out(vty, "Status: %s %s", value_to_string(&conv_lsp_status, lsp->status), VTY_NEWLINE);
 	}
@@ -1561,6 +1642,35 @@ DEFUN (dragon_delete_local_id,
     return CMD_WARNING;
 }
     
+DEFUN (dragon_delete_local_id_all,
+       dragon_delete_local_id_all_cmd,
+       "delete local-id all",
+       SET_STR
+       "Local ingress/egress port identifier\n"
+       "All LocalId(s)\n")
+{
+    u_int16_t type;
+    struct local_id * lid = NULL;
+    listnode node;
+
+    LIST_LOOP(registered_local_ids, lid, node)
+    {
+        if (type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)
+            local_id_group_free(lid);
+        listnode_delete(registered_local_ids, lid);
+        XFREE(MTYPE_TMP, lid);
+    }
+
+    zDeleteLocalId(dmaster.api, 0xffff, 0xffff, 0xffff);
+    return CMD_SUCCESS;
+}
+
+ALIAS (dragon_delete_local_id_all,
+       dragon_clear_local_id_cmd,
+       "clear local-id",
+       "Clear all localId(s)\n"
+       "Local ingress/egress port identifier\n");
+
 DEFUN (dragon_show_local_id,
        dragon_show_local_id_cmd,
        "show local-id",
@@ -1580,7 +1690,7 @@ DEFUN (dragon_show_local_id,
     vty_out(vty, " LocalID  Type         (Tags/Ports in Group)%s", VTY_NEWLINE);
     LIST_LOOP(registered_local_ids, lid, node)
     {
-         vty_out(vty, "  %d\t[%s]    ", lid->value, lid_types[lid->type]);
+         vty_out(vty, "%-8d[%-12s]    ", lid->value, lid_types[lid->type]);
          if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
             local_id_group_show(vty, lid);
          else
@@ -1613,6 +1723,8 @@ dragon_supp_vty_init ()
   install_element(VIEW_NODE, &dragon_set_local_id_cmd);
   install_element(VIEW_NODE, &dragon_set_local_id_group_cmd);
   install_element(VIEW_NODE, &dragon_delete_local_id_cmd);
+  install_element(VIEW_NODE, &dragon_delete_local_id_all_cmd);
+  install_element(VIEW_NODE, &dragon_clear_local_id_cmd);
   install_element(VIEW_NODE, &dragon_show_local_id_cmd);
   
   install_element(CONFIG_NODE, &dragon_set_pce_para_cmd);
@@ -1631,5 +1743,8 @@ dragon_supp_vty_init ()
   install_element(LSP_NODE, &dragon_set_lsp_sw_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_dir_cmd);
   install_element(LSP_NODE, &dragon_set_label_set_cmd);
+  install_element(LSP_NODE, &dragon_set_lsp_vtag_cmd);
+  install_element(LSP_NODE, &dragon_set_lsp_vtag_default_cmd);
+  install_element(LSP_NODE, &dragon_set_lsp_vtag_any_cmd);  
 }
 

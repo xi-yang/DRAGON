@@ -185,6 +185,7 @@ struct api_msg_header
 #define LSP_OPT_PREFERRED ((u_int32_t)(0x02 << 16)) /*otherwise LSP_OPT_ONLY*/
 #define LSP_OPT_MRN 0x04 << 16  /*otherwise SINGLE_REGION*/
 #define LSP_OPT_BIDIRECTIONAL 0x10 << 16  /* otherwise UNIDIRECTIONAL*/
+#define LSP_OPT_E2E_VTAG  ((u_int32_t)(0x20 << 16)) //otherwise Untgged VLAN for E2E Ethernet
 
 #ifdef roundup
 #  define ROUNDUP(val, gran)	roundup(val, gran)
@@ -482,9 +483,13 @@ struct lsp_dragon_para {
     time_t lsp_start_time;		/* Scheduled establishment time of the LSP */
     time_t lsp_duration;		/* Duration of the LSP */
     u_int32_t AAA;				/* A(uthentication), A(uthorization), and A(ccounting) */
-    u_int32_t srcLocalId;         /* Source is (port|group-port|vlan-tag|tag-group) */
-    u_int32_t destLocalId;       /* Destination is (port|group-port|vlan-tag|tag-group) */
+    u_int32_t srcLocalId;         /* Source is (port|tagged-group|tag-group) */
+    u_int32_t destLocalId;       /* Destination is (port|untagged-group|tagged-group) */
+    u_int32_t lspVtag;       /* LSP E2E VLAN Tag */
 };
+
+#define ANY_VTAG 0xffff  /*Indicating that LSP uses any available E2E VL
+AN Tag*/
 
 /* Structure of the LSP */
 struct lsp {
@@ -564,7 +569,7 @@ struct local_id {
 #define LOCAL_ID_TYPE_PORT (u_int16_t)0x1
 #define LOCAL_ID_TYPE_GROUP (u_int16_t)0x2
 #define LOCAL_ID_TYPE_TAGGED_GROUP (u_int16_t)0x3
-
+#define LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL (u_int16_t)0x4
 
 /* local_id_group_mapping operators */
 void local_id_group_add(struct local_id *lid, u_int16_t  tag);

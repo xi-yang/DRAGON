@@ -71,7 +71,7 @@ build_dragon_msg_header (struct stream *s, u_int8_t msgtype, u_int32_t seqno)
 
 /*Instead we use the unified api_msg format*/
 static struct api_msg_header * 
-build_api_msg_header (struct stream *s, u_int16_t type, u_int16_t length, u_int32_t ucid, u_int32_t seqnum)
+build_api_msg_header (struct stream *s, u_int16_t type, u_int16_t length , u_int32_t ucid, u_int32_t seqnum, u_int32_t opt, u_int32_t tag)
 {
     struct api_msg_header ah, *ah_p;
 
@@ -81,7 +81,8 @@ build_api_msg_header (struct stream *s, u_int16_t type, u_int16_t length, u_int3
     ah.length = htons (length);
     ah.seqnum = htonl (seqnum);
     ah.ucid = htonl(ucid);
-    ah.options = htonl(LSP_OPT_STRICT);
+    ah.options = htonl(opt);
+    ah.tag = htonl(tag);
     ah.chksum = API_MSG_CHKSUM(ah);
 
     stream_put (s, &ah, sizeof(struct api_msg_header));
@@ -260,7 +261,13 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   dmsgh = build_dragon_msg_header(s, DMSG_CLI_TOPO_CREATE, lsp->seqno);
   */
 
-  amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, 0, lsp->seqno);
+  if (lsp->dragon.lspVtag)
+      amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, 0, lsp->seqno, 
+        LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG, lsp->dragon.lspVtag);
+  else
+      amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, 0, lsp->seqno,
+        LSP_OPT_STRICT, 0);
+
   /*$$$$ ucid (=0 now) be assigned a meaningful id in the future.*/
 
   /* Build TLVs */
@@ -286,7 +293,8 @@ dragon_topology_confirm_msg_new(struct lsp *lsp)
   /* Obsolete header format
   dmsgh = build_dragon_msg_header(s, DMSG_CLI_TOPO_CONFIRM, lsp->seqno);
   */
-  amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, 0, lsp->seqno);
+  amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, 0, lsp->seqno,
+    LSP_OPT_STRICT, lsp->dragon.lspVtag);
 
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_CONFIRM, lsp);
@@ -311,7 +319,8 @@ dragon_topology_remove_msg_new(struct lsp *lsp)
   /* Obsolete header format
   dmsgh = build_dragon_msg_header(s, DMSG_CLI_TOPO_DELETE, lsp->seqno);
   */
-  amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, 0, lsp->seqno);
+  amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, 0, lsp->seqno,
+      LSP_OPT_STRICT, lsp->dragon.lspVtag);
 
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_DELETE, lsp);
@@ -482,6 +491,7 @@ dragon_find_lsp_by_rsvpupcallparam(struct _rsvp_upcall_parameter *p)
 void 
 dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 {
+	int num_newnodes;
 	struct dragon_tlv_header *tlvh;
 	u_int32_t read_len;
 	struct lsp *lsp = NULL;
@@ -514,6 +524,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
                                 srcLocalId->isLoose = 1;
                                 memcpy(&srcLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.srcAddr, sizeof(struct in_addr));
                                 srcLocalId->data.uNumIfID.interfaceID = lsp->dragon.srcLocalId;
+                                srcLocalId->isLoose = 0;
                             }
                             /*Create source localID subobj */
                             if(lsp->dragon.destLocalId >> 16 != LOCAL_ID_TYPE_NONE)
@@ -525,46 +536,35 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
                                 destLocalId->isLoose = 1;
                                 memcpy(&destLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.destAddr, sizeof(struct in_addr));
                                 destLocalId->data.uNumIfID.interfaceID = lsp->dragon.destLocalId;
+                                destLocalId->isLoose = 0;
                             }
-                            /*
-                            if (srcLocalId && destLocalId)
-                            {
-                                temp_ero = lsp->common.EROAbstractNode_Para;
-                                lsp->common.EROAbstractNode_Para = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*lsp->common.ERONodeNumber);
-                                memcpy(lsp->common.EROAbstractNode_Para, srcLocalId, sizeof(struct _EROAbstractNode_Para));
-                                memcpy(lsp->common.EROAbstractNode_Para + 1, temp_ero, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber-2));
-                                memcpy(lsp->common.EROAbstractNode_Para + lsp->common.ERONodeNumber-1, destLocalId, sizeof(struct _EROAbstractNode_Para));
-                                XFREE(MTYPE_TMP, temp_ero);
-                                XFREE(MTYPE_TMP, srcLocalId);
-                                XFREE(MTYPE_TMP, destLocalId);
-                            }
-                            else if (srcLocalId)
-                            {
-                                temp_ero = lsp->common.EROAbstractNode_Para;
-                                lsp->common.EROAbstractNode_Para = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*lsp->common.ERONodeNumber);
-                                memcpy(lsp->common.EROAbstractNode_Para, srcLocalId, sizeof(struct _EROAbstractNode_Para));
-                                memcpy(lsp->common.EROAbstractNode_Para + 1, temp_ero, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber-1));
-                                XFREE(MTYPE_TMP, temp_ero);
-                                XFREE(MTYPE_TMP, srcLocalId);
-                            }
-                            else if (destLocalId)
-                            {
-                                temp_ero = lsp->common.EROAbstractNode_Para;
-                                lsp->common.EROAbstractNode_Para = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*lsp->common.ERONodeNumber);                              
-                                memcpy(lsp->common.EROAbstractNode_Para, temp_ero, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber-1));
-                                memcpy(lsp->common.EROAbstractNode_Para + lsp->common.ERONodeNumber-1, destLocalId, sizeof(struct _EROAbstractNode_Para));
-                                XFREE(MTYPE_TMP, temp_ero);
-                                XFREE(MTYPE_TMP, destLocalId);
-                            }
-                            */
+                            num_newnodes = 0;
+                            if (srcLocalId) 
+                                num_newnodes++;
+                            if (destLocalId)
+                                num_newnodes++;
+                            if (num_newnodes > 0)
+                                if (realloc(lsp->common.EROAbstractNode_Para, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber + num_newnodes)) == NULL)
+                                {
+                                    zlog_warn("Error: dragon_narb_topo_rsp_proc: memory realloc failed");
+                                    return;
+                                }
+                            
                             if (srcLocalId)
                             {
+                                if (memmove(lsp->common.EROAbstractNode_Para + 1, lsp->common.EROAbstractNode_Para, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber)) == NULL)
+                                {
+                                    zlog_warn("Error: dragon_narb_topo_rsp_proc: memory memmove failed");
+                                    return;
+                                }
                                 memcpy(lsp->common.EROAbstractNode_Para, srcLocalId, sizeof(struct _EROAbstractNode_Para));
+                                lsp->common.ERONodeNumber++;
                                 XFREE(MTYPE_TMP, srcLocalId);
                             }
                             if (destLocalId)
                             {
-                                memcpy(lsp->common.EROAbstractNode_Para + lsp->common.ERONodeNumber-1, destLocalId, sizeof(struct _EROAbstractNode_Para));
+                                memcpy(lsp->common.EROAbstractNode_Para + lsp->common.ERONodeNumber, destLocalId, sizeof(struct _EROAbstractNode_Para));
+                                lsp->common.ERONodeNumber++;
                                 XFREE(MTYPE_TMP, destLocalId);
                             }
 				break;

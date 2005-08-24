@@ -68,6 +68,7 @@ enum OspfRsvpMessage {
 	FindOutLifByOSPF = 131, 		//Find outgoing control logical interface by next hop data plane IP / interface ID
 	GetVLSRRoutebyOSPF = 132,		//Get VLSR route
 	GetLoopbackAddress = 133,		// Get its loopback address
+	HoldVtagbyOSPF = 134,		// Hold or release a VLAN Tag
 };
 
 /*
@@ -183,6 +184,8 @@ out:
 		stream_putc(s, length);
 		stream_putc(s, FindDataByInterface);
 		stream_put_ipv4(s, data_addr.s_addr);
+		if (data_local_id == 0 && (fd >> 16) != 0)
+			data_local_id = fd;
 		stream_putl(s, data_local_id);
 	}
 	else{
@@ -226,10 +229,14 @@ ospf_find_out_lif(struct in_addr *addr,  u_int32_t if_id, int fd)
 				write (fd, STREAM_DATA(s), length);
 				goto out;
 			}
-			else if (if_id && INTERFACE_GMPLS_ENABLED(oi) &&
+			else if ( (if_id && INTERFACE_GMPLS_ENABLED(oi) &&
 					ntohs(oi->te_para.link_lcrmt_id.header.type)!=0 &&
 					ntohl(oi->te_para.link_id.value.s_addr) == ntohl(addr->s_addr) &&
 					ntohl(oi->te_para.link_lcrmt_id.link_remote_id) == if_id)
+					||
+					((if_id >> 16) && INTERFACE_GMPLS_ENABLED(oi) &&
+					ntohs(oi->te_para.rmtif_ipaddr.header.type)!=0 &&
+					ntohl(oi->te_para.link_id.value.s_addr) == ntohl(addr->s_addr)) )
 				{
 					length = sizeof(u_int8_t)*2 + sizeof(struct in_addr);
 					s = stream_new(length);
@@ -395,6 +402,87 @@ out:
 	return;
 }
 
+static int 
+has_vlan_id(struct link_ifswcap_specific_vlan* vlan_info, u_int16_t vid)
+{
+    int i;
+    if (vlan_info->version != IFSWCAP_SPECIFIC_VLAN_VERSION)
+	return 0;
+    assert (vlan_info->vlan_num <= MAX_NUM_VLANS);
+    for (i = 0; i < vlan_info->vlan_num; i++)
+        if (vlan_info->vlan_id[i] == vid)
+            return 1;
+    return 0;
+}
+
+static int 
+remove_vlan_id(struct link_ifswcap_specific_vlan* vlan_info, u_int16_t vid)
+{
+    int i;
+    if (vlan_info->version != IFSWCAP_SPECIFIC_VLAN_VERSION)
+	return 0;
+    assert (vlan_info->vlan_num <= MAX_NUM_VLANS);
+    for (i = 0; i < vlan_info->vlan_num; i++)
+        if (vlan_info->vlan_id[i] == vid)
+        {
+            if (i < vlan_info->vlan_num-1)
+                if (memmove(vlan_info->vlan_id+i, vlan_info->vlan_id+i+1, (vlan_info->vlan_num - i -1)*2) == NULL)
+                    return 0;
+            vlan_info->vlan_num--;
+            return 1;
+        }
+    return 1;
+}
+
+static int 
+add_vlan_id(struct link_ifswcap_specific_vlan* vlan_info, u_int16_t vid)
+{
+    int i;
+    if (vlan_info->version != IFSWCAP_SPECIFIC_VLAN_VERSION)
+	return 0;
+    assert (vlan_info->vlan_num <= MAX_NUM_VLANS);
+    if (vlan_info->vlan_num == MAX_NUM_VLANS)
+        return 0;
+    for (i = 0; i < vlan_info->vlan_num; i++)
+        if (vlan_info->vlan_id[i] == vid)
+            return 1;
+    vlan_info->vlan_id[vlan_info->vlan_num++] = vid;
+    return 1;
+}
+
+void
+ospf_hold_vtag(u_int32_t vtag, u_int8_t hold_flag)
+{
+	struct ospf_interface *oi;
+	struct listnode *node1, *node2;
+	struct ospf *ospf;
+	int updated = 0;
+	
+	if (om->ospf)
+	LIST_LOOP(om->ospf, ospf, node1)
+	{
+		if (ospf->oiflist)
+		LIST_LOOP(ospf->oiflist, oi, node2){
+			if (oi && INTERFACE_MPLS_ENABLED(oi)) {
+				if (hold_flag == 1 && has_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag))
+				{
+					remove_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag);
+					updated = 1;
+				}
+				else if (hold_flag == 0 && !has_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag))
+				{
+					add_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag);
+					updated = 1;
+				}
+				if (updated && oi->t_te_area_lsa_link_self)
+				{
+					OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
+					OSPF_INTERFACE_TIMER_ON (oi->t_te_area_lsa_link_self, ospf_te_area_lsa_link_timer, OSPF_MIN_LS_INTERVAL);
+				}
+			}
+		}
+	}
+}
 
 void
 ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t inPort, u_int32_t outPort, int fd)
@@ -404,6 +492,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 	struct ospf *ospf;
 	struct stream *s;
 	u_int8_t length = 0;
+	u_int32_t vlan = 0;
 
 	if (ntohl(inRtId->s_addr)==ntohl(outRtId->s_addr) && inPort!=outPort){
 		/* un-numbered interface */
@@ -423,6 +512,32 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		 	 }
 		}
 	}
+        else if (inRtId->s_addr != outRtId->s_addr && inRtId->s_addr && outRtId->s_addr != 0 
+          && inPort == outPort && (inPort >> 16) == 0x4) /* 0x4: LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL*/ 
+        {
+		vlan = inPort & 0x0000ffff;
+		if ( om->ospf)
+		LIST_LOOP(om->ospf, ospf, node1)
+		{
+			if (ospf->oiflist)
+			LIST_LOOP(ospf->oiflist, oi, node2){
+				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(inRtId->s_addr)
+                                && oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION 
+        			    && has_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, (u_int16_t)vlan)) {
+				        inPort &= 0xffff0000;
+                                    inPort |= oi->vlsr_if.switch_port;
+					 in_oi = oi;
+                               }
+				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(outRtId->s_addr)
+                                && oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION 
+      			           && has_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, (u_int16_t)vlan)) {
+				        outPort &= 0xffff0000;
+                                    outPort |= oi->vlsr_if.switch_port;
+					 out_oi = oi;
+                               }
+		 	 }
+		}
+        }
        else if (inRtId->s_addr==0 && inPort != 0 && outRtId->s_addr != 0 ){
               /* local-id configured at ingress */
 		if ( om->ospf)
@@ -469,54 +584,90 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 			 }
 		}
 	}
-	if (in_oi && out_oi && in_oi->vlsr_if.switch_ip.s_addr!=0 && out_oi->vlsr_if.switch_ip.s_addr!=0 &&
+       if ( (inPort >> 16) == 0x4 && (outPort >> 16) == 0x4
+          && ((inPort & 0xffff) != 0) && ((outPort & 0xffff) != 0) && (inPort != outPort )
+          && in_oi && out_oi && in_oi->vlsr_if.switch_ip.s_addr!=0)
+        {
+		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
+		s = stream_new(length);
+		stream_putc(s, length);
+		stream_putc(s, GetVLSRRoutebyOSPF);
+		stream_put_ipv4(s, in_oi->vlsr_if.switch_ip.s_addr);
+		stream_putl(s, inPort);
+		stream_putl(s, outPort);
+		stream_putl(s, vlan);
+		/* Send message.  */
+		write (fd, STREAM_DATA(s), length);
+        }
+	else if (in_oi && out_oi && in_oi->vlsr_if.switch_ip.s_addr!=0 && out_oi->vlsr_if.switch_ip.s_addr!=0 &&
 		in_oi->vlsr_if.switch_ip.s_addr == out_oi->vlsr_if.switch_ip.s_addr &&
 		in_oi->vlsr_if.switch_port != 0 && out_oi->vlsr_if.switch_port != 0 &&
 		in_oi->vlsr_if.switch_port != out_oi->vlsr_if.switch_port)
 	{
-		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*2;
+		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
 		s = stream_new(length);
 		stream_putc(s, length);
 		stream_putc(s, GetVLSRRoutebyOSPF);
 		stream_put_ipv4(s, in_oi->vlsr_if.switch_ip.s_addr);
 		stream_putl(s, in_oi->vlsr_if.switch_port);
 		stream_putl(s, out_oi->vlsr_if.switch_port);
+		stream_putl(s, 0);
 		/* Send message.  */
 		write (fd, STREAM_DATA(s), length);
 	}
 	else if (outPort != 0 && in_oi && in_oi->vlsr_if.switch_ip.s_addr!=0 && in_oi->vlsr_if.switch_port != 0)
        {
-		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*2;
+		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
 		s = stream_new(length);
 		stream_putc(s, length);
 		stream_putc(s, GetVLSRRoutebyOSPF);
 		stream_put_ipv4(s, in_oi->vlsr_if.switch_ip.s_addr);
-		stream_putl(s, in_oi->vlsr_if.switch_port);
+		if ((inPort >> 16) == 0x4)
+                {
+			vlan = inPort&0xffff;
+                	inPort &= 0xffff0000;
+                	inPort |= in_oi->vlsr_if.switch_port;
+		}
+        	else
+            		inPort = in_oi->vlsr_if.switch_port;       
+		stream_putl(s, inPort);
 		stream_putl(s, outPort);
+		stream_putl(s, vlan);
 		/* Send message.  */
 		write (fd, STREAM_DATA(s), length);             
        }
 	else if (inPort != 0 && out_oi && out_oi->vlsr_if.switch_ip.s_addr!=0 && out_oi->vlsr_if.switch_port != 0)
        {
-		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*2;
+		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
 		s = stream_new(length);
 		stream_putc(s, length);
 		stream_putc(s, GetVLSRRoutebyOSPF);
 		stream_put_ipv4(s, out_oi->vlsr_if.switch_ip.s_addr);
 		stream_putl(s, inPort);
-		stream_putl(s, out_oi->vlsr_if.switch_port);
+		if ((outPort >> 16) == 0x4)
+                {
+			vlan = outPort&0xffff;
+                	outPort &= 0xffff0000;
+                	outPort |= out_oi->vlsr_if.switch_port;
+		}
+        	else
+            		outPort = out_oi->vlsr_if.switch_port;       
+		stream_putl(s, outPort);
+		stream_putl(s, vlan);
+
 		/* Send message.  */
 		write (fd, STREAM_DATA(s), length);             
        }
        else
 	{
-		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*2;
+		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
 		s = stream_new(length);
 		stream_putc(s, length);
 		stream_putc(s, GetVLSRRoutebyOSPF);
 		stream_put_ipv4(s, 0);
-		stream_putc(s, 0);
-		stream_putc(s, 0);
+		stream_putl(s, 0);
+		stream_putl(s, 0);
+		stream_putl(s, 0);
 		/* Send message.  */
 		write (fd, STREAM_DATA(s), length);
 	}
@@ -533,6 +684,7 @@ ospf_rsvp_notify(u_int8_t msgtype, struct in_addr * ctrlIP, float *bandwidth, in
 	u_int8_t i;
 	static float zero_bw = 0;
 	float max_rsv_bw;
+	float unrsv_bw;
 	
 	if (om->ospf)
 	LIST_LOOP(om->ospf, ospf, node1)
@@ -550,7 +702,14 @@ ospf_rsvp_notify(u_int8_t msgtype, struct in_addr * ctrlIP, float *bandwidth, in
 		{
 			case OspfResv:
 				for (i=0; i<8; i++)
-					set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &zero_bw);
+				{
+					ntohf(&oi->te_para.unrsv_bw.value[i], &unrsv_bw);
+					unrsv_bw -= ((*bandwidth) * 1000000 / 8);
+					if (unrsv_bw < 0)
+						unrsv_bw = zero_bw;
+					set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
+					htonf(&unrsv_bw, &oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i]);
+				}
 				if (oi->t_te_area_lsa_link_self)
 				{
 					OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
@@ -561,7 +720,14 @@ ospf_rsvp_notify(u_int8_t msgtype, struct in_addr * ctrlIP, float *bandwidth, in
 			case OspfResvTear:
 				ntohf(&oi->te_para.max_rsv_bw.value, &max_rsv_bw);
 				for (i=0; i<8; i++)
-					set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &max_rsv_bw);
+				{
+					ntohf(&oi->te_para.unrsv_bw.value[i], &unrsv_bw);
+					unrsv_bw += ((*bandwidth) * 1000000 / 8);
+					if (unrsv_bw > max_rsv_bw)
+						unrsv_bw = max_rsv_bw;
+					set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
+					htonf(&unrsv_bw, &oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i]);
+				}
 				if (oi->t_te_area_lsa_link_self)
 				{
 					OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
@@ -607,6 +773,8 @@ ospf_rsvp_read (struct thread *thread)
   struct in_addr addr, addr1;
   u_int32_t if_id;
   u_int32_t vlsr_in_if_id, vlsr_out_if_id;
+  u_int32_t vtag;
+  u_int8_t vtag_hold_flag;
   float bandwidth, tmpbw;
   
   /* Get thread data.  Reset reading thread because I'm running. */
@@ -668,6 +836,13 @@ ospf_rsvp_read (struct thread *thread)
 	vlsr_in_if_id = stream_getl(s);
 	vlsr_out_if_id = stream_getl(s);
 	ospf_get_vlsr_route(&addr, &addr1, vlsr_in_if_id, vlsr_out_if_id, sock);
+     break;
+
+    case HoldVtagbyOSPF:
+	vtag = stream_getl(s);	
+	vtag_hold_flag = stream_getc(s);	
+	ospf_hold_vtag(vtag, vtag_hold_flag);
+     break;
 
     case OspfPathTear:
     case OspfResv:
