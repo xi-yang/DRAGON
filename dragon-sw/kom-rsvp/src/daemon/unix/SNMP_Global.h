@@ -15,14 +15,23 @@ To be incorporated into KOM-RSVP-TE package
 
 #define SWITCH_CTRL_PORT	1
 #define MIN_VLAN			2
-#define MAX_VLAN	   		9
+#define MAX_VLAN	   		32
 #define MAX_VENDOR			2
+
+struct vlanPortMap{
+    uint32 pvid;
+    uint32 portMask;
+};
+
+typedef SimpleList<vlanPortMap> vlanPortMapList;
 
 class SNMP_Session{
 	String sessionName;
 	NetAddress switchInetAddr;
 	uint32 portList[MAX_VLAN+1];
 	uint32 portListUntagged[MAX_VLAN+1];
+	vlanPortMapList vlanPortMapListAll;
+	vlanPortMapList vlanPortMapListUntagged;
 	struct snmp_session* sessionHandle;	
 	bool active;
 	uint32 vendor;

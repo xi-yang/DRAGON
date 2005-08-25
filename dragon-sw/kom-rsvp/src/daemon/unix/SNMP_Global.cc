@@ -128,77 +128,80 @@ bool SNMP_Session::movePortToDefaultVLAN(uint32 port)
 	return ret;
 }
 
+void SNMP_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapList &vpmList)
+{
+        struct snmp_pdu *pdu;
+        struct snmp_pdu *response;
+        netsnmp_variable_list *vars;
+        oid anOID[MAX_OID_LEN];
+        oid root[MAX_OID_LEN];
+        size_t anOID_len = MAX_OID_LEN;
+        int status;
+        long int ports;
+        bool running = true;
+        size_t rootlen;
+
+        status = read_objid(oid_str, anOID, &anOID_len);
+        rootlen = anOID_len;
+        memcpy(root, anOID, rootlen*sizeof(oid));
+        vpmList.clear();
+        while (running) {
+                // Create the PDU for the data for our request.
+                pdu = snmp_pdu_create(SNMP_MSG_GETNEXT);
+                snmp_add_null_var(pdu, anOID, anOID_len);
+                // Send the Request out.
+                status = snmp_synch_response(sessionHandle, pdu, &response);
+                if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
+                        for (vars = response->variables; vars; vars = vars->next_variable) {
+                                if ((vars->name_length < rootlen) || (memcmp(anOID, vars->name, rootlen * sizeof(oid)) != 0)) {
+                                        running = false;
+                                        continue;
+                                }
+
+                                if (response->variables->val.integer){
+                                        ports = ntohl(*(response->variables->val.integer));
+                                        if (response->variables->val_len < 4) {
+                                                uint32 mask = (uint32)0xFFFFFFFF << ((4-response->variables->val_len)*8);
+                                                ports &= mask;
+                                                //portList[(int)vars->name[vars->name_length - 1]] = ports;
+                                                vlanPortMap portmap;
+                                                portmap.pvid = (int)vars->name[vars->name_length - 1];
+                                                portmap.portMask = ports;
+                                                vpmList.push_back(portmap);
+                                        }
+                                }
+                                else
+                                        ports = 0;
+                                if ((vars->type != SNMP_ENDOFMIBVIEW) &&
+                                    (vars->type != SNMP_NOSUCHOBJECT) &&
+                                    (vars->type != SNMP_NOSUCHINSTANCE)) {
+                                    memcpy((char *)anOID, (char *)vars->name, vars->name_length * sizeof(oid));
+                                    anOID_len = vars->name_length;
+                                }
+                                else {
+                                running = 0;
+                                }
+                        }
+                }
+                else {
+                        running = false;
+                }
+                if(response) snmp_free_pdu(response);
+        }
+}
+
 bool SNMP_Session::readVLANFromSwitch()
 {
-	struct snmp_pdu *pdu;
-	struct snmp_pdu *response;
-	oid anOID[MAX_OID_LEN];
-	size_t anOID_len = MAX_OID_LEN;
-	int status;
-	long int ports;
-	
-	// vlan port list 
-	const char* read_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
-	char oid_str[128];
+    bool ret = true;;
+    readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.2", vlanPortMapListAll);
+    if (vlanPortMapListAll.size() == 0)
+        ret = false;
 
-	if (vendor != RFC2674)
-		return true;
-	
-	uint32 vlan = MIN_VLAN;
+    readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.4", vlanPortMapListUntagged);
+    if (vlanPortMapListUntagged.size() == 0)
+        ret = false;
 
-	while (vlan <= MAX_VLAN){
-		// Create the PDU for the data for our request. 
-		pdu = snmp_pdu_create(SNMP_MSG_GET);
-		sprintf(oid_str, "%s.%d", read_oid_str, vlan);
-		status = read_objid(oid_str, anOID, &anOID_len);
-		snmp_add_null_var(pdu, anOID, anOID_len);
-		// Send the Request out. 
-		status = snmp_synch_response(sessionHandle, pdu, &response);
-		if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
-			if (response->variables->val.integer){
-				ports = ntohl(*(response->variables->val.integer));
-				if (response->variables->val_len < 4){
-					uint32 mask = (uint32)0xFFFFFFFF << ((4-response->variables->val_len)*8); 
-					ports &= mask; 
-				}
-			}
-			else
-				ports = 0;
-			portList[vlan] = ports;
-		}
-		if(response) snmp_free_pdu(response);
-		vlan++;
-	}
-
-	const char* read_oid_str_untagged = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
-
-	vlan = MIN_VLAN;
-
-	while (vlan <= MAX_VLAN){
-		// Create the PDU for the data for our request. 
-		pdu = snmp_pdu_create(SNMP_MSG_GET);
-		sprintf(oid_str, "%s.%d", read_oid_str_untagged, vlan);
-		status = read_objid(oid_str, anOID, &anOID_len);
-		snmp_add_null_var(pdu, anOID, anOID_len);
-		// Send the Request out. 
-		status = snmp_synch_response(sessionHandle, pdu, &response);
-		if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
-			if (response->variables->val.integer){
-				ports = ntohl(*(response->variables->val.integer));
-				if (response->variables->val_len < 4){
-					uint32 mask = (uint32)0xFFFFFFFF << ((4-response->variables->val_len)*8); 
-					ports &= mask; 
-				}
-			}
-			else
-				ports = 0;
-			portListUntagged[vlan] = ports;
-		}
-		if(response) snmp_free_pdu(response);
-		vlan++;
-	}
-
-       return true;
+    return ret;
 }
 
 bool SNMP_Session::setSwitchVendorInfo()
