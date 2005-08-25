@@ -109,11 +109,6 @@ protected:
 	MESSAGE_ID_NACK_List         nackList;
 #endif
 
-        //@@@@ hacked
-        uint16 localIdType;
-        uint16 localIdValue;
-        uint16 localIdTag;
-
 	bool checkFlowdescList() const;
 
 	friend ostream& operator<< ( ostream&, const Message& );
@@ -216,15 +211,13 @@ public:
         //@@@@ hacked
         LocalId* getLocalIdObject() { 
             LocalId* lid = new LocalId; 
-            lid->type = localIdType; 
-            lid->value = localIdValue;
+            lid->type = SESSION_Object_O.getTunnelId(); 
+            lid->value = (uint16)(SESSION_Object_O.getExtendedTunnelId() >> 16); 
             lid->group = new SimpleList<uint16>;
-            if (localIdTag != 0)
-                lid->group->push_back(localIdTag);
+            if ((SESSION_Object_O.getExtendedTunnelId() & 0xffff) != 0)
+                lid->group->push_back((uint16)(SESSION_Object_O.getExtendedTunnelId() & 0xffff));
             return lid; 
             }
-        void setLocalIdObject(uint16 t, uint16 v, uint16 g) 
-            {localIdType = t; localIdValue = v; localIdTag = g;}
 
 #define Message_CHECK_OBJECT(XXX) \
                                               assert( !(objectFlags & XXX) ); \

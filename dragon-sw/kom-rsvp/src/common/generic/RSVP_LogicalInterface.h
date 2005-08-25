@@ -79,6 +79,8 @@ private:
 
 	friend class NetworkServiceDaemon;                 // access: fd
 	friend class RSVP_API;                             // access: fd
+	//hacked @@@@
+	friend class RSVP;                             // access: fd
 protected:
 	mutable ONetworkBuffer obuffer;
 	VIRTUAL void Print( ostream& ) const;

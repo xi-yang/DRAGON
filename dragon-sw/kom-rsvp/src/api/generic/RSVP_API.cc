@@ -295,10 +295,9 @@ void RSVP_API::addLocalId(uint16 type, uint16 value, uint16 tag)
 {
 	uint8 msgType = Message::AddLocalId;
 	uint8 TTL = 1;
-	SESSION_Object session(NetAddress(0), 0, 0);	
+	SESSION_Object session(NetAddress(0), type, (value<<16)|tag);	
 	Message msg( msgType, TTL, session);
 	msg.setRSVP_HOP_Object( *apiLif );
-	msg.setLocalIdObject(type, value, tag);
 	apiLif->sendMessage( msg, NetAddress(0), apiLif->getLocalAddress() );
 }
 
@@ -307,10 +306,9 @@ void RSVP_API::deleteLocalId(uint16 type, uint16 value, uint16 tag)
 {
 	uint8 msgType = Message::DeleteLocalId;
 	uint8 TTL = 1;
-	SESSION_Object session(NetAddress(0), 0, 0);	
+	SESSION_Object session(NetAddress(0), type, (value<<16)|tag);	
 	Message msg( msgType, TTL, session);
 	msg.setRSVP_HOP_Object( *apiLif );
-	msg.setLocalIdObject(type, value, tag);        
 	apiLif->sendMessage( msg, NetAddress(0), apiLif->getLocalAddress() );
 }
 
