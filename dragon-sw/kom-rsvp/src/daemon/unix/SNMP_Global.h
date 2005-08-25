@@ -81,10 +81,10 @@ public:
 	}
 	bool setSwitchVendorInfo();
 	const uint32 findEmptyVLAN() const{
-		vlanPortMapList::iterator iter;
+		vlanPortMapList::ConstIterator iter;
 		//for (uint32 vlan=MIN_VLAN; vlan<=MAX_VLAN; vlan++)
 		//	if (!portList[vlan]) return vlan;
-		for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); iter++)
+		for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter)
 		    if ((*iter).ports == 0)
                       return (*iter).vid;  
 		return 0;
@@ -95,31 +95,18 @@ public:
 	bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
 	bool removePortFromVLAN(uint32 port, uint32 vlanID);
 	bool movePortToDefaultVLAN(uint32 port);
-	uint32 getVLANbyUntaggedPort(uint32 port){
-		//for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
-		//	if(portListUntagged[i]&(1<<(32-port)))
-		//	      return i;
-		vlanPortMapList::iterator iter;
-		for (iter = vlanPortMapListUntagged.begin(); iter != vlanPortMapListAll.end(); iter++)
-		    if (((*iter).ports)&(1<<(32-port)))
-                      return (*iter).vid;  
-		return 0;
-	}
+	uint32 getVLANbyUntaggedPort(uint32 port);
 	uint32 getVLANbyPort(uint32 port){
-		//for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
-		//	if(portList[i]&(1<<(32-port)))
-		//	      return i;
-		//}
-		vlanPortMapList::iterator iter;
-		for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); iter++)
+		vlanPortMapList::Iterator iter;
+		for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter)
 		    if (((*iter).ports)&(1<<(32-port)))
                       return (*iter).vid;  
 		return 0;
 	}
 	uint32 getVLANListbyPort(uint32 port, SimpleList<uint32> &vlan_list){
 		vlan_list.clear();
-		vlanPortMapList::iterator iter;
-		for (iter = vlanPortMapListUntagged.begin(); iter != vlanPortMapListAll.end(); iter++)
+		vlanPortMapList::Iterator iter;
+		for (iter = vlanPortMapListUntagged.begin(); iter != vlanPortMapListAll.end(); ++iter)
 		    if (((*iter).ports)&(1<<(32-port)))
                       return vlan_list.push_back((*iter).vid);
 

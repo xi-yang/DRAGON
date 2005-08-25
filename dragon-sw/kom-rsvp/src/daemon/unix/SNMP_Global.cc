@@ -43,8 +43,8 @@ bool SNMP_Session::connectSwitch()
 
 static vlanPortMap *getVlanPortMapById(vlanPortMapList &vpmList, uint32 vid)
 {
-    vlanPortMapList::iterator iter;
-    for (iter = vpmList.begin(); iter != vpmList.end(); iter++)
+    vlanPortMapList::Iterator iter;
+    for (iter = vpmList.begin(); iter != vpmList.end(); ++iter)
         if (((*iter).vid) == vid)
             return &(*iter);
     return NULL;
@@ -73,12 +73,14 @@ bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 		if (vpmUntagged) ret&=setVLANPort(vpmUntagged->ports, old_vlan); //remove untagged port out of the old VLAN
        }
 	mask = 1<<(32-port);
+        vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
 	if (vpmUntagged)
 	    vpmUntagged->ports |=mask;
-	if (vpmAll)
+        vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
+	if (vpmAll) {
 	    vpmAll->ports |=mask;
-	if (vpmAll)    
 	    ret&=setVLANPort(vpmAll->ports, vlanID) ;
+        }
 	if (vendor == RFC2674){
        	if (vpmUntagged)
 		    ret&=setVLANPortTag(vpmUntagged->ports, vlanID); //Set to "untagged"
@@ -194,20 +196,20 @@ void SNMP_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapList &v
                                         continue;
                                 }
 
-                                if (response->variables->val.integer){
-                                        ports = ntohl(*(response->variables->val.integer));
-                                        if (response->variables->val_len < 4) {
+                                if (vars->val.integer){
+                                        ports = ntohl(*(vars->val.integer));
+                                        if (vars->val_len < 4) {
                                                 uint32 mask = (uint32)0xFFFFFFFF << ((4-response->variables->val_len)*8);
                                                 ports &= mask;
                                                 //portList[(int)vars->name[vars->name_length - 1]] = ports;
-                                                vlanPortMap portmap;
-                                                portmap.vid = (int)vars->name[vars->name_length - 1];
-                                                portmap.ports = ports;
-                                                vpmList.push_back(portmap);
                                         }
                                 }
                                 else
                                         ports = 0;
+                                vlanPortMap portmap;
+                                portmap.vid = (int)vars->name[vars->name_length - 1];
+                                portmap.ports = ports;
+                                vpmList.push_back(portmap);
                                 if ((vars->type != SNMP_ENDOFMIBVIEW) &&
                                     (vars->type != SNMP_NOSUCHOBJECT) &&
                                     (vars->type != SNMP_NOSUCHINSTANCE)) {
@@ -215,12 +217,12 @@ void SNMP_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapList &v
                                     anOID_len = vars->name_length;
                                 }
                                 else {
-                                running = 0;
+                                    running = 0;
                                 }
                         }
                 }
                 else {
-                        running = false;
+                    running = false;
                 }
                 if(response) snmp_free_pdu(response);
         }
@@ -376,6 +378,13 @@ bool SNMP_Session::setVLANPortTag(uint32 portListNew, uint32 vlanID)
 		return false;
 	  }
 	  return true;
+}
+uint32 SNMP_Session::getVLANbyUntaggedPort(uint32 port){
+	vlanPortMapList::Iterator iter;
+	for (iter = vlanPortMapListUntagged.begin(); iter != vlanPortMapListUntagged.end(); ++iter)
+	    if (((*iter).ports)&(1<<(32-port)))
+                 return (*iter).vid;  
+	return 0;
 }
 
 bool SNMP_Session::verifyVLAN(uint32 vlanID)
