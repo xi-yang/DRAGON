@@ -256,11 +256,10 @@ void local_id_group_free(struct local_id *lid)
 
     LIST_LOOP(lid->group, ptag, node)
     {
-        listnode_delete(lid->group, ptag);
         XFREE(MTYPE_TMP, ptag);
     }
 
-    list_free(lid->group);
+    list_delete(lid->group);
     lid->group = NULL;
 }
 
@@ -1657,10 +1656,9 @@ DEFUN (dragon_delete_local_id_all,
     {
         if (type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)
             local_id_group_free(lid);
-        listnode_delete(registered_local_ids, lid);
         XFREE(MTYPE_TMP, lid);
     }
-
+    list_delete_all_node(registered_local_ids);
     zDeleteLocalId(dmaster.api, 0xffff, 0xffff, 0xffff);
     return CMD_SUCCESS;
 }
