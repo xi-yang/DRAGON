@@ -41,29 +41,47 @@ bool SNMP_Session::connectSwitch()
 	return true;
 }
 
+static vlanPortMap *getVlanPortMapById(vlanPortMapList &vpmList, uint32 vid)
+{
+    vlanPortMapList::iterator iter;
+    for (iter = vpmList.begin(); iter != vpmList.end(); iter++)
+        if (((*iter).vid) == vid)
+            return &(*iter);
+    return NULL;
+}
+
 bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 {
 	uint32 mask;
 	bool ret = true;
-	
+	vlanPortMap * vpmAll = NULL, *vpmUntagged = NULL;
+
 	if ((!active) || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
 		return false; //don't touch the control port!
 	int old_vlan = getVLANbyUntaggedPort(port);
 	if (old_vlan) //Remove untagged port from old VLAN
 	{
-		mask=(~(1<<(32-port))) & 0xFFFFFFFF;	
-		portListUntagged[old_vlan]&=mask;
-		portList[old_vlan]&=mask;
+		mask=(~(1<<(32-port))) & 0xFFFFFFFF;
+              vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
+              if (vpmUntagged)
+    		    vpmUntagged->ports&=mask;
+              vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
+              if (vpmAll)
+    		    vpmAll->ports&=mask;
 		if (vendor == RFC2674) 
-			ret&=setVLANPortTag(portListUntagged[old_vlan], old_vlan); //Set back to "tagged"
-		ret&=setVLANPort(portListUntagged[old_vlan], old_vlan); //remove untagged port out of the old VLAN
+                    if (vpmUntagged) ret&=setVLANPortTag(vpmUntagged->ports , old_vlan); //Set back to "tagged"
+		if (vpmUntagged) ret&=setVLANPort(vpmUntagged->ports, old_vlan); //remove untagged port out of the old VLAN
        }
 	mask = 1<<(32-port);
-	portListUntagged[vlanID]|=mask;
-	portList[vlanID]|=mask;
-	ret&=setVLANPort(portList[vlanID], vlanID) ;
+	if (vpmUntagged)
+	    vpmUntagged->ports |=mask;
+	if (vpmAll)
+	    vpmAll->ports |=mask;
+	if (vpmAll)    
+	    ret&=setVLANPort(vpmAll->ports, vlanID) ;
 	if (vendor == RFC2674){
-		ret&=setVLANPortTag(portListUntagged[vlanID], vlanID); //Set to "untagged"
+       	if (vpmUntagged)
+		    ret&=setVLANPortTag(vpmUntagged->ports, vlanID); //Set to "untagged"
 		ret&=setVLANPVID(port, vlanID); //Set pvid
 	}
 	return ret;
@@ -73,37 +91,48 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
 {
 	uint32 mask;
 	bool ret = true;
-	
+	vlanPortMap * vpmAll = NULL;
+
 	if ((!active) || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
 		return false; //don't touch the control port!
 
        //there is no need to remove a to-be-tagged-in-new-VLAN port from old VLAN
 	mask = 1<<(32-port);
-	portList[vlanID]|=mask;
-	ret&=setVLANPort(portList[vlanID], vlanID) ;
+	vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
+	if (vpmAll) {
+	    vpmAll->ports |=mask;
+	    ret&=setVLANPort(vpmAll->ports, vlanID) ;
+       }
+       else
+            return false;
 	if (vendor == RFC2674){
 		ret&=setVLANPVID(port, vlanID); //Set pvid
 	}
 	return ret;
 }
 
-
-
 bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
 {
 	bool ret = true;
-	
+	vlanPortMap * vpmAll = NULL, *vpmUntagged = NULL;
+
 	if ((!active) || port==SWITCH_CTRL_PORT)
 		return false; //don't touch the control port!
 
 	if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN){
 		uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF;	
-		portList[vlanID]&=mask;
-		portListUntagged[vlanID]&=mask;
+		vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
+              if (vpmAll)
+                vpmAll->ports &= mask;
+              vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
+              if (vpmUntagged)
+                vpmUntagged->ports &= mask;
 		if (vendor == RFC2674) {
-			ret&=setVLANPortTag(portList[vlanID], vlanID); //Set back to "tagged"
+	           if (vpmAll)
+                      ret&=setVLANPortTag(vpmAll->ports, vlanID); //Set back to "tagged"
 		}
-		ret &= setVLANPort(portList[vlanID], vlanID) ;
+		if (vpmAll)
+		    ret &= setVLANPort(vpmAll->ports, vlanID);
 	}
 	return ret;
 }
@@ -111,19 +140,26 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
 bool SNMP_Session::movePortToDefaultVLAN(uint32 port)
 {
 	bool ret = true;
-	
+	vlanPortMap * vpmAll = NULL, *vpmUntagged = NULL;
+
 	if ((!active) || port==SWITCH_CTRL_PORT)
 		return false; //don't touch the control port!
 	uint32 vlanID = getVLANbyPort(port);
 	if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN){
 		uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF;	
-		portList[vlanID]&=mask;
-		portListUntagged[vlanID]&=mask;
+		vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
+              if (vpmAll)
+                vpmAll->ports &= mask;
+              vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
+              if (vpmUntagged)
+                vpmUntagged->ports &= mask;
 		if (vendor == RFC2674) {
 			//ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID
-			ret&=setVLANPortTag(portList[vlanID], vlanID); //Set back to "tagged"
+	       if (vpmAll)
+                    ret&=setVLANPortTag(vpmAll->ports, vlanID); //Set back to "tagged"
 		}
-		ret &= setVLANPort(portList[vlanID], vlanID) ;
+		if (vpmAll)
+		    ret &= setVLANPort(vpmAll->ports, vlanID);
 	}
 	return ret;
 }
@@ -165,8 +201,8 @@ void SNMP_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapList &v
                                                 ports &= mask;
                                                 //portList[(int)vars->name[vars->name_length - 1]] = ports;
                                                 vlanPortMap portmap;
-                                                portmap.pvid = (int)vars->name[vars->name_length - 1];
-                                                portmap.portMask = ports;
+                                                portmap.vid = (int)vars->name[vars->name_length - 1];
+                                                portmap.ports = ports;
                                                 vpmList.push_back(portmap);
                                         }
                                 }

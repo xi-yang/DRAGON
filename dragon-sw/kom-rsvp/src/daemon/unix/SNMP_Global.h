@@ -15,12 +15,12 @@ To be incorporated into KOM-RSVP-TE package
 
 #define SWITCH_CTRL_PORT	1
 #define MIN_VLAN			2
-#define MAX_VLAN	   		32
+#define MAX_VLAN	   		4095
 #define MAX_VENDOR			2
 
 struct vlanPortMap{
-    uint32 pvid;
-    uint32 portMask;
+    uint32 vid;
+    uint32 ports;
 };
 
 typedef SimpleList<vlanPortMap> vlanPortMapList;
@@ -28,8 +28,8 @@ typedef SimpleList<vlanPortMap> vlanPortMapList;
 class SNMP_Session{
 	String sessionName;
 	NetAddress switchInetAddr;
-	uint32 portList[MAX_VLAN+1];
-	uint32 portListUntagged[MAX_VLAN+1];
+	//uint32 portList[MAX_VLAN+1];
+	//uint32 portListUntagged[MAX_VLAN+1];
 	vlanPortMapList vlanPortMapListAll;
 	vlanPortMapList vlanPortMapListUntagged;
 	struct snmp_session* sessionHandle;	
@@ -55,8 +55,8 @@ public:
 	}
 	SNMP_Session(const String& sName, const NetAddress& swAddr)
 		:sessionName(sName), switchInetAddr(swAddr), sessionHandle(NULL) , active(false), vendor(Illegal){
-		for (uint32 vlan=0; vlan<=MAX_VLAN; vlan++) 
-			portList[vlan]=0;
+		//for (uint32 vlan=0; vlan<=MAX_VLAN; vlan++) 
+		//	portList[vlan]=0;
 		setSupportedVendorOidString();
 	}
 	~SNMP_Session() {disconnectSwitch();}
@@ -66,8 +66,8 @@ public:
 	SNMP_Session& operator=(const SNMP_Session& s) { 
 		sessionName = s.sessionName;
 		switchInetAddr = s.switchInetAddr;
-		for (uint32 i = 0; i <= MAX_VLAN; i++)
-			portList[i] = s.portList[i];
+		//for (uint32 i = 0; i <= MAX_VLAN; i++)
+		//	portList[i] = s.portList[i];
 		sessionHandle = s.sessionHandle; 
 		active = s.active;
 		vendor = s.vendor;
@@ -81,8 +81,12 @@ public:
 	}
 	bool setSwitchVendorInfo();
 	const uint32 findEmptyVLAN() const{
-		for (uint32 vlan=MIN_VLAN; vlan<=MAX_VLAN; vlan++)
-			if (!portList[vlan]) return vlan;
+		vlanPortMapList::iterator iter;
+		//for (uint32 vlan=MIN_VLAN; vlan<=MAX_VLAN; vlan++)
+		//	if (!portList[vlan]) return vlan;
+		for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); iter++)
+		    if ((*iter).ports == 0)
+                      return (*iter).vid;  
 		return 0;
 	}
 	bool setVLANPVID(uint32 port, uint32 vlanID); // A hack to Dell 5324 switch
@@ -92,27 +96,40 @@ public:
 	bool removePortFromVLAN(uint32 port, uint32 vlanID);
 	bool movePortToDefaultVLAN(uint32 port);
 	uint32 getVLANbyUntaggedPort(uint32 port){
-		for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
-			if(portListUntagged[i]&(1<<(32-port)))
-			      return i;
-		}
+		//for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
+		//	if(portListUntagged[i]&(1<<(32-port)))
+		//	      return i;
+		vlanPortMapList::iterator iter;
+		for (iter = vlanPortMapListUntagged.begin(); iter != vlanPortMapListAll.end(); iter++)
+		    if (((*iter).ports)&(1<<(32-port)))
+                      return (*iter).vid;  
 		return 0;
 	}
 	uint32 getVLANbyPort(uint32 port){
-		for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
-			if(portList[i]&(1<<(32-port)))
-			      return i;
-		}
+		//for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
+		//	if(portList[i]&(1<<(32-port)))
+		//	      return i;
+		//}
+		vlanPortMapList::iterator iter;
+		for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); iter++)
+		    if (((*iter).ports)&(1<<(32-port)))
+                      return (*iter).vid;  
 		return 0;
 	}
 	uint32 getVLANListbyPort(uint32 port, SimpleList<uint32> &vlan_list){
 		vlan_list.clear();
-		for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
-			if(portList[i]&(1<<(32-port)))
-			      vlan_list.push_back(i);
-		}
+		vlanPortMapList::iterator iter;
+		for (iter = vlanPortMapListUntagged.begin(); iter != vlanPortMapListAll.end(); iter++)
+		    if (((*iter).ports)&(1<<(32-port)))
+                      return vlan_list.push_back((*iter).vid);
+
+		//for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
+		//	if(portList[i]&(1<<(32-port)))
+		//	      vlan_list.push_back(i);
+		//}
 		return vlan_list.size();
 	}
+	void readVlanPortMapBranch(const char* oid_str, vlanPortMapList &vpmList);
 	bool readVLANFromSwitch();
 	String& getSessionName() {return sessionName;}
 	NetAddress& getSwitchInetAddr() {return switchInetAddr;}
