@@ -72,8 +72,6 @@ BGPD = @BGPD@
 CC = @CC@
 CPP = @CPP@
 CURSES = @CURSES@
-CXX = @CXX@
-CYGPATH_W = @CYGPATH_W@
 DEPDIR = @DEPDIR@
 DRAGON = @DRAGON@
 IF_METHOD = @IF_METHOD@
@@ -103,10 +101,8 @@ VERSION = @VERSION@
 VTYSH = @VTYSH@
 ZEBRA = @ZEBRA@
 am__include = @am__include@
-am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
 install_sh = @install_sh@
-mkdir_p = @mkdir_p@
 DEFS = @DEFS@ $(LOCAL_OPTS) -DSYSCONFDIR=\"$(sysconfdir)/\"
 INSTALL_SDATA = @INSTALL@ -m 600
 
@@ -142,7 +138,7 @@ sysconf_DATA = ospfd.conf.sample
 EXTRA_DIST = $(sysconf_DATA) OSPF-MIB.txt OSPF-TRAP-MIB.txt ChangeLog.opaque.txt
 subdir = ospfd
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
-CONFIG_HEADER = $(top_builddir)/config.h $(top_builddir)/$@)]
+CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 
@@ -178,7 +174,7 @@ am_ospfd_OBJECTS = ospf_main.$(OBJEXT) $(am__objects_1)
 ospfd_OBJECTS = $(am_ospfd_OBJECTS)
 ospfd_DEPENDENCIES = ../lib/libzebra.a
 ospfd_LDFLAGS =
-DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir) -I$(top_builddir)
+DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@

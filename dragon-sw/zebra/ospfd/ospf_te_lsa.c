@@ -757,9 +757,9 @@ ospf_te_area_lsa_rtid_timer(struct thread *t)
   area->t_te_area_lsa_rtid_self = NULL;
    
    if (area->te_area_lsa_rtid_self)
-   	rc = ospf_te_area_lsa_rtid_refresh(area->te_area_lsa_rtid_self);
+      rc = ospf_te_area_lsa_rtid_refresh(area->te_area_lsa_rtid_self);
    else
-   	rc = ospf_te_area_lsa_rtid_originate(area);
+      rc = ospf_te_area_lsa_rtid_originate(area);
    return rc;
 }
 
@@ -804,7 +804,9 @@ ospf_te_area_lsa_rtid_refresh (struct ospf_lsa *lsa)
   if (ospf_lsa_install (area->ospf, NULL, new ) == NULL)
     {
       zlog_warn ("ospf_te_area_lsa_rtid_refresh: ospf_lsa_install() ?");
-      ospf_lsa_free (new);
+      /*hacked@@@@*/
+      if (new->lock == 0)
+          ospf_lsa_free (new);
       goto out;
     }
 
