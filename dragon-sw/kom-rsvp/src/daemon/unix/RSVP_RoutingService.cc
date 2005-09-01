@@ -405,13 +405,12 @@ const LogicalInterface* RoutingService::findOutLifByOSPF( const NetAddress& next
 	//If OSPF is not able to resolve it, try looking up the static routing table, maybe there is one entry in it...
 	if (msgLength <= sizeof(uint8)*2)
 	{
-	/*
+	//@@@@ Static route resolution for interdomain links
 		const LogicalInterface* lif = getUnicastRoute(nextHop, gw); 
 		const NetAddress addr = NetAddress(gw.rawAddress());
 		if (lif && RSVP_Global::rsvp->findInterfaceByAddress(addr))
 			getPeerIPAddr(addr, gw);
-		return lif;
-	*/
+			return lif;
 		return RSVP_Global::rsvp->findInterfaceByAddress(nextHop);
 	}
 
