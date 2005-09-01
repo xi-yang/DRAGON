@@ -428,7 +428,8 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 		getOIatPSB( outLif.getLIH() )->setOutLabelRequestedType(getLABEL_REQUEST_Object().getRequestedLabelType());
 	} else if (outLif == *(RSVP_Global::rsvp->getApiLif())){
 		message.setLABEL_REQUEST_Object( getLABEL_REQUEST_Object());
-	}	
+	} else
+		message.setLABEL_REQUEST_Object( getLABEL_REQUEST_Object());
 	if ( explicitRoute && explicitRoute->getAbstractNodeList().size() >= 1 ) {
 		message.setEXPLICIT_ROUTE_Object( *explicitRoute );
 	}
