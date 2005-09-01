@@ -914,7 +914,7 @@ ospf_rsvp_init ()
   int ret;
   int accept_sock;
   struct sockaddr_in addr;
-  static const u_int16_t ospf_rsvp_port = 2613;
+  static u_int16_t ospf_rsvp_port = 2613;
   if (OSPF_API_SYNC_PORT == 2607)
       ospf_rsvp_port = 2713;
 
