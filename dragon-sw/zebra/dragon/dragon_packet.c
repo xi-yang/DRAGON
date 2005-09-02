@@ -530,8 +530,8 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
                             if(lsp->dragon.destLocalId >> 16 != LOCAL_ID_TYPE_NONE)
                             {
 
-                                destLocalId = XMALLOC(MTYPE_TMP, sizeof(struct AbstractNode_UnNumIfID));
-                                memset(destLocalId, 0, sizeof(struct AbstractNode_UnNumIfID));
+                                destLocalId = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
+                                memset(destLocalId, 0, sizeof(struct _EROAbstractNode_Para));
                                 destLocalId->type = UNumIfID;
                                 destLocalId->isLoose = 1;
                                 memcpy(&destLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.destAddr, sizeof(struct in_addr));
