@@ -119,7 +119,7 @@ static int
 build_dragon_tlv_ero (char *buf, struct lsp *lsp)
 {
 	u_int16_t type = htons(DMSG_CLI_TOPO_ERO);
-	u_int16_t length = sizeof(te_tlv_header);
+	u_int16_t length = 4;
 	struct _EROAbstractNode_Para *eroNodePara;
 	char *p = buf + length;
 	int i;
@@ -152,12 +152,12 @@ build_dragon_tlv_ero (char *buf, struct lsp *lsp)
 		}
 	}
 
-	if (length == sizeof(te_tlv_header))
+	if (length <= 4)
 		return 0;
 
 	/* Put TLV header */
 	*(u_int16_t*)buf = type;
-	*(u_int16_t*)(buf+2) = htons(length - sizeof(te_tlv_header));
+	*(u_int16_t*)(buf+2) = htons(length - 4);
 	
 	return length;
 }
