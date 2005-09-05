@@ -115,19 +115,17 @@ build_dragon_tlv_srcdst (struct stream *s, u_int16_t t, struct lsp *lsp)
 	return; 
 }
 
-static void 
-build_dragon_tlv_ero (struct stream *s, struct lsp *lsp)
+static int
+build_dragon_tlv_ero (char *buf, struct lsp *lsp)
 {
 	u_int16_t type = htons(DMSG_CLI_TOPO_ERO);
-	u_int16_t length =0;
-	char buf[DRAGON_MAX_PACKET_SIZE];
+	u_int16_t length = sizeof(te_tlv_header);
 	struct _EROAbstractNode_Para *eroNodePara;
-	char *p;
+	char *p = buf + length;
 	int i;
 
 	if (lsp->common.ERONodeNumber == 0)
-		return;
-
+		return 0;
 
 	for (i = 0, eroNodePara = lsp->common.EROAbstractNode_Para, p = buf; i < lsp->common.ERONodeNumber; i++, eroNodePara++)
 	{
@@ -154,14 +152,14 @@ build_dragon_tlv_ero (struct stream *s, struct lsp *lsp)
 		}
 	}
 
-	/* Put TLV header */
-	stream_put (s, &type, sizeof (u_int16_t));
-	length = htons(length);
-	stream_put (s, &length, sizeof (u_int16_t));
+	if (length == sizeof(te_tlv_header))
+		return 0;
 
-	/* Put TLV data */
-	stream_put (s, buf, ntohs(length));
-	return; 
+	/* Put TLV header */
+	*(u_int16_t*)buf = type;
+	*(u_int16_t*)(buf+2) = htons(length - sizeof(te_tlv_header));
+	
+	return length;
 }
 
 struct dragon_fifo_elt *
@@ -331,7 +329,9 @@ dragon_topology_confirm_msg_new(struct lsp *lsp)
   struct stream *s;
   struct api_msg_header *amsgh;
   struct dragon_fifo_elt *packet;
-  
+  char ero_buf[DRAGON_MAX_PACKET_SIZE];
+  int ero_len = build_dragon_tlv_ero(ero_buf, lsp);
+
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
   s = packet->s;
@@ -341,12 +341,15 @@ dragon_topology_confirm_msg_new(struct lsp *lsp)
   /* Obsolete header format
   dmsgh = build_dragon_msg_header(s, DMSG_CLI_TOPO_CONFIRM, lsp->seqno);
   */
-  amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, 0, lsp->seqno,
+  amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20 + ero_len, 0, lsp->seqno,
     LSP_OPT_STRICT, lsp->dragon.lspVtag);
 
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_CONFIRM, lsp);
-  build_dragon_tlv_ero(s, lsp);
+
+  if (ero_len > 0)
+  	stream_put(s, ero_buf, ero_len);
+
   return packet;
 }
 
@@ -357,6 +360,8 @@ dragon_topology_remove_msg_new(struct lsp *lsp)
   struct stream *s;
   struct api_msg_header *amsgh;
   struct dragon_fifo_elt *packet;
+  char ero_buf[DRAGON_MAX_PACKET_SIZE];
+  int ero_len = build_dragon_tlv_ero(ero_buf, lsp);
   
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
@@ -367,16 +372,16 @@ dragon_topology_remove_msg_new(struct lsp *lsp)
   /* Obsolete header format
   dmsgh = build_dragon_msg_header(s, DMSG_CLI_TOPO_DELETE, lsp->seqno);
   */
-  amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, 0, lsp->seqno,
+  amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20 + ero_len, 0, lsp->seqno,
       LSP_OPT_STRICT, lsp->dragon.lspVtag);
 
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_DELETE, lsp);
-  build_dragon_tlv_ero(s, lsp);
+  if (ero_len > 0)
+  	stream_put(s, ero_buf, ero_len);
 
   return packet;
 }
-
 
 int 
 dragon_lsp_refresh_timer(struct thread *t)
