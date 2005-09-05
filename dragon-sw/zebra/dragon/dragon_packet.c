@@ -135,7 +135,7 @@ build_dragon_tlv_ero (struct stream *s, struct lsp *lsp)
 		{
 			((struct AbstractNode_IPv4 *)p)->typeOrLoose = eroNodePara->type | (eroNodePara->isLoose << 7);
 			((struct AbstractNode_IPv4 *)p)->length = sizeof(struct AbstractNode_IPv4 );
-			memcpy(((struct AbstractNode_IPv4 *)p)->addr, eroNodePara->data.ip4.addr, sizeof(struct in_addr));
+			memcpy(((struct AbstractNode_IPv4 *)p)->addr, &eroNodePara->data.ip4.addr, sizeof(struct in_addr));
 			((struct AbstractNode_IPv4 *)p)->prefix = eroNodePara->data.ip4.prefix;
 			((struct AbstractNode_IPv4 *)p)->resvd = 0;
 			p+=sizeof(struct AbstractNode_IPv4);
@@ -146,7 +146,7 @@ build_dragon_tlv_ero (struct stream *s, struct lsp *lsp)
 		{
 			((struct AbstractNode_UnNumIfID *)p)->typeOrLoose = eroNodePara->type | (eroNodePara->isLoose << 7);
 			((struct AbstractNode_UnNumIfID *)p)->length = sizeof(struct AbstractNode_UnNumIfID );
-			((struct AbstractNode_UnNumIfID *)p)->routerID =  eroNodePara->data.uNumIfID.routerID;
+			memcpy(((struct AbstractNode_UnNumIfID *)p)->routerID, &eroNodePara->data.uNumIfID.routerID, sizeof(struct in_addr));
 			((struct AbstractNode_UnNumIfID *)p)->interfaceID =  eroNodePara->data.uNumIfID.interfaceID;
 			((struct AbstractNode_UnNumIfID *)p)->resvd = 0;
 			p+=sizeof(struct AbstractNode_UnNumIfID);
