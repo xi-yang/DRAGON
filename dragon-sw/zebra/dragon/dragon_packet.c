@@ -115,6 +115,54 @@ build_dragon_tlv_srcdst (struct stream *s, u_int16_t t, struct lsp *lsp)
 	return; 
 }
 
+static void 
+build_dragon_tlv_ero (struct stream *s, struct lsp *lsp)
+{
+	u_int16_t type = htons(DMSG_CLI_TOPO_ERO);
+	u_int16_t length =0;
+	char buf[DRAGON_MAX_PACKET_SIZE];
+	struct _EROAbstractNode_Para *eroNodePara;
+	char *p;
+	int i;
+
+	if (lsp->common.ERONodeNumber == 0)
+		return;
+
+
+	for (i = 0, eroNodePara = lsp->common.EROAbstractNode_Para, p = buf; i < lsp->common.ERONodeNumber; i++, eroNodePara++)
+	{
+		if (eroNodePara->type == IPv4)
+		{
+			((struct AbstractNode_IPv4 *)p)->typeOrLoose = eroNodePara->type | (eroNodePara->isLoose << 7);
+			((struct AbstractNode_IPv4 *)p)->length = sizeof(struct AbstractNode_IPv4 );
+			memcpy(((struct AbstractNode_IPv4 *)p)->addr, eroNodePara->data.ip4.addr, sizeof(struct in_addr));
+			((struct AbstractNode_IPv4 *)p)->prefix = eroNodePara->data.ip4.prefix;
+			((struct AbstractNode_IPv4 *)p)->resvd = 0;
+			p+=sizeof(struct AbstractNode_IPv4);
+			length += sizeof(struct AbstractNode_IPv4);
+			
+		}
+		else if (eroNodePara->type == UNumIfID)
+		{
+			((struct AbstractNode_UnNumIfID *)p)->typeOrLoose = eroNodePara->type | (eroNodePara->isLoose << 7);
+			((struct AbstractNode_UnNumIfID *)p)->length = sizeof(struct AbstractNode_UnNumIfID );
+			((struct AbstractNode_UnNumIfID *)p)->routerID =  eroNodePara->data.uNumIfID.routerID;
+			((struct AbstractNode_UnNumIfID *)p)->interfaceID =  eroNodePara->data.uNumIfID.interfaceID;
+			((struct AbstractNode_UnNumIfID *)p)->resvd = 0;
+			p+=sizeof(struct AbstractNode_UnNumIfID);
+			length += sizeof(struct AbstractNode_UnNumIfID);
+		}
+	}
+
+	/* Put TLV header */
+	stream_put (s, &type, sizeof (u_int16_t));
+	length = htons(length);
+	stream_put (s, &length, sizeof (u_int16_t));
+
+	/* Put TLV data */
+	stream_put (s, buf, ntohs(length));
+	return; 
+}
 
 struct dragon_fifo_elt *
 dragon_packet_new(size_t size)
@@ -298,7 +346,7 @@ dragon_topology_confirm_msg_new(struct lsp *lsp)
 
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_CONFIRM, lsp);
-  
+  build_dragon_tlv_ero(s, lsp);
   return packet;
 }
 
@@ -324,7 +372,8 @@ dragon_topology_remove_msg_new(struct lsp *lsp)
 
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_DELETE, lsp);
-  
+  build_dragon_tlv_ero(s, lsp);
+
   return packet;
 }
 
