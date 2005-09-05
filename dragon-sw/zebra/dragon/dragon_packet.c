@@ -127,7 +127,7 @@ build_dragon_tlv_ero (char *buf, struct lsp *lsp)
 	if (lsp->common.ERONodeNumber == 0)
 		return 0;
 
-	for (i = 0, eroNodePara = lsp->common.EROAbstractNode_Para, p = buf; i < lsp->common.ERONodeNumber; i++, eroNodePara++)
+	for (i = 0, eroNodePara = lsp->common.EROAbstractNode_Para; i < lsp->common.ERONodeNumber; i++, eroNodePara++)
 	{
 		if (eroNodePara->type == IPv4)
 		{
@@ -145,7 +145,7 @@ build_dragon_tlv_ero (char *buf, struct lsp *lsp)
 			((struct AbstractNode_UnNumIfID *)p)->typeOrLoose = eroNodePara->type | (eroNodePara->isLoose << 7);
 			((struct AbstractNode_UnNumIfID *)p)->length = sizeof(struct AbstractNode_UnNumIfID );
 			memcpy(((struct AbstractNode_UnNumIfID *)p)->routerID, &eroNodePara->data.uNumIfID.routerID, sizeof(struct in_addr));
-			((struct AbstractNode_UnNumIfID *)p)->interfaceID =  eroNodePara->data.uNumIfID.interfaceID;
+			((struct AbstractNode_UnNumIfID *)p)->interfaceID =  htonl(eroNodePara->data.uNumIfID.interfaceID);
 			((struct AbstractNode_UnNumIfID *)p)->resvd = 0;
 			p+=sizeof(struct AbstractNode_UnNumIfID);
 			length += sizeof(struct AbstractNode_UnNumIfID);
