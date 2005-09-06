@@ -9,14 +9,14 @@ extern "C" {
     int do_read(int fd, char *text1, char *text2, int show, int timeout);
     int do_write(int fd, char *text, int timeout);
     int is_force10_prompt(char *p, int len);
-
-    char  progname[100];
-    char  hostname[100];
-    pid_t pid;
-    int   got_alarm;
-    int   verbose;
+    void sigfunct(int signo);
 }
 
+extern char  progname[100];
+extern char  hostname[100];
+extern pid_t pid;
+extern int   got_alarm;
+extern int   verbose;
 /* program constants */
 #define TELNET_EXEC     "/usr/bin/telnet"
 #define TELNET_CLOSE    "Connection closed"

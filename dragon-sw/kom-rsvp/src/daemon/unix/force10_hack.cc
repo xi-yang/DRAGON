@@ -1,6 +1,5 @@
-/* Created by DRAGON Team 2005-2006 */
-
-/*
+/* Created by DRAGON Team 2005-2006 
+ *
  * Modifed from ftos_telnet_hack.c
  *
  * adds/removes untagged ports in VLANs on Force10 devices via telnet
@@ -135,6 +134,7 @@
  * ftos_telnet_hack: connection to host '10.10.10.2' failed
  *  */
 
+#include "force10_hack.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
