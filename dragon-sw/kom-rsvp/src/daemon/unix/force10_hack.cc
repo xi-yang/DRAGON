@@ -227,9 +227,9 @@ void sigfunct(int signo)
 void force10_hack(char* portName, char* vlanNum, char* action)
 {
   int fdpipe[2][2], fdin, fdout, fderr, err, n;
-
+  char tagged_untagged[20];
+    
   got_alarm = 0;
-
   /* we need pipes to communicate between the programs */
   if (pipe(fdpipe[0]) < 0) {
     err_msg("%s: pipe failed: errno=%d\n", progname, errno);
@@ -330,7 +330,7 @@ void force10_hack(char* portName, char* vlanNum, char* action)
     if ((n = do_write(fdout, "configure\n", 5)) < 0) break;
     if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
 
-    if (strcmp(action, "add") == 0) {
+    if (strstr(action, "add") != NULL) {
       /* when adding a port, do interface config then vlan config */
 
       /* enter interface configuration mode */
@@ -354,8 +354,13 @@ void force10_hack(char* portName, char* vlanNum, char* action)
       if ((n = do_write(fdout, "\n", 5)) < 0) break;
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
       
-      /* configure specified port as an untagged member of the specified VLAN */
-      if ((n = do_write(fdout, "untagged ", 5)) < 0) break;
+      /* read parameter that specifies a port is tagged or untagged */
+      if (strstr(action, "untagged") != NULL)
+        strcpy(tagged_untagged, "untagged");
+      else
+        strcpy(tagged_untagged, "tagged");
+      /* add specified port as an untagged/tagged member of the specified VLAN */
+      if ((n = do_write(fdout, tagged_untagged, 5)) < 0) break;
       if ((n = do_write(fdout, portName, 5)) < 0) break;
       if ((n = do_write(fdout, "\n", 5)) < 0) break;
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
@@ -365,8 +370,7 @@ void force10_hack(char* portName, char* vlanNum, char* action)
       if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
 
     }
-
-    if (strcmp(action, "remove") == 0) {
+    if (strstr(action, "remove") != NULL) {
       /* when removing a port, do vlan config then interface config */
       /* also, use the 'no' keyword in the commands */ 
 
@@ -376,8 +380,13 @@ void force10_hack(char* portName, char* vlanNum, char* action)
       if ((n = do_write(fdout, "\n", 5)) < 0) break;
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
       
-      /* configure specified port as an untagged member of the specified VLAN */
-      if ((n = do_write(fdout, "no untagged ", 5)) < 0) break;
+      /* read parameter that specifies a port is tagged or untagged */
+      if (strstr(action, "untagged") != NULL)
+        strcpy(tagged_untagged, "no untagged");
+      else
+        strcpy(tagged_untagged, "no tagged");
+      /* remove specified port as an untagged member/untagged of the specified VLAN */
+      if ((n = do_write(fdout, tagged_untagged, 5)) < 0) break;
       if ((n = do_write(fdout, portName, 5)) < 0) break;
       if ((n = do_write(fdout, "\n", 5)) < 0) break;
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
