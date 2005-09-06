@@ -28,8 +28,6 @@ typedef SimpleList<vlanPortMap> vlanPortMapList;
 class SNMP_Session{
 	String sessionName;
 	NetAddress switchInetAddr;
-	//uint32 portList[MAX_VLAN+1];
-	//uint32 portListUntagged[MAX_VLAN+1];
 	vlanPortMapList vlanPortMapListAll;
 	vlanPortMapList vlanPortMapListUntagged;
 	struct snmp_session* sessionHandle;	
@@ -40,6 +38,7 @@ class SNMP_Session{
 	void setSupportedVendorOidString() {
 		supportedVendorOidString[IntelES530] = ".1.3.6.1.4.1.343.6.63.3.8.2.3.1.3";
 		supportedVendorOidString[RFC2674] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
+		supportedVendorOidString[LambdaOptical] = "1.3.6.1.4.1.7156.1.4.1.1";
 	}
 
 protected:
@@ -47,6 +46,8 @@ protected:
 			Illegal = 0,
 			IntelES530 = 1, //Intel ES-530 Express Fast Ethernet Switch
 			RFC2674 = 2,	// Dell 5200/5300 Series GigE Switch
+			LambdaOptical = 3,
+			Force10E600 =4,
 	};
 
 public:
@@ -55,8 +56,6 @@ public:
 	}
 	SNMP_Session(const String& sName, const NetAddress& swAddr)
 		:sessionName(sName), switchInetAddr(swAddr), sessionHandle(NULL) , active(false), vendor(Illegal){
-		//for (uint32 vlan=0; vlan<=MAX_VLAN; vlan++) 
-		//	portList[vlan]=0;
 		setSupportedVendorOidString();
 	}
 	~SNMP_Session() {disconnectSwitch();}
@@ -66,13 +65,12 @@ public:
 	SNMP_Session& operator=(const SNMP_Session& s) { 
 		sessionName = s.sessionName;
 		switchInetAddr = s.switchInetAddr;
-		//for (uint32 i = 0; i <= MAX_VLAN; i++)
-		//	portList[i] = s.portList[i];
 		sessionHandle = s.sessionHandle; 
 		active = s.active;
 		vendor = s.vendor;
 		return *this;
 	}
+        uint32 getVendor() { return vendor;}
 	bool connectSwitch();
 	void disconnectSwitch() { 
 		snmp_close(sessionHandle);
@@ -82,8 +80,6 @@ public:
 	bool setSwitchVendorInfo();
 	const uint32 findEmptyVLAN() const{
 		vlanPortMapList::ConstIterator iter;
-		//for (uint32 vlan=MIN_VLAN; vlan<=MAX_VLAN; vlan++)
-		//	if (!portList[vlan]) return vlan;
 		for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter)
 		    if ((*iter).ports == 0)
                       return (*iter).vid;  
@@ -109,11 +105,6 @@ public:
 		for (iter = vlanPortMapListUntagged.begin(); iter != vlanPortMapListAll.end(); ++iter)
 		    if (((*iter).ports)&(1<<(32-port)))
                       return vlan_list.push_back((*iter).vid);
-
-		//for(int i=MIN_VLAN;i<=MAX_VLAN;i++){
-		//	if(portList[i]&(1<<(32-port)))
-		//	      vlan_list.push_back(i);
-		//}
 		return vlan_list.size();
 	}
 	void readVlanPortMapBranch(const char* oid_str, vlanPortMapList &vpmList);
@@ -121,9 +112,14 @@ public:
 	String& getSessionName() {return sessionName;}
 	NetAddress& getSwitchInetAddr() {return switchInetAddr;}
 	bool isValidSession() const {return active;}
-        bool verifyVLAN(uint32 vlanID);
-        bool setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID);
-        bool VLANHasTaggedPort(uint32 vlanID);
+	bool verifyVLAN(uint32 vlanID);
+	bool setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID);
+	bool VLANHasTaggedPort(uint32 vlanID);
+
+	 //declaration for force10 switch operations
+	 //interface to the force10_hack module
+	bool deleteVLANPortForce10(uint32 portID, uint32 vlanID);
+	bool addVLANPortForce10(uint32 portID, uint32 vlanID);
 };
 
 struct LocalId {

@@ -8,6 +8,9 @@ To be incorporated into KOM-RSVP-TE package
 #include "SNMP_Global.h"
 #include "RSVP_Log.h"
 #include "RSVP_Message.h"
+#include "force10_hack.h"
+#include <signal.h>
+
 
 LocalIdList SNMP_Global::localIdList;
 
@@ -280,6 +283,10 @@ bool SNMP_Session::setSwitchVendorInfo()
 			vendor = RFC2674;
 		else if (buf.leftequal("Summit1i") || buf.leftequal("Summit5i")) 
 			vendor = RFC2674;
+		else if (buf.leftequal("Spectra")) 
+			vendor = LambdaOptical;
+		else if (buf.leftequal("Force10 Networks Real Time Operating System Software")) 
+			vendor = Force10E600;
 		else{
 			vendor = Illegal;
 		 	return false;
@@ -398,6 +405,7 @@ bool SNMP_Session::verifyVLAN(uint32 vlanID)
     String tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
     uint32 ports = 0;
 
+    //@@@@ Other Vendors (Intel, Force10) ????
     if (!active || vendor!=RFC2674) //not initialized or session has been disconnected
     	return false;
 
@@ -428,6 +436,7 @@ bool SNMP_Session::setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID)
     String tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
     uint32 ports = 0;
 
+    //@@@@ Other Vendors (Intel, Force10) ????
     if (!active || vendor!=RFC2674) //not initialized or session has been disconnected
     	return false;
 
@@ -489,6 +498,7 @@ bool SNMP_Session::VLANHasTaggedPort(uint32 vlanID)
     String oid_str_all = ".1.3.6.1.2.1.17.7.1.4.3.1.2";    
     String oid_str_untagged = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
 
+    //@@@@ Other Vendors (Intel, Force10) ????
     if (!active || vendor!=RFC2674) //not initialized or session has been disconnected
       return false;
 
@@ -579,14 +589,77 @@ bool SNMP_Session::setVLANPort(uint32 portListNew, uint32 vlanID)
 }
 
 SNMP_Global::~SNMP_Global() {
-		SNMPSessionList::Iterator snmpIter = snmpSessionList.begin();
-		for ( ; snmpIter != snmpSessionList.end(); ++snmpIter){
-			(*snmpIter)->disconnectSwitch();
-			snmpSessionList.erase(snmpIter);
-		}
+	SNMPSessionList::Iterator snmpIter = snmpSessionList.begin();
+	for ( ; snmpIter != snmpSessionList.end(); ++snmpIter){
+		(*snmpIter)->disconnectSwitch();
+		snmpSessionList.erase(snmpIter);
 	}
+}
 
 
+////////////////////////////////////////////////////
+//     Definition for the interface to force10_hack module      //
+////////////////////////////////////////////////////
+
+
+bool SNMP_Session::addVLANPortForce10(uint32 portID, uint32 vlanID)
+{
+    int n;
+    uint32 port_part,slot_part;
+    char port[100], vlan[100], action[100];
+    // extern int optind;
+    if (!active || vendor==Illegal) //not initialized or session has been disconnected
+    return false;
+
+    pid = -1;
+    verbose = 0;
+
+    // setup signals properly
+    for(n = 1; n < NSIG; n++)
+        signal(n, sigfunct);
+    signal(SIGCHLD, SIG_IGN);
+    strcpy(progname, "ftos_telnet_hack"); 
+    strcpy(hostname, convertAddressToString(switchInetAddr).chars());
+
+    sprintf(vlan, "%d", vlanID);
+    strcpy(action, "add");
+
+    // add port to VLAN
+    port_part=(portID)&0xf;     
+    slot_part=(portID>>4)&0xf;
+    sprintf(port, "gi%d/%d",slot_part,port_part);
+    force10_hack(port, vlan, action);
+
+    return true;
+}
+
+bool SNMP_Session::deleteVLANPortForce10(uint32 portID, uint32 vlanID)
+{
+    int n;
+    uint32 port_part,slot_part;
+    char port[100], vlan[100], action[100];
+    //  extern int optind;
+    verbose = 0;
+    if (!active || vendor==Illegal) //not initialized or session has been disconnected
+    return false;
+
+    // setup signals properly
+    for(n = 1; n < NSIG; n++)
+        signal(n, sigfunct);
+    signal(SIGCHLD, SIG_IGN);
+    strcpy(action, "remove");
+
+    // remove in port from VLAN
+    port_part=(portID)&0xf;
+    slot_part=(portID>>4)&0xf;
+    sprintf(port, "gi%d/%d",slot_part,port_part);
+    force10_hack(port, vlan, action);
+
+    return true;
+}
+
+//////////////////////////////////
+     
 //One unique SNMP session per switch
 bool SNMP_Global::addSNMPSession(SNMP_Session* addSS)
 {
