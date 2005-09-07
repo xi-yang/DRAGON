@@ -18,21 +18,45 @@ To be incorporated into KOM-RSVP-TE package
 #define MAX_VLAN	   		4095
 #define MAX_VENDOR			2
 
+#define MAX_VLAN_PORT_BYTES 24
 struct vlanPortMap{
     uint32 vid;
     union {
         uint32 ports;
-        uint8 portbits[24];
+        uint8 portbits[MAX_VLAN_PORT_BYTES];
     };
 };
-
 typedef SimpleList<vlanPortMap> vlanPortMapList;
+
+struct vlanRefID{
+    uint32 ref_id;
+    uint32 vlan_id;
+};
+typedef SimpleList<vlanRefID> vlanRefIDList;
+
+inline uint32 Port2BitForce10(uint32 port)
+{
+    return ((port>>4)&0xf)*24 + ((port)&0xf) + 1;
+}
+
+inline void SetPortBitForce10(uint8* bitstring, uint32 bit)
+{
+    uint8 mask = (1 << (7 - bit%8))&0xff;
+    bitstring[bit/8] |= mask;
+}
+
+inline void ResetPortBitForce10(uint8* bitstring, uint32 bit)
+{
+    uint8 mask = (~(1 << (7 - bit%8)))&0xff;
+    bitstring[bit/8] &= mask;
+}
 
 class SNMP_Session{
 	String sessionName;
 	NetAddress switchInetAddr;
 	vlanPortMapList vlanPortMapListAll;
 	vlanPortMapList vlanPortMapListUntagged;
+	vlanRefIDList vlanRefIdConvList;
 	struct snmp_session* sessionHandle;	
 	bool active;
 	uint32 vendor;
@@ -123,6 +147,10 @@ public:
 	 //interface to the force10_hack module
 	bool deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagged = false);
 	bool addVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagged = false);
+	//force10 hack for generic bitsting vlan-port mask
+	void  CreateVlanRefToIDTableForce10 (const char* oid_str, vlanRefIDList& vlanRefList);
+	uint32  VlanIDToRefForce10 (uint32 vlan_id);
+	uint32  VlanRefToIDForce10 (uint32 ref_id);
 };
 
 struct LocalId {
