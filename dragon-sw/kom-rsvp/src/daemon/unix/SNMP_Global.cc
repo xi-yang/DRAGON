@@ -14,6 +14,15 @@ To be incorporated into KOM-RSVP-TE package
 
 LocalIdList SNMP_Global::localIdList;
 
+static vlanPortMap *getVlanPortMapById(vlanPortMapList &vpmList, uint32 vid)
+{
+    vlanPortMapList::Iterator iter;
+    for (iter = vpmList.begin(); iter != vpmList.end(); ++iter)
+        if (((*iter).vid) == vid)
+            return &(*iter);
+    return NULL;
+}
+
 bool SNMP_Session::connectSwitch()
 {
 	struct snmp_session session;	
@@ -396,7 +405,7 @@ bool SNMP_Session::VLANHasTaggedPort(uint32 vlanID)
     String oid_str_all = ".1.3.6.1.2.1.17.7.1.4.3.1.2";    
     String oid_str_untagged = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
 
-    memset(&portmap_all, 0, sizeof(vlanPortMap);
+    memset(&portmap_all, 0, sizeof(vlanPortMap));
     if (vendor == Force10E600)
         portmap_all.vid = VlanIDToRefForce10(vlanID);
     else
@@ -466,7 +475,7 @@ bool SNMP_Session::VLANHasTaggedPort(uint32 vlanID)
     if(response) 
       snmp_free_pdu(response);
 
-    if (memcmp(&portmap_all, &portmap_untagged, sizeof(vlanPortMap) == 0)
+    if (memcmp(&portmap_all, &portmap_untagged, sizeof(vlanPortMap)) == 0)
         return false;
 
     return true;
@@ -613,16 +622,6 @@ bool SNMP_Session::setVLANPortTag(uint32 portListNew, uint32 vlanID)
 	  }
 	  return true;
 }
-
-static vlanPortMap *getVlanPortMapById(vlanPortMapList &vpmList, uint32 vid)
-{
-    vlanPortMapList::Iterator iter;
-    for (iter = vpmList.begin(); iter != vpmList.end(); ++iter)
-        if (((*iter).vid) == vid)
-            return &(*iter);
-    return NULL;
-}
-
 
 bool SNMP_Session::setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID)
 {
@@ -820,12 +819,10 @@ void SNMP_Session::CreateVlanRefToIDTableForce10 (const char* oid_str, vlanRefID
         bool running = true;
         size_t rootlen;
 
-        vlanRefList.clear();
-
         status = read_objid(oid_str, anOID, &anOID_len);
         rootlen = anOID_len;
         memcpy(root, anOID, rootlen*sizeof(oid));
-        vpmList.clear();
+        vlanRefList.clear();
         while (running) {
                 // Create the PDU for the data for our request.
                 pdu = snmp_pdu_create(SNMP_MSG_GETNEXT);
@@ -840,7 +837,7 @@ void SNMP_Session::CreateVlanRefToIDTableForce10 (const char* oid_str, vlanRefID
                                 }
 
                                 if (vars->val.string){
-                                        strncpy(ref_str, vars->val.string, vars->val_len)
+                                        strncpy(ref_str, (char*)vars->val.string, vars->val_len);
                                 }
                                 else
                                         ref_str[0] = 0;
@@ -887,7 +884,7 @@ uint32 SNMP_Session::VlanRefToIDForce10 (uint32 ref_id)
     for (it = vlanRefIdConvList.begin(); it != vlanRefIdConvList.end(); ++it)
     {
         if ((*it).ref_id == ref_id)
-            return (*it).vlan_id
+            return (*it).vlan_id;
     }
  
     return 0;
