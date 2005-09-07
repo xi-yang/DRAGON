@@ -20,7 +20,10 @@ To be incorporated into KOM-RSVP-TE package
 
 struct vlanPortMap{
     uint32 vid;
-    uint32 ports;
+    union {
+        uint32 ports;
+        uint8 portbits[24];
+    };
 };
 
 typedef SimpleList<vlanPortMap> vlanPortMapList;
@@ -118,8 +121,8 @@ public:
 
 	 //declaration for force10 switch operations
 	 //interface to the force10_hack module
-	bool deleteVLANPortForce10(uint32 portID, uint32 vlanID);
-	bool addVLANPortForce10(uint32 portID, uint32 vlanID);
+	bool deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagged = false);
+	bool addVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagged = false);
 };
 
 struct LocalId {
