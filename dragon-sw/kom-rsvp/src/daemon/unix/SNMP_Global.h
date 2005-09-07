@@ -16,7 +16,7 @@ To be incorporated into KOM-RSVP-TE package
 #define SWITCH_CTRL_PORT	1
 #define MIN_VLAN			2
 #define MAX_VLAN	   		4095
-#define MAX_VENDOR			5
+#define MAX_VENDOR			4
 
 #define MAX_VLAN_PORT_BYTES 24
 struct vlanPortMap{
@@ -112,38 +112,29 @@ public:
                       return (*iter).vid;  
 		return 0;
 	}
+
+	String& getSessionName() {return sessionName;}
+	NetAddress& getSwitchInetAddr() {return switchInetAddr;}
+	bool isValidSession() const {return active;}
+
 	bool setVLANPVID(uint32 port, uint32 vlanID); // A hack to Dell 5324 switch
 	bool setVLANPortTag(uint32 portListNew, uint32 vlanID); // A hack to Dell 5324 switch
+
+	bool setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID); //No use for Force10 switch
+
+	/////// Below are force10 hack affected functions V  ////////
 	bool movePortToVLANAsTagged(uint32 port, uint32 vlanID);
 	bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
 	bool removePortFromVLAN(uint32 port, uint32 vlanID);
 	bool movePortToDefaultVLAN(uint32 port);
+	uint32 getVLANbyPort(uint32 port);
+	uint32 getVLANListbyPort(uint32 port, SimpleList<uint32> &vlan_list);
 	uint32 getVLANbyUntaggedPort(uint32 port);
-	uint32 getVLANbyPort(uint32 port){
-		vlanPortMapList::Iterator iter;
-		for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter)
-		    if (((*iter).ports)&(1<<(32-port)))
-                      return (*iter).vid;  
-		return 0;
-	}
-	uint32 getVLANListbyPort(uint32 port, SimpleList<uint32> &vlan_list){
-		vlan_list.clear();
-		vlanPortMapList::Iterator iter;
-		for (iter = vlanPortMapListUntagged.begin(); iter != vlanPortMapListAll.end(); ++iter)
-		    if (((*iter).ports)&(1<<(32-port)))
-                      return vlan_list.push_back((*iter).vid);
-		return vlan_list.size();
-	}
 	void readVlanPortMapBranch(const char* oid_str, vlanPortMapList &vpmList);
 	bool readVLANFromSwitch();
-	String& getSessionName() {return sessionName;}
-	NetAddress& getSwitchInetAddr() {return switchInetAddr;}
-	bool isValidSession() const {return active;}
 	bool verifyVLAN(uint32 vlanID);
-	bool setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID);
 	bool VLANHasTaggedPort(uint32 vlanID);
 
-	 //declaration for force10 switch operations
 	 //interface to the force10_hack module
 	bool deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagged = false);
 	bool addVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagged = false);

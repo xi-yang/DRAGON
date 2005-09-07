@@ -340,16 +340,48 @@ bool SNMP_Session::readVLANFromSwitch()
 }
 
 //@@@@ Force10 hack inside
+uint32 SNMP_Session::getVLANbyPort(uint32 port){
+	vlanPortMapList::Iterator iter;
+	for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter) {
+	    if (vendor == Force10E600) {
+	        if (((*iter).ports) & (1 << Port2BitForce10(port)))
+	            return (*iter).vid;
+	    } else {
+      	        if (((*iter).ports)&(1<<(32-port)))
+                  return (*iter).vid;
+           }
+	}
+	return 0;
+}
+
+//@@@@ Force10 hack inside
+uint32 SNMP_Session::getVLANListbyPort(uint32 port, SimpleList<uint32> &vlan_list){
+	vlan_list.clear();
+	vlanPortMapList::Iterator iter;
+	for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter) {
+	    if (vendor == Force10E600) {
+	        if (((*iter).ports) & (1 << Port2BitForce10(port)))
+	            vlan_list.push_back((*iter).vid);
+	    } else {
+               if (((*iter).ports)&(1<<(32-port)))
+                   vlan_list.push_back((*iter).vid);
+    	    }
+	}
+	return vlan_list.size();
+}
+
+//@@@@ Force10 hack inside
 uint32 SNMP_Session::getVLANbyUntaggedPort(uint32 port){
 	vlanPortMapList::Iterator iter;
-	for (iter = vlanPortMapListUntagged.begin(); iter != vlanPortMapListUntagged.end(); ++iter)
-       if (vendor == Force10E600) {
-            if (((*iter).ports) & (1 << Port2BitForce10(port)))
-                return (*iter).vid;
-       } else {
-            if (((*iter).ports)&(1<<(32-port)))
-                 return (*iter).vid;  
-       }
+	for (iter = vlanPortMapListUntagged.begin(); iter != vlanPortMapListUntagged.end(); ++iter) {
+	       if (vendor == Force10E600) {
+	            if (((*iter).ports) & (1 << Port2BitForce10(port)))
+	                return (*iter).vid;
+	       } else {
+	            if (((*iter).ports)&(1<<(32-port)))
+	                 return (*iter).vid;  
+	       }
+	}
 	return 0;
 }
 
@@ -390,6 +422,7 @@ bool SNMP_Session::verifyVLAN(uint32 vlanID)
         snmp_free_pdu(response);
     return false;
 }
+
 
 //@@@@ Force10 hack inside
 bool SNMP_Session::VLANHasTaggedPort(uint32 vlanID)
