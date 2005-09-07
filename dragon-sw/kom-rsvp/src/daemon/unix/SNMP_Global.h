@@ -16,7 +16,7 @@ To be incorporated into KOM-RSVP-TE package
 #define SWITCH_CTRL_PORT	1
 #define MIN_VLAN			2
 #define MAX_VLAN	   		4095
-#define MAX_VENDOR			2
+#define MAX_VENDOR			5
 
 #define MAX_VLAN_PORT_BYTES 24
 struct vlanPortMap{
