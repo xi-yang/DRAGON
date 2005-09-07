@@ -105,18 +105,10 @@ public:
 		vendor = Illegal;
 	}
 	bool setSwitchVendorInfo();
-	const uint32 findEmptyVLAN() const{
-		vlanPortMapList::ConstIterator iter;
-		for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter)
-		    if ((*iter).ports == 0)
-                      return (*iter).vid;  
-		return 0;
-	}
-
 	String& getSessionName() {return sessionName;}
 	NetAddress& getSwitchInetAddr() {return switchInetAddr;}
 	bool isValidSession() const {return active;}
-
+	const uint32 findEmptyVLAN() const;
 	bool setVLANPVID(uint32 port, uint32 vlanID); // A hack to Dell 5324 switch
 	bool setVLANPortTag(uint32 portListNew, uint32 vlanID); // A hack to Dell 5324 switch
 

@@ -53,6 +53,21 @@ bool SNMP_Session::connectSwitch()
 	return true;
 }
 
+const uint32 SNMP_Session::findEmptyVLAN() const{
+	vlanPortMapList::ConstIterator iter;
+        vlanPortMap vpm;
+	memset(&vpm, 0, sizeof(vlanPortMap));
+	for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter)
+	    if (vendor == Force10E600) {
+	        if (memcmp(&(*iter).portbits, &vpm.portbits, MAX_VLAN_PORT_BYTES) == 0)
+	            return (*iter).vid;
+	    } else {
+	        if ((*iter).ports == 0)
+                     return (*iter).vid;  
+            }
+	return 0;
+}
+
 //@@@@ Force10 hack inside
 bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 {
