@@ -890,7 +890,7 @@ void SNMP_Session::CreateVlanRefToIDTableForce10 (const char* oid_str, vlanRefID
                                 }
                                 else
                                         ref_str[0] = 0;
-                                if (!ref_str[0]) {
+                                if (ref_str[0] != 0) {
                                     ref_id.ref_id = (int)vars->name[vars->name_length - 1];
                                     if (sscanf(ref_str, "Vlan %d", &ref_id.vlan_id) == 1)
                                         vlanRefList.push_back(ref_id);
