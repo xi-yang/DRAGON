@@ -886,6 +886,7 @@ void SNMP_Session::CreateVlanRefToIDTableForce10 (const char* oid_str, vlanRefID
 
                                 if (vars->val.string){
                                         strncpy(ref_str, (char*)vars->val.string, vars->val_len);
+                                        ref_str[vars->val_len] = 0;
                                 }
                                 else
                                         ref_str[0] = 0;
