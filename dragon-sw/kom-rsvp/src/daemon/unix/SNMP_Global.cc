@@ -856,6 +856,9 @@ bool SNMP_Session::deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTa
     signal(SIGPIPE, sigpipe);
 #endif
 
+    strcpy(progname, "ftos_telnet_hack"); 
+    strcpy(hostname, convertAddressToString(switchInetAddr).chars());
+
     if (isTagged)
         strcpy(action, "remove tagged");
     else
