@@ -808,7 +808,6 @@ bool SNMP_Session::addVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagge
     strcpy(progname, "ftos_telnet_hack"); 
     strcpy(hostname, convertAddressToString(switchInetAddr).chars());
 
-    sprintf(vlan, "%d", vlanID);
     if (isTagged)
         strcpy(action, "add tagged");
     else
@@ -817,6 +816,7 @@ bool SNMP_Session::addVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagge
     port_part=(portID)&0xf;     
     slot_part=(portID>>4)&0xf;
     sprintf(port, "gi%d/%d",slot_part,port_part);
+    sprintf(vlan, "%d", vlanID);
     force10_hack(port, vlan, action);
 
     return true;
@@ -847,6 +847,7 @@ bool SNMP_Session::deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTa
     port_part=(portID)&0xf;
     slot_part=(portID>>4)&0xf;
     sprintf(port, "gi%d/%d",slot_part,port_part);
+    sprintf(vlan, "%d", vlanID);
     force10_hack(port, vlan, action);
 
     return true;

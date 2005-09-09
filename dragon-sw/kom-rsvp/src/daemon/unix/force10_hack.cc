@@ -521,6 +521,8 @@ int do_write(int fd, char *text, int timeout)
 
   int err, len, n;
 
+  printf("%s", text);
+
   /* setup alarm (so we won't hang forever upon problems) */
   signal(SIGALRM, sigalrm);
   alarm(timeout);
