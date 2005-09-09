@@ -291,17 +291,16 @@ void SNMP_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapList &v
                                         continue;
                                 }
 
-                                if (vars->val.integer){
+                                if (vars->val.bitstring && getVendor() == SNMP_Session::Force10E600){ //force10_hack @@@@
+                                        memset(&portmap.portbits, 0, MAX_VLAN_PORT_BYTES);
+                                        for (int i = 0; i < vars->val_len && i < MAX_VLAN_PORT_BYTES; i++) {
+                                                portmap.portbits[i] = vars->val.bitstring[i];
+                                       }
+                                } else if (vars->val.integer){
                                         portmap.ports = ntohl(*(vars->val.integer));
                                         if (vars->val_len < 4) {
                                                 uint32 mask = (uint32)0xFFFFFFFF << ((4-response->variables->val_len)*8);
                                                 portmap.ports &= mask;
-                                       }
-                                }
-                                else if (vars->val.bitstring && getVendor() == SNMP_Session::Force10E600){ //force10_hack @@@@
-                                        memset(&portmap.portbits, 0, MAX_VLAN_PORT_BYTES);
-                                        for (int i = 0; i < vars->val_len && i < MAX_VLAN_PORT_BYTES; i++) {
-                                                portmap.portbits[i] = vars->val.bitstring[i];
                                        }
                                 }
                                 else
@@ -473,16 +472,15 @@ bool SNMP_Session::VLANHasTaggedPort(uint32 vlanID)
     status = snmp_synch_response(sessionHandle, pdu, &response);
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
         vars = response->variables;
-        if (vars->val.integer){
+        if (vars->val.bitstring && getVendor() == SNMP_Session::Force10E600){ //force10_hack @@@@
+                for (int i = 0; i < vars->val_len && i < MAX_VLAN_PORT_BYTES; i++) {
+                        portmap_all.portbits[i] = vars->val.bitstring[i];
+               }
+        } else if (vars->val.integer){
                 portmap_all.ports = ntohl(*(vars->val.integer));
                 if (vars->val_len < 4) {
                         uint32 mask = (uint32)0xFFFFFFFF << ((4-response->variables->val_len)*8);
                         portmap_all.ports &= mask;
-               }
-        }
-        else if (vars->val.bitstring && getVendor() == SNMP_Session::Force10E600){ //force10_hack @@@@
-                for (int i = 0; i < vars->val_len && i < MAX_VLAN_PORT_BYTES; i++) {
-                        portmap_all.portbits[i] = vars->val.bitstring[i];
                }
         }
         else
@@ -503,19 +501,19 @@ bool SNMP_Session::VLANHasTaggedPort(uint32 vlanID)
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
 
         vars = response->variables;
-        if (vars->val.integer){
+        if (vars->val.bitstring && getVendor() == SNMP_Session::Force10E600){ //force10_hack @@@@
+                for (int i = 0; i < vars->val_len && i < MAX_VLAN_PORT_BYTES; i++) {
+                        portmap_untagged.portbits[i] = vars->val.bitstring[i];
+               }
+        }
+        else if (vars->val.integer){
                 portmap_untagged.ports = ntohl(*(vars->val.integer));
                 if (vars->val_len < 4) {
                         uint32 mask = (uint32)0xFFFFFFFF << ((4-response->variables->val_len)*8);
                         portmap_untagged.ports &= mask;
                }
         }
-        else if (vars->val.bitstring && getVendor() == SNMP_Session::Force10E600){ //force10_hack @@@@
-                for (int i = 0; i < vars->val_len && i < MAX_VLAN_PORT_BYTES; i++) {
-                        portmap_untagged.portbits[i] = vars->val.bitstring[i];
-               }
-        }
-        else
+        else 
             return false;
     }
     else 
