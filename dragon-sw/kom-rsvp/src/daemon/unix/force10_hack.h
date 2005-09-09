@@ -10,6 +10,7 @@ extern "C" {
     int do_write(int fd, char *text, int timeout);
     int is_force10_prompt(char *p, int len);
     void sigfunct(int signo);
+    void sigpipe(int signo);
 }
 
 extern char  progname[100];

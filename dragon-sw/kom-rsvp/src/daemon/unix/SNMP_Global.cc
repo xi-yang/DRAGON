@@ -815,6 +815,10 @@ bool SNMP_Session::addVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagge
     for(n = 1; n < NSIG; n++)
        signal(n, sigfunct);
     signal(SIGCHLD, SIG_IGN);
+#ifdef SIGPIPE
+    signal(SIGPIPE, sigpipe);
+#endif
+
     strcpy(progname, "ftos_telnet_hack"); 
     strcpy(hostname, convertAddressToString(switchInetAddr).chars());
 
@@ -848,6 +852,9 @@ bool SNMP_Session::deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTa
     for(n = 1; n < NSIG; n++)
         signal(n, sigfunct);
     signal(SIGCHLD, SIG_IGN);
+#ifdef SIGPIPE
+    signal(SIGPIPE, sigpipe);
+#endif
 
     if (isTagged)
         strcpy(action, "remove tagged");

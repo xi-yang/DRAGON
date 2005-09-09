@@ -149,6 +149,7 @@ char  hostname[100];
 pid_t pid;
 int   got_alarm;
 int   verbose;
+bool pipe_broken = false;
 
 /* show usage info */
 void usage(void)
@@ -209,6 +210,12 @@ void sigalrm(int signo)
   err_msg("%s: timeout on connection to host '%s'\n", progname, hostname);
 }
 
+/* our timeout procedure, used to abort malfunctioning connections */
+void sigpipe(int signo)
+{
+  pipe_broken = true;
+}
+
 /* handle the reception of signals */
 void sigfunct(int signo)
 {
@@ -228,10 +235,11 @@ int pipe_alive(int fdin, int fdout)
   int n;
   if (fdin < 0 || fdout < 0)
     return 0;
-  if ((n = do_write(fdout, "\n", 2)) < 0) 
+  pipe_broken = false;
+  if ((n = do_write(fdout, "\n", 2)) < 0 || pipe_broken) 
   	return 0;
 
-  if ((n = do_read (fdin, FORCE10_PROMPT, NULL, 0, 3)) < 0) 
+  if ((n = do_read (fdin, FORCE10_PROMPT, NULL, 0, 3)) < 0  || pipe_broken)) 
   	return 0;
 
   return 1;
