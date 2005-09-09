@@ -418,7 +418,7 @@ bool SNMP_Session::verifyVLAN(uint32 vlanID)
     }
 
     //not initialized or session has been disconnected; No IntelES530 at this point.
-    if (!active || vendor!=RFC2674 || vendor!=Force10E600)
+    if (!active || (vendor!=RFC2674 && vendor!=Force10E600))
     	return false;
 
     pdu = snmp_pdu_create(SNMP_MSG_GET);
@@ -460,7 +460,7 @@ bool SNMP_Session::VLANHasTaggedPort(uint32 vlanID)
     portmap_untagged = portmap_all;
 
     //not initialized or session has been disconnected; No IntelES530 at this point
-    if (!active || vendor!=RFC2674 || vendor == Force10E600) 
+    if (!active || (vendor!=RFC2674 && vendor!=Force10E600))
       return false;
 
     pdu = snmp_pdu_create(SNMP_MSG_GET);
