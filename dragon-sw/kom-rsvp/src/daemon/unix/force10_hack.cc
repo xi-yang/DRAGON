@@ -249,106 +249,8 @@ int force10_hack(char* portName, char* vlanNum, char* action)
   int ret = -1;
     
   got_alarm = 0;
-  /* we need pipes to communicate between the programs */
-  if (strcmp(action, "check") == 0) {
-     if (pipe_alive(fdin, fdout))
-       return 0;
-     else return -1;
-  } else if (strcmp(action, "engage") == 0) {
-      if (pipe_alive(fdin, fdout))
-      	return 0;
-      	
-      if (pipe(fdpipe[0]) < 0) {
-        err_msg("%s: pipe failed: errno=%d\n", progname, errno);
-        return -1;
-      }
-      if (pipe(fdpipe[1]) < 0) {
-        err_msg("%s: pipe failed: errno=%d\n", progname, errno);
-        close(fdpipe[0][0]);
-        close(fdpipe[0][1]);
-        return -1;
-      }
-    
-      switch(pid = fork()) {
-        case 0: /* child */
-          /* child:stdin */
-          close(0);
-          if (dup(fdpipe[0][0]) < 0) {
-    	err_exit("%s: dup failed: errno=%d\n", progname, errno);
-          }
-    
-          /* close first pipe */
-          close(fdpipe[0][0]);
-          close(fdpipe[0][1]);
-    
-          /* child:stdout */
-          close(1);
-          if (dup(fdpipe[1][1]) < 0) {
-    	err_exit("%s: dup failed: errno=%d\n", progname, errno);
-          }
-    
-          /* child:stderr */
-          if ((fderr = dup(2)) < 0) {
-    	err_exit("%s: dup failed: errno=%d\n", progname, errno);
-          }
-    
-          close(2);
-          if (dup(fdpipe[1][1]) < 0) {
-    	err = errno;
-    	dup(fderr);
-    	err_exit("%s: dup failed: errno=%d\n", progname, err);
-          }
-    
-          /* close second pipe */
-          close(fdpipe[1][0]);
-          close(fdpipe[1][1]);
-    
-          /* exec TELNET application */
-          execl(TELNET_EXEC, "telnet", hostname, TELNET_PORT, (char*)NULL);
-    
-          /* if we're still here the TELNET_EXEC could not be exec'd */
-          err = errno;
-          close(2);
-          dup(fderr);
-          err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);
-          break;
-    
-        case -1: /* error */
-          err_exit("%s: fork failed: errno=%d\n", progname, errno);
-          return -1;
-    
-        default: /* parent */
-          /* close the childs end of the pipes */
-          close(fdpipe[0][0]);
-          close(fdpipe[1][1]);
-          break;
-      	}
-    
-      /* now communicate with the 'telnet' process */
-      fdin = fdpipe[1][0];
-      fdout = fdpipe[0][1];
 
-      /* wait for login prompt */
-      n = do_read(fdin, "Login: ", TELNET_PROMPT, 1, 15);
-      if (n != 1) {
-        if (got_alarm == 0)
-          err_msg("%s: connection to host '%s' failed\n", progname, hostname);
-        goto _cannot_login;
-      }
-  
-      /* send the telnet username and password */
-      if ((n = do_write(fdout, TELNET_USERNAME, 5)) < 0) goto _cannot_login;
-      if ((n = do_write(fdout, "\n", 5)) < 0) goto _cannot_login;
-      if ((n = do_read (fdin,  "Password: ", NULL, 1, 10)) < 0) goto _cannot_login;
-      if ((n = do_write(fdout, TELNET_PASSWORD, 5)) < 0) goto _cannot_login;
-      if ((n = do_write(fdout, "\n", 5)) < 0) goto _cannot_login;
-      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) goto _cannot_login;
-      return 0;
-
-_cannot_login:
-      fdin = fdout = -1;
-      return ret;
-    } else if (strcmp(action, "disengage") == 0) {
+  if (strcmp(action, "disengage") == 0) {
       if (fdin >= 0)
         close(fdin);
       if (fdout >= 0)
@@ -356,11 +258,98 @@ _cannot_login:
       fdin = fdout = -1;
       stop_telnet();
       return 0;
-  }
-
-  if (pipe_alive(fdin, fdout)) {
-        fdin = fdout = -1;
-  	return -1;
+  } else if (strcmp(action, "check") == 0) {
+      if (pipe_alive(fdin, fdout))
+	  return 0;
+      fdin = fdout = -1;
+      return -1;
+  } else if (!pipe_alive(fdin, fdout)) {
+      /* we need pipes to communicate between the programs */
+      if (pipe(fdpipe[0]) < 0) {
+      err_msg("%s: pipe failed: errno=%d\n", progname, errno);
+      return -1;
+      }
+      if (pipe(fdpipe[1]) < 0) {
+      err_msg("%s: pipe failed: errno=%d\n", progname, errno);
+      close(fdpipe[0][0]);
+      close(fdpipe[0][1]);
+      return -1;
+      }
+      
+      switch(pid = fork()) {
+      case 0: /* child */
+        /* child:stdin */
+        close(0);
+        if (dup(fdpipe[0][0]) < 0) {
+      err_exit("%s: dup failed: errno=%d\n", progname, errno);
+        }
+      
+        /* close first pipe */
+        close(fdpipe[0][0]);
+        close(fdpipe[0][1]);
+      
+        /* child:stdout */
+        close(1);
+        if (dup(fdpipe[1][1]) < 0) {
+      err_exit("%s: dup failed: errno=%d\n", progname, errno);
+        }
+      
+        /* child:stderr */
+        if ((fderr = dup(2)) < 0) {
+      err_exit("%s: dup failed: errno=%d\n", progname, errno);
+        }
+      
+        close(2);
+        if (dup(fdpipe[1][1]) < 0) {
+      err = errno;
+      dup(fderr);
+      err_exit("%s: dup failed: errno=%d\n", progname, err);
+        }
+      
+        /* close second pipe */
+        close(fdpipe[1][0]);
+        close(fdpipe[1][1]);
+      
+        /* exec TELNET application */
+        execl(TELNET_EXEC, "telnet", hostname, TELNET_PORT, (char*)NULL);
+      
+        /* if we're still here the TELNET_EXEC could not be exec'd */
+        err = errno;
+        close(2);
+        dup(fderr);
+        err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);
+        break;
+      
+      case -1: /* error */
+        err_exit("%s: fork failed: errno=%d\n", progname, errno);
+        return -1;
+      
+      default: /* parent */
+        /* close the childs end of the pipes */
+        close(fdpipe[0][0]);
+        close(fdpipe[1][1]);
+        break;
+      	}
+      
+      /* now communicate with the 'telnet' process */
+      fdin = fdpipe[1][0];
+      fdout = fdpipe[0][1];
+    
+      /* wait for login prompt */
+      n = do_read(fdin, "Login: ", TELNET_PROMPT, 1, 15);
+      if (n != 1) {
+        if (got_alarm == 0)
+          err_msg("%s: connection to host '%s' failed\n", progname, hostname);
+        goto _telnet_dead;
+      }
+      
+      /* send the telnet username and password */
+      if ((n = do_write(fdout, TELNET_USERNAME, 5)) < 0) goto _telnet_dead;
+      if ((n = do_write(fdout, "\n", 5)) < 0) goto _telnet_dead;
+      if ((n = do_read (fdin,  "Password: ", NULL, 1, 10)) < 0) goto _telnet_dead;
+      if ((n = do_write(fdout, TELNET_PASSWORD, 5)) < 0) goto _telnet_dead;
+      if ((n = do_write(fdout, "\n", 5)) < 0) goto _telnet_dead;
+      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
   }
 
   for(;;) {
@@ -474,15 +463,12 @@ _cannot_login:
     break;
   }
 
-  //close(fdin);
-  //close(fdout);
-
-  //if ((n < 0) && (got_alarm == 0)) {
-  //  err_msg("%s: connection to host '%s' failed\n", progname, hostname);
-  //}
-
-  //stop_telnet();
   return 0;  
+
+ _telnet_dead:
+
+  fdin = fdout = -1;
+  return -1;
 }
 
 /* read information from 'telnet', stop reading upon errors, on a timeout */
