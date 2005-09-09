@@ -565,6 +565,8 @@ bool SNMP_Session::setSwitchVendorInfo()
 			vendor = IntelES530;
 		else if (String("Ethernet Switch") == buf)
 			vendor = RFC2674;
+		else if (String("Ethernet Routing Switch") == buf) // Dell PowerConnect 6024/6024F
+			vendor = RFC2674;
 		else if (buf.leftequal("Summit1i") || buf.leftequal("Summit5i")) 
 			vendor = RFC2674;
 		else if (buf.leftequal("Spectra")) 
