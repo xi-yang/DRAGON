@@ -356,9 +356,9 @@ void force10_hack(char* portName, char* vlanNum, char* action)
       
       /* read parameter that specifies a port is tagged or untagged */
       if (strstr(action, "untagged") != NULL)
-        strcpy(tagged_untagged, "untagged");
+        strcpy(tagged_untagged, "untagged ");
       else
-        strcpy(tagged_untagged, "tagged");
+        strcpy(tagged_untagged, "tagged ");
       /* add specified port as an untagged/tagged member of the specified VLAN */
       if ((n = do_write(fdout, tagged_untagged, 5)) < 0) break;
       if ((n = do_write(fdout, portName, 5)) < 0) break;
@@ -382,9 +382,9 @@ void force10_hack(char* portName, char* vlanNum, char* action)
       
       /* read parameter that specifies a port is tagged or untagged */
       if (strstr(action, "untagged") != NULL)
-        strcpy(tagged_untagged, "no untagged");
+        strcpy(tagged_untagged, "no untagged ");
       else
-        strcpy(tagged_untagged, "no tagged");
+        strcpy(tagged_untagged, "no tagged ");
       /* remove specified port as an untagged member/untagged of the specified VLAN */
       if ((n = do_write(fdout, tagged_untagged, 5)) < 0) break;
       if ((n = do_write(fdout, portName, 5)) < 0) break;
@@ -519,6 +519,7 @@ int do_read(int fd, char *text1, char *text2, int show, int timeout)
 /* write a command to the 'telnet' process */
 int do_write(int fd, char *text, int timeout)
 {
+
   int err, len, n;
 
   /* setup alarm (so we won't hang forever upon problems) */
