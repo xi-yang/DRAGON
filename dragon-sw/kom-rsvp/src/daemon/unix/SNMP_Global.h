@@ -105,11 +105,7 @@ public:
 	}
         uint32 getVendor() { return vendor;}
 	bool connectSwitch();
-	void disconnectSwitch() { 
-		snmp_close(sessionHandle);
-		active = false;
-		vendor = Illegal;
-	}
+	void disconnectSwitch();
 	bool setSwitchVendorInfo();
 	String& getSessionName() {return sessionName;}
 	NetAddress& getSwitchInetAddr() {return switchInetAddr;}

@@ -223,83 +223,122 @@ void sigfunct(int signo)
   exit(1);
 }
 
-/* magic incantations for manipulating VLANs in Force10 OS (FTOS) land */
-void force10_hack(char* portName, char* vlanNum, char* action)
+int pipe_alive(int fdin, int fdout)
 {
-  int fdpipe[2][2], fdin, fdout, fderr, err, n;
+  int n;
+  if (fdin < 0 || fdout < 0)
+    return 0;
+  if ((n = do_write(fdout, "\n", 2)) < 0) 
+  	return 0;
+
+  if ((n = do_read (fdin, FORCE10_PROMPT, NULL, 0, 3)) < 0) 
+  	return 0;
+
+  return 1;
+}
+
+
+/* magic incantations for manipulating VLANs in Force10 OS (FTOS) land */
+int force10_hack(char* portName, char* vlanNum, char* action)
+{
+  static int fdin = -1;
+  static int fdout = -1;
+
+  int fdpipe[2][2], fderr, err, n;
   char tagged_untagged[20];
     
   got_alarm = 0;
   /* we need pipes to communicate between the programs */
-  if (pipe(fdpipe[0]) < 0) {
-    err_msg("%s: pipe failed: errno=%d\n", progname, errno);
-    return;
+  if (strcmp(action, "check") == 0) {
+     if (pipe_alive(fdin, fdout))
+       return 0;
+     else return -1;
+  } else if (strcmp(action, "engage") == 0) {
+      if (pipe_alive(fdin, fdout))
+      	return 0;
+      	
+      if (pipe(fdpipe[0]) < 0) {
+        err_msg("%s: pipe failed: errno=%d\n", progname, errno);
+        return -1;
+      }
+      if (pipe(fdpipe[1]) < 0) {
+        err_msg("%s: pipe failed: errno=%d\n", progname, errno);
+        close(fdpipe[0][0]);
+        close(fdpipe[0][1]);
+        return -1;
+      }
+    
+      switch(pid = fork()) {
+        case 0: /* child */
+          /* child:stdin */
+          close(0);
+          if (dup(fdpipe[0][0]) < 0) {
+    	err_exit("%s: dup failed: errno=%d\n", progname, errno);
+          }
+    
+          /* close first pipe */
+          close(fdpipe[0][0]);
+          close(fdpipe[0][1]);
+    
+          /* child:stdout */
+          close(1);
+          if (dup(fdpipe[1][1]) < 0) {
+    	err_exit("%s: dup failed: errno=%d\n", progname, errno);
+          }
+    
+          /* child:stderr */
+          if ((fderr = dup(2)) < 0) {
+    	err_exit("%s: dup failed: errno=%d\n", progname, errno);
+          }
+    
+          close(2);
+          if (dup(fdpipe[1][1]) < 0) {
+    	err = errno;
+    	dup(fderr);
+    	err_exit("%s: dup failed: errno=%d\n", progname, err);
+          }
+    
+          /* close second pipe */
+          close(fdpipe[1][0]);
+          close(fdpipe[1][1]);
+    
+          /* exec TELNET application */
+          execl(TELNET_EXEC, "telnet", hostname, TELNET_PORT, (char*)NULL);
+    
+          /* if we're still here the TELNET_EXEC could not be exec'd */
+          err = errno;
+          close(2);
+          dup(fderr);
+          err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);
+          break;
+    
+        case -1: /* error */
+          err_exit("%s: fork failed: errno=%d\n", progname, errno);
+          return -1;
+    
+        default: /* parent */
+          /* close the childs end of the pipes */
+          close(fdpipe[0][0]);
+          close(fdpipe[1][1]);
+          break;
+      	}
+    
+      /* now communicate with the 'telnet' process */
+      fdin = fdpipe[1][0];
+      fdout = fdpipe[0][1];
+      return 0;
+    } else if (strcmp(action, "disengage") == 0) {
+      if (fdin >= 0)
+        close(fdin);
+      if (fdout >= 0)
+        close(fdout);
+      fdin = fdout = -1;
+      stop_telnet();
+      return 0;
   }
-  if (pipe(fdpipe[1]) < 0) {
-    err_msg("%s: pipe failed: errno=%d\n", progname, errno);
-    close(fdpipe[0][0]);
-    close(fdpipe[0][1]);
-    return;
-  }
 
-  switch(pid = fork()) {
-    case 0: /* child */
-      /* child:stdin */
-      close(0);
-      if (dup(fdpipe[0][0]) < 0) {
-	err_exit("%s: dup failed: errno=%d\n", progname, errno);
-      }
-
-      /* close first pipe */
-      close(fdpipe[0][0]);
-      close(fdpipe[0][1]);
-
-      /* child:stdout */
-      close(1);
-      if (dup(fdpipe[1][1]) < 0) {
-	err_exit("%s: dup failed: errno=%d\n", progname, errno);
-      }
-
-      /* child:stderr */
-      if ((fderr = dup(2)) < 0) {
-	err_exit("%s: dup failed: errno=%d\n", progname, errno);
-      }
-
-      close(2);
-      if (dup(fdpipe[1][1]) < 0) {
-	err = errno;
-	dup(fderr);
-	err_exit("%s: dup failed: errno=%d\n", progname, err);
-      }
-
-      /* close second pipe */
-      close(fdpipe[1][0]);
-      close(fdpipe[1][1]);
-
-      /* exec TELNET application */
-      execl(TELNET_EXEC, "telnet", hostname, TELNET_PORT, (char*)NULL);
-
-      /* if we're still here the TELNET_EXEC could not be exec'd */
-      err = errno;
-      close(2);
-      dup(fderr);
-      err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);
-      break;
-
-    case -1: /* error */
-      err_exit("%s: fork failed: errno=%d\n", progname, errno);
-      return;
-
-    default: /* parent */
-      /* close the childs end of the pipes */
-      close(fdpipe[0][0]);
-      close(fdpipe[1][1]);
-      break;
-  }
-
-  /* now communicate with the 'telnet' process */
-  fdin = fdpipe[1][0];
-  fdout = fdpipe[0][1];
+  if (pipe_alive(fdin, fdout))
+  	return -1;
 
   for(;;) {
 
@@ -435,6 +474,7 @@ void force10_hack(char* portName, char* vlanNum, char* action)
   }
 
   stop_telnet();
+  return 0;  
 }
 
 /* read information from 'telnet', stop reading upon errors, on a timeout */
@@ -520,8 +560,6 @@ int do_write(int fd, char *text, int timeout)
 {
 
   int err, len, n;
-
-  printf("%s", text);
 
   /* setup alarm (so we won't hang forever upon problems) */
   signal(SIGALRM, sigalrm);

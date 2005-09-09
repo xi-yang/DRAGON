@@ -49,8 +49,20 @@ bool SNMP_Session::connectSwitch()
 		disconnectSwitch();
 		return false;
 	}
-	active = true;
+	if (force10_hack(NULL, NULL, "engage") == -1)
+	  return false;
+	else
+         active = true;
+
 	return true;
+}
+
+void SNMP_Session::disconnectSwitch() 
+{
+	snmp_close(sessionHandle);
+	force10_hack(NULL, NULL, "disengage");
+	active = false;
+	vendor = Illegal;
 }
 
 const uint32 SNMP_Session::findEmptyVLAN() const{
@@ -90,7 +102,7 @@ bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 	              vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
 	              if (vpmAll)
 	    		    ResetPortBitForce10(vpmAll->portbits, bit);
-                     deleteVLANPortForce10(port, vlanID, false);
+                     ret &= deleteVLANPortForce10(port, vlanID, false);
 		}
 		else {
 			mask=(~(1<<(32-port))) & 0xFFFFFFFF;
@@ -114,7 +126,7 @@ bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
               vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
               if (vpmAll) {
     		    SetPortBitForce10(vpmAll->portbits, bit);
-        	    addVLANPortForce10(port, vlanID, false);
+        	    ret &= addVLANPortForce10(port, vlanID, false);
               }
 	}
 	else {
@@ -133,6 +145,7 @@ bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 			ret&=setVLANPVID(port, vlanID); //Set pvid
 		}
 	}
+
 	return ret;
 }
 
@@ -153,7 +166,7 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
               vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
               if (vpmAll) {
     		    SetPortBitForce10(vpmAll->portbits, bit);
-        	    addVLANPortForce10(port, vlanID, true);
+        	    ret&=addVLANPortForce10(port, vlanID, true);
               }
 	}
 	else {
@@ -193,8 +206,9 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
 	              vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
 	              if (vpmAll) {
 	    		    ResetPortBitForce10(vpmAll->portbits, bit);
-			    this->deleteVLANPortForce10(port, vlanID, false);
-			    this->deleteVLANPortForce10(port, vlanID, true);
+			    bool ret1 = this->deleteVLANPortForce10(port, vlanID, false);
+			    bool ret2 = this->deleteVLANPortForce10(port, vlanID, true);
+                         ret &= (ret1 || ret2);
 	              }
 		}
 		else {
@@ -225,7 +239,7 @@ bool SNMP_Session::movePortToDefaultVLAN(uint32 port)
 
 	if ((!active) || port==SWITCH_CTRL_PORT)
 		return false; //don't touch the control port!
-	uint32 vlanID = getVLANbyPort(port);
+	uint32 vlanID = getVLANbyUntaggedPort(port);
 	if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN){
 		if (getVendor() == SNMP_Session::Force10E600) { //force10_hack
 			bit = Port2BitForce10(port);
@@ -236,8 +250,9 @@ bool SNMP_Session::movePortToDefaultVLAN(uint32 port)
 	              vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
 	              if (vpmAll) {
 	    		    ResetPortBitForce10(vpmAll->portbits, bit);
-			    this->deleteVLANPortForce10(port, vlanID, false);
-			    this->deleteVLANPortForce10(port, vlanID, true);
+			    bool ret1 = this->deleteVLANPortForce10(port, vlanID, false);
+			    bool ret2 = this->deleteVLANPortForce10(port, vlanID, true);
+                         ret &= (ret1 || ret2);
 	              }
 		}
 		else {
@@ -817,7 +832,8 @@ bool SNMP_Session::addVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagge
     slot_part=(portID>>4)&0xf;
     sprintf(port, "gi%d/%d",slot_part,port_part);
     sprintf(vlan, "%d", vlanID);
-    force10_hack(port, vlan, action);
+    if (force10_hack(port, vlan, action) == -1)
+        return false;
 
     return true;
 }
@@ -848,7 +864,8 @@ bool SNMP_Session::deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTa
     slot_part=(portID>>4)&0xf;
     sprintf(port, "gi%d/%d",slot_part,port_part);
     sprintf(vlan, "%d", vlanID);
-    force10_hack(port, vlan, action);
+    if (force10_hack(port, vlan, action) == -1)
+        return false;
 
     return true;
 }
