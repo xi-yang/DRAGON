@@ -49,11 +49,22 @@ bool SNMP_Session::connectSwitch()
 		disconnectSwitch();
 		return false;
 	}
-	if (force10_hack(NULL, NULL, "engage") == -1)
-	  return false;
-	else
-         active = true;
 
+        if (vendor == SNMP_Session::Force10E600) {
+		pid = -1;
+		verbose = 0;
+		// setup signals properly
+		for(int n = 1; n < NSIG; n++)
+		   signal(n, sigfunct);
+		signal(SIGCHLD, SIG_IGN);
+		strcpy(progname, "ftos_telnet_hack"); 
+		strcpy(hostname, convertAddressToString(switchInetAddr).chars());
+
+		if (force10_hack(NULL, NULL, "engage") == -1)
+			return false;
+        }
+
+        active = true;
 	return true;
 }
 
@@ -806,22 +817,11 @@ SNMP_Global::~SNMP_Global() {
 //@@@@ Force10 hack
 bool SNMP_Session::addVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagged)
 {
-    int n;
     uint32 port_part,slot_part;
     char port[100], vlan[100], action[100];
     // extern int optind;
     if (!active || vendor==Illegal) //not initialized or session has been disconnected
     return false;
-
-    pid = -1;
-    verbose = 0;
-
-    // setup signals properly
-    for(n = 1; n < NSIG; n++)
-        signal(n, sigfunct);
-    signal(SIGCHLD, SIG_IGN);
-    strcpy(progname, "ftos_telnet_hack"); 
-    strcpy(hostname, convertAddressToString(switchInetAddr).chars());
 
     if (isTagged)
         strcpy(action, "add tagged");

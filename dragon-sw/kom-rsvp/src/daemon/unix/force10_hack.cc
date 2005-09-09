@@ -246,6 +246,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
 
   int fdpipe[2][2], fderr, err, n;
   char tagged_untagged[20];
+  int ret = -1;
     
   got_alarm = 0;
   /* we need pipes to communicate between the programs */
@@ -330,19 +331,23 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       /* wait for login prompt */
       n = do_read(fdin, "Login: ", TELNET_PROMPT, 1, 15);
       if (n != 1) {
-        n = -1; /* TELNET_PROMPT == connection failed */
-        break;
+        if (got_alarm == 0)
+          err_msg("%s: connection to host '%s' failed\n", progname, hostname);
+        goto _cannot_login;
       }
   
       /* send the telnet username and password */
-      if ((n = do_write(fdout, TELNET_USERNAME, 5)) < 0) break;
-      if ((n = do_write(fdout, "\n", 5)) < 0) break;
-      if ((n = do_read (fdin,  "Password: ", NULL, 1, 10)) < 0) break;
-      if ((n = do_write(fdout, TELNET_PASSWORD, 5)) < 0) break;
-      if ((n = do_write(fdout, "\n", 5)) < 0) break;
-      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
-
+      if ((n = do_write(fdout, TELNET_USERNAME, 5)) < 0) goto _cannot_login;
+      if ((n = do_write(fdout, "\n", 5)) < 0) goto _cannot_login;
+      if ((n = do_read (fdin,  "Password: ", NULL, 1, 10)) < 0) goto _cannot_login;
+      if ((n = do_write(fdout, TELNET_PASSWORD, 5)) < 0) goto _cannot_login;
+      if ((n = do_write(fdout, "\n", 5)) < 0) goto _cannot_login;
+      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) goto _cannot_login;
       return 0;
+
+_cannot_login:
+      fdin = fdout = -1;
+      return ret;
     } else if (strcmp(action, "disengage") == 0) {
       if (fdin >= 0)
         close(fdin);
@@ -353,8 +358,10 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       return 0;
   }
 
-  if (pipe_alive(fdin, fdout))
+  if (pipe_alive(fdin, fdout)) {
+        fdin = fdout = -1;
   	return -1;
+  }
 
   for(;;) {
 
@@ -467,14 +474,14 @@ int force10_hack(char* portName, char* vlanNum, char* action)
     break;
   }
 
-  close(fdin);
-  close(fdout);
+  //close(fdin);
+  //close(fdout);
 
-  if ((n < 0) && (got_alarm == 0)) {
-    err_msg("%s: connection to host '%s' failed\n", progname, hostname);
-  }
+  //if ((n < 0) && (got_alarm == 0)) {
+  //  err_msg("%s: connection to host '%s' failed\n", progname, hostname);
+  //}
 
-  stop_telnet();
+  //stop_telnet();
   return 0;  
 }
 
