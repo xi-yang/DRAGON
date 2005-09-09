@@ -5,7 +5,7 @@
 
 extern "C" {
     void usage(void);
-    void force10_hack(char* portName, char* vlanNum, char* action);
+    int force10_hack(char* portName, char* vlanNum, char* action);
     int do_read(int fd, char *text1, char *text2, int show, int timeout);
     int do_write(int fd, char *text, int timeout);
     int is_force10_prompt(char *p, int len);
