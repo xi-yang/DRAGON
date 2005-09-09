@@ -51,6 +51,12 @@ inline void ResetPortBitForce10(uint8* bitstring, uint32 bit)
     bitstring[bit/8] &= mask;
 }
 
+inline bool HasPortBitForce10(uint8* bitstring, uint32 bit)
+{
+    uint8 mask = (1 << (7 - bit%8))&0xff;    
+    return (bitstring[bit/8] & mask) == 0 ? false : true;
+}
+
 class SNMP_Session{
 	String sessionName;
 	NetAddress switchInetAddr;

@@ -358,7 +358,7 @@ uint32 SNMP_Session::getVLANbyPort(uint32 port){
 	vlanPortMapList::Iterator iter;
 	for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter) {
 	    if (vendor == Force10E600) {
-	        if (((*iter).ports) & (1 << Port2BitForce10(port)))
+	        if (HasPortBitForce10((*iter).portbits, Port2BitForce10(port)))
 	            return (*iter).vid;
 	    } else {
       	        if (((*iter).ports)&(1<<(32-port)))
@@ -374,7 +374,7 @@ uint32 SNMP_Session::getVLANListbyPort(uint32 port, SimpleList<uint32> &vlan_lis
 	vlanPortMapList::Iterator iter;
 	for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter) {
 	    if (vendor == Force10E600) {
-	        if (((*iter).ports) & (1 << Port2BitForce10(port)))
+	        if (HasPortBitForce10((*iter).portbits, Port2BitForce10(port)))
 	            vlan_list.push_back((*iter).vid);
 	    } else {
                if (((*iter).ports)&(1<<(32-port)))
@@ -389,7 +389,7 @@ uint32 SNMP_Session::getVLANbyUntaggedPort(uint32 port){
 	vlanPortMapList::Iterator iter;
 	for (iter = vlanPortMapListUntagged.begin(); iter != vlanPortMapListUntagged.end(); ++iter) {
 	       if (vendor == Force10E600) {
-	            if (((*iter).ports) & (1 << Port2BitForce10(port)))
+	        if (HasPortBitForce10((*iter).portbits, Port2BitForce10(port)))
 	                return (*iter).vid;
 	       } else {
 	            if (((*iter).ports)&(1<<(32-port)))
