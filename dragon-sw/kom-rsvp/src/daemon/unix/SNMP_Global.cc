@@ -412,7 +412,7 @@ bool SNMP_Session::verifyVLAN(uint32 vlanID)
     uint32 ports = 0;
 
     if (getVendor() == SNMP_Session::Force10E600) { //force10_hack
-        vlanID = VlanRefToIDForce10(vlanID);
+        vlanID = VlanIDToRefForce10(vlanID);
         if (vlanID == 0)
             return false;
     }
