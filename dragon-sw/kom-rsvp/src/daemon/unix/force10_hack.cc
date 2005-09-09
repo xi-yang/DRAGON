@@ -395,16 +395,15 @@ void force10_hack(char* portName, char* vlanNum, char* action)
       if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
       if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
 
-      /* enter interface configuration mode */
-      if ((n = do_write(fdout, "interface ", 5)) < 0) break;
-      if ((n = do_write(fdout, portName, 5)) < 0) break;
-      if ((n = do_write(fdout, "\n", 5)) < 0) break;
-      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
-      
       /* XXX should we make the sysadmin do this or should the VLSR do it??? */ 
-      /* switchport command sets an interface to layer-2 mode */
-      if ((n = do_write(fdout, "no switchport\n", 5)) < 0) break;
-      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      /* enter interface configuration mode */
+      //if ((n = do_write(fdout, "interface ", 5)) < 0) break;
+      //if ((n = do_write(fdout, portName, 5)) < 0) break;
+      //if ((n = do_write(fdout, "\n", 5)) < 0) break;
+      //if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      // switchport command sets an interface to layer-2 mode
+      //if ((n = do_write(fdout, "no switchport\n", 5)) < 0) break;
+      //if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
       
       /* exit interface configuration mode */
       if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
