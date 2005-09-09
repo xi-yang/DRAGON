@@ -189,7 +189,7 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
 	              assert(bit < MAX_VLAN_PORT_BYTES*8);
 	              vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
 	              if (vpmUntagged)
-	    		    ResetPortBitForce10(vpmAll->portbits, bit);
+	    		    ResetPortBitForce10(vpmUntagged->portbits, bit);
 	              vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
 	              if (vpmAll) {
 	    		    ResetPortBitForce10(vpmAll->portbits, bit);
@@ -232,7 +232,7 @@ bool SNMP_Session::movePortToDefaultVLAN(uint32 port)
 	              assert(bit < MAX_VLAN_PORT_BYTES*8);
 	              vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
 	              if (vpmUntagged)
-	    		    ResetPortBitForce10(vpmAll->portbits, bit);
+	    		    ResetPortBitForce10(vpmUntagged->portbits, bit);
 	              vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
 	              if (vpmAll) {
 	    		    ResetPortBitForce10(vpmAll->portbits, bit);
