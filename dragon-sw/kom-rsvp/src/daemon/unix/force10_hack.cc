@@ -326,6 +326,22 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       /* now communicate with the 'telnet' process */
       fdin = fdpipe[1][0];
       fdout = fdpipe[0][1];
+
+      /* wait for login prompt */
+      n = do_read(fdin, "Login: ", TELNET_PROMPT, 1, 15);
+      if (n != 1) {
+        n = -1; /* TELNET_PROMPT == connection failed */
+        break;
+      }
+  
+      /* send the telnet username and password */
+      if ((n = do_write(fdout, TELNET_USERNAME, 5)) < 0) break;
+      if ((n = do_write(fdout, "\n", 5)) < 0) break;
+      if ((n = do_read (fdin,  "Password: ", NULL, 1, 10)) < 0) break;
+      if ((n = do_write(fdout, TELNET_PASSWORD, 5)) < 0) break;
+      if ((n = do_write(fdout, "\n", 5)) < 0) break;
+      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+
       return 0;
     } else if (strcmp(action, "disengage") == 0) {
       if (fdin >= 0)
@@ -341,21 +357,6 @@ int force10_hack(char* portName, char* vlanNum, char* action)
   	return -1;
 
   for(;;) {
-
-    /* wait for login prompt */
-    n = do_read(fdin, "Login: ", TELNET_PROMPT, 1, 15);
-    if (n != 1) {
-      n = -1; /* TELNET_PROMPT == connection failed */
-      break;
-    }
-
-    /* send the telnet username and password */
-    if ((n = do_write(fdout, TELNET_USERNAME, 5)) < 0) break;
-    if ((n = do_write(fdout, "\n", 5)) < 0) break;
-    if ((n = do_read (fdin,  "Password: ", NULL, 1, 10)) < 0) break;
-    if ((n = do_write(fdout, TELNET_PASSWORD, 5)) < 0) break;
-    if ((n = do_write(fdout, "\n", 5)) < 0) break;
-    if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
 
     /* enter enable mode and send enable password */
    /* if ((n = do_write(fdout, "enable\n", 5)) < 0) break;
