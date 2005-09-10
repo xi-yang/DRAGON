@@ -48,6 +48,7 @@
 #include "RSVP_RoutingService.h"
 #include "RSVP_Session.h"
 #include "RSVP_SignalHandling.h"
+#include "force10_hack.h"
 
 #if defined(WITH_API)
 API_Server* RSVP::apiServer = NULL;
