@@ -231,16 +231,17 @@ void sigfunct(int signo)
   exit(1);
 }
 
-int pipe_alive(int fdin, int fdout)
+int pipe_alive(int fdi, int fdo)
 {
   int n;
-  if (fdin < 0 || fdout < 0)
+  if (fdi < 0 || fdo < 0)
     return 0;
+
   pipe_broken = false;
-  if ((n = do_write(fdout, "\n", 2)) < 0 || pipe_broken) 
+  if ((n = do_write(fdo, "\n", 2)) < 0 || pipe_broken) 
   	return 0;
 
-  if ((n = do_read (fdin, FORCE10_PROMPT, NULL, 0, 3)) < 0  || pipe_broken) 
+  if ((n = do_read (fdi, FORCE10_PROMPT, NULL, 0, 3)) < 0  || pipe_broken) 
   	return 0;
 
   return 1;
@@ -478,8 +479,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
     break;
   }
 
-  //@@@@
-  printf("#### done with level = %d!\n", level);
+  printf("#DEBUG# done with level = %d!\n", level);
 
   /* return to root cli level */
   for (i = 0; i < level; i++) {
@@ -493,8 +493,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
 
  _telnet_dead:
 
-  //@@@@
-  printf("#### telnet dead!\n");
+  printf("#DEBUG# telnet dead!\n");
 
   fdin = fdout = -1;
   return -1;
@@ -584,8 +583,7 @@ int do_write(int fd, char *text, int timeout)
 
   int err, len, n;
 
-  //@@@@ 
-  printf("%s", text);
+  if (verbose) printf("%s", text);
 
   /* setup alarm (so we won't hang forever upon problems) */
   signal(SIGALRM, sigalrm);

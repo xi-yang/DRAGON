@@ -16,8 +16,9 @@ extern "C" {
 extern char  progname[100];
 extern char  hostname[100];
 extern pid_t pid;
-extern int   got_alarm;
-extern int   verbose;
+extern int    got_alarm;
+extern int    verbose;
+
 /* program constants */
 #define TELNET_EXEC     "/usr/bin/telnet"
 #define TELNET_CLOSE    "Connection closed"
