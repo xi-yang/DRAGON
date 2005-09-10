@@ -214,6 +214,7 @@ void sigalrm(int signo)
 void sigpipe(int signo)
 {
   pipe_broken = true;
+  fprintf(stderr, ".... pipe broken!\n");
 }
 
 /* handle the reception of signals */
@@ -239,7 +240,7 @@ int pipe_alive(int fdin, int fdout)
   if ((n = do_write(fdout, "\n", 2)) < 0 || pipe_broken) 
   	return 0;
 
-  if ((n = do_read (fdin, FORCE10_PROMPT, NULL, 0, 3)) < 0  || pipe_broken)) 
+  if ((n = do_read (fdin, FORCE10_PROMPT, NULL, 0, 3)) < 0  || pipe_broken) 
   	return 0;
 
   return 1;
@@ -251,10 +252,9 @@ int force10_hack(char* portName, char* vlanNum, char* action)
 {
   static int fdin = -1;
   static int fdout = -1;
-
   int fdpipe[2][2], fderr, err, n;
   char tagged_untagged[20];
-  int ret = -1;
+  int i, level = 0;
     
   got_alarm = 0;
 
@@ -360,7 +360,6 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
   }
 
-  int level = 0;
   for(;;) {
 
     /* enter enable mode and send enable password */
@@ -479,16 +478,23 @@ int force10_hack(char* portName, char* vlanNum, char* action)
     break;
   }
 
+  //@@@@
+  printf("#### done with level = %d!\n", level);
+
   /* return to root cli level */
-  for (int i = 0; i < level; i++)
+  for (i = 0; i < level; i++) {
     if ((n = do_write(fdout, "exit\n", 5)) < 0)
       goto _telnet_dead;
-  if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 10)) < 0)
-   goto _telnet_dead;
+    if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 5)) < 0)
+      goto _telnet_dead;
+  }
   
   return 0;  
 
  _telnet_dead:
+
+  //@@@@
+  printf("#### telnet dead!\n");
 
   fdin = fdout = -1;
   return -1;
@@ -577,6 +583,9 @@ int do_write(int fd, char *text, int timeout)
 {
 
   int err, len, n;
+
+  //@@@@ 
+  printf("%s", text);
 
   /* setup alarm (so we won't hang forever upon problems) */
   signal(SIGALRM, sigalrm);
