@@ -227,7 +227,7 @@ void sigfunct(int signo)
     err_msg("%s: received signal #%d during connection to host '%s' -- aborting\n", progname, signo, hostname);
   }
 
-  stop_telnet();
+  force10_hack(NULL, NULL, "disengage");
   exit(1);
 }
 

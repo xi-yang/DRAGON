@@ -48,7 +48,6 @@
 #include "RSVP_RoutingService.h"
 #include "RSVP_Session.h"
 #include "RSVP_SignalHandling.h"
-#include "force10_hack.h"
 
 #if defined(WITH_API)
 API_Server* RSVP::apiServer = NULL;
@@ -247,9 +246,6 @@ RSVP::~RSVP() {
 	if ( routing ) delete routing;
 	if ( zeroFlowspec ) zeroFlowspec->destroy();
 	if ( RSVP_Global::currentTimerSystem ) delete RSVP_Global::currentTimerSystem;
-
-	force10_hack(NULL, NULL, "disengage");
-
 	FATAL(1)( Log::Fatal, "RSVP: exiting gracefully" );
 }	
 
