@@ -360,6 +360,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
   }
 
+  int level = 0;
   for(;;) {
 
     /* enter enable mode and send enable password */
@@ -369,10 +370,10 @@ int force10_hack(char* portName, char* vlanNum, char* action)
     if ((n = do_write(fdout, "\n", 5)) < 0) break;
     if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
    */
-
     /* enter configuration mode */
     if ((n = do_write(fdout, "configure\n", 5)) < 0) break;
     if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+    level++;
 
     if (strstr(action, "add") != NULL) {
       /* when adding a port, do interface config then vlan config */
@@ -382,6 +383,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       if ((n = do_write(fdout, portName, 5)) < 0) break;
       if ((n = do_write(fdout, "\n", 5)) < 0) break;
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      level++;
       
       /* XXX should we make the sysadmin do this or should the VLSR do it??? */ 
       /* switchport command sets an interface to layer-2 mode */
@@ -391,12 +393,14 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       /* exit interface configuration mode */
       if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      level--;
 
       /* enter vlan configuration mode */
       if ((n = do_write(fdout, "interface vlan ", 5)) < 0) break;
       if ((n = do_write(fdout, vlanNum, 5)) < 0) break;
       if ((n = do_write(fdout, "\n", 5)) < 0) break;
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      level++;
       
       /* read parameter that specifies a port is tagged or untagged */
       if (strstr(action, "untagged") != NULL)
@@ -412,7 +416,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       /* exit vlan configuration mode */
       if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
       if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
-
+      level--;
     }
     if (strstr(action, "remove") != NULL) {
       /* when removing a port, do vlan config then interface config */
@@ -423,7 +427,8 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       if ((n = do_write(fdout, vlanNum, 5)) < 0) break;
       if ((n = do_write(fdout, "\n", 5)) < 0) break;
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
-      
+      level++;
+
       /* read parameter that specifies a port is tagged or untagged */
       if (strstr(action, "untagged") != NULL)
         strcpy(tagged_untagged, "no untagged ");
@@ -438,6 +443,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       /* exit vlan configuration mode */
       if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
       if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      level--;
 
       /* XXX should we make the sysadmin do this or should the VLSR do it??? */ 
       /* enter interface configuration mode */
@@ -450,13 +456,15 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       //if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
       
       /* exit interface configuration mode */
-      if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
-      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      //if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
+      //if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      //level--;
     }
 
     /* exit configuration mode */
     if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
     if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+    level--;
 
     /* show the specified VLAN's configuration */
     if ((n = do_write(fdout, "show vlan id ", 5)) < 0) break;
@@ -465,12 +473,19 @@ int force10_hack(char* portName, char* vlanNum, char* action)
     if ((n = do_read (fdin, FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
 
     /* close telnet connection */
-    if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
-    if ((n = do_read (fdin,  TELNET_CLOSE, NULL, 1, 20)) < 0) break;
+    //if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
+    //if ((n = do_read (fdin,  TELNET_CLOSE, NULL, 1, 20)) < 0) break;
 
     break;
   }
 
+  /* return to root cli level */
+  for (int i = 0; i < level; i++)
+    if ((n = do_write(fdout, "exit\n", 5)) < 0)
+      goto _telnet_dead;
+  if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 10)) < 0)
+   goto _telnet_dead;
+  
   return 0;  
 
  _telnet_dead:
