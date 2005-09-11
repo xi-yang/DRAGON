@@ -1689,7 +1689,7 @@ DEFUN (ospf_te_router_addr,
 
 DEFUN (ospf_te_data_interface,
        ospf_te_data_interface_cmd,
-       "data-interface ip A.B.C.D protocol (snmp|tl1) switch-ip A.B.C.D switch-port <1-4294967296>",
+       "data-interface ip A.B.C.D protocol (snmp|tl1) switch-ip A.B.C.D switch-port <0-4294967296>",
        "Associate an out-of-band data interface to this interface\n"
        "The IP address of the data interface\n"
        "IPv4 address\n"
@@ -1749,7 +1749,7 @@ ALIAS (ospf_te_data_interface,
 
 DEFUN (ospf_te_data_interface_unnum,
        ospf_te_data_interface_unnum_cmd,
-       "data-interface unnumbered protocol (snmp|tl1) switch-ip A.B.C.D switch-port <1-4294967296>",
+       "data-interface unnumbered protocol (snmp|tl1) switch-ip A.B.C.D switch-port <0-4294967296>",
        "Associate an out-of-band data interface to this interface\n"
        "unnumbered interface\n"
        "Protocol type\n"
