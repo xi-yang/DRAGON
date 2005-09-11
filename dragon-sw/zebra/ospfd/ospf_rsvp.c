@@ -585,8 +585,8 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		}
 	}
        if ( (inPort >> 16) == 0x4 && (outPort >> 16) == 0x4
-          && ((inPort & 0xffff) != 0) && ((outPort & 0xffff) != 0) && (inPort != outPort )
-          && in_oi && out_oi && in_oi->vlsr_if.switch_ip.s_addr!=0)
+          //&& ((inPort & 0xffff) != 0) && ((outPort & 0xffff) != 0) 
+          && (inPort != outPort ) && in_oi && out_oi && in_oi->vlsr_if.switch_ip.s_addr!=0)
         {
 		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
 		s = stream_new(length);
@@ -601,7 +601,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
         }
 	else if (in_oi && out_oi && in_oi->vlsr_if.switch_ip.s_addr!=0 && out_oi->vlsr_if.switch_ip.s_addr!=0 &&
 		in_oi->vlsr_if.switch_ip.s_addr == out_oi->vlsr_if.switch_ip.s_addr &&
-		in_oi->vlsr_if.switch_port != 0 && out_oi->vlsr_if.switch_port != 0 &&
+		//in_oi->vlsr_if.switch_port != 0 && out_oi->vlsr_if.switch_port != 0 &&
 		in_oi->vlsr_if.switch_port != out_oi->vlsr_if.switch_port)
 	{
 		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
@@ -615,7 +615,9 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		/* Send message.  */
 		write (fd, STREAM_DATA(s), length);
 	}
-	else if (outPort != 0 && in_oi && in_oi->vlsr_if.switch_ip.s_addr!=0 && in_oi->vlsr_if.switch_port != 0)
+	else if (outPort != 0 && in_oi && in_oi->vlsr_if.switch_ip.s_addr!=0 
+		//&& in_oi->vlsr_if.switch_port != 0
+		)
        {
 		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
 		s = stream_new(length);
@@ -636,7 +638,9 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		/* Send message.  */
 		write (fd, STREAM_DATA(s), length);             
        }
-	else if (inPort != 0 && out_oi && out_oi->vlsr_if.switch_ip.s_addr!=0 && out_oi->vlsr_if.switch_port != 0)
+	else if (inPort != 0 && out_oi && out_oi->vlsr_if.switch_ip.s_addr!=0 
+		//&& out_oi->vlsr_if.switch_port != 0
+		)
        {
 		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
 		s = stream_new(length);
