@@ -737,6 +737,7 @@ const LogicalInterface*  RoutingService::getRouteReply( NetAddress& dest, NetAdd
 			return NULL;
 	  } else {
 			LOG(8)( Log::Routing, "WARNING: received route reply seqno", mhp->rtm_seq, "type", (uint32)mhp->rtm_type, "PID", mhp->rtm_pid, "but my PID is", mainPID );
+			continue;
 		}
 	}
 	caddr_t cp = (caddr_t)(mhp + 1);
