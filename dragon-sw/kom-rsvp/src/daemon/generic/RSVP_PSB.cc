@@ -237,7 +237,7 @@ void PSB::updateRoutingInfo( const LogicalInterfaceSet& lifList,
 #endif
 #if defined(REFRESH_REDUCTION)
 			if ( sendID ) {
-				nextHop->clearSendState( sendID->id );
+				if (nextHop) nextHop->clearSendState( sendID->id );
 				sendID = NULL;
 			}
 #endif
