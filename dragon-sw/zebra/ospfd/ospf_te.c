@@ -1138,7 +1138,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 {
   const char* swcap = "Unknown";
   const char* enc  = "Unknown";
-  int i;
+  int i, n;
   float fval, *f;
   u_char *v;
   u_int16_t *dc;
@@ -1214,6 +1214,21 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	    				*v);
 	  }
   }
+  else if (strncmp(swcap, "l2sc", 4) == 0)
+  {
+	  if (vty != NULL && (*v == IFSWCAP_SPECIFIC_VLAN_VERSION)) {
+	    v++;
+	    n = *v;
+	    vty_out (vty, "  -- L2SC specific information-- : %d VLAN tags assigned:", 
+	    				n);
+	    v++;
+	    dc = (u_int16_t*)v;
+	    for (i = 0; i < n; i++, dc++)
+		vty_out (vty, " %d", *dc);
+	    vty_out (vty, "%s", VTY_NEWLINE);
+	  }
+  }
+
   return TLV_SIZE (tlvh);
 }
 
@@ -2184,15 +2199,13 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 		else
 			vty_out(vty, "Protocol type is UNKNOWN, ");
 		  if (oi->vlsr_if.switch_ip.s_addr!=0 && oi->vlsr_if.switch_port!=0)
-			  vty_out(vty, "Data interface is numbered , IP = %s , Switch IP = %s, Switch port = %d %s", 
-							  inet_ntoa (oi->vlsr_if.data_ip), inet_ntoa(oi->vlsr_if.switch_ip), oi->vlsr_if.switch_port, 
-							  VTY_NEWLINE);
+			  vty_out(vty, "Data interface is numbered , IP = %s , Switch IP = %s, Switch port = %d,  ", 
+							  inet_ntoa (oi->vlsr_if.data_ip), inet_ntoa(oi->vlsr_if.switch_ip), oi->vlsr_if.switch_port);
 		  else
-			  vty_out(vty, "Data interface is numbered, IP = %s %s", 
-							  inet_ntoa (oi->vlsr_if.data_ip), VTY_NEWLINE);
+			  vty_out(vty, "Data interface is numbered, IP = %s,  ",  inet_ntoa (oi->vlsr_if.data_ip));
 
 		  if (oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION) {
-			  vty_out(vty, "Assgined VLAN tags:");
+			  vty_out(vty, "Assigned VLAN tags:");
 			  for (i = 0; i < oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num; i++)
 				  vty_out(vty, " %d", oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_id[i]);
 			  vty_out(vty, "%s", VTY_NEWLINE);
