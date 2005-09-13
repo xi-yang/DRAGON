@@ -38,6 +38,7 @@
 #include "RSVP_PSB.h"
 #include "RSVP_RSB.h"
 #include "RSVP_Session.h"
+#include "force10_hack.h"
 
 #define CHECK_UNICAST_ROUTING_FOR_PATH_REFRESH
 #if defined(CHECK_UNICAST_ROUTING_FOR_PATH_REFRESH)
@@ -169,6 +170,8 @@ void Hop::processSrefresh( const Message& msg ) {
 					}
 #endif
 					(*stateIter).sb.psb->restartTimeout();
+                                   //@@@@ force10_hack: To keep the telnet session alive
+                                   force10_hack(NULL, NULL, "refresh");
 	goto nextMsgIter;
 				}
 				case RecvStorageID::Resv:

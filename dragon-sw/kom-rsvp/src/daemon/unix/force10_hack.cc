@@ -259,7 +259,16 @@ int force10_hack(char* portName, char* vlanNum, char* action)
     
   got_alarm = 0;
 
-  if (strcmp(action, "disengage") == 0) {
+  if (strcmp(action, "refresh") == 0) {
+      if (pipe_alive(fdin, fdout)) {
+        if ((n = do_write(fdout, "\n", 5)) >= 0)
+          n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 10);
+        if (n >=0)
+            return 0;
+      }
+      fdin = fdout = -1;
+      return -1;
+  } else if (strcmp(action, "disengage") == 0) {
       if (pipe_alive(fdin, fdout)) {
         /* exit interface configuration mode */
         if ((n = do_write(fdout, "exit\n", 5)) >= 0)
