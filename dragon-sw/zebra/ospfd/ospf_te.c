@@ -2191,7 +2191,7 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 			  vty_out(vty, "Data interface is numbered, IP = %s %s", 
 							  inet_ntoa (oi->vlsr_if.data_ip), VTY_NEWLINE);
 
-		  if (oi->te_para.link_ifswcap && oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION) {
+		  if (oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION) {
 			  vty_out(vty, "Assgined VLAN tags:");
 			  for (i = 0; i < oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num; i++)
 				  vty_out(vty, " %d", oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_id[i]);
