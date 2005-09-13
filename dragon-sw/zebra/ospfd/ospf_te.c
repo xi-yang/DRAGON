@@ -2159,6 +2159,9 @@ vlan_id[te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.i
     padding_len = 2;
   te_config.te_para.link_ifswcap.header.length = htons(ntohs(te_config.te_para.link_ifswcap.header.length) + 2
       + te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num*2 + padding_len);
+  
+  if (te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num <= 1)
+  	te_config.te_para.link_ifswcap.header.length = htons(ntohs(te_config.te_para.link_ifswcap.header.length) + 4);
   te_config.configed = 1;
   return CMD_SUCCESS;
 }
