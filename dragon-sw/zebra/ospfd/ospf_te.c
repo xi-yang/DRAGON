@@ -2169,7 +2169,7 @@ DEFUN (show_ospf_te_router,
 static void
 show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 {
-
+  int i;
   if (INTERFACE_MPLS_ENABLED(oi)
   &&  (! if_is_loopback (oi->ifp) && if_is_up (oi->ifp) && ospf_oi_count (oi->ifp) > 0))
     {
@@ -2190,6 +2190,15 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 		  else
 			  vty_out(vty, "Data interface is numbered, IP = %s %s", 
 							  inet_ntoa (oi->vlsr_if.data_ip), VTY_NEWLINE);
+
+		  if (oi->te_para.link_ifswcap && oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION) {
+			  vty_out(vty, "Assgined VLAN tags:");
+			  for (i = 0; i < oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num; i++)
+				  vty_out(vty, " %d", oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_id[i]);
+			  vty_out(vty, "%s", VTY_NEWLINE);
+		  	}
+		  else
+			  vty_out(vty, "No VLAN tag assigned %s", VTY_NEWLINE);
 	}
 	  else
 	  {
