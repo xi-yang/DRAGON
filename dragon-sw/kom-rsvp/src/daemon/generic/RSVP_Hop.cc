@@ -118,7 +118,8 @@ void Hop::sendMessageReliable( const Message& msg, const NetAddress& dest, const
 }
 
 void Hop::processSrefresh( const Message& msg ) {
-	const SimpleList<sint32>& msgIdList = msg.getMESSAGE_ID_LIST_Object().getID_List();
+       static int force10_refresh_at_zero = 1;
+       const SimpleList<sint32>& msgIdList = msg.getMESSAGE_ID_LIST_Object().getID_List();
 	SimpleList<sint32>::ConstIterator msgIter = msgIdList.begin();
 	Message* nackMsg = new Message( Message::Ack, 15 );
 	for ( ; msgIter != msgIdList.end(); ++msgIter ) {
@@ -170,14 +171,16 @@ void Hop::processSrefresh( const Message& msg ) {
 					}
 #endif
 					(*stateIter).sb.psb->restartTimeout();
-                                   //@@@@ force10_hack: To keep the telnet session alive
-                                   force10_hack(NULL, NULL, "refresh");
 	goto nextMsgIter;
 				}
 				case RecvStorageID::Resv:
 					foundRSB = true;
 					LOG(4)( Log::Reduct, "found RSB for ID", *msgIter, "from", *this );
 					(*stateIter).sb.rsb->restartTimeout();
+
+                                   //@@@@ force10_hack: To keep the telnet session alive; once every 5 minutes.
+                                   if ((force10_refresh_at_zero++)%10 == 0)
+                                       force10_hack(NULL, NULL, "refresh");
 				}
 			} // found matching ID
 		}
