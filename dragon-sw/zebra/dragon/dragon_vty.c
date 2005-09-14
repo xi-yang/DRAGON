@@ -136,7 +136,7 @@ struct string_value_conversion conv_gpid =
 
 struct string_value_conversion conv_bandwidth = 
 {
-	24,
+	32,
 	{{ "ds0", 	LSP_BW_DS0, 			3}, 
 	{ "ds1", 		LSP_BW_DS1, 			3}, 
 	{ "e1", 		LSP_BW_E1, 				2}, 
@@ -954,7 +954,7 @@ ALIAS (dragon_set_lsp_vtag_default,
 
 DEFUN (dragon_set_lsp_sw,
        dragon_set_lsp_sw_cmd,
-       "set bandwidth (gige_f|hdtv|oc48|10g|eth100M|eth200M|eth300M|eth400M|eth500M|eth600M|eth800M|eth100M|eth900M) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
+       "set bandwidth (gige|gige_f|hdtv|oc48|10g|eth100M|eth200M|eth300M|eth400M|eth500M|eth600M|eth800M|eth100M|eth900M) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
        "Set LSP parameters\n"
        "Bandwidth\n"
        "1250.00 Mbps\n"
