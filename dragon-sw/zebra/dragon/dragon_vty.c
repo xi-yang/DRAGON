@@ -147,6 +147,14 @@ struct string_value_conversion conv_bandwidth =
 	{ "ds3",		LSP_BW_DS3, 			3},
 	{ "sts1", 		LSP_BW_STS1,			1}, 
 	{ "eth100M", 	LSP_BW_Fast_Eth,			7}, 
+	{ "eth200M", 	LSP_BW_200m_Eth,		7}, 
+	{ "eth300M", 	LSP_BW_300m_Eth,		7}, 
+	{ "eth400M", 	LSP_BW_400m_Eth,		7}, 
+	{ "eth500M", 	LSP_BW_500m_Eth,		7}, 
+	{ "eth600M", 	LSP_BW_600m_Eth,		7}, 
+	{ "eth700M", 	LSP_BW_700m_Eth,		7}, 
+	{ "eth800M", 	LSP_BW_800m_Eth,		7}, 
+	{ "eth900M", 	LSP_BW_900m_Eth,		7}, 
 	{ "e4", 		LSP_BW_E4,				2}, 
 	{ "fc0133M", 	LSP_BW_FC0_133M,		5}, 
 	{ "oc3", 		LSP_BW_OC3,				3}, 
@@ -946,13 +954,22 @@ ALIAS (dragon_set_lsp_vtag_default,
 
 DEFUN (dragon_set_lsp_sw,
        dragon_set_lsp_sw_cmd,
-       "set bandwidth (gige_f|hdtv|oc48|10g) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
+       "set bandwidth (gige_f|hdtv|oc48|10g|eth100M|eth200M|eth300M|eth400M|eth500M|eth600M|eth800M|eth100M|eth900M) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
        "Set LSP parameters\n"
        "Bandwidth\n"
        "1250.00 Mbps\n"
        "1485.00 Mbps\n"
        "2488.32 Mbps\n"
        "11095.19 Mbps\n"
+       "100.0 Mbps\n"       
+       "200.0 Mbps\n"       
+       "300.0 Mbps\n"       
+       "400.0 Mbps\n"       
+       "500.0 Mbps\n"       
+       "600.0 Mbps\n"       
+       "700.0 Mbps\n"       
+       "800.0 Mbps\n"       
+       "900.0 Mbps\n"       
        "Switching capability\n"
        "Packeting switching capable 1\n"
        "Layer 2 switching capable\n"

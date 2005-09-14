@@ -246,6 +246,14 @@ enum BwEnc{
 	LSP_BW_DS3			= 0x4AAAA780,
 	LSP_BW_STS1			= 0x4AC5C100,
 	LSP_BW_Fast_Eth		= 0x4B3EBC20,
+	LSP_BW_200m_Eth		= 0x4BBEBC20,
+	LSP_BW_300m_Eth		= 0x4C0F0D18,
+	LSP_BW_400m_Eth		= 0x4C3EBC20,
+	LSP_BW_500m_Eth		= 0x4C6E6B28,
+	LSP_BW_600m_Eth		= 0x4C8F0D18,
+	LSP_BW_700m_Eth		= 0x4CA6E49C,
+	LSP_BW_800m_Eth		= 0x4CBEBC20,
+	LSP_BW_900m_Eth		= 0x4CD693A4,
 	LSP_BW_E4				= 0x4B84D000,
 	LSP_BW_FC0_133M		= 0x4B7DAD68,
 	LSP_BW_OC3			= 0x4B9450C0,
@@ -259,7 +267,7 @@ enum BwEnc{
 	LSP_BW_10Gig_E		= 0x4E9502F9,
 	LSP_BW_OC768 			= 0x4F9450C0,
 	LSP_BW_Gig_E_OverFiber = 0x4D1502F9,	/* Movaz specific value */
-	LSP_BW_HDTV			= 0x4D31069A       /* Movaz specific value */
+	LSP_BW_HDTV			= 0x4D31069A,       /* Movaz specific value */
 };
 
 enum G_PID {
