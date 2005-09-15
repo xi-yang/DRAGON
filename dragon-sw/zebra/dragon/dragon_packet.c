@@ -597,14 +597,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
                             if (srcLocalId) 
                                 num_newnodes++;
                             if (destLocalId)
-                                num_newnodes++;
-                            if (num_newnodes > 0)
-                                if (realloc(lsp->common.EROAbstractNode_Para, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber + num_newnodes)) == NULL)
-                                {
-                                    zlog_warn("Error: dragon_narb_topo_rsp_proc: memory realloc failed");
-                                    return;
-                                }
-                            
+                                num_newnodes++;                            
                             if (srcLocalId)
                             {
                                 if (memmove(lsp->common.EROAbstractNode_Para + 1, lsp->common.EROAbstractNode_Para, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber)) == NULL)
@@ -632,9 +625,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 	}
 	
 	/* call RSVPD to set up the path */
-	memcpy(buf, lsp->common.EROAbstractNode_Para, sizeof(struct _EROAbstractNode_Para)*2); //@@@@
 	zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
-	memcpy(lsp->common.EROAbstractNode_Para, buf, sizeof(struct _EROAbstractNode_Para)*2); //@@@@
 
 	return;
 }
