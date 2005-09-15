@@ -551,6 +551,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 	struct lsp *lsp = NULL;
        struct _EROAbstractNode_Para *srcLocalId=NULL, *destLocalId=NULL;
        struct _EROAbstractNode_Para *temp_ero = NULL;
+       char buf[sizeof(struct _EROAbstractNode_Para)*2];
 
 	/* Look for the corresponding LSP request according to the sequence number */
 	if (!(lsp = dragon_find_lsp_by_seqno(ntohl(amsgh->seqnum))))
@@ -631,7 +632,9 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 	}
 	
 	/* call RSVPD to set up the path */
+	memcpy(buf, lsp->common.EROAbstractNode_Para, sizeof(struct _EROAbstractNode_Para)*2); //@@@@
 	zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
+	memcpy(lsp->common.EROAbstractNode_Para, buf, sizeof(struct _EROAbstractNode_Para)*2); //@@@@
 
 	return;
 }
