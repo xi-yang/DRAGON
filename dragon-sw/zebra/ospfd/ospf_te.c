@@ -1388,6 +1388,7 @@ ospf_te_interface_config_update(struct vty* vty)
 	struct ospf_interface *oi = NULL;
 	listnode node;
 	struct ospf_te_config_para *oc;
+	u_int32_t* pv;
 	
 	if (listcount(ospf->oiflist)) /* ospfd already fetched IP data from zebra */
 	{
@@ -2162,6 +2163,12 @@ vlan_id[te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.i
   
   if (te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.vlan_num <= 1)
   	te_config.te_para.link_ifswcap.header.length = htons(ntohs(te_config.te_para.link_ifswcap.header.length) + 4);
+
+  if (!te_config.vlsr_if.held_vtag_list)
+  	te_config.vlsr_if.held_vtag_list = list_new();
+  u_int32_t *vlan_val = XMALLOC(MTYPE_TMP, sizeof(u_int32_t));
+  *vlan_val = vlan;
+  listnode_add(te_config.vlsr_if.held_vtag_list, vlan_val);
   te_config.configed = 1;
   return CMD_SUCCESS;
 }

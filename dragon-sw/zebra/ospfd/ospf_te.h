@@ -378,6 +378,7 @@ struct vlsr_if
 	struct in_addr data_ip;		/* The data IP representing the TE link */
 	struct in_addr switch_ip;		/* The switch's control IP address */
 	u_int32_t switch_port;			/* The switch's port */
+	list held_vtag_list;
 };
 
 /* A group of parameters for OSPF-TE VTY config */

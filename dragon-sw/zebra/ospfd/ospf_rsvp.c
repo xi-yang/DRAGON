@@ -402,6 +402,19 @@ out:
 	return;
 }
 
+static int
+vlan_id_configured(struct ospf_interface *oi ,  u_int32_t vid)
+{
+	u_int32_t *pv;
+	listnode node;
+	if (oi && oi->vlsr_if.held_vtag_list) {
+		LIST_LOOP(oi->vlsr_if.held_vtag_list, pv, node)
+			if (*pv == vid)
+				return 1;
+	}
+	return 0;		
+}
+
 static int 
 has_vlan_id(struct link_ifswcap_specific_vlan* vlan_info, u_int16_t vid)
 {
@@ -464,6 +477,8 @@ ospf_hold_vtag(u_int32_t vtag, u_int8_t hold_flag)
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
 			if (oi && INTERFACE_MPLS_ENABLED(oi)) {
+				if (!vlan_id_configured(oi, vtag))
+					continue;
 				if (hold_flag == 1 && has_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag))
 				{
 					remove_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag);
