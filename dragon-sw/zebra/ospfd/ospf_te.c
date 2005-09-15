@@ -2137,6 +2137,7 @@ DEFUN (ospf_te_interface_ifsw_cap4,
 {
   u_int32_t vlan;
   int padding_len = 0;
+  u_int32_t* pv;
  
   if (sscanf (argv[0], "%d", &vlan) != 1)
     {
@@ -2166,9 +2167,9 @@ vlan_id[te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.i
 
   if (!te_config.vlsr_if.held_vtag_list)
   	te_config.vlsr_if.held_vtag_list = list_new();
-  u_int32_t *vlan_val = XMALLOC(MTYPE_TMP, sizeof(u_int32_t));
-  *vlan_val = vlan;
-  listnode_add(te_config.vlsr_if.held_vtag_list, vlan_val);
+  pv = XMALLOC(MTYPE_TMP, sizeof(u_int32_t));
+  *pv = vlan;
+  listnode_add(te_config.vlsr_if.held_vtag_list, pv);
   te_config.configed = 1;
   return CMD_SUCCESS;
 }
