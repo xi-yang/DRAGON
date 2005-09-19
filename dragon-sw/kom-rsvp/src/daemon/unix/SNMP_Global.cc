@@ -813,7 +813,8 @@ bool SNMP_Session::addVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagge
     verbose = 0;
     // setup signals properly
     for(n = 1; n < NSIG; n++)
-       signal(n, sigfunct);
+       if (n != 11)
+           signal(n, sigfunct);
     signal(SIGCHLD, SIG_IGN);
 #ifdef SIGPIPE
     signal(SIGPIPE, sigpipe);
@@ -853,7 +854,8 @@ bool SNMP_Session::deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTa
 
     // setup signals properly
     for(n = 1; n < NSIG; n++)
-        signal(n, sigfunct);
+        if (n != 11)
+            signal(n, sigfunct);
     signal(SIGCHLD, SIG_IGN);
 #ifdef SIGPIPE
     signal(SIGPIPE, sigpipe);
