@@ -175,6 +175,7 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
 	       }
 	       else
 	            return false;
+              //remove setVLANPVID for PowerConnect 5224
 		if (vendor == RFC2674){
 			ret&=setVLANPVID(port, vlanID); //Set pvid
 		}
@@ -216,6 +217,7 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
 	              if (vpmUntagged)
 	                vpmUntagged->ports &= mask;
 			if (vendor == RFC2674) {
+				//ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID; for PowerConnect 5224 only
 		           if (vpmAll)
 	                      ret&=setVLANPortTag(vpmAll->ports, vlanID); //Set back to "tagged"
 			}
@@ -260,9 +262,9 @@ bool SNMP_Session::movePortToDefaultVLAN(uint32 port)
 	              if (vpmUntagged)
 	                vpmUntagged->ports &= mask;
 			if (vendor == RFC2674) {
-				//ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID
-		       if (vpmAll)
-	                    ret&=setVLANPortTag(vpmAll->ports, vlanID); //Set back to "tagged"
+				//ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID; for PowerConnect 5224 only
+        		       if (vpmAll)
+        	                    ret&=setVLANPortTag(vpmAll->ports, vlanID); //Set back to "tagged"
 			}
 			if (vpmAll)
 			    ret &= setVLANPort(vpmAll->ports, vlanID);

@@ -459,12 +459,12 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                       while (portList.size()) {
                                             port = portList.front();
                                             if ((*iter).vlanTag != 0) {
-                                                (*snmpIter)->removePortFromVLAN(port, (*iter).vlanTag);
        						LOG(4)(Log::MPLS, "VLSR: Removing ingress port#",  port, "from VLAN #", (*iter).vlanTag);
+                                                (*snmpIter)->removePortFromVLAN(port, (*iter).vlanTag);
                                             }
                                             else {
-                                                (*snmpIter)->movePortToDefaultVLAN(port);
         						LOG(3)(Log::MPLS, "VLSR: Moving ingress port#",  port, " back to Default VLAN #");
+                                                (*snmpIter)->movePortToDefaultVLAN(port);
                                             }
                                             portList.pop_front();
                                       }
