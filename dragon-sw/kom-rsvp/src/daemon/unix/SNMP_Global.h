@@ -75,6 +75,7 @@ class SNMP_Session{
 	}
 
 protected:
+	String venderSystemDescription;
 	enum SupportedVendor{
 			Illegal = 0,
 			IntelES530 = 1, //Intel ES-530 Express Fast Ethernet Switch

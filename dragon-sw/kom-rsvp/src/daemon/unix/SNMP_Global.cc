@@ -175,8 +175,8 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
 	       }
 	       else
 	            return false;
-              //remove setVLANPVID for PowerConnect 5224
-		if (vendor == RFC2674){
+              //no need of setVLANPVID for PowerConnect 5224
+		if (vendor == RFC2674 && venderSystemDescription !="PowerConnect 5224"){
 			ret&=setVLANPVID(port, vlanID); //Set pvid
 		}
 	}
@@ -217,7 +217,8 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
 	              if (vpmUntagged)
 	                vpmUntagged->ports &= mask;
 			if (vendor == RFC2674) {
-				//ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID; for PowerConnect 5224 only
+                         if (venderSystemDescription =="PowerConnect 5224")
+				ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID;
 		           if (vpmAll)
 	                      ret&=setVLANPortTag(vpmAll->ports, vlanID); //Set back to "tagged"
 			}
@@ -262,7 +263,8 @@ bool SNMP_Session::movePortToDefaultVLAN(uint32 port)
 	              if (vpmUntagged)
 	                vpmUntagged->ports &= mask;
 			if (vendor == RFC2674) {
-				//ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID; for PowerConnect 5224 only
+                            if (venderSystemDescription =="PowerConnect 5224")
+				    ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID;
         		       if (vpmAll)
         	                    ret&=setVLANPortTag(vpmAll->ports, vlanID); //Set back to "tagged"
 			}
@@ -568,21 +570,21 @@ bool SNMP_Session::setSwitchVendorInfo()
 		strncpy(vname, (const char*)response->variables->val.string, response->variables->val_len);
 		vname[response->variables->val_len] = 0;
 
-		String buf = vname;
+		venderSystemDescription = vname;
 		snmp_free_pdu(response);
-		if (String("PowerConnect 5224") == buf)
+		if (String("PowerConnect 5224") == venderSystemDescription)
 			vendor = RFC2674;
-		else if (String("Intel(R) Express 530T Switch ") == buf)
+		else if (String("Intel(R) Express 530T Switch ") == venderSystemDescription)
 			vendor = IntelES530;
-		else if (String("Ethernet Switch") == buf)
+		else if (String("Ethernet Switch") == venderSystemDescription)
 			vendor = RFC2674;
-		else if (String("Ethernet Routing Switch") == buf) // Dell PowerConnect 6024/6024F
+		else if (String("Ethernet Routing Switch") == venderSystemDescription) // Dell PowerConnect 6024/6024F
 			vendor = RFC2674;
-		else if (buf.leftequal("Summit1i") || buf.leftequal("Summit5i")) 
+		else if (venderSystemDescription.leftequal("Summit1i") || venderSystemDescription.leftequal("Summit5i")) 
 			vendor = RFC2674;
-		else if (buf.leftequal("Spectra")) 
+		else if (venderSystemDescription.leftequal("Spectra")) 
 			vendor = LambdaOptical;
-		else if (buf.leftequal("Force10 Networks Real Time Operating System Software")) 
+		else if (venderSystemDescription.leftequal("Force10 Networks Real Time Operating System Software")) 
 			vendor = Force10E600;
 		else{
 			vendor = Illegal;
