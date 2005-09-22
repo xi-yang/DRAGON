@@ -153,7 +153,10 @@ void Log::internalInit( const String& filename, bool logErrorsInStdLog ) {
 			cerr << "couldn't use stdlog " << filename << endl;
 			cerr << "logging to stdout..." << endl;
 			stdlog = &cout;
+		} else {
+                        logErrorsInStdLog = true;
 		}
+
 	}
 	*stdlog << setiosflags(ios::fixed) << setprecision(3);
 	if ( logErrorsInStdLog ) {
