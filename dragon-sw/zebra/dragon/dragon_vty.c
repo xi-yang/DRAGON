@@ -957,6 +957,7 @@ DEFUN (dragon_set_lsp_sw,
        "set bandwidth (gige|gige_f|hdtv|oc48|10g|eth100M|eth200M|eth300M|eth400M|eth500M|eth600M|eth700M|eth800M|eth900M) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
        "Set LSP parameters\n"
        "Bandwidth\n"
+       "1000.00 Mbps\n"
        "1250.00 Mbps\n"
        "1485.00 Mbps\n"
        "2488.32 Mbps\n"
