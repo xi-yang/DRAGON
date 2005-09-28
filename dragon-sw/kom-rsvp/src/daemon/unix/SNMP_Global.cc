@@ -873,6 +873,9 @@ bool SNMP_Session::deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTa
     else
         strcpy(action, "remove untagged");
 
+    if (getVLANbyPort(portID) == 0)
+        strcat(action, " shutdown");
+
     // remove in port from VLAN
     port_part=(portID)&0xf;
     slot_part=(portID>>4)&0xf;
