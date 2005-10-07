@@ -387,7 +387,7 @@ class SESSION_ATTRIBUTE_Object {
 		else return (nameLength+4);
 	}
 public:
-	SESSION_ATTRIBUTE_Object()): excludeAny(0), includeAny(0), includeAll(0), setupPri(7), holdingPri(7), flags(0) {};
+	SESSION_ATTRIBUTE_Object(): excludeAny(0), includeAny(0), includeAll(0), setupPri(7), holdingPri(7), flags(0) {};
 	SESSION_ATTRIBUTE_Object( const String ssName, const uint32 eAny = 0, const uint32 iAny = 0, const uint32 iAll = 0, 
 								           const uint8 sPr = 7, const uint8 hPr = 7, const uint8 flags = 0) : 
 		excludeAny(eAny), includeAny(iAny), includeAll(iAll), setupPri(sPr), holdingPri(hPr), flags(flags){
