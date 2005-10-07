@@ -270,11 +270,12 @@ INetworkBuffer& operator>> ( INetworkBuffer& buffer, Message& m ) {
 			buffer.skip( object.getLength() - RSVP_ObjectHeader::size() );
 		} // switch
 	} // for
-	//if ( readLength != m.length ) {
-	//	m.status = Message::Drop;
-	//	ERROR(4)( Log::Error, "ERROR in Message: message length field was set incorrect:", readLength, "!=", m.length );
-	//	return buffer;
-	//}
+	//@@@@ A temp solution for message reading error would be removing the below  if clause.
+	if ( readLength != m.length ) {
+		m.status = Message::Drop;
+		ERROR(4)( Log::Error, "ERROR in Message: message length field was set incorrect:", readLength, "!=", m.length );
+		return buffer;
+	}
 	if ( m.msgType == Message::ResvTear && m.STYLE_Object_O.getStyle() == WF && m.flowDescriptorList.empty() ) {
 		m.flowDescriptorList.push_back( new FLOWSPEC_Object );
 	}
