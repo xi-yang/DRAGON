@@ -57,8 +57,10 @@ void SESSION_ATTRIBUTE_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len
 	buffer >> setupPri >> holdingPri >> flags >> nameLength;
 	String ssName;
 	char s;
+	uint8 ui8 = 0;
 	for (int i = 0; i < nameLength; i++){
-		buffer >> (uint8)s; 
+		buffer >> ui8;
+		s = ui8; 
 		if (s!=0) ssName += String(s);
 	}
 	sessionName = ssName;
