@@ -71,6 +71,21 @@ enum OspfRsvpMessage {
 	HoldVtagbyOSPF = 134,		// Hold or release a VLAN Tag
 };
 
+
+static u_int32_t get_slash30_peer_address(u_int32_t addr)
+{
+	u_int32_t peer_addr = addr & 0xfcffffff;
+
+	if (htonl(ntohl(peer_addr)+1) == addr)
+		peer_addr = htonl(ntohl(peer_addr)+2);
+	else
+		peer_addr = htonl(ntohl(peer_addr)+1);
+
+	return peer_addr;
+}
+
+#define IN_SAME_SLASH30(X, Y) (X.s_addr == Y.s_addr || X.s_addr == get_slash30_peer_address(Y.s_addr))
+
 /*
 Find control logical interface by data plane IP / interface ID 
 */
@@ -83,10 +98,12 @@ ospf_find_interface_by_data(struct in_addr *addr, u_int32_t if_id, int fd)
 	struct stream *s;
 	u_int8_t length;
 
+	struct in_addr peer_addr = get_slash30_peer_address(*addr);
 
 	if (IS_VALID_LCL_IFID(if_id)) /* unnumbered interface */
 	{
-		if (ntohl(OspfTeRouterAddr.value.s_addr)==addr->s_addr && om->ospf)
+		/*if ((ntohl(OspfTeRouterAddr.value.s_addr)==addr->s_addr || ) && om->ospf)*/
+		if (IN_SAME_SLASH30(OspfTeRouterAddr.value, addr) && om->ospf)
 		LIST_LOOP(om->ospf, ospf, node1)
 		{
 			if (ospf->oiflist)
@@ -116,7 +133,7 @@ ospf_find_interface_by_data(struct in_addr *addr, u_int32_t if_id, int fd)
 			LIST_LOOP(ospf->oiflist, oi, node2){
 				if (INTERFACE_MPLS_ENABLED(oi) &&
 					ntohs(oi->te_para.lclif_ipaddr.header.type)!=0 &&
-					ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(addr->s_addr))
+					IN_SAME_SLASH30(oi->te_para.lclif_ipaddr.value, addr))
 				{
 					length = sizeof(u_int8_t)*2 + sizeof(struct in_addr);
 					s = stream_new(length);
@@ -163,7 +180,7 @@ ospf_find_data_by_interface(struct in_addr *addr, int fd)
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
 			if (INTERFACE_GMPLS_ENABLED(oi) &&
-			    ntohl(oi->address->u.prefix4.s_addr) == ntohl(addr->s_addr))
+			    IN_SAME_SLASH30(oi->address->u.prefix4, addr))
 			{
 				if (ntohs(oi->te_para.lclif_ipaddr.header.type)!=0) /* numbered interface */
 					data_addr.s_addr = oi->te_para.lclif_ipaddr.value.s_addr;
@@ -218,7 +235,7 @@ ospf_find_out_lif(struct in_addr *addr,  u_int32_t if_id, int fd)
 		LIST_LOOP(ospf->oiflist, oi, node2){
 			if (if_id == 0 && INTERFACE_MPLS_ENABLED(oi) &&
 			    ntohs(oi->te_para.rmtif_ipaddr.header.type)!=0 &&
-			    ntohl(oi->te_para.rmtif_ipaddr.value.s_addr) == ntohl(addr->s_addr))
+			    IN_SAME_SLASH30(oi->te_para.rmtif_ipaddr.value, addr))
 			{
 				length = sizeof(u_int8_t)*2 + sizeof(struct in_addr);
 				s = stream_new(length);
@@ -231,12 +248,12 @@ ospf_find_out_lif(struct in_addr *addr,  u_int32_t if_id, int fd)
 			}
 			else if ( (if_id && INTERFACE_GMPLS_ENABLED(oi) &&
 					ntohs(oi->te_para.link_lcrmt_id.header.type)!=0 &&
-					ntohl(oi->te_para.link_id.value.s_addr) == ntohl(addr->s_addr) &&
+					IN_SAME_SLASH30(oi->te_para.link_id.value, addr) &&
 					ntohl(oi->te_para.link_lcrmt_id.link_remote_id) == if_id)
 					||
 					((if_id >> 16) && INTERFACE_GMPLS_ENABLED(oi) &&
 					ntohs(oi->te_para.rmtif_ipaddr.header.type)!=0 &&
-					ntohl(oi->te_para.link_id.value.s_addr) == ntohl(addr->s_addr)) )
+					IN_SAME_SLASH30(oi->te_para.link_id.value, addr)) )
 				{
 					length = sizeof(u_int8_t)*2 + sizeof(struct in_addr);
 					s = stream_new(length);
