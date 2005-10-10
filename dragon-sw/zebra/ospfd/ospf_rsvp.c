@@ -101,7 +101,7 @@ ospf_find_interface_by_data(struct in_addr *addr, u_int32_t if_id, int fd)
 	if (IS_VALID_LCL_IFID(if_id)) /* unnumbered interface */
 	{
 		/*if ((ntohl(OspfTeRouterAddr.value.s_addr)==addr->s_addr || ) && om->ospf)*/
-		if (OspfTeRouterAddr.value.in_addr == addr->s_addr) && om->ospf)
+		if (OspfTeRouterAddr.value.s_addr == addr->s_addr && om->ospf)
 		LIST_LOOP(om->ospf, ospf, node1)
 		{
 			if (ospf->oiflist)
@@ -131,7 +131,7 @@ ospf_find_interface_by_data(struct in_addr *addr, u_int32_t if_id, int fd)
 			LIST_LOOP(ospf->oiflist, oi, node2){
 				if (INTERFACE_MPLS_ENABLED(oi) &&
 					ntohs(oi->te_para.lclif_ipaddr.header.type)!=0 &&
-					oi->te_para.lclif_ipaddr.value == addr->s_addr))
+					oi->te_para.lclif_ipaddr.value.s_addr == addr->s_addr)
 				{
 					length = sizeof(u_int8_t)*2 + sizeof(struct in_addr);
 					s = stream_new(length);
@@ -178,7 +178,7 @@ ospf_find_data_by_interface(struct in_addr *addr, int fd)
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
 			if (INTERFACE_GMPLS_ENABLED(oi) &&
-			    oi->address->u.prefix4 == addr->s_addr)))
+			    oi->address->u.prefix4.s_addr == addr->s_addr)
 			{
 				if (ntohs(oi->te_para.lclif_ipaddr.header.type)!=0) /* numbered interface */
 					data_addr.s_addr = oi->te_para.lclif_ipaddr.value.s_addr;
