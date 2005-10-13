@@ -126,6 +126,15 @@ void API_Server::processMessage( const Message& msg, MessageProcessor& mp) {
 	SESSION_Object session = msg.getSESSION_Object();
 	uint16 port = msg.getRSVP_HOP_Object().getLIH();
 	const NetAddress& address = msg.getRSVP_HOP_Object().getAddress();
+
+	//Initialize OSPF socket 
+	if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
+		if (!RSVP_Global::rsvp->getRoutingService().ospf_socket_init()){
+			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
+			return;
+		}
+	}
+
 	if (msg.getMsgType() == Message::InitAPI && (session.getDestAddress() == LogicalInterface::loopbackAddress 
 		|| session.getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()))
 	{

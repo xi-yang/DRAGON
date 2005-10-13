@@ -371,13 +371,15 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	VLSRRoute vLSRoute;
 
 	//Initialize OSPF socket 
+	/* Moved to RSVP_API_Server::processMessage
 	if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
 		if (!RSVP_Global::rsvp->getRoutingService().ospf_socket_init()){
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
 			return;
 		}
 	}
-	
+	*/
+
 	EXPLICIT_ROUTE_Object* explicitRoute = NULL;
 	if ( destAddress.isMulticast() ) {
 		LOG(2)( Log::MPLS, "MPLS: explicit routing not allowed for multicast sessions:", destAddress );
