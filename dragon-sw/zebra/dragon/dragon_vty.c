@@ -1736,12 +1736,12 @@ dragon_supp_vty_init ()
   install_element(VIEW_NODE, &dragon_delete_lsp_cmd);
 
   registered_local_ids = list_new();
-  install_element(VIEW_NODE, &dragon_set_local_id_cmd);
-  install_element(VIEW_NODE, &dragon_set_local_id_group_cmd);
-  install_element(VIEW_NODE, &dragon_delete_local_id_cmd);
-  install_element(VIEW_NODE, &dragon_delete_local_id_all_cmd);
-  install_element(VIEW_NODE, &dragon_clear_local_id_cmd);
   install_element(VIEW_NODE, &dragon_show_local_id_cmd);
+  install_element(CONFIG_NODE, &dragon_set_local_id_cmd);
+  install_element(CONFIG_NODE, &dragon_set_local_id_group_cmd);
+  install_element(CONFIG_NODE, &dragon_delete_local_id_cmd);
+  install_element(CONFIG_NODE, &dragon_delete_local_id_all_cmd);
+  install_element(CONFIG_NODE, &dragon_clear_local_id_cmd);
   
   install_element(CONFIG_NODE, &dragon_set_pce_para_cmd);
   install_element(CONFIG_NODE, &dragon_set_pce_para_ip_cmd);
