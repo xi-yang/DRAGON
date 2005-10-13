@@ -355,7 +355,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 #if defined(WITH_API)
 	bool fromLocalAPI = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
 		&& (msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress
-		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress())) );
+		|| msg.getRSVP_HOP_Object().getAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
+		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress()));
 #endif
 
 	LogicalInterfaceSet RtOutL;
@@ -441,7 +442,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		policyData = msg.getPolicyList().front();
 
 		if ( senderTemplate.getSrcAddress() == NetAddress(0) 
-			|| senderTemplate.getSrcAddress() == LogicalInterface::loopbackAddress ) {
+			|| senderTemplate.getSrcAddress() == LogicalInterface::loopbackAddress 
+			|| senderTemplate.getSrcAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() ) {
 			if (defaultOutLif) {
 				LOG(2)( Log::API, "default out interface is", defaultOutLif->getName() );
 				//senderTemplate.setSrcAddress( defaultOutLif->getLocalAddress() );
