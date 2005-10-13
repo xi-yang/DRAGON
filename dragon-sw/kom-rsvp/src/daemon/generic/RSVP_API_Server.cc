@@ -40,6 +40,7 @@
 #include "RSVP_MessageProcessor.h"
 #include "RSVP_ProtocolObjects.h"
 #include "RSVP_TrafficControl.h"
+#include "RSVP_RoutingService.h"
 
 //#if defined(NS2)
 //#include "RSVP_Wrapper.h"

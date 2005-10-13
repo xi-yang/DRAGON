@@ -687,7 +687,7 @@ const LogicalInterface*  RoutingService::getRouteReply( NetAddress& dest, NetAdd
 			ERROR(2)( Log::Error, "ERROR: read failed, can't find route for", dest );
 	return NULL;
 		}
-		if ( (pid_t)routeMsg.hdr.nlmsg_pid == mainPID ) {
+		if ( (pid_t)routeMsg.hdr.nlmsg_pid == mainPID || (pid_t)routeMsg.hdr.nlmsg_pid == 0) {
 		  if ( routeMsg.hdr.nlmsg_seq != queryCounter ) {
 				// this is an async route notification -> should be buffered and delivered later
 				ERROR(6)( Log::Error, "ERROR: async route reply seqno", routeMsg.hdr.nlmsg_seq, "type", (uint32)routeMsg.hdr.nlmsg_type, "but waiting for", queryCounter );
