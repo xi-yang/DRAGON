@@ -127,7 +127,7 @@ void API_Server::processMessage( const Message& msg, MessageProcessor& mp) {
 	uint16 port = msg.getRSVP_HOP_Object().getLIH();
 	const NetAddress& address = msg.getRSVP_HOP_Object().getAddress();
 	if (msg.getMsgType() == Message::InitAPI && (session.getDestAddress() == LogicalInterface::loopbackAddress 
-		||session.getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()))
+		|| session.getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()))
 	{
 		//register default client API
 		ApiEntryList::ConstIterator iter1 = getApiList( session ).begin();

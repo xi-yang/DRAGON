@@ -223,7 +223,7 @@ void NetworkServiceDaemon::buildInterfaceList( LogicalInterfaceList& lifList ) {
 #endif /* SunOS -> use manual index counter */
 
 		// ignore loopback interface
-		if ( NetAddress(addr) == LogicalInterface::loopbackAddress || NetAddress(addr) == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()) {
+		if ( NetAddress(addr) == LogicalInterface::loopbackAddress) {
 			loopbackInterfaceIndex = index;
 	continue;
 		}
