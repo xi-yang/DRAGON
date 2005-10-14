@@ -141,7 +141,13 @@ void Hop::processSrefresh( const Message& msg ) {
 #if defined(CHECK_UNICAST_ROUTING_FOR_PATH_REFRESH)
 					static NetAddress gw(0);
 					const LogicalInterface* lif;
-					if ( (*stateIter).sb.psb->getEXPLICIT_ROUTE_Object() )
+
+#if defined(WITH_API)
+					if ((*stateIter).sb.psb->getSession().getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
+							lif = RSVP_Global::rsvp->getApiLif();
+					else
+#endif
+						if ( (*stateIter).sb.psb->getEXPLICIT_ROUTE_Object() )
 					{
 						EXPLICIT_ROUTE_Object* ero = const_cast<EXPLICIT_ROUTE_Object*>((*stateIter).sb.psb->getEXPLICIT_ROUTE_Object());
 						if (ero->getAbstractNodeList().front().getType() == AbstractNode::IPv4)
