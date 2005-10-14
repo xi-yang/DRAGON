@@ -518,13 +518,12 @@ static int hold_bandwidth(struct ospf_interface *oi, float bandwidth)
 {
 	u_int8_t i;
 	static float zero_bw = 0;
-	float max_rsv_bw;
 	float unrsv_bw;
 
 	for (i=0; i<8; i++)
 	{
 		ntohf(&oi->te_para.unrsv_bw.value[i], &unrsv_bw);
-		unrsv_bw -= ((*bandwidth) * 1000000 / 8);
+		unrsv_bw -= (bandwidth * 1000000 / 8);
 		if (unrsv_bw < 0)
 			unrsv_bw = zero_bw;
 		set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
@@ -536,7 +535,6 @@ static int hold_bandwidth(struct ospf_interface *oi, float bandwidth)
 static int release_bandwidth(struct ospf_interface *oi, float bandwidth)
 {
 	u_int8_t i;
-	static float zero_bw = 0;
 	float max_rsv_bw;
 	float unrsv_bw;
 
@@ -544,7 +542,7 @@ static int release_bandwidth(struct ospf_interface *oi, float bandwidth)
 	for (i=0; i<8; i++)
 	{
 		ntohf(&oi->te_para.unrsv_bw.value[i], &unrsv_bw);
-		unrsv_bw += ((*bandwidth) * 1000000 / 8);
+		unrsv_bw += (bandwidth * 1000000 / 8);
 		if (unrsv_bw > max_rsv_bw)
 			unrsv_bw = max_rsv_bw;
 		set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
@@ -577,7 +575,7 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag)
 				{
 					updated = hold_bandwidth(oi, bw);
 				}
-				else if (hold_flag == 0 && !has_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag))
+				else 
 				{
 					updated = release_bandwidth(oi, bw);
 				}
