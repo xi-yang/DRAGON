@@ -93,6 +93,7 @@ public:
 		GetVLSRRoutebyOSPF = 132,		//Get VLSR route
 		GetLoopbackAddress = 133, 		// Get its loopback address
 		HoldVtagbyOSPF = 134, 		// Hold or release a VLAN Tag
+		HoldBandwidthbyOSPF = 134, 		// Hold or release a portion of bandwidth
 	};
 	RoutingService();
 	~RoutingService();

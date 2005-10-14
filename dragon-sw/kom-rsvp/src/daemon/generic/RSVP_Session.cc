@@ -305,7 +305,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		VLSR_Route vlsr;
 		memset(&vlsr, 0, sizeof(VLSR_Route));
 		RSVP_Global::rsvp->getRoutingService().getVLSRRoutebyOSPF(inRtId, outRtId, inUnumIfID, outUnumIfID, vlsr);
-		vlsr.bandwidth = msg->getSENDER_TSPEC_Object()..get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
+		vlsr.bandwidth = msg.getSENDER_TSPEC_Object().get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
 		if (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0))
 		{
 			//prepare SNMP connection

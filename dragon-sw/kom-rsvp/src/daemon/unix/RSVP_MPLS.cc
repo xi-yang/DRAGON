@@ -327,7 +327,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                  else
                                                         (*snmpIter)->movePortToVLANAsUntagged(port, vlan);
 							//deduct bandwidth from the link associated with the port
-							RSVP_Global::rsvp->getRoutingService().holdBandwithbyOSPF(port, (*iter)->bandwidth, true); //true == deduct
+							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true); //true == deduct
                                                 portList.pop_front();
                                           }
                                           if (taggedPorts != 0)
@@ -492,7 +492,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                   (*snmpIter)->movePortToDefaultVLAN(port);
     						        LOG(3)(Log::MPLS, "VLSR: Moving egress port#",  port, " back to Default VLAN #");
                                             }
-						  RSVP_Global::rsvp->getRoutingService().holdBandwithbyOSPF(port, (*iter)->bandwidth, false); //false == increase
+						  RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false); //false == increase
                                             portList.pop_front();
                                       }
 					if ((((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
