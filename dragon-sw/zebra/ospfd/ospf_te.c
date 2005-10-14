@@ -2196,6 +2196,9 @@ static void
 show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 {
   int i;
+  char data_ip_address[20];
+  char switch_ip_address[20];
+
   if (INTERFACE_MPLS_ENABLED(oi)
   &&  (! if_is_loopback (oi->ifp) && if_is_up (oi->ifp) && ospf_oi_count (oi->ifp) > 0))
     {
@@ -2210,8 +2213,12 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 		else
 			vty_out(vty, "Protocol type is UNKNOWN, ");
 		  if (oi->vlsr_if.switch_ip.s_addr!=0 && oi->vlsr_if.switch_port!=0)
+                  {
+                          strcpy(data_ip_address, inet_ntoa(oi->vlsr_if.data_ip));
+                          strcpy(switch_ip_address, inet_ntoa(oi->vlsr_if.switch_ip));
 			  vty_out(vty, "Data interface is numbered , IP = %s , Switch IP = %s, Switch port = %d,  ", 
-							  inet_ntoa (oi->vlsr_if.data_ip), inet_ntoa(oi->vlsr_if.switch_ip), oi->vlsr_if.switch_port);
+							  data_ip_address, switch_ip_address, oi->vlsr_if.switch_port);
+                  }
 		  else
 			  vty_out(vty, "Data interface is numbered, IP = %s,  ",  inet_ntoa (oi->vlsr_if.data_ip));
 
