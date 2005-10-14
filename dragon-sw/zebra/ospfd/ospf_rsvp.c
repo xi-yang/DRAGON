@@ -69,6 +69,7 @@ enum OspfRsvpMessage {
 	GetVLSRRoutebyOSPF = 132,		//Get VLSR route
 	GetLoopbackAddress = 133,		// Get its loopback address
 	HoldVtagbyOSPF = 134,		// Hold or release a VLAN Tag
+	HoldBandwidthbyOSPF = 135, 		// Hold or release a portion of bandwidth
 };
 
 
@@ -513,6 +514,83 @@ ospf_hold_vtag(u_int32_t vtag, u_int8_t hold_flag)
 	}
 }
 
+static int hold_bandwidth(struct ospf_interface *oi, float bandwidth)
+{
+	u_int8_t i;
+	static float zero_bw = 0;
+	float max_rsv_bw;
+	float unrsv_bw;
+
+	for (i=0; i<8; i++)
+	{
+		ntohf(&oi->te_para.unrsv_bw.value[i], &unrsv_bw);
+		unrsv_bw -= ((*bandwidth) * 1000000 / 8);
+		if (unrsv_bw < 0)
+			unrsv_bw = zero_bw;
+		set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
+		htonf(&unrsv_bw, &oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i]);
+	}
+	return 1;
+}
+
+static int release_bandwidth(struct ospf_interface *oi, float bandwidth)
+{
+	u_int8_t i;
+	static float zero_bw = 0;
+	float max_rsv_bw;
+	float unrsv_bw;
+
+	ntohf(&oi->te_para.max_rsv_bw.value, &max_rsv_bw);
+	for (i=0; i<8; i++)
+	{
+		ntohf(&oi->te_para.unrsv_bw.value[i], &unrsv_bw);
+		unrsv_bw += ((*bandwidth) * 1000000 / 8);
+		if (unrsv_bw > max_rsv_bw)
+			unrsv_bw = max_rsv_bw;
+		set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
+		htonf(&unrsv_bw, &oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i]);
+	}
+
+	return 1;
+}
+
+void
+ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag)
+{
+	struct ospf_interface *oi;
+	struct listnode *node1, *node2;
+	struct ospf *ospf;
+	int updated = 0;
+
+	if (port == 0 || bw == 0)
+		return;
+
+	bw = (bw *100000) / 8;
+
+	if (om->ospf)
+	LIST_LOOP(om->ospf, ospf, node1)
+	{
+		if (ospf->oiflist)
+		LIST_LOOP(ospf->oiflist, oi, node2){
+			if (oi && INTERFACE_MPLS_ENABLED(oi) && oi->vlsr_if.switch_port == port) {
+				if (hold_flag == 1)
+				{
+					updated = hold_bandwidth(oi, bw);
+				}
+				else if (hold_flag == 0 && !has_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag))
+				{
+					updated = release_bandwidth(oi, bw);
+				}
+				if (updated && oi->t_te_area_lsa_link_self)
+				{
+					OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
+					OSPF_INTERFACE_TIMER_ON (oi->t_te_area_lsa_link_self, ospf_te_area_lsa_link_timer, OSPF_MIN_LS_INTERVAL);
+				}
+			}
+		}
+	}
+}
+
 void
 ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t inPort, u_int32_t outPort, int fd)
 {
@@ -806,8 +884,9 @@ ospf_rsvp_read (struct thread *thread)
   struct in_addr addr, addr1;
   u_int32_t if_id;
   u_int32_t vlsr_in_if_id, vlsr_out_if_id;
+  u_int32_t port, bw_uint32;
   u_int32_t vtag;
-  u_int8_t vtag_hold_flag;
+  u_int8_t hold_flag;
   float bandwidth, tmpbw;
   
   /* Get thread data.  Reset reading thread because I'm running. */
@@ -871,10 +950,17 @@ ospf_rsvp_read (struct thread *thread)
 	ospf_get_vlsr_route(&addr, &addr1, vlsr_in_if_id, vlsr_out_if_id, sock);
      break;
 
+    case HoldBandwidthbyOSPF:
+	port = stream_getl(s);	
+	bw_uint32 = stream_getl(s);	
+	hold_flag = stream_getc(s);
+	ospf_hold_bandwidth(port, *(float*)&bw_uint32, hold_flag);
+     break;
+
     case HoldVtagbyOSPF:
 	vtag = stream_getl(s);	
-	vtag_hold_flag = stream_getc(s);	
-	ospf_hold_vtag(vtag, vtag_hold_flag);
+	hold_flag = stream_getc(s);	
+	ospf_hold_vtag(vtag, hold_flag);
      break;
 
     case OspfPathTear:
