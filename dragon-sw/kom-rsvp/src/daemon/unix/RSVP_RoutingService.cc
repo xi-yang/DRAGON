@@ -464,6 +464,17 @@ const void RoutingService::notifyOSPF(uint8 msgType, const NetAddress& ctrlIfIP,
 	}
 }
 
+//Hold or release bandwidth
+const void RoutingService::holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold) const {
+	uint8 message = HoldBandwidthbyOSPF;
+	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32)*2 + sizeof(uint8);
+	uint8 c_hold = hold ? 1 : 0;
+	ONetworkBuffer obuffer(msgLength);
+	obuffer << msgLength << message << port << bw <<c_hold;
+	CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+}
+
+
 //Hold or release VLAN Tag
 const void RoutingService::holdVtagbyOSPF(u_int32_t vtag, bool hold) const {
 	uint8 message = HoldVtagbyOSPF;

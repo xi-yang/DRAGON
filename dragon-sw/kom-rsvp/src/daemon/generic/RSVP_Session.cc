@@ -305,6 +305,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		VLSR_Route vlsr;
 		memset(&vlsr, 0, sizeof(VLSR_Route));
 		RSVP_Global::rsvp->getRoutingService().getVLSRRoutebyOSPF(inRtId, outRtId, inUnumIfID, outUnumIfID, vlsr);
+		vlsr.bandwidth = msg->getSENDER_TSPEC_Object()..get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
 		if (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0))
 		{
 			//prepare SNMP connection
@@ -812,12 +813,13 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 	} else
 	{
 #endif
-	if (outLif && outLif != RSVP_Global::rsvp->getApiLif()){
-		RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), outLif->getAddress(), bandwidth);
-	}
-	if (inLif && inLif != RSVP_Global::rsvp->getApiLif() && biDir){
-		RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), inLif->getAddress(), bandwidth);
-	}
+	//@@@@hack
+	//if (outLif && outLif != RSVP_Global::rsvp->getApiLif()){
+	//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), outLif->getAddress(), bandwidth);
+	//}
+	//if (inLif && inLif != RSVP_Global::rsvp->getApiLif() && biDir){
+	//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), inLif->getAddress(), bandwidth);
+	//}
 #if defined(ONEPASS_RESERVATION)
 	}
 #endif
@@ -1077,12 +1079,13 @@ void Session::processRESV( const Message& msg, Hop& nhop ) {
 			}
 		}
 		else{  //Send notification to OSPF
-			if (outLif && outLif != RSVP_Global::rsvp->getApiLif()){
-				RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), outLif->getAddress(), bandwidth);
-			}
-			if (inLif && inLif != RSVP_Global::rsvp->getApiLif() && biDir){
-				RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), inLif->getAddress(), bandwidth);
-			}
+			//@@@@hack
+			//if (outLif && outLif != RSVP_Global::rsvp->getApiLif()){
+			//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), outLif->getAddress(), bandwidth);
+			//}
+			//if (inLif && inLif != RSVP_Global::rsvp->getApiLif() && biDir){
+			//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), inLif->getAddress(), bandwidth);
+			//}
 		}
 	} // loop through flow descriptors
 }
@@ -1154,12 +1157,13 @@ void Session::processRERR( Message& msg, Hop& hop ) {
 				} else
 #endif
 					sendLif.sendMessage( msg, rsb->getNextHop().getAddress() );
-				if (outLif && outLif != RSVP_Global::rsvp->getApiLif()){
-					RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), outLif->getAddress(), bandwidth);
-				}
-				if (inLif && inLif != RSVP_Global::rsvp->getApiLif() && biDir){
-					RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), inLif->getAddress(), bandwidth);
-				}
+				//@@@@hack
+				//if (outLif && outLif != RSVP_Global::rsvp->getApiLif()){
+				//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), outLif->getAddress(), bandwidth);
+				//}
+				//if (inLif && inLif != RSVP_Global::rsvp->getApiLif() && biDir){
+				//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), inLif->getAddress(), bandwidth);
+				//}
 
 			}
 		}
@@ -1182,12 +1186,13 @@ bool Session::deregisterAPI( const NetAddress& address, uint16 port ) {
 			sessionDeleted = (RelationshipSession_PSB::followRelationship().size() == 1);
 			psb->sendTearMessage();
 			ieee32float bandwidth = psb->getSENDER_TSPEC_Object().get_r();
-			if (outLif && outLif != RSVP_Global::rsvp->getApiLif()){
-				RSVP_Global::rsvp->getRoutingService().notifyOSPF(Message::PathTear, outLif->getAddress(), bandwidth	);
-			}
-			if (inLif && inLif != RSVP_Global::rsvp->getApiLif() && biDir){
-				RSVP_Global::rsvp->getRoutingService().notifyOSPF(Message::PathTear, inLif->getAddress(), bandwidth);
-			}
+			//@@@@hack
+			//if (outLif && outLif != RSVP_Global::rsvp->getApiLif()){
+			//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(Message::PathTear, outLif->getAddress(), bandwidth	);
+			//}
+			//if (inLif && inLif != RSVP_Global::rsvp->getApiLif() && biDir){
+			//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(Message::PathTear, inLif->getAddress(), bandwidth);
+			//}
 			
  			delete psb;
 		} else if ( psb->getForwardFlowspec() != NULL && psb->getOutISB(RSVP::getApiLif()->getLIH()) ) {

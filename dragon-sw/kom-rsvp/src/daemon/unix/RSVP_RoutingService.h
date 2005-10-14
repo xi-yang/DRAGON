@@ -58,6 +58,7 @@ typedef struct _vlsr_route_{
 	uint32 inPort;
 	uint32 outPort;
 	uint32 vlanTag;
+	float bandwidth;
 }VLSR_Route;
 typedef SimpleList<VLSR_Route> VLSRRoute;
 
@@ -106,7 +107,8 @@ public:
 	const void notifyOSPF(uint8 msgType, const NetAddress& ctrlIfIP, ieee32float bw  ) const;
 	const LogicalInterface* findOutLifByOSPF( const NetAddress& , const uint32 , NetAddress& ) const;
 	const void getVLSRRoutebyOSPF(const NetAddress& inRtID, const NetAddress& outRtID, const uint32 inIfId, const uint32 outIfId, VLSR_Route& vlsr) const ;
-	const void RoutingService::holdVtagbyOSPF(u_int32_t vtag, bool hold = true) const;
+	const void holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold = true) const;
+	const void holdVtagbyOSPF(u_int32_t vtag, bool hold = true) const;
 	NetAddress getLoopbackAddress() const;
 	const LogicalInterface* getUnicastRoute( const NetAddress&, NetAddress& ) const;
 	const LogicalInterface* getMulticastRoute( const NetAddress&, const NetAddress&, LogicalInterfaceSet& ) const;
