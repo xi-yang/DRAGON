@@ -126,5 +126,18 @@ public:
 #endif
 };
 
+#define CheckOspfSocket(function) (\
+	if (!ospf_socket){ \
+		if (!ospf_socket_init()){ \
+			LOG(1)( Log::Error, "checkOspfSocket: cannot connect to OSPFd..."); \
+		} \
+	} \
+	CHECK(function); \
+	if (CHECK_result < 0) { \
+		CHECK(close(ospf_socket)); \
+		ospf_socket = 0;
+	} \
+    )\
+
 #endif /* _RSVP_RoutingService_h_ */
 

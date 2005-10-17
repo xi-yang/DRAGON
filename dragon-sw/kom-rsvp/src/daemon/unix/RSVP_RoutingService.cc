@@ -240,6 +240,7 @@ bool RoutingService::ospf_socket_init (){
 
 }
 #endif
+
 void RoutingService::maskLength2IP (int masklen, NetAddress& netmask) const {
 	uint8 *pnt;
 	int bit;
@@ -306,7 +307,7 @@ const NetAddress &dest, const SENDER_TSPEC_Object& sendTSpec, const LABEL_REQUES
 		obuffer << sendTSpec.getNCC() << sendTSpec.getNVC() << sendTSpec.getMT();
 		obuffer << sendTSpec.getTransparency() << sendTSpec.getProfile();
 	}
-	CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 
 	msgLength = 0;
 	//Read response from OSPF
@@ -339,7 +340,7 @@ const LogicalInterface* RoutingService::findInterfaceByData( const NetAddress& i
 	uint8 msgLength = sizeof(uint8)*2+ip.size()+sizeof(uint32);
 	ONetworkBuffer obuffer(msgLength);
 	obuffer << msgLength << message << ip << ifID;
-	CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 
 	msgLength = 0;
 	//Read response from OSPF
@@ -367,7 +368,7 @@ bool RoutingService::findDataByInterface(const LogicalInterface& lif, NetAddress
 	uint8 msgLength = sizeof(uint8)*2+lif.getAddress().size();
 	ONetworkBuffer obuffer(msgLength);
 	obuffer << msgLength << message << lif.getAddress();
-	CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 
 	msgLength = 0;
 	//Read response from OSPF
@@ -395,7 +396,7 @@ const LogicalInterface* RoutingService::findOutLifByOSPF( const NetAddress& next
 	uint8 msgLength = sizeof(uint8)*2+nextHop.size()+sizeof(uint32);
 	ONetworkBuffer obuffer(msgLength);
 	obuffer << msgLength << message << nextHop << ifID;
-	CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 
 	msgLength = 0;
 	//Read response from OSPF
@@ -436,7 +437,7 @@ const void RoutingService::getVLSRRoutebyOSPF(const NetAddress& inRtID, const Ne
 	uint8 msgLength = sizeof(uint8)*2+inRtID.size() + outRtID.size() + sizeof(uint32)*2;
 	ONetworkBuffer obuffer(msgLength);
 	obuffer << msgLength << message << inRtID << outRtID << inIfId << outIfId;
-	CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 
 	msgLength = 0;
 	//Read response from OSPF
@@ -460,7 +461,7 @@ const void RoutingService::notifyOSPF(uint8 msgType, const NetAddress& ctrlIfIP,
 		uint8 msgLength = sizeof(uint8)*2+ctrlIfIP.size()+sizeof(ieee32float);
 		ONetworkBuffer obuffer(msgLength);
 		obuffer << msgLength << msgType << ctrlIfIP << bw;
-		CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+		CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 	}
 }
 
@@ -471,7 +472,7 @@ const void RoutingService::holdBandwidthbyOSPF(u_int32_t port, float bw, bool ho
 	uint8 c_hold = hold ? 1 : 0;
 	ONetworkBuffer obuffer(msgLength);
 	obuffer << msgLength << message << port << bw <<c_hold;
-	CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 }
 
 
@@ -482,7 +483,7 @@ const void RoutingService::holdVtagbyOSPF(u_int32_t vtag, bool hold) const {
 	uint8 c_hold = hold ? 1 : 0;
 	ONetworkBuffer obuffer(msgLength);
 	obuffer << msgLength << message << vtag <<c_hold;
-	CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 }
 
 // Get its loopback address
@@ -493,7 +494,7 @@ NetAddress RoutingService::getLoopbackAddress() const{
 	uint8 msgLength = sizeof(uint8)*2;
 	ONetworkBuffer obuffer(msgLength);
 	obuffer << msgLength << message;
-	CHECK(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 
 	msgLength = 0;
 	//Read response from OSPF
