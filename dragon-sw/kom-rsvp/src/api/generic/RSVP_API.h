@@ -175,6 +175,7 @@ private:
 	void process( Message& , zUpcall upcall = NULL);
 	static void refreshSession( const SESSION_Object& session, const TimeValue& = 0 );
 	void constructor( uint16 apiPort, NetAddress apiHost );
+	void readPreservedLocalIds();
 	inline ApiStateBlockList& getStateList( const SESSION_Object& s );
 	friend class API_StateBlock;                       // access: refreshSession
 #if defined(NS2)
