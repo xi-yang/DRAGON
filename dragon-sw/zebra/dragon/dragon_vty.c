@@ -1518,6 +1518,33 @@ value_to_string(struct string_value_conversion *db, u_int32_t value)
 	return def_string;
 }
 
+static void preserve_local_ids()
+{
+	struct local_id * lid = NULL;
+	u_int16_t * ptag = NULL;
+	listnode node, node2;
+	FILE *fp;
+
+	fp = fopen("/var/preserve/dragon.localids", "w");
+
+	if (fp != NULL) 
+	{
+		LIST_LOOP(registered_local_ids, lid, node)
+		{
+			fprintf(fp, "%d%-10d",  lid->type, lid->value);
+			if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
+			{
+				LIST_LOOP(lid->group, ptag, node2)
+				{
+					fprintf(fp, "  %-10d", *ptag);
+				}
+			}
+			fprintf(fp, "\n");
+		}
+		fclose (fp);
+	}
+}
+
 DEFUN (dragon_set_local_id,
        dragon_set_local_id_cmd,
        "set local-id port <0-65535>",
@@ -1545,6 +1572,7 @@ DEFUN (dragon_set_local_id,
     lid->value = tag;
     listnode_add(registered_local_ids, lid);
     zAddLocalId(dmaster.api, type, tag, 0);
+    preserve_local_ids();
     return CMD_SUCCESS;
 }
 
@@ -1601,7 +1629,7 @@ DEFUN (dragon_set_local_id_group,
                 }
                 zDeleteLocalId(dmaster.api, type, tag, sub_tag);
             }
-
+            preserve_local_ids();
             return CMD_SUCCESS;
         }
     }
@@ -1619,6 +1647,7 @@ DEFUN (dragon_set_local_id_group,
     local_id_group_add(lid, sub_tag);
     listnode_add(registered_local_ids, lid);
     zAddLocalId(dmaster.api, type, tag, sub_tag);
+    preserve_local_ids();
     return CMD_SUCCESS;
 }
 
@@ -1651,6 +1680,7 @@ DEFUN (dragon_delete_local_id,
             listnode_delete(registered_local_ids, lid);
             XFREE(MTYPE_TMP, lid);
             zDeleteLocalId(dmaster.api, type, tag, 0);
+            preserve_local_ids();
             return CMD_SUCCESS;
         }
     }
@@ -1678,6 +1708,7 @@ DEFUN (dragon_delete_local_id_all,
     }
     list_delete_all_node(registered_local_ids);
     zDeleteLocalId(dmaster.api, 0xffff, 0xffff, 0xffff);
+    preserve_local_ids();
     return CMD_SUCCESS;
 }
 
