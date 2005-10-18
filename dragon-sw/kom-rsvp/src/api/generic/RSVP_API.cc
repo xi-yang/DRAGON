@@ -74,7 +74,6 @@ RSVP_API::RSVP_API( const String& confFile, uint32 sessionHash )
 		}
 	}
 	constructor( apiPort, apiHost );
-	readPreservedLocalIds();
 }
 
 void RSVP_API::constructor( uint16 apiPort, NetAddress apiHost ) {
@@ -101,39 +100,6 @@ void RSVP_API::constructor( uint16 apiPort, NetAddress apiHost ) {
 	apiLif->configureRefresh( 0 );
 	apiLif->initWithPort();
 	LOG(2)( Log::API, "API: ", *apiLif );
-}
-
-void RSVP_API::readPreservedLocalIds() {
-	ifstream inFile;
-	char line[100], *str;
-	u_int16_t type, value, tag;
-
-	inFile.open ("/var/preserve/dragon.localids", ifstream::in);
-       if (!inFile  || inFile.bad()) 
-       {
-		LOG(1)(Log::Error, "Failed to open the /var/preserve/dragon.localids...");
-		return;
-       }
-	while (inFile >> line)
-	{
-		str = strtok(line, " ");
-		if(!str) break;
-		sscanf(str, "%d:%d", &type, &value);
-		if (type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)
-		{
-			while (str = strtok(NULL, " "))
-			{
-				if (str) sscanf(str, "%d", &tag);
-				else break;
-				addLocalId(type, value, tag);
-			}
-		}
-		else
-		{
-			addLocalId(type, value, 0);
-		}
-			
-	}
 }
 
 RSVP_API::~RSVP_API() {
