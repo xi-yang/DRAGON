@@ -39,6 +39,7 @@
 #include "RSVP_Message.h"
 #include "RSVP_NetworkService.h"
 #include "RSVP_PacketHeader.h"
+#include "SNMP_Global.h"
 
 #if !defined(NS2)
 // trick linker
@@ -106,7 +107,7 @@ void RSVP_API::constructor( uint16 apiPort, NetAddress apiHost ) {
 void RSVP_API::readPreservedLocalIds() {
 	ifstream inFile;
 	char line[100], *str;
-	int type, value, tag;
+	u_int16_t type, value, tag;
 
 	inFile.open ("/var/preserve/dragon.localids", ifstream::in);
        if (!inFile  || inFile.bad()) 
@@ -114,7 +115,7 @@ void RSVP_API::readPreservedLocalIds() {
 		LOG(1)(Log::Error, "Failed to open the /var/preserve/dragon.localids...");
 		return;
        }
-	while (getline(inFile, line))
+	while (inFile >> line)
 	{
 		str = strtok(line, " ");
 		if(!str) break;

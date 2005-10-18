@@ -103,16 +103,16 @@ public:
 	void init( LogicalInterfaceList& tmpLifList );
 	void init2();
 	EXPLICIT_ROUTE_Object* getExplicitRouteByOSPF(const NetAddress& src, const NetAddress& dest, const SENDER_TSPEC_Object& sendTSpec, const LABEL_REQUEST_Object& labelReq);
-	const LogicalInterface* findInterfaceByData( const NetAddress& ip, const uint32 ifID = 0	) const;
-	bool findDataByInterface(const LogicalInterface& lif, NetAddress& ip, uint32& ifID) const;
-	const void notifyOSPF(uint8 msgType, const NetAddress& ctrlIfIP, ieee32float bw  ) const;
-	const LogicalInterface* findOutLifByOSPF( const NetAddress& , const uint32 , NetAddress& ) const;
-	const void getVLSRRoutebyOSPF(const NetAddress& inRtID, const NetAddress& outRtID, const uint32 inIfId, const uint32 outIfId, VLSR_Route& vlsr) const ;
-	const void holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold = true) const;
-	const void holdVtagbyOSPF(u_int32_t vtag, bool hold = true) const;
-	NetAddress getLoopbackAddress() const;
-	const LogicalInterface* getUnicastRoute( const NetAddress&, NetAddress& ) const;
-	const LogicalInterface* getMulticastRoute( const NetAddress&, const NetAddress&, LogicalInterfaceSet& ) const;
+	const LogicalInterface* findInterfaceByData( const NetAddress& ip, const uint32 ifID = 0);
+	bool findDataByInterface(const LogicalInterface& lif, NetAddress& ip, uint32& ifID);
+	const void notifyOSPF(uint8 msgType, const NetAddress& ctrlIfIP, ieee32float bw  );
+	const LogicalInterface* findOutLifByOSPF( const NetAddress& , const uint32 , NetAddress& );
+	const void getVLSRRoutebyOSPF(const NetAddress& inRtID, const NetAddress& outRtID, const uint32 inIfId, const uint32 outIfId, VLSR_Route& vlsr);
+	const void holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold = true);
+	const void holdVtagbyOSPF(u_int32_t vtag, bool hold = true);
+	NetAddress getLoopbackAddress();
+	const LogicalInterface* getUnicastRoute( const NetAddress&, NetAddress& );
+	const LogicalInterface* getMulticastRoute( const NetAddress&, const NetAddress&, LogicalInterfaceSet& );
 	bool getAsyncMulticastRoutingEvent( NetAddress&, NetAddress&, const LogicalInterface*&, LogicalInterfaceSet& );
 	const LogicalInterface*  getAsyncUnicastRoutingEvent( NetAddress&, NetAddress& );
 	bool isMulticastRouter() { return rsrr != NULL; }
@@ -126,7 +126,7 @@ public:
 #endif
 };
 
-#define CheckOspfSocket(function) (\
+#define CheckOspfSocket(function) \
 	if (!ospf_socket){ \
 		if (!ospf_socket_init()){ \
 			LOG(1)( Log::Error, "checkOspfSocket: cannot connect to OSPFd..."); \
@@ -135,9 +135,8 @@ public:
 	CHECK(function); \
 	if (CHECK_result < 0) { \
 		CHECK(close(ospf_socket)); \
-		ospf_socket = 0;
+		ospf_socket = 0; \
 	} \
-    )\
 
 #endif /* _RSVP_RoutingService_h_ */
 

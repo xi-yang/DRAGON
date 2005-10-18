@@ -163,72 +163,8 @@ public:
 	SNMPSessionList& getSNMPSessionList() { return snmpSessionList; }
 public:
         static LocalIdList localIdList;
-        static void addLocalId(uint16 type, uint16 value, uint16  tag = 0) {
-        LocalIdList::Iterator it;
-        LocalId lid;
-
-        for (it = localIdList.begin(); it != localIdList.end(); ++it) {
-            lid = *it;
-            if (lid.type == type && lid.value == value) {
-                if (type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)  {
-                    SimpleList<uint16>::Iterator it_uint16;
-                    for (it_uint16 = lid.group->begin(); it_uint16 != lid.group->end(); ++it_uint16) {
-                        if (*it_uint16 == tag)
-                            return;
-                        }
-                    lid.group->push_back(tag);
-                    return;
-                    }
-                else
-                    return;
-                }
-            }
-            lid.type = type;
-            lid.value = value;
-            localIdList.push_back(lid);
-            localIdList.back().group = new SimpleList<uint16>;
-            if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP) && tag != 0)
-                localIdList.back().group->push_back(tag);
-            }
-        static void deleteLocalId(uint16 type, uint16 value, uint16  tag = 0) {
-            LocalIdList::Iterator it;
-            LocalId lid;
-            if (type == 0xffff && value == 0xffff) {
-                    //for (it = localIdList.begin(); it != localIdList.end(); ++it)
-                     //   if (lid.group)
-                     //       delete lid.group;
-                    localIdList.clear();
-                    return;
-                }
-            for (it = localIdList.begin(); it != localIdList.end(); ++it) {
-                lid = *it;
-                if (lid.type == type && lid.value == value) {
-                    if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)) {
-                        if (tag == 0 && lid.group) {
-                            delete lid.group;
-                            localIdList.erase(it);
-                            }
-                        else {
-                            SimpleList<uint16>::Iterator it_uint16;
-                            for (it_uint16 = lid.group->begin(); it_uint16 != lid.group->end(); ++it_uint16) {
-                                if (*it_uint16 == tag)
-                                    lid.group->erase(it_uint16);
-                                }
-                            if (lid.group->size() == 0) {
-                                delete lid.group;
-                                localIdList.erase(it);
-                                }
-                            }
-                        return;
-                        }
-                    else {
-                            delete lid.group;
-                            localIdList.erase(it);
-                            return;
-                        }
-                    }
-                }
-            }
+        static void addLocalId(uint16 type, uint16 value, uint16  tag = 0);
+        static void deleteLocalId(uint16 type, uint16 value, uint16  tag = 0);
         static bool hasLocalId(uint16 type, uint16 value, uint16  tag = 0) {
             LocalIdList::Iterator it;
             LocalId lid;

@@ -334,7 +334,7 @@ const NetAddress &dest, const SENDER_TSPEC_Object& sendTSpec, const LABEL_REQUES
 
 
 //Find control logical interface by data plane IP / interface ID
-const LogicalInterface* RoutingService::findInterfaceByData( const NetAddress& ip, const uint32 ifID ) const{
+const LogicalInterface* RoutingService::findInterfaceByData( const NetAddress& ip, const uint32 ifID ) {
 	//Write packet to OSPF socket ask for my hop control IP address
 	uint8 message = FindInterfaceByData;
 	uint8 msgLength = sizeof(uint8)*2+ip.size()+sizeof(uint32);
@@ -363,7 +363,7 @@ const LogicalInterface* RoutingService::findInterfaceByData( const NetAddress& i
 }
 
 //Find data plane IP / interface ID by control logical interface
-bool RoutingService::findDataByInterface(const LogicalInterface& lif, NetAddress& ip, uint32& ifID) const{
+bool RoutingService::findDataByInterface(const LogicalInterface& lif, NetAddress& ip, uint32& ifID) {
 	uint8 message = FindDataByInterface;
 	uint8 msgLength = sizeof(uint8)*2+lif.getAddress().size();
 	ONetworkBuffer obuffer(msgLength);
@@ -390,7 +390,7 @@ bool RoutingService::findDataByInterface(const LogicalInterface& lif, NetAddress
 
 
 //Find outgoing control logical interface by next hop data plane IP / interface ID
-const LogicalInterface* RoutingService::findOutLifByOSPF( const NetAddress& nextHop, const uint32 ifID, NetAddress& gw   ) const {
+const LogicalInterface* RoutingService::findOutLifByOSPF( const NetAddress& nextHop, const uint32 ifID, NetAddress& gw   ) {
 
 	uint8 message = FindOutLifByOSPF;
 	uint8 msgLength = sizeof(uint8)*2+nextHop.size()+sizeof(uint32);
@@ -431,7 +431,7 @@ const LogicalInterface* RoutingService::findOutLifByOSPF( const NetAddress& next
 }
 
 //Get VLSR route
-const void RoutingService::getVLSRRoutebyOSPF(const NetAddress& inRtID, const NetAddress& outRtID, const uint32 inIfId, const uint32 outIfId, VLSR_Route& vlsr) const {
+const void RoutingService::getVLSRRoutebyOSPF(const NetAddress& inRtID, const NetAddress& outRtID, const uint32 inIfId, const uint32 outIfId, VLSR_Route& vlsr) {
 
 	uint8 message = GetVLSRRoutebyOSPF;
 	uint8 msgLength = sizeof(uint8)*2+inRtID.size() + outRtID.size() + sizeof(uint32)*2;
@@ -453,7 +453,7 @@ const void RoutingService::getVLSRRoutebyOSPF(const NetAddress& inRtID, const Ne
 
 }
 
-const void RoutingService::notifyOSPF(uint8 msgType, const NetAddress& ctrlIfIP, ieee32float bw  ) const{
+const void RoutingService::notifyOSPF(uint8 msgType, const NetAddress& ctrlIfIP, ieee32float bw  ) {
 	//Write packet to OSPF socket ask for my hop control IP address
 	if ((msgType == OspfResv || msgType == OspfPathTear || msgType == OspfResvTear) &&
 		ospf_socket)
@@ -466,7 +466,7 @@ const void RoutingService::notifyOSPF(uint8 msgType, const NetAddress& ctrlIfIP,
 }
 
 //Hold or release bandwidth
-const void RoutingService::holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold) const {
+const void RoutingService::holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold) {
 	uint8 message = HoldBandwidthbyOSPF;
 	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32)*2 + sizeof(uint8);
 	uint8 c_hold = hold ? 1 : 0;
@@ -477,7 +477,7 @@ const void RoutingService::holdBandwidthbyOSPF(u_int32_t port, float bw, bool ho
 
 
 //Hold or release VLAN Tag
-const void RoutingService::holdVtagbyOSPF(u_int32_t vtag, bool hold) const {
+const void RoutingService::holdVtagbyOSPF(u_int32_t vtag, bool hold) {
 	uint8 message = HoldVtagbyOSPF;
 	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32) + sizeof(uint8);
 	uint8 c_hold = hold ? 1 : 0;
@@ -488,7 +488,7 @@ const void RoutingService::holdVtagbyOSPF(u_int32_t vtag, bool hold) const {
 
 // Get its loopback address
 // used for filling the IP address field of the RSVP_HOP object
-NetAddress RoutingService::getLoopbackAddress() const{
+NetAddress RoutingService::getLoopbackAddress() {
 	//Write packet to OSPF socket ask for my hop control IP address
 	uint8 message = GetLoopbackAddress;
 	uint8 msgLength = sizeof(uint8)*2;
@@ -517,7 +517,7 @@ NetAddress RoutingService::getLoopbackAddress() const{
 }
 
 
-const LogicalInterface* RoutingService::getUnicastRoute( const NetAddress& dest, NetAddress& gw ) const {
+const LogicalInterface* RoutingService::getUnicastRoute( const NetAddress& dest, NetAddress& gw ) {
 #if defined(REAL_NETWORK)
 	NetAddress readDest = 0;
 	if ( sendRouteRequest( dest ) ) {
@@ -542,7 +542,7 @@ const LogicalInterface* RoutingService::getUnicastRoute( const NetAddress& dest,
 
 // lifList might already contain entries -> do not delete
 // see Session::processPATH (API processing)
-const LogicalInterface* RoutingService::getMulticastRoute( const NetAddress& src, const NetAddress& dest, LogicalInterfaceSet& lifList ) const {
+const LogicalInterface* RoutingService::getMulticastRoute( const NetAddress& src, const NetAddress& dest, LogicalInterfaceSet& lifList ) {
 	const LogicalInterface* inLif = NULL;
 #if defined(NS2)
                                                 assert( RSVP_Global::wrapper );
