@@ -1531,12 +1531,12 @@ static void preserve_local_ids()
 	{
 		LIST_LOOP(registered_local_ids, lid, node)
 		{
-			fprintf(fp, "%d%-10d",  lid->type, lid->value);
+			fprintf(fp, "%d:%d",  lid->type, lid->value);
 			if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
 			{
 				LIST_LOOP(lid->group, ptag, node2)
 				{
-					fprintf(fp, "  %-10d", *ptag);
+					fprintf(fp, " %d", *ptag);
 				}
 			}
 			fprintf(fp, "\n");
