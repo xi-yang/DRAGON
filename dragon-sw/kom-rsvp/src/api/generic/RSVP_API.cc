@@ -39,7 +39,6 @@
 #include "RSVP_Message.h"
 #include "RSVP_NetworkService.h"
 #include "RSVP_PacketHeader.h"
-#include "SNMP_Global.h"
 
 #if !defined(NS2)
 // trick linker
@@ -126,12 +125,12 @@ void RSVP_API::readPreservedLocalIds() {
 			{
 				if (str) sscanf(str, "%d", &tag);
 				else break;
-				SNMP_Global::addLocalId(type, value, tag);
+				addLocalId(type, value, tag);
 			}
 		}
 		else
 		{
-			SNMP_Global::addLocalId(type, value);
+			addLocalId(type, value, 0);
 		}
 			
 	}
