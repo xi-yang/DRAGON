@@ -157,8 +157,9 @@ class SNMP_Global{
 	SNMPSessionList snmpSessionList;
 
 public:
-	SNMP_Global() { snmpSessionList.clear(); init_snmp("VLSRCtrl");} 
+	SNMP_Global();
 	~SNMP_Global();
+	void readPreservedLocalIds();
 	bool addSNMPSession(SNMP_Session* addSS);
 	SNMPSessionList& getSNMPSessionList() { return snmpSessionList; }
 public:
