@@ -523,7 +523,7 @@ static int hold_bandwidth(struct ospf_interface *oi, float bandwidth)
 	for (i=0; i<8; i++)
 	{
 		ntohf(&oi->te_para.unrsv_bw.value[i], &unrsv_bw);
-		unrsv_bw -= (bandwidth * 1000000 / 8);
+		unrsv_bw -= bandwidth;
 		if (unrsv_bw < 0)
 			unrsv_bw = zero_bw;
 		set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
@@ -542,7 +542,7 @@ static int release_bandwidth(struct ospf_interface *oi, float bandwidth)
 	for (i=0; i<8; i++)
 	{
 		ntohf(&oi->te_para.unrsv_bw.value[i], &unrsv_bw);
-		unrsv_bw += (bandwidth * 1000000 / 8);
+		unrsv_bw += bandwidth;
 		if (unrsv_bw > max_rsv_bw)
 			unrsv_bw = max_rsv_bw;
 		set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
