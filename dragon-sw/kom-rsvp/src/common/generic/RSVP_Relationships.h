@@ -74,15 +74,15 @@ class Relationship1to1 : public RelationshipTo1<Other> {
 public:
 	Relationship1to1() {}
 	~Relationship1to1() {
-		if (other) other->clearRelationshipHalf();
+		if (this->other) this->other->clearRelationshipHalf();
 	}
 	void setRelationshipFull( This* me, Other* other ) {
 		other->Relationship1to1<Other,This>::setRelationshipHalf( me );
 		setRelationshipHalf( other );
 	}
 	void clearRelationshipFull() {
-		other->Relationship1to1<Other,This>::clearRelationshipHalf();
-		clearRelationshipHalf();
+		this->other->Relationship1to1<Other,This>::clearRelationshipHalf();
+		this->clearRelationshipHalf();
 	}
 };
 
@@ -106,7 +106,7 @@ class RelationshipMANYto1 : public RelationshipTo1<Other> {
 public:
 	RelationshipMANYto1() {}
 	~RelationshipMANYto1() {
-		if (other) clearRelationshipFull();
+		if (this->other) clearRelationshipFull();
 	}
 	void setRelationshipFull( This* me, Other* other ) {
 		thisIter = other->Relationship1toMANY<Other,This,ThisContainer,OnEmptyDelete1>::setRelationshipHalf( me );
@@ -117,11 +117,12 @@ public:
 		setRelationshipHalf( other );
 	}
 	void clearRelationshipFull() {
-		if ( OnEmptyDelete1()() && other->Relationship1toMANY<Other,This,ThisContainer,OnEmptyDelete1>::followRelationship().size() <= 1 ) {
-			delete other; other = NULL;
+		if ( OnEmptyDelete1()() && this->other->Relationship1toMANY<Other,This,ThisContainer,OnEmptyDelete1>::followRelationship().size() <= 1 ) {
+			delete this->other; 
+			this->other = NULL;
 		} else {
-			other->Relationship1toMANY<Other,This,ThisContainer,OnEmptyDelete1>::clearRelationshipHalf( thisIter );
-			clearRelationshipHalf();
+			this->other->Relationship1toMANY<Other,This,ThisContainer,OnEmptyDelete1>::clearRelationshipHalf( thisIter );
+			this->clearRelationshipHalf();
 		}
 	}
 	bool changeRelationshipFull( This* me, Other* other ) {
@@ -175,8 +176,8 @@ public:
 	Relationship1toMANY() {}
 	Relationship1toMANY( unsigned int count ) : RelationshipToMANY<Other,OtherContainer>(count) {}
 	~Relationship1toMANY() {
-		ConstIterator iter = others.begin();
-		for ( ; iter != others.end(); ++iter ) {
+		ConstIterator iter = this->others.begin();
+		for ( ; iter != this->others.end(); ++iter ) {
 			const_cast<Other*>(*iter)->RelationshipTo1<This>::clearRelationshipHalf();
 		}
 	}

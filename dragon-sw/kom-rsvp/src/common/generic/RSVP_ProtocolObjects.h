@@ -478,7 +478,7 @@ IMPLEMENT_ORDER_RSVP_HOP_TLV(<)
 class RSVP_HOP_Object {
 	NetAddress hopAddress;
 	uint32 LIH;
-	RSVP_HOP_TLV_SUB_Object tlv;
+	RSVP_HOP_TLV_SUB_Object* tlv;
 	friend ostream& operator<< ( ostream&, const RSVP_HOP_Object& );
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const RSVP_HOP_Object& );
 	DECLARE_ORDER(RSVP_HOP_Object)
@@ -486,17 +486,19 @@ public:
 	RSVP_HOP_Object() : 
 		hopAddress(0), LIH(0)
 	{	
-		tlv = RSVP_HOP_TLV_SUB_Object();
+		tlv = new RSVP_HOP_TLV_SUB_Object();
 	}
 	RSVP_HOP_Object( const NetAddress& hopAddress, uint32 LIH )
-		: hopAddress(hopAddress), LIH(LIH) {
-		tlv = RSVP_HOP_TLV_SUB_Object();
+	        : hopAddress(hopAddress), LIH(LIH) {
+		tlv = new RSVP_HOP_TLV_SUB_Object();
 	}
-	RSVP_HOP_Object( const NetAddress& hopAddress, uint32 LIH, RSVP_HOP_TLV_SUB_Object tlv )
-		: hopAddress(hopAddress), LIH(LIH), tlv(tlv) { }
+	RSVP_HOP_Object( const NetAddress& hopAddress, uint32 LIH, RSVP_HOP_TLV_SUB_Object& t )
+                : hopAddress(hopAddress), LIH(LIH) { 
+	        tlv = new RSVP_HOP_TLV_SUB_Object(t);
+	}
 	RSVP_HOP_Object(const RSVP_HOP_Object& t) { *this = t; }
 	const uint16 size() const { return NetAddress::size() + 
-							tlv.size() +
+							tlv->size() +
 							4; }
 	const uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
 	void readFromBuffer( INetworkBuffer&, uint16 len,  uint8 C_Type);
@@ -504,8 +506,8 @@ public:
 	void setAddress( const NetAddress& a ) { hopAddress = a; }
 	uint32 getLIH()	const { return LIH; }
 	void setLIH( uint32 LIH ) { this->LIH = LIH; }
-	void setTLV(RSVP_HOP_TLV_SUB_Object& tlv) {this->tlv = tlv; }
-	const RSVP_HOP_TLV_SUB_Object& getTLV() const { return tlv; }
+	void setTLV(RSVP_HOP_TLV_SUB_Object& t) { tlv = &t; }
+	const RSVP_HOP_TLV_SUB_Object& getTLV() const { return *tlv; }
 	RSVP_HOP_Object& operator=(const RSVP_HOP_Object & t) {
 		hopAddress = t.hopAddress;
 		LIH = t.LIH;

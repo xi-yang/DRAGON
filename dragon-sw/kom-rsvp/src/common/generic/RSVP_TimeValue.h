@@ -177,8 +177,9 @@ extern inline ONetworkBuffer& operator<<( ONetworkBuffer& buffer, const TimeValu
 	buffer << sint32(t.tv_sec) << sint32(t.tv_usec);
 	return buffer;
 }
-extern inline INetworkBuffer& operator>>( INetworkBuffer& buffer, TimeValue& t ) {
-	buffer >> sint32(t.tv_sec) >> sint32(t.tv_usec);
+extern inline INetworkBuffer& operator>>( INetworkBuffer& buffer, const TimeValue& t ) {
+        sint32 *psec = (sint32*)&(t.tv_sec), *pusec = (sint32*)&(t.tv_usec);
+	buffer >> *psec >> *pusec;
 	return buffer;
 }
 

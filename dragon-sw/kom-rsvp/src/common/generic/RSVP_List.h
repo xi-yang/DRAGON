@@ -138,9 +138,9 @@ public:
 	public:
 		Iterator() {}
 		Iterator( ListNode* node ) : ConstIterator(node) {}
-		Iterator& operator++() { node = node->next; return *this; }
-		Iterator& operator--() { node = node->prev; return *this; }
-		Value& operator*() const { return node->data; }
+		Iterator& operator++() { this->node = this->node->next; return *this; }
+		Iterator& operator--() { this->node = this->node->prev; return *this; }
+		Value& operator*() const { return this->node->data; }
 	};
 
 	typedef void (*CallForAllVoid)( Value );

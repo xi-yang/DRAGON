@@ -65,9 +65,9 @@ protected:
 	Compare comp;
 
 	ListNode* lower_bound_node( const Key& elem ) const {
-		ListNode* iter = head();
+		ListNode* iter = this->head();
 		BoundCompare c(elem);
-		while ( iter != tail() && c( KEY_CAST iter->data ) )
+		while ( iter != this->tail() && c( KEY_CAST iter->data ) )
 			iter = iter->next;
 		return iter;
 	}
@@ -86,22 +86,22 @@ public:
 
 	Iterator find( const Key& elem ) const {
 		ListNode* iter = lower_bound_node( elem );
-		if ( iter != tail() && !comp( elem, KEY_CAST iter->data ) )
+		if ( iter != this->tail() && !comp( elem, KEY_CAST iter->data ) )
 			return iter;
 		else
-			return tail();
+			return this->tail();
 	}
 
 	Iterator find_or_insert_sorted( const Value& elem ) {
 		ListNode* pos = lower_bound_node( KEY_CAST elem );
-		if ( pos == tail() || comp( KEY_CAST elem, KEY_CAST pos->data ) )
+		if ( pos == this->tail() || comp( KEY_CAST elem, KEY_CAST pos->data ) )
 			return insert_elem( pos, elem );
 		else
 			return pos;
 	}
 
 	bool contains( const Key& key ) const {
-		return find(key) != end();
+		return find(key) != this->end();
 	}
 
 	Iterator insert_sorted( const Value& elem ) {
@@ -111,7 +111,7 @@ public:
 	Iterator insert_unique( const Value& elem ) {
 		Iterator iter;
 		ListNode* pos = lower_bound_node( KEY_CAST elem );
-		if ( pos == tail() || comp( KEY_CAST elem, KEY_CAST pos->data ) )
+		if ( pos == this->tail() || comp( KEY_CAST elem, KEY_CAST pos->data ) )
 			iter = insert_elem( pos, elem );
 		else
 			iter = pos;
@@ -120,15 +120,15 @@ public:
 
 	Iterator erase_key( const Key& elem ) {
 		ListNode* iter = lower_bound_node( elem );
-		if ( iter != tail() && !comp( elem, KEY_CAST iter->data ) )
+		if ( iter != this->tail() && !comp( elem, KEY_CAST iter->data ) )
 			return erase_node( iter );
 		else
-			return tail();
+			return this->tail();
 	}
 
 	void union_with( const SortableList& s ) {
-		ListNode* iter1 = head(); ListNode* iter2 = s.head();
-		while ( iter1 != tail() && iter2 != s.tail() ) {
+		ListNode* iter1 = this->head(); ListNode* iter2 = s.head();
+		while ( iter1 != this->tail() && iter2 != s.tail() ) {
 			if ( comp( KEY_CAST iter1->data, KEY_CAST iter2->data ) ) {
 				iter1 = iter1->next;
 			} else if ( comp( KEY_CAST iter2->data, KEY_CAST iter1->data ) ) {

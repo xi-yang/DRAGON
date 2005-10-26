@@ -37,7 +37,7 @@
 #include "RSVP_SortedList.h"
 
 class BaseTimer;
-struct Less<BaseTimer*> {
+template <> struct Less<BaseTimer*> {
 	inline bool operator()( BaseTimer*, BaseTimer* ) const;
 };
 typedef SortableList<BaseTimer*,BaseTimer*> BaseTimerList;

@@ -1,7 +1,7 @@
 /****************************************************************************
 
-  KOM RSVP Engine (release version 3.0f)
-  Copyright (C) 1999-2004 Martin Karsten
+  KOM RSVP Engine (release version 3.0)
+  Copyright (C) 1999-2002 Martin Karsten
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -33,20 +33,18 @@
 
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if !defined(CHECK)
 #ifdef CHECK_ON
 static	int	CHECK_result;
+static  int CHECK_abort() { abort(); return 0; }
 extern	int errno;
-#define CHECK(function)	(CHECK_result = function, \
-CHECK_result < 0 ? (printf("CHECK ERROR %d occured in PID %ld File %s in Line %d\
- in Call :\n%s\nerrno is %d, %s\n",CHECK_result,(long)getpid(),__FILE__,__LINE__,#function,errno,strerror(errno)),abort(), 0) : 0,\
-CHECK_result)
-#define CHECK0(function)	(CHECK_result = function, \
-CHECK_result != 0 ? (printf("CHECK ERROR %d occured in PID %ld File %s in Line %d\
- in Call :\n%s\nerrno is %d, %s\n",CHECK_result,(long)getpid(),__FILE__,__LINE__,#function,errno,strerror(errno)),abort(), 0) : 0,\
-CHECK_result)
+#define CHECK(function)	((CHECK_result = function) < 0 ? printf("CHECK ERROR %d occured in PID %ld File %s in Line %d\
+ in Call :\n%s\nerrno is %d, %s\n",CHECK_result,(long)getpid(),__FILE__,__LINE__,#function,errno,strerror(errno)),CHECK_abort() : CHECK_result)
+#define CHECK0(function)	((CHECK_result = function) != 0 ? printf("CHECK ERROR %d occured in PID %ld File %s in Line %d\
+ in Call :\n%s\nerrno is %d, %s\n",CHECK_result,(long)getpid(),__FILE__,__LINE__,#function,errno,strerror(errno)),CHECK_abort() : CHECK_result)
 #else
 #define CHECK(function)	function
 #define CHECK0(function)	function

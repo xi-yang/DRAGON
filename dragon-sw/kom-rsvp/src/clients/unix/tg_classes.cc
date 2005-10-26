@@ -142,9 +142,9 @@ void OnceTimer<T>::internalFire() {
 
 template <class T>
 void ManyTimer<T>::internalFire() {
-	cancel();
-	alarmTime = object.timeout();
-	if ( alarmTime != TimeValue(0,0) ) start();
+	this->cancel();
+	this->alarmTime = this->object.timeout();
+	if ( this->alarmTime != TimeValue(0,0) ) this->start();
 }
 
 void PacketCounter::showSummaryInformation() {
@@ -825,8 +825,8 @@ void ActionObject::stop() {
 
 template <class T>
 void TimeoutTimerRSVP<T>::internalFire() {
-	cancel();
-	object.rsvpTimeout();
+	this->cancel();
+	this->object.rsvpTimeout();
 }
 
 void Sender::startSending() {

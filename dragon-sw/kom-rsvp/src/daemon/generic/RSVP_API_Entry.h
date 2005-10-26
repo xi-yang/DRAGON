@@ -68,7 +68,7 @@ public:
 	}
 };
 
-struct Less<API_EntryKey*> {
+template <> struct Less<API_EntryKey*> {
 	bool operator()( const API_EntryKey* e1, const API_EntryKey* e2 ) const {
 		if ( e1->session != e2->session ) {
 			return e1->session < e2->session;

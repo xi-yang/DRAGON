@@ -38,40 +38,40 @@
 typedef SortableList<NetAddress,NetAddress> AddressList;
 
 class LogicalInterface;
-struct Less<LogicalInterface*> {
+template <> struct Less<LogicalInterface*> {
 	inline bool operator()( const LogicalInterface*, const LogicalInterface* ) const;
 };
 typedef SimpleList<LogicalInterface*> LogicalInterfaceList;
 
 class Hop; class HopKey;
-struct Less<HopKey*> {
+template <> struct Less<HopKey*> {
 	inline bool operator()( const HopKey*, const HopKey* ) const;
 };
 typedef SortableList<Hop*,HopKey*> HopList;
 
 class RSB; class RSB_Key;
-struct Less<RSB_Key*> {
+template <> struct Less<RSB_Key*> {
 	inline bool operator()( const RSB_Key*, const RSB_Key* ) const;
 };
 typedef SortableList<RSB*,RSB_Key*> RSB_List;
 
 class PSB; class SENDER_Object;
-struct Less<SENDER_Object*> {
+template <> struct Less<SENDER_Object*> {
 	inline bool operator()( const SENDER_Object*, const SENDER_Object* ) const;
 };
 typedef SortableList<PSB*,SENDER_Object*> PSB_List;
 
 class Session; class SESSION_Object;
-struct Less<SESSION_Object*> {
+template <> struct Less<SESSION_Object*> {
 	inline bool operator()( const SESSION_Object*, const SESSION_Object* ) const;
 };
-struct GetHash<SESSION_Object*> {
+template <> struct GetHash<SESSION_Object*> {
 	inline uint32 operator()( const SESSION_Object*, uint32 hashCount ) const;
 };
 typedef SortableHash<Session*,SESSION_Object*> SessionHash;
 
 class PHopSB; class PHopSBKey;
-struct Less<PHopSBKey*> {
+template <> struct Less<PHopSBKey*> {
 	inline bool operator()( const PHopSBKey*, const PHopSBKey* ) const;
 };
 typedef SortableList<PHopSB*,PHopSBKey*> PHOP_List;

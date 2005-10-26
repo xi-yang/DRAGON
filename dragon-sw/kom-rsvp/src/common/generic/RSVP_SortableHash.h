@@ -94,7 +94,7 @@ public:
 		return false;
 	}
 
-	bool operator!=( const SortableHash& l ) const { return !operator==(h); }
+	bool operator!=( const SortableHash& l ) const { return !operator==(this->h); }
 
 	unsigned int size() const { return elemCount; }
 	bool empty() const { return elemCount == 0; }
@@ -108,7 +108,7 @@ public:
 	}
 
 	bool contains( const Key& key ) const {
-		return hash[getHashValue(elem,hashCount)].find(key) != hash[getHashValue(elem,hashCount)].end();
+		return hash[getHashValue(this->elem,hashCount)].find(key) != hash[getHashValue(this->elem,hashCount)].end();
 	}
 
 	Iterator insert( ConstIterator pos, const Value& elem ) {

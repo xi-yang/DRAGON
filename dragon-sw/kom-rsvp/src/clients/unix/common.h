@@ -61,14 +61,7 @@
 #define UDP_HEADER_SIZE	(sizeof(struct udphdr))              //  8
 #define TCP_HEADER_SIZE (sizeof(struct tcphdr))              // 20 + options
 
-#ifndef CHECK
-static	int	CHECK_result;
-//extern	int errno;
-#define CHECK(function)	(CHECK_result = function, \
-CHECK_result < 0 ? (printf("CHECK ERROR %d occured in PID %ld File %s in Line %d\
- in Call :\n%s\nerrno is %d, %s\n",CHECK_result,(long)getpid(),__FILE__,__LINE__,#function,errno,strerror(errno)),abort(), 0) : 0,\
-CHECK_result)
-#endif
+#include "SystemCallCheck.h"
 
 static inline unsigned int getInetAddr( const char* name ) {
 	unsigned int addr = inet_addr( name );

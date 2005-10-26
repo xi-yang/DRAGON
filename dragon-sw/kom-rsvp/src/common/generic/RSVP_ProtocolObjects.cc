@@ -136,28 +136,30 @@ ostream& operator<< ( ostream& os, const RSVP_HOP_TLV_SUB_Object& o ) {
 
 void RSVP_HOP_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len, uint8 C_Type)
 {
+        RSVP_HOP_TLV_SUB_Object t;
+        t = this->getTLV();
 	buffer >> hopAddress >> LIH;
 	switch (C_Type){
 		case 1:  break;
-		case 3:	buffer >> tlv; break;
+		case 3:	buffer >> t; this->setTLV(t); break;
 		default: buffer.skip(len); break;
 	}	
 }
 
 ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const RSVP_HOP_Object& o ) {
-	if (o.tlv.getType()!=RSVP_HOP_TLV_SUB_Object::Illegal)
+	if (o.tlv->getType()!=RSVP_HOP_TLV_SUB_Object::Illegal)
 		buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::RSVP_HOP, 3 );
 	else
 		buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::RSVP_HOP, 1 );
 	buffer << o.hopAddress << o.LIH;
-	if (o.tlv.getType()!=RSVP_HOP_TLV_SUB_Object::Illegal)
-	 	buffer << o.tlv;
+	if (o.tlv->getType()!=RSVP_HOP_TLV_SUB_Object::Illegal)
+	 	buffer << o.getTLV();
  return buffer;
 }
 
 ostream& operator<< ( ostream& os, const RSVP_HOP_Object& o ) {
 	os << "Hop address: " << o.getAddress() << "LIH: " << (uint32)o.getLIH();
-	if (o.tlv.getType()!=RSVP_HOP_TLV_SUB_Object::Illegal)
+	if (o.tlv->getType()!=RSVP_HOP_TLV_SUB_Object::Illegal)
 		os << o.getTLV();
 	return os;
 }

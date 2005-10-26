@@ -38,7 +38,8 @@
 template <class T>
 class InterfaceArray {
 public:
-	friend class ConstIterator {
+        friend class ConstIterator;
+        class ConstIterator {
 	protected:
 		friend class InterfaceArray;
 		const InterfaceArray* set;

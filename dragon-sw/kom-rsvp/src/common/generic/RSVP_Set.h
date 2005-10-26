@@ -84,8 +84,8 @@ public:
 	}
 
 	void intersection_with( const Set& s ) {
-		ListNode* iter1 = head(); ListNode* iter2 = s.head();
-		while ( iter1 != tail() && iter2 != s.tail() ) {
+		ListNode* iter1 = this->head(); ListNode* iter2 = s.head();
+		while ( iter1 != this->tail() && iter2 != s.tail() ) {
 			if ( comp( KEY_CAST iter1->data, KEY_CAST iter2->data ) ) {
 				iter1 = erase_node( iter1 );
 			} else if ( comp( KEY_CAST iter2->data, KEY_CAST iter1->data ) ) {
@@ -94,7 +94,7 @@ public:
 				iter1 = iter1->next; iter2 = iter2->next;
 			}
 		}
-		erase_range ( iter1, tail() );
+		erase_range ( iter1, this->tail() );
 	}
 
 	Set create_intersection_with( const Set& s ) const {
@@ -105,8 +105,8 @@ public:
 
 	Set create_difference_from( const Set& s ) const {
 		Set result;
-		ListNode* iter1 = head(); ListNode* iter2 = s.head();
-		while ( iter1 != tail() && iter2 != s.tail() ) {
+		ListNode* iter1 = this->head(); ListNode* iter2 = s.head();
+		while ( iter1 != this->tail() && iter2 != s.tail() ) {
 			if ( comp( KEY_CAST iter1->data, KEY_CAST iter2->data ) ) {
 				result.insert_elem( result.tail(), iter1->data );
 				iter1 = iter1->next;
@@ -116,13 +116,13 @@ public:
 				iter1 = iter1->next; iter2 = iter2->next;
 			}
 		}
-		result.insert_range( result.tail(), iter1, tail() );
+		result.insert_range( result.tail(), iter1, this->tail() );
 		return result;
 	}
 
 	void replaceElements( const Set& s, Set& removed, Set& added ) {
-		ListNode* iter1 = head(); ListNode* iter2 = s.head();
-		while ( iter1 != tail() && iter2 != s.tail() ) {
+		ListNode* iter1 = this->head(); ListNode* iter2 = s.head();
+		while ( iter1 != this->tail() && iter2 != s.tail() ) {
 			if ( comp( KEY_CAST iter1->data, KEY_CAST iter2->data ) ) {
 				removed.insert_elem( removed.tail(), iter1->data );
 				iter1 = erase_node( iter1 );
@@ -134,9 +134,9 @@ public:
 				iter1 = iter1->next; iter2 = iter2->next;
 			}
 		}
-		removed.insert_range( removed.tail(), iter1, tail() );
-		erase_range( iter1, tail() );
-		insert_range( tail(), iter2, s.tail() );
+		removed.insert_range( removed.tail(), iter1, this->tail() );
+		erase_range( iter1, this->tail() );
+		insert_range( this->tail(), iter2, s.tail() );
 		added.insert_range( added.tail(), iter2, s.tail() );
 	}
 

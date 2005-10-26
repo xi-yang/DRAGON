@@ -29,13 +29,13 @@ public:
 };
 IMPLEMENT_ORDER1(MPLS_Classifier,destAddress)
 
-struct Less<MPLS_Classifier*> {
+template <> struct Less<MPLS_Classifier*> {
 	bool operator()( const MPLS_Classifier* f1, const MPLS_Classifier* f2 ) const {
 		return *f1 < *f2;
 	}
 };
 
-struct GetHash<MPLS_Classifier*> {
+template <> struct GetHash<MPLS_Classifier*> {
 	inline uint32 operator()( const MPLS_Classifier* f, uint32 hashCount ) const {
 		return f->getHash( hashCount );
 	}

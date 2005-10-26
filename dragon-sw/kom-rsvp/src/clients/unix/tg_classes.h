@@ -74,18 +74,9 @@ protected:
 public:
 	OnceTimer( T& o ) : BaseTimer(TimeValue(0,0)), object(o) {}
 	OnceTimer( T& o, const TimeValue& t ) : BaseTimer(t), object(o) {}
-	void startRel( const TimeValue& t ) {
-		alarmTime = t + traffgen->getCurrentTime();
-		start();
-	}
-	void startAbs( const TimeValue& t ) {
-		alarmTime = t;
-		start();
-	}
-	void startNow() {
-		alarmTime = traffgen->getCurrentTime();
-		start();
-	}
+	inline void startRel( const TimeValue& t );
+	inline void startAbs( const TimeValue& t );
+	inline void startNow();
 };
 
 template <class T>
@@ -616,6 +607,22 @@ public:
 	inline void actionFinished();
 	static inline const TimeValue& getCurrentTime();
 };
+
+template <class T>
+  inline void OnceTimer<T>::startRel( const TimeValue& t ) {
+  alarmTime = t + traffgen->getCurrentTime();
+  start();
+}
+template <class T>
+  inline void OnceTimer<T>::startAbs( const TimeValue& t ) {
+  alarmTime = t;
+  start();
+}
+template <class T>
+  inline void OnceTimer<T>::startNow() {
+  alarmTime = traffgen->getCurrentTime();
+  start();
+}
 
 } // namespace
 
