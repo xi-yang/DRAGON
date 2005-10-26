@@ -176,8 +176,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	NetAddress phopLoopBackAddr;
 	const LogicalInterface* outLif = NULL;
 	uint32 ifId;
-	RSVP_HOP_TLV_SUB_Object* tlv;
-	RSVP_HOP_TLV_SUB_Object t;
+	RSVP_HOP_TLV_SUB_Object tlv;
 	uint32 inUnumIfID = 0;
 	uint32 outUnumIfID = 0;
 	NetAddress inRtId = NetAddress(0);
@@ -194,17 +193,16 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		&& explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
 		{
 			inUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
-			tlv = new RSVP_HOP_TLV_SUB_Object(inRtId);
+			tlv = RSVP_HOP_TLV_SUB_Object(inRtId);
 		}
 		else {
 			if (!inUnumIfID) //numbered interface
-				tlv = new RSVP_HOP_TLV_SUB_Object(inRtId);
+				tlv = RSVP_HOP_TLV_SUB_Object(inRtId);
 			else { //un-numbered interface
-				t = msg.getRSVP_HOP_Object().getTLV();
-				tlv = &t;
+				tlv = msg.getRSVP_HOP_Object().getTLV();
                         }
 		}
-		dataInRsvpHop = RSVP_HOP_Object(hop.getLogicalInterface().getAddress(), msg.getRSVP_HOP_Object().getLIH(), *tlv);
+		dataInRsvpHop = RSVP_HOP_Object(hop.getLogicalInterface().getAddress(), msg.getRSVP_HOP_Object().getLIH(), tlv);
 	}
        else  //ingress localID processing @@@@ hacked
        {
@@ -286,13 +284,13 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
 		phopLoopBackAddr = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
 		if (!outUnumIfID || ifId == 0) //numbered interface
-			tlv = new RSVP_HOP_TLV_SUB_Object(outRtId);
+			tlv = RSVP_HOP_TLV_SUB_Object(outRtId);
 		else //un-numbered interface
-			tlv = new RSVP_HOP_TLV_SUB_Object(outRtId, outUnumIfID);
+			tlv  = RSVP_HOP_TLV_SUB_Object(outRtId, outUnumIfID);
 		if (fromLocalAPI)
-			dataOutRsvpHop = RSVP_HOP_Object(phopLoopBackAddr, outLif->getLIH(), *tlv );		
+			dataOutRsvpHop = RSVP_HOP_Object(phopLoopBackAddr, outLif->getLIH(), tlv );		
 		else
-			dataOutRsvpHop = RSVP_HOP_Object(outLif->getAddress(), outLif->getLIH(), *tlv );		
+			dataOutRsvpHop = RSVP_HOP_Object(outLif->getAddress(), outLif->getLIH(), tlv );		
 
 		if (dataOutRsvpHop.getAddress() ==NetAddress(0) || ((!fromLocalAPI) && dataOutRsvpHop.getAddress()==NetAddress(0)))
 			return false;		
