@@ -239,6 +239,7 @@ int narb_rceapi_msghandle (struct rce_api_msg*msg)
             zlog_info("LSA update acklowdged with id %d", ack_id);
 	     break;
         default:
+             break;
         }
         break;
      case MSG_LSP:
