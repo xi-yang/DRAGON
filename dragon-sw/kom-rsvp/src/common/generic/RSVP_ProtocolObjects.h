@@ -486,11 +486,13 @@ public:
 	RSVP_HOP_Object() : 
 		hopAddress(0), LIH(0)
 	{	
-		tlv = RSVP_HOP_TLV_SUB_Object();
+		RSVP_HOP_TLV_SUB_Object t;
+		tlv = t;
 	}
 	RSVP_HOP_Object( const NetAddress& hopAddress, uint32 LIH )
 	        : hopAddress(hopAddress), LIH(LIH) {
-		tlv = RSVP_HOP_TLV_SUB_Object();
+		RSVP_HOP_TLV_SUB_Object t;
+		tlv = t;
 	}
 	RSVP_HOP_Object( const NetAddress& hopAddress, uint32 LIH, RSVP_HOP_TLV_SUB_Object& t )
                 : hopAddress(hopAddress), LIH(LIH) { 

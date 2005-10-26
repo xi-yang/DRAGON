@@ -193,11 +193,14 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		&& explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
 		{
 			inUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
-			tlv = RSVP_HOP_TLV_SUB_Object(inRtId);
+                        RSVP_HOP_TLV_SUB_Object t(inRtId);
+			tlv = t;
 		}
 		else {
-			if (!inUnumIfID) //numbered interface
-				tlv = RSVP_HOP_TLV_SUB_Object(inRtId);
+			if (!inUnumIfID) { //numbered interface
+				RSVP_HOP_TLV_SUB_Object t(inRtId);
+				tlv = t;
+			}
 			else { //un-numbered interface
 				tlv = msg.getRSVP_HOP_Object().getTLV();
                         }
@@ -283,10 +286,14 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			return false;
 
 		phopLoopBackAddr = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
-		if (!outUnumIfID || ifId == 0) //numbered interface
-			tlv = RSVP_HOP_TLV_SUB_Object(outRtId);
-		else //un-numbered interface
-			tlv  = RSVP_HOP_TLV_SUB_Object(outRtId, outUnumIfID);
+		if (!outUnumIfID || ifId == 0) { //numbered interface
+			RSVP_HOP_TLV_SUB_Object t(outRtId);
+			tlv = t;
+		}
+		else { //un-numbered interface
+			RSVP_HOP_TLV_SUB_Object t(outRtId, outUnumIfID);
+			tlv  = t;
+		}
 		if (fromLocalAPI)
 			dataOutRsvpHop = RSVP_HOP_Object(phopLoopBackAddr, outLif->getLIH(), tlv );		
 		else
