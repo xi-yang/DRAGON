@@ -13,7 +13,9 @@ To be incorporated into KOM-RSVP-TE package
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/session_api.h>
 
-#define SWITCH_CTRL_PORT	17
+//Now ./configure takes care of the definition of switch ctrl port
+//#define SWITCH_CTRL_PORT	17
+
 #define MIN_VLAN			2
 #define MAX_VLAN	   		4095
 #define MAX_VENDOR			4

@@ -3205,6 +3205,7 @@ _ACEOF
 fi
 
 fi
+
 # AC_PROG_MAKE_SET
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
@@ -3540,7 +3541,6 @@ _ACEOF
 if test $NUMCPUS && test $NUMCPUS -gt 1; then
 	MAKEFLAGS="-j $NUMCPUS"
 fi
-
 
 
 echo "$as_me:$LINENO: checking whether byte ordering is bigendian" >&5
@@ -7320,6 +7320,13 @@ echo "${ECHO_T}disabled" >&6
 fi
 
 
+# Check whether --with-switch-ctrl-port was given.
+if test "${with_switch_ctrl_port+set}" = set; then
+  withval="$with_switch_ctrl_port"
+  with_switch_ctrl_port=$withval
+else
+  with_switch_ctrl_port=no
+fi;
 
 echo "$as_me:$LINENO: checking for crypto" >&5
 echo $ECHO_N "checking for crypto... $ECHO_C" >&6
@@ -8640,6 +8647,35 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
 
 _ACEOF
 
+if test "$with_switch_ctrl_port" = "no"; then
+echo $ECHO_N "
+
+*** Switch Control Port:
+
+   A switch control port is used by network administrators to login
+and execute management commands on the switch. Generally the switch
+control port should be excluded from data plane operations. In other
+words, we should avoid moving around the switch control port and
+risking losing the management connectivity to the switch.
+
+   Providing the --with-switch-ctrl-port=\"x\" parameter to
+./configure will avoid this prompt.
+
+Switch control port to use [1]: $ECHO_C"
+read tmpinput
+if test "$tmpinput" = ""; then
+    tmpinput="255"
+fi
+eval with_switch_ctrl_port=\$tmpinput
+
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define SWITCH_CTRL_PORT $with_switch_ctrl_port
+_ACEOF
+
+
+
 # Transform confdefs.h into two sed scripts, `conftest.defines' and
 # `conftest.undefs', that substitutes the proper values into
 # config.h.in to produce config.h.  The first handles `#define'
@@ -8846,3 +8882,4 @@ else
 	echo export RSVP_BUILD_DIR=$RSVP_BUILD_DIR
 fi
 echo
+

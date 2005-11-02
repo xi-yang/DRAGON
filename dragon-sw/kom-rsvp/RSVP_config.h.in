@@ -166,4 +166,8 @@
    `char[]'. */
 #undef YYTEXT_POINTER
 
+/* Define the deafult switch control port to avoid loss of management 
+   connectivity to the switch. */
+#define SWITCH_CTRL_PORT 255
+
 #endif /* _RSVP_config_h_ */
