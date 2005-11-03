@@ -699,6 +699,8 @@ bool SNMP_Session::setSwitchVendorInfo()
 			vendor = RFC2674;
 		else if (venderSystemDescription.leftequal("Summit1i") || venderSystemDescription.leftequal("Summit5i")) 
 			vendor = RFC2674;
+		else if (venderSystemDescription.leftequal("Ether-Raptor"))
+			vendor = RFC2674;
 		else if (venderSystemDescription.leftequal("Spectra")) 
 			vendor = LambdaOptical;
 		else if (venderSystemDescription.leftequal("Force10 Networks Real Time Operating System Software")) 
