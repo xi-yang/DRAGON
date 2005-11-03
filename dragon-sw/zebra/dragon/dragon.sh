@@ -94,6 +94,9 @@ case $1 in
 	fi
 	echo "dragon-sw: started rsvp daemon."
     
+        echo "sleeping for 2 seconds before starting dragon daemon..."
+        sleep 2
+
         if test "$dragon_pid" != ""; then
 	    kill $dragon_pid
 	fi
