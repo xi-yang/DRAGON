@@ -560,10 +560,10 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag)
 	struct ospf *ospf;
 	int updated = 0;
 
-	if (port == 0 || bw == 0)
+	if (bw == 0)
 		return;
 
-	bw = (bw *100000) / 8;
+	bw = (bw *1000000) / 8;
 
 	if (om->ospf)
 	LIST_LOOP(om->ospf, ospf, node1)
