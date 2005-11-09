@@ -166,7 +166,7 @@ struct string_value_conversion conv_bandwidth =
 	{ "3gige",	LSP_BW_3Gig_E,			6}, 
 	{ "4gige",	LSP_BW_4Gig_E,			6}, 
 	{ "5gige",	LSP_BW_5Gig_E,			6}, 
-	{ "62gige",	LSP_BW_6Gig_E,			6}, 
+	{ "6gige",	LSP_BW_6Gig_E,			6}, 
 	{ "7gige",	LSP_BW_7Gig_E,			6}, 
 	{ "8gige",	LSP_BW_8Gig_E,			6}, 
 	{ "9gige",	LSP_BW_9Gig_E,			6}, 
