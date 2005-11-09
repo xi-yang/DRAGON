@@ -136,7 +136,7 @@ struct string_value_conversion conv_gpid =
 
 struct string_value_conversion conv_bandwidth = 
 {
-	32,
+	40,
 	{{ "ds0", 	LSP_BW_DS0, 			3}, 
 	{ "ds1", 		LSP_BW_DS1, 			3}, 
 	{ "e1", 		LSP_BW_E1, 				2}, 
@@ -162,13 +162,21 @@ struct string_value_conversion conv_bandwidth =
 	{ "fc0531M", 	LSP_BW_FC0_531M,		5}, 
 	{ "oc12",		LSP_BW_OC12,			4}, 
 	{ "gige",		LSP_BW_Gig_E,			5}, 
+	{ "2gige",	LSP_BW_2Gig_E,			6}, 
+	{ "3gige",	LSP_BW_3Gig_E,			6}, 
+	{ "4gige",	LSP_BW_4Gig_E,			6}, 
+	{ "5gige",	LSP_BW_5Gig_E,			6}, 
+	{ "62gige",	LSP_BW_6Gig_E,			6}, 
+	{ "7gige",	LSP_BW_7Gig_E,			6}, 
+	{ "8gige",	LSP_BW_8Gig_E,			6}, 
+	{ "9gige",	LSP_BW_9Gig_E,			6}, 
+	{ "10g",		LSP_BW_10Gig_E,			3}, 
 	{ "fc01062M",	LSP_BW_FC0_1062M,		6}, 
 	{ "oc48",		LSP_BW_OC48,			4}, 
 	{ "oc192",	LSP_BW_OC192,			4}, 
-	{ "10g",		LSP_BW_10Gig_E,			1}, 
 	{ "oc768",	LSP_BW_OC768,			4}, 
 	{ "gige_f", 	LSP_BW_Gig_E_OverFiber,	5},
-	{ "hdtv", 		LSP_BW_HDTV,			1}} 
+	{ "hdtv", 		LSP_BW_HDTV,			4}} 
 };
 
 struct string_value_conversion conv_rsvp_event = 
@@ -954,7 +962,7 @@ ALIAS (dragon_set_lsp_vtag_default,
 
 DEFUN (dragon_set_lsp_sw,
        dragon_set_lsp_sw_cmd,
-       "set bandwidth (gige|gige_f|hdtv|oc48|10g|eth100M|eth200M|eth300M|eth400M|eth500M|eth600M|eth700M|eth800M|eth900M) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
+       "set bandwidth (gige|gige_f|hdtv|oc48|10g|eth100M|eth200M|eth300M|eth400M|eth500M|eth600M|eth700M|eth800M|eth900M|2gige|3gige|4gige|5gige|6gige|7gige|8gige|9gige) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
        "Set LSP parameters\n"
        "Bandwidth\n"
        "1000.00 Mbps\n"
