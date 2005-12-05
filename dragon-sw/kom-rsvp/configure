@@ -7328,6 +7328,13 @@ else
   with_switch_ctrl_port=no
 fi;
 
+# Check whether --enable-force10-software-v6 was given.
+if test "${enable_force10_software_v6}" = set; then
+  has_force10_software_v6=yes
+else
+  has_force10_software_v6=no
+fi;
+
 echo "$as_me:$LINENO: checking for crypto" >&5
 echo $ECHO_N "checking for crypto... $ECHO_C" >&6
 
@@ -8674,7 +8681,11 @@ cat >>confdefs.h <<_ACEOF
 #define SWITCH_CTRL_PORT $with_switch_ctrl_port
 _ACEOF
 
-
+if test "$has_force10_software_v6" = "yes"; then
+    cat >>confdefs.h <<_ACEOF
+    #define FORCE10_SOFTWARE_V6
+    _ACEOF
+#fi
 
 # Transform confdefs.h into two sed scripts, `conftest.defines' and
 # `conftest.undefs', that substitutes the proper values into

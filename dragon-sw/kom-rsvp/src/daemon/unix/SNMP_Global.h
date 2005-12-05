@@ -20,7 +20,12 @@ To be incorporated into KOM-RSVP-TE package
 #define MAX_VLAN	   		4095
 #define MAX_VENDOR			4
 
-#define MAX_VLAN_PORT_BYTES 24  //24 == > 96 ?? for FTOS-ED-6-2-1-401
+#ifdef FORCE10_SOFTWARE_V6
+    #define MAX_VLAN_PORT_BYTES 96  // FTOS-ED-6.2.1
+#else
+    #define MAX_VLAN_PORT_BYTES 24  // FTOS-ED-5.3.1
+#endif
+
 struct vlanPortMap{
     uint32 vid;
     union {
@@ -38,8 +43,11 @@ typedef SimpleList<vlanRefID> vlanRefIDList;
 
 inline uint32 Port2BitForce10(uint32 port)
 {
-    return ((port>>4)&0xf)*24 + ((port)&0xf) + 1; //FTOS-ED-5.3.1.2
-    //return ((port>>4)&0xf)*96 + ((port)&0xf); //FTOS-ED-6.2.1.401    
+#ifdef FORCE10_SOFTWARE_V6
+    return ((port>>4)&0xf)*96 + ((port)&0xf); //FTOS-ED-6.2.1
+#else
+    return ((port>>4)&0xf)*24 + ((port)&0xf) + 1; //FTOS-ED-5.3.1
+#endif
 }
 
 inline void SetPortBitForce10(uint8* bitstring, uint32 bit)
