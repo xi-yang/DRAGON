@@ -705,6 +705,8 @@ bool SNMP_Session::setSwitchVendorInfo()
 			vendor = LambdaOptical;
 		else if (venderSystemDescription.leftequal("Force10 Networks Real Time Operating System Software")) 
 			vendor = Force10E600;
+		else if (venderSystemDescription.leftequal("Cyclone Operating System")) 
+			vendor = Force10E600;
 		else{
 			vendor = Illegal;
 		 	return false;
@@ -953,7 +955,7 @@ bool SNMP_Session::addVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagge
     // add port to VLAN
     port_part=(portID)&0xf;     
     slot_part=(portID>>4)&0xf;
-    if (slot_part < 2)
+    if (slot_part < 2 || slot_part == 3)
         sprintf(port, "te%d/%d",slot_part,port_part);
     else
         sprintf(port, "gi%d/%d",slot_part,port_part);
@@ -998,7 +1000,7 @@ bool SNMP_Session::deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTa
     // remove in port from VLAN
     port_part=(portID)&0xf;
     slot_part=(portID>>4)&0xf;
-    if (slot_part < 2)
+    if (slot_part < 2 || slot_part == 3)
         sprintf(port, "te%d/%d",slot_part,port_part);
     else
         sprintf(port, "gi%d/%d",slot_part,port_part);

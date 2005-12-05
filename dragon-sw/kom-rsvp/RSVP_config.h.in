@@ -171,6 +171,6 @@
 #define SWITCH_CTRL_PORT 255
 
 /* Define a flag to indicator that the system is using Force10 App Software Version 6.2.1. */
-#define FORCE10_SOFTWARE_V6
+#undef FORCE10_SOFTWARE_V6
 
 #endif /* _RSVP_config_h_ */

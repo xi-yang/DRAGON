@@ -7328,11 +7328,11 @@ else
   with_switch_ctrl_port=no
 fi;
 
-# Check whether --enable-force10-software-v6 was given.
-if test "${enable_force10_software_v6}" = set; then
-  has_force10_software_v6=yes
-else
-  has_force10_software_v6=no
+# Check whether --with-force10-software-v6 was given.
+if test "${with_force10_software_v6+set}" = set; then
+cat >>confdefs.h <<_ACEOF
+#define FORCE10_SOFTWARE_V6
+_ACEOF
 fi;
 
 echo "$as_me:$LINENO: checking for crypto" >&5
@@ -8669,23 +8669,19 @@ risking losing the management connectivity to the switch.
 ./configure will avoid this prompt.
 
 Switch control port to use [1]: $ECHO_C"
+
 read tmpinput
 if test "$tmpinput" = ""; then
     tmpinput="255"
 fi
 eval with_switch_ctrl_port=\$tmpinput
 
-fi
+fi;
 
 cat >>confdefs.h <<_ACEOF
 #define SWITCH_CTRL_PORT $with_switch_ctrl_port
 _ACEOF
 
-if test "$has_force10_software_v6" = "yes"; then
-    cat >>confdefs.h <<_ACEOF
-    #define FORCE10_SOFTWARE_V6
-    _ACEOF
-#fi
 
 # Transform confdefs.h into two sed scripts, `conftest.defines' and
 # `conftest.undefs', that substitutes the proper values into
