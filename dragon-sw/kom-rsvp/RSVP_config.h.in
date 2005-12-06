@@ -173,4 +173,8 @@
 /* Define a flag to indicator that the system is using Force10 App Software Version 6.2.1. */
 #undef FORCE10_SOFTWARE_V6
 
+/* Define username and password for CLI access to the switch */
+#define TELNET_USERNAME "unknown"
+#define TELNET_PASSWORD "unknown"
+
 #endif /* _RSVP_config_h_ */

@@ -24,8 +24,6 @@ extern int    verbose;
 #define TELNET_CLOSE    "Connection closed"
 #define TELNET_PORT     "23"
 #define TELNET_PROMPT   "telnet> "
-#define TELNET_USERNAME "unknown"
-#define TELNET_PASSWORD "unknown"
 #define LINELEN  256
 #define FORCE10_PROMPT ((char*)-1)
 
