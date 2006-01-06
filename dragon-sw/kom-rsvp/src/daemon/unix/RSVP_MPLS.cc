@@ -326,6 +326,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                     }
                                                  else
                                                         (*snmpIter)->movePortToVLANAsUntagged(port, vlan);
+
+							//@@@@
+							//perform rate police on input port and rate limitation on output port
+							//burst size?? traffic shaping ??
+							//@@@@
+
 							//deduct bandwidth from the link associated with the port
 							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true); //true == deduct
                                                 portList.pop_front();

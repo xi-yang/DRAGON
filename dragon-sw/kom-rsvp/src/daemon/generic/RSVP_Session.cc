@@ -329,13 +329,17 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				LOG(2)( Log::MPLS, "VLSR: SNMP Session not found. Now creating SNMP session for ", vlsr.switchID);
 				ssNew = new SNMP_Session("VLSR", vlsr.switchID);
 				if (!ssNew->connectSwitch()){
-					LOG(3)( Log::MPLS, "VLSR: Cannot connect to Ethernet switch : ", vlsr.switchID, "via SNMP.");
+					LOG(3)( Log::MPLS, "VLSR: Cannot connect to Ethernet switch : ", vlsr.switchID, " via SNMP.");
 					delete(ssNew);
 					return false;
 				}
 				else{
 					RSVP_Global::snmp->addSNMPSession(ssNew);
 				}
+			}
+			else if (!(*snmpIter)->readVLANFromSwitch()) { //Read/Synchronize to Ethernet switch
+				LOG(3)( Log::MPLS, "VLSR: Cannot read from Ethernet switch : ", vlsr.switchID, " via SNMP.");
+				return false;
 			}
 			vLSRoute.push_back(vlsr);                    
 		}
