@@ -147,9 +147,13 @@ public:
 	bool deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagged = false);
 	bool addVLANPortForce10(uint32 portID, uint32 vlanID, bool isTagged = false);
 	//force10 hack for generic bitsting vlan-port mask
-	void  CreateVlanRefToIDTableForce10 (const char* oid_str, vlanRefIDList& vlanRefList);
+	void  createVlanRefToIDTableForce10 (const char* oid_str, vlanRefIDList& vlanRefList);
 	uint32  VlanIDToRefForce10 (uint32 vlan_id);
 	uint32  VlanRefToIDForce10 (uint32 ref_id);
+
+	//QoS functions
+	bool performBandwidthPolicing(uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+	bool performBandwidthLimitation(uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 };
 
 struct LocalId {

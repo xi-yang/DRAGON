@@ -289,22 +289,22 @@ int force10_hack(char* portName, char* vlanNum, char* action)
   } else if (!pipe_alive(fdin, fdout)) {
       /* we need pipes to communicate between the programs */
       if (pipe(fdpipe[0]) < 0) {
-      err_msg("%s: pipe failed: errno=%d\n", progname, errno);
-      return -1;
+        err_msg("%s: pipe failed: errno=%d\n", progname, errno);
+        return -1;
       }
       if (pipe(fdpipe[1]) < 0) {
-      err_msg("%s: pipe failed: errno=%d\n", progname, errno);
-      close(fdpipe[0][0]);
-      close(fdpipe[0][1]);
-      return -1;
+        err_msg("%s: pipe failed: errno=%d\n", progname, errno);
+        close(fdpipe[0][0]);
+        close(fdpipe[0][1]);
+        return -1;
       }
-      
+
       switch(pid = fork()) {
       case 0: /* child */
         /* child:stdin */
         close(0);
         if (dup(fdpipe[0][0]) < 0) {
-      err_exit("%s: dup failed: errno=%d\n", progname, errno);
+          err_exit("%s: dup failed: errno=%d\n", progname, errno);
         }
       
         /* close first pipe */
@@ -314,19 +314,19 @@ int force10_hack(char* portName, char* vlanNum, char* action)
         /* child:stdout */
         close(1);
         if (dup(fdpipe[1][1]) < 0) {
-      err_exit("%s: dup failed: errno=%d\n", progname, errno);
+          err_exit("%s: dup failed: errno=%d\n", progname, errno);
         }
       
         /* child:stderr */
         if ((fderr = dup(2)) < 0) {
-      err_exit("%s: dup failed: errno=%d\n", progname, errno);
+          err_exit("%s: dup failed: errno=%d\n", progname, errno);
         }
       
         close(2);
         if (dup(fdpipe[1][1]) < 0) {
-      err = errno;
-      dup(fderr);
-      err_exit("%s: dup failed: errno=%d\n", progname, err);
+          err = errno;
+          dup(fderr);
+          err_exit("%s: dup failed: errno=%d\n", progname, err);
         }
       
         /* close second pipe */
@@ -492,6 +492,48 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       //if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
       //level--;
     }
+    if (strstr(action, "rate police") != NULL) {
+        float committed_rate;
+        if(sscanf("%f", action+12, &committed_rate) < 1 || committed_rate == 0.0)
+            break;
+
+      /* enter interface/port configuration mode */
+      if ((n = do_write(fdout, "interface ", 5)) < 0) break;
+      if ((n = do_write(fdout, portName, 5)) < 0) break;
+      if ((n = do_write(fdout, "\n", 5)) < 0) break;
+      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      level++;
+
+      if ((n = do_write(fdout, action, 5)) < 0) break;
+      if ((n = do_write(fdout, "\n", 5)) < 0) break;
+      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+
+      /* exit interface configuration mode */
+      if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
+      if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      level--;
+    }
+    if (strstr(action, "rate limit") != NULL) {
+        float committed_rate;
+        if(sscanf("%f", action+11, &committed_rate) < 1 || committed_rate == 0.0)
+            break;
+
+      /* enter interface/port configuration mode */
+      if ((n = do_write(fdout, "interface ", 5)) < 0) break;
+      if ((n = do_write(fdout, portName, 5)) < 0) break;
+      if ((n = do_write(fdout, "\n", 5)) < 0) break;
+      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      level++;
+
+      if ((n = do_write(fdout, action, 5)) < 0) break;
+      if ((n = do_write(fdout, "\n", 5)) < 0) break;
+      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;      
+
+      /* exit interface configuration mode */
+      if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
+      if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
+      level--;
+    }
 
     /* exit configuration mode */
     if ((n = do_write(fdout, "exit\n", 5)) < 0) break;
@@ -520,7 +562,12 @@ int force10_hack(char* portName, char* vlanNum, char* action)
     if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 5)) < 0)
       goto _telnet_dead;
   }
-  
+
+  if ((n = do_write(fdout, "end\n", 5)) < 0)  
+      goto _telnet_dead;
+  if ((n = do_read(fdin, FORCE10_PROMPT, NULL, 1, 5)) < 0)
+      goto _telnet_dead;
+
   return 0;  
 
  _telnet_dead:

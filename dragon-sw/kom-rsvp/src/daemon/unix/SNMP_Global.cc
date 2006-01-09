@@ -469,7 +469,7 @@ bool SNMP_Session::readVLANFromSwitch()
 
     if (getVendor() == SNMP_Session::Force10E600)
     {
-        CreateVlanRefToIDTableForce10(".1.3.6.1.2.1.2.2.1.2", vlanRefIdConvList);
+        createVlanRefToIDTableForce10(".1.3.6.1.2.1.2.2.1.2", vlanRefIdConvList);
         if (vlanRefIdConvList.size() == 0)
             return false;
     }
@@ -1010,7 +1010,7 @@ bool SNMP_Session::deleteVLANPortForce10(uint32 portID, uint32 vlanID, bool isTa
 }
 
 //@@@@ Force10 hack
-void SNMP_Session::CreateVlanRefToIDTableForce10 (const char* oid_str, vlanRefIDList& vlanRefList)
+void SNMP_Session::createVlanRefToIDTableForce10 (const char* oid_str, vlanRefIDList& vlanRefList)
 {
         struct snmp_pdu *pdu;
         struct snmp_pdu *response;
@@ -1095,6 +1095,87 @@ uint32 SNMP_Session::VlanRefToIDForce10 (uint32 ref_id)
  
     return 0;
 }
+
+/////////// QoS Functions //////////
+
+//committed_rate and peak_rate are measued in Mbps; burst_size and peak_burst_size are in KB
+bool SNMP_Session::performBandwidthPolicing(uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    int n;
+    uint32 port_part,slot_part;
+    char port[100], vlan[100], action[100];
+    char append[20];
+    int committed_rate_int = (int)committed_rate;
+
+    if (getVendor() == SNMP_Session::Force10E600)
+    {
+        // add port to VLAN
+        port_part=(input_port)&0xf;     
+        slot_part=(input_port>>4)&0xf;
+        if (slot_part < 2)
+            sprintf(port, "te%d/%d",slot_part, port_part);
+        else
+            sprintf(port, "gi%d/%d",slot_part, port_part);
+        sprintf(vlan, "%d", vlan_id);
+        sprintf(action, "rate limit %d", committed_rate_int);
+        if (burst_size > 0) {
+            sprintf(append, " %d", burst_size);
+            strcat(action, append);
+        }
+        if (peak_rate > 0.0001) {
+            sprintf(append, " peak %d", peak_rate);
+            strcat(action, append);
+            if (peak_burst_size > 0) {
+                sprintf(append, " %d", peak_burst_size);
+                strcat(action, append);
+            }
+        }
+        if (force10_hack(port, vlan, action) == -1)
+            return false;
+    }
+
+    return true;
+}
+
+bool SNMP_Session::performBandwidthLimitation(uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size,  float peak_rate, int peak_burst_size)
+{
+    int n;
+    uint32 port_part,slot_part;
+    char port[100], vlan[100], action[100];
+    char append[20];
+    int committed_rate_int = (int)committed_rate;
+
+    if (getVendor() == SNMP_Session::Force10E600)
+    {
+        // add port to VLAN
+        port_part=(output_port)&0xf;     
+        slot_part=(output_port>>4)&0xf;
+        if (slot_part < 2)
+            sprintf(port, "te%d/%d",slot_part, port_part);
+        else
+            sprintf(port, "gi%d/%d",slot_part, port_part);
+        sprintf(vlan, "%d", vlan_id);
+        sprintf(action, "rate police %d", committed_rate_int);
+        if (burst_size > 0) {
+            sprintf(append, " %d", burst_size);
+            strcat(action, append);
+        }
+        if (peak_rate > 0.0001) {
+            sprintf(append, " peak %d", peak_rate);
+            strcat(action, append);
+            if (peak_burst_size > 0) {
+                sprintf(append, " %d", peak_burst_size);
+                strcat(action, append);
+            }
+        }
+        if (force10_hack(port, vlan, action) == -1)
+            return false;
+    }
+
+    return true;
+}
+
+
 
 //////////////////////////////////
      
