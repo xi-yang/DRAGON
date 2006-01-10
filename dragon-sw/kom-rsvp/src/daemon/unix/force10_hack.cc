@@ -186,7 +186,7 @@ void err_exit(const char *format, ...)
 }
 
 /* try to terminate the telnet-child that we started */
-void stop_telnet(void)
+void stop_cli(void)
 {
   pid_t p;
 
@@ -251,6 +251,8 @@ int pipe_alive(int fdi, int fdo)
 /* magic incantations for manipulating VLANs in Force10 OS (FTOS) land */
 int force10_hack(char* portName, char* vlanNum, char* action)
 {
+  assert(CLI_SESSION_TYPE);
+
   static int fdin = -1;
   static int fdout = -1;
   int fdpipe[2][2], fderr, err, n;
@@ -279,7 +281,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       if (fdout >= 0)
         close(fdout);
       fdin = fdout = -1;
-      stop_telnet();
+      stop_cli();
       return 0;
   } else if (strcmp(action, "check") == 0) {
       if (pipe_alive(fdin, fdout))
@@ -333,16 +335,29 @@ int force10_hack(char* portName, char* vlanNum, char* action)
         close(fdpipe[1][0]);
         close(fdpipe[1][1]);
       
-        /* exec TELNET application */
-        execl(TELNET_EXEC, "telnet", hostname, TELNET_PORT, (char*)NULL);
-      
-        /* if we're still here the TELNET_EXEC could not be exec'd */
-        err = errno;
-        close(2);
-        dup(fderr);
-        err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);
+        /* exec CLI session application */
+        if (CLI_SESSION_TYPE == CLI_TELNET) {
+            execl(TELNET_EXEC, "telnet", hostname, TELNET_PORT, (char*)NULL);
+          
+            /* if we're still here the TELNET_EXEC could not be exec'd */
+            err = errno;
+            close(2);
+            dup(fderr);
+            err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);
+        } if (CLI_SESSION_TYPE == CLI_SSH) {
+            execl(SSH_EXEC, "ssh", hostname, "-p", TELNET_PORT, "-l", CLI_USERNAME, (char*)NULL);
+          
+            /* if we're still here the SSH_EXEC could not be exec'd */
+            err = errno;
+            close(2);
+            dup(fderr);
+            err_exit("%s: execl(%s) failed: errno=%d\n", progname, SSH_EXEC, err);            
+        }
+        else {
+            err_exit("invalid cli seesion execl: %s\n", progname);
+        }
         break;
-      
+
       case -1: /* error */
         err_exit("%s: fork failed: errno=%d\n", progname, errno);
         return -1;
@@ -358,21 +373,34 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       fdin = fdpipe[1][0];
       fdout = fdpipe[0][1];
     
-      /* wait for login prompt */
-      n = do_read(fdin, "Login: ", TELNET_PROMPT, 1, 15);
-      if (n != 1) {
-        if (got_alarm == 0)
-          err_msg("%s: connection to host '%s' failed\n", progname, hostname);
-        goto _telnet_dead;
+      if (CLI_SESSION_TYPE == CLI_TELNET) {
+          /* wait for login prompt */
+          n = do_read(fdin, "Login: ", TELNET_PROMPT, 1, 15);
+          if (n != 1) {
+            if (got_alarm == 0)
+              err_msg("%s: connection to host '%s' failed\n", progname, hostname);
+            goto _telnet_dead;
+          }
+          
+          /* send the telnet username and password */
+          if ((n = do_write(fdout, CLI_USERNAME, 5)) < 0) goto _telnet_dead;
+          if ((n = do_write(fdout, "\n", 5)) < 0) goto _telnet_dead;
+          if ((n = do_read (fdin,  "Password: ", NULL, 1, 10)) < 0) goto _telnet_dead;
+          if ((n = do_write(fdout, CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
+          if ((n = do_write(fdout, "\n", 5)) < 0) goto _telnet_dead;
+          if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
+      } 
+      else if (CLI_SESSION_TYPE == CLI_SSH) {
+          if ((n = do_read (fdin,  "Password: ", "The authenticity", 1, 10)) < 0) goto _telnet_dead;
+          if (n == 2) {
+              if ((n = do_write(fdout, "yes", 5)) < 0) goto _telnet_dead;
+              if ((n = do_write(fdout, "\n", 5)) < 0) goto _telnet_dead;
+              if ((n = do_read(fdin, "Password: ", CLI_USERNAME, 1, 10) < 0) goto  _telnet_dead;
+          }
+          if ((n = do_write(fdout, CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
+          if ((n = do_write(fdout, "\n", 5)) < 0) goto _telnet_dead;
+          if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
       }
-      
-      /* send the telnet username and password */
-      if ((n = do_write(fdout, TELNET_USERNAME, 5)) < 0) goto _telnet_dead;
-      if ((n = do_write(fdout, "\n", 5)) < 0) goto _telnet_dead;
-      if ((n = do_read (fdin,  "Password: ", NULL, 1, 10)) < 0) goto _telnet_dead;
-      if ((n = do_write(fdout, TELNET_PASSWORD, 5)) < 0) goto _telnet_dead;
-      if ((n = do_write(fdout, "\n", 5)) < 0) goto _telnet_dead;
-      if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
   }
 
   for(;;) {
@@ -601,7 +629,7 @@ int do_read(int fd, char *text1, char *text2, int show, int timeout)
     for(;;) {
       if (n == LINELEN) {
 	alarm(0); /* disable alarm */
-	stop_telnet();
+	stop_cli();
 	err_exit("%s: too long line!\n", progname);
       }
       m = read(fd, &line[n], 1);

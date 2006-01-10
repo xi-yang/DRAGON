@@ -8706,8 +8706,8 @@ eval switch_cli_password=\$tmpinput
 fi;
 
 cat >>confdefs.h <<_ACEOF
-#define TELNET_USERNAME "$switch_cli_username"
-#define TELNET_PASSWORD "$switch_cli_password"
+#define CLI_USERNAME "$switch_cli_username"
+#define CLI_PASSWORD "$switch_cli_password"
 _ACEOF
 
 # Transform confdefs.h into two sed scripts, `conftest.defines' and
