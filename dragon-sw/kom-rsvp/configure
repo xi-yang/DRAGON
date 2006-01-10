@@ -8710,6 +8710,38 @@ cat >>confdefs.h <<_ACEOF
 #define CLI_PASSWORD "$switch_cli_password"
 _ACEOF
 
+if test "$with_switch_cli_type" = "no"; then
+echo $ECHO_N "
+
+*** Setting CLI Session Type:
+
+   With the --with-switch-cli-access option, 
+you need to specify the CLI session type as either TELNET or SSH.
+This can also be specified by --with-switch-cli-type [telnet|ssh]
+
+CLI Session Type [TELNET/telnet]: $ECHO_C"
+read tmpinput
+if test "$tmpinput" = ""; then
+    tmpinput="CLI_TELNET"
+fi
+if test "$tmpinput" = "ssh"; then
+    tmpinput="CLI_SSH"
+fi
+eval with_switch_cli_type=\$tmpinput
+else
+    if test "$with_switch_cli_type" = "telnet"; then
+        eval with_switch_cli_type="CLI_TELNET"
+    fi
+    if test "$with_switch_cli_type" = "ssh"; then
+        eval with_switch_cli_type="CLI_SSH"
+    fi
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define CLI_SESSION_TYPE "$switch_cli_type"
+_ACEOF
+
+
 # Transform confdefs.h into two sed scripts, `conftest.defines' and
 # `conftest.undefs', that substitutes the proper values into
 # config.h.in to produce config.h.  The first handles `#define'

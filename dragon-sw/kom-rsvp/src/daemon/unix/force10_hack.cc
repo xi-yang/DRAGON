@@ -251,7 +251,10 @@ int pipe_alive(int fdi, int fdo)
 /* magic incantations for manipulating VLANs in Force10 OS (FTOS) land */
 int force10_hack(char* portName, char* vlanNum, char* action)
 {
-  assert(CLI_SESSION_TYPE);
+  if (CLI_SESSION_TYPE == 0) {
+    err_msg("Invalid CLI session name (use TELNET or SSH)\n");
+    return -1;
+  }
 
   static int fdin = -1;
   static int fdout = -1;
@@ -395,7 +398,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
           if (n == 2) {
               if ((n = do_write(fdout, "yes", 5)) < 0) goto _telnet_dead;
               if ((n = do_write(fdout, "\n", 5)) < 0) goto _telnet_dead;
-              if ((n = do_read(fdin, "Password: ", CLI_USERNAME, 1, 10) < 0) goto  _telnet_dead;
+              if ((n = do_read(fdin, "Password: ", CLI_USERNAME, 1, 10)) < 0) goto  _telnet_dead;
           }
           if ((n = do_write(fdout, CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
           if ((n = do_write(fdout, "\n", 5)) < 0) goto _telnet_dead;
