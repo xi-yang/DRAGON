@@ -303,9 +303,11 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                  else
                                                     (*snmpIter)->movePortToVLANAsUntagged(port, vlan);
 
-							//perform rate policing on input port and rate limitation on output port
-							//burst size?? traffic shaping ??
+                                                 LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  port, "for VLAN #", vlan);
+							//Perform rate policing and limitation on the port, which is both input and output port
+							//as the VLAN is duplex.
                                                 (*snmpIter)->performBandwidthPolicing(port, vlan, (*iter).bandwidth);
+                                                 (*snmpIter)->performBandwidthLimitation(port, vlan,  (*iter).bandwidth);
 
                                                 portList.pop_front();
                                           }
@@ -332,8 +334,10 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                  else
                                                         (*snmpIter)->movePortToVLANAsUntagged(port, vlan);
 
-							//perform rate limitation on output port and rate limitation on output port
-							//burst size?? traffic shaping ??
+                                                 LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  port, "for VLAN #", vlan);
+							//Perform rate policing and limitation on the port, which is both input and output port
+							//as the VLAN is duplex.
+                                                (*snmpIter)->performBandwidthPolicing(port, vlan, (*iter).bandwidth);
                                                  (*snmpIter)->performBandwidthLimitation(port, vlan,  (*iter).bandwidth);
 
 							//deduct bandwidth from the link associated with the port
@@ -505,13 +509,30 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 						  RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false); //false == increase
                                             portList.pop_front();
                                       }
-					if ((((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
-					      || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
-					  && (*iter).vlanTag != 0 && !(*snmpIter)->VLANHasTaggedPort((*iter).vlanTag))
-					{
-						RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).vlanTag, false); //false == release
-					}
-					break;
+
+                                    uint32 vlanID = (*iter).vlanTag;
+                                    if ( vlanID != 0) {
+                                        vlanID = (*snmpIter)->getVLANbyUntaggedPort(port);
+                                    }
+                                    if (vlanID !=  0) {
+                                        LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
+     					     //Undo rate policing and limitation on the port, which is both input and output port
+    					     //as the VLAN is duplex.
+                                        (*snmpIter)->performBandwidthPolicing(port, (*iter).vlanTag, (*iter).bandwidth, false);
+                                        (*snmpIter)->performBandwidthLimitation(port, (*iter).vlanTag,  (*iter).bandwidth, false);
+                                    }
+                                    else {
+                                        LOG(2)(Log::MPLS, "VLSR: Invalid VLAN ID for undoing bandwidth policing and limitation on port#",  port);
+                                    }
+
+                                    if ((((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
+                                        || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+                                            && (*iter).vlanTag != 0 && !(*snmpIter)->VLANHasTaggedPort((*iter).vlanTag))
+                                    {
+                                          //Increase link bandwidth by the amount that is released from removing the VLAN.
+                                        RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).vlanTag, false); //false == release
+ 					}
+ 					break;
                         }
                      }
 			psb.getVLSR_Route().erase(iter);
