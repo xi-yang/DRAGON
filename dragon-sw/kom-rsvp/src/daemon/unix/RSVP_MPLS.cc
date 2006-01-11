@@ -306,8 +306,8 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                  LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  port, "for VLAN #", vlan);
 							//Perform rate policing and limitation on the port, which is both input and output port
 							//as the VLAN is duplex.
-                                                (*snmpIter)->performBandwidthPolicing(port, vlan, (*iter).bandwidth);
-                                                 (*snmpIter)->performBandwidthLimitation(port, vlan,  (*iter).bandwidth);
+                                                (*snmpIter)->performBandwidthPolicing(true, port, vlan, (*iter).bandwidth);
+                                                 (*snmpIter)->performBandwidthLimitation(true, port, vlan,  (*iter).bandwidth);
 
                                                 portList.pop_front();
                                           }
@@ -337,8 +337,8 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                  LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  port, "for VLAN #", vlan);
 							//Perform rate policing and limitation on the port, which is both input and output port
 							//as the VLAN is duplex.
-                                                (*snmpIter)->performBandwidthPolicing(port, vlan, (*iter).bandwidth);
-                                                 (*snmpIter)->performBandwidthLimitation(port, vlan,  (*iter).bandwidth);
+                                                (*snmpIter)->performBandwidthPolicing(true, port, vlan, (*iter).bandwidth);
+                                                 (*snmpIter)->performBandwidthLimitation(true, port, vlan,  (*iter).bandwidth);
 
 							//deduct bandwidth from the link associated with the port
 							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true); //true == deduct
@@ -518,8 +518,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                         LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
      					     //Undo rate policing and limitation on the port, which is both input and output port
     					     //as the VLAN is duplex.
-                                        (*snmpIter)->performBandwidthPolicing(port, (*iter).vlanTag, (*iter).bandwidth, false);
-                                        (*snmpIter)->performBandwidthLimitation(port, (*iter).vlanTag,  (*iter).bandwidth, false);
+                                        (*snmpIter)->performBandwidthPolicing(false, port, (*iter).vlanTag, (*iter).bandwidth);
+                                        (*snmpIter)->performBandwidthLimitation(false, port, (*iter).vlanTag,  (*iter).bandwidth);
                                     }
                                     else {
                                         LOG(2)(Log::MPLS, "VLSR: Invalid VLAN ID for undoing bandwidth policing and limitation on port#",  port);

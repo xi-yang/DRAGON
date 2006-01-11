@@ -1099,13 +1099,17 @@ uint32 SNMP_Session::VlanRefToIDForce10 (uint32 ref_id)
 /////////// QoS Functions //////////
 
 //committed_rate and peak_rate are measued in Mbps; burst_size and peak_burst_size are in KB
-bool SNMP_Session::performBandwidthPolicing(uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+bool SNMP_Session::performBandwidthPolicing(bool will_do, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     int n;
     uint32 port_part,slot_part;
     char port[100], vlan[100], action[100];
     char append[20];
+    char *undo = "no ";
     int committed_rate_int = (int)committed_rate;
+
+    if (will_do)
+        undo[0] = '\0';
 
     if (getVendor() == SNMP_Session::Force10E600)
     {
@@ -1117,7 +1121,7 @@ bool SNMP_Session::performBandwidthPolicing(uint32 input_port, uint32 vlan_id, f
         else
             sprintf(port, "gi%d/%d",slot_part, port_part);
         sprintf(vlan, "%d", vlan_id);
-        sprintf(action, "rate limit %d", committed_rate_int);
+        sprintf(action, "%srate limit %d", undo, committed_rate_int);
         if (burst_size > 0) {
             sprintf(append, " %d", burst_size);
             strcat(action, append);
@@ -1137,13 +1141,17 @@ bool SNMP_Session::performBandwidthPolicing(uint32 input_port, uint32 vlan_id, f
     return true;
 }
 
-bool SNMP_Session::performBandwidthLimitation(uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size,  float peak_rate, int peak_burst_size)
+bool SNMP_Session::performBandwidthLimitation(bool will_do, uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size,  float peak_rate, int peak_burst_size)
 {
     int n;
     uint32 port_part,slot_part;
     char port[100], vlan[100], action[100];
     char append[20];
+    char *undo = "no ";
     int committed_rate_int = (int)committed_rate;
+
+    if (will_do)
+        undo[0] = '\0';
 
     if (getVendor() == SNMP_Session::Force10E600)
     {
@@ -1155,7 +1163,7 @@ bool SNMP_Session::performBandwidthLimitation(uint32 output_port, uint32 vlan_id
         else
             sprintf(port, "gi%d/%d",slot_part, port_part);
         sprintf(vlan, "%d", vlan_id);
-        sprintf(action, "rate police %d", committed_rate_int);
+        sprintf(action, "%srate police %d", undo, committed_rate_int);
         if (burst_size > 0) {
             sprintf(append, " %d", burst_size);
             strcat(action, append);

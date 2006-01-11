@@ -152,8 +152,8 @@ public:
 	uint32  VlanRefToIDForce10 (uint32 ref_id);
 
 	//QoS functions
-	bool performBandwidthPolicing(uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
-	bool performBandwidthLimitation(uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+	bool performBandwidthPolicing(bool will_do, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+	bool performBandwidthLimitation(bool will_do,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 };
 
 struct LocalId {
