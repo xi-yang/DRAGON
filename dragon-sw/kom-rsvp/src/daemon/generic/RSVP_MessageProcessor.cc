@@ -299,6 +299,7 @@ void MessageProcessor::refreshReservations() {
 
 			LOG(2)( Log::Process, "creating RESV for PHOP", phopRefresh.getPHopSB().getAddress() );
 
+			//$$$$
 			resvMsg->setRSVP_HOP_Object( (*psbIter)->getDataInRsvpHop() );
 			resvMsg->setTIME_VALUES_Object( inLif.getRefreshInterval() );
 

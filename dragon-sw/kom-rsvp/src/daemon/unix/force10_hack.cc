@@ -430,7 +430,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
       level++;
 
-#ifdef DISABLE_SWITCH_PORT_SHUTDOWN
+#ifdef ENABLE_SWITCH_PORT_SHUTDOWN
       /* XXX should we make the sysadmin do this or should the VLSR do it??? */ 
       /* switchport command sets an interface to layer-2 mode */
       if ((n = do_write(fdout, "no shutdown\n", 5)) < 0) break;
@@ -472,7 +472,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       /* when removing a port, do vlan config then interface config */
       /* also, use the 'no' keyword in the commands */ 
 
-#ifdef DISABLE_SWITCH_PORT_SHUTDOWN
+#ifdef ENABLE_SWITCH_PORT_SHUTDOWN
       if (strstr(action, "shutdown") != NULL) {
           if ((n = do_write(fdout, "interface ", 5)) < 0) break;
           if ((n = do_write(fdout, portName, 5)) < 0) break;
