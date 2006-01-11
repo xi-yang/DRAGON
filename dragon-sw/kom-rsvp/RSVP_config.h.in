@@ -180,4 +180,7 @@
 #define CLI_USERNAME "unknown"
 #define CLI_PASSWORD "unknown"
 
+/* When this definition shows up, ignore switch port shutdown operations */
+#undef DISABLE_SWITCH_PORT_SHUTDOWN
+
 #endif /* _RSVP_config_h_ */

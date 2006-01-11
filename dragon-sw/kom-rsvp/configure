@@ -8741,6 +8741,10 @@ cat >>confdefs.h <<_ACEOF
 #define CLI_SESSION_TYPE $switch_cli_type
 _ACEOF
 
+if test "$disable_switch_port_shutdown" = "no"; then
+cat >>confdefs.h <<_ACEOF
+#define DISABLE_SWITCH_PORT_SHUTDOWN
+fi;
 
 # Transform confdefs.h into two sed scripts, `conftest.defines' and
 # `conftest.undefs', that substitutes the proper values into
