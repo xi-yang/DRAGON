@@ -8713,7 +8713,7 @@ echo $ECHO_N "
 you need to specify the CLI session type as either TELNET or SSH.
 This can also be specified by --with-switch-cli-type [telnet|ssh]
 
-CLI Session Type [telnet]: $ECHO_C"
+CLI Session Type [none]: $ECHO_C"
 read tmpinput
 if test "$tmpinput" = "telnet"; then
     tmpinput="1"
@@ -8722,17 +8722,26 @@ elif test "$tmpinput" = "ssh"; then
 else
     tmpinput="0"
 fi
-else
-if test "$with_switch_cli_type" = "telnet"; then
+elif test "$with_switch_cli_type" = "telnet"; then
     tmpinput="1"
 elif test "$with_switch_cli_type" = "ssh"; then
     tmpinput="2"
 else
-    tmpinput="0"
-fi
-fi
+    eval switch_cli_type="0"
+fi; #if test "$with_switch_cli_type"
 
 eval switch_cli_type=\$tmpinput
+
+fi;
+
+if test "$switch_cli_type" = ""; then
+if test "$with_switch_cli_type" = "telnet"; then
+    eval switch_cli_type="1"
+elif test "$with_switch_cli_type" = "ssh"; then
+    eval switch_cli_type="2"
+else
+    eval switch_cli_type="0"
+fi
 fi;
 
 cat >>confdefs.h <<_ACEOF
