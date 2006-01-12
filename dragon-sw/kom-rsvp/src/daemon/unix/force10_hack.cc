@@ -544,7 +544,9 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
       level++;
 
-      if ((n = do_write(fdout, action, 5)) < 0) break;
+      strcat(action, " vlan ");
+      strcat(action, vlanNum);
+      if ((n = do_write(fdout, action, 5)) < 0) break;      
       if ((n = do_write(fdout, "\n", 5)) < 0) break;
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
 
@@ -565,6 +567,8 @@ int force10_hack(char* portName, char* vlanNum, char* action)
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;
       level++;
 
+      strcat(action, " vlan ");
+      strcat(action, vlanNum);
       if ((n = do_write(fdout, action, 5)) < 0) break;
       if ((n = do_write(fdout, "\n", 5)) < 0) break;
       if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) break;      
