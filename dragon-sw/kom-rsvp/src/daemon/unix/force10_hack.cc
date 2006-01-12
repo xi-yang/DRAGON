@@ -348,7 +348,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
             dup(fderr);
             err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);
         } if (CLI_SESSION_TYPE == CLI_SSH) {
-            execl(SSH_EXEC, "ssh", hostname, "-p", TELNET_PORT, "-l", CLI_USERNAME, (char*)NULL);
+            execl(SSH_EXEC, "ssh", hostname, "-p", SSH_PORT, "-l", CLI_USERNAME, (char*)NULL);
           
             /* if we're still here the SSH_EXEC could not be exec'd */
             err = errno;
@@ -529,7 +529,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
     }
     if (strstr(action, "rate police") != NULL) {
         float committed_rate;
-        if(sscanf("%f", action+12, &committed_rate) < 1 || committed_rate == 0.0)
+        if(sscanf(action+12, "%f", &committed_rate) < 1 || committed_rate == 0.0)
             break;
 
       /* enter interface/port configuration mode */
@@ -550,7 +550,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
     }
     if (strstr(action, "rate limit") != NULL) {
         float committed_rate;
-        if(sscanf("%f", action+11, &committed_rate) < 1 || committed_rate == 0.0)
+        if(sscanf(action+11, "%f", &committed_rate) < 1 || committed_rate == 0.0)
             break;
 
       /* enter interface/port configuration mode */

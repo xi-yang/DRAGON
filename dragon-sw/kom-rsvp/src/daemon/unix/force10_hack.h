@@ -27,6 +27,7 @@ extern int    verbose;
 #define LINELEN  256
 #define FORCE10_PROMPT ((char*)-1)
 
+#define SSH_PORT     "22"
 #define SSH_EXEC     "/usr/bin/ssh"
 
 /*CLI Session Types*/

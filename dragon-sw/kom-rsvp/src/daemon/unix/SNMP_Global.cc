@@ -1105,11 +1105,7 @@ bool SNMP_Session::performBandwidthPolicing(bool will_do, uint32 input_port, uin
     uint32 port_part,slot_part;
     char port[100], vlan[100], action[100];
     char append[20];
-    char *undo = "no ";
     int committed_rate_int = (int)committed_rate;
-
-    if (will_do)
-        undo[0] = '\0';
 
     if (getVendor() == SNMP_Session::Force10E600)
     {
@@ -1121,7 +1117,7 @@ bool SNMP_Session::performBandwidthPolicing(bool will_do, uint32 input_port, uin
         else
             sprintf(port, "gi%d/%d",slot_part, port_part);
         sprintf(vlan, "%d", vlan_id);
-        sprintf(action, "%srate limit %d", undo, committed_rate_int);
+        sprintf(action, "%srate limit %d", will_do? "": "no ", committed_rate_int);
         if (burst_size > 0) {
             sprintf(append, " %d", burst_size);
             strcat(action, append);
@@ -1147,11 +1143,7 @@ bool SNMP_Session::performBandwidthLimitation(bool will_do, uint32 output_port, 
     uint32 port_part,slot_part;
     char port[100], vlan[100], action[100];
     char append[20];
-    char *undo = "no ";
     int committed_rate_int = (int)committed_rate;
-
-    if (will_do)
-        undo[0] = '\0';
 
     if (getVendor() == SNMP_Session::Force10E600)
     {
@@ -1163,7 +1155,7 @@ bool SNMP_Session::performBandwidthLimitation(bool will_do, uint32 output_port, 
         else
             sprintf(port, "gi%d/%d",slot_part, port_part);
         sprintf(vlan, "%d", vlan_id);
-        sprintf(action, "%srate police %d", undo, committed_rate_int);
+        sprintf(action, "%srate police %d", will_do? "": "no ", committed_rate_int);
         if (burst_size > 0) {
             sprintf(append, " %d", burst_size);
             strcat(action, append);
