@@ -511,7 +511,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                       }
 
                                     uint32 vlanID = (*iter).vlanTag;
-                                    if ( vlanID != 0) {
+                                    if ( vlanID == 0) {
                                         vlanID = (*snmpIter)->getVLANbyUntaggedPort(port);
                                     }
                                     if (vlanID !=  0) {
