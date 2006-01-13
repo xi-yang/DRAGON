@@ -462,6 +462,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 				if ((*snmpIter)->getSwitchInetAddr()==ethSw && (*snmpIter)->isValidSession()){
     					SimpleList<uint32> portList;
                                       uint32 port = (*iter).inPort;
+                                      uint32 vlanID = (*iter).vlanTag;
+
                                       if ((port >> 16) == LOCAL_ID_TYPE_NONE)
                                          portList.push_back(port);
                                       else if ((port >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
@@ -474,8 +476,6 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                       }
                                       while (portList.size()) {
                                             port = portList.front();
-
-                                            uint32 vlanID = (*iter).vlanTag;
 
                                             if ((*iter).vlanTag != 0) {
        						LOG(4)(Log::MPLS, "VLSR: Removing ingress port#",  port, "from VLAN #", (*iter).vlanTag);
