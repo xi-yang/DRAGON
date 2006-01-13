@@ -185,7 +185,7 @@ void Hop::processSrefresh( const Message& msg ) {
 					(*stateIter).sb.rsb->restartTimeout();
 
                                    //@@@@ force10_hack: To keep the telnet session alive; once every 5 minutes.
-                                   if ((force10_refresh_at_zero++)%10 == 0)
+                                   if (CLI_SESSION_TYPE != CLI_NONE && (force10_refresh_at_zero++)%10 == 0)
                                        force10_hack(NULL, NULL, "refresh");
 				}
 			} // found matching ID
