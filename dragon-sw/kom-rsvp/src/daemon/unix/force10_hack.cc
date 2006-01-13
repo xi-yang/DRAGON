@@ -534,7 +534,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
     }
     if (strstr(action, "rate police") != NULL) {
         float committed_rate;
-        if(sscanf(action+(strncmp(action, " no ", 3) == 0 ? 15 : 12), "%f", &committed_rate) < 1 || committed_rate == 0.0)
+        if(sscanf(action+(strncmp(action, "no ", 3) == 0 ? 15 : 12), "%f", &committed_rate) < 1 || committed_rate == 0.0)
             break;
 
       /* enter interface/port configuration mode */
@@ -557,7 +557,7 @@ int force10_hack(char* portName, char* vlanNum, char* action)
     }
     if (strstr(action, "rate limit") != NULL) {
         float committed_rate;
-        if(sscanf(action+(strncmp(action, " no ", 3) == 0 ? 14 : 11), "%f", &committed_rate) < 1 || committed_rate == 0.0)
+        if(sscanf(action+(strncmp(action, "no ", 3) == 0 ? 14 : 11), "%f", &committed_rate) < 1 || committed_rate == 0.0)
             break;
 
       /* enter interface/port configuration mode */
