@@ -486,9 +486,6 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                 (*snmpIter)->movePortToDefaultVLAN(port);
                                             }
 
-                                            //@@@@ Hold bandwidth for ingress port? Alwarys bidirectiona !!!???
-						  RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false); //false == increase
-
                                             if ( vlanID == 0) {
                                                 vlanID = (*snmpIter)->getVLANbyUntaggedPort(port);
                                             }
