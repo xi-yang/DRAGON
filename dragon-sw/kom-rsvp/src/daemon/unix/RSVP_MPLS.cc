@@ -474,6 +474,9 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                       }
                                       while (portList.size()) {
                                             port = portList.front();
+
+                                            uint32 vlanID = (*iter).vlanTag;
+
                                             if ((*iter).vlanTag != 0) {
        						LOG(4)(Log::MPLS, "VLSR: Removing ingress port#",  port, "from VLAN #", (*iter).vlanTag);
                                                 (*snmpIter)->removePortFromVLAN(port, (*iter).vlanTag);
@@ -482,6 +485,24 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
         						LOG(3)(Log::MPLS, "VLSR: Moving ingress port#",  port, " back to Default VLAN #");
                                                 (*snmpIter)->movePortToDefaultVLAN(port);
                                             }
+
+                                            //@@@@ Hold bandwidth for ingress port? Alwarys bidirectiona !!!???
+						  RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false); //false == increase
+
+                                            if ( vlanID == 0) {
+                                                vlanID = (*snmpIter)->getVLANbyUntaggedPort(port);
+                                            }
+                                            if (vlanID !=  0) {
+                                                LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
+             					     //Undo rate policing and limitation on the port, which is both input and output port
+            					     //as the VLAN is duplex.
+                                                (*snmpIter)->performBandwidthPolicing(false, port, (*iter).vlanTag, (*iter).bandwidth);
+                                                (*snmpIter)->performBandwidthLimitation(false, port, (*iter).vlanTag,  (*iter).bandwidth);
+                                            }
+                                            else {
+                                                LOG(2)(Log::MPLS, "VLSR: Invalid VLAN ID for undoing bandwidth policing and limitation on port#",  port);
+                                            }
+
                                             portList.pop_front();
                                       }
                                       portList.clear();
@@ -509,7 +530,6 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 						  RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false); //false == increase
 
-                                            uint32 vlanID = (*iter).vlanTag;
                                             if ( vlanID == 0) {
                                                 vlanID = (*snmpIter)->getVLANbyUntaggedPort(port);
                                             }
