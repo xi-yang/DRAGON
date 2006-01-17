@@ -8697,12 +8697,14 @@ if test "$tmpinput" = ""; then
 fi
 eval switch_cli_username=\$tmpinput
 
+stty -echo
 echo $ECHO_N "Password [unknown]: $ECHO_C"
 read tmpinput
 if test "$tmpinput" = ""; then
     tmpinput="unknown"
 fi
 eval switch_cli_password=\$tmpinput
+stty echo
 
 if test "$with_switch_cli_type" = ""; then
 echo $ECHO_N "
