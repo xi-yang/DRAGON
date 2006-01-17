@@ -348,7 +348,9 @@ int force10_hack(char* portName, char* vlanNum, char* action)
             dup(fderr);
             err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);
         } if (CLI_SESSION_TYPE == CLI_SSH) {
-            execl(SSH_EXEC, "ssh", hostname, "-p", SSH_PORT, "-l", CLI_USERNAME, (char*)NULL);
+            char spawn_cmd[128];
+            sprintf(spawn_cmd, "spawn ssh %s -l %s -p %s", hostname, CLI_USERNAME, SSH_PORT);
+            execl("/usr/local/bin/expect", "expect", "-c", spawn_cmd, "-c", "interact", (char*)NULL);
           
             /* if we're still here the SSH_EXEC could not be exec'd */
             err = errno;
@@ -394,16 +396,16 @@ int force10_hack(char* portName, char* vlanNum, char* action)
           if ((n = do_read (fdin,  FORCE10_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
       } 
       else if (CLI_SESSION_TYPE == CLI_SSH) {
-          if ((n = do_read (fdin,  "The authenticity", "Password:", 1, 30)) < 0) goto _telnet_dead;
-          if (n == 1) {
-              if ((n = do_write(fdout, "yes\n", 5)) < 0) goto _telnet_dead;
-              if ((n = do_read(fdin, "Password: ", CLI_USERNAME, 1, 10)) < 0) goto  _telnet_dead;
-              n = 2;
-          }
-          if (n != 2) {
+          if ((n = do_read (fdin,  "The authenticity", CLI_USERNAME, 1, 15)) < 0) {
             if (got_alarm == 0)
               err_msg("%s: connection to host '%s' failed\n", progname, hostname);
             goto _telnet_dead;
+          }
+
+          if (n == 1) {
+              if ((n = do_write(fdout, "yes\n", 5)) < 0) goto _telnet_dead;
+              if ((n = do_read(fdin, CLI_USERNAME, NULL, 1, 10)) < 0) goto
+  _telnet_dead;
           }
           if ((n = do_write(fdout, CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
           if ((n = do_write(fdout, "\n", 5)) < 0) goto _telnet_dead;
