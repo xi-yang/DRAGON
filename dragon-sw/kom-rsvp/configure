@@ -8682,12 +8682,12 @@ cat >>confdefs.h <<_ACEOF
 #define SWITCH_CTRL_PORT $with_switch_ctrl_port
 _ACEOF
 
-if test "$with_switch_cli_access" = "yes"; then
+if test "$enable_switch_cli_access" = "yes"; then
 echo $ECHO_N "
 
 *** Setting username and password to access switch via CLI:
 
-   With the --with-switch-cli-access option, 
+   With the --enable-switch-cli-access option, 
 you need to provide the username and password.
 
 Username [unknown]: $ECHO_C"
@@ -8711,9 +8711,9 @@ echo $ECHO_N "
 
 *** Setting CLI Session Type:
 
-   With the --with-switch-cli-access option, 
+   With the --enable-switch-cli-access option, 
 you need to specify the CLI session type as either TELNET or SSH.
-This can also be specified by --with-switch-cli-type [telnet|ssh]
+This can also be specified by --enable-switch-cli-type [telnet|ssh]
 
 CLI Session Type [none]: $ECHO_C"
 read tmpinput
