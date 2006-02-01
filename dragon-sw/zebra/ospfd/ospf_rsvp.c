@@ -417,67 +417,6 @@ out:
 	return;
 }
 
-static int
-vlan_id_configured(struct ospf_interface *oi ,  u_int32_t vid)
-{
-	u_int32_t *pv;
-	listnode node;
-	if (oi && oi->vlsr_if.held_vtag_list) {
-		LIST_LOOP(oi->vlsr_if.held_vtag_list, pv, node)
-			if (*pv == vid)
-				return 1;
-	}
-	return 0;		
-}
-
-static int 
-has_vlan_id(struct link_ifswcap_specific_vlan* vlan_info, u_int16_t vid)
-{
-    int i;
-    if (vlan_info->version != IFSWCAP_SPECIFIC_VLAN_VERSION)
-	return 0;
-    assert (vlan_info->vlan_num <= MAX_NUM_VLANS);
-    for (i = 0; i < vlan_info->vlan_num; i++)
-        if (vlan_info->vlan_id[i] == vid)
-            return 1;
-    return 0;
-}
-
-static int 
-remove_vlan_id(struct link_ifswcap_specific_vlan* vlan_info, u_int16_t vid)
-{
-    int i;
-    if (vlan_info->version != IFSWCAP_SPECIFIC_VLAN_VERSION)
-	return 0;
-    assert (vlan_info->vlan_num <= MAX_NUM_VLANS);
-    for (i = 0; i < vlan_info->vlan_num; i++)
-        if (vlan_info->vlan_id[i] == vid)
-        {
-            if (i < vlan_info->vlan_num-1)
-                if (memmove(vlan_info->vlan_id+i, vlan_info->vlan_id+i+1, (vlan_info->vlan_num - i -1)*2) == NULL)
-                    return 0;
-            vlan_info->vlan_num--;
-            return 1;
-        }
-    return 1;
-}
-
-static int 
-add_vlan_id(struct link_ifswcap_specific_vlan* vlan_info, u_int16_t vid)
-{
-    int i;
-    if (vlan_info->version != IFSWCAP_SPECIFIC_VLAN_VERSION)
-	return 0;
-    assert (vlan_info->vlan_num <= MAX_NUM_VLANS);
-    if (vlan_info->vlan_num == MAX_NUM_VLANS)
-        return 0;
-    for (i = 0; i < vlan_info->vlan_num; i++)
-        if (vlan_info->vlan_id[i] == vid)
-            return 1;
-    vlan_info->vlan_id[vlan_info->vlan_num++] = vid;
-    return 1;
-}
-
 void
 ospf_hold_vtag(u_int32_t vtag, u_int8_t hold_flag)
 {
@@ -492,16 +431,16 @@ ospf_hold_vtag(u_int32_t vtag, u_int8_t hold_flag)
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
 			if (oi && INTERFACE_MPLS_ENABLED(oi)) {
-				if (!vlan_id_configured(oi, vtag))
+				if (!HAS_VLAN(oi->vlsr_if.vtag_bitmask, vtag))
 					continue;
-				if (hold_flag == 1 && has_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag))
+				if (hold_flag == 1 && HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
 				{
-					remove_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag);
+					RESET_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag);
 					updated = 1;
 				}
-				else if (hold_flag == 0 && !has_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag))
+				else if (hold_flag == 0 && !HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
 				{
-					add_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, vtag);
+					SET_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag);
 					updated = 1;
 				}
 				if (updated && oi->t_te_area_lsa_link_self)
@@ -628,14 +567,14 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 			LIST_LOOP(ospf->oiflist, oi, node2){
 				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(inRtId->s_addr)
                                 && oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION 
-        			    && has_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, (u_int16_t)vlan)) {
+        			    && HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
 				        inPort &= 0xffff0000;
                                     inPort |= oi->vlsr_if.switch_port;
 					 in_oi = oi;
                                }
 				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(outRtId->s_addr)
                                 && oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION 
-      			           && has_vlan_id(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, (u_int16_t)vlan)) {
+      			           && HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
 				        outPort &= 0xffff0000;
                                     outPort |= oi->vlsr_if.switch_port;
 					 out_oi = oi;
