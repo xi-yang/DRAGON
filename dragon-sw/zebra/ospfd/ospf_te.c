@@ -1392,7 +1392,6 @@ ospf_te_interface_config_update(struct vty* vty)
 	struct ospf_interface *oi = NULL;
 	listnode node;
 	struct ospf_te_config_para *oc;
-	u_int32_t* pv;
 	
 	if (listcount(ospf->oiflist)) /* ospfd already fetched IP data from zebra */
 	{
@@ -2140,8 +2139,6 @@ DEFUN (ospf_te_interface_ifsw_cap4a,
        "Tagged VLAN ID in the range [1, 4095]\n")
 {
   u_int32_t vlan;
-  int padding_len = 0;
-  u_int32_t* pv;
  
   if (sscanf (argv[0], "%d", &vlan) != 1)
     {
@@ -2167,8 +2164,6 @@ DEFUN (ospf_te_interface_ifsw_cap4b,
 	"Tagged VLAN ID2 in the range [2, 4095]\n")
 {
   u_int32_t vlan, vlan1, vlan2;
-  int padding_len = 0;
-  u_int32_t* pv;
  
   if (sscanf (argv[0], "%d", &vlan1) != 1)
     {
@@ -2249,7 +2244,7 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 		  if (oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION) {
 			  vty_out(vty, "Assigned VLAN tags:");
 			  for (i = 1; i <= MAX_VLAN_NUM; i++)
-			  	if (HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, i);
+			  	if (HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, i))
 				    vty_out(vty, " %d", i);
 			  vty_out(vty, "%s", VTY_NEWLINE);
 		  	}
