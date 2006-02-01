@@ -2156,7 +2156,7 @@ DEFUN (ospf_te_interface_ifsw_cap4,
     }
   else if (argc == 2 ) 
     {
-	  if (sscanf (argv[2], "%d", &vlan2) != 1)
+	  if (sscanf (argv[1], "%d", &vlan2) != 1)
 	    {
 	      vty_out (vty, "ospf_te_interface_ifsw_cap4: fscanf vlan2: %s%s", strerror (errno), VTY_NEWLINE);
 	      return CMD_WARNING;
