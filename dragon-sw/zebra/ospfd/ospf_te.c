@@ -2132,11 +2132,54 @@ DEFUN (ospf_te_interface_ifsw_cap3b,
   return CMD_SUCCESS;
 }
 
-DEFUN (ospf_te_interface_ifsw_cap4a,
-       ospf_te_interface_ifsw_cap4a_cmd,
-       "vlan <1-4095>",
+
+DEFUN (ospf_te_interface_ifsw_cap4,
+       ospf_te_interface_ifsw_cap4_cmd,
+       "vlan <1-4094>",
        "Assign this port/IP to a tagged VLAN\n"
        "Tagged VLAN ID in the range [1, 4095]\n")
+{
+  u_int32_t vlan, vlan1, vlan2;
+ 
+  if (sscanf (argv[0], "%d", &vlan1) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap4: fscanf vlan1: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(MAX_VLAN_NUM/8 + 3);
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version = IFSWCAP_SPECIFIC_VLAN_VERSION;
+
+  if (argc == 1) 
+    {
+	SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan);
+    }
+  else if (argc == 3 && strcmp(argv[1], "to") == 0) 
+    {
+	  if (sscanf (argv[2], "%d", &vlan2) != 1)
+	    {
+	      vty_out (vty, "ospf_te_interface_ifsw_cap4: fscanf vlan2: %s%s", strerror (errno), VTY_NEWLINE);
+	      return CMD_WARNING;
+	    }
+	  else if (vlan2 < vlan1)
+	    {
+	      vty_out (vty, "ospf_te_interface_ifsw_cap4: VLAN ID2 < ID1%s", VTY_NEWLINE);
+	      return CMD_WARNING;
+	    }
+	  for(vlan = vlan1; vlan <= vlan2; vlan++)
+	      SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan);
+    }
+  te_config.configed = 1;
+  return CMD_SUCCESS;
+}
+
+ALIAS (ospf_te_interface_ifsw_cap4,
+       ospf_te_interface_ifsw_cap4a_cmd,
+       "vlan <1-4094> to <2-4095>",
+       "Assign this port/IP to a tagged VLAN\n"
+       "Tagged VLAN ID1 in the range [1, 4094]\n"
+       "Tagged VLAN ID2 in the range [2, 4095]\n")
+       
 {
   u_int32_t vlan;
  
@@ -2152,42 +2195,6 @@ DEFUN (ospf_te_interface_ifsw_cap4a,
   
   SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan);
   
-  te_config.configed = 1;
-  return CMD_SUCCESS;
-}
-
-DEFUN (ospf_te_interface_ifsw_cap4b,
-       ospf_te_interface_ifsw_cap4b_cmd,
-       "vlan <1-4094> to <2, 4095>",
-       "Assign this port/IP to a tagged VLAN\n"
-       "Tagged VLAN ID1 in the range [1, 4094]\n"
-	"Tagged VLAN ID2 in the range [2, 4095]\n")
-{
-  u_int32_t vlan, vlan1, vlan2;
- 
-  if (sscanf (argv[0], "%d", &vlan1) != 1)
-    {
-      vty_out (vty, "ospf_te_interface_ifsw_cap4b: fscanf vlan1: %s%s", strerror (errno), VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-
-  if (sscanf (argv[0], "%d", &vlan2) != 1)
-    {
-      vty_out (vty, "ospf_te_interface_ifsw_cap4b: fscanf vlan2: %s%s", strerror (errno), VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-  else if (vlan2 < vlan1)
-    {
-      vty_out (vty, "ospf_te_interface_ifsw_cap4b: VLAN ID2 < ID1%s", VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(MAX_VLAN_NUM/8 + 3);
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version = IFSWCAP_SPECIFIC_VLAN_VERSION;
-
-  for(vlan = vlan1; vlan <= vlan2; vlan++)
-      SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan);
-
   te_config.configed = 1;
   return CMD_SUCCESS;
 }
@@ -2489,8 +2496,8 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap2_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap3a_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap3b_cmd);
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4a_cmd);
-  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4b_cmd);
   set_config_end_call_back_func(ospf_te_interface_config_update);
 
   return;
