@@ -2152,9 +2152,9 @@ DEFUN (ospf_te_interface_ifsw_cap4,
 
   if (argc == 1) 
     {
-	SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan);
+	SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan1);
     }
-  else if (argc == 3 && strcmp(argv[1], "to") == 0) 
+  else if (argc == 2 ) 
     {
 	  if (sscanf (argv[2], "%d", &vlan2) != 1)
 	    {
@@ -2169,6 +2169,11 @@ DEFUN (ospf_te_interface_ifsw_cap4,
 	  for(vlan = vlan1; vlan <= vlan2; vlan++)
 	      SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan);
     }
+  else
+    {
+        vty_out (vty, "ospf_te_interface_ifsw_cap4: invalid command", VTY_NEWLINE);
+	 return CMD_WARNING;
+    }
   te_config.configed = 1;
   return CMD_SUCCESS;
 }
@@ -2178,26 +2183,7 @@ ALIAS (ospf_te_interface_ifsw_cap4,
        "vlan <1-4094> to <2-4095>",
        "Assign this port/IP to a tagged VLAN\n"
        "Tagged VLAN ID1 in the range [1, 4094]\n"
-       "Tagged VLAN ID2 in the range [2, 4095]\n")
-       
-{
-  u_int32_t vlan;
- 
-  if (sscanf (argv[0], "%d", &vlan) != 1)
-    {
-      vty_out (vty, "ospf_te_interface_ifsw_cap4a: fscanf: %s%s", strerror (errno), VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(MAX_VLAN_NUM/8 + 3);
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version = IFSWCAP_SPECIFIC_VLAN_VERSION;
-
-  
-  SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan);
-  
-  te_config.configed = 1;
-  return CMD_SUCCESS;
-}
+       "Tagged VLAN ID2 in the range [2, 4095]\n");
 
 
 DEFUN (show_ospf_te_router,
