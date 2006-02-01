@@ -539,10 +539,10 @@ set_linkparams_ifsw_cap1 (struct te_link_subtlv_link_ifswcap *para, u_char swcap
   {
   	 para->header.length = htons(base_length + sizeof(struct link_ifswcap_specific_tdm));
   }
-  else if ( swcap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
-  {
-  	 para->header.length = htons(base_length + sizeof(struct link_ifswcap_specific_vlan));
-  }
+  //else if ( swcap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
+  //{
+  //	 para->header.length = htons(base_length + sizeof(struct link_ifswcap_specific_vlan));
+  //}
   else
   	 para->header.length = htons(base_length);
    para->link_ifswcap_data.switching_cap = swcap;
@@ -1136,7 +1136,8 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
   }
   else if (top->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
   {
-  	  if (vty != NULL && (top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION)) 
+  	  if (vty != NULL && (top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION)
+	  	&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) == MAX_VLAN_NUM/8+3)) 
 	  {
 	    vty_out (vty, "  -- L2SC specific information-- : Available VLAN tag set:");
 	    for (i = 0; i < MAX_VLAN_NUM; i++)
@@ -1231,9 +1232,8 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   }
   else if (strncmp(swcap, "l2sc", 4) == 0)
   {
-          v += 2;
-	  if (vty != NULL && (*v == IFSWCAP_SPECIFIC_VLAN_VERSION)) {
-	    v++;
+	  if (vty != NULL && (*(u_int32_t*))v == ntohs(MAX_VLAN_NUM/8+3) && *(v+2) ==IFSWCAP_SPECIFIC_VLAN_VERSION)) {
+	    v += 3;
 	    vty_out (vty, "  -- L2SC specific information-- : Available VLAN tag set:");
 	    for (i = 0; i < MAX_VLAN_NUM; i++)
 		if (HAS_VLAN(v, i))
