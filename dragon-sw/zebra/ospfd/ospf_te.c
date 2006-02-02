@@ -1232,12 +1232,11 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   }
   else if (strncmp(swcap, "l2sc", 4) == 0)
   {
-	  if (vty != NULL && (*(u_int32_t*))v == ntohs(MAX_VLAN_NUM/8+3) && *(v+2) ==IFSWCAP_SPECIFIC_VLAN_VERSION)) {
+	  if (vty != NULL && (*(u_int32_t*)v == ntohs(MAX_VLAN_NUM/8+3) && *(v+2) ==IFSWCAP_SPECIFIC_VLAN_VERSION)) {
 	    v += 3;
 	    vty_out (vty, "  -- L2SC specific information-- : Available VLAN tag set:");
 	    for (i = 0; i < MAX_VLAN_NUM; i++)
-		if (HAS_VLAN(v, i))
-		vty_out (vty, " %d", i);
+		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
 	    vty_out (vty, "%s", VTY_NEWLINE);
 	  }
   }
