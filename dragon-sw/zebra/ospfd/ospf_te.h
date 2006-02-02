@@ -258,6 +258,7 @@ struct link_ifswcap_specific_vlan {
 	u_int16_t		length;		/*up to 512 byes in vlan_bitmask. So 515 will be the default length.*/
 	u_char	 	version;       /*fixed to be 0x2, other vaule is reserved for compression versions.*/
 	u_char           bitmask[MAX_VLAN_NUM/8];
+	u_char		padding[1];
 };
 
 #define HAS_VLAN(P, VID) ((P[VID/8] & (0x80 >> (VID-1)%8)) != 0)
