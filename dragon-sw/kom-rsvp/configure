@@ -8654,6 +8654,32 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
 
 _ACEOF
 
+if test "$with_switch_vendor_model" = ""; then
+echo $ECHO_N "
+
+*** Setting the vendor/model type of VLSR switch:
+
+      You are highly recommended to provide the vendor/model ID 
+(case sensitive). If you do not know the switch vendor/model, it's 
+set to a default value: 'AutoDetect.' VLSR will try detecting the switch
+vendor and model via SNMP. 
+
+Switch Vendor/Model ID [AutoDetect]: $ECHO_C"
+read tmpinput
+if test "$tmpinput" = ""; then
+    tmpinput="AutoDetect"
+fi
+else
+    tmpinput="$with_switch_vendor_type"
+fi;
+
+eval switch_vendor_model=\$tmpinput
+
+cat >>confdefs.h <<_ACEOF
+#define SWITCH_VENDOR_MODEL $switch_vendor_model
+_ACEOF
+
+
 if test "$with_switch_ctrl_port" = "no"; then
 echo $ECHO_N "
 
@@ -8741,7 +8767,15 @@ if test "$with_switch_cli_type" = "telnet"; then
     eval switch_cli_type="1"
 elif test "$with_switch_cli_type" = "ssh"; then
     eval switch_cli_type="2"
-else
+    
+    echo "$as_me:$LINENO: checking 'expect' command" >&5
+    echo $ECHO_N "checking 'expect' command... $ECHO_C" >&6
+    if ! -f "/usr/local/bin/expect" && ! -f "/usr/bin/expect"; then
+        { { echo "$as_me:$LINENO: error: \"Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!\"" >&5
+        echo "$as_me: error: \"Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!\"" >&2;}
+       { (exit 1); exit 1; }; }
+    fi;
+
     eval switch_cli_type="0"
 fi
 fi;

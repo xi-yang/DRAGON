@@ -38,7 +38,7 @@
 #include "RSVP_PSB.h"
 #include "RSVP_RSB.h"
 #include "RSVP_Session.h"
-#include "force10_hack.h"
+#include "CLI_Session.h"
 
 #define CHECK_UNICAST_ROUTING_FOR_PATH_REFRESH
 #if defined(CHECK_UNICAST_ROUTING_FOR_PATH_REFRESH)
@@ -118,7 +118,7 @@ void Hop::sendMessageReliable( const Message& msg, const NetAddress& dest, const
 }
 
 void Hop::processSrefresh( const Message& msg ) {
-       static int force10_refresh_at_zero = 1;
+       static int switch_refresh_counter = 1;
        const SimpleList<sint32>& msgIdList = msg.getMESSAGE_ID_LIST_Object().getID_List();
 	SimpleList<sint32>::ConstIterator msgIter = msgIdList.begin();
 	Message* nackMsg = new Message( Message::Ack, 15 );
@@ -184,9 +184,9 @@ void Hop::processSrefresh( const Message& msg ) {
 					LOG(4)( Log::Reduct, "found RSB for ID", *msgIter, "from", *this );
 					(*stateIter).sb.rsb->restartTimeout();
 
-                                   //@@@@ force10_hack: To keep the telnet session alive; once every 5 minutes.
-                                   if (CLI_SESSION_TYPE != CLI_NONE && (force10_refresh_at_zero++)%10 == 0)
-                                       force10_hack(NULL, NULL, "refresh");
+                                   //@@@@ To keep the telnet session alive; once every 5 minutes.
+                                   if (CLI_SESSION_TYPE != CLI_NONE && (switch_refresh_counter++)%10 == 0)
+                                       RSVP_Global::switchController->refreshSessions();
 				}
 			} // found matching ID
 		}

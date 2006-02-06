@@ -73,7 +73,7 @@ uint32 RSVP_Global::listAlloc = 0;
 uint32 RSVP_Global::sbAlloc = 0;
 
 RSVP*             RSVP_Global::rsvp = NULL;
-SNMP_Global*  RSVP_Global::snmp = NULL;
+SwitchCtrl_Global*  RSVP_Global::switchController = NULL;
 MessageProcessor* RSVP_Global::messageProcessor = NULL;
 TimerSystem*      RSVP_Global::currentTimerSystem = NULL;
 #if defined(NS2)

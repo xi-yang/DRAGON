@@ -44,6 +44,7 @@ static TimeValue yy_timeval;
 static ConfigFileReader* cfr = NULL;
 static const char* configfile = NULL;
 static bool fatalError = false;
+static String yy_ifType;
 %}
 
 %token INTEGER FLOAT STRING IP_ADDRESS
@@ -51,6 +52,7 @@ static bool fatalError = false;
 %token TC_C NONE CBQ_C HFSC_C RATE PEER
 %token TIMER SESSION_HASH API_HASH ID_HASH_SEND ID_HASH_RECV LIST_ALLOC SB_ALLOC
 %token EXPLICIT_ROUTE MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH
+%token SLOTS
 
 %%
 
@@ -77,7 +79,18 @@ command:
 	| LABEL_HASH INTEGER			{ cfr->setLabelHash(yy_int); }
 	| PEER local_address remote_address INTEGER	{ cfr->addHop(yy_int); }
 	| PEER local_address remote_address		{ cfr->addHop(); }
+	| SLOTS if_type slot			{ }
 	;
+
+/*** Addtions by Xi Yang ***/
+if_type:
+	STRING		{ yy_ifType = yy_string; }
+	;
+slot:
+	slot INTEGER	{ cfr->addSlot(yy_ifType, yy_int); }
+	| INTEGER	{ cfr->addSlot(yy_ifType, yy_int); }
+	;
+/*** END: Addtions by Xi Yang ***/
 
 tw_total:
 	INTEGER		{ cfr->setTimerTotal(yy_int); }

@@ -166,6 +166,9 @@
    `char[]'. */
 #undef YYTEXT_POINTER
 
+/* Define switch vendor/model ID. */
+#define SWITCH_VENDOR_MODEL AutoDetect
+
 /* Define the deafult switch control port to avoid loss of management 
    connectivity to the switch. */
 #define SWITCH_CTRL_PORT 255

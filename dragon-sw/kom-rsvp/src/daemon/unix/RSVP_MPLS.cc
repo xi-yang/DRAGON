@@ -6,7 +6,9 @@
 #include "RSVP_PSB.h"
 #include "RSVP_PHopSB.h"
 #include "RSVP_Session.h"
-#include "SNMP_Global.h"
+#include "SwitchCtrl_Global.h"
+//#include "SNMP_Session.h"
+//#include "CLI_Session.h"
 #if MPLS_REAL
 #include "RSVP_RoutingService.h"
 #include <linux/mpls.h>
@@ -253,10 +255,10 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 		VLSRRoute::ConstIterator iter = psb.getVLSR_Route().begin();
 		for ( ; iter != psb.getVLSR_Route().end(); ++iter ) {
 			NetAddress ethSw = (*iter).switchID;
-			SNMPSessionList::Iterator snmpIter = RSVP_Global::snmp->getSNMPSessionList().begin();
+			SwitchCtrlSessionList::Iterator sessionIter = RSVP_Global::switchController->getSessionList().begin();
 			bool noError = false;
-			for (; snmpIter != RSVP_Global::snmp->getSNMPSessionList().end(); ++snmpIter ) {
-				if ((*snmpIter)->getSwitchInetAddr()==ethSw && (*snmpIter)->isValidSession()){
+			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
+				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()){
 					noError = true;
 					uint32 vlan;
                                    if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
@@ -272,14 +274,20 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                       vlan =   (*iter).outPort & 0xffff;
                                     }
                                    else
-                                        vlan = (*snmpIter)->findEmptyVLAN();
+                                        vlan = (*sessionIter)->findEmptyVLAN();
 
-                                   if (!(*snmpIter)->verifyVLAN(vlan))
+                                   if (!(*sessionIter)->verifyVLAN(vlan))
                                     {
-        					LOG(4)( Log::MPLS, "VLSR: Cannot verify VLAN Tag(ID): ", vlan, " on Switch: ", ethSw);
+        					LOG(5)( Log::MPLS, "VLSR: Cannot verify VLAN Tag(ID). ", vlan, " on Switch: ", ethSw, 
+                                                        " >>> Creating a new VLAN...");
+                                          if (!(*sessionIter)->createVLAN(vlan)) {
+                					LOG(5)( Log::MPLS, "VLSR: Creating a new VLAN ID:", vlan, " on Switch: ", ethSw, " has failed!" );
+                					noError = false;
+                                          }
                                     }
 
-					if (vlan){
+					//if (vlan){
+					if (noError){
         					SimpleList<uint32> portList;
                                           uint32 port = (*iter).inPort;
                                           uint32 taggedPorts = 0;
@@ -288,7 +296,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           else if ((port >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                                               portList.push_back(port & 0xffff);
                                           else
-                                              SNMP_Global::getPortsByLocalId(portList, port);
+                                              SwitchCtrl_Global::getPortsByLocalId(portList, port);
                                           if (portList.size() == 0){
         					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress.");
                                                 return false;
@@ -297,17 +305,17 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                 port = portList.front();
         						LOG(4)(Log::MPLS, "VLSR: Moving ingress port#",  port, " to VLAN #", vlan);
                                                  if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
-                                                        (*snmpIter)->movePortToVLANAsTagged(port, vlan);
+                                                        (*sessionIter)->movePortToVLANAsTagged(port, vlan);
                                                         taggedPorts |= (1<<(32-port));
                                                     }
                                                  else
-                                                    (*snmpIter)->movePortToVLANAsUntagged(port, vlan);
+                                                    (*sessionIter)->movePortToVLANAsUntagged(port, vlan);
 
                                                  LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  port, "for VLAN #", vlan);
 							//Perform rate policing and limitation on the port, which is both input and output port
 							//as the VLAN is duplex.
-                                                (*snmpIter)->performBandwidthPolicing(true, port, vlan, (*iter).bandwidth);
-                                                 (*snmpIter)->performBandwidthLimitation(true, port, vlan,  (*iter).bandwidth);
+                                                (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);
+                                                 (*sessionIter)->limitOutputBandwidth(true, port, vlan,  (*iter).bandwidth);
 
                                                 portList.pop_front();
                                           }
@@ -319,7 +327,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           else if ((port >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                                               portList.push_back(port & 0xffff);
                                           else
-                                              SNMP_Global::getPortsByLocalId(portList, port);
+                                              SwitchCtrl_Global::getPortsByLocalId(portList, port);
                                           if (portList.size() == 0){
         					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
                                                 return false;
@@ -328,17 +336,17 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                 port = portList.front();
         						LOG(4)(Log::MPLS, "VLSR: Moving egress port#",  port, " to VLAN #", vlan);
                                                  if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
-                                                        (*snmpIter)->movePortToVLANAsTagged(port, vlan);
+                                                        (*sessionIter)->movePortToVLANAsTagged(port, vlan);
                                                         taggedPorts |= (1<<(32-port));
                                                     }
                                                  else
-                                                        (*snmpIter)->movePortToVLANAsUntagged(port, vlan);
+                                                        (*sessionIter)->movePortToVLANAsUntagged(port, vlan);
 
                                                  LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  port, "for VLAN #", vlan);
 							//Perform rate policing and limitation on the port, which is both input and output port
 							//as the VLAN is duplex.
-                                                (*snmpIter)->performBandwidthPolicing(true, port, vlan, (*iter).bandwidth);
-                                                 (*snmpIter)->performBandwidthLimitation(true, port, vlan,  (*iter).bandwidth);
+                                                (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);
+                                                 (*sessionIter)->limitOutputBandwidth(true, port, vlan,  (*iter).bandwidth);
 
 							//deduct bandwidth from the link associated with the port
 							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true); //true == deduct
@@ -346,7 +354,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           }
                                           if (taggedPorts != 0)
                                             {
-                                  		(*snmpIter)->setVLANPortsTagged(taggedPorts, vlan); //Set vlan ports to be "tagged"
+                                  		(*sessionIter)->setVLANPortsTagged(taggedPorts, vlan); //Set vlan ports to be "tagged"
 							RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF(vlan, true); //true == hold
             					LOG(4)(Log::MPLS, "VLSR: Set tagged ports:",  taggedPorts, " in VLAN #", vlan);
                                             }
@@ -457,9 +465,9 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 		VLSRRoute::ConstIterator iter = psb.getVLSR_Route().begin();
 		for ( ; iter != psb.getVLSR_Route().end(); ++iter ) {
 			NetAddress ethSw = (*iter).switchID;
-			SNMPSessionList::Iterator snmpIter = RSVP_Global::snmp->getSNMPSessionList().begin();
-			for (; snmpIter != RSVP_Global::snmp->getSNMPSessionList().end(); ++snmpIter ) {
-				if ((*snmpIter)->getSwitchInetAddr()==ethSw && (*snmpIter)->isValidSession()){
+			SwitchCtrlSessionList::Iterator sessionIter = RSVP_Global::switchController->getSessionList().begin();
+			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
+				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()){
     					SimpleList<uint32> portList;
                                       uint32 port = (*iter).inPort;
                                       uint32 vlanID = (*iter).vlanTag;
@@ -469,7 +477,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                       else if ((port >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                                           portList.push_back(port & 0xffff);
                                       else
-                                          SNMP_Global::getPortsByLocalId(portList, port);
+                                          SwitchCtrl_Global::getPortsByLocalId(portList, port);
                                       if (portList.size() == 0){
     					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress.");
                                             return;
@@ -477,24 +485,25 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                       while (portList.size()) {
                                             port = portList.front();
 
+                                            (*sessionIter)->removePortFromVLAN(port, (*iter).vlanTag);
                                             if ((*iter).vlanTag != 0) {
        						LOG(4)(Log::MPLS, "VLSR: Removing ingress port#",  port, "from VLAN #", (*iter).vlanTag);
-                                                (*snmpIter)->removePortFromVLAN(port, (*iter).vlanTag);
+                                                //(*sessionIter)->removePortFromVLAN(port, (*iter).vlanTag);
                                             }
                                             else {
         						LOG(3)(Log::MPLS, "VLSR: Moving ingress port#",  port, " back to Default VLAN #");
-                                                (*snmpIter)->movePortToDefaultVLAN(port);
+                                                //(*sessionIter)->movePortToDefaultVLAN(port);
                                             }
 
                                             if ( vlanID == 0) {
-                                                vlanID = (*snmpIter)->getVLANbyUntaggedPort(port);
+                                                vlanID = (*sessionIter)->getVLANbyUntaggedPort(port);
                                             }
                                             if (vlanID !=  0) {
                                                 LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
              					     //Undo rate policing and limitation on the port, which is both input and output port
             					     //as the VLAN is duplex.
-                                                (*snmpIter)->performBandwidthPolicing(false, port, (*iter).vlanTag, (*iter).bandwidth);
-                                                (*snmpIter)->performBandwidthLimitation(false, port, (*iter).vlanTag,  (*iter).bandwidth);
+                                                (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth);
+                                                (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);
                                             }
                                             else {
                                                 LOG(2)(Log::MPLS, "VLSR: Invalid VLAN ID for undoing bandwidth policing and limitation on port#",  port);
@@ -509,33 +518,34 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                       else if ((port >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                                           portList.push_back(port & 0xffff);
                                       else
-                                          SNMP_Global::getPortsByLocalId(portList, port);
+                                          SwitchCtrl_Global::getPortsByLocalId(portList, port);
                                       if (portList.size() == 0){
     					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
                                             return;
                                       }
                                       while (portList.size()) {
                                             port = portList.front();
+                                            (*sessionIter)->removePortFromVLAN(port, (*iter).vlanTag);
                                             if ((*iter).vlanTag != 0) {
-                                                (*snmpIter)->removePortFromVLAN(port, (*iter).vlanTag);
+                                                //(*sessionIter)->removePortFromVLAN(port, (*iter).vlanTag);
        						LOG(4)(Log::MPLS, "VLSR: Removing egress port#",  port, "from VLAN #", (*iter).vlanTag);
                                             }
                                             else {
-                                                  (*snmpIter)->movePortToDefaultVLAN(port);
+                                                 // (*sessionIter)->movePortToDefaultVLAN(port);
     						        LOG(3)(Log::MPLS, "VLSR: Moving egress port#",  port, " back to Default VLAN #");
                                             }
 
 						  RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false); //false == increase
 
                                             if ( vlanID == 0) {
-                                                vlanID = (*snmpIter)->getVLANbyUntaggedPort(port);
+                                                vlanID = (*sessionIter)->getVLANbyUntaggedPort(port);
                                             }
                                             if (vlanID !=  0) {
                                                 LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
              					     //Undo rate policing and limitation on the port, which is both input and output port
             					     //as the VLAN is duplex.
-                                                (*snmpIter)->performBandwidthPolicing(false, port, (*iter).vlanTag, (*iter).bandwidth);
-                                                (*snmpIter)->performBandwidthLimitation(false, port, (*iter).vlanTag,  (*iter).bandwidth);
+                                                (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth);
+                                                (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);
                                             }
                                             else {
                                                 LOG(2)(Log::MPLS, "VLSR: Invalid VLAN ID for undoing bandwidth policing and limitation on port#",  port);
@@ -546,11 +556,17 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
                                     if ((((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
                                         || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
-                                            && (*iter).vlanTag != 0 && !(*snmpIter)->VLANHasTaggedPort((*iter).vlanTag))
+                                            && (*iter).vlanTag != 0 && !(*sessionIter)->VLANHasTaggedPort((*iter).vlanTag))
                                     {
                                           //Increase link bandwidth by the amount that is released from removing the VLAN.
                                         RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).vlanTag, false); //false == release
  					}
+
+                                   if ((*sessionIter)->isVLANEmpty(vlanID)) {
+                                        if ((*sessionIter)->removeVLAN(vlanID)) {
+                                            LOG(2)(Log::MPLS, "VLSR: Failed to remove the empty VLAN: ",  vlanID);
+                                        }
+                                   }
  					break;
                         }
                      }

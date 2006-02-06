@@ -69,6 +69,7 @@ ieee32float_p yy_float;
 "explicit_route"	return EXPLICIT_ROUTE;
 "list_alloc"		return LIST_ALLOC;
 "sb_alloc"		return SB_ALLOC;
+"slots"			return SLOTS;
 
 
 [0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?	{ yy_string = yytext; return IP_ADDRESS; }

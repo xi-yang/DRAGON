@@ -36,6 +36,7 @@
 #include "RSVP_Lists.h"
 #include "RSVP_String.h"
 #include "RSVP_TimeValue.h"
+#include "SwitchCtrl_Global.h"
 
 class RSVP;
 class TrafficControl;
@@ -90,6 +91,7 @@ public:
 	void cleanup();
 	void warn( const String& );
 	const SimpleList<Hop>& getHopList() { return hopList; }
+	void addSlot(String slot_type, uint16 slot_num);
 };
 
 #endif /* _RSVP_ConfigFileReader_h_ */

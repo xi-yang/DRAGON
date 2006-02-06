@@ -43,7 +43,9 @@
 #include "RSVP_Session.h"
 #include "RSVP_OutISB.h"
 #include "RSVP_TrafficControl.h"
-#include "SNMP_Global.h"
+#include "SwitchCtrl_Global.h"
+//#include "SNMP_Session.h"
+//#include "CLI_Session.h"
 
 ostream& operator<< ( ostream& os, const PSB& psb ) {
 	os << "PSB:" << (const SENDER_Object&)psb;

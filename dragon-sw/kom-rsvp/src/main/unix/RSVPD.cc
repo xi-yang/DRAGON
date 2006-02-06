@@ -30,7 +30,9 @@
 ****************************************************************************/
 #include "RSVP.h"
 #include "RSVP_Log.h"
-#include "SNMP_Global.h"
+#include "SwitchCtrl_Global.h"
+//#include "SNMP_Session.h"
+//#include "CLI_Session.h"
 #include <fcntl.h>
 #include <sys/stat.h>
 
@@ -151,12 +153,12 @@ int main( int argc, char** argv ) {
 	delete pidfile;
 #endif
 	Log::init( logstring_enable, logstring_disable, logfile );
-	SNMP_Global* snmpGlobal = new SNMP_Global();
+	SwitchCtrl_Global* controller = &SwitchCtrl_Global::instance();
+	RSVP_Global::switchController = controller;
 	RSVP* rsvp = new RSVP( configfile);
-	RSVP_Global::snmp = snmpGlobal;
 	if ( rsvp->properInit() ) rsvp->main();
 	delete rsvp;
-	delete snmpGlobal;
+	delete controller;
 	Log::close();
 #if defined(REAL_NETWORK)
 	unlink( PIDFILE );

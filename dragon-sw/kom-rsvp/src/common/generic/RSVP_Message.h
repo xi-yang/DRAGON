@@ -37,7 +37,9 @@
 #include "RSVP_Lists.h"
 #include "RSVP_PolicyObjects.h"
 #include "RSVP_ProtocolObjects.h"
-#include "SNMP_Global.h"
+#include "SwitchCtrl_Global.h"
+//#include "SNMP_Session.h"
+//#include "CLI_Session.h"
 
 class Message {
 

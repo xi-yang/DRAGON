@@ -35,7 +35,7 @@
 #include "RSVP_TimeValue.h"
 
 class RSVP;
-class SNMP_Global;
+class SwitchCtrl_Global;
 class LogicalInterface;
 class TimerSystem;
 class MessageProcessor;
@@ -49,7 +49,7 @@ struct RSVP_Global {
 	static void init();
 	static void reportSettings();
 	static RSVP* rsvp;
-	static SNMP_Global* snmp;
+	static SwitchCtrl_Global* switchController;
 	static MessageProcessor* messageProcessor;
 	static TimerSystem* currentTimerSystem;
 #if defined(NS2)   

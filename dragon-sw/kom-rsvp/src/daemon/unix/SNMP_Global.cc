@@ -162,7 +162,7 @@ bool SNMP_Session::connectSwitch()
 	 }
 
 	//Read Ethernet switch vendor info
-	if (!(setSwitchVendorInfo() && readVLANFromSwitch())){
+	if (!(getSwitchVendorInfo() && readVLANFromSwitch())){
 		disconnectSwitch();
 		return false;
 	}
@@ -659,7 +659,7 @@ bool SNMP_Session::VLANHasTaggedPort(uint32 vlanID)
     return true;
 }
 
-bool SNMP_Session::setSwitchVendorInfo()
+bool SNMP_Session::getSwitchVendorInfo()
 {
 	struct snmp_pdu *pdu;
 	struct snmp_pdu *response;

@@ -43,7 +43,9 @@
 #include "RSVP_RoutingService.h"
 #include "RSVP_Session.h"
 #include "RSVP_OutISB.h"
-#include "SNMP_Global.h"
+#include "SwitchCtrl_Global.h"
+//#include "SNMP_Session.h"
+//#include "CLI_Session.h"
 
 MessageProcessor::MessageProcessor() : ibuffer(LogicalInterface::maxPayloadLength),
 	sendingHop(NULL), currentLif(NULL), incomingLif(NULL),
@@ -75,7 +77,7 @@ void MessageProcessor::processMessage() {
 
 	if ( currentMessage.getMsgType() == Message::AddLocalId || currentMessage.getMsgType() == Message::DeleteLocalId) {
 		LocalId *lid = currentMessage.getLocalIdObject();
-		SNMP_Global::processLocalIdMessage(currentMessage.getMsgType(), *lid);
+		SwitchCtrl_Global::processLocalIdMessage(currentMessage.getMsgType(), *lid);
 		delete lid;
 		return;
 	}

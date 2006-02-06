@@ -120,7 +120,7 @@ public:
         uint32 getVendor() { return vendor;}
 	bool connectSwitch();
 	void disconnectSwitch();
-	bool setSwitchVendorInfo();
+	bool getSwitchVendorInfo();
 	String& getSessionName() {return sessionName;}
 	NetAddress& getSwitchInetAddr() {return switchInetAddr;}
 	bool isValidSession() const {return active;}

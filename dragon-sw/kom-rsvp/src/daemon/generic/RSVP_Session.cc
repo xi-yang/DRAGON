@@ -44,7 +44,8 @@
 #include "RSVP_Session.h"
 #include "RSVP_FilterSpecList.h"
 #include "RSVP_TrafficControl.h"
-#include "SNMP_Global.h"
+#include "SwitchCtrl_Global.h"
+
 // #define BETWEEN_APIS 1
 
 Session::Session( const SESSION_Object &session) : SESSION_Object(session),
@@ -307,38 +308,45 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
           (!fromLocalAPI && inRtId != NetAddress(0) && outUnumIfID != 0) ||
 	   (((!fromLocalAPI) && inRtId != NetAddress(0) && outRtId != NetAddress(0)) || (inRtId == outRtId && outUnumIfID != 0)) )
 	{	
-		SNMPSessionList::Iterator snmpIter;
-		bool foundSNMPSession;
-		SNMP_Session* ssNew;
+		SwitchCtrlSessionList::Iterator sessionIter;
+		bool foundSession;
+		SwitchCtrl_Session* ssNew;
 		VLSR_Route vlsr;
 		memset(&vlsr, 0, sizeof(VLSR_Route));
 		RSVP_Global::rsvp->getRoutingService().getVLSRRoutebyOSPF(inRtId, outRtId, inUnumIfID, outUnumIfID, vlsr);
 		vlsr.bandwidth = msg.getSENDER_TSPEC_Object().get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
 		if (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0))
 		{
-			//prepare SNMP connection
-			snmpIter = RSVP_Global::snmp->getSNMPSessionList().begin();
-			foundSNMPSession = false;
-			for (; snmpIter != RSVP_Global::snmp->getSNMPSessionList().end(); ++snmpIter ) {
-				if ((*snmpIter)->getSwitchInetAddr()==vlsr.switchID && (*snmpIter)->isValidSession()){
-					foundSNMPSession = true;
+			//prepare SwitchCtrl session connection
+			sessionIter = RSVP_Global::switchController->getSessionList().begin();
+			foundSession = false;
+			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
+				if ((*sessionIter)->getSwitchInetAddr()==vlsr.switchID && (*sessionIter)->isValidSession()){
+					foundSession = true;
 					break;
 				}
 			}
-			if (!foundSNMPSession){
-				LOG(2)( Log::MPLS, "VLSR: SNMP Session not found. Now creating SNMP session for ", vlsr.switchID);
-				ssNew = new SNMP_Session("VLSR", vlsr.switchID);
+			if (!foundSession){
+				LOG(2)( Log::MPLS, "VLSR: SwitchCtrl Session not found. Now creating new session for ", vlsr.switchID);
+
+                            ssNew = RSVP_Global::switchController->createSession(vlsr.switchID);
+                            if (!ssNew) {
+                                    LOG(1)( Log::MPLS, "Failed to create VLSR SwitchCtrl Session: Unkown switch Vendor/Model");
+        				return false;
+                            }
+
 				if (!ssNew->connectSwitch()){
-					LOG(3)( Log::MPLS, "VLSR: Cannot connect to Ethernet switch : ", vlsr.switchID, " via SNMP.");
+					LOG(2)( Log::MPLS, "VLSR: Cannot connect to Ethernet switch : ", vlsr.switchID);
 					delete(ssNew);
 					return false;
 				}
 				else{
-					RSVP_Global::snmp->addSNMPSession(ssNew);
+					RSVP_Global::switchController->addSession(ssNew);
 				}
 			}
-			else if (!(*snmpIter)->readVLANFromSwitch()) { //Read/Synchronize to Ethernet switch
-				LOG(3)( Log::MPLS, "VLSR: Cannot read from Ethernet switch : ", vlsr.switchID, " via SNMP.");
+			else if (!(*sessionIter)->readVLANFromSwitch()) { //Read/Synchronize to Ethernet switch
+			       //syncWithSwitch ... !
+				LOG(2)( Log::MPLS, "VLSR: Cannot read from Ethernet switch : ", vlsr.switchID);
 				return false;
 			}
 			vLSRoute.push_back(vlsr);                    
@@ -825,7 +833,7 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 	} else
 	{
 #endif
-	//@@@@hack
+	//@@@@
 	//if (outLif && outLif != RSVP_Global::rsvp->getApiLif()){
 	//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), outLif->getAddress(), bandwidth);
 	//}

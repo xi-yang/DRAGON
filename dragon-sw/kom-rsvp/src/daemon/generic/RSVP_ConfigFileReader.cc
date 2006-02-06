@@ -182,6 +182,20 @@ void ConfigFileReader::setApiPort( uint16 apiPort ) {
 #endif
 }
 
+void ConfigFileReader::addSlot(String slot_type, uint16 slot_num) {
+	slot_entry se;
+	if (slot_type == "gi") {
+		se.slot_type = SLOT_TYPE_GIGE;
+	}
+	else if (slot_type == "te") {
+		se.slot_type = SLOT_TYPE_TENGIGE;
+	}
+	else
+		return;
+	se.slot_num = slot_num;
+	RSVP_Global::switchController->addSlotEntry(se);
+}
+
 void ConfigFileReader::cleanup() {
 	interfaceName = "";
 	localAddress = remoteAddress = virtAddress = 0;
