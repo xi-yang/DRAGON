@@ -8776,8 +8776,8 @@ elif test "$with_switch_cli_type" = "ssh"; then
        { (exit 1); exit 1; }; }
     fi;
 
-    eval switch_cli_type="0"
 fi
+    eval switch_cli_type="0"
 fi;
 
 cat >>confdefs.h <<_ACEOF
