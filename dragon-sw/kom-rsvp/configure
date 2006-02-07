@@ -8744,18 +8744,18 @@ This can also be specified by --enable-switch-cli-type [telnet|ssh]
 CLI Session Type [none]: $ECHO_C"
 read tmpinput
 if test "$tmpinput" = "telnet"; then
-    tmpinput="1"
+    tmpinput="CLI_TELNET"
 elif test "$tmpinput" = "ssh"; then
-    tmpinput="2"
+    tmpinput="CLI_SSH"
 else
-    tmpinput="0"
+    tmpinput="CLI_NONE"
 fi
 elif test "$with_switch_cli_type" = "telnet"; then
-    tmpinput="1"
+    tmpinput="CLI_TELNET"
 elif test "$with_switch_cli_type" = "ssh"; then
-    tmpinput="2"
+    tmpinput="CLI_SSH"
 else
-    eval switch_cli_type="0"
+    eval switch_cli_type="CLI_NONE"
 fi; #if test "$with_switch_cli_type"
 
 eval switch_cli_type=\$tmpinput
@@ -8764,9 +8764,9 @@ fi;
 
 if test "$switch_cli_type" = ""; then
 if test "$with_switch_cli_type" = "telnet"; then
-    eval switch_cli_type="1"
+    eval switch_cli_type="CLI_TELNET"
 elif test "$with_switch_cli_type" = "ssh"; then
-    eval switch_cli_type="2"
+    eval switch_cli_type="CLI_SSH"
     
     echo "$as_me:$LINENO: checking 'expect' command" >&5
     echo $ECHO_N "checking 'expect' command... $ECHO_C" >&6
@@ -8777,7 +8777,7 @@ elif test "$with_switch_cli_type" = "ssh"; then
     fi;
 
 fi
-    eval switch_cli_type="0"
+    eval switch_cli_type="CLI_NONE"
 fi;
 
 cat >>confdefs.h <<_ACEOF
