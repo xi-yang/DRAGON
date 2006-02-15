@@ -2148,7 +2148,13 @@ DEFUN (ospf_te_interface_ifsw_cap4,
        "Tagged VLAN ID in the range [1, 4095]\n")
 {
   u_int32_t vlan, vlan1, vlan2;
- 
+
+  if  (te_config.te_para.link_ifswcap.link_ifswcap_data.switching_cap != LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap4: no 'vlan' command on non-L2SC link.%s", VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  	
   if (sscanf (argv[0], "%d", &vlan1) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap4: fscanf vlan1: %s%s", strerror (errno), VTY_NEWLINE);
