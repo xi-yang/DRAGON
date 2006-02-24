@@ -13,6 +13,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "SNMP_Session.h"
 #include "CLI_Session.h"
 #include "SwitchCtrl_Session_Force10E600.h"
+#include "SwitchCtrl_Session_RaptorER1010.h"
 
 #include <signal.h>
 
@@ -51,10 +52,19 @@ void SwitchCtrl_Session::disconnectSwitch()
 
 bool SwitchCtrl_Session::getSwitchVendorInfo()
 { 
+    bool ret;
     if (!snmp_enabled)
         return false;
 
-    return SwitchCtrl_Global::static_getSwitchVendorInfo(snmpSessionHandle, vendor, venderSystemDescription); 
+    ret = SwitchCtrl_Global::static_getSwitchVendorInfo(snmpSessionHandle, vendor, venderSystemDescription); 
+    switch (vendor) {
+    case RFC2674:
+    case IntelES530:
+        rfc2674_compatible = snmp_enabled = true;
+        break;
+    }
+
+    return ret;
 }
 
 bool SwitchCtrl_Session::createVLAN(uint32 &vlanID)
@@ -195,7 +205,6 @@ bool SwitchCtrl_Session::readVLANFromSwitch()
     if (!hook_createVlanInterfaceToIDRefTable(vlanRefIdConvList))
         return false;
 
-    //if (rfc2674_compatible
     readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.2", vlanPortMapListAll);
     if (vlanPortMapListAll.size() == 0)
         ret = false;
@@ -514,6 +523,8 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         	vendor = LambdaOptical;
         else if (venderSystemDescription.leftequal("Force10 Networks Real Time Operating System Software")) 
         	vendor = Force10E600;
+        else if (venderSystemDescription.leftequal("Ether-Raptor")) 
+        	vendor = RaptorER1010;
         else{
         	vendor = Illegal;
          	return false;
@@ -553,8 +564,11 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
 
     switch(vendor_model) {
         case Force10E600:
-            ssNew = new SwitchCtrl_Session_Force10E600("VLSR-SNMP", switchAddr);
+            ssNew = new SwitchCtrl_Session_Force10E600("VLSR-Force10", switchAddr);
             break;                                        
+        case RaptorER1010:
+            ssNew = new SwitchCtrl_Session_RaptorER1010("VLSR-Raptor", switchAddr);
+            break;
         case Illegal:
             return NULL;
         default:

@@ -37,13 +37,14 @@ public:
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port);
 
 	///////------Vendor/model specific functions--------///////
-	bool setVLANPVID(uint32 port, uint32 vlanID); // A hack to Dell 5324 switch
-	bool setVLANPortTag(uint32 portListNew, uint32 vlanID); // A hack to Dell 5324 switch
-	// RFC2674 and IntelES530
-	bool setVLANPort(uint32 portListNew, uint32 vlanID); // vendor specific
+	bool setVLANPortTag(uint32 portListNew, uint32 vlanID);
+	bool setVLANPort(uint32 portListNew, uint32 vlanID);
+	bool setVLANPortTag(uint8 * portbits, int bitlen, uint32 vlanID);	
+	bool setVLANPort(uint8 * portbits, int bitlen, uint32 vlanID);	
+	//  Dell 5324 switch
+	bool setVLANPVID(uint32 port, uint32 vlanID); 
 	// RFC2674 (DELL and Extreme)
 	bool movePortToDefaultVLAN(uint32 port); 
 };
-
 
 #endif //ifndef _SNMP_SESSION_H_

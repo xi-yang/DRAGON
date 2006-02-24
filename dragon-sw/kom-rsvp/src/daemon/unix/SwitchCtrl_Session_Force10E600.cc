@@ -25,10 +25,10 @@ bool SwitchCtrl_Session_Force10E600::movePortToVLANAsUntagged(uint32 port, uint3
         assert(bit < MAX_VLAN_PORT_BYTES*8);
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
         if (vpmUntagged)
-            ResetPortBitForce10(vpmUntagged->portbits, bit);
+            ResetPortBit(vpmUntagged->portbits, bit);
         vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
         if (vpmAll)
-            ResetPortBitForce10(vpmAll->portbits, bit);
+            ResetPortBit(vpmAll->portbits, bit);
         ret &= deleteVLANPort_ShellScript(port, old_vlan, false);
     }
 
@@ -36,10 +36,10 @@ bool SwitchCtrl_Session_Force10E600::movePortToVLANAsUntagged(uint32 port, uint3
     assert(bit < MAX_VLAN_PORT_BYTES*8);
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged)
-    SetPortBitForce10(vpmUntagged->portbits, bit);
+    SetPortBit(vpmUntagged->portbits, bit);
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
-        SetPortBitForce10(vpmAll->portbits, bit);
+        SetPortBit(vpmAll->portbits, bit);
         ret &= addVLANPort_ShellScript(port, vlanID, false);
     }
 
@@ -59,7 +59,7 @@ bool SwitchCtrl_Session_Force10E600::movePortToVLANAsTagged(uint32 port, uint32 
     assert(bit < MAX_VLAN_PORT_BYTES*8);
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
-       SetPortBitForce10(vpmAll->portbits, bit);
+       SetPortBit(vpmAll->portbits, bit);
        ret&=addVLANPort_ShellScript(port, vlanID, true);
     }
     
@@ -82,10 +82,10 @@ bool SwitchCtrl_Session_Force10E600::removePortFromVLAN(uint32 port, uint32 vlan
         assert(bit < MAX_VLAN_PORT_BYTES*8);
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
         if (vpmUntagged)
-            ResetPortBitForce10(vpmUntagged->portbits, bit);
+            ResetPortBit(vpmUntagged->portbits, bit);
         vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
         if (vpmAll) {
-            ResetPortBitForce10(vpmAll->portbits, bit);
+            ResetPortBit(vpmAll->portbits, bit);
             bool ret1 = this->deleteVLANPort_ShellScript(port, vlanID, false);
             bool ret2 = this->deleteVLANPort_ShellScript(port, vlanID, true);
             ret &= (ret1 || ret2);
@@ -497,7 +497,7 @@ bool SwitchCtrl_Session_Force10E600::hook_createVlanInterfaceToIDRefTable(vlanRe
 
 bool SwitchCtrl_Session_Force10E600::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 {
-        if (HasPortBitForce10(vpm.portbits, Port2BitForce10(port)))
+        if (HasPortBit(vpm.portbits, Port2BitForce10(port)))
             return true;
         return false;
 }

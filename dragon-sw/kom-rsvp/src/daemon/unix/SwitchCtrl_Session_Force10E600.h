@@ -73,25 +73,5 @@ inline uint32 Port2BitForce10(uint32 port)
 #endif
 }
 
-inline void SetPortBitForce10(uint8* bitstring, uint32 bit)
-{
-    uint8 mask = (1 << (7 - bit%8))&0xff;
-    bitstring[bit/8] |= mask;
-}
-
-inline void ResetPortBitForce10(uint8* bitstring, uint32 bit)
-{
-    assert (bit > 0);
-    uint8 mask = (~(1 << (7 - bit%8)))&0xff;
-    bitstring[bit/8] &= mask;
-}
-
-inline bool HasPortBitForce10(uint8* bitstring, uint32 bit)
-{
-    assert (bit > 0);
-    uint8 mask = (1 << (7 - bit%8))&0xff;    
-    return (bitstring[bit/8] & mask) == 0 ? false : true;
-}
-
 #endif //ifndef _CLI_SESSION_H_
 

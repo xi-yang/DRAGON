@@ -40,12 +40,13 @@ Notes:
 #endif
 
 enum SupportedVendor{
-	Illegal = -1,
 	AutoDetect = 0,
 	IntelES530 = 1, //Intel ES-530 Express Fast Ethernet Switch
 	RFC2674 = 2,	// Dell 5200/5300 Series GigE Switch
 	LambdaOptical = 3,
-	Force10E600 =4,
+	Force10E600 = 4,
+	RaptorER1010 = 5,
+	Illegal = 0xffff,
 };
 
 struct vlanPortMap{
@@ -251,6 +252,32 @@ inline vlanPortMap *getVlanPortMapById(vlanPortMapList &vpmList, uint32 vid)
             return &(*iter);
     return NULL;
 }
+
+inline void SetPortBit(uint8* bitstring, uint32 bit)
+{
+    uint8 mask = (1 << (7 - bit%8))&0xff;
+    bitstring[bit/8] |= mask;
+}
+
+inline void ResetPortBit(uint8* bitstring, uint32 bit)
+{
+    assert (bit > 0);
+    uint8 mask = (~(1 << (7 - bit%8)))&0xff;
+    bitstring[bit/8] &= mask;
+}
+
+inline bool HasPortBit(uint8* bitstring, uint32 bit)
+{
+    assert (bit > 0);
+    uint8 mask = (1 << (7 - bit%8))&0xff;    
+    return (bitstring[bit/8] & mask) == 0 ? false : true;
+}
+
+inline void RevertWordBytes(uint32& x)
+{
+	x = (x<<24) | (x>>24) | ((x&0x00ff0000)>>8) | ((x&0x0000ff00)<<8);
+}
+
 
 #endif //#ifndef _SWITCHCTRL_GLOBAL_H_
 

@@ -16,20 +16,23 @@ bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
     bool ret = true;
     vlanPortMap * vpmAll = NULL, *vpmUntagged = NULL;
 
-    if ((!active) || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
+    if ((!active) || !rfc2674_compatible || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
     	return false; //don't touch the control port!
     int old_vlan = getVLANbyUntaggedPort(port);
     if (old_vlan) { //Remove untagged port from old VLAN
-    	mask=(~(1<<(32-port))) & 0xFFFFFFFF;
-              vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
-              if (vpmUntagged)
-    		    vpmUntagged->ports&=mask;
-              vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
-              if (vpmAll)
-    		    vpmAll->ports&=mask;
-    	if (vendor == RFC2674) 
-                    if (vpmUntagged) ret&=setVLANPortTag(vpmUntagged->ports , old_vlan); //Set back to "tagged"
-    	if (vpmUntagged) ret&=setVLANPort(vpmUntagged->ports, old_vlan); //remove untagged port out of the old VLAN
+        mask=(~(1<<(32-port))) & 0xFFFFFFFF;
+        vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
+        if (vpmUntagged)
+            vpmUntagged->ports&=mask;
+        vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
+        if (vpmAll)
+    	    vpmAll->ports&=mask;
+        if (vendor == RFC2674) {
+            //Set this port to untagged
+            if (vpmUntagged) ret&=setVLANPortTag(vpmUntagged->ports , old_vlan); 
+        }
+        //remove THIS untagged port out of the old VLAN
+        if (vpmUntagged) ret&=setVLANPort(vpmUntagged->ports, old_vlan); 
    }
 
     mask = 1<<(32-port);
@@ -42,11 +45,10 @@ bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
         ret&=setVLANPort(vpmAll->ports, vlanID) ;
         }
 
-    //@@@@ if (rfc2674_compatible) ??
     if (vendor == RFC2674) {
-       	if (vpmUntagged)
+        if (vpmUntagged)
     	    ret&=setVLANPortTag(vpmUntagged->ports, vlanID); //Set to "untagged"
-    	ret&=setVLANPVID(port, vlanID); //Set pvid
+        ret&=setVLANPVID(port, vlanID); //Set pvid
     }
 
     return ret;
@@ -58,7 +60,7 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
 	bool ret = true;
 	vlanPortMap * vpmAll = NULL;
 
-	if ((!active) || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
+	if ((!active) || !rfc2674_compatible || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
 		return false; //don't touch the control port!
 
        //there is no need to remove a to-be-tagged-in-new-VLAN port from old VLAN
@@ -83,7 +85,7 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
     bool ret = true;
     vlanPortMap * vpmAll = NULL, *vpmUntagged = NULL;
 
-    if ((!active) || port==SWITCH_CTRL_PORT)
+    if ((!active) || !rfc2674_compatible || port==SWITCH_CTRL_PORT)
     	return false; //don't touch the control port!
 
     if (vlanID == 0)
@@ -99,11 +101,11 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
         if (vendor == RFC2674) {
             if (venderSystemDescription =="PowerConnect 5224")
                 ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID;
-            if (vpmAll)
-                ret&=setVLANPortTag(vpmAll->ports, vlanID); //Set back to "tagged"
+            if (vpmUntagged)
+                ret&=setVLANPortTag(vpmUntagged->ports, vlanID); //make THIS port tagged
     	}
     	if (vpmAll)
-    	    ret &= setVLANPort(vpmAll->ports, vlanID);
+    	    ret &= setVLANPort(vpmAll->ports, vlanID); //remove
     }
 
     return ret;
@@ -121,7 +123,7 @@ bool SNMP_Session::setVLANPVID(uint32 port, uint32 vlanID)
 	int status;
 	String tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.5.1.1";
 
-	if (!active || vendor!=RFC2674) //not initialized or session has been disconnected
+	if (!active || !rfc2674_compatible) //not initialized or session has been disconnected
 		return false;
 	// Create the PDU for the data for our request. 
 	  pdu = snmp_pdu_create(SNMP_MSG_SET);
@@ -154,15 +156,22 @@ bool SNMP_Session::setVLANPVID(uint32 port, uint32 vlanID)
 
 bool SNMP_Session::setVLANPortTag(uint32 portListNew, uint32 vlanID)
 {
+    RevertWordBytes(portListNew);
+
+    return setVLANPortTag((uint8*)&portListNew, 32, vlanID);
+}
+
+bool SNMP_Session::setVLANPortTag(uint8* portbits, int bitlen, uint32 vlanID)
+{
 	struct snmp_pdu *pdu;
 	struct snmp_pdu *response;
 	oid anOID[MAX_OID_LEN];
 	size_t anOID_len = MAX_OID_LEN;
-	char type, value[128], oid_str[128];
-	int status;
+	char type, value[128], oid_str[128], oct[3];
+	int status, i;
 	String tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
 
-	if (!active || vendor!=RFC2674) //not initialized or session has been disconnected
+	if (!active || !rfc2674_compatible) //not initialized or session has been disconnected
 		return false;
 	// Create the PDU for the data for our request. 
 	  pdu = snmp_pdu_create(SNMP_MSG_SET);
@@ -170,9 +179,12 @@ bool SNMP_Session::setVLANPortTag(uint32 portListNew, uint32 vlanID)
 	  // vlan port list 
 	  sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
 	  status = read_objid(oid_str, anOID, &anOID_len);
-	  type='x'; 
-  	  sprintf(value, "%.8lx", portListNew);
-	  
+	  type='x';
+
+         for (i = 0, value[0] = 0; i < (bitlen+7)/8; i++) { 
+            snprintf(oct, 3, "%.2x", portbits[i]);
+            strcat(value,oct);
+         }
 	  status = snmp_add_var(pdu, anOID, anOID_len, type, value);
 
 	  // Send the Request out. 
@@ -195,14 +207,30 @@ bool SNMP_Session::setVLANPortTag(uint32 portListNew, uint32 vlanID)
 
 bool SNMP_Session::setVLANPort(uint32 portListNew, uint32 vlanID)
 {
+    //because the portListNew was read in as a 32-bit long integer, port 1-8 goes the highest byte.
+    //In other port-bitmask reading, we put port 1:8 in the lowest byte (1st byte of a uint8 string)
+    RevertWordBytes(portListNew); 
+
+    if (vendor==IntelES530) {
+        uint8 value[12];
+        memset(value, 0, 12);
+        memcpy(value, &portListNew, sizeof(uint32));
+    	 return setVLANPort(value, 96, vlanID);
+    }
+    else 
+    	return setVLANPort((uint8*)&portListNew, 32, vlanID);
+}
+
+bool SNMP_Session::setVLANPort(uint8* portbits, int bitlen, uint32 vlanID)
+{
 	struct snmp_pdu *pdu;
 	struct snmp_pdu *response;
 	oid anOID[MAX_OID_LEN];
 	size_t anOID_len = MAX_OID_LEN;
-	char type, value[128], oid_str[128];
-	int status;
+	char type, value[128], oid_str[128], oct[3];
+	int status, i;
 
-	if (!active || vendor==Illegal) //not initialized or session has been disconnected
+	if (!active || !rfc2674_compatible) //not initialized or session has been disconnected
 		return false;
 	// Create the PDU for the data for our request. 
 	  pdu = snmp_pdu_create(SNMP_MSG_SET);
@@ -212,10 +240,10 @@ bool SNMP_Session::setVLANPort(uint32 portListNew, uint32 vlanID)
 	  status = read_objid(oid_str, anOID, &anOID_len);
 	  type='x'; 
 
-	  if (vendor==IntelES530)
-		sprintf(value, "%.8lx0000000000000000", portListNew);
-	  else if (vendor==RFC2674)
-	  	sprintf(value, "%.8lx", portListNew);
+         for (i = 0, value[0] = 0; i < (bitlen+7)/8; i++) { 
+            snprintf(oct, 3, "%.2x", portbits[i]);
+            strcat(value,oct);
+         }
 	  
 	  status = snmp_add_var(pdu, anOID, anOID_len, type, value);
 
@@ -236,7 +264,6 @@ bool SNMP_Session::setVLANPort(uint32 portListNew, uint32 vlanID)
 	  }
 	  return true;
 }
-
 
 /////////////----------///////////
 
