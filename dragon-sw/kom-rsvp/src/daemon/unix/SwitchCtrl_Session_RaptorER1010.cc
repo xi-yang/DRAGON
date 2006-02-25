@@ -45,9 +45,10 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsUntagged(uint32 port, uint
         SetPortBit(vpmAll->portbits, port);
         ret&=setVLANPort(vpmAll->portbits, RAPTOR_VLAN_BITLEN, vlanID) ;
     }
-
+    else
+        return false;
     //@@@@ Does Raptor require set PVID to the VLAN#?
-    //ret&=setVLANPVID(port, vlanID); //Set pvid
+    ret&=setVLANPVID(port, vlanID); //Set pvid
 
     return ret;
 }
@@ -71,6 +72,11 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsTagged(uint32 port, uint32
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged)
         ret&=setVLANPortTag(vpmUntagged->portbits, RAPTOR_VLAN_BITLEN, vlanID);
+    else
+        return false;
+
+    //@@@@ Does Raptor require set PVID to the VLAN#?
+    ret&=setVLANPVID(port, vlanID); //Set pvid
 
     return ret;
 }
@@ -93,9 +99,9 @@ bool SwitchCtrl_Session_RaptorER1010::removePortFromVLAN(uint32 port, uint32 vla
             vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
             if (vpmUntagged) {
                 ResetPortBit(vpmUntagged->portbits, port);
-                //@@@@    ?+?   Set pvid to default vlan ID;
-                //ret&=setVLANPVID(port, 1); 
                 ret&=setVLANPortTag(vpmUntagged->portbits, RAPTOR_VLAN_BITLEN, vlanID);
+                //@@@@    ?+?   Set pvid to default vlan ID;
+                ret&=setVLANPVID(port, 1);
             }
             ret &= setVLANPort(vpmAll->portbits, RAPTOR_VLAN_BITLEN, vlanID);
         }
