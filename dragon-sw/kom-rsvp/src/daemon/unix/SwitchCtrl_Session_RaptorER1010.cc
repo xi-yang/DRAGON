@@ -211,6 +211,7 @@ void SwitchCtrl_Session_RaptorER1010::hook_getPortMapFromSnmpVars(vlanPortMap &v
             vpm.portbits[i] = vars->val.bitstring[i];
        }
     }
+     vpm.vid = (uint32)vars->name[vars->name_length - 1];
 }
 
 bool SwitchCtrl_Session_RaptorER1010::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
