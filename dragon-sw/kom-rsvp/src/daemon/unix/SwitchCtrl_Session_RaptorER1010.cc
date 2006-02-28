@@ -39,10 +39,10 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsUntagged(uint32 port, uint
 
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged)
-        SetPortBit(vpmUntagged->portbits, port);
+        SetPortBit(vpmUntagged->portbits, port-1);
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
-        SetPortBit(vpmAll->portbits, port);
+        SetPortBit(vpmAll->portbits, port-1);
         ret&=setVLANPort(vpmAll->portbits, RAPTOR_VLAN_BITLEN, vlanID) ;
     }
     else
@@ -64,7 +64,7 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsTagged(uint32 port, uint32
     //there is no need to remove a to-be-tagged-in-new-VLAN port from old VLAN
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
-        SetPortBit(vpmAll->portbits, port);
+        SetPortBit(vpmAll->portbits, port-1);
         ret&=setVLANPort(vpmAll->portbits, RAPTOR_VLAN_BITLEN, vlanID) ;
     } else
         return false;
@@ -95,10 +95,10 @@ bool SwitchCtrl_Session_RaptorER1010::removePortFromVLAN(uint32 port, uint32 vla
     if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN) {
     	 vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
         if (vpmAll) {
-            ResetPortBit(vpmAll->portbits, port);
+            ResetPortBit(vpmAll->portbits, port-1);
             vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
             if (vpmUntagged) {
-                ResetPortBit(vpmUntagged->portbits, port);
+                ResetPortBit(vpmUntagged->portbits, port-1);
                 ret&=setVLANPortTag(vpmUntagged->portbits, RAPTOR_VLAN_BITLEN, vlanID);
                 //@@@@    ?+?   Set pvid to default vlan ID;
                 ret&=setVLANPVID(port, 1);
@@ -216,7 +216,7 @@ void SwitchCtrl_Session_RaptorER1010::hook_getPortMapFromSnmpVars(vlanPortMap &v
 
 bool SwitchCtrl_Session_RaptorER1010::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 {
-    return HasPortBit(vpm.portbits, port);
+    return HasPortBit(vpm.portbits, port-1);
 }
 
 
