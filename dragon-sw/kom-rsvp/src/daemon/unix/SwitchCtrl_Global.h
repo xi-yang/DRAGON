@@ -31,7 +31,7 @@ Notes:
 
 #define MIN_VLAN			2
 #define MAX_VLAN	   		4095
-#define MAX_VENDOR			4
+#define MAX_VENDOR			6
 
 #ifdef FORCE10_SOFTWARE_V6
     #define MAX_VLAN_PORT_BYTES 96  // FTOS-ED-6.2.1
@@ -188,6 +188,7 @@ protected:
 		supportedVendorOidString[IntelES530] = ".1.3.6.1.4.1.343.6.63.3.8.2.3.1.3";
 		supportedVendorOidString[RFC2674] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
 		supportedVendorOidString[LambdaOptical] = "1.3.6.1.4.1.7156.1.4.1.1";
+		supportedVendorOidString[RaptorER1010] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
 	}
 };
 
