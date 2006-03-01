@@ -137,11 +137,14 @@ bool SwitchCtrl_Session::isVLANEmpty(const uint32 vlanID)
 const uint32 SwitchCtrl_Session::findEmptyVLAN()
 {
     vlanPortMapList::ConstIterator iter;
+    uint32 ret =1;
     for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter) {
         if (hook_isVLANEmpty(*iter))
             return (*iter).vid;
+        else if (ret == (*iter).vid)
+            ret = (*iter).vid+1;
     }
-    return 0;
+    return ret;
 }
 
 void SwitchCtrl_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapList &vpmList)

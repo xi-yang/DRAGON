@@ -16,12 +16,12 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsUntagged(uint32 port, uint
 
     if ((!active) || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
     	return false; //don't touch the control port!
-    int old_vlan = getVLANbyUntaggedPort(port);
 
     //@@@@ Raptor allows a port to be tagged in two VLANs
     //@@@@ Do we still need to do the following removal?
     //@@@@ Code haven't been changed after copied from SNMP_Session.cc
     /*
+    int old_vlan = getVLANbyUntaggedPort(port);
     if (old_vlan) { //Remove untagged port from old VLAN
         mask=(~(1<<(32-port))) & 0xFFFFFFFF;
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
@@ -107,7 +107,7 @@ bool SwitchCtrl_Session_RaptorER1010::removePortFromVLAN(uint32 port, uint32 vla
                 SetPortBit(vpmUntagged->portbits, port-1);
                 ret&=setVLANPortTag(vpmUntagged->portbits, RAPTOR_VLAN_BITLEN, vlanID);
                 //@@@@    ?+?   Set pvid to default vlan ID;
-                //ret&=setVLANPVID(port, 1);
+                ret&=setVLANPVID(port, 1);
             }
         }
     }
