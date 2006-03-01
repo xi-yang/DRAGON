@@ -165,7 +165,7 @@ bool SwitchCtrl_Session_RaptorER1010::hook_createVLAN(const uint32 vlanID)
     memset(&vpm, 0, sizeof(vlanPortMap));
     vpm.vid = vlanID;
     vlanPortMapListAll.push_back(vpm);
-    memset(&vpm, 0xff, sizeof(vlanPortMap));
+    memset(vpm.portbits, 0xff, MAX_VLAN_PORT_BYTES);
     vlanPortMapListUntagged.push_back(vpm);
 
     return true;
