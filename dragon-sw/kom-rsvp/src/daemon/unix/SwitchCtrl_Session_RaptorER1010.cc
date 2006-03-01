@@ -38,11 +38,12 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsUntagged(uint32 port, uint
     */
 
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
-    if (vpmUntagged)
+    if (vpmUntagged) //bit==1 means port is untagged
         SetPortBit(vpmUntagged->portbits, port-1);
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
         SetPortBit(vpmAll->portbits, port-1);
+        //By default Raptor move port into VLAN as untagged
         ret&=setVLANPort(vpmAll->portbits, RAPTOR_VLAN_BITLEN, vlanID) ;
     }
     else
@@ -70,8 +71,11 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsTagged(uint32 port, uint32
         return false;
 
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
-    if (vpmUntagged)
+    if (vpmUntagged) {
+         //bit==0 means port is untagged
+        ResetPortBit(vpmUntagged->portbits, port-1);
         ret&=setVLANPortTag(vpmUntagged->portbits, RAPTOR_VLAN_BITLEN, vlanID);
+    }
     else
         return false;
 
@@ -96,14 +100,15 @@ bool SwitchCtrl_Session_RaptorER1010::removePortFromVLAN(uint32 port, uint32 vla
     	 vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
         if (vpmAll) {
             ResetPortBit(vpmAll->portbits, port-1);
+            ret &= setVLANPort(vpmAll->portbits, RAPTOR_VLAN_BITLEN, vlanID);
             vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
             if (vpmUntagged) {
-                ResetPortBit(vpmUntagged->portbits, port-1);
+                //After a port is moved out of a VLAN make it untagged in this VLAN.
+                SetPortBit(vpmUntagged->portbits, port-1);
                 ret&=setVLANPortTag(vpmUntagged->portbits, RAPTOR_VLAN_BITLEN, vlanID);
                 //@@@@    ?+?   Set pvid to default vlan ID;
-                ret&=setVLANPVID(port, 1);
+                //ret&=setVLANPVID(port, 1);
             }
-            ret &= setVLANPort(vpmAll->portbits, RAPTOR_VLAN_BITLEN, vlanID);
         }
     }
 
