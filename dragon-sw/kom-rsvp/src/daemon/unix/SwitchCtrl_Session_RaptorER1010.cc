@@ -159,6 +159,15 @@ bool SwitchCtrl_Session_RaptorER1010::hook_createVLAN(const uint32 vlanID)
         if(response) snmp_free_pdu(response);
         return false;
     }
+
+    //add the new *empty* vlan into PortMapListAll and portMapListUntagged
+    vlanPortMap vpm;
+    memset(&vpm, 0, sizeof(vlanPortMap));
+    vpm.vid = vlanID;
+    vlanPortMapListAll.push_back(vpm);
+    memset(&vpm, 0xff, sizeof(vlanPortMap));
+    vlanPortMapListUntagged.push_back(vpm);
+
     return true;
 }
 

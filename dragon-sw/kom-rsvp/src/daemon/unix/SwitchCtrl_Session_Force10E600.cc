@@ -390,6 +390,13 @@ bool SwitchCtrl_Session_Force10E600::hook_createVLAN(const uint32 vlanID)
     DIE_IF_NEGATIVE(n= writeShell(createVlan, 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, FORCE10_ERROR_PROMPT, 1, 10));
 
+    //add the new *empty* vlan into PortMapListAll and portMapListUntagged
+    vlanPortMap vpm;
+    memset(&vpm, 0, sizeof(vlanPortMap));
+    vpm.vid = vlanID;
+    vlanPortMapListAll.push_back(vpm);
+    vlanPortMapListUntagged.push_back(vpm);
+
     return postAction();
 }
 

@@ -87,12 +87,13 @@ bool SwitchCtrl_Session::createVLAN(uint32 &vlanID)
         return false;
 
     //add the new *empty* vlan into PortMapListAll and portMapListUntagged
+    /*
     vlanPortMap vpm;
     memset(&vpm, 0, sizeof(vlanPortMap));
     vpm.vid = vlanID;
     vlanPortMapListAll.push_back(vpm);
     vlanPortMapListUntagged.push_back(vpm);
-
+    */
     return true;
 }
 
