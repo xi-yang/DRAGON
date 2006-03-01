@@ -262,14 +262,12 @@ inline void SetPortBit(uint8* bitstring, uint32 bit)
 
 inline void ResetPortBit(uint8* bitstring, uint32 bit)
 {
-    assert (bit > 0);
     uint8 mask = (~(1 << (7 - bit%8)))&0xff;
     bitstring[bit/8] &= mask;
 }
 
 inline bool HasPortBit(uint8* bitstring, uint32 bit)
 {
-    assert (bit > 0);
     uint8 mask = (1 << (7 - bit%8))&0xff;    
     return (bitstring[bit/8] & mask) == 0 ? false : true;
 }
