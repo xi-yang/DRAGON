@@ -280,9 +280,11 @@ ospf_lsa_dup (struct ospf_lsa *lsa)
   new->retransmit_counter = 0;
   new->data = ospf_lsa_data_dup (lsa->data);
   /* Re-parse this duplicated TE-LSA and generate all the necessary pointers */
+#ifdef HAVE_OPAQUE_LSA
   new->te_lsa_type = NOT_TE_LSA;
   new->tepara_ptr = NULL;
   new = ospf_te_lsa_parse(new);
+#endif
   /* kevinm: Clear the refresh_list, otherwise there are going
      to be problems when we try to remove the LSA from the
      queue (which it's not a member of.)
@@ -308,12 +310,14 @@ ospf_lsa_free (struct ospf_lsa *lsa)
   if (lsa->data != NULL)
     ospf_lsa_data_free (lsa->data);
 
+#ifdef HAVE_OPAQUE_LSA
   if (lsa->tepara_ptr)
   {
     if (lsa->tepara_ptr->p_link_ifswcap_list)
     	list_delete (lsa->tepara_ptr->p_link_ifswcap_list);
     XFREE (MTYPE_OSPF_IF_PARAMS, lsa->tepara_ptr);
   }
+#endif
 	
   assert (lsa->refresh_list < 0);
 
@@ -2579,10 +2583,12 @@ ospf_maxage_lsa_remover (struct thread *thread)
         ospf_flood_through (ospf, NULL, lsa);
 #endif /* ORIGINAL_CODING */
 
+#ifdef HAVE_OPAQUE_LSA
 	if (is_ospf_te_lsa(lsa->data) && 
 	   (lsa->te_lsa_type == LINK_TE_LSA || lsa->te_lsa_type == ROUTER_ID_TE_LSA) &&
 	   lsa->te_lsdb)
 		ospf_te_lsdb_delete(lsa->te_lsdb, lsa);
+#endif
 	/* Remove from lsdb. */
         ospf_discard_from_db (ospf, lsa->lsdb, lsa);
         ospf_lsdb_delete (lsa->lsdb, lsa);

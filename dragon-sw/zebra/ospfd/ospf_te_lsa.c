@@ -52,6 +52,8 @@
 #include "ospfd/ospf_ase.h"
 #include "ospfd/ospf_zebra.h"
 
+#ifdef HAVE_OPAQUE_LSA
+
 #define SET_LINK_PARAMS_LINK_HEADER_TLV(X) \
 	  if (ntohs (para->X.header.type) != 0) \
 	    length += TLV_SIZE (&para->X.header);
@@ -1316,5 +1318,6 @@ ospf_te_cspf_calculate_schedule (struct ospf_area *area)
 #endif 
 }
 
+#endif
 
 

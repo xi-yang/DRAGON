@@ -20,6 +20,7 @@
  * Boston, MA 02111-1307, USA. 
  */
 
+
 #include <zebra.h>
 
 #include "thread.h"
@@ -50,6 +51,8 @@
 #include "ospfd/ospf_zebra.h"
 #include "ospfd/ospf_lsdb.h"
 #include <sys/un.h>
+
+#ifdef HAVE_OPAQUE_LSA
 
 #ifdef HAVE_SNMP
 #include "ospfd/ospf_snmp.h"
@@ -1014,3 +1017,4 @@ ospf_rsvp_init ()
 
 }
 
+#endif

@@ -24,6 +24,7 @@
 #ifndef _ZEBRA_OSPF_TE_LSA_H
 #define _ZEBRA_OSPF_TE_LSA_H
 
+#ifdef HAVE_OPAQUE_LSA
 /* A group of pointers to different TE-LSA tlvs and sub-tlvs */
 struct te_lsa_para_ptr
 {
@@ -67,4 +68,5 @@ extern list ospf_cspf_calculate (struct ospf_area *area, struct in_addr source_i
                     u_int8_t SwitchingCapability);
 extern void ospf_te_cspf_calculate_schedule (struct ospf_area *area);
 
+#endif
 #endif /* _ZEBRA_OSPF_TE_LSA_H */

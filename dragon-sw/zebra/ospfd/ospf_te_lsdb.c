@@ -20,6 +20,7 @@
  * 02111-1307, USA.
  */
 
+
 #include <zebra.h>
 
 #include "prefix.h"
@@ -32,6 +33,8 @@
 #include "ospfd/ospf_lsdb.h"
 #include "ospfd/ospf_te.h"
 #include "ospfd/ospf_te_lsdb.h"
+
+#ifdef HAVE_OPAQUE_LSA
 
 struct ospf_te_lsdb *
 ospf_te_lsdb_new ()
@@ -208,3 +211,5 @@ ospf_te_lsdb_isempty (struct ospf_te_lsdb *lsdb)
 {
   return (lsdb->total == 0);
 }
+
+#endif

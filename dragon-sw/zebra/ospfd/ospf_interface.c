@@ -283,14 +283,16 @@ ospf_if_cleanup (struct ospf_interface *oi)
   oi->network_lsa_self = NULL;
   OSPF_TIMER_OFF (oi->t_network_lsa_self);
 
+#ifdef HAVE_OPAQUE_LSA
   ospf_lsa_unlock (oi->te_area_lsa_link_self);
   oi->te_area_lsa_link_self = NULL;
+
   OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
 
   ospf_lsa_unlock (oi->te_linklocal_lsa_self);
   oi->te_linklocal_lsa_self = NULL;
   OSPF_TIMER_OFF (oi->t_te_linklocal_lsa_self);
-  
+#endif
 }
 
 void

@@ -1574,6 +1574,7 @@ ospf_ls_upd_list_lsa (struct ospf_neighbor *nbr, struct stream *s,
              Instead TE parameters will be parsed at the moment of LSDB install */
         lsa->data = ospf_lsa_data_new (length);
         memcpy (lsa->data, lsah, length);
+#ifdef HAVE_OPAQUE_LSA
         if (is_ospf_te_lsa(lsah))
         {
         	lsa = ospf_te_lsa_parse(lsa);
@@ -1594,11 +1595,14 @@ ospf_ls_upd_list_lsa (struct ospf_neighbor *nbr, struct stream *s,
         }
 	 else
 	 {
+#endif
 	        if (IS_DEBUG_OSPF_EVENT)
 				  zlog_info("LSA[Type%d:%s]: %p new LSA created with Link State Update",
 		  			  lsa->data->type, inet_ntoa (lsa->data->id), lsa);
 	        listnode_add (lsas, lsa);
+#ifdef HAVE_OPAQUE_LSA
 	 }
+#endif
     }
 
   return lsas;

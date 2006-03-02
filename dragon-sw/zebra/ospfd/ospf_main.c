@@ -53,8 +53,10 @@
 /* Configuration filename and directory. */
 char config_current[] = OSPF_DEFAULT_CONFIG;
 char config_default[] = SYSCONFDIR OSPF_DEFAULT_CONFIG;
-
+ 
+#ifdef SUPPORT_OSPF_API
 extern int  OSPF_API_SYNC_PORT;
+#endif
 
 /* OSPFd options. */
 struct option longopts[] = 
@@ -202,7 +204,9 @@ main (int argc, char **argv)
   /* OSPF master init. */
   ospf_master_init ();
 
+#ifdef SUPPORT_OSPF_API
   OSPF_API_SYNC_PORT = 2617; /*intra-domain*/
+#endif
 
   while (1) 
     {
@@ -233,7 +237,9 @@ main (int argc, char **argv)
 	  vty_port = atoi (optarg);
 	  break;
 	case 'I':
+#ifdef SUPPORT_OSPF_API
 	  OSPF_API_SYNC_PORT = 2607; /*inter-dimain*/
+#endif
 	  break;
 	case 'v':
 	  print_version (progname);
@@ -266,8 +272,9 @@ main (int argc, char **argv)
   ospf_if_init ();
   ospf_zebra_init ();
  /* OSPF-RSVP socket inits */
+#ifdef HAVE_OPAQUE_LSA
  ospf_rsvp_init();
- 
+#endif 
   /* OSPF vty inits. */
   ospf_vty_init ();
   ospf_vty_show_init ();

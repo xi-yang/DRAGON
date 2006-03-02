@@ -120,13 +120,14 @@ ospf_router_id_update (struct ospf *ospf)
 
   /* If OSPF-TE router ID is not set, 
       set it as well */
+#ifdef HAVE_OPAQUE_LSA
   if (OspfTeRouterAddr.value.s_addr == 0 || OspfTeRouterAddr.value.s_addr == router_id_old.s_addr)
   {
        set_ospf_te_router_addr (ospf->router_id);
   	ospf_te_rtid_update = 1;
   }
   
-  
+#endif  
   if (IS_DEBUG_OSPF_EVENT)
     zlog_info ("Router-ID[NEW:%s]: Update", inet_ntoa (ospf->router_id));
 
@@ -139,6 +140,7 @@ ospf_router_id_update (struct ospf *ospf)
           /* Update self-neighbor's router_id. */
           oi->nbr_self->router_id = router_id;
 
+#ifdef HAVE_OPAQUE_LSA
           if (ospf_te_rtid_update && oi->area)
           {
              struct ospf_area *area = oi->area;
@@ -157,11 +159,14 @@ ospf_router_id_update (struct ospf *ospf)
 			  
 			if (INTERFACE_GMPLS_ENABLED(oi) &&
 			    ntohs(oi->te_para.lclif_ipaddr.header.type) == 0){
+#ifdef HAVE_OPAQUE_LSA
 				OSPF_TIMER_OFF (oi->t_te_linklocal_lsa_self);
 				OSPF_INTERFACE_TIMER_ON (oi->t_te_linklocal_lsa_self, ospf_te_linklocal_lsa_timer, OSPF_MIN_LS_INTERVAL);
+#endif
 			}
 		}
           }
+#endif
           	
         }
 
@@ -576,8 +581,10 @@ ospf_area_free (struct ospf_area *area)
     free (IMPORT_NAME (area));
 
   /* Cancel timer. */
+#ifdef HAVE_OPAQUE_LSA
   OSPF_TIMER_OFF (area->t_router_lsa_self);
   OSPF_TIMER_OFF (area->t_te_area_lsa_rtid_self);
+#endif
 
   if (OSPF_IS_AREA_BACKBONE (area))
     area->ospf->backbone = NULL;

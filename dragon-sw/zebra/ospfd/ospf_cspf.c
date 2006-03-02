@@ -18,6 +18,8 @@ along with GNU Zebra; see the file COPYING.  If not, write to the Free
 Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
+
+
 #include <zebra.h>
 
 #include "thread.h"
@@ -47,6 +49,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "ospfd/ospf_ase.h"
 #include "ospfd/ospf_abr.h"
 #include "ospfd/ospf_dump.h"
+
+#ifdef HAVE_OPAQUE_LSA
 
 #define DEBUG
 
@@ -444,4 +448,4 @@ for (i=0; i<hop[dest]-1; i++)  {
   return explicit_path;
 }
  
-
+#endif

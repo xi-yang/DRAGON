@@ -25,6 +25,7 @@
 #define _ZEBRA_OSPF_TE_LSDB_H
 
 
+#ifdef HAVE_OPAQUE_LSA
 /* TE-LSDB */
 /* In this implementation, 
   * There is only one type-10 TE-area LSA for each MPLS/GMPLS enabled ospf interface 
@@ -50,5 +51,7 @@ extern struct ospf_lsa *ospf_te_lsdb_lookup (struct ospf_te_lsdb *lsdb, struct o
 extern list ospf_te_lsdb_lookup_by_adv_router (struct ospf_te_lsdb *lsdb, struct in_addr adv_router);
 extern unsigned long ospf_te_lsdb_count (struct ospf_te_lsdb *lsdb);
 extern unsigned long ospf_te_lsdb_isempty (struct ospf_te_lsdb *lsdb);
+
+#endif
 
 #endif /* _ZEBRA_OSPF_TE_LSDB_H */
