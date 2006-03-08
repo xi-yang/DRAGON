@@ -471,6 +471,7 @@ bool SwitchCtrl_Global::static_connectSwitch(struct snmp_session* &sessionHandle
 	 // Open the session   
 	 if (!(sessionHandle = snmp_open(&session))){
 		snmp_perror("snmp_open");
+		LOG(1)( Log::MPLS, "VLSR: snmp_open failed");
 		return false;  
 	 }
 	return true;
@@ -496,6 +497,7 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
     char* oid_str = "system.sysDescr.0";
     if (!snmp_parse_oid(oid_str, anOID, &anOID_len)) {
         	snmp_perror(oid_str);
+		LOG(1)( Log::MPLS, "VLSR: snmp_get system.sysDescr.0 failed");
         	return false;
     }
     else
@@ -529,6 +531,7 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         	vendor = RaptorER1010;
         else{
         	vendor = Illegal;
+		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", venderSystemDescription);
          	return false;
         }
     }
