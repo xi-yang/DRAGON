@@ -868,8 +868,6 @@ Optional Features:
   --enable-opaque-lsa     enable OSPF Opaque-LSA with OSPFAPI support (RFC2370)
   --disable-ospfapi       do not build OSPFAPI to access the OSPF LSA Database,
                           (this is the default if --enable-opaque-lsa is not set)
-  --disable-narb          do not build OSPFAPI client for OSPFAPI,
-                          (this is the default if --disable-ospfapi is set)
   --enable-ospf-te        enable Traffic Engineering Extension to OSPF
   --enable-dragon         enable DRAGON configuration interface
   --enable-multipath=ARG  enable multipath function, ARG must be digit
@@ -3567,11 +3565,7 @@ if test "${enable_ospfapi+set}" = set; then
   enableval="$enable_ospfapi"
 
 fi;
-# Check whether --enable-narb or --disable-narb was given.
-if test "${enable_narb+set}" = set; then
-  enableval="$enable_narb"
 
-fi;
 # Check whether --enable-ospf-te or --disable-ospf-te was given.
 if test "${enable_ospf_te+set}" = set; then
   enableval="$enable_ospf_te"
@@ -3601,7 +3595,6 @@ if test "${enable_dragon}" = "yes"; then
   enable_ospf_te=yes
   enable_tcp_zebra=yes
   enable_ospfapi=yes
-  enable_narb=yes
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_DRAGON
@@ -6437,10 +6430,6 @@ cat >>confdefs.h <<\_ACEOF
 #define SUPPORT_OSPF_API
 _ACEOF
 
-
-    if test "${enable_narb}" != "no";then
-      NARB="narb"
-    fi
   fi
 fi
 
@@ -8310,7 +8299,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_htonl_works" >&5
 echo "${ECHO_T}$ac_cv_htonl_works" >&6
 
-                                                                                                                        ac_config_files="$ac_config_files Makefile lib/Makefile zebra/Makefile ripd/Makefile ripngd/Makefile bgpd/Makefile ospfd/Makefile ospf6d/Makefile vtysh/Makefile dragon/Makefile narb/Makefile doc/Makefile"
+                                                                                                                        ac_config_files="$ac_config_files Makefile lib/Makefile zebra/Makefile ripd/Makefile ripngd/Makefile bgpd/Makefile ospfd/Makefile ospf6d/Makefile vtysh/Makefile dragon/Makefile doc/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -8870,7 +8859,6 @@ do
   "ospf6d/Makefile" ) CONFIG_FILES="$CONFIG_FILES ospf6d/Makefile" ;;
   "vtysh/Makefile" ) CONFIG_FILES="$CONFIG_FILES vtysh/Makefile" ;;
   "dragon/Makefile" ) CONFIG_FILES="$CONFIG_FILES dragon/Makefile" ;;
-  "narb/Makefile" ) CONFIG_FILES="$CONFIG_FILES narb/Makefile" ;;
   "doc/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
