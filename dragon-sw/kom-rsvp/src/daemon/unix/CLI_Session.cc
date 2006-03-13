@@ -59,8 +59,14 @@ void sigalrm(int signo)
 // our timeout procedure, used to abort malfunctioning connections 
 void sigpipe(int signo)
 {
+  static int num_broken = 100;
   pipe_broken = true;
   err_msg(".... pipe broken!\n");
+  if (--num_broken < 0)
+  {
+    err_msg("Too many 'pipe broken' errors! Aborting....\n");
+    exit(1);
+  }
 }
 
 // handle the reception of signals 
