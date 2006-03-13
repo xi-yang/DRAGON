@@ -217,4 +217,59 @@ int
 ospf_apiserver_handle_cspf_request (struct ospf_apiserver *apiserv,
 					 struct msg *msg);
 
+/* compatible definitions for old narb implementation */
+#define MTYPE_ERO MTYPE_TMP
+#define MSG_NARB_CSPF_REQUEST 0xf1
+#define MSG_NARB_CSPF_REPLY 0xf2
+
+/* each NARB<->APP contains a TLV in its message body*/
+enum  narb_tlv_type
+{
+  TLV_TYPE_NARB_REQUEST = 0x02,
+  TLV_TYPE_NARB_ERO = 0x03,
+  TLV_TYPE_NARB_ERROR_CODE = 0x04
+};
+/* definitions of NARB error code as proccessing a request fails*/
+
+/* data structure of APP->NARB request message */
+struct msg_app2narb_request
+{
+  u_int16_t type;
+  u_int16_t length;
+  struct in_addr src;
+  struct in_addr dest;
+  u_int8_t  encoding_type;
+  u_int8_t  switching_type;
+  u_int16_t gpid;
+  float bandwidth;
+};
+
+/* structure of NARB->OSPFd CSPF request message (msg body only)*/
+struct msg_narb_cspf_request
+{
+  u_int32_t narb_apiserv_id;
+  u_int32_t app_seqnum;
+  struct in_addr area_id;
+  struct msg_app2narb_request app_req_data;
+};
+
+/* structure of OSPFd->NARB CSPF reply message (msg body only)*/
+struct msg_narb_cspf_reply
+{
+  u_int32_t narb_apiserv_id;
+  u_int32_t app_seqnum;
+  struct in_addr src;
+  struct in_addr dest;
+  struct te_tlv_header tlv;
+};
+
+/* definitions of OSPFd->NARB error code*/
+enum msg_narb_cspf_error_code
+{
+  CSPF_ERROR_UNKNOWN_SRC = 1,
+  CSPF_ERROR_UNKNOWN_DEST,
+  CSPF_ERROR_NO_ROUTE
+};
+
+
 #endif /* _OSPF_APISERVER_H */

@@ -65,10 +65,8 @@
 #include "ospfd/ospf_zebra.h"
 
 #include "ospfd/ospf_api.h"
-#include "narb/ospf_apiclient.h"
 #include "ospfd/ospf_opaque.h"
 #include "ospfd/ospf_apiserver.h"
-#include "narb/narb_apiserver.h"
 
 /* This is an implementation of an API to the OSPF daemon that allows
  * external applications to access the OSPF daemon through socket
