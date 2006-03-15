@@ -91,9 +91,6 @@ AC_ARG_ENABLE(opaque-lsa,
 AC_ARG_ENABLE(ospfapi,
 [  --disable-ospfapi       do not build OSPFAPI to access the OSPF LSA Database,
                           (this is the default if --enable-opaque-lsa is not set)])
-AC_ARG_ENABLE(narb,
-[  --disable-narb          do not build OSPFAPI client for OSPFAPI,
-                          (this is the default if --disable-ospfapi is set)])
 AC_ARG_ENABLE(ospf-te,
 [  --enable-ospf-te        enable Traffic Engineering Extension to OSPF])
 AC_ARG_ENABLE(dragon,
@@ -111,7 +108,6 @@ if test "${enable_dragon}" = "yes"; then
   enable_ospf_te=yes
   enable_tcp_zebra=yes
   enable_ospfapi=yes
-  enable_narb=yes
   AC_DEFINE(HAVE_DRAGON,,DRAGON)
 fi
 
@@ -555,14 +551,9 @@ else
   OSPFD="ospfd"
 fi
 
-NARB=""
 if test "${enable_opaque_lsa}" = "yes"; then
   if test "${enable_ospfapi}" != "no";then
     AC_DEFINE(SUPPORT_OSPF_API,,OSPFAPI)
-
-    if test "${enable_narb}" != "no";then
-      NARB="narb"
-    fi
   fi
 fi
 
@@ -595,7 +586,6 @@ AC_SUBST(RIPNGD)
 AC_SUBST(OSPFD)
 AC_SUBST(OSPF6D)
 AC_SUBST(DRAGON)
-AC_SUBST(NARB)
 AC_SUBST(OSPFAPI)
 AC_SUBST(VTYSH)
 AC_SUBST(INCLUDES)
@@ -862,7 +852,7 @@ ac_cv_htonl_works=yes,
 ac_cv_htonl_works=no)])
 AC_MSG_RESULT($ac_cv_htonl_works)
 
-AC_OUTPUT(Makefile lib/Makefile zebra/Makefile ripd/Makefile ripngd/Makefile bgpd/Makefile ospfd/Makefile ospf6d/Makefile vtysh/Makefile dragon/Makefile narb/Makefile doc/Makefile)
+AC_OUTPUT(Makefile lib/Makefile zebra/Makefile ripd/Makefile ripngd/Makefile bgpd/Makefile ospfd/Makefile ospf6d/Makefile vtysh/Makefile dragon/Makefile doc/Makefile)
 
 echo "
 zebra configuration

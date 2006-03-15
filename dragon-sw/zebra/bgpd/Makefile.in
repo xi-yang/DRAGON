@@ -155,7 +155,6 @@ LIB_REGEX = @LIB_REGEX@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MULTIPATH_NUM = @MULTIPATH_NUM@
-NARB = @NARB@
 OBJEXT = @OBJEXT@
 OSPF6D = @OSPF6D@
 OSPFAPI = @OSPFAPI@
@@ -251,9 +250,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  bgpd/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  bgpd/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  bgpd/Makefile
+	  $(AUTOMAKE) --foreign  bgpd/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
