@@ -51,6 +51,7 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsUntagged(uint32 port, uint
     //@@@@ Does Raptor require set PVID to the VLAN#?
     ret&=setVLANPVID(port, vlanID); //Set pvid
 
+    activeVlanId = vlanID; //$$
     return ret;
 }
 
@@ -82,6 +83,7 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsTagged(uint32 port, uint32
     //@@@@ Does Raptor require set PVID to the VLAN#?
     ret&=setVLANPVID(port, vlanID); //Set pvid
 
+    activeVlanId = vlanID; //$$
     return ret;
 }
 
@@ -95,7 +97,7 @@ bool SwitchCtrl_Session_RaptorER1010::removePortFromVLAN(uint32 port, uint32 vla
     	return false; //don't touch the control port!
 
     if (vlanID == 0)
-        vlanID = getVLANbyUntaggedPort(port);
+        vlanID = (activeVlanId > 0) ? activeVlanId : getVLANbyUntaggedPort(port);
     if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN) {
     	 vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
         if (vpmAll) {
@@ -112,6 +114,7 @@ bool SwitchCtrl_Session_RaptorER1010::removePortFromVLAN(uint32 port, uint32 vla
         }
     }
 
+    activeVlanId = 0;
     return ret;
 }
 
