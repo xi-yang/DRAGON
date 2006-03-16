@@ -489,7 +489,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                 vlanID = (*sessionIter)->getActiveVlanId(port);
                                             if (vlanID != 0) {
                                                 (*sessionIter)->removePortFromVLAN(port, vlanID);
-       						LOG(4)(Log::MPLS, "VLSR: Removing ingress port#",  port, "from VLAN #", (*iter).vlanTag);
+       						LOG(4)(Log::MPLS, "VLSR: Removing ingress port#",  port, "from VLAN #", vlanID);
                                             }
                                             else {
     						       LOG(1)(Log::MPLS, "VLSR: Cannot identify the VLAN (for ingress port) to be operated.");
@@ -524,7 +524,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                 vlanID = (*sessionIter)->getActiveVlanId(port);
                                             if (vlanID != 0) {
                                                 (*sessionIter)->removePortFromVLAN(port, vlanID);
-       						LOG(4)(Log::MPLS, "VLSR: Removing egress port#",  port, "from VLAN #", (*iter).vlanTag);
+       						LOG(4)(Log::MPLS, "VLSR: Removing egress port#",  port, "from VLAN #", vlanID);
                                             }
                                             else {
     						       LOG(1)(Log::MPLS, "VLSR: Cannot identify the VLAN  (for egress port) to be operated.");
