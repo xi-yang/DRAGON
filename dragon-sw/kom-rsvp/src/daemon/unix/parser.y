@@ -80,18 +80,18 @@ command:
 	| LABEL_HASH INTEGER			{ cfr->setLabelHash(yy_int); }
 	| PEER local_address remote_address INTEGER	{ cfr->addHop(yy_int); }
 	| PEER local_address remote_address		{ cfr->addHop(); }
-	| NARB host port				{ }
+	| NARB narb_host narb_port	 	{ }
 	| SLOTS if_type slot			{ }
 	;
 
 /*** Addtions by Xi Yang ***/
-host:
+narb_host:
 	STRING		{ yy_host = yy_string; }
+	| ip_address	{ yy_host = yy_ip_address; }
 	;
-port:
+narb_port:
 	INTEGER		{ cfr->setNarbApiClient(yy_host, yy_int); }
 	;
-
 if_type:
 	STRING		{ yy_ifType = yy_string; }
 	;
