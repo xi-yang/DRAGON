@@ -17,14 +17,14 @@ class SwitchCtrl_Session_RaptorER1010: public SNMP_Session
 public:
 	SwitchCtrl_Session_RaptorER1010(): SNMP_Session() { rfc2674_compatible = snmp_enabled = true; activeVlanId = 0;}
 	SwitchCtrl_Session_RaptorER1010(const RSVP_String& sName, const NetAddress& swAddr): SNMP_Session(sName, swAddr) 
-		{ rfc2674_compatible = snmp_enabled = true; }
+		{ rfc2674_compatible = snmp_enabled = true; activeVlanId = 0; }
 	virtual ~SwitchCtrl_Session_RaptorER1010() { }
 
 	////////// Below are vendor specific functions/////////
 	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID);
 	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
 	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID);
-	virtual uint32 getActiveVlanId(uint32 port) { return ((activeVlanId > 0) activeVlanId : getVLANbyUntaggedPort(port)); }
+	virtual uint32 getActiveVlanId(uint32 port) { if (activeVlanId > 0) return activeVlanId; return getVLANbyUntaggedPort(port); }
 
 	///////////------QoS Functions ------/////////
 	//virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
@@ -40,8 +40,7 @@ public:
 	///////------Vendor/model specific functions--------///////
 
 private:
-	uint16 activeVlanId; //@@@@@@@@@@ init ... set when move ...
-
+	uint16 activeVlanId; 
 };
 
 #define RAPTOR_VLAN_BITLEN		48

@@ -9,6 +9,7 @@ To be incorporated into KOM-RSVP-TE package
 
 #include "SwitchCtrl_Session_Force10E600.h"
 #include "RSVP.h"
+#include "RSVP_Log.h"
 
 bool SwitchCtrl_Session_Force10E600::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 {
