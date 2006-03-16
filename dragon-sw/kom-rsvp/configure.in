@@ -610,7 +610,7 @@ AC_ARG_WITH(snmp,
 if test "$BUILD_NS2" = "yes"; then with-snmp=no; fi
 if test "$with_snmp" = "yes"; then
 	with_snmp=/usr
-	LDFLAGS="-lcrypto -lm -lnetsnmp"
+	LDFLAGS="-L$with_snmp/lib -lcrypto -lm -lnetsnmp"
 elif test "$with_snmp" != "no"; then
          LDFLAGS="-L$with_snmp/lib -lcrypto -lm -lnetsnmp"
 fi
@@ -637,6 +637,13 @@ else
 fi
 
 AC_SUBST(SNMP_INCLUDE)
+
+AC_MSG_CHECKING(for crypto)
+AC_CHECK_LIB(crypto, SSLeay)
+if test "$ac_cv_lib_crypto_SSLeay" = "no"; then
+    new_libs="`echo ${LIBS} | sed -e 's/-lcrypto//g'`"
+    LIBS="${new_libs}"
+fi
 
 SAVE_LIBS=$LIBS
 LIBS=
