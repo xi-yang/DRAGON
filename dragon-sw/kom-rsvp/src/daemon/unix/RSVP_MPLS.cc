@@ -525,31 +525,26 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                       }
                                       while (portList.size()) {
                                             port = portList.front();
-                                            (*sessionIter)->removePortFromVLAN(port, (*iter).vlanTag);
-                                            if ((*iter).vlanTag != 0) {
-                                                //(*sessionIter)->removePortFromVLAN(port, (*iter).vlanTag);
+                                            vlanID = (*iter).vlanTag;
+                                            if (vlanID ==0)
+                                                vlanID = (*sessionIter)->getActiveVlanId(port);
+                                            if (vlanID != 0) {
+                                                (*sessionIter)->removePortFromVLAN(port, vlanID);
        						LOG(4)(Log::MPLS, "VLSR: Removing egress port#",  port, "from VLAN #", (*iter).vlanTag);
                                             }
                                             else {
-                                                 // (*sessionIter)->movePortToDefaultVLAN(port);
-    						        LOG(3)(Log::MPLS, "VLSR: Moving egress port#",  port, " back to Default VLAN #");
+    						       LOG(1)(Log::MPLS, "VLSR: Cannot identify the VLAN to be operated.");
+                                                 return;
                                             }
 
+                                            //increase the bandwidth by the amount taken by the removed LSP
 						  RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false); //false == increase
 
-                                            if ( vlanID == 0) {
-                                                vlanID = (*sessionIter)->getVLANbyUntaggedPort(port);
-                                            }
-                                            if (vlanID !=  0) {
-                                                LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
-             					     //Undo rate policing and limitation on the port, which is both input and output port
-            					     //as the VLAN is duplex.
-                                                (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth);
-                                                (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);
-                                            }
-                                            else {
-                                                LOG(2)(Log::MPLS, "VLSR: Invalid VLAN ID for undoing bandwidth policing and limitation on port#",  port);
-                                            }
+                                            //Undo rate policing and limitation on the port, which is both input and output port
+                                            //as the VLAN is duplex.
+                                            LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
+                                            (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth);
+                                            (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);
 
                                             portList.pop_front();
                                       }

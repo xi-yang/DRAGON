@@ -96,8 +96,6 @@ bool SwitchCtrl_Session_RaptorER1010::removePortFromVLAN(uint32 port, uint32 vla
     if ((!active) || !rfc2674_compatible || port==SWITCH_CTRL_PORT)
     	return false; //don't touch the control port!
 
-    if (vlanID == 0)
-        vlanID = (activeVlanId > 0) ? activeVlanId : getVLANbyUntaggedPort(port);
     if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN) {
     	 vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
         if (vpmAll) {
@@ -112,6 +110,8 @@ bool SwitchCtrl_Session_RaptorER1010::removePortFromVLAN(uint32 port, uint32 vla
                 ret&=setVLANPVID(port, 1);
             }
         }
+    } else {
+        LOG(2) (Log::MPLS, "Trying to remove port from an invalid VLAN ", vlanID);
     }
 
     return ret;

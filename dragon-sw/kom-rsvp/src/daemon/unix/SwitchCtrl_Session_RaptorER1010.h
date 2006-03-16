@@ -24,6 +24,7 @@ public:
 	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID);
 	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
 	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID);
+	virtual uint32 getActiveVlanId(uint32 port) { return ((activeVlanId > 0) activeVlanId : getVLANbyUntaggedPort(port)); }
 
 	///////////------QoS Functions ------/////////
 	//virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);

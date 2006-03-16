@@ -88,8 +88,6 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
     if ((!active) || !rfc2674_compatible || port==SWITCH_CTRL_PORT)
     	return false; //don't touch the control port!
 
-    if (vlanID == 0)
-        vlanID = getVLANbyUntaggedPort(port);
     if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN) {
       	 uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF;
     	 vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
@@ -106,6 +104,8 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
     	}
     	if (vpmAll)
     	    ret &= setVLANPort(vpmAll->ports, vlanID); //remove
+    } else {
+        LOG(2) (Log::MPLS, "Trying to remove port from an invalid VLAN ", vlanID);
     }
 
     return ret;

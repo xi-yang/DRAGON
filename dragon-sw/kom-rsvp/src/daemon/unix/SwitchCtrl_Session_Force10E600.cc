@@ -75,8 +75,6 @@ bool SwitchCtrl_Session_Force10E600::removePortFromVLAN(uint32 port, uint32 vlan
     if ((!active) || port==SWITCH_CTRL_PORT)
     	return ret; //don't touch the control port!
 
-    if (vlanID == 0)
-        vlanID = getVLANbyUntaggedPort(port);
     if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN){
         bit = Port2BitForce10(port);
         assert(bit < MAX_VLAN_PORT_BYTES*8);
@@ -90,6 +88,8 @@ bool SwitchCtrl_Session_Force10E600::removePortFromVLAN(uint32 port, uint32 vlan
             bool ret2 = this->deleteVLANPort_ShellScript(port, vlanID, true);
             ret &= (ret1 || ret2);
         }
+    } else {
+        LOG(2) (Log::MPLS, "Trying to remove port from an invalid VLAN ", vlanID);
     }
 
     return ret;
