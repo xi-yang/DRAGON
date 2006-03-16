@@ -132,9 +132,67 @@ void NARB_APIClient::disconnect()
     }
 }
 
-bool NARB_APIClient::isAlive()
+bool NARB_APIClient::operational()
 {
-    return (fd > 0);
+    if (fd > 0)
+        return true;
+
+    int val, ret=0;
+    int sock;
+    struct sockaddr_in addr;
+    int flags, old_flags;
+    fd_set sset;
+    struct timeval tv;
+    socklen_t lon;
+
+    sock = socket (AF_INET, SOCK_STREAM, 0);
+    if (sock < 0)
+      return -1;
+
+    flags = old_flags = fcntl(sock, F_GETFL, 0);
+#if defined(O_NONBLOCK)
+    flags |= O_NONBLOCK;
+#elif defined(O_NDELAY)
+    flags |= O_NDELAY;
+#elif defined(FNDELAY)
+    flags |= FNDELAY;
+#endif
+
+    if (fcntl(sock, F_SETFL, flags) == -1) {
+        return false;
+    }
+
+    memset (&addr, 0, sizeof (struct sockaddr_in));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = module->ip_addr.s_addr;
+    addr.sin_port = htons(module->port);
+
+    ret = connect (sock, (struct sockaddr *) &addr, sizeof(struct sockaddr_in));
+    if(ret < 0) {
+       if (errno == EINPROGRESS) {
+           tv.tv_sec = 1;
+           tv.tv_usec = 0;
+           FD_ZERO(&sset);
+           FD_SET(sock, &sset);
+           if(select(sock+1, NULL, &sset, NULL, &tv) > 0) {
+               lon = sizeof(int);
+               getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&val), &lon); 
+               return ((val != 0)? false : true);
+           }
+           else {
+               return false;
+           }
+       }
+       else {
+           return false;
+       }
+   }
+
+    if (fcntl(sock, F_SETFL, old_flags) == -1) {
+         return false;
+    }
+    close (sock);
+    return true;
 }
 
 EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag)

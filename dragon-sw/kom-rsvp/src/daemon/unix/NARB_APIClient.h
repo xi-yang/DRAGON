@@ -92,7 +92,7 @@ public:
 	int doConnect(char *host, int port);
 	int doConnect();
 	void disconnect();
-	bool isAlive();
+	bool operational();
 	EXPLICIT_ROUTE_Object* getExplicitRoute();
 
 protected:

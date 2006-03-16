@@ -37,6 +37,7 @@
 #include "RSVP_String.h"
 #include "RSVP_TimeValue.h"
 #include "SwitchCtrl_Global.h"
+#include "NARB_APIClient.h"
 
 class RSVP;
 class TrafficControl;

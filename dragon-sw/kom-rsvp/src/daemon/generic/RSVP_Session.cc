@@ -260,11 +260,13 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				LOG(2)( Log::MPLS, "MPLS: resolving loose hop by local routing module: ", explicitRoute->getAbstractNodeList().front() );
                             uint32 vtag = (explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) ?
                                    explicitRoute->getAbstractNodeList().front().getInterfaceID() & 0xffff : 0;
-                            EXPLICIT_ROUTE_Object* ero = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
+                            EXPLICIT_ROUTE_Object* ero = NULL;
+                            if (NARB_APIClient::operational())
+                                ero = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
                                     getDestAddress().rawAddress(), msg.LABEL_REQUEST_Object_O.getSwitchingType(), msg.LABEL_REQUEST_Object_O.getLspEncodingType(), 
                                     msg.getSENDER_TSPEC_Object().get_r(), vtag);
                             if (!ero)
-    					ero  = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
+    				    ero  = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 											hop.getLogicalInterface().getAddress(),
 											explicitRoute->getAbstractNodeList().front().getAddress(), 
 											msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
@@ -418,11 +420,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					   : const_cast<EXPLICIT_ROUTE_Object*>(msg.getEXPLICIT_ROUTE_Object());
 		if (!explicitRoute) {
 			LOG(2)( Log::MPLS, "MPLS: requesting ERO from local routing module...", *static_cast<SESSION_Object*>(this));
-                     explicitRoute = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
+                     if (NARB_APIClient::operational())
+                         explicitRoute = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
                                     getDestAddress().rawAddress(), msg.LABEL_REQUEST_Object_O.getSwitchingType(), msg.LABEL_REQUEST_Object_O.getLspEncodingType(), 
                                     msg.getSENDER_TSPEC_Object().get_r(), 0);
                      if (!explicitRoute)
-				explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
+			    explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 						 hop.getLogicalInterface().getAddress(),
 						 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
 		}
