@@ -14,6 +14,9 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_ProtocolObjects.h"
 #include "NARB_APIClient.h"
 
+int readn (int fd, char *ptr, int nbytes);
+int writen(int fd, char *ptr, int nbytes);
+
 NARB_APIClient NARB_APIClient::apiclient;
 
 NARB_APIClient& NARB_APIClient::instance()
@@ -208,7 +211,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
     struct narb_api_msg_header* msgheader = (struct narb_api_msg_header*)buf;
-    struct msg_narb_route_request* msgbody = (struct msg_narb_route_request*)(buf + sizeof(struct narb_api_msg_header));
+    struct msg_app2narb_request* msgbody = (struct msg_app2narb_request*)(buf + sizeof(struct narb_api_msg_header));
     te_tlv_header *tlv = (te_tlv_header*)msgbody;
     int len, offset;
     ipv4_prefix_subobj* subobj_ipv4;
@@ -220,29 +223,57 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
 
     //construct NARB API message
     msgheader->type = htons(1); // 1 == NARB_MSG_LSPQ
-    msgheader->length = htons (sizeof(struct msg_narb_route_request));
+    msgheader->length = htons (sizeof(struct msg_app2narb_request));
     msgheader->seqnum = htonl (0);
     msgheader->ucid = htonl(0);
     msgheader->tag = htonl(vtag);
-
-    memset(&msgbody, 0, sizeof(struct msg_narb_route_request));
-    msgbody->app_req_data.type = htons(2); // 2 == MSG_APP_REQUEST
-    msgbody->app_req_data.length = htons(sizeof(struct msg_narb_route_request));
-    msgbody->app_req_data.src.s_addr = src;
-    msgbody->app_req_data.dest.s_addr = dest;
-    msgbody->app_req_data.switching_type = swtype;
-    msgbody->app_req_data.encoding_type = encoding;
-    msgbody->app_req_data.bandwidth = bandwidth;
-    
-    msgbody->rec_req_data = msgbody->app_req_data;
+    msgheader->options = htonl(0x07<<16);
+    if (vtag > 0)
+        msgheader->options |= htonl(0x30<<16);
+    msgheader->chksum = NARB_MSG_CHKSUM(*msgheader);
+    memset(msgbody, 0, sizeof(msg_app2narb_request));
+    msgbody->type = htons(2); // 2 == MSG_APP_REQUEST
+    msgbody->length = htons(sizeof(struct msg_app2narb_request));
+    msgbody->src.s_addr = src;
+    msgbody->dest.s_addr = dest;
+    msgbody->switching_type = swtype;
+    msgbody->encoding_type = encoding;
+    msgbody->bandwidth = bandwidth;
 
     //send query
-    write(fd, buf, sizeof(struct narb_api_msg_header)+sizeof(struct msg_narb_route_request));
+    len = writen(fd, buf, sizeof(struct narb_api_msg_header)+sizeof(struct msg_app2narb_request));
+    if (len < 0)
+    {
+        LOG(2)(Log::Routing, "NARB_APIClient failed to write to: ", fd);
+	goto _RETURN;
+    }
+    else if (len ==0)
+    {
+	close(fd);
+	LOG(1)(Log::Routing, "connection closed for NARB_APIClient.");
+        goto _RETURN;
+    }
+    else if (len != sizeof(struct narb_api_msg_header)+sizeof(struct msg_app2narb_request))
+    {
+        LOG(2)(Log::Routing, "NARB_APIClient cannot write the message to: ", fd);
+        goto _RETURN; 
+    } 
+
     //read reply
-    read(fd, buf, sizeof(struct narb_api_msg_header));
-    read(fd, buf+sizeof(struct narb_api_msg_header), ntohs(msgheader->length));
+    len = readn(fd, buf, sizeof(struct narb_api_msg_header));
+    if (len < 0)
+    {
+        LOG(2)(Log::Routing, "NARB_APIClient failed to read from: ", fd);
+	goto _RETURN;
+    }
+    len = readn(fd, buf+sizeof(struct narb_api_msg_header), ntohs(msgheader->length));
+    if (len < 0)
+    {
+        LOG(2)(Log::Routing, "NARB_APIClient failed to read from: ", fd);
+	goto _RETURN;
+    }
     //parse NARB reply
-    if (ntohs(tlv->type) == 4) // 4 == TLV_TYPE_NARB_ERROR_CODE
+    if (ntohs(tlv->type) != 3) // 3 == TLV_TYPE_NARB_ERO
         goto _RETURN;
 
     ero = new EXPLICIT_ROUTE_Object;
@@ -260,14 +291,14 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
 
         if (subobj_unum)
         {
-            AbstractNode node(((subobj_unum->l_and_type>>7) == 1), NetAddress(*(uint32*)subobj_ipv4->addr), subobj_unum->ifid);
+            AbstractNode node(((subobj_unum->l_and_type>>7) == 1), NetAddress(subobj_unum->addr.s_addr), subobj_unum->ifid);
       	    ero->pushBack(node);
             len -= sizeof(unum_if_subobj);
             offset += sizeof(unum_if_subobj);
         }
         else
         {
-            AbstractNode node(((subobj_unum->l_and_type>>7) == 1), NetAddress(*(uint32*)subobj_ipv4->addr), (uint8)32);
+            AbstractNode node(((subobj_ipv4->l_and_type>>7) == 1), NetAddress(*(uint32*)subobj_ipv4->addr), (uint8)32);
       	    ero->pushBack(node);
             len -= sizeof(ipv4_prefix_subobj);
             offset += sizeof(ipv4_prefix_subobj);
@@ -279,5 +310,50 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
 _RETURN:
     disconnect();
     return ero;
+}
+
+int readn (int fd, char *ptr, int nbytes)
+{
+  int nleft;
+  int nread;
+
+  nleft = nbytes;
+
+  while (nleft > 0) 
+    {
+      nread = read (fd, ptr, nleft);
+
+      if (nread < 0) 
+	return (nread);
+      else
+	if (nread == 0) 
+	  break;
+
+      nleft -= nread;
+      ptr += nread;
+    }
+
+  return nbytes - nleft;
+}  
+
+
+int writen(int fd, char *ptr, int nbytes)
+{
+	int nleft;
+	int nwritten;
+
+	nleft = nbytes;
+
+	while (nleft > 0) 
+	{
+	  nwritten = write(fd, ptr, nleft);
+	  
+	  if (nwritten <= 0) 
+         return (nwritten);
+
+	  nleft -= nwritten;
+	  ptr += nwritten;
+	}
+	return nbytes - nleft;
 }
 

@@ -66,12 +66,6 @@ struct msg_app2narb_request
     float bandwidth;
 };
 
-struct msg_narb_route_request 
-{
-    struct msg_app2narb_request app_req_data;
-    struct msg_app2narb_request rec_req_data;    // data structure for relaying mrn-multidomain tspec
-}; 
-
 #define NARB_MSG_CHKSUM(X) (((u_int32_t*)&X)[0] + ((u_int32_t*)&X)[1] + ((u_int32_t*)&X)[2])
 
 
