@@ -72,22 +72,9 @@ int NARB_APIClient::doConnect(char *host, int port)
         return (-1);
     }
   #endif /* SO_REUSEPORT */
-  
-    memset (&addr, 0, sizeof (struct sockaddr_in));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons (port+1000);
-    //addr.sin_len = sizeof (struct sockaddr_in);
-    size = sizeof (struct sockaddr_in);
-                                                                                  
-    ret = bind (fd, (struct sockaddr *) &addr, size);
-    if (ret < 0)
-    {
-        LOG(1)( Log::Routing, "NARB_APIClient::Connect: bind sync socket failed.");
-        close (fd);
-        return (-1);
-    }
-                                                                                  
+
     /* Prepare address structure for connect */
+    memset (&addr, 0, sizeof (struct sockaddr_in));                                                                                
     memcpy (&addr.sin_addr, hp->h_addr, hp->h_length);
     addr.sin_family = AF_INET;
     addr.sin_port = htons (port);
@@ -136,10 +123,13 @@ bool NARB_APIClient::operational()
 {
     if (fd > 0)
         return true;
+    if (_host.length() == 0 || _port == 0)
+        return false;
 
     int val, ret=0;
     int sock;
     struct sockaddr_in addr;
+    struct hostent *hp;
     int flags, old_flags;
     fd_set sset;
     struct timeval tv;
@@ -162,10 +152,17 @@ bool NARB_APIClient::operational()
         return false;
     }
 
+    hp = gethostbyname (_host);
+    if (!hp)
+    {
+        LOG(2)( Log::Routing, "NARB_APIClient::Connect: no such host %s\n", host);
+        return (false);
+    }
+
     memset (&addr, 0, sizeof (struct sockaddr_in));
+    memcpy (&addr.sin_addr, hp->h_addr, hp->h_length);
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = module->ip_addr.s_addr;
-    addr.sin_port = htons(module->port);
+    addr.sin_port = htons (_port);
 
     ret = connect (sock, (struct sockaddr *) &addr, sizeof(struct sockaddr_in));
     if(ret < 0) {
