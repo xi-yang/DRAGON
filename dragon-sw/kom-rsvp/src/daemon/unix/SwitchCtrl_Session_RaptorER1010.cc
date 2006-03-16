@@ -114,7 +114,6 @@ bool SwitchCtrl_Session_RaptorER1010::removePortFromVLAN(uint32 port, uint32 vla
         }
     }
 
-    activeVlanId = 0;
     return ret;
 }
 
