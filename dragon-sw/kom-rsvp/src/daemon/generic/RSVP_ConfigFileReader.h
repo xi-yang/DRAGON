@@ -91,6 +91,7 @@ public:
 	void cleanup();
 	void warn( const String& );
 	const SimpleList<Hop>& getHopList() { return hopList; }
+	void setNarbApiClient(String host, int port);
 	void addSlot(String slot_type, uint16 slot_num);
 };
 

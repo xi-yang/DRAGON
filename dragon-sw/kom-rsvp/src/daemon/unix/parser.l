@@ -70,7 +70,7 @@ ieee32float_p yy_float;
 "list_alloc"		return LIST_ALLOC;
 "sb_alloc"		return SB_ALLOC;
 "slots"			return SLOTS;
-
+"narb"			return NARB;
 
 [0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?	{ yy_string = yytext; return IP_ADDRESS; }
 

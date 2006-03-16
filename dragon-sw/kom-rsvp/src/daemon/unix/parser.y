@@ -52,7 +52,7 @@ static String yy_ifType;
 %token TC_C NONE CBQ_C HFSC_C RATE PEER
 %token TIMER SESSION_HASH API_HASH ID_HASH_SEND ID_HASH_RECV LIST_ALLOC SB_ALLOC
 %token EXPLICIT_ROUTE MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH
-%token SLOTS
+%token NARB SLOTS
 
 %%
 
@@ -79,10 +79,18 @@ command:
 	| LABEL_HASH INTEGER			{ cfr->setLabelHash(yy_int); }
 	| PEER local_address remote_address INTEGER	{ cfr->addHop(yy_int); }
 	| PEER local_address remote_address		{ cfr->addHop(); }
+	| NARB host port				{ }
 	| SLOTS if_type slot			{ }
 	;
 
 /*** Addtions by Xi Yang ***/
+host:
+	STRING		{ yy_host = yy_string; }
+	;
+port:
+	INTEGER		{ cfr->setNarbApiClient(yy_host, yy_int); }
+	;
+
 if_type:
 	STRING		{ yy_ifType = yy_string; }
 	;
