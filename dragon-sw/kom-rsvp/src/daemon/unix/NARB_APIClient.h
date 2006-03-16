@@ -43,15 +43,8 @@ struct narb_api_msg_header
     u_int32_t ucid; //  unique client id
     u_int32_t seqnum; // sequence number, specified by requestor
     u_int32_t chksum;   // checksum for the above three 32-b words
-    union
-    {
-        u_int32_t msgtag[2];
-        struct 
-        {
-            u_int32_t options;
-            u_int32_t tag;
-        };
-    };
+    u_int32_t options;
+    u_int32_t tag;
 };
 
 struct narb_api_msg
@@ -85,20 +78,19 @@ struct msg_narb_route_request
 class EXPLICIT_ROUTE_Object;
 class NARB_APIClient{
 public:
-	~NARB_APIClient();
 	static NARB_APIClient& instance();
-
-	void setHostPort(char *host, int port);
+	void setHostPort(const char *host, int port);
 	int doConnect(char *host, int port);
 	int doConnect();
 	void disconnect();
 	bool operational();
-	EXPLICIT_ROUTE_Object* getExplicitRoute();
+	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag);
 
 protected:
-	NARB_APIClient() {_host = ""; _port = 0; fd = -1;}
+	NARB_APIClient();
+	~NARB_APIClient();
 	NARB_APIClient(const NARB_APIClient& obj);
-	NARB_APIClient apiclient;
+	static NARB_APIClient apiclient;
 
 private:
 	String _host;

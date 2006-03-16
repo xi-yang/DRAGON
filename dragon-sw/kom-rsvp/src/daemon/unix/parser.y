@@ -45,6 +45,7 @@ static ConfigFileReader* cfr = NULL;
 static const char* configfile = NULL;
 static bool fatalError = false;
 static String yy_ifType;
+static String yy_host;
 %}
 
 %token INTEGER FLOAT STRING IP_ADDRESS

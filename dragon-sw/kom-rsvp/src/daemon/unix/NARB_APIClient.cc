@@ -7,6 +7,7 @@ To be incorporated into KOM-RSVP-TE package
 ****************************************************************************/
 #include <sys/types.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -20,7 +21,18 @@ NARB_APIClient& NARB_APIClient::instance()
     return apiclient;
 }
 
-void NARB_APIClient::setHostPort(char *host, int port)
+NARB_APIClient::NARB_APIClient()
+{
+    _host = ""; 
+    _port = 0; 
+    fd = -1;
+}
+
+NARB_APIClient::~NARB_APIClient()
+{
+}
+
+void NARB_APIClient::setHostPort(const char *host, int port)
 {
     _host = host;
     _port = port;
@@ -31,7 +43,6 @@ int NARB_APIClient::doConnect(char *host, int port)
       struct sockaddr_in addr;
       struct hostent *hp;
       int ret;
-      int size;
       int on = 1;
 
       _host = host;
@@ -152,10 +163,10 @@ bool NARB_APIClient::operational()
         return false;
     }
 
-    hp = gethostbyname (_host);
+    hp = gethostbyname (_host.chars());
     if (!hp)
     {
-        LOG(2)( Log::Routing, "NARB_APIClient::Connect: no such host %s\n", host);
+        LOG(2)(Log::Routing, "NARB_APIClient::Connect: no such host %s\n", _host);
         return (false);
     }
 
@@ -196,20 +207,24 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
 {
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
+    struct narb_api_msg_header* msgheader = (struct narb_api_msg_header*)buf;
+    struct msg_narb_route_request* msgbody = (struct msg_narb_route_request*)(buf + sizeof(struct narb_api_msg_header));
+    te_tlv_header *tlv = (te_tlv_header*)msgbody;
+    int len, offset;
+    ipv4_prefix_subobj* subobj_ipv4;
+    unum_if_subobj* subobj_unum;
 
-    if (!isAlive() && _port != 0)
+    if (_host.length() > 0 && _port != 0)
         if (doConnect() < 0)
             goto _RETURN;
 
     //construct NARB API message
-    struct narb_api_msg_header* msgheader = buf;
-    msgheader->header.type = htons(1); // 1 == NARB_MSG_LSPQ
-    msgheader->header.length = htons (sizeof(struct msg_narb_route_request));
-    msgheader->header.seqnum = htonl (0);
-    msgheader->header.ucid = htonl(0);
-    msgheader->header.tag = htonl(vtag);
+    msgheader->type = htons(1); // 1 == NARB_MSG_LSPQ
+    msgheader->length = htons (sizeof(struct msg_narb_route_request));
+    msgheader->seqnum = htonl (0);
+    msgheader->ucid = htonl(0);
+    msgheader->tag = htonl(vtag);
 
-    struct msg_narb_route_request* msgbody = buf + sizeof(struct narb_api_msg_header);
     memset(&msgbody, 0, sizeof(struct msg_narb_route_request));
     msgbody->app_req_data.type = htons(2); // 2 == MSG_APP_REQUEST
     msgbody->app_req_data.length = htons(sizeof(struct msg_narb_route_request));
@@ -225,20 +240,17 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     write(fd, buf, sizeof(struct narb_api_msg_header)+sizeof(struct msg_narb_route_request));
     //read reply
     read(fd, buf, sizeof(struct narb_api_msg_header));
-    read(fd, buf+sizeof(struct narb_api_msg_header), ntohs(msgheader.length));
+    read(fd, buf+sizeof(struct narb_api_msg_header), ntohs(msgheader->length));
     //parse NARB reply
-    te_tlv_header *tlv = msgbody;
-    if ((ntohs(tlv->type) == 4) // 4 == TLV_TYPE_NARB_ERROR_CODE
+    if (ntohs(tlv->type) == 4) // 4 == TLV_TYPE_NARB_ERROR_CODE
         goto _RETURN;
 
     ero = new EXPLICIT_ROUTE_Object;
-    int len = ntohs(tlv->length) ;
+    len = ntohs(tlv->length) ;
     assert( len > 0);
-    int offset = sizeof(struct te_tlv_header);
+    offset = sizeof(struct te_tlv_header);
 
-    AbstractNode node;
-    ipv4_prefix_subobj* subobj_ipv4  = (ipv4_prefix_subobj *)((char *)tlv + offset);
-    unum_if_subobj* subobj_unum;
+    subobj_ipv4  = (ipv4_prefix_subobj *)((char *)tlv + offset);
     while (len > 0)
     {
         if ((subobj_ipv4->l_and_type & 0x7f) == 4)
@@ -248,31 +260,20 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
 
         if (subobj_unum)
         {
-            node.Type = AbstractNode::UNumIfID;
-            node.typeOrLoose = subobj_unum->l_and_type;
-            node.unum_rtid = subobj_unum.addr.s_addr;
-            node.unum_ifid = subobj_unum->ifid;
+            AbstractNode node(((subobj_unum->l_and_type>>7) == 1), NetAddress(*(uint32*)subobj_ipv4->addr), subobj_unum->ifid);
+      	    ero->pushBack(node);
             len -= sizeof(unum_if_subobj);
             offset += sizeof(unum_if_subobj);
         }
         else
         {
-            node.Type = AbstractNode::IPv4;
-            node.ip4_addr = subobj_ipv4->addr.s_addr;
-            node.ip4_prefix = 32;
-            node.typeOrLoose = subobj_unum->l_and_type;
+            AbstractNode node(((subobj_unum->l_and_type>>7) == 1), NetAddress(*(uint32*)subobj_ipv4->addr), (uint8)32);
+      	    ero->pushBack(node);
             len -= sizeof(ipv4_prefix_subobj);
             offset += sizeof(ipv4_prefix_subobj);
         }
 
-      	 ero->pushBack(node);
         subobj_ipv4  = (ipv4_prefix_subobj *)((char *)tlv + offset);
-    }
-
-    if (ero->length == 0)
-    {
-        delete ero;
-        ero = NULL;
     }
 
 _RETURN:
