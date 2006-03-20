@@ -424,6 +424,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
                          explicitRoute = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
                                     getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                                     msg.getSENDER_TSPEC_Object().get_r(), 0);
+                     //@@@@ vtag == 0 for now. We need a mechanism to pass vtag request in some RESV object 
+                     // (LABEL_REQUEST_Object? SENDER_TSPEC? Or a new Ether_TSPEC!).
                      if (!explicitRoute)
 			    explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 						 hop.getLogicalInterface().getAddress(),
@@ -445,9 +447,11 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		LOG(2)(Log::MPLS, "MPLS: Internal error in the ERO :", explicitRoute->getAbstractNodeList().front().getAddress());
 		explicitRoute = NULL;
 	}
+
 	explicitRoute = RSVP_Global::rsvp->getMPLS().updateExplicitRoute( destAddress, explicitRoute );
-	if ( explicitRoute )
+	if ( explicitRoute &&  !explicitRoute->empty()) { // @@ !explicitRoute->empty() ???
 		destAddress = explicitRoute->getAbstractNodeList().front().getAddress();
+	}
 	else{
 		ERROR(2)( Log::Error, "Can't determine data interfaces!", *static_cast<SESSION_Object*>(this));
 		RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
@@ -517,8 +521,10 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		RtOutL.insert_unique( RSVP::getApiLif() );
 	}
 #endif
-
-	if ( !RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) ) {
+	//$$$$ updated 3/20/2006, yet to test ...
+	defaultOutLif = RSVP_Global::rsvp->findInterfaceByAddress( destAddress );
+	gateway = LogicalInterface::noGatewayAddress;
+	if ( !defaultOutLif) {
 	//if (!RSVP_Global::rsvp->getApiServer().findApiSession( *this ) ){
 		if ( destAddress.isMulticast() )  {
 			gateway = LogicalInterface::noGatewayAddress;
@@ -541,9 +547,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				defaultOutLif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( destAddress, gateway );
 			if ( defaultOutLif ) RtOutL.insert_unique( defaultOutLif );
 		}
-	} else {
-		defaultOutLif = RSVP::getApiLif();
-		gateway = LogicalInterface::noGatewayAddress;
 	}
 
 	//Store defaultOutLif and gateway

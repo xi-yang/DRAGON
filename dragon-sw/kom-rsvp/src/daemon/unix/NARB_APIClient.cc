@@ -227,9 +227,9 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     msgheader->seqnum = htonl (0);
     msgheader->ucid = htonl(0);
     msgheader->tag = htonl(vtag);
-    msgheader->options = htonl(0x07<<16);
+    msgheader->options = htonl(0x07<<16); //OPT_STRICT | OPT_PREFERED |OPT_MRN
     if (vtag > 0)
-        msgheader->options |= htonl(0x30<<16);
+        msgheader->options |= htonl(0x30<<16); //OPT_BIDIRECTIONAL | OPT_E2E_VLAN
     msgheader->chksum = NARB_MSG_CHKSUM(*msgheader);
     memset(msgbody, 0, sizeof(msg_app2narb_request));
     msgbody->type = htons(2); // 2 == MSG_APP_REQUEST
@@ -306,6 +306,13 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
 
         subobj_ipv4  = (ipv4_prefix_subobj *)((char *)tlv + offset);
     }
+
+    if (ero && ero->empty())
+    {
+        ero->destroy();
+        ero = NULL;
+    }
+
 
 _RETURN:
     disconnect();

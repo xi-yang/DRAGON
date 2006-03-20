@@ -634,6 +634,9 @@ void MPLS::removeHopInfo( uint32 port ) {
 #endif /* MPLS_CAMBRIDGE */
 
 EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLICIT_ROUTE_Object* er ) {
+	//@@@@ if (!er) 
+	// Check static routes first ... enforceVirtualRoute ...???
+	// Add the remote next hop (and the session destination?)
 	if ( er ) er->borrow();
 	ExplicitRouteList::ConstIterator erIter = erList.find( dest );
 	if ( erIter != erList.end() ) {
