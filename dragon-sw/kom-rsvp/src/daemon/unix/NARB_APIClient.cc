@@ -307,7 +307,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
         subobj_ipv4  = (ipv4_prefix_subobj *)((char *)tlv + offset);
     }
 
-    if (ero && ero->empty())
+    if (ero && ero->getAbstractNodeList().empty())
     {
         ero->destroy();
         ero = NULL;

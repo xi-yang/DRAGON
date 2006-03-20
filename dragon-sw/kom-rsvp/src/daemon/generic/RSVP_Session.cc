@@ -449,7 +449,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	}
 
 	explicitRoute = RSVP_Global::rsvp->getMPLS().updateExplicitRoute( destAddress, explicitRoute );
-	if ( explicitRoute &&  !explicitRoute->empty()) { // @@ !explicitRoute->empty() ???
+	if ( explicitRoute &&  !explicitRoute->getAbstractNodeList().empty()) { // @@ !explicitRoute->empty() ???
 		destAddress = explicitRoute->getAbstractNodeList().front().getAddress();
 	}
 	else{
