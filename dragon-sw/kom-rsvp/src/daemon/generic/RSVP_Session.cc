@@ -224,20 +224,16 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		if ((ifId >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
 			ifId = 0;
 		NetAddress hopAddr = explicitRoute->getAbstractNodeList().front().getAddress();
-		outLif = RSVP_Global::rsvp->getRoutingService().findInterfaceByData(hopAddr, ifId); 
-		if (!outLif)
-		{
-			outLif = RSVP_Global::rsvp->findInterfaceByAddress(hopAddr);
-			if (!outLif && hopAddr != RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
-				break;
-		}
-              //egress localID processing @@@@ hacked
-              if (explicitRoute->getAbstractNodeList().size() == 1)
-              {
-                    if(explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::UNumIfID && hopAddr == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
-                    {
-                        outUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
-                    }
+		if (hopAddr != RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()) {
+			outLif = RSVP_Global::rsvp->getRoutingService().findInterfaceByData(hopAddr, ifId); 
+			if (!outLif)
+			{
+				outLif = RSVP_Global::rsvp->findInterfaceByAddress(hopAddr);
+				if (!outLif)  break;
+			}
+		} else if (explicitRoute->getAbstractNodeList().size() == 1 && explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::UNumIfID) {
+	             //egress localID processing @@@@ hacked
+                    outUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
               }
 		explicitRoute->popFront();
 		// E2E tagged VLAN processing (outbound) @@@@ hacked
