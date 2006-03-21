@@ -663,8 +663,7 @@ EXPLICIT_ROUTE_Object* MPLS::getExplicitRoute(NetAddress& dest) {
 			if (RSVP_Global::rsvp->getRoutingService().findDataByInterface(*outLif, nexthop, ifID)) {
 				er = new EXPLICIT_ROUTE_Object;
 				RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(nexthop, remote_nexthop);
-				er->pushFront(AbstractNode(false, nexthop, (uint8)32));
-				dest = remote_nexthop;
+				er->pushFront(AbstractNode(false, remote_nexthop, (uint8)32));
 			}
 		}
 	}
