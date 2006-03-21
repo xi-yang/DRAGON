@@ -261,11 +261,11 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
                                 ero = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
                                     getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                                     msg.getSENDER_TSPEC_Object().get_r(), vtag);
-//                            if (!ero)
-//    				    ero  = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
-//											hop.getLogicalInterface().getAddress(),
-//											explicitRoute->getAbstractNodeList().front().getAddress(), 
-//											msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
+                            if (!ero)
+    				    ero  = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
+											hop.getLogicalInterface().getAddress(),
+											explicitRoute->getAbstractNodeList().front().getAddress(), 
+											msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
 				if (ero && (!ero->getAbstractNodeList().front().isLoose())){
 					explicitRoute->popFront();
 					while (!ero->getAbstractNodeList().empty()){
@@ -383,13 +383,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		&& (msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress
 		|| msg.getRSVP_HOP_Object().getAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
 		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress()));
-	LOG(3)(Log::API, "hop.getLogicalInterface() ", &hop.getLogicalInterface(),  RSVP_Global::rsvp->getApiLif());
-	LOG(2)(Log::API, "msg.getRSVP_HOP_Object().getAddress() ", msg.getRSVP_HOP_Object().getAddress());
-	LOG(2)(Log::API, "RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() ", RSVP_Global::rsvp->getRoutingService().getLoopbackAddress());
-	bool b1 = &hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif();
-	bool b2 = msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress;
-	bool b3 = RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress());
-
 #endif
 
 	LogicalInterfaceSet RtOutL;
@@ -429,10 +422,13 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
                                     msg.getSENDER_TSPEC_Object().get_r(), 0);
                      //@@@@ vtag == 0 for now. We need a mechanism to pass vtag request in some RESV object 
                      // (LABEL_REQUEST_Object? SENDER_TSPEC? Or a new Ether_TSPEC!).
-//                     if (!explicitRoute)
-//			    explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
-//						 hop.getLogicalInterface().getAddress(),
-//						 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
+                     //@@@@ do explicit routing
+                     if (!explicitRoute)
+	                    	explicitRoute = RSVP_Global::rsvp->getMPLS().updateExplicitRoute(destAddress, explicitRoute);
+                     if (!explicitRoute)
+			    explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
+						 hop.getLogicalInterface().getAddress(),
+						 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
 		}
 		else{
 			// further, all error conditions should return an error and ignore the message
@@ -451,7 +447,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		explicitRoute = NULL;
 	}
 
-	explicitRoute = RSVP_Global::rsvp->getMPLS().updateExplicitRoute( destAddress, explicitRoute );
+	//explicitRoute = RSVP_Global::rsvp->getMPLS().updateExplicitRoute( destAddress, explicitRoute );
 	if ( explicitRoute &&  !explicitRoute->getAbstractNodeList().empty()) { // @@ !explicitRoute->empty() ???
 		destAddress = explicitRoute->getAbstractNodeList().front().getAddress();
 	}
