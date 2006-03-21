@@ -80,11 +80,12 @@ ostream& operator<< (ostream& os, const RoutingEntry& rt ) {
 }
 
 void RoutingService::addRoute( const RoutingEntry& rte ) {
-#if defined(VIRT_NETWORK)
+//@@hacked
+//#if defined(VIRT_NETWORK)
 	if( rte.iface ) {
 		rtList->push_front( new RoutingEntry( rte ) );
 	}
-#endif
+//#endif
 }
 
 RoutingService::RoutingService() : rsrr(NULL), rtList(new RoutingEntryList),
