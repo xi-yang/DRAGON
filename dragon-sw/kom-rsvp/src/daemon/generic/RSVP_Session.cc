@@ -364,8 +364,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
             lif->setMPLS(true);
        }
 
-	if (explicitRoute.getAbstractNodeList().empty())
-		explicitRoute.getAbstractNodeList().pushFront(AbstractNode(false, getDestAddress(), (uint32)32));
 	return true;
 }
 
@@ -385,6 +383,13 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		&& (msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress
 		|| msg.getRSVP_HOP_Object().getAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
 		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress()));
+	LOG(3)(Log::API, "hop.getLogicalInterface() ", &hop.getLogicalInterface(),  RSVP_Global::rsvp->getApiLif());
+	LOG(2)(Log::API, "msg.getRSVP_HOP_Object().getAddress() ", msg.getRSVP_HOP_Object().getAddress());
+	LOG(2)(Log::API, "RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() ", RSVP_Global::rsvp->getRoutingService().getLoopbackAddress());
+	bool b1 = &hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif();
+	bool b2 = msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress;
+	bool b3 = RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress());
+
 #endif
 
 	LogicalInterfaceSet RtOutL;
@@ -467,9 +472,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 #if defined(WITH_API)
 	if ( fromLocalAPI ) {
 		// message is from local API -> set sender address if not set
-		if (destAddress == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()) {
-			defaultOutLif = RSVP_Global::rsvp->getApiLif();
-		} else if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
+		if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
 		|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 		&& (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL))
 			defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, 0, gateway);
@@ -524,7 +527,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	}
 #endif
 
-	if ( !defaultOutLif) {
+	if ( !RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) ) {
 	//if (!RSVP_Global::rsvp->getApiServer().findApiSession( *this ) ){
 		if ( destAddress.isMulticast() )  {
 			gateway = LogicalInterface::noGatewayAddress;
@@ -547,6 +550,9 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				defaultOutLif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( destAddress, gateway );
 			if ( defaultOutLif ) RtOutL.insert_unique( defaultOutLif );
 		}
+	} else {
+		defaultOutLif = RSVP::getApiLif();
+		gateway = LogicalInterface::noGatewayAddress;
 	}
 
 	//Store defaultOutLif and gateway

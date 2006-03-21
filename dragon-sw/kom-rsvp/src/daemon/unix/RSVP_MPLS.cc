@@ -648,8 +648,11 @@ EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLIC
 			}
 		}
 	}
+	//@@@@
+        if (er && er->getAbstractNodeList().empty() && RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() == dest)
+                er->pushFront(AbstractNode(false, dest, (uint8)32));
 	//@@ query from configured virtual routes...
-	if (!er || er->getAbstractNodeList().empty() || er->getAbstractNodeList().front().getAddress() == dest) {
+	if (!er || er->getAbstractNodeList().empty()) {
 		LogicalInterface* outLif;
 		NetAddress nexthop, remote_nexthop, gw;
 		uint32 ifID;
