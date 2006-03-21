@@ -102,7 +102,7 @@ public:
 	void getPeerIPAddr(const NetAddress& myAddr, NetAddress& peerAddr) const;
 	void init( LogicalInterfaceList& tmpLifList );
 	void init2();
-	bool getRoute( const NetAddress&, NetAddress& nexthop, NetAddress& remote_nexthop,  NetAddress& gateway ) const;
+	bool getRoute( const NetAddress&, LogicalInterface*& lif, NetAddress& gateway ) const;
 	EXPLICIT_ROUTE_Object* getExplicitRouteByOSPF(const NetAddress& src, const NetAddress& dest, const SENDER_TSPEC_Object& sendTSpec, const LABEL_REQUEST_Object& labelReq);
 	const LogicalInterface* findInterfaceByData( const NetAddress& ip, const uint32 ifID = 0);
 	bool findDataByInterface(const LogicalInterface& lif, NetAddress& ip, uint32& ifID);

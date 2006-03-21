@@ -650,12 +650,17 @@ EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLIC
 	}
 	//@@ query from configured virtual routes...
 	if (!er || er->getAbstractNodeList().empty() || er->getAbstractNodeList().front().getAddress() == dest) {
+		LogicalInterface* outLif;
 		NetAddress nexthop, remote_nexthop, gw;
-		if (RSVP_Global::rsvp->getRoutingService().getRoute(dest, nexthop, remote_nexthop, gw)) {
-			if (!er) er = new EXPLICIT_ROUTE_Object;
-			if (er->getAbstractNodeList().empty())
-				er->pushFront(AbstractNode(false, dest, (uint8)32));
-			er->pushFront(AbstractNode(false, remote_nexthop, (uint8)32));
+		uint32 ifID;
+		if (RSVP_Global::rsvp->getRoutingService().getRoute(dest, outLif, gw)) {
+			if (RSVP_Global::rsvp->getRoutingService().findDataByInterface(*outLif, nexthop, ifID)) {
+				if (!er) er = new EXPLICIT_ROUTE_Object;
+				if (er->getAbstractNodeList().empty())
+					er->pushFront(AbstractNode(false, dest, (uint8)32));
+				RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(nexthop, remote_nexthop);
+				er->pushFront(AbstractNode(false, remote_nexthop, (uint8)32));
+			}
 		}
 		else if (er) {
 			er->destroy();

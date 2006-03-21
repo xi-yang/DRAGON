@@ -568,13 +568,12 @@ const LogicalInterface* RoutingService::getMulticastRoute( const NetAddress& src
 }
 
 //virtual route
-bool RoutingService::getRoute( const NetAddress& dest, NetAddress& nexthop, NetAddress& remote_nexthop,  NetAddress& gw ) const {
+bool RoutingService::getRoute( const NetAddress& dest, LogicalInterface*& lif,  NetAddress& gw ) const {
 	bool found = false;
 	RoutingEntryList::ConstIterator iter = rtList->begin();
 	for ( ; iter != rtList->end(); ++iter ) {
 		if ( ((*iter)->mask & dest) == (*iter)->dest ) {
-			nexthop = (*iter)->iface->getAddress();
-			getPeerIPAddr(nexthop, remote_nexthop);
+			lif = (*iter)->iface;
 			gw = (*iter)->gw;
 			found = true;
 		}
