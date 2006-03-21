@@ -424,7 +424,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
                      // (LABEL_REQUEST_Object? SENDER_TSPEC? Or a new Ether_TSPEC!).
                      //@@@@ do explicit routing
                      if (!explicitRoute)
-	                    	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress, explicitRoute);
+	                    	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress);
                      if (!explicitRoute)
 			    explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 						 hop.getLogicalInterface().getAddress(),
