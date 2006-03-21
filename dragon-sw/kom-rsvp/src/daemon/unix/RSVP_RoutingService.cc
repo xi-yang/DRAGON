@@ -572,7 +572,7 @@ bool RoutingService::getRoute( const NetAddress& dest, NetAddress& nexthop, NetA
 	RoutingEntryList::ConstIterator iter = rtList->begin();
 	for ( ; iter != rtList->end(); ++iter ) {
 		if ( ((*iter)->mask & dest) == (*iter)->dest ) {
-			nexthop = (*iter)->iface.getLocalAddress();
+			nexthop = (*iter)->iface->getAddress();
 			getPeerIPAddr(nexthop, remote_nexthop);
 			gw = (*iter)->gw;
 			found = true;

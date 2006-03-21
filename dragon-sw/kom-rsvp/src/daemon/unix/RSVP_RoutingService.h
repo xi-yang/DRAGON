@@ -74,7 +74,6 @@ class RoutingService {
 #endif
 	void maskLength2IP (int masklen, NetAddress& netmask) const;
 	void addRoute( const RoutingEntry& rte );
-	bool getRoute( const NetAddress&, NetAddress& nexthop, NetAddress& remote_nexthop,  NetAddress& gateway ) const;
 	void getVirtualRoute( const NetAddress&, LogicalInterfaceSet&, NetAddress& gateway ) const;
 	bool sendRouteRequest( const NetAddress& dest ) const;
 	const LogicalInterface* getRouteReply( NetAddress& dest, NetAddress& gateway, bool async = false ) const;
@@ -103,6 +102,7 @@ public:
 	void getPeerIPAddr(const NetAddress& myAddr, NetAddress& peerAddr) const;
 	void init( LogicalInterfaceList& tmpLifList );
 	void init2();
+	bool getRoute( const NetAddress&, NetAddress& nexthop, NetAddress& remote_nexthop,  NetAddress& gateway ) const;
 	EXPLICIT_ROUTE_Object* getExplicitRouteByOSPF(const NetAddress& src, const NetAddress& dest, const SENDER_TSPEC_Object& sendTSpec, const LABEL_REQUEST_Object& labelReq);
 	const LogicalInterface* findInterfaceByData( const NetAddress& ip, const uint32 ifID = 0);
 	bool findDataByInterface(const LogicalInterface& lif, NetAddress& ip, uint32& ifID);
