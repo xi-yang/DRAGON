@@ -633,12 +633,12 @@ void MPLS::removeHopInfo( uint32 port ) {
 }
 #endif /* MPLS_CAMBRIDGE */
 
-EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLICIT_ROUTE_Object* er ) {
-	if ( er ) er->borrow();
+EXPLICIT_ROUTE_Object* MPLS::getExplicitRoute( const NetAddress& dest) {
+	EXPLICIT_ROUTE_Object* er = NULL;
 	ExplicitRouteList::ConstIterator erIter = erList.find( dest );
 	if ( erIter != erList.end() ) {
-                                           assert( !(*erIter).anList.empty() );
-		if (!er) er = new EXPLICIT_ROUTE_Object;
+              assert( !(*erIter).anList.empty() );
+		er = new EXPLICIT_ROUTE_Object;
 		SimpleList<NetAddress>::ConstIterator addrIter = (*erIter).anList.end();
 		for ( ;; ) {
 			--addrIter;
@@ -648,27 +648,48 @@ EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLIC
 			}
 		}
 	}
-	//@@@@
-        if (er && er->getAbstractNodeList().empty() && RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() == dest)
-                er->pushFront(AbstractNode(false, dest, (uint8)32));
-	//@@ query from configured virtual routes...
-	if (!er || er->getAbstractNodeList().empty()) {
+
+	//destination is local
+	if (!er && RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() == dest) {
+		er = new EXPLICIT_ROUTE_Object;
+              er->pushFront(AbstractNode(false, dest, (uint8)32));
+	}
+	//query from configured virtual routes...
+	if (!er) {
 		LogicalInterface* outLif;
 		NetAddress nexthop, remote_nexthop, gw;
 		uint32 ifID;
 		if (RSVP_Global::rsvp->getRoutingService().getRoute(dest, outLif, gw)) {
 			if (RSVP_Global::rsvp->getRoutingService().findDataByInterface(*outLif, nexthop, ifID)) {
-				if (er) er->destroy();
 				er = new EXPLICIT_ROUTE_Object;
 				RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(nexthop, remote_nexthop);
 				er->pushFront(AbstractNode(false, remote_nexthop, (uint8)32));
 			}
 		}
-		else if (er) {
-			er->destroy();
-			er = NULL;
+	}
+
+	return er;
+}
+
+EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLICIT_ROUTE_Object* er ) {
+	if ( er ) er->borrow();
+	ExplicitRouteList::ConstIterator erIter = erList.find( dest );
+	if ( erIter != erList.end() ) {
+                                           assert( !(*erIter).anList.empty() );
+		if (!er) 
+			er = new EXPLICIT_ROUTE_Object;
+		else 
+			er.getAbstractNodeList().clear();
+		SimpleList<NetAddress>::ConstIterator addrIter = (*erIter).anList.end();
+		for ( ;; ) {
+			--addrIter;
+			er->pushFront( AbstractNode( false, (*addrIter), (uint8)32 ) );
+			if ( addrIter == (*erIter).anList.begin() ) {
+		break;
+			}
 		}
 	}
+
 	if (er) {
 		LOG(4)( Log::MPLS, "MPLS: explicit route for", dest, "is", *er );
 	}

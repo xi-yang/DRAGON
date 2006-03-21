@@ -132,6 +132,7 @@ public:
 	void removeHopInfo( uint32 ) {}
 #endif
 	// TODO: elaborated interface needed (maybe COPS, maybe whatever)
+	EXPLICIT_ROUTE_Object* getExplicitRoute( const NetAddress& dest);
 	EXPLICIT_ROUTE_Object* updateExplicitRoute( const NetAddress& dest, EXPLICIT_ROUTE_Object* = NULL );
 	void addExplicitRoute( const NetAddress& dest, const SimpleList<NetAddress>& );
 };
