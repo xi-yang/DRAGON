@@ -448,8 +448,15 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	}
 
 	explicitRoute = RSVP_Global::rsvp->getMPLS().updateExplicitRoute( destAddress, explicitRoute );
-	if ( explicitRoute &&  !explicitRoute->getAbstractNodeList().empty()) {
-		destAddress = explicitRoute->getAbstractNodeList().front().getAddress();
+	if ( explicitRoute ) {
+		if (!explicitRoute.empty())
+			destAddress = explicitRoute->getAbstractNodeList().front().getAddress();
+		else {
+			// removal of EXPLICIT_ROUTE_OBJECT affects path_refresh_needed
+			explicitRoute.destroy();
+			explicitRoute = NULL;
+			msg.clearEXPLICIT_ROUTE_Object();
+		}
 	}
 	else{
 		ERROR(2)( Log::Error, "Can't determine data interfaces!", *static_cast<SESSION_Object*>(this));
@@ -468,11 +475,11 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 #if defined(WITH_API)
 	if ( fromLocalAPI ) {
 		// message is from local API -> set sender address if not set
-		if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
-		|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
+		if (explicitRoute && explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
+		|| (explicitRoute && explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 		&& (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL))
 			defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, 0, gateway);
-		else if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID)
+		else if (explicitRoute && explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID)
 		{
 			uint32 uNumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
 			defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, uNumIfID, gateway);
@@ -533,11 +540,11 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			}
 		} else {
 			RtInIf = &hop.getLogicalInterface();
-			if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
-			|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
+			if (explicitRoute && explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
+			|| (explicitRoute && explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 			&& (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL))
 				defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, 0, gateway);
-			else if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID)
+			else if (explicitRoute && explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID)
 			{
 				uint32 uNumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
 				defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, uNumIfID, gateway);
