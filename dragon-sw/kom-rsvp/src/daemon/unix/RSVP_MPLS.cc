@@ -634,9 +634,6 @@ void MPLS::removeHopInfo( uint32 port ) {
 #endif /* MPLS_CAMBRIDGE */
 
 EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLICIT_ROUTE_Object* er ) {
-	//@@@@ if (!er) 
-	// Check static routes first ... enforceVirtualRoute ...???
-	// Add the remote next hop (and the session destination?)
 	if ( er ) er->borrow();
 	ExplicitRouteList::ConstIterator erIter = erList.find( dest );
 	if ( erIter != erList.end() ) {
@@ -651,9 +648,20 @@ EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLIC
 			}
 		}
 	}
+	//@@ query from configured virtual routes...
+	if (!er || er.getAbstractNodeList().empty() || er.getAbstractNodeList().front().getAddress() == dest) {
+		NetAddress nexthop, remote_nexthop, gw;
+		if (RSVP_Global::rsvp->getRoutingService().getRoute(dest, nexthop, remote_nexthop, gw)) {
+			if (!er) er = new EXPLICIT_ROUTE_Object;
+			if (er.er.getAbstractNodeList().empty())
+				er.pushFront(AbstractNode(false, dest, (uint8)32));
+			er.pushFront(AbstractNode(false, remote_nexthop, (uint8)32));
+		}
+	}
 	if (er) {
 		LOG(4)( Log::MPLS, "MPLS: explicit route for", dest, "is", *er );
 	}
+
 	return er;
 }
 

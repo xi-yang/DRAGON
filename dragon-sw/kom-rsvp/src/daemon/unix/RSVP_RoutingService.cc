@@ -566,6 +566,21 @@ const LogicalInterface* RoutingService::getMulticastRoute( const NetAddress& src
 	return inLif;
 }
 
+//virtual route
+bool RoutingService::getRoute( const NetAddress& dest, NetAddress& nexthop, NetAddress& remote_nexthop,  NetAddress& gw ) const {
+	bool found = false;
+	RoutingEntryList::ConstIterator iter = rtList->begin();
+	for ( ; iter != rtList->end(); ++iter ) {
+		if ( ((*iter)->mask & dest) == (*iter)->dest ) {
+			nexthop = (*iter)->iface.getLocalAddress();
+			getPeerIPAddr(nexthop, remote_nexthop);
+			gw = (*iter)->gw;
+			found = true;
+		}
+	}
+	return found;
+}
+
 void RoutingService::getVirtualRoute( const NetAddress& dest, LogicalInterfaceSet& lifList, NetAddress& gw ) const {
 #if defined(VIRT_NETWORK)
 	// only uses simple match and returns all matching routes (i.e. no longest-prefix match)

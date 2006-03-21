@@ -74,6 +74,7 @@ class RoutingService {
 #endif
 	void maskLength2IP (int masklen, NetAddress& netmask) const;
 	void addRoute( const RoutingEntry& rte );
+	bool getRoute( const NetAddress&, NetAddress& nexthop, NetAddress& remote_nexthop,  NetAddress& gateway ) const;
 	void getVirtualRoute( const NetAddress&, LogicalInterfaceSet&, NetAddress& gateway ) const;
 	bool sendRouteRequest( const NetAddress& dest ) const;
 	const LogicalInterface* getRouteReply( NetAddress& dest, NetAddress& gateway, bool async = false ) const;
