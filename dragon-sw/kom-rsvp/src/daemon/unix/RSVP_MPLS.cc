@@ -679,7 +679,7 @@ EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLIC
 		if (!er) 
 			er = new EXPLICIT_ROUTE_Object;
 		else 
-			er.getAbstractNodeList().clear();
+			while (!er->getAbstractNodeList().empty())er->popFront();
 		SimpleList<NetAddress>::ConstIterator addrIter = (*erIter).anList.end();
 		for ( ;; ) {
 			--addrIter;
@@ -688,6 +688,11 @@ EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLIC
 		break;
 			}
 		}
+	}
+
+	if ((!er || er->getAbstractNodeList().empty()) && RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() == dest) {
+		er = new EXPLICIT_ROUTE_Object;
+              er->pushFront(AbstractNode(false, dest, (uint8)32));
 	}
 
 	if (er) {
