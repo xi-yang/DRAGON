@@ -573,7 +573,7 @@ bool RoutingService::getRoute( const NetAddress& dest, LogicalInterface*& lif,  
 	RoutingEntryList::ConstIterator iter = rtList->begin();
 	for ( ; iter != rtList->end(); ++iter ) {
 		if ( ((*iter)->mask & dest) == (*iter)->dest ) {
-			lif = (*iter)->iface;
+			lif = (LogicalInterface*)((*iter)->iface);
 			gw = (*iter)->gw;
 			found = true;
 		}
