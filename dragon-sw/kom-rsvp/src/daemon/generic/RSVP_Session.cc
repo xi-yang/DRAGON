@@ -481,19 +481,28 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
                     	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress);
 
                      //explicit routing using NARB
-                     if (!explicitRoute && NARB_APIClient::instance().operational())
+                     if (!explicitRoute && NARB_APIClient::instance().operational()) {
                             explicitRoute = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
                                     getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                                     msg.getSENDER_TSPEC_Object().get_r(), 0);
 	                     //@@@@ set vtag == 0 for now. We need a mechanism to pass vtag request in some RESV object (LABEL_REQUEST_Object? SENDER_TSPEC? Or a new Ether_TSPEC!).
 
-                     //explicit routing using OSPFd
-                     if (!explicitRoute)
-			       explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
-						 hop.getLogicalInterface().getAddress(),
-						 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
+	                     //explicit routing using OSPFd
+	                     if (!explicitRoute)
+				       explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
+							 hop.getLogicalInterface().getAddress(),
+							 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
 
-			//@@@@ all strict ... store into erList ... ?
+				//store ERO into erList .
+				if (explicitRoute) {
+					SimpleList<NetAddress> simple_ero;
+					AbstractNodeList::ConstIterator iter = ero->getAbstractNodeList().begin();
+					for (; iter != explicitRoute->getAbstractNodeList().end(); ++iter){
+						simple_ero.push_back((*iter).getAddress());
+					}
+					RSVP_Global::rsvp->getMPLS().addExplicitRoute(destAddress, simple_ero);
+				}
+                    	}
 		}
 		else{
 			// further, all error conditions should return an error and ignore the message
