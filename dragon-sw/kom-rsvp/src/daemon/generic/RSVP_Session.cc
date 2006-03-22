@@ -381,18 +381,22 @@ bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 
 	//skip all local hops
 	AbstractNodeList::ConstIterator iter = ero->getAbstractNodeList().begin();
-	for (; iter != ero->getAbstractNodeList().end(); iter++){
-		if ((*iter).type == AbstractNode::IPv4)
-			ifId == 0;
-		else if (*iter).type == AbstractNode::UNumIfID)
+	for (; iter != ero->getAbstractNodeList().end(); ++iter){
+		switch ((*iter).getType()) {
+		case AbstractNode::IPv4:
+			ifId = 0;
+			break;
+		case AbstractNode::UNumIfID:
 			ifId = (*iter).getInterfaceID();
-		else
+			break;
+		default:
 			return false;
+		}
 		if ((*iter).getAddress() != loopback) {
-			outLif = RSVP_Global::rsvp->getRoutingService().findInterfaceByData((*iter).getAddress(), ifId); 
+			outLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData((*iter).getAddress(), ifId); 
 			if (!outLif)
 			{
-				outLif = RSVP_Global::rsvp->findInterfaceByAddress((*iter).getAddress());
+				outLif = (LogicalInterface*)RSVP_Global::rsvp->findInterfaceByAddress((*iter).getAddress());
 				if (!outLif)  break;
 			}
 		}
@@ -401,7 +405,7 @@ bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 	//no nexthop found and we do need it
 	if (iter == ero->getAbstractNodeList().end())
 		return true;
-	outLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
+	outLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
 		     (*iter).getAddress(), ifId, gw);
 	if (!outLif)
 		return true;
