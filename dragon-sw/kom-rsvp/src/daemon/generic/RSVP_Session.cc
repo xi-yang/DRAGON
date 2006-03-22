@@ -254,13 +254,15 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			else 
 			{
 				LOG(2)( Log::MPLS, "MPLS: resolving loose hop by local routing module: ", explicitRoute->getAbstractNodeList().front() );
+                            EXPLICIT_ROUTE_Object* ero = NULL;
+				/* @@@@ Use of NARB in loose hop expansion yet to be determinted
                             uint32 vtag = (explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) ?
                                    explicitRoute->getAbstractNodeList().front().getInterfaceID() & 0xffff : 0;
-                            EXPLICIT_ROUTE_Object* ero = NULL;
                             if (NARB_APIClient::instance().operational())
                                 ero = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
                                     getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                                     msg.getSENDER_TSPEC_Object().get_r(), vtag);
+                            */
                             if (!ero)
     				    ero  = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 											hop.getLogicalInterface().getAddress(),
@@ -269,11 +271,11 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				if (ero && (!ero->getAbstractNodeList().front().isLoose())){
 					explicitRoute->popFront();
 					while (!ero->getAbstractNodeList().empty()){
-						outLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
-							     ero->getAbstractNodeList().back().getAddress(),ifId, gw);
-						if (!outLif)
-							explicitRoute->pushFront(ero->getAbstractNodeList().back());
-						ero->popBack();
+						//outLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
+						//	     ero->getAbstractNodeList().back().getAddress(),ifId, gw);
+						//if (!outLif)
+						//	explicitRoute->pushFront(ero->getAbstractNodeList().back());
+						//ero->popBack();
 					}
 				}
 				else{
@@ -405,10 +407,13 @@ bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 	//no nexthop found and we do need it
 	if (iter == ero->getAbstractNodeList().end())
 		return true;
+	//expanding loose hop
+	if ((*iter).isLoose())
+		return true;
+	//rerouting for a hop OSPFd cannot resolve
 	outLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
 		     (*iter).getAddress(), ifId, gw);
-	if (!outLif)
-		return true;
+	if (!outLif) return true;
 
 	//no nexthop routing
 	return false;
@@ -472,22 +477,23 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		if (!explicitRoute) {
 			LOG(2)( Log::MPLS, "MPLS: requesting ERO from local routing module...", *static_cast<SESSION_Object*>(this));
 
+                     //explicit routing using local configuration
+                    	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress);
+
                      //explicit routing using NARB
-                     if (NARB_APIClient::instance().operational())
-                         explicitRoute = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
+                     if (!explicitRoute && NARB_APIClient::instance().operational())
+                            explicitRoute = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
                                     getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                                     msg.getSENDER_TSPEC_Object().get_r(), 0);
 	                     //@@@@ set vtag == 0 for now. We need a mechanism to pass vtag request in some RESV object (LABEL_REQUEST_Object? SENDER_TSPEC? Or a new Ether_TSPEC!).
-
-                     //explicit routing using local configuration
-                     if (!explicitRoute)
-	                    	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress);
 
                      //explicit routing using OSPFd
                      if (!explicitRoute)
 			       explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 						 hop.getLogicalInterface().getAddress(),
 						 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
+
+			//@@@@ all strict ... store into erList ... ?
 		}
 		else{
 			// further, all error conditions should return an error and ignore the message
