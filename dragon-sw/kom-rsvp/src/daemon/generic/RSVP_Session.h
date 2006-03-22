@@ -88,6 +88,8 @@ public:
 
 	OutISB* findOutISB( const LogicalInterface&, const PSB& );
 
+	bool shouldReroute( const EXPLICIT_ROUTE_Object* ero );
+
 	bool processERO(const Message& msg, Hop&, EXPLICIT_ROUTE_Object* explicitRoute, bool fromLocalAPI, RSVP_HOP_Object& dataInRsvpHop, RSVP_HOP_Object& dataOutRsvpHop, VLSRRoute& vLSRoute);
 	void processPATH( const Message&, Hop&, uint8 );
 	// for multicast sessions

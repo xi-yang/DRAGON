@@ -269,7 +269,10 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				if (ero && (!ero->getAbstractNodeList().front().isLoose())){
 					explicitRoute->popFront();
 					while (!ero->getAbstractNodeList().empty()){
-						explicitRoute->pushFront(ero->getAbstractNodeList().back());
+						outLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
+							     ero->getAbstractNodeList().back().getAddress(),ifId, gw);
+						if (!outLif)
+							explicitRoute->pushFront(ero->getAbstractNodeList().back());
 						ero->popBack();
 					}
 				}
@@ -367,6 +370,47 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	return true;
 }
 
+bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
+	LogicalInterface* outLif;
+	uint32 ifId;
+
+	//if destination is reached, there is no need for nexthop route
+	NetAddress loopback =  RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+	if (getDestAddress() == loopback)
+		return false;
+
+	//skip all local hops
+	AbstractNodeList::ConstIterator iter = ero->getAbstractNodeList().begin();
+	for (; iter != ero->getAbstractNodeList().end(); iter++){
+		if ((*iter).type == AbstractNode::IPv4)
+			ifId == 0;
+		else if (*iter).type == AbstractNode::UNumIfID)
+			ifId = (*iter).getInterfaceID();
+		else
+			return false;
+		if ((*iter).getAddress() != loopback) {
+			outLif = RSVP_Global::rsvp->getRoutingService().findInterfaceByData((*iter).getAddress(), ifId); 
+			if (!outLif)
+			{
+				outLif = RSVP_Global::rsvp->findInterfaceByAddress((*iter).getAddress());
+				if (!outLif)  break;
+			}
+		}
+	}
+
+	//no nexthop found and we do need it
+	if (iter == ero->getAbstractNodeList().end())
+		return true;
+	outLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
+		     (*iter).getAddress(), ifId, gw);
+	if (!outLif)
+		return true;
+
+	//no nexthop routing
+	return false;
+}
+
+
 void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 #if defined(ONEPASS_RESERVATION)
@@ -415,20 +459,27 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		explicitRoute = ((!fromLocalAPI) && (!hop.getLogicalInterface().hasEnabledMPLS())) ? NULL
 					   : const_cast<EXPLICIT_ROUTE_Object*>(msg.getEXPLICIT_ROUTE_Object());
 
-		//@@@@ 
-		//explicitRoute = preProcessERO(msg, hop, explicitRoute);
+		//preprocess ERO
+		if (explicitRoute && shouldReroute(explicitRoute)) {
+			explicitRoute->destroy();
+			explicitRoute = NULL;
+		}
 
 		if (!explicitRoute) {
 			LOG(2)( Log::MPLS, "MPLS: requesting ERO from local routing module...", *static_cast<SESSION_Object*>(this));
+
+                     //explicit routing using NARB
                      if (NARB_APIClient::instance().operational())
                          explicitRoute = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
                                     getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                                     msg.getSENDER_TSPEC_Object().get_r(), 0);
-                     //@@@@ vtag == 0 for now. We need a mechanism to pass vtag request in some RESV object 
-                     // (LABEL_REQUEST_Object? SENDER_TSPEC? Or a new Ether_TSPEC!).
-                     //@@@@ do explicit routing
+	                     //@@@@ set vtag == 0 for now. We need a mechanism to pass vtag request in some RESV object (LABEL_REQUEST_Object? SENDER_TSPEC? Or a new Ether_TSPEC!).
+
+                     //explicit routing using local configuration
                      if (!explicitRoute)
 	                    	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress);
+
+                     //explicit routing using OSPFd
                      if (!explicitRoute)
 			       explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 						 hop.getLogicalInterface().getAddress(),
@@ -444,8 +495,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				explicitRoute = NULL;
 			}
 		}
-		//@@@@
-		//end of preProcessERO
 	}
 	if (explicitRoute && (!processERO(msg, hop, explicitRoute, fromLocalAPI, dataInRsvpHop, dataOutRsvpHop, vLSRoute)))
 	{
@@ -518,7 +567,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	else
 #endif
 
-	//$$$$ updated 3/20/2006, yet to test ...
 	if ( destAddress.isMulticast()
 		|| RSVP_Global::rsvp->findInterfaceByAddress( destAddress )
 		|| RSVP_Global::rsvp->getApiServer().findApiSession( *this ) ) {
