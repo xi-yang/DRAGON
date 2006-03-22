@@ -431,10 +431,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	uint32 phopLIH = msg.getRSVP_HOP_Object().getLIH();
 	bool Path_Refresh_Needed = false;
 
+	NetAddress loopback = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+
 #if defined(WITH_API)
 	bool fromLocalAPI = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
 		&& (msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress
-		|| msg.getRSVP_HOP_Object().getAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
+		|| msg.getRSVP_HOP_Object().getAddress() == loopback)
 		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress()));
 #endif
 
@@ -482,7 +484,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
                      //explicit routing using NARB
                      if (!explicitRoute && NARB_APIClient::instance().operational()) {
-                            explicitRoute = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
+                            explicitRoute = NARB_APIClient::instance().getExplicitRoute(loopback.rawAddress(), 
                                     getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                                     msg.getSENDER_TSPEC_Object().get_r(), 0);
 	                     //@@@@ set vtag == 0 for now. We need a mechanism to pass vtag request in some RESV object (LABEL_REQUEST_Object? SENDER_TSPEC? Or a new Ether_TSPEC!).
@@ -497,8 +499,15 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				if (explicitRoute) {
 					SimpleList<NetAddress> simple_ero;
 					AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
+					LogicalInterface * aLif;
 					for (; iter != explicitRoute->getAbstractNodeList().end(); ++iter){
-						simple_ero.push_back((*iter).getAddress());
+						if ((*iter).getAddress() != loopback) {
+							aLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData((*iter).getAddress(), 0); 
+							if (!aLif)
+							{
+								simple_ero.push_back((*iter).getAddress());
+							}
+						}
 					}
 					RSVP_Global::rsvp->getMPLS().addExplicitRoute(destAddress, simple_ero);
 				}
@@ -557,7 +566,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 		if ( senderTemplate.getSrcAddress() == NetAddress(0) 
 			|| senderTemplate.getSrcAddress() == LogicalInterface::loopbackAddress 
-			|| senderTemplate.getSrcAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() ) {
+			|| senderTemplate.getSrcAddress() == loopback ) {
 			if (defaultOutLif) {
 				LOG(2)( Log::API, "default out interface is", defaultOutLif->getName() );
 				//senderTemplate.setSrcAddress( defaultOutLif->getLocalAddress() );
