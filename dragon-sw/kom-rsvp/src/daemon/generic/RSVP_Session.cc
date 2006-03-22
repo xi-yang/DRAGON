@@ -496,7 +496,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				//store ERO into erList .
 				if (explicitRoute) {
 					SimpleList<NetAddress> simple_ero;
-					AbstractNodeList::ConstIterator iter = ero->getAbstractNodeList().begin();
+					AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
 					for (; iter != explicitRoute->getAbstractNodeList().end(); ++iter){
 						simple_ero.push_back((*iter).getAddress());
 					}
