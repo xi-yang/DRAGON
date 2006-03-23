@@ -61,6 +61,7 @@ Session::Session( const SESSION_Object &session) : SESSION_Object(session),
 Session::~Session() {
 	LOG(2)( Log::Session, "delete Session:", *this );
 	RSVP_Global::rsvp->removeSession( iterFromRSVP );
+	RSVP_Global::rsvp->getMPLS().deleteExplicitRoute(destAddress, (uint32)this); //@@@@ use address as unique ID.
 }
 
 void Session::deleteAll() {
@@ -242,8 +243,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		&& explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
 			outUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
 	}
-	//process loose hop
+
 	if (!explicitRoute->getAbstractNodeList().empty()){
+		//process loose hop
 		if ( explicitRoute->getAbstractNodeList().front().isLoose() ){
 		 	if (explicitRoute->getAbstractNodeList().front().getType() != AbstractNode::IPv4 ||
 		 	     explicitRoute->getAbstractNodeList().front().getType() != AbstractNode::UNumIfID)
@@ -289,7 +291,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		if ((ifId >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
 			ifId = 0;
 		outLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
-			     explicitRoute->getAbstractNodeList().front().getAddress(),ifId, gw);
+			     explicitRoute->getAbstractNodeList().front().getAddress(), ifId, gw);
 		if (!outLif)
 			return false;
 		
@@ -509,7 +511,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 							}
 						}
 					}
-					RSVP_Global::rsvp->getMPLS().addExplicitRoute(destAddress, simple_ero);
+					//@@@@use address as unique ID. Later on when the session quits, this ERO is removed from erList
+					RSVP_Global::rsvp->getMPLS().addExplicitRoute(destAddress, simple_ero, (uint32)this);
 				}
                     	}
 		}

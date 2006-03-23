@@ -702,11 +702,19 @@ EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLIC
 	return er;
 }
 
-void MPLS::addExplicitRoute( const NetAddress& dest, const SimpleList<NetAddress>& alist ) {
-	ExplicitRoute er(dest);
+void MPLS::addExplicitRoute( const NetAddress& dest, const SimpleList<NetAddress>& alist,  uint32 sid ) {
+	ExplicitRoute er(dest, sid);
 	er.anList = alist;
 	LOG(2)( Log::MPLS, "MPLS: setting explicit route", er );
 	erList.insert_sorted( er );
+}
+
+void MPLS::deleteExplicitRoute( const NetAddress& dest, uint32 sid ) {
+	ExplicitRouteList::ConstIterator erIter = erList.begin();
+	for ( ; erIter != erList.end(); erIter++) {
+		if ((*erIter) == dest && (sid == 0 || sid == (*erIter).sessionID))
+			erList.erase(erIter);
+	}
 }
 
 ostream& operator<<( ostream& os, const ExplicitRoute& er ) {

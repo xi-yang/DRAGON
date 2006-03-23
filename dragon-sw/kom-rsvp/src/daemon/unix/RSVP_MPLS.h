@@ -77,7 +77,8 @@ public:
 
 struct ExplicitRoute : public NetAddress {
 	SimpleList<NetAddress> anList;
-	ExplicitRoute( const NetAddress& a = 0 ) : NetAddress(a) {}
+	uint32 sessionID;	//@@@@
+	ExplicitRoute( const NetAddress& a = 0, const uint32 sid = 0 ) : NetAddress(a), sessionID (sid) {}
 };
 ostream& operator<<( ostream&, const ExplicitRoute& );
 
@@ -132,9 +133,10 @@ public:
 	void removeHopInfo( uint32 ) {}
 #endif
 	// TODO: elaborated interface needed (maybe COPS, maybe whatever)
-	EXPLICIT_ROUTE_Object* getExplicitRoute( NetAddress& dest);
+	EXPLICIT_ROUTE_Object* getExplicitRoute( NetAddress& dest );
 	EXPLICIT_ROUTE_Object* updateExplicitRoute( const NetAddress& dest, EXPLICIT_ROUTE_Object* = NULL );
-	void addExplicitRoute( const NetAddress& dest, const SimpleList<NetAddress>& );
+	void addExplicitRoute( const NetAddress& dest, const SimpleList<NetAddress>&, const uint32 sid = 0 );
+	void deleteExplicitRoute( const NetAddress& dest, uint32 sid = 0 );
 };
 
 
