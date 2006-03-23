@@ -130,7 +130,9 @@ void API_Server::processMessage( const Message& msg, MessageProcessor& mp) {
 	//Initialize OSPF socket 
 	if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
 		if (!RSVP_Global::rsvp->getRoutingService().ospf_socket_init()){
-			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
+			//RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
+			ERROR(1)( Log::Error, "Failed to init rsvp-ospf communication!" );
+			RSVP_Global::rsvp->getRoutingService().disableOspfSocket();
 			return;
 		}
 	}

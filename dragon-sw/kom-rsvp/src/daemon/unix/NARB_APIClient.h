@@ -68,7 +68,7 @@ struct msg_app2narb_request
 
 #define NARB_MSG_CHKSUM(X) (((u_int32_t*)&X)[0] + ((u_int32_t*)&X)[1] + ((u_int32_t*)&X)[2])
 
-
+//@@@@ Need one APIClient in each session...
 class EXPLICIT_ROUTE_Object;
 class NARB_APIClient{
 public:
@@ -79,6 +79,8 @@ public:
 	void disconnect();
 	bool operational();
 	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag);
+	//socket remains connected after request, resvConfMessage and resvReleaseMessage should be sent...
+	//ERO kept in NARB ...
 
 protected:
 	NARB_APIClient();
