@@ -61,7 +61,7 @@ Session::Session( const SESSION_Object &session) : SESSION_Object(session),
 Session::~Session() {
 	LOG(2)( Log::Session, "delete Session:", *this );
 	RSVP_Global::rsvp->removeSession( iterFromRSVP );
-	RSVP_Global::rsvp->getMPLS().deleteExplicitRoute(destAddress, (uint32)this); //@@@@ use address as unique ID.
+	RSVP_Global::rsvp->getMPLS().deleteExplicitRouteBySession((uint32)this); //@@@@ use address as unique ID.
 }
 
 void Session::deleteAll() {

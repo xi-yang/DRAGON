@@ -709,10 +709,10 @@ void MPLS::addExplicitRoute( const NetAddress& dest, const SimpleList<NetAddress
 	erList.insert_sorted( er );
 }
 
-void MPLS::deleteExplicitRoute( const NetAddress& dest, uint32 sid ) {
+void MPLS::deleteExplicitRouteBySession( uint32 sid ) {
 	ExplicitRouteList::ConstIterator erIter = erList.begin();
-	for ( ; erIter != erList.end(); erIter++) {
-		if ((*erIter) == dest && (sid == 0 || sid == (*erIter).sessionID))
+	for ( ; erIter != erList.end(); ++erIter) {
+		if ( sid == (*erIter).sessionID)
 			erList.erase(erIter);
 	}
 }

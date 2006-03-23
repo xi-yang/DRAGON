@@ -135,8 +135,8 @@ public:
 	// TODO: elaborated interface needed (maybe COPS, maybe whatever)
 	EXPLICIT_ROUTE_Object* getExplicitRoute( NetAddress& dest );
 	EXPLICIT_ROUTE_Object* updateExplicitRoute( const NetAddress& dest, EXPLICIT_ROUTE_Object* = NULL );
-	void addExplicitRoute( const NetAddress& dest, const SimpleList<NetAddress>&, const uint32 sid = 0 );
-	void deleteExplicitRoute( const NetAddress& dest, uint32 sid = 0 );
+	void addExplicitRoute( const NetAddress& dest, const SimpleList<NetAddress>& aList, const uint32 sid = 0 );
+	void deleteExplicitRouteBySession( uint32 sid );
 };
 
 
