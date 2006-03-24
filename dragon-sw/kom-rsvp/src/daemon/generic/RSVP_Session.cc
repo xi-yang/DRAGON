@@ -276,7 +276,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 						//outLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
 						//	     ero->getAbstractNodeList().back().getAddress(),ifId, gw);
 						//if (!outLif)
-						//	explicitRoute->pushFront(ero->getAbstractNodeList().back());
+							explicitRoute->pushFront(ero->getAbstractNodeList().back());
 						//ero->popBack();
 					}
 				}
@@ -453,171 +453,106 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	RSVP_HOP_Object dataOutRsvpHop;
 	VLSRRoute vLSRoute;
 
-	//Initialize OSPF socket 
-	/* Moved to RSVP_API_Server::processMessage
-	if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
-		if (!RSVP_Global::rsvp->getRoutingService().ospf_socket_init()){
+
+
+	EXPLICIT_ROUTE_Object* explicitRoute = NULL;
+
+	if (!RSVP_Global::rsvp->isUNI_C())	{ // not UNI-C
+		if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
 			return;
 		}
-	}
-	*/
+	
+		if ( destAddress.isMulticast() ) {
+			LOG(2)( Log::MPLS, "MPLS: explicit routing not allowed for multicast sessions:", destAddress );
+			explicitRoute = NULL;
+		} 
+		else{
+			explicitRoute = ((!fromLocalAPI) && (!hop.getLogicalInterface().hasEnabledMPLS())) ? NULL
+						   : const_cast<EXPLICIT_ROUTE_Object*>(msg.getEXPLICIT_ROUTE_Object());
 
-	EXPLICIT_ROUTE_Object* explicitRoute = NULL;
-	if ( destAddress.isMulticast() ) {
-		LOG(2)( Log::MPLS, "MPLS: explicit routing not allowed for multicast sessions:", destAddress );
-		explicitRoute = NULL;
-	} 
-	else{
-		explicitRoute = ((!fromLocalAPI) && (!hop.getLogicalInterface().hasEnabledMPLS())) ? NULL
-					   : const_cast<EXPLICIT_ROUTE_Object*>(msg.getEXPLICIT_ROUTE_Object());
+			//preprocess ERO
+			if (explicitRoute && shouldReroute(explicitRoute)) {
+				explicitRoute->destroy();
+				explicitRoute = NULL;
+			}
+			if (!explicitRoute) {
+				LOG(2)( Log::MPLS, "MPLS: requesting ERO from local routing module...", *static_cast<SESSION_Object*>(this));
 
-		//preprocess ERO
-		if (explicitRoute && shouldReroute(explicitRoute)) {
-			explicitRoute->destroy();
+	                     //explicit routing using local configuration
+	                    	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress);
+
+	                     //explicit routing using NARB
+	                     if (!explicitRoute && NARB_APIClient::instance().operational()) {
+	                            explicitRoute = NARB_APIClient::instance().getExplicitRoute(loopback.rawAddress(), 
+	                                    getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
+	                                    msg.getSENDER_TSPEC_Object().get_r(), 0);
+		                     //@@@@ set vtag == 0 for now. We need a mechanism to pass vtag request in some RESV object (LABEL_REQUEST_Object? SENDER_TSPEC? Or a new Ether_TSPEC!).
+
+		                     //explicit routing using OSPFd
+		                     if (!explicitRoute)
+					       explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
+								 hop.getLogicalInterface().getAddress(),
+								 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
+
+					//store ERO into erList //@@@@ to be changed ...
+					if (explicitRoute) {
+						SimpleList<NetAddress> simple_ero;
+						AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
+						LogicalInterface * aLif;
+						for (; iter != explicitRoute->getAbstractNodeList().end(); ++iter){
+							if ((*iter).getAddress() != loopback) {
+								aLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData((*iter).getAddress(), 0); 
+								if (!aLif)
+								{
+									simple_ero.push_back((*iter).getAddress());
+								}
+							}
+						}
+						//@@@@use address as unique ID. Later on when the session quits, this ERO is removed from erList
+						RSVP_Global::rsvp->getMPLS().addExplicitRoute(destAddress, simple_ero, (uint32)this);
+					}
+	                    	}
+			}
+			else{
+				// further, all error conditions should return an error and ignore the message
+				assert( !explicitRoute->getAbstractNodeList().empty() );
+				if (explicitRoute->getAbstractNodeList().front().getType() != AbstractNode::IPv4 &&
+	 			     explicitRoute->getAbstractNodeList().front().getType() != AbstractNode::UNumIfID)
+				{
+					LOG(2)( Log::MPLS, "MPLS: abstract node type not supported yet:", explicitRoute->getAbstractNodeList().front().getType() );
+					explicitRoute = NULL;
+				}
+			}
+		}
+
+		if (explicitRoute && (!processERO(msg, hop, explicitRoute, fromLocalAPI, dataInRsvpHop, dataOutRsvpHop, vLSRoute)))
+		{
+			LOG(2)(Log::MPLS, "MPLS: Internal error in the ERO :", explicitRoute->getAbstractNodeList().front().getAddress());
 			explicitRoute = NULL;
 		}
 
-		if (!explicitRoute) {
-			LOG(2)( Log::MPLS, "MPLS: requesting ERO from local routing module...", *static_cast<SESSION_Object*>(this));
-
-                     //explicit routing using local configuration
-                    	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress);
-
-                     //explicit routing using NARB
-                     if (!explicitRoute && NARB_APIClient::instance().operational()) {
-                            explicitRoute = NARB_APIClient::instance().getExplicitRoute(loopback.rawAddress(), 
-                                    getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
-                                    msg.getSENDER_TSPEC_Object().get_r(), 0);
-	                     //@@@@ set vtag == 0 for now. We need a mechanism to pass vtag request in some RESV object (LABEL_REQUEST_Object? SENDER_TSPEC? Or a new Ether_TSPEC!).
-
-	                     //explicit routing using OSPFd
-	                     if (!explicitRoute)
-				       explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
-							 hop.getLogicalInterface().getAddress(),
-							 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
-
-				//store ERO into erList .
-				if (explicitRoute) {
-					SimpleList<NetAddress> simple_ero;
-					AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
-					LogicalInterface * aLif;
-					for (; iter != explicitRoute->getAbstractNodeList().end(); ++iter){
-						if ((*iter).getAddress() != loopback) {
-							aLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData((*iter).getAddress(), 0); 
-							if (!aLif)
-							{
-								simple_ero.push_back((*iter).getAddress());
-							}
-						}
-					}
-					//@@@@use address as unique ID. Later on when the session quits, this ERO is removed from erList
-					RSVP_Global::rsvp->getMPLS().addExplicitRoute(destAddress, simple_ero, (uint32)this);
-				}
-                    	}
+		explicitRoute = RSVP_Global::rsvp->getMPLS().updateExplicitRoute( destAddress, explicitRoute );
+		if ( explicitRoute && !explicitRoute->getAbstractNodeList().empty()) {
+			destAddress = explicitRoute->getAbstractNodeList().front().getAddress();
 		}
 		else{
-			// further, all error conditions should return an error and ignore the message
-			assert( !explicitRoute->getAbstractNodeList().empty() );
-			if (explicitRoute->getAbstractNodeList().front().getType() != AbstractNode::IPv4 &&
- 			     explicitRoute->getAbstractNodeList().front().getType() != AbstractNode::UNumIfID)
-			{
-				LOG(2)( Log::MPLS, "MPLS: abstract node type not supported yet:", explicitRoute->getAbstractNodeList().front().getType() );
-				explicitRoute = NULL;
-			}
+			ERROR(2)( Log::Error, "Can't determine data interfaces!", *static_cast<SESSION_Object*>(this));
+			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
+			return;
 		}
-	}
-	if (explicitRoute && (!processERO(msg, hop, explicitRoute, fromLocalAPI, dataInRsvpHop, dataOutRsvpHop, vLSRoute)))
-	{
-		LOG(2)(Log::MPLS, "MPLS: Internal error in the ERO :", explicitRoute->getAbstractNodeList().front().getAddress());
-		explicitRoute = NULL;
-	}
-
-	explicitRoute = RSVP_Global::rsvp->getMPLS().updateExplicitRoute( destAddress, explicitRoute );
-	if ( explicitRoute || !explicitRoute->getAbstractNodeList().empty()) {
-		destAddress = explicitRoute->getAbstractNodeList().front().getAddress();
-	}
-	else{
-		ERROR(2)( Log::Error, "Can't determine data interfaces!", *static_cast<SESSION_Object*>(this));
-		RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
-		return;
-	}
 
 #if defined(ONEPASS_RESERVATION)
-	if ( msg.getMsgType() == Message::PathResv && RSVP_Global::messageProcessor->getOnepassPSB() ) {
-		RtInIf = NULL;
-		RtOutL.insert_unique( &hop.getLogicalInterface() );
-	goto search_psb;
-	}
+		if ( msg.getMsgType() == Message::PathResv && RSVP_Global::messageProcessor->getOnepassPSB() ) {
+			RtInIf = NULL;
+			RtOutL.insert_unique( &hop.getLogicalInterface() );
+		goto search_psb;
+		}
 #endif
 
 #if defined(WITH_API)
-	if ( fromLocalAPI ) {
-		// message is from local API -> set sender address if not set
-		if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
-		|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
-		&& (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL))
-			defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, 0, gateway);
-		else if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID)
-		{
-			uint32 uNumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
-			defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, uNumIfID, gateway);
-		}
-		else
-			defaultOutLif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( destAddress, gateway );
-		policyData = msg.getPolicyList().front();
-
-		if ( senderTemplate.getSrcAddress() == NetAddress(0) 
-			|| senderTemplate.getSrcAddress() == LogicalInterface::loopbackAddress 
-			|| senderTemplate.getSrcAddress() == loopback ) {
-			if (defaultOutLif) {
-				LOG(2)( Log::API, "default out interface is", defaultOutLif->getName() );
-				//senderTemplate.setSrcAddress( defaultOutLif->getLocalAddress() );
-				senderTemplate.setSrcAddress( dataOutRsvpHop.getAddress());
-#if !defined(BETWEEN_APIS)
-			} else {
-				ERROR(3)( Log::Error, "Can't find out interface for", *static_cast<SESSION_Object*>(this), "for PATH message from API" );
-	// should probably return an error to the api
-	return;
-#endif
-			}
-		} else {
-			if ( !RSVP_Global::rsvp->findInterfaceByAddress( senderTemplate.getSrcAddress() ) ) {
-				ERROR(3)( Log::Error, "Unknown interface", senderTemplate.getSrcAddress(), "in PATH message from API" );
-	// should probably return an error to the api
-	return;
-			}
-		}
-	} else if ( &hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif() ) {
-		// message is from remote API -> set sender address if not set
-		if ( senderTemplate.getSrcAddress() == NetAddress(0) ) {
-			senderTemplate.setSrcAddress( hop.getAddress() );
-		}
-       }
-#if !defined(BETWEEN_APIS)
-	else
-#endif
-
-	if ( destAddress.isMulticast()
-		|| RSVP_Global::rsvp->findInterfaceByAddress( destAddress )
-		|| RSVP_Global::rsvp->getApiServer().findApiSession( *this ) ) {
-		// store multicast path messages for future API clients
-		// store unicast path messages targeted to this host for future API clients
-		// note that RtOutL is not emptied in 'getMulticastRoute' below
-		RtOutL.insert_unique( RSVP::getApiLif() );
-	}
-#endif
-
-	if ( !RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) ) {
-	//if (!RSVP_Global::rsvp->getApiServer().findApiSession( *this ) ){
-		if ( destAddress.isMulticast() )  {
-			gateway = LogicalInterface::noGatewayAddress;
-			RtInIf = RSVP_Global::rsvp->getRoutingService().getMulticastRoute( senderTemplate.getSrcAddress(), destAddress, RtOutL );
-			if ( !RSVP_Global::rsvp->getRoutingService().isMulticastRouter() ) {
-				RtInIf = &hop.getLogicalInterface();
-			}
-		} else {
-			RtInIf = &hop.getLogicalInterface();
+		if ( fromLocalAPI ) {
+			// message is from local API -> set sender address if not set
 			if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
 			|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 			&& (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL))
@@ -629,10 +564,81 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			}
 			else
 				defaultOutLif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( destAddress, gateway );
-			if ( defaultOutLif ) RtOutL.insert_unique( defaultOutLif );
+			policyData = msg.getPolicyList().front();
+
+			if ( senderTemplate.getSrcAddress() == NetAddress(0) 
+				|| senderTemplate.getSrcAddress() == LogicalInterface::loopbackAddress 
+				|| senderTemplate.getSrcAddress() == loopback ) {
+				if (defaultOutLif) {
+					LOG(2)( Log::API, "default out interface is", defaultOutLif->getName() );
+					//senderTemplate.setSrcAddress( defaultOutLif->getLocalAddress() );
+					senderTemplate.setSrcAddress( dataOutRsvpHop.getAddress());
+#if !defined(BETWEEN_APIS)
+				} else {
+					ERROR(3)( Log::Error, "Can't find out interface for", *static_cast<SESSION_Object*>(this), "for PATH message from API" );
+		// should probably return an error to the api
+		return;
+#endif
+				}
+			} else {
+				if ( !RSVP_Global::rsvp->findInterfaceByAddress( senderTemplate.getSrcAddress() ) ) {
+					ERROR(3)( Log::Error, "Unknown interface", senderTemplate.getSrcAddress(), "in PATH message from API" );
+		// should probably return an error to the api
+		return;
+				}
+			}
+		} else if ( &hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif() ) {
+			// message is from remote API -> set sender address if not set
+			if ( senderTemplate.getSrcAddress() == NetAddress(0) ) {
+				senderTemplate.setSrcAddress( hop.getAddress() );
+			}
+	       }
+#if !defined(BETWEEN_APIS)
+		else
+#endif
+
+		if ( destAddress.isMulticast()
+			|| RSVP_Global::rsvp->findInterfaceByAddress( destAddress )
+			|| RSVP_Global::rsvp->getApiServer().findApiSession( *this ) ) {
+			// store multicast path messages for future API clients
+			// store unicast path messages targeted to this host for future API clients
+			// note that RtOutL is not emptied in 'getMulticastRoute' below
+			RtOutL.insert_unique( RSVP::getApiLif() );
 		}
-	} else {
-		defaultOutLif = RSVP::getApiLif();
+#endif
+
+		if ( !RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) ) {
+		//if (!RSVP_Global::rsvp->getApiServer().findApiSession( *this ) ){
+			if ( destAddress.isMulticast() )  {
+				gateway = LogicalInterface::noGatewayAddress;
+				RtInIf = RSVP_Global::rsvp->getRoutingService().getMulticastRoute( senderTemplate.getSrcAddress(), destAddress, RtOutL );
+				if ( !RSVP_Global::rsvp->getRoutingService().isMulticastRouter() ) {
+					RtInIf = &hop.getLogicalInterface();
+				}
+			} else {
+				RtInIf = &hop.getLogicalInterface();
+				if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
+				|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
+				&& (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL))
+					defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, 0, gateway);
+				else if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID)
+				{
+					uint32 uNumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
+					defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, uNumIfID, gateway);
+				}
+				else
+					defaultOutLif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( destAddress, gateway );
+				if ( defaultOutLif ) RtOutL.insert_unique( defaultOutLif );
+			}
+		} else {
+			defaultOutLif = RSVP::getApiLif();
+			gateway = LogicalInterface::noGatewayAddress;
+		}
+	}else { // UNI-C
+		// use the first UNI-C item. Later on we can use multiple UNI-C items distinguished by the requested label ...
+		UNI* uni_c = RSVP_Global::rsvp->getUNI_CList().front();
+		assert(uni_c->ctrlChannel);
+		defaultOutLif = uni_c->ctrlChannel; 
 		gateway = LogicalInterface::noGatewayAddress;
 	}
 
@@ -642,7 +648,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	inLif = RtInIf;
 	biDir = msg.hasUPSTREAM_LABEL_Object();
 
-	
 #if defined(BETWEEN_APIS)
 	if ( &hop.getLogicalInterface() != RSVP::getApiLif() )
 #endif

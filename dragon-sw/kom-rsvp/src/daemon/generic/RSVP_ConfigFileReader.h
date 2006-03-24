@@ -89,6 +89,7 @@ public:
 	void setExplicitRoute();
 	void addHop( uint32 = 0 );
 	void setApiPort( uint16 );
+	void addUNI(uint32 type);
 	void cleanup();
 	void warn( const String& );
 	const SimpleList<Hop>& getHopList() { return hopList; }

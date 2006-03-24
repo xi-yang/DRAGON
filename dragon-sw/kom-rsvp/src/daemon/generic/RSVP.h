@@ -49,6 +49,7 @@ class MESSAGE_ID_Object;
 class PSB;
 class PHopSB;
 class MPLS;
+class UNI;
 
 class RSVP {
 	bool initOK;
@@ -73,6 +74,9 @@ class RSVP {
 	uint32 currentReservationCount;
 
 	MPLS* mpls;
+
+	SimpleList<UNI*> uni_cList;
+	SimpleList<UNI*> uni_nList;
 
 #if defined(WITH_API)
 	static void configureAPI( uint16 port ) {
@@ -119,6 +123,16 @@ public:
 	Hop* findHop( const LogicalInterface&, const NetAddress&, bool create = false );
 	void removeHop( HopKey& );
 	MPLS& getMPLS() { return *mpls; }
+
+	SimpleList<UNI*>& getUNI_CList() { return uni_cList; }
+	SimpleList<UNI*>& getUNI_NList() { return uni_nList; }
+	void addUNI(const UNI *uni) { 
+		if (uni->Type == UNI::UNI_C) uni_cList.push_back(uni);
+		else if (uni->Type == UNI::UNI_N) uni_nList.push_back(uni);
+	}
+	bool isUNI_C() { return (uni_cList.size() > 0); }
+	bool isUNI_N() { return (uni_nList.size() > 0); }
+
 #if defined(WITH_API)
 	static API_Server& getApiServer() { assert(apiServer); return *apiServer; }
 	static const LogicalInterface* getApiLif() { assert(apiServer); return RSVP_Global::rsvp->lifArray[0]; }

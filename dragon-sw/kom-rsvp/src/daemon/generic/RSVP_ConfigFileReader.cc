@@ -200,6 +200,35 @@ void ConfigFileReader::addSlot(String slot_type, uint16 slot_num) {
 	RSVP_Global::switchController->addSlotEntry(se);
 }
 
+void ConfigFileReader::addUNI(uint32 type) {
+	const LogicalInterface* lif = NULL;
+	LogicalInterfaceList::Iterator lifIter = tmpLifList.begin();
+	for ( ; lifIter != tmpLifList.end(); ++lifIter ) {
+		if ( (*lifIter)->getName() == interfaceName ) {
+			lif = *lifIter;
+		}
+	}
+
+	if (!lif) {
+		ERROR(3)( Log::Config, "UNI Control Channel Interface:", interfaceName, "does not exist -> ignoring config settings" );
+		return;
+	}
+
+	UNI* uni = NULL;
+	switch (type) {
+	case UNI::UNI_C:
+		uni = new UNI(localAddress,  remoteAddress, lif);
+		break;
+	case UNI::UNI_N:
+		uni = new UNI( remoteAddress, localAddress, lif);
+		break;
+	default:
+		return;
+	}
+	if (uni)	rsvp.addUNI(uni);
+}
+
+
 void ConfigFileReader::cleanup() {
 	interfaceName = "";
 	localAddress = remoteAddress = virtAddress = 0;

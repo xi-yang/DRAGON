@@ -98,7 +98,7 @@ public:
 	RoutingService();
 	~RoutingService();
 	const int getOspfSocket() const { return ospf_socket; }
-	void disableOspfSocket() { ospf_socket = -1; }
+	void disableOspfSocket() { ospf_socket = 0; }
 	bool ospf_socket_init ();
 	void getPeerIPAddr(const NetAddress& myAddr, NetAddress& peerAddr) const;
 	void init( LogicalInterfaceList& tmpLifList );
