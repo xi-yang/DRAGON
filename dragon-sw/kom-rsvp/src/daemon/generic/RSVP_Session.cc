@@ -645,6 +645,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		destAddress = uni_c->ip_n;
 		RSVP_HOP_TLV_SUB_Object tlv (uni_c->ip_c);
 		dataOutRsvpHop = RSVP_HOP_Object(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress(), defaultOutLif->getLIH(), tlv);
+		senderTemplate.setSrcAddress( dataOutRsvpHop.getAddress());
 	}
 
 	//Store defaultOutLif and gateway
