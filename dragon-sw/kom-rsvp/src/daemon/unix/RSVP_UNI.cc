@@ -10,7 +10,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_UNI.h"
 
 
-UNI::UNI(const NetAddress& ipc, const NetAddress& ipn, const LogicalInterface* lif) : ip_c(ip_c), ip_n(ipn), ctrlChannel(lif)
+UNI::UNI(enum Type t, NetAddress& ipc, NetAddress& ipn, LogicalInterface* lif) : type(t), ip_c(ipc), ip_n(ipn), ctrlChannel(lif)
 {
 
 }

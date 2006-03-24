@@ -126,12 +126,9 @@ public:
 
 	SimpleList<UNI*>& getUNI_CList() { return uni_cList; }
 	SimpleList<UNI*>& getUNI_NList() { return uni_nList; }
-	void addUNI(const UNI *uni) { 
-		if (uni->Type == UNI::UNI_C) uni_cList.push_back(uni);
-		else if (uni->Type == UNI::UNI_N) uni_nList.push_back(uni);
-	}
 	bool isUNI_C() { return (uni_cList.size() > 0); }
 	bool isUNI_N() { return (uni_nList.size() > 0); }
+	void addUNI(UNI *uni);
 
 #if defined(WITH_API)
 	static API_Server& getApiServer() { assert(apiServer); return *apiServer; }

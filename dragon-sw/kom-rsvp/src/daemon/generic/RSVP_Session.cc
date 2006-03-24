@@ -46,6 +46,7 @@
 #include "RSVP_TrafficControl.h"
 #include "NARB_APIClient.h"
 #include "SwitchCtrl_Global.h"
+#include "RSVP_UNI.h"
 
 // #define BETWEEN_APIS 1
 
@@ -639,7 +640,11 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		UNI* uni_c = RSVP_Global::rsvp->getUNI_CList().front();
 		assert(uni_c->ctrlChannel);
 		defaultOutLif = uni_c->ctrlChannel; 
-		gateway = LogicalInterface::noGatewayAddress;
+		RtOutL.insert_unique( defaultOutLif );
+		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
+		destAddress = uni_c->ip_n;
+		RSVP_HOP_TLV_SUB_Object tlv (uni_c->ip_c);
+		dataOutRsvpHop = RSVP_HOP_Object(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress(), defaultOutLif->getLIH(), tlv);
 	}
 
 	//Store defaultOutLif and gateway

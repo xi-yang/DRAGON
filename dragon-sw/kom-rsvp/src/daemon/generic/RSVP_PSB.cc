@@ -471,6 +471,8 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 		outLif.sendMessage( message, gateway);
            else
 		outLif.sendMessage( message, explicitRoute->getAbstractNodeList().front().getAddress(), getSrcAddress(), gateway );
+	else if (RSVP_Global::rsvp->isUNI_C()) //@@@@
+		outLif.sendMessage( message, gateway);
 	else
 		outLif.sendMessage( message, getSession().getDestAddress(), getSrcAddress(), gateway );
 }
@@ -489,8 +491,10 @@ void PSB::sendTearMessage() {
 			(*lifIter)->sendMessage( msg, gateway);
 		    else
 			(*lifIter)->sendMessage( msg, explicitRoute->getAbstractNodeList().front().getAddress(), getSrcAddress(), gateway );
-		} else
-		(*lifIter)->sendMessage( msg, getSession().getDestAddress(), getSrcAddress(), gateway );
+		} else if (RSVP_Global::rsvp->isUNI_C()) //@@@@
+			(*lifIter)->sendMessage( msg, gateway);
+		else
+			(*lifIter)->sendMessage( msg, getSession().getDestAddress(), getSrcAddress(), gateway );
 		msg.clearRSVP_HOP_Object(msg.getRSVP_HOP_Object());
 	}
 }

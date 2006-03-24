@@ -42,6 +42,7 @@
 #include "RSVP_SchedulerCBQ.h"
 #include "RSVP_SchedulerHFSC.h"
 #include "RSVP_SchedulerRate.h"
+#include "RSVP_UNI.h"
 
 void ConfigFileReader::setTimerTotal( uint32 x ) {
 	TimerSystem::totalPeriod = TimeValue( x, 0 );
@@ -201,7 +202,7 @@ void ConfigFileReader::addSlot(String slot_type, uint16 slot_num) {
 }
 
 void ConfigFileReader::addUNI(uint32 type) {
-	const LogicalInterface* lif = NULL;
+	LogicalInterface* lif = NULL;
 	LogicalInterfaceList::Iterator lifIter = tmpLifList.begin();
 	for ( ; lifIter != tmpLifList.end(); ++lifIter ) {
 		if ( (*lifIter)->getName() == interfaceName ) {
@@ -217,15 +218,15 @@ void ConfigFileReader::addUNI(uint32 type) {
 	UNI* uni = NULL;
 	switch (type) {
 	case UNI::UNI_C:
-		uni = new UNI(localAddress,  remoteAddress, lif);
+		uni = new UNI((UNI::Type)type, localAddress,  remoteAddress, lif);
 		break;
 	case UNI::UNI_N:
-		uni = new UNI( remoteAddress, localAddress, lif);
+		uni = new UNI((UNI::Type)type, remoteAddress, localAddress, lif);
 		break;
 	default:
 		return;
 	}
-	if (uni)	rsvp.addUNI(uni);
+	if (uni) rsvp.addUNI(uni);
 }
 
 

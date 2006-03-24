@@ -14,12 +14,12 @@ class LogicalInterface;
 
 class UNI {
 public:
-	UNI(const NetAddress& ipc, const NetAddress& ipn, const LogicalInterface* lif);
-	~UNI() { }
-
-	enum Type { UNI_C = 1, UNI_N = 2 };
+	enum Type { UNI_C = 1, UNI_N = 2 } type;
 	NetAddress ip_c, ip_n;
 	LogicalInterface* ctrlChannel;
+
+	UNI(enum Type t, NetAddress& ipc, NetAddress& ipn, LogicalInterface* lif);
+	~UNI() { }
 };
 
 
