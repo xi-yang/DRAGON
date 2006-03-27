@@ -979,10 +979,12 @@ ospf_te_area_lsa_link_timer(struct thread *t)
 
    oi->t_te_area_lsa_link_self = NULL;
 
-   if (oi->te_area_lsa_link_self)
+   if (oi->te_area_lsa_link_self) {
        rc = ospf_te_area_lsa_link_refresh(oi->te_area_lsa_link_self);
-   else
+     }
+   else {
    	rc = ospf_te_area_lsa_link_originate(oi);
+     }
    return rc;
 }
 

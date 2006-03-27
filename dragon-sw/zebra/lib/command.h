@@ -87,6 +87,7 @@ enum node_type
   BGP_IPV6_NODE,		/* BGP IPv6 address family */
   OSPF_NODE,			/* OSPF protocol mode */
   OSPF_TE_IF_NODE,	/* OSPF TE interface configuration node */
+  OSPF_TE_UNI_NODE,	/* OSPF TE UNI configuration node */
   LSP_NODE,                     /* Label switching path configuration node */
   NARB_NODE,   /*NARB configuration*/
   TOPOLOGY_NODE,	/* NARB topology configuration node */

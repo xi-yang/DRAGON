@@ -293,6 +293,9 @@ ospf_if_cleanup (struct ospf_interface *oi)
   oi->te_linklocal_lsa_self = NULL;
   OSPF_TIMER_OFF (oi->t_te_linklocal_lsa_self);
 #endif
+
+  /*@@@@UNI hacks*/
+  /*timer off and unlock UNI LSAs */
 }
 
 void
@@ -322,6 +325,10 @@ ospf_if_free (struct ospf_interface *oi)
 
   listnode_delete (oi->ospf->oiflist, oi);
   listnode_delete (oi->area->oiflist, oi);
+
+  /*@@@@ UNI hacks*/
+  if (oi->uni_data)
+	  XFREE (MTYPE_TMP, oi->uni_data);
 
   memset (oi, 0, sizeof (*oi));
   XFREE (MTYPE_OSPF_IF, oi);

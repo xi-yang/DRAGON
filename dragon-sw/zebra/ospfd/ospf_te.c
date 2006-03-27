@@ -1392,6 +1392,28 @@ ospf_te_verify_config(struct ospf_interface *oi, struct ospf_te_config_para *oc)
 	return ret;
 }
 
+/*@@@@UNI hacks*/
+int
+ospf_te_uni_config(struct ospf_interface *oi, struct ospf_te_config_para *oc)
+{
+	int ret = 0;
+	if ((!oi) || (!oc) || (strcmp(oi->ifp->name, oc->if_name)!=0))
+		ret = -1;
+	else if (!(INTERFACE_MPLS_ENABLED(oi) || oc->level >= INTERFACE_TE_MPLS))
+		/* Level must be at least MPLS */
+		ret = -1;
+
+	if (ret==0)
+  	{
+  		if (!oi->uni_data)
+			oi->uni_data = (struct uni_data*)XCALLOC(MTYPE_TMP, sizeof(struct uni_data));
+  		memset(&oi->uni_data, 0, sizeof(struct uni_data));
+		memcpy(&oi->uni_data.te_para, &oc->te_para);
+		oi->uni_data.loopback.s_addr = oc->uni_loopback.s_addr;
+  	}
+	return ret;
+}
+
 /* This function is called when the configuration of a TE-Link is completed */
 void 
 ospf_te_interface_config_update(struct vty* vty)
@@ -1406,9 +1428,8 @@ ospf_te_interface_config_update(struct vty* vty)
 		LIST_LOOP(ospf->oiflist, oi, node)
 		    if (oi->ifp && strcmp(oi->ifp->name, te_config.if_name)==0)
 		    {
-		    	if (te_config.configed && ospf_te_verify_config(oi, &te_config) == 0)
+		    	if (te_config.configed == 1 && ospf_te_verify_config(oi, &te_config) == 0)
 		    		ospf_te_new_if(oi);
-
 		       /* Don't forget to release occupied memory ! */
 		       if (te_config.te_para.link_srlg.srlg_list)
 			       list_delete(te_config.te_para.link_srlg.srlg_list);
@@ -1417,12 +1438,15 @@ ospf_te_interface_config_update(struct vty* vty)
 	}
 	else/* in the middle of reading ospfd.conf */
 	{
-		 if (te_config.configed)
-		 {
+		if (te_config.configed == 1)
+		{
 			oc = XMALLOC(MTYPE_OSPF_TMP, sizeof(struct ospf_te_config_para));
 			memcpy(oc, &te_config, sizeof(struct ospf_te_config_para));
 			listnode_add(OspfTeConfigList, oc);
-		 }
+		}
+		else if (te_config.configed == 2) /*@@@@UNI hacks*/
+			ospf_te_uni_config(oi, &te_config);
+
 		memset(&te_config, 0, sizeof(struct ospf_te_config_para));
 	}
 }
@@ -1631,7 +1655,7 @@ DEFUN (ospf_te_interface_ifname,
  strcat(OspfTeIfPrompt,")# ");
  memset(&te_config, 0, sizeof(struct ospf_te_config_para));
  strcpy(te_config.if_name, argv[0]);
-  return CMD_SUCCESS;
+ return CMD_SUCCESS;
 }
 
 DEFUN (no_ospf_te_interface_ifname,
@@ -1661,6 +1685,75 @@ DEFUN (no_ospf_te_interface_ifname,
   vty_out (vty, "no_ospf_te_interface: cannot find ospf interface: %s %s", argv[0], VTY_NEWLINE);
   return CMD_WARNING;
 
+}
+
+DEFUN (ospf_te_uni_ifname,
+       ospf_te_uni_ifname_cmd,
+       "ospf-te uni-interface INTERFACE",
+       "Configure OSPF-TE UNI parameters\n"
+       "Configure TE UNI parameters for the interface\n"
+       "Interface name\n")
+{
+  struct ospf_interface *oi;
+  struct ospf_te_config_para *oc;
+  struct interface *ifp;
+  struct listnode *node;
+  struct ospf *ospf = (struct ospf *)vty->index;
+  u_int8_t find;
+  
+  if ((ifp = if_lookup_by_name (argv[0])) == NULL){
+        vty_out (vty, "No such interface name %s %s", argv[0], VTY_NEWLINE);
+        return CMD_WARNING;
+  }
+  
+if (OspfTeConfigList)
+  LIST_LOOP(OspfTeConfigList, oc, node)
+    if (strcmp(oc->if_name, argv[0])==0)
+    {
+        vty->node = OSPF_TE_UNI_NODE;
+        strcpy(OspfTeIfPrompt,"%s(config-te-uni-");
+        strcat(OspfTeIfPrompt,argv[0]);
+        strcat(OspfTeIfPrompt,")# ");
+        memset(&te_config, 0, sizeof(struct ospf_te_config_para));
+        te_config.configed = 2;
+        strcpy(te_config.if_name, argv[0]);
+        return CMD_SUCCESS;
+    }
+
+  vty_out (vty, "No configued TE interface name %s for UNI ...%s", argv[0], VTY_NEWLINE);
+  return CMD_WARNING;
+}
+  	
+
+DEFUN (no_ospf_te_uni_ifname,
+       no_ospf_te_uni_ifname_cmd,
+       "no ospf-te uni INTERFACE",
+       NO_STR
+       "Configure OSPF-TE UNI parameters\n"
+       "Disable OSPF-TE UNI functionality for an interface\n"
+       "Interface name")
+{
+  struct ospf_interface *oi;
+  struct listnode *node;
+  struct interface *ifp;
+  struct ospf *ospf = (struct ospf *)vty->index;
+  
+  if ((ifp = if_lookup_by_name (argv[0])) == NULL){
+        vty_out (vty, "No such interface name %s %s", argv[0], VTY_NEWLINE);
+        return CMD_WARNING;
+  }
+  if (ospf->oiflist)
+  LIST_LOOP(ospf->oiflist, oi, node){
+    if (oi->ifp == ifp){
+	 if (oi->uni_data) {
+	     free(oi->uni_data);
+            oi->uni_data = NULL;
+          }
+	 return CMD_SUCCESS;
+    }
+  }
+  vty_out (vty, "no_ospf_te_interface: cannot find ospf interface: %s %s", argv[0], VTY_NEWLINE);
+  return CMD_WARNING;
 }
 
 
@@ -2218,6 +2311,20 @@ DEFUN (show_ospf_te_router,
   return CMD_SUCCESS;
 }
 
+
+DEFUN (ospf_te_uni_loopback,
+       ospf_te_uni_loopback_cmd,
+       "loopback A.B.C.D",
+       "Assign UNI client loopback address\n"
+       "IP address A.B.C.D\n")
+{
+  if argc != 1 || (! inet_aton (argv[0], &te_config.uni_loopback))
+  {
+      vty_out (vty, "Please specify the UNI loopback address by A.B.C.D%s", VTY_NEWLINE);
+      return CMD_WARNING;
+  }
+}
+
 static void
 show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 {
@@ -2477,7 +2584,8 @@ ospf_te_register_vty (void)
 
   install_element (OSPF_NODE, &ospf_te_router_addr_cmd);
   install_element (OSPF_NODE, &ospf_te_interface_ifname_cmd);
-  install_element (OSPF_NODE, &no_ospf_te_interface_ifname_cmd);
+  install_element (OSPF_NODE, &ospf_te_uni_ifname_cmd);
+  install_element (OSPF_NODE, &no_ospf_te_uni_ifname_cmd);
   
   install_default(OSPF_TE_IF_NODE);
   install_element (OSPF_TE_IF_NODE, &ospf_te_data_interface_cmd);
@@ -2498,8 +2606,29 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap3b_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4a_cmd);
-  set_config_end_call_back_func(ospf_te_interface_config_update);
 
+  /*@@@@ UNI hacks */
+  install_default(OSPF_TE_UNI_NODE);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_data_interface_noproto_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_data_interface_unnum_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_level_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_metric_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_maxbw_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_max_rsv_bw_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_rsc_clsclr_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_remote_ifid_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_protection_type_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_srlg_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap1_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap2_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap3a_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap3b_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap4_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap4a_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_uni_loopback_cmd);
+
+  set_config_end_call_back_func(ospf_te_interface_config_update);
+  
   return;
 }
 
