@@ -16,9 +16,10 @@ class UNI {
 public:
 	enum Type { UNI_C = 1, UNI_N = 2 } type;
 	NetAddress ip_c, ip_n;
+	NetAddress loopback;
 	LogicalInterface* ctrlChannel;
 
-	UNI(enum Type t, NetAddress& ipc, NetAddress& ipn, LogicalInterface* lif);
+	UNI(enum Type t, NetAddress& ipc, NetAddress& ipn, LogicalInterface* lif, NetAddress& lo);
 	~UNI() { }
 };
 

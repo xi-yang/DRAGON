@@ -82,8 +82,8 @@ command:
 	| PEER local_address remote_address		{ cfr->addHop(); }
 	| NARB narb_host narb_port	 	{ }
 	| SLOTS if_type slot			{ }
-	| UNI_C local_address remote_address name {cfr->addUNI(1); }
-	| UNI_N local_address remote_address name {cfr->addUNI(2); }
+	| UNI_C local_address remote_address name loopback_address {cfr->addUNI(1); }
+	| UNI_N local_address remote_address name loopback_address {cfr->addUNI(2); }
 	;
 
 /*** Addtions by Xi Yang ***/
@@ -147,6 +147,10 @@ local_address:
 
 remote_address:
 	ip_address		{ cfr->remoteAddress = yy_ip_address; }
+	;
+
+loopback_address:
+	ip_address		{ cfr->loopbackAddress = yy_ip_address; }
 	;
 
 remote_port:

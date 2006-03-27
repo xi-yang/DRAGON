@@ -218,10 +218,10 @@ void ConfigFileReader::addUNI(uint32 type) {
 	UNI* uni = NULL;
 	switch (type) {
 	case UNI::UNI_C:
-		uni = new UNI((UNI::Type)type, localAddress,  remoteAddress, lif);
+		uni = new UNI((UNI::Type)type, localAddress,  remoteAddress, lif, loopbackAddress);
 		break;
 	case UNI::UNI_N:
-		uni = new UNI((UNI::Type)type, remoteAddress, localAddress, lif);
+		uni = new UNI((UNI::Type)type, remoteAddress, localAddress, lif, loopbackAddress);
 		break;
 	default:
 		return;
