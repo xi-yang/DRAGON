@@ -52,7 +52,7 @@
 #include "ospfd/ospf_ase.h"
 #include "ospfd/ospf_zebra.h"
 #include "ospfd/ospf_api.h"
-#include "ospfd/ospf_apisrever.h"
+#include "ospfd/ospf_apiserver.h"
 
 #ifdef HAVE_OPAQUE_LSA
 
@@ -1357,7 +1357,6 @@ out:
 static void
 ospf_te_area_lsa_uni_link_body_set (struct stream *s, struct ospf_interface *oi)
 {
-  assert(oi->uni_data);
   build_tlv_header (s, &oi->uni_data->te_para.link.header);
 
   BUILD_UNI_SUBTLV(link_type);
@@ -1383,7 +1382,6 @@ ospf_te_area_lsa_uni_link_body_set (struct stream *s, struct ospf_interface *oi)
 static void
 ospf_te_area_lsa_uni_rtid_body_set (struct stream *s, struct ospf_interface *oi)
 {
-  assert(oi->uni_data);
   struct te_tlv_header *tlvh = &OspfTeRouterAddr.header;
   if (ntohs (tlvh->type) != 0)
     {
