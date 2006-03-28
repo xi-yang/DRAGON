@@ -1754,7 +1754,7 @@ ospf_te_area_lsa_uni_refresh1 (struct ospf_interface *oi, struct ospf_lsa *old)
       /* Flood updated LSA through area. */
       ospf_flood_through_area (area, NULL/*nbr*/, new);
       ospf_lsa_unlock(old);
-      oi->uni_data->te_lsa_link = new;
+      oi->uni_data->te_lsa_link = ospf_lsa_lock(new);
   }
 
   rc = 0;
@@ -1778,17 +1778,19 @@ ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
        goto out;
   }
 
-  if (! ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link))
-  {
-	zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link) on %s failed.", oi->ifp->name);
-	goto out;
-  }	
+  if (oi->uni_data->te_lsa_link)
+      if (! ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link))
+      {
+          zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link) on %s failed.", oi->ifp->name);
+          goto out;
+      }	
 
-  if (! ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid))
-  {
-	zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid) on %s failed.", oi->ifp->name);
-	goto out;
-  }
+  if (oi->uni_data->te_lsa_rtid)
+      if (! ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid))
+      {
+          zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid) on %s failed.", oi->ifp->name);
+          goto out;
+      }
 
   rc = 0;
 out:
