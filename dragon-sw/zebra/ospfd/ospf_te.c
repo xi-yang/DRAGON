@@ -318,6 +318,11 @@ set_linkparams_link_id (struct ospf_interface *oi)
           oi->te_para.link_id.value = nbr->router_id;
           done = 1;
         }
+      else if (oi->uni_data) /*@@@@ UNI hacks*/
+        {
+          oi->te_para.link_id.value = oi->uni_data->te_para.link_id.value;
+          done = 1;
+        }
       break;
     case OSPF_IFTYPE_BROADCAST:
     case OSPF_IFTYPE_NBMA:
@@ -375,8 +380,8 @@ static void set_linkparams_rmtif_addr(struct ospf_interface *oi)
     if(oi->type == OSPF_IFTYPE_POINTOPOINT)
     {
       /* Take the router ID of the neighbor. */
-      if ((nbr = ospf_nbr_lookup_ptop (oi)) && (nbr->state == NSM_Full) 
-      	     && ntohs(oi->te_para.lclif_ipaddr.header.type) != 0)
+      if (((nbr = ospf_nbr_lookup_ptop (oi)) && (nbr->state == NSM_Full) || oi->uni_data) /*@@@@ UNI hacks*/
+      	     && ntohs(oi->te_para.lclif_ipaddr.header.type) != 0 )
       {
 	   oi->te_para.rmtif_ipaddr.header.type = htons (TE_LINK_SUBTLV_RMTIF_IPADDR);
 	   oi->te_para.rmtif_ipaddr.header.length = htons (sizeof(struct in_addr));
