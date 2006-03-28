@@ -1479,7 +1479,7 @@ ospf_te_area_lsa_uni_rtid_new_for_interface (struct ospf_interface *oi)
 
   lsa_type = OSPF_OPAQUE_AREA_LSA;
   /* instance = last 24 bits of the TE router address for this implementation */
-  tmp = SET_OPAQUE_LSID (OPAQUE_TYPE_TE_AREA_LSA, oi->uni_data->loopback.s_addr));
+  tmp = SET_OPAQUE_LSID (OPAQUE_TYPE_TE_AREA_LSA, oi->uni_data->loopback.s_addr);
   lsa_id.s_addr = htonl (tmp);
 
   if (IS_DEBUG_OSPF (lsa, LSA_GENERATE))
