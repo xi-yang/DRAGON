@@ -1631,7 +1631,7 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
       /* New LSA install in LSDB. */
       rc = ospf_apiserver_originate1 (new);
     }
-    oi->uni_data->te_lsa_rtid = new;
+    oi->uni_data->te_lsa_rtid = ospf_lsa_lock(new);
 
   /**************************************/
 
@@ -1653,7 +1653,7 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
       /* New LSA install in LSDB. */
       rc = ospf_apiserver_originate1 (new);
     }
-  oi->uni_data->te_lsa_link = new;
+  oi->uni_data->te_lsa_link = ospf_lsa_lock(new);
   rc = 0;
 out:
   return rc;
@@ -1711,7 +1711,6 @@ ospf_te_area_lsa_uni_delete (struct ospf_interface *oi)
       old = ospf_lsa_lookup (area,  oi->uni_data->te_lsa_link->data->type,  oi->uni_data->te_lsa_link->data->id, adv_router);
       if (old)
       	 {
-          //ospf_opaque_lsa_flush_schedule (old);
           ospf_lsa_flush_area (old, area);
           ospf_lsa_unlock (oi->uni_data->te_lsa_link);
           oi->uni_data->te_lsa_link = NULL;
@@ -1742,6 +1741,7 @@ ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
   if (ospf_te_area_lsa_uni_delete (oi) != 0)
      goto out;
 
+  sleep(3);
   if (ospf_te_area_lsa_uni_originate1 (oi) != 0)
      goto out;
 	
