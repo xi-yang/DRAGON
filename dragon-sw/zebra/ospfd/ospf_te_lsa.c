@@ -1624,14 +1624,14 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
     }
 
   /* Determine if LSA is new or an update for an existing one. */
-  old = ospf_lsdb_lookup (lsdb, new);
+  /*old = ospf_lsdb_lookup (lsdb, new);*/
 
-  if (!old)
+  if (!oi->uni_data->te_lsa_rtid )
     {
       /* New LSA install in LSDB. */
       rc = ospf_apiserver_originate1 (new);
+      oi->uni_data->te_lsa_rtid = ospf_lsa_lock(new);
     }
-    oi->uni_data->te_lsa_rtid = ospf_lsa_lock(new);
 
   /**************************************/
 
@@ -1648,12 +1648,12 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
   /* Determine if LSA is new or an update for an existing one. */
   old = ospf_lsdb_lookup (lsdb, new);
 
-  if (!old)
+  if (!oi->uni_data->te_lsa_link )
     {
       /* New LSA install in LSDB. */
       rc = ospf_apiserver_originate1 (new);
+      oi->uni_data->te_lsa_link = ospf_lsa_lock(new);
     }
-  oi->uni_data->te_lsa_link = ospf_lsa_lock(new);
   rc = 0;
 out:
   return rc;
@@ -1741,7 +1741,6 @@ ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
   if (ospf_te_area_lsa_uni_delete (oi) != 0)
      goto out;
 
-  sleep(3);
   if (ospf_te_area_lsa_uni_originate1 (oi) != 0)
      goto out;
 	
