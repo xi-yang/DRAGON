@@ -1628,8 +1628,19 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
 
   if (!old)
     {
-      /* New LSA install in LSDB. */
-      rc = ospf_apiserver_originate1 (new);
+	  /* Install this LSA into LSDB. */
+	  if (ospf_lsa_install (area->ospf, oi, new) == NULL)	
+	    {
+	      zlog_warn ("ospf_te_area_lsa_uni_originate1: ospf_lsa_install() ?");
+	      ospf_lsa_free (new);
+	      goto out;
+	    }
+	  
+	  /* Update new LSA origination count. */
+	  area->ospf->lsa_originate_count++;
+
+	  /* Flood new TE-area LSA through area. */
+	  ospf_flood_through_area (area, NULL/*nbr*/, new);
     }
     oi->uni_data->te_lsa_rtid = ospf_lsa_lock(new);
 
@@ -1756,8 +1767,6 @@ ospf_te_area_lsa_uni_refresh1 (struct ospf_interface *oi, struct ospf_lsa *old)
     
       /* Flood updated LSA through area. */
       ospf_flood_through_area (area, NULL/*nbr*/, new);
-      ospf_lsa_unlock(old);
-      oi->uni_data->te_lsa_link = ospf_lsa_lock(new);
   }
 
   rc = 0;
@@ -1788,14 +1797,14 @@ ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
           zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid) on %s failed.", oi->ifp->name);
           goto out;
       }	
-/*
+
   if (oi->uni_data->te_lsa_link)
       if (ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link) != 0)
       {
           zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link) on %s failed.", oi->ifp->name);
           goto out;
       }
-*/
+
   rc = 0;
 out:
   return rc;
