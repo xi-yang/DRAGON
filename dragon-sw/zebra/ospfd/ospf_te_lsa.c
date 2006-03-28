@@ -51,6 +51,8 @@
 #include "ospfd/ospf_route.h"
 #include "ospfd/ospf_ase.h"
 #include "ospfd/ospf_zebra.h"
+#include "ospfd/ospf_api.h"
+#include "ospfd/ospf_apisrever.h"
 
 #ifdef HAVE_OPAQUE_LSA
 
@@ -984,6 +986,7 @@ ospf_te_area_lsa_link_timer(struct thread *t)
      }
    else {
    	rc = ospf_te_area_lsa_link_originate(oi);
+	rc |= ospf_te_area_lsa_uni_originate(oi);
      }
    return rc;
 }
@@ -1319,6 +1322,324 @@ ospf_te_cspf_calculate_schedule (struct ospf_area *area)
 	list_delete(explicit_path);
 #endif 
 }
+
+
+
+/***********************************************************/
+/*                            @@@@ UNI hacks                                              */
+/*                                                                                                    */
+/*               	UNI specific functions implementation                             */
+/*                                                                                                    */
+/***********************************************************/
+
+static int
+is_mandated_params_set_for_uni(struct ospf_interface *oi)
+{
+  int rc = 0;
+
+  if (!oi->uni_data)
+    goto out;
+
+  if (ntohs (oi->uni_data->te_para.link_type.header.type) == 0)
+    goto out;
+
+  if (ntohs (oi->uni_data->te_para.link_id.header.type) == 0)
+    goto out;
+
+  rc = 1;
+out:
+  return rc;
+}
+
+/* The follow definitions are for calling functions defined above */
+#define BUILD_UNI_SUBTLV(X)  build_link_subtlv_ ## X  (s, &oi->uni_data->te_para. X)
+
+static void
+ospf_te_area_lsa_uni_link_body_set (struct stream *s, struct ospf_interface *oi)
+{
+  assert(oi->uni_data);
+  build_tlv_header (s, &oi->uni_data->te_para.link.header);
+
+  BUILD_UNI_SUBTLV(link_type);
+  BUILD_UNI_SUBTLV(link_id);
+  BUILD_UNI_SUBTLV(lclif_ipaddr);
+  BUILD_UNI_SUBTLV(rmtif_ipaddr);
+  BUILD_UNI_SUBTLV(te_metric);
+  BUILD_UNI_SUBTLV(max_bw);
+  BUILD_UNI_SUBTLV(max_rsv_bw);
+  BUILD_UNI_SUBTLV(unrsv_bw);
+  BUILD_UNI_SUBTLV(rsc_clsclr);
+
+  if (INTERFACE_GMPLS_ENABLED(oi))
+  {
+	BUILD_UNI_SUBTLV(link_lcrmt_id);
+	BUILD_UNI_SUBTLV(link_protype);
+	BUILD_UNI_SUBTLV(link_ifswcap);
+	BUILD_UNI_SUBTLV(link_srlg);
+  }
+  return;
+}
+
+static void
+ospf_te_area_lsa_uni_rtid_body_set (struct stream *s, struct ospf_interface *oi)
+{
+  assert(oi->uni_data);
+  struct te_tlv_header *tlvh = &OspfTeRouterAddr.header;
+  if (ntohs (tlvh->type) != 0)
+    {
+      build_tlv_header (s, tlvh);
+      stream_put (s, &oi->uni_data->loopback, TLV_BODY_SIZE (tlvh));
+    }
+  return;
+}
+
+/* Create new TE-area LSA. */
+static struct ospf_lsa *
+ospf_te_area_lsa_uni_rtid_new_for_interface (struct ospf_interface *oi)
+{
+  struct stream *s;
+  struct lsa_header *lsah;
+  struct ospf_lsa *new = NULL;
+  u_char options, lsa_type;
+  struct in_addr lsa_id;
+  u_int32_t tmp;
+  u_int16_t length;
+  struct ospf_area *area = oi->area;
+
+  if (!oi->uni_data)
+      return NULL;
+
+  /* Create a stream for LSA. */
+  if ((s = stream_new (OSPF_MAX_LSA_SIZE)) == NULL)
+    {
+      zlog_warn ("ospf_te_area_lsa_rtid_new_for_area: stream_new() ?");
+      goto out;
+    }
+  lsah = (struct lsa_header *) STREAM_DATA (s);
+
+  options  = LSA_OPTIONS_GET (area);
+#ifdef HAVE_NSSA
+  options |= LSA_NSSA_GET (area);
+#endif /* HAVE_NSSA */
+  options |= OSPF_OPTION_O; /* Don't forget this :-) */
+
+  lsa_type = OSPF_OPAQUE_AREA_LSA;
+  /* instance = last 24 bits of the TE router address for this implementation */
+  tmp = SET_OPAQUE_LSID (OPAQUE_TYPE_TE_AREA_LSA, ntohl(OspfTeRouterAddr.value.s_addr)); 
+  lsa_id.s_addr = htonl (tmp);
+
+  if (IS_DEBUG_OSPF (lsa, LSA_GENERATE))
+    zlog_info ("LSA[Type%d:%s]: Create an Opaque-area router ID LSA/TE instance", lsa_type, inet_ntoa (lsa_id));
+
+  /* Set opaque-LSA header fields. */
+  lsa_header_set (s, options, lsa_type, lsa_id, oi->uni_data->loopback);
+
+  /* Set opaque-LSA body fields. */
+  ospf_te_area_lsa_uni_rtid_body_set (s, oi);
+
+  /* Set length. */
+  length = stream_get_endp (s);
+  lsah->length = htons (length);
+
+  /* Now, create an OSPF LSA instance. */
+  if ((new = ospf_lsa_new ()) == NULL)
+    {
+      zlog_warn ("ospf_te_area_lsa_new_for_interface: ospf_lsa_new() ?");
+      stream_free (s);
+      goto out;
+    }
+  if ((new->data = ospf_lsa_data_new (length)) == NULL)
+    {
+      zlog_warn ("ospf_te_area_lsa_rtid_new_for_area: ospf_lsa_data_new() ?");
+      ospf_lsa_free (new);
+      new = NULL;
+      stream_free (s);
+      goto out;
+    }
+
+  new->area = area;
+
+  SET_FLAG (new->flags, OSPF_LSA_SELF);
+  memcpy (new->data, lsah, length);
+  new = ospf_te_lsa_parse(new);
+  
+  stream_free (s);
+
+out:
+  return new;
+}
+
+
+/* Create new TE-area LSA. */
+static struct ospf_lsa *
+ospf_te_area_lsa_uni_link_new_for_interface (struct ospf_interface *oi)
+{
+  struct stream *s;
+  struct lsa_header *lsah;
+  struct ospf_lsa *new = NULL;
+  u_char options, lsa_type;
+  struct in_addr lsa_id;
+  u_int32_t tmp;
+  u_int16_t length;
+  struct ospf_area *area = oi->area;
+
+  if (!oi->uni_data)
+      return NULL;
+  if (!INTERFACE_MPLS_ENABLED(oi)) 
+  	goto out;
+  
+  /* Create a stream for LSA. */
+  if ((s = stream_new (OSPF_MAX_LSA_SIZE)) == NULL)
+    {
+      zlog_warn ("ospf_te_area_lsa_new_for_interface: stream_new() ?");
+      goto out;
+    }
+  lsah = (struct lsa_header *) STREAM_DATA (s);
+
+  options  = LSA_OPTIONS_GET (area);
+#ifdef HAVE_NSSA
+  options |= LSA_NSSA_GET (area);
+#endif /* HAVE_NSSA */
+  options |= OSPF_OPTION_O; /* Don't forget this :-) */
+
+  lsa_type = OSPF_OPAQUE_AREA_LSA;
+  tmp = SET_OPAQUE_LSID (OPAQUE_TYPE_TE_AREA_LSA, oi->ifp->ifindex); /* instance = ifindex */
+  lsa_id.s_addr = htonl (tmp);
+
+  if (IS_DEBUG_OSPF (lsa, LSA_GENERATE))
+    zlog_info ("LSA[Type%d:%s]: Create an Opaque-area LSA/TE instance", lsa_type, inet_ntoa (lsa_id));
+
+  /* Set opaque-LSA header fields. */
+  lsa_header_set (s, options, lsa_type, lsa_id, oi->uni_data->loopback);
+
+  /* Set opaque-LSA body fields. */
+  ospf_te_area_lsa_uni_link_body_set (s, oi);
+
+  /* Set length. */
+  length = stream_get_endp (s);
+  lsah->length = htons (length);
+
+  /* Now, create an OSPF LSA instance. */
+  if ((new = ospf_lsa_new ()) == NULL)
+    {
+      zlog_warn ("ospf_te_area_lsa_new_for_interface: ospf_lsa_new() ?");
+      stream_free (s);
+      goto out;
+    }
+  if ((new->data = ospf_lsa_data_new (length)) == NULL)
+    {
+      zlog_warn ("ospf_te_area_lsa_new_for_interface: ospf_lsa_data_new() ?");
+      ospf_lsa_free (new);
+      new = NULL;
+      stream_free (s);
+      goto out;
+    }
+
+  new->area = area;
+  new->oi = oi; 
+  SET_FLAG (new->flags, OSPF_LSA_SELF);
+  memcpy (new->data, lsah, length);
+  new = ospf_te_lsa_parse(new);
+  
+  stream_free (s);
+
+out:
+  return new;
+}
+
+static int
+ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
+{
+  struct lsa_header *lsa;
+  struct ospf_lsa *new, *old;
+  struct ospf_area *area = oi->area; 
+  struct ospf_lsdb *lsdb = area->lsdb;
+  int rc = -1;
+
+  /**************************************/
+  
+  /*          Originate UNI RtId LSA                    */
+  /* Create OSPF's internal opaque LSA representation */
+  lsa = ospf_te_area_lsa_uni_rtid_new_for_interface(oi);
+  if (!lsa)
+    {
+      zlog_warn ("ospf_te_area_lsa_uni_rtid_new_for_interface failed...");
+      goto out;
+    }
+  new = ospf_apiserver_opaque_lsa_new (area, oi, lsa);
+  if (!new)
+    {
+      rc = OSPF_API_NOMEMORY;	/* XXX */
+      goto out;
+    }
+
+  /* Determine if LSA is new or an update for an existing one. */
+  old = ospf_lsdb_lookup (lsdb, new);
+
+  if (!old)
+    {
+      /* New LSA install in LSDB. */
+      rc = ospf_apiserver_originate1 (new);
+    }
+
+  /**************************************/
+
+  /*          Originate UNI TE Link  LSA                    */
+  /* Create OSPF's internal opaque LSA representation */
+
+  lsa = ospf_te_area_lsa_uni_link_new_for_interface(oi);
+  if (!lsa)
+    {
+      zlog_warn ("ospf_te_area_lsa_uni_link_new_for_interface failed...");
+      goto out;
+    }  
+  new = ospf_apiserver_opaque_lsa_new (area, oi, lsa);
+  if (!new)
+    {
+      rc = OSPF_API_NOMEMORY;	/* XXX */
+      goto out;
+    }
+
+  /* Determine if LSA is new or an update for an existing one. */
+  old = ospf_lsdb_lookup (lsdb, new);
+
+  if (!old)
+    {
+      /* New LSA install in LSDB. */
+      rc = ospf_apiserver_originate1 (new);
+    }
+
+  rc = 0;
+out:
+  return rc;
+}
+
+int
+ospf_te_area_lsa_uni_originate (struct ospf_interface *oi)
+{
+  int rc = -1;
+
+  if (!INTERFACE_MPLS_ENABLED(oi))
+  {
+	zlog_info ("ospf_te_area_lsa_originate: TE is disabled now for interface %s.", oi->ifp->name);
+	rc = 0; /* This is not an error case. */
+	goto out;
+  }
+  if (!is_mandated_params_set_for_uni(oi))
+  {
+       goto out;
+  }
+
+  /* Ok, let's try to originate an LSA for this area and Link using the UNI data. */
+  if (ospf_te_area_lsa_uni_originate1 (oi) != 0)
+     goto out;
+	
+  rc = 0;
+out:
+  return rc;
+}
+
+
 
 #endif
 

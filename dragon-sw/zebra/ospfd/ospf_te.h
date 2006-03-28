@@ -390,7 +390,7 @@ struct vlsr_if
 /* A group of parameters for OSPF-TE VTY config */
 struct ospf_te_config_para
 {
-	u_int8_t configed;
+	u_int8_t configed; /*1: TE link 2: UNI */
 	char if_name[20]; /* interface name */
 	struct vlsr_if vlsr_if;
 	u_char level;  /* MPLS or GMPLS */
