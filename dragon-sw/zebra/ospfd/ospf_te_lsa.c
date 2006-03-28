@@ -1725,6 +1725,10 @@ out:
 int
 ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
 {
+  struct ospf_lsa *old;
+  struct in_addr adv_router;
+  struct ospf_area *area = oi->area; 
+
   int rc = -1;
 
   if (!INTERFACE_MPLS_ENABLED(oi))
@@ -1738,12 +1742,47 @@ ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
        goto out;
   }
 
+/*
   if (ospf_te_area_lsa_uni_delete (oi) != 0)
      goto out;
 
   if (ospf_te_area_lsa_uni_originate1 (oi) != 0)
      goto out;
-	
+*/
+
+  old = oi->uni_data->te_lsa_link;
+  if (old)
+    {
+      /* Delete LSA from neighbor retransmit-list. */
+      ospf_ls_retransmit_delete_nbr_area (area, old);
+    
+      /* Create new Opaque-LSA/TE instance. */
+      if (( new = ospf_te_area_lsa_uni_link_new_for_interface(oi)) == NULL)
+        {
+          zlog_warn ("ospf_te_area_lsa_link_refresh: ospf_te_area_lsa_uni_link_new_for_interface() ?");
+          goto out;
+        }
+      new->data->ls_seqnum = lsa_seqnum_increment (old);
+    
+      /* Install this LSA into TE-LSDB. */
+      /* Given "lsa" will be freed in the next function. */
+      if (ospf_lsa_install (area->ospf, oi, new ) == NULL)
+        {
+          zlog_warn ("ospf_te_area_lsa_link_refresh: ospf_lsa_install() ?");
+          ospf_lsa_free (new);
+          goto out;
+        }
+    
+      /* Flood updated LSA through area. */
+      ospf_flood_through_area (area, NULL/*nbr*/, new);
+      ospf_lsa_unlock(old);
+      oi->uni_data->te_lsa_link = new;
+  }
+
+  rc = 0;
+out:
+  return rc;
+
   rc = 0;
 out:
   return rc;
