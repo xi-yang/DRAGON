@@ -1817,9 +1817,8 @@ ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
        goto out;
   }
 
-
-  if (oi->uni_data->te_lsa_rtid)
-/*      if (ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid) != 0) */
+/*if (oi->uni_data->te_lsa_rtid)
+   if (ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid) != 0) */
       if (ospf_te_area_lsa_uni_refresh2(oi) != 0)
       {
           zlog_info ("ospf_te_area_lsa_uni_refresh2(oi) on %s failed.", oi->ifp->name);
