@@ -1548,7 +1548,6 @@ out:
 static int
 ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
 {
-  struct lsa_header *lsa;
   struct ospf_lsa *new, *old;
   struct ospf_area *area = oi->area; 
   struct ospf_lsdb *lsdb = area->lsdb;
@@ -1558,16 +1557,10 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
   
   /*          Originate UNI RtId LSA                    */
   /* Create OSPF's internal opaque LSA representation */
-  lsa = ospf_te_area_lsa_uni_rtid_new_for_interface(oi);
-  if (!lsa)
-    {
-      zlog_warn ("ospf_te_area_lsa_uni_rtid_new_for_interface failed...");
-      goto out;
-    }
-  new = ospf_apiserver_opaque_lsa_new (area, oi, lsa);
+  new = ospf_te_area_lsa_uni_rtid_new_for_interface(oi);
   if (!new)
     {
-      rc = OSPF_API_NOMEMORY;	/* XXX */
+      zlog_warn ("ospf_te_area_lsa_uni_rtid_new_for_interface failed...");
       goto out;
     }
 
@@ -1585,18 +1578,12 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
   /*          Originate UNI TE Link  LSA                    */
   /* Create OSPF's internal opaque LSA representation */
 
-  lsa = ospf_te_area_lsa_uni_link_new_for_interface(oi);
-  if (!lsa)
+  new = ospf_te_area_lsa_uni_link_new_for_interface(oi);
+  if (!new)
     {
       zlog_warn ("ospf_te_area_lsa_uni_link_new_for_interface failed...");
       goto out;
     }  
-  new = ospf_apiserver_opaque_lsa_new (area, oi, lsa);
-  if (!new)
-    {
-      rc = OSPF_API_NOMEMORY;	/* XXX */
-      goto out;
-    }
 
   /* Determine if LSA is new or an update for an existing one. */
   old = ospf_lsdb_lookup (lsdb, new);

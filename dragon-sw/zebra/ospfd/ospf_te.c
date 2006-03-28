@@ -1448,9 +1448,10 @@ ospf_te_uni_config(struct ospf_interface *oi, struct ospf_te_config_para *oc)
 		oi->uni_data->loopback.s_addr = oc->uni_loopback.s_addr;
 		oi->uni_data->te_para.instance = oi->te_para.instance;
 		oi->uni_data->te_para.link = oi->te_para.link;
+		oi->uni_data->te_para.link_type = oi->te_para.link_type;
 		memcpy(&oi->uni_data->te_para.link_id, &OspfTeRouterAddr, sizeof(struct te_tlv_router_addr));
 		oi->uni_data->te_para.lclif_ipaddr = oi->te_para.lclif_ipaddr;
-		oi->uni_data->te_para.lclif_ipaddr.value = oc->vlsr_if.data_ip.s_addr;
+		oi->uni_data->te_para.lclif_ipaddr.value.s_addr = oc->vlsr_if.data_ip.s_addr;
 		oi->uni_data->te_para.rmtif_ipaddr = oi->te_para.rmtif_ipaddr;
 		masklen2ip (IPV4_ALLOWABLE_BITLEN_P2P, &mask);
 		addr.s_addr = oi->uni_data->te_para.lclif_ipaddr.value.s_addr & mask.s_addr;
@@ -1460,7 +1461,7 @@ ospf_te_uni_config(struct ospf_interface *oi, struct ospf_te_config_para *oc)
 			oi->uni_data->te_para.rmtif_ipaddr.value.s_addr = htonl(ntohl(addr.s_addr)+1);
 		oi->uni_data->te_para.link_lcrmt_id.header.type = htons (TE_LINK_SUBTLV_LINK_LCRMT_ID);
 		oi->uni_data->te_para.link_lcrmt_id.header.length = htons (sizeof(u_int32_t)*2);
-		oi->uni_data->te_para.link_lcrmt_id.link_local_id = ntohl(oi->uni_data->vlsr_if.if_id);
+		oi->uni_data->te_para.link_lcrmt_id.link_local_id = ntohl(oc->vlsr_if.if_id);
 		oi->uni_data->te_para.link_lcrmt_id.link_remote_id = 0;
   	}
 	return ret;
