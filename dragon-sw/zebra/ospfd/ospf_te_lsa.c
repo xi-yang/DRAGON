@@ -1697,24 +1697,16 @@ ospf_te_area_lsa_uni_delete (struct ospf_interface *oi)
   adv_router = oi->uni_data->loopback;
   if (oi->uni_data->te_lsa_rtid)
     {
-      old = ospf_lsa_lookup (area,  oi->uni_data->te_lsa_rtid->data->type,  oi->uni_data->te_lsa_rtid->data->id, adv_router);
-      if (old)
-      	 {
-          ospf_lsa_flush_area (old, area);
+          ospf_lsa_flush_area (oi->uni_data->te_lsa_rti, area);
           ospf_lsa_unlock (oi->uni_data->te_lsa_rtid);
           oi->uni_data->te_lsa_rtid = NULL;
-      	 }
     }
 
   if (oi->uni_data->te_lsa_link)
     {
-      old = ospf_lsa_lookup (area,  oi->uni_data->te_lsa_link->data->type,  oi->uni_data->te_lsa_link->data->id, adv_router);
-      if (old)
-      	 {
-          ospf_lsa_flush_area (old, area);
+          ospf_lsa_flush_area (oi->uni_data->te_lsa_rti, area);
           ospf_lsa_unlock (oi->uni_data->te_lsa_link);
           oi->uni_data->te_lsa_link = NULL;
-      	 }
     }
 
   rc = 0;
