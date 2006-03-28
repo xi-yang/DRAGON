@@ -1407,9 +1407,9 @@ ospf_te_uni_config(struct ospf_interface *oi, struct ospf_te_config_para *oc)
   	{
   		if (!oi->uni_data)
 			oi->uni_data = (struct uni_data*)XCALLOC(MTYPE_TMP, sizeof(struct uni_data));
-  		memset(&oi->uni_data, 0, sizeof(struct uni_data));
-		memcpy(&oi->uni_data.te_para, &oc->te_para);
-		oi->uni_data.loopback.s_addr = oc->uni_loopback.s_addr;
+  		memset(oi->uni_data, 0, sizeof(struct uni_data));
+		memcpy(&oi->uni_data->te_para, &oc->te_para, sizeof(struct uni_data));
+		oi->uni_data->loopback.s_addr = oc->uni_loopback.s_addr;
   	}
 	return ret;
 }
@@ -2318,11 +2318,11 @@ DEFUN (ospf_te_uni_loopback,
        "Assign UNI client loopback address\n"
        "IP address A.B.C.D\n")
 {
-  if argc != 1 || (! inet_aton (argv[0], &te_config.uni_loopback))
-  {
+  if (argc != 1 || ! inet_aton(argv[0], &te_config.uni_loopback)) {
       vty_out (vty, "Please specify the UNI loopback address by A.B.C.D%s", VTY_NEWLINE);
       return CMD_WARNING;
   }
+  return CMD_SUCCESS;
 }
 
 static void
