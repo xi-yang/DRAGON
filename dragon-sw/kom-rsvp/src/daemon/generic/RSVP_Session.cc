@@ -639,13 +639,17 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		// use the first UNI-C item. Later on we can use multiple UNI-C items distinguished by the requested label ...
 		UNI* uni_c = RSVP_Global::rsvp->getUNI_CList().front();
 		assert(uni_c->ctrlChannel);
-		defaultOutLif = uni_c->ctrlChannel; 
+		if (fromLocalAPI) {
+			defaultOutLif = uni_c->ctrlChannel;
+			RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
+			destAddress = uni_c->ip_n;
+			RSVP_HOP_TLV_SUB_Object tlv (uni_c->ip_c);
+			dataOutRsvpHop = RSVP_HOP_Object(uni_c->loopback, defaultOutLif->getLIH(), tlv);
+			senderTemplate.setSrcAddress( dataOutRsvpHop.getAddress());
+		}
+		else
+			defaultOutLif = RSVP::getApiLif();
 		RtOutL.insert_unique( defaultOutLif );
-		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
-		destAddress = uni_c->ip_n;
-		RSVP_HOP_TLV_SUB_Object tlv (uni_c->ip_c);
-		dataOutRsvpHop = RSVP_HOP_Object(uni_c->loopback, defaultOutLif->getLIH(), tlv);
-		senderTemplate.setSrcAddress( dataOutRsvpHop.getAddress());
 	}
 
 	//Store defaultOutLif and gateway
