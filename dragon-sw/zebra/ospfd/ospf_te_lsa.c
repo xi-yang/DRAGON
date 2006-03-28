@@ -1779,14 +1779,14 @@ ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
   }
 
   if (oi->uni_data->te_lsa_link)
-      if (! ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link))
+      if (ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link) != 0)
       {
           zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link) on %s failed.", oi->ifp->name);
           goto out;
       }	
 
   if (oi->uni_data->te_lsa_rtid)
-      if (! ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid))
+      if (! ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid)  != 0)
       {
           zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid) on %s failed.", oi->ifp->name);
           goto out;
