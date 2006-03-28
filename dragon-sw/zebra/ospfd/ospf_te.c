@@ -320,7 +320,7 @@ set_linkparams_link_id (struct ospf_interface *oi)
         }
       else if (oi->uni_data) /*@@@@ UNI hacks*/
         {
-          oi->te_para.link_id.value = oi->uni_data->te_para.link_id.value;
+          oi->te_para.link_id.value = oi->uni_data->loopback;
           done = 1;
         }
       break;
