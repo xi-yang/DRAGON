@@ -1723,34 +1723,12 @@ out:
 }
 
 int
-ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
+ospf_te_area_lsa_uni_refresh1 (struct ospf_interface *oi, struct ospf_lsa *old)
 {
-  struct ospf_lsa *old;
-  struct in_addr adv_router;
+  struct ospf_lsa *new;
   struct ospf_area *area = oi->area; 
-
   int rc = -1;
 
-  if (!INTERFACE_MPLS_ENABLED(oi))
-  {
-	zlog_info ("ospf_te_area_lsa_refresh: TE is disabled now for interface %s.", oi->ifp->name);
-	rc = 0; /* This is not an error case. */
-	goto out;
-  }
-  if (!is_mandated_params_set_for_uni(oi))
-  {
-       goto out;
-  }
-
-/*
-  if (ospf_te_area_lsa_uni_delete (oi) != 0)
-     goto out;
-
-  if (ospf_te_area_lsa_uni_originate1 (oi) != 0)
-     goto out;
-*/
-
-  old = oi->uni_data->te_lsa_link;
   if (old)
     {
       /* Delete LSA from neighbor retransmit-list. */
@@ -1782,6 +1760,35 @@ ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
   rc = 0;
 out:
   return rc;
+}
+
+int
+ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
+{
+  int rc = -1;
+
+  if (!INTERFACE_MPLS_ENABLED(oi))
+  {
+	zlog_info ("ospf_te_area_lsa_refresh: TE is disabled now for interface %s.", oi->ifp->name);
+	rc = 0; /* This is not an error case. */
+	goto out;
+  }
+  if (!is_mandated_params_set_for_uni(oi))
+  {
+       goto out;
+  }
+
+  if (! ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link))
+  {
+	zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link) on %s failed.", oi->ifp->name);
+	goto out;
+  }	
+
+  if (! ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid))
+  {
+	zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid) on %s failed.", oi->ifp->name);
+	goto out;
+  }
 
   rc = 0;
 out:
