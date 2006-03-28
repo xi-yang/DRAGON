@@ -1630,8 +1630,8 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
     {
       /* New LSA install in LSDB. */
       rc = ospf_apiserver_originate1 (new);
-      oi->uni_data->te_lsa_rtid = new;
     }
+    oi->uni_data->te_lsa_rtid = new;
 
   /**************************************/
 
