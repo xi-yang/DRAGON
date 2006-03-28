@@ -1629,7 +1629,7 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
   if (!old)
     {
 	  /* Install this LSA into LSDB. */
-	  if (ospf_lsa_install (area->ospf, oi, new) == NULL)	
+	  if (ospf_lsa_install (area->ospf, oi, new) == NULL)	 /*@@@@ ospf_te_lsa_install causes confuse */
 	    {
 	      zlog_warn ("ospf_te_area_lsa_uni_originate1: ospf_lsa_install() ?");
 	      ospf_lsa_free (new);
@@ -1662,7 +1662,7 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
   if (!old)
     {
 	  /* Install this LSA into LSDB. */
-	  if (ospf_lsa_install (area->ospf, oi, new) == NULL)	
+	  if (ospf_lsa_install (area->ospf, oi, new) == NULL)	 /*@@@@ ospf_te_lsa_install causes confuse */
 	    {
 	      zlog_warn ("ospf_te_area_lsa_uni_originate1: ospf_lsa_install() ?");
 	      ospf_lsa_free (new);
@@ -1737,6 +1737,28 @@ out:
 }
 
 int
+ospf_te_area_lsa_uni_refresh2 (struct ospf_interface *oi)
+{
+  struct ospf_lsa *old;
+  struct in_addr adv_router;
+  struct ospf_area *area = oi->area; 
+  struct ospf_lsdb *lsdb = area->lsdb;
+
+  int rc = -1;
+  
+  if (ospf_te_area_lsa_uni_delete (oi) != 0)
+  	goto out;
+
+  OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
+  OSPF_INTERFACE_TIMER_ON (oi->t_te_area_lsa_link_self, ospf_te_area_lsa_link_timer, OSPF_MIN_LS_INTERVAL);
+
+  rc = 0;
+out:
+  return rc;
+}
+
+
+int
 ospf_te_area_lsa_uni_refresh1 (struct ospf_interface *oi, struct ospf_lsa *old)
 {
   struct ospf_lsa *new;
@@ -1758,7 +1780,7 @@ ospf_te_area_lsa_uni_refresh1 (struct ospf_interface *oi, struct ospf_lsa *old)
     
       /* Install this LSA into TE-LSDB. */
       /* Given "lsa" will be freed in the next function. */
-      if (ospf_lsa_install (area->ospf, oi, new ) == NULL)
+      if (ospf_lsa_install (area->ospf, oi, new ) == NULL) /*@@@@ ospf_te_lsa_install causes confuse */
         {
           zlog_warn ("ospf_te_area_lsa_link_refresh: ospf_lsa_install() ?");
           ospf_lsa_free (new);
@@ -1792,19 +1814,20 @@ ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
 
 
   if (oi->uni_data->te_lsa_rtid)
-      if (ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid) != 0)
+/*      if (ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid) != 0) */
+      if (ospf_te_area_lsa_uni_refresh2(oi) != 0)
       {
-          zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_rtid) on %s failed.", oi->ifp->name);
+          zlog_info ("ospf_te_area_lsa_uni_refresh2(oi) on %s failed.", oi->ifp->name);
           goto out;
       }	
-
+/*
   if (oi->uni_data->te_lsa_link)
       if (ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link) != 0)
       {
           zlog_info ("ospf_te_area_lsa_uni_refresh1(oi, oi->uni_data->te_lsa_link) on %s failed.", oi->ifp->name);
           goto out;
       }
-
+*/
   rc = 0;
 out:
   return rc;
