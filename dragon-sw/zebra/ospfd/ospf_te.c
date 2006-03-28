@@ -74,6 +74,13 @@ struct cmd_node ospf_te_link_node =
   1
 };
 
+struct cmd_node ospf_te_uni_node =
+{
+  OSPF_TE_UNI_NODE,
+  OspfTeIfPrompt,
+  1
+};
+
 struct str_val_conv str_val_conv_protection = 
 {
 	6,
@@ -1655,6 +1662,7 @@ DEFUN (ospf_te_interface_ifname,
  strcat(OspfTeIfPrompt,")# ");
  memset(&te_config, 0, sizeof(struct ospf_te_config_para));
  strcpy(te_config.if_name, argv[0]);
+ te_config.configed = 1;
  return CMD_SUCCESS;
 }
 
@@ -1832,7 +1840,6 @@ DEFUN (ospf_te_data_interface,
   	te_config.vlsr_if.protocol = VLSR_PROTO_NONE;
 	te_config.vlsr_if.switch_ip.s_addr = 0;
 	te_config.vlsr_if.switch_port = 0;
-      te_config.configed = 1;
 	return CMD_SUCCESS;
   }
 
@@ -1856,7 +1863,6 @@ DEFUN (ospf_te_data_interface,
       return CMD_WARNING;
   }
 
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -1886,7 +1892,6 @@ DEFUN (ospf_te_data_interface_unnum,
 	te_config.vlsr_if.switch_ip.s_addr = 0;
 	te_config.vlsr_if.switch_port = 0;
       te_config.vlsr_if.if_id = ospf_te_assign_lcl_ifid();
-      te_config.configed = 1;
 	return CMD_SUCCESS;
   }
   
@@ -1911,7 +1916,6 @@ DEFUN (ospf_te_data_interface_unnum,
   }
 
     te_config.vlsr_if.if_id = ospf_te_assign_lcl_ifid();
-    te_config.configed = 1;
    return CMD_SUCCESS;
 }
 
@@ -1945,7 +1949,6 @@ DEFUN (ospf_te_interface_level,
   }
 
   te_config.level = level;
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -1960,7 +1963,6 @@ DEFUN (ospf_te_interface_metric,
   value = strtoul (argv[0], NULL, 10);
 
   set_linkparams_te_metric (&te_config.te_para.te_metric, value);
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -1979,7 +1981,6 @@ DEFUN (ospf_te_interface_maxbw,
     }
 
   set_linkparams_max_bw (&te_config.te_para.max_bw, &bw);
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -2001,7 +2002,6 @@ DEFUN (ospf_te_interface_max_rsv_bw,
   for (i=0; i< 8; i++)
 	set_linkparams_unrsv_bw (&te_config.te_para.unrsv_bw, i, &bw);
   
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -2021,7 +2021,6 @@ DEFUN (ospf_te_interface_rsc_clsclr,
     }
 
   set_linkparams_rsc_clsclr (&te_config.te_para.rsc_clsclr, value);
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -2036,7 +2035,6 @@ DEFUN (ospf_te_remote_ifid,
   value = strtoul (argv[0], NULL, 10);
 
   set_linkparams_rmt_id(&te_config.te_para.link_lcrmt_id, value);
-   te_config.configed = 1;
  return CMD_SUCCESS;
 }
 
@@ -2062,7 +2060,6 @@ DEFUN (ospf_te_interface_protection_type,
     }
 
   set_linkparams_protection_type (&te_config.te_para.link_protype, ptype);
-   te_config.configed = 1;
  return CMD_SUCCESS;
 }
 
@@ -2105,7 +2102,6 @@ DEFUN (ospf_te_interface_srlg,
 	    	  break;
 	    }
   set_linkparams_srlg (&te_config.te_para.link_srlg, value, action);	
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -2147,7 +2143,6 @@ DEFUN (ospf_te_interface_ifsw_cap1,
    }
 
   set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap, swcap, encoding);
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -2174,7 +2169,6 @@ DEFUN (ospf_te_interface_ifsw_cap2,
     }
 
   htonf (&bw, &te_config.te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[priority]);
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -2202,7 +2196,6 @@ DEFUN (ospf_te_interface_ifsw_cap3a,
   htonf (&bw, &te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.min_lsp_bw);
   te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu = htons(mtu);
 
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -2229,7 +2222,6 @@ DEFUN (ospf_te_interface_ifsw_cap3b,
     }
   htonf (&bw, &te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.min_lsp_bw);
   te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication = indication;
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -2281,7 +2273,6 @@ DEFUN (ospf_te_interface_ifsw_cap4,
         vty_out (vty, "ospf_te_interface_ifsw_cap4: invalid command", VTY_NEWLINE);
 	 return CMD_WARNING;
     }
-  te_config.configed = 1;
   return CMD_SUCCESS;
 }
 
@@ -2608,9 +2599,10 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4a_cmd);
 
   /*@@@@ UNI hacks */
+  install_node (&ospf_te_uni_node, NULL);
   install_default(OSPF_TE_UNI_NODE);
   install_element (OSPF_TE_UNI_NODE, &ospf_te_data_interface_noproto_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_data_interface_unnum_cmd);
+  install_element (OSPF_TE_UNI_NODE, &ospf_te_data_interface_unnum_noproto_cmd);
   install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_level_cmd);
   install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_metric_cmd);
   install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_maxbw_cmd);
