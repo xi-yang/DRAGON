@@ -1458,7 +1458,8 @@ ospf_te_uni_config(struct ospf_interface *oi, struct ospf_te_config_para *oc)
 		oi->uni_data->te_para.link_id.value.s_addr = OspfTeRouterAddr.value.s_addr;
 		oi->uni_data->te_para.lclif_ipaddr = oi->te_para.lclif_ipaddr;
 		oi->uni_data->te_para.lclif_ipaddr.value.s_addr = oc->vlsr_if.data_ip.s_addr;
-		oi->uni_data->te_para.rmtif_ipaddr = oi->te_para.rmtif_ipaddr;
+		oi->uni_data->te_para.rmtif_ipaddr.header.type = htons(TE_LINK_SUBTLV_RMTIF_IPADDR);
+		oi->uni_data->te_para.rmtif_ipaddr.header.type = htons(sizeof(struct in_addr));
 		oi->uni_data->te_para.rmtif_ipaddr.value.s_addr = oi->te_para.lclif_ipaddr.value.s_addr;
 		masklen2ip (IPV4_ALLOWABLE_BITLEN_P2P, &mask);
 		addr.s_addr = oi->uni_data->te_para.lclif_ipaddr.value.s_addr & mask.s_addr;
