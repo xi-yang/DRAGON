@@ -295,7 +295,8 @@ ospf_if_cleanup (struct ospf_interface *oi)
 #endif
 
   /*@@@@UNI hacks*/
-  /*timer off and unlock UNI LSAs */
+  /*Flush oi->uni_data->te_lsa_rtid and oi->uni_data->te_lsa_link*/
+  ospf_te_area_lsa_uni_delete(oi);
 }
 
 void
@@ -327,9 +328,9 @@ ospf_if_free (struct ospf_interface *oi)
   listnode_delete (oi->area->oiflist, oi);
 
   /*@@@@ UNI hacks*/
-  if (oi->uni_data)
+  if (oi->uni_data) {
 	  XFREE (MTYPE_TMP, oi->uni_data);
-
+  }
   memset (oi, 0, sizeof (*oi));
   XFREE (MTYPE_OSPF_IF, oi);
 }

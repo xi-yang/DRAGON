@@ -983,10 +983,13 @@ ospf_te_area_lsa_link_timer(struct thread *t)
 
    if (oi->te_area_lsa_link_self) {
        rc = ospf_te_area_lsa_link_refresh(oi->te_area_lsa_link_self);
+       if (oi->uni_data)
+           rc |= ospf_te_area_lsa_uni_refresh(oi);
      }
    else {
    	rc = ospf_te_area_lsa_link_originate(oi);
-	rc |= ospf_te_area_lsa_uni_originate(oi);
+       if (oi->uni_data)
+           rc |= ospf_te_area_lsa_uni_originate(oi);
      }
    return rc;
 }
@@ -1627,6 +1630,7 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
     {
       /* New LSA install in LSDB. */
       rc = ospf_apiserver_originate1 (new);
+      oi->uni_data->te_lsa_rtid = new;
     }
 
   /**************************************/
@@ -1648,6 +1652,7 @@ ospf_te_area_lsa_uni_originate1 (struct ospf_interface *oi)
     {
       /* New LSA install in LSDB. */
       rc = ospf_apiserver_originate1 (new);
+      oi->uni_data->te_lsa_link = new;
     }
 
   rc = 0;
@@ -1680,6 +1685,68 @@ out:
   return rc;
 }
 
+int
+ospf_te_area_lsa_uni_delete (struct ospf_interface *oi)
+{
+  struct ospf_lsa *old;
+  struct in_addr adv_router;
+  struct ospf_area *area = oi->area; 
+  struct ospf_lsdb *lsdb = area->lsdb;
+
+  int rc = -1;
+  
+  adv_router = oi->uni_data->loopback;
+  if (oi->uni_data->te_lsa_rtid)
+    {
+      old = ospf_lsa_lookup (area,  oi->uni_data->te_lsa_rtid->data->type,  oi->uni_data->te_lsa_rtid->data->id, adv_router);
+      if (old)
+      	 {
+          ospf_opaque_lsa_flush_schedule (old);
+          oi->uni_data->te_lsa_rtid = NULL;
+      	 }
+    }
+
+  if (oi->uni_data->te_lsa_link)
+    {
+      old = ospf_lsa_lookup (area,  oi->uni_data->te_lsa_link->data->type,  oi->uni_data->te_lsa_link->data->id, adv_router);
+      if (old)
+      	 {
+          ospf_opaque_lsa_flush_schedule (old);
+          oi->uni_data->te_lsa_link = NULL;
+      	 }
+    }
+
+  rc = 0;
+out:
+  return rc;
+}
+
+int
+ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
+{
+  int rc = -1;
+
+  if (!INTERFACE_MPLS_ENABLED(oi))
+  {
+	zlog_info ("ospf_te_area_lsa_refresh: TE is disabled now for interface %s.", oi->ifp->name);
+	rc = 0; /* This is not an error case. */
+	goto out;
+  }
+  if (!is_mandated_params_set_for_uni(oi))
+  {
+       goto out;
+  }
+
+  if (ospf_te_area_lsa_uni_delete (oi) != 0)
+     goto out;
+
+  if (ospf_te_area_lsa_uni_originate1 (oi) != 0)
+     goto out;
+	
+  rc = 0;
+out:
+  return rc;
+}
 
 
 #endif
