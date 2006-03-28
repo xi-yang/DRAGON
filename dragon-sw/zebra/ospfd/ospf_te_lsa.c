@@ -983,14 +983,19 @@ ospf_te_area_lsa_link_timer(struct thread *t)
 
    if (oi->te_area_lsa_link_self) {
        rc = ospf_te_area_lsa_link_refresh(oi->te_area_lsa_link_self);
-       if (oi->uni_data)
-           rc |= ospf_te_area_lsa_uni_refresh(oi);
      }
    else {
    	rc = ospf_te_area_lsa_link_originate(oi);
-       if (oi->uni_data)
-           rc |= ospf_te_area_lsa_uni_originate(oi);
      }
+
+   if (oi->uni_data) {
+	   if (oi->uni_data->te_lsa_link && oi->uni_data->te_lsa_rtid) {
+              rc |= ospf_te_area_lsa_uni_refresh(oi);	     }
+	   else {
+              rc |= ospf_te_area_lsa_uni_originate(oi);
+	     }
+    }
+
    return rc;
 }
 
