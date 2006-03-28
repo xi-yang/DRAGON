@@ -65,7 +65,7 @@ struct te_tlv_router_addr OspfTeRouterAddr;
 char OspfTeIfPrompt[50] = "%s(te-if)# ";
 
 list OspfTeConfigList = NULL;
-
+list OspfTeUniConfigList = NULL;
 
 struct cmd_node ospf_te_link_node =
 {
@@ -221,7 +221,9 @@ ospf_te_init (void)
   memset(&OspfTeRouterAddr, 0, sizeof(struct te_tlv_router_addr)); 
   OspfTeConfigList = list_new();
   OspfTeConfigList->del = (void (*) (void *))ospf_te_config_para_del;
-
+  OspfTeUniConfigList = list_new();
+  OspfTeUniConfigList->del = (void (*) (void *))ospf_te_config_para_del;
+  
 out:
   return rc;
 }
@@ -236,6 +238,8 @@ ospf_te_term (void)
   memset(&OspfTeRouterAddr, 0, sizeof(struct te_tlv_router_addr));
   if (OspfTeConfigList)
   	list_delete(OspfTeConfigList);
+  if (OspfTeUniConfigList)
+  	list_delete(OspfTeUniConfigList);
   return;
 }
 
@@ -728,6 +732,18 @@ ospf_te_ism_change (struct ospf_interface *oi, int old_state)
 
 		    	break;
 		    }
+		/*@@@@UNI hacks*/
+		LIST_LOOP(OspfTeUniConfigList, oc, node)
+		    if (strcmp(oc->if_name, oi->ifp->name)==0)
+		    {
+		    	if (ospf_te_uni_config(oi, oc)==0)
+		        	ospf_te_new_if(oi);
+		       if (oc->te_para.link_srlg.srlg_list)
+		     	      list_delete(oc->te_para.link_srlg.srlg_list);
+		    	listnode_delete(OspfTeUniConfigList, oc);
+
+		    	break;
+		    }
     	}
 	else
 	{
@@ -779,6 +795,18 @@ ospf_te_nsm_change (struct ospf_neighbor *nbr, int old_state)
 		      if (oc->te_para.link_srlg.srlg_list)
 		     	      list_delete(oc->te_para.link_srlg.srlg_list);
 		    	listnode_delete(OspfTeConfigList, oc);
+
+		    	break;
+		    }
+		/*@@@@UNI hacks*/
+		LIST_LOOP(OspfTeUniConfigList, oc, node)
+		    if (strcmp(oc->if_name, oi->ifp->name)==0)
+		    {
+		    	if (ospf_te_uni_config(oi, oc)==0)
+		        	ospf_te_new_if(oi);
+		       if (oc->te_para.link_srlg.srlg_list)
+		     	      list_delete(oc->te_para.link_srlg.srlg_list);
+		    	listnode_delete(OspfTeUniConfigList, oc);
 
 		    	break;
 		    }
@@ -1451,9 +1479,11 @@ ospf_te_interface_config_update(struct vty* vty)
 			memcpy(oc, &te_config, sizeof(struct ospf_te_config_para));
 			listnode_add(OspfTeConfigList, oc);
 		}
-		else if (te_config.configed == 2) /*@@@@UNI hacks*/
-			ospf_te_uni_config(oi, &te_config);
-
+		else if (te_config.configed == 2) {/*@@@@UNI hacks*/
+			oc = XMALLOC(MTYPE_OSPF_TMP, sizeof(struct ospf_te_config_para));
+			memcpy(oc, &te_config, sizeof(struct ospf_te_config_para));
+			listnode_add(OspfTeUniConfigList, oc);
+		}
 		memset(&te_config, 0, sizeof(struct ospf_te_config_para));
 	}
 }
