@@ -1354,9 +1354,65 @@ out:
 /* The follow definitions are for calling functions defined above */
 #define BUILD_UNI_SUBTLV(X)  build_link_subtlv_ ## X  (s, &oi->uni_data->te_para. X)
 
+
+static void
+set_linkparams_uni_link_header (struct ospf_interface *oi)
+{
+  u_int16_t length = 0;
+  struct te_area_lsa_para *para = &(oi->uni_data->te_para);
+
+  /* TE_LINK_SUBTLV_LINK_TYPE */
+  SET_LINK_PARAMS_LINK_HEADER_TLV(link_type)
+  
+  /* TE_LINK_SUBTLV_LINK_ID */
+  SET_LINK_PARAMS_LINK_HEADER_TLV(link_id)
+
+  /* TE_LINK_SUBTLV_LCLIF_IPADDR */
+  SET_LINK_PARAMS_LINK_HEADER_TLV(lclif_ipaddr)
+
+  /* TE_LINK_SUBTLV_RMTIF_IPADDR */
+  SET_LINK_PARAMS_LINK_HEADER_TLV(rmtif_ipaddr)
+
+  /* TE_LINK_SUBTLV_TE_METRIC */
+  SET_LINK_PARAMS_LINK_HEADER_TLV(te_metric)
+
+  /* TE_LINK_SUBTLV_MAX_BW */
+  SET_LINK_PARAMS_LINK_HEADER_TLV(max_bw)
+
+  /* TE_LINK_SUBTLV_MAX_RSV_BW */
+  SET_LINK_PARAMS_LINK_HEADER_TLV(max_rsv_bw)
+
+  /* TE_LINK_SUBTLV_UNRSV_BW */
+  SET_LINK_PARAMS_LINK_HEADER_TLV(unrsv_bw)
+
+  /* TE_LINK_SUBTLV_RSC_CLSCLR */
+  SET_LINK_PARAMS_LINK_HEADER_TLV(rsc_clsclr)
+
+  /* The following are for GMPLS extensions */
+  if (INTERFACE_GMPLS_ENABLED(oi)){
+	  /* TE_LINK_SUBTLV_LCLRMT_ID */
+	  SET_LINK_PARAMS_LINK_HEADER_TLV(link_lcrmt_id)
+	  
+	  /* TE_LINK_SUBTLV_PROTECTION_TYPE */
+	  SET_LINK_PARAMS_LINK_HEADER_TLV(link_protype)
+	  
+	  /* TE_LINK_SUBTLV_IFSWCAP */
+	  SET_LINK_PARAMS_LINK_HEADER_TLV(link_ifswcap)
+
+	  /* TE_LINK_SUBTLV_IFSWCAP */
+	  SET_LINK_PARAMS_LINK_HEADER_TLV(link_srlg)
+  }
+
+  para->link.header.type   = htons (TE_TLV_LINK);
+  para->link.header.length = htons (length);
+
+  return;
+}
+
 static void
 ospf_te_area_lsa_uni_link_body_set (struct stream *s, struct ospf_interface *oi)
 {
+  set_linkparams_uni_link_header(oi);
   build_tlv_header (s, &oi->uni_data->te_para.link.header);
 
   BUILD_UNI_SUBTLV(link_type);
@@ -1423,7 +1479,7 @@ ospf_te_area_lsa_uni_rtid_new_for_interface (struct ospf_interface *oi)
 
   lsa_type = OSPF_OPAQUE_AREA_LSA;
   /* instance = last 24 bits of the TE router address for this implementation */
-  tmp = SET_OPAQUE_LSID (OPAQUE_TYPE_TE_AREA_LSA, ntohl(OspfTeRouterAddr.value.s_addr)); 
+  tmp = SET_OPAQUE_LSID (OPAQUE_TYPE_TE_AREA_LSA, oi->uni_data->loopback.s_addr));
   lsa_id.s_addr = htonl (tmp);
 
   if (IS_DEBUG_OSPF (lsa, LSA_GENERATE))
