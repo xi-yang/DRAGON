@@ -629,7 +629,7 @@ void MESSAGE_ID_LIST_Object::readFromBuffer( INetworkBuffer& buffer, uint16 len 
 
 void DRAGON_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 {
-	buffer >>srcTNA.length >> srcTNA.type >> >>srcTNA.sub_type >> srcTNA.addr.s_addr >> srcTNA.local_id;
+	buffer >>srcTNA.length >> srcTNA.type >> srcTNA.sub_type >> srcTNA.addr.s_addr >> srcTNA.local_id;
 	buffer >>destTNA.length >> destTNA.type >> destTNA.sub_type >> destTNA.addr.s_addr >> destTNA.local_id;
 }
 
