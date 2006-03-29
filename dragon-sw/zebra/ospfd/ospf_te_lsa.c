@@ -1725,14 +1725,12 @@ ospf_te_area_lsa_uni_delete (struct ospf_interface *oi)
   if (oi->uni_data->te_lsa_rtid)
     {
           ospf_lsa_flush_area (oi->uni_data->te_lsa_rtid, area);
-          ospf_lsa_unlock (oi->uni_data->te_lsa_rtid);
           oi->uni_data->te_lsa_rtid = NULL;
     }
 
   if (oi->uni_data->te_lsa_link)
     {
           ospf_lsa_flush_area (oi->uni_data->te_lsa_link, area);
-          ospf_lsa_unlock (oi->uni_data->te_lsa_link);
           oi->uni_data->te_lsa_link = NULL;
     }
 
