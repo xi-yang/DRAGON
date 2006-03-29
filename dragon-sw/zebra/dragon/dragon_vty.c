@@ -904,15 +904,22 @@ DEFUN (dragon_set_lsp_ip,
 
 DEFUN (dragon_set_lsp_uni_c,
        dragon_set_lsp_unic_cmd,
-       "set uni-c",
+       "set uni (client|network|none) via NAME",
        "Set LSP Mode as originated from UNI Client\n"
        "VLAN Tag from end to end\n"
 	)
 {
     struct lsp *lsp = (struct lsp *)(vty->index);
-    lsp->uni_mode = 1;
+    if (strcmp(argv[0], "client") == 0)
+	    lsp->uni_mode = 1;
+    if (strcmp(argv[0], "network") == 0)
+	    lsp->uni_mode = 2;
+    else 
+	    lsp->uni_mode = 0;
     lsp->common.DragonUni_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_Uni_Para));
     memset(lsp->common.DragonUni_Para, 0, sizeof(struct _Dragon_Uni_Para));
+    strncpy(lsp->common.DragonUni_Para->ctrlChannel, argv[1], 12);
+
     return CMD_SUCCESS;
 }
 
