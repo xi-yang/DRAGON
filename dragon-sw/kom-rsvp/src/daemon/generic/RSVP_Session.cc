@@ -463,13 +463,9 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
                 defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getCtrlChannelName().name));
                 RtOutL.insert_unique( defaultOutLif );
                 RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
-
-                NetAddress clientAddress(String("140.173.97.61"));
-                NetAddress networkAddress(String("140.173.97.62"));
-                destAddress = networkAddress;
-                RSVP_HOP_TLV_SUB_Object tlv (clientAddress);
+                RSVP_HOP_TLV_SUB_Object tlv (NetAddress(0));
                 dataOutRsvpHop = RSVP_HOP_Object(NetAddress(uni->getSrcTNA().addr.s_addr), defaultOutLif->getLIH(), tlv);
-                senderTemplate.setSrcAddress( dataOutRsvpHop.getAddress());
+                senderTemplate.setSrcAddress(NetAddress(uni->getSrcTNA().addr.s_addr));
 	}
 	else {
 
