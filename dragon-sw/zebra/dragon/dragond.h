@@ -439,6 +439,12 @@ struct _Protection_Para {
 	u_int8_t pro_type;
 };
 
+
+struct _Dragon_Uni_Para {
+	uint32 srcLocalId;
+	uint32 destLocalId;
+};
+
 struct _sessionParameters {
 	//Mandatory parameters
 	struct _LabelRequest_Para LabelRequest_Para;
@@ -450,6 +456,7 @@ struct _sessionParameters {
 #define MAX_ERO_NUMBER	32
 	u_int8_t ERONodeNumber;	// 32 in Maximum
 	struct _EROAbstractNode_Para* EROAbstractNode_Para;
+	struct _Dragon_Uni_Para* DragonUni_Para;
 	u_int8_t labelSetSize;	// 8 in maximum
 #define MAX_LABEL_SET_SIZE	8
 	u_int32_t* labelSet;
@@ -516,7 +523,10 @@ struct lsp {
 #define	LSP_IS 			2		/* This LSP is in service */
 #define	LSP_DELETE		3		/* This LSP is in deletion */
 #define	LSP_LISTEN 		4		/* This LSP is a receiver  */	
-
+       u_int8_t uni_mode;  /* UNI mode */
+#define	UNI_NONE		0		
+#define	UNI_CLIENT 		1		
+#define	UNI_NETWORK	2		
 	u_int32_t flag;	/* LSP parameter flags */
 	struct _sessionParameters common;
 	struct lsp_optional_constraints constraints;

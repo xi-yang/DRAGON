@@ -1740,28 +1740,6 @@ out:
 }
 
 int
-ospf_te_area_lsa_uni_refresh2 (struct ospf_interface *oi)
-{
-  struct ospf_lsa *old;
-  struct in_addr adv_router;
-  struct ospf_area *area = oi->area; 
-  struct ospf_lsdb *lsdb = area->lsdb;
-
-  int rc = -1;
-  
-  if (ospf_te_area_lsa_uni_delete (oi) != 0)
-  	goto out;
-
-  OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
-  OSPF_INTERFACE_TIMER_ON (oi->t_te_area_lsa_link_self, ospf_te_area_lsa_link_timer, OSPF_MIN_LS_INTERVAL);
-
-  rc = 0;
-out:
-  return rc;
-}
-
-
-int
 ospf_te_area_lsa_uni_refresh1 (struct ospf_interface *oi, struct ospf_lsa *old)
 {
   struct ospf_lsa *new;
@@ -1798,6 +1776,28 @@ ospf_te_area_lsa_uni_refresh1 (struct ospf_interface *oi, struct ospf_lsa *old)
 out:
   return rc;
 }
+
+int
+ospf_te_area_lsa_uni_refresh2 (struct ospf_interface *oi)
+{
+  struct ospf_lsa *old;
+  struct in_addr adv_router;
+  struct ospf_area *area = oi->area; 
+  struct ospf_lsdb *lsdb = area->lsdb;
+
+  int rc = -1;
+  
+  if (ospf_te_area_lsa_uni_delete (oi) != 0)
+  	goto out;
+
+  OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
+  OSPF_INTERFACE_TIMER_ON (oi->t_te_area_lsa_link_self, ospf_te_area_lsa_link_timer, OSPF_MIN_LS_INTERVAL);
+
+  rc = 0;
+out:
+  return rc;
+}
+
 
 int
 ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)

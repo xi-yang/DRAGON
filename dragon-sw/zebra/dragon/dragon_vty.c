@@ -894,8 +894,28 @@ DEFUN (dragon_set_lsp_ip,
   lsp->dragon.srcLocalId = ((u_int32_t)type_src)<<16 |port_src;
   lsp->dragon.destLocalId = ((u_int32_t)type_dest)<<16 |port_dest;
 
+  if (lsp->common.DragonUni_Para) {
+	lsp->common.DragonUni_Para->srcLocalId = lsp->dragon.srcLocalId;
+	lsp->common.DragonUni_Para->destLocalId = lsp->dragon.destLocalId;
+  }
+
   return CMD_SUCCESS;
 }
+
+DEFUN (dragon_set_lsp_uni_c,
+       dragon_set_lsp_unic_cmd,
+       "set uni-c",
+       "Set LSP Mode as originated from UNI Client\n"
+       "VLAN Tag from end to end\n"
+	)
+{
+    struct lsp *lsp = (struct lsp *)(vty->index);
+    lsp->uni_mode = 1;
+    lsp->common.DragonUni_Para = new (struct _Dragon_Uni_Para);
+    memset(lsp->common.DragonUni_Para, 0, sizeof(struct _Dragon_Uni_Para));
+    return CMD_SUCCESS;
+}
+
 
 DEFUN (dragon_set_lsp_vtag,
        dragon_set_lsp_vtag_cmd,
@@ -1804,6 +1824,7 @@ dragon_supp_vty_init ()
   install_element(LSP_NODE, &dragon_set_lsp_sw_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_dir_cmd);
   install_element(LSP_NODE, &dragon_set_label_set_cmd);
+  install_element(LSP_NODE, &dragon_set_lsp_unic_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_vtag_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_vtag_default_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_vtag_any_cmd);  
