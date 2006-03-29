@@ -912,7 +912,7 @@ DEFUN (dragon_set_lsp_uni_c,
     struct lsp *lsp = (struct lsp *)(vty->index);
     if (strcmp(argv[0], "client") == 0)
 	    lsp->uni_mode = 1;
-    if (strcmp(argv[0], "network") == 0)
+    else if (strcmp(argv[0], "network") == 0)
 	    lsp->uni_mode = 2;
     else 
 	    lsp->uni_mode = 0;
