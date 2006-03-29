@@ -488,6 +488,10 @@ const void RoutingService::holdVtagbyOSPF(u_int32_t vtag, bool hold) {
 // Get its loopback address
 // used for filling the IP address field of the RSVP_HOP object
 NetAddress RoutingService::getLoopbackAddress() {
+        //for UNI Client
+        if (ospf_socket <= 0)
+                return LogicalInterface::loopbackAddress;
+
 	//Write packet to OSPF socket ask for my hop control IP address
 	uint8 message = GetLoopbackAddress;
 	uint8 msgLength = sizeof(uint8)*2;
