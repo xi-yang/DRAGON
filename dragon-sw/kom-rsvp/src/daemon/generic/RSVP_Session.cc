@@ -464,10 +464,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
                 RtOutL.insert_unique( defaultOutLif );
                 RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 
-                //destAddress = uni->networkAddress;
-                //RSVP_HOP_TLV_SUB_Object tlv (uni->clientAddress);
-                //dataOutRsvpHop = RSVP_HOP_Object(NetAddress(uni->srcTNA.addr.s_addr), defaultOutLif->getLIH(), tlv);
-                //senderTemplate.setSrcAddress( dataOutRsvpHop.getAddress());
+                NetAddress clientAddress(String(140.173.97.61));
+                NetAddress	networkAddress(String(140.173.97.62));
+                destAddress = networkAddress;
+                RSVP_HOP_TLV_SUB_Object tlv (clientAddress);
+                dataOutRsvpHop = RSVP_HOP_Object(NetAddress(uni->srcTNA.addr.s_addr), defaultOutLif->getLIH(), tlv);
+                senderTemplate.setSrcAddress( dataOutRsvpHop.getAddress());
 	}
 	else {
 
