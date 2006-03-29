@@ -464,11 +464,11 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
                 RtOutL.insert_unique( defaultOutLif );
                 RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 
-                NetAddress clientAddress(String(140.173.97.61));
-                NetAddress	networkAddress(String(140.173.97.62));
+                NetAddress clientAddress(String("140.173.97.61"));
+                NetAddress networkAddress(String("140.173.97.62"));
                 destAddress = networkAddress;
                 RSVP_HOP_TLV_SUB_Object tlv (clientAddress);
-                dataOutRsvpHop = RSVP_HOP_Object(NetAddress(uni->srcTNA.addr.s_addr), defaultOutLif->getLIH(), tlv);
+                dataOutRsvpHop = RSVP_HOP_Object(NetAddress(uni->getSrcTNA().addr.s_addr), defaultOutLif->getLIH(), tlv);
                 senderTemplate.setSrcAddress( dataOutRsvpHop.getAddress());
 	}
 	else {
@@ -815,8 +815,8 @@ search_psb:
 	if (labelSetObj) cPSB->updateLABEL_SET_Object(labelSetObj->borrow());
 
 	//hacks @@@@
-	if (!msg.getDRAGON_UNI_Object() != NULL)
-		cPSB->updateDRAGON_UNI_Object(msg.getSUGGESTED_LABEL_Object());
+	if (((Message*)&msg)->getDRAGON_UNI_Object() != NULL)
+		cPSB->updateDRAGON_UNI_Object(((Message*)&msg)->getDRAGON_UNI_Object());
 
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {

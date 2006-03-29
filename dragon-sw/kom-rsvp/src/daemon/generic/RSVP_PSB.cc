@@ -699,7 +699,7 @@ bool PSB::updateSESSION_ATTRIBUTE_Object( SESSION_ATTRIBUTE_Object sa ) {
 
 bool PSB::updateDRAGON_UNI_Object( DRAGON_UNI_Object* uni ) {
 	if (dragonUni) {
-		if (!uni|| *uni != *dragonUni) {
+		if (!uni|| !(*uni == *dragonUni)) {
 			dragonUni->destroy();
 		} else {
 			return false;
@@ -707,7 +707,7 @@ bool PSB::updateDRAGON_UNI_Object( DRAGON_UNI_Object* uni ) {
 	} else if (!uni) {
 		return false;
 	}
-	labelSet = uni;
+	dragonUni = uni;
 	return true;
 }
 
