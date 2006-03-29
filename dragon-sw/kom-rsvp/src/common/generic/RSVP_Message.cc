@@ -225,7 +225,7 @@ INetworkBuffer& operator>> ( INetworkBuffer& buffer, Message& m ) {
 			m.checkEXPLICIT_ROUTE_Object( new EXPLICIT_ROUTE_Object( buffer, object.getLength() ) );
 			break;
 		case RSVP_ObjectHeader::DRAGON_UNI:
-			m.checkDRAGON_UNI_Object(new DRAGON_UNI_Object(buffer, object.getLength) );
+			m.checkDRAGON_UNI_Object(new DRAGON_UNI_Object(buffer, object.getLength() ) );
 			break;
 		case RSVP_ObjectHeader::LABEL_SET:
 			m.checkLABEL_SET_Object( new LABEL_SET_Object( buffer, object.getLength() ) );
@@ -397,7 +397,7 @@ void Message::checkLABEL_SET_Object( const LABEL_SET_Object* o ) {
 	CHECK_OBJECT_REF(LABEL_SET)
 }
 
-void Message::checkDRAGON_UNI_Object( const DRAGON_UNI_Object* o ) {
+void Message::checkDRAGON_UNI_Object( DRAGON_UNI_Object* o ) {
 	CHECK_OBJECT_REF(DRAGON_UNI)
 }
 

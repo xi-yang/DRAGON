@@ -211,8 +211,9 @@ public:
 		uint8 TTL, const ADSPEC_Object* = NULL, const POLICY_DATA_Object* = NULL,
 		bool reserve = false, uint16 senderRecvPort = 0, uint16 recvSendPort = 0);
 	void createSender( SessionId session, uint16 port, const SENDER_TSPEC_Object& tspec,
-		const LABEL_REQUEST_Object&  labelReqObj, EXPLICIT_ROUTE_Object* ero, LABEL_SET_Object* labelSet, 
+		const LABEL_REQUEST_Object&  labelReqObj, EXPLICIT_ROUTE_Object* ero, 
 		DRAGON_UNI_Object* uni,
+		LABEL_SET_Object* labelSet, 
 		SESSION_ATTRIBUTE_Object* ssAttrib,
 		UPSTREAM_LABEL_Object* upstreamLabel,
 		uint8 TTL, const ADSPEC_Object* adSpec = NULL,

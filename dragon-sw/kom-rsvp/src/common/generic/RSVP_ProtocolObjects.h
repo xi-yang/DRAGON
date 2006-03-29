@@ -821,7 +821,7 @@ struct LocalIdTNA {
 	uint32 local_id;
 };
 
-class DRAGON_UNI_Object: : public RefObject<DRAGON_UNI_Object> {
+class DRAGON_UNI_Object: public RefObject<DRAGON_UNI_Object> {
 	LocalIdTNA srcTNA;
 	LocalIdTNA destTNA;
 	friend ostream& operator<< ( ostream&, const DRAGON_UNI_Object& );
@@ -836,7 +836,7 @@ public:
 		srcTNA.length = sizeof(struct LocalIdTNA);
 		srcTNA.type = UNI_SUBOBJ_SRCTNA;
 		srcTNA.sub_type = UNI_TNA_SUBTYPE_LCLID;
-		srcTNA.addr.s_addr = srcTNA.addr.local_id = 0;
+		srcTNA.addr.s_addr = srcTNA.local_id = 0;
 		destTNA = srcTNA; destTNA.type = UNI_SUBOBJ_DESTTNA;
 	}
 	DRAGON_UNI_Object( struct in_addr src_addr, uint32 src_lclid, struct in_addr dest_addr, uint32 dest_lclid ) {
@@ -850,12 +850,12 @@ public:
 		destTNA.local_id = dest_lclid;
 	}
 	DRAGON_UNI_Object(INetworkBuffer& buffer, uint16 len) {
-		readFromBuffer( b, len );
+		readFromBuffer(buffer, len );
 	}
 	void readFromBuffer( INetworkBuffer& buffer, uint16 len);
 	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
-	LocalIdTNA& getSrcTNA() const { return srcTNA; }
-	LocalIdTNA& getDestTNA() const { return destTNA; }
+	LocalIdTNA& getSrcTNA() { return srcTNA; }
+	LocalIdTNA& getDestTNA(){ return destTNA; }
 	bool operator==(const DRAGON_UNI_Object& s){
 		return (memcmp(&srcTNA, &s.srcTNA, sizeof(struct LocalIdTNA)) == 0 && memcmp(&destTNA, &s.destTNA, sizeof(struct LocalIdTNA)) == 0);
 	}

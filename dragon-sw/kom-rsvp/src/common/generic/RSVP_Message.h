@@ -132,7 +132,7 @@ protected:
 	void checkEXPLICIT_ROUTE_Object( const EXPLICIT_ROUTE_Object* );
 	void checkLABEL_SET_Object(const LABEL_SET_Object*);
 
-	void checkDRAGON_UNI_Object(const DRAGON_UNI_Object*);
+	void checkDRAGON_UNI_Object(DRAGON_UNI_Object*);
 
 	bool checkForFilter();
 	void checkStatus() const;
@@ -351,7 +351,7 @@ public:
 	DRAGON_UNI_Object* getDRAGON_UNI_Object() {
 		return DRAGON_UNI_Object_P;
 	}
-	void setDRAGON_UNI_Object( const DRAGON_UNI_Object& o ) {
+	void setDRAGON_UNI_Object( DRAGON_UNI_Object& o ) {
 		checkDRAGON_UNI_Object( o.borrow() );
 	}
 	void clearDRAGON_UNI_Object() {
