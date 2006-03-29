@@ -814,6 +814,10 @@ search_psb:
 	LABEL_SET_Object* labelSetObj = const_cast<LABEL_SET_Object*>(msg.getLABEL_SET_Object());
 	if (labelSetObj) cPSB->updateLABEL_SET_Object(labelSetObj->borrow());
 
+	//hacks @@@@
+	if (!msg.getDRAGON_UNI_Object() != NULL)
+		cPSB->updateDRAGON_UNI_Object(msg.getSUGGESTED_LABEL_Object());
+
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {
 		Path_Refresh_Needed = true;

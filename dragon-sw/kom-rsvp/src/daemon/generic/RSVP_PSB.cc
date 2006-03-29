@@ -437,6 +437,7 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 	}
 	//We shall apply filtering rules to the labelSet object later. But for now, let's just simply copy it to outgoing PATH messages
 	if (labelSet) message.setLABEL_SET_Object(*labelSet);
+	if (dragonUni) message.setDRAGON_UNI_Object(*dragonUni); //hacks @@@@
 	if (hasSessionAttributeObject) message.setSESSION_ATTRIBUTE_Object(sessionAttributeObject);
 
 	if (outLif == *(RSVP_Global::rsvp->getApiLif())){
@@ -693,6 +694,20 @@ bool PSB::updateSESSION_ATTRIBUTE_Object( SESSION_ATTRIBUTE_Object sa ) {
 		return false;
 	sessionAttributeObject= sa;
 	hasSessionAttributeObject = true;
+	return true;
+}
+
+bool PSB::updateDRAGON_UNI_Object( DRAGON_UNI_Object* uni ) {
+	if (dragonUni) {
+		if (!uni|| *uni != *dragonUni) {
+			dragonUni->destroy();
+		} else {
+			return false;
+		}
+	} else if (!uni) {
+		return false;
+	}
+	labelSet = uni;
 	return true;
 }
 
