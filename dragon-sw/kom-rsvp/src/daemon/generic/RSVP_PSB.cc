@@ -471,6 +471,8 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 		outLif.sendMessage( message, gateway);
            else
 		outLif.sendMessage( message, explicitRoute->getAbstractNodeList().front().getAddress(), getSrcAddress(), gateway );
+       else if (message->getDRAGON_UNI_Object() != NULL) //@@@@ hacked
+	   	outLif.sendMessage( message, gateway );
 	else
 		outLif.sendMessage( message, getSession().getDestAddress(), getSrcAddress(), gateway );
 }
@@ -490,6 +492,8 @@ void PSB::sendTearMessage() {
 		    else
 			(*lifIter)->sendMessage( msg, explicitRoute->getAbstractNodeList().front().getAddress(), getSrcAddress(), gateway );
 		} 
+	       else if (msg->getDRAGON_UNI_Object() != NULL) //@@@@ hacked
+		   	(*lifIter)->sendMessage( msg, gateway );
 		else
 			(*lifIter)->sendMessage( msg, getSession().getDestAddress(), getSrcAddress(), gateway );
 		msg.clearRSVP_HOP_Object(msg.getRSVP_HOP_Object());

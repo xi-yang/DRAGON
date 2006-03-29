@@ -824,10 +824,11 @@ struct LocalIdTNA {
 class DRAGON_UNI_Object: public RefObject<DRAGON_UNI_Object> {
 	LocalIdTNA srcTNA;
 	LocalIdTNA destTNA;
+	String ctrlChanName;
 	friend ostream& operator<< ( ostream&, const DRAGON_UNI_Object& );
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_UNI_Object& );
 	uint16 size() const{ 
-		return (sizeof(struct LocalIdTNA)*2);
+		return (sizeof(struct LocalIdTNA)*2 + ctrlChanName.length());
 	}
 	REF_OBJECT_METHODS(DRAGON_UNI_Object)
 
@@ -839,7 +840,7 @@ public:
 		srcTNA.addr.s_addr = srcTNA.local_id = 0;
 		destTNA = srcTNA; destTNA.type = UNI_SUBOBJ_DESTTNA;
 	}
-	DRAGON_UNI_Object( struct in_addr src_addr, uint32 src_lclid, struct in_addr dest_addr, uint32 dest_lclid ) {
+	DRAGON_UNI_Object( struct in_addr src_addr, uint32 src_lclid, struct in_addr dest_addr, uint32 dest_lclid, char* chan_name ) {
 		srcTNA.length = sizeof(struct LocalIdTNA);
 		srcTNA.type = UNI_SUBOBJ_SRCTNA;
 		srcTNA.sub_type = UNI_TNA_SUBTYPE_LCLID;
@@ -848,6 +849,7 @@ public:
 		srcTNA.local_id = src_lclid;
 		destTNA.addr = dest_addr;
 		destTNA.local_id = dest_lclid;
+		ctrlChanName = chan_name;
 	}
 	DRAGON_UNI_Object(INetworkBuffer& buffer, uint16 len) {
 		readFromBuffer(buffer, len );
