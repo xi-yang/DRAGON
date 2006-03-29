@@ -442,7 +442,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		|| msg.getRSVP_HOP_Object().getAddress() == loopback)
 		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress()));
 
-	bool fromUniClient = (fromLocalAPI && msg.getDRAGON_UNI_Object() != NULL);
+	bool fromUniClient = (fromLocalAPI && ((Message*)&msg)->getDRAGON_UNI_Object() != NULL);
 #endif
 
 	LogicalInterfaceSet RtOutL;
@@ -456,10 +456,11 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	RSVP_HOP_Object dataOutRsvpHop;
 	VLSRRoute vLSRoute;
 
+	EXPLICIT_ROUTE_Object* explicitRoute = NULL;
 
 	if (fromUniClient) {
-                DRAGON_UNI_Object* uni = msg.getDRAGON_UNI_Object();
-                defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(uni->ctrlChanName);
+                DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
+                defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getCtrlChannelName().name));
                 RtOutL.insert_unique( defaultOutLif );
                 RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 
@@ -469,7 +470,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
                 //senderTemplate.setSrcAddress( dataOutRsvpHop.getAddress());
 	}
 	else {
-		EXPLICIT_ROUTE_Object* explicitRoute = NULL;
 
 		if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);

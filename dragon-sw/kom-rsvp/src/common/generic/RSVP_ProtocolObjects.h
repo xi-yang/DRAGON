@@ -858,7 +858,7 @@ public:
 		srcTNA.local_id = src_lclid;
 		destTNA.addr = dest_addr;
 		destTNA.local_id = dest_lclid;
-		strncpy(ctrlChanName.name, chan_name);
+		strncpy((char*)ctrlChanName.name, chan_name, 12);
 		ctrlChanName.length= sizeof(struct CtrlChannel);
 		ctrlChanName.type = UNI_SUBOBJ_CTRLCHAN;
 		ctrlChanName.sub_type = UNI_TNA_SUBTYPE_NONE;
@@ -870,6 +870,7 @@ public:
 	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
 	LocalIdTNA& getSrcTNA() { return srcTNA; }
 	LocalIdTNA& getDestTNA(){ return destTNA; }
+	CtrlChannel& getCtrlChannelName(){ return ctrlChanName; }
 	bool operator==(const DRAGON_UNI_Object& s){
 		return (memcmp(&srcTNA, &s.srcTNA, sizeof(struct LocalIdTNA)) == 0 && memcmp(&destTNA, &s.destTNA, sizeof(struct LocalIdTNA)) == 0);
 	}

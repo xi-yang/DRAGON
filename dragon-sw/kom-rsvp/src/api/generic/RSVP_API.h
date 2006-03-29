@@ -150,7 +150,6 @@ struct _Dragon_Uni_Para {
 	char ctrlChannel[12];
 };
 
-
 struct _sessionParameters {
 	//Mandatory parameters
 	struct _LabelRequest_Para LabelRequest_Para;

@@ -561,7 +561,7 @@ void zInitRsvpPathRequest(void* thisApi, struct _sessionParameters* para, uint8 
 		uni = new DRAGON_UNI_Object(para->Session_Para.srcAddr, 
 									para->Dragon_Uni_Para->srcLocalId, 
 									para->Session_Para.destAddr, 
-									para->Dragon_Uni_Para->destLocalId
+									para->Dragon_Uni_Para->destLocalId,
 									para->Dragon_Uni_Para->ctrlChannel);
 	}
 	if (para->labelSet && para->labelSetSize > 0){

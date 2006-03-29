@@ -648,7 +648,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_UNI_Object& o 
 
 ostream& operator<< ( ostream& os, const DRAGON_UNI_Object& o ) {
 	char addr_str[20];
-	os <<"[ source: " << String( inet_ntoa(o.srcTNA.addr)) <<"/" o.srcTNA.local_id;
+	os <<"[ source: " << String( inet_ntoa(o.srcTNA.addr)) <<"/" << o.srcTNA.local_id;
 	os <<" <==> destination: ";
 	os << String( inet_ntoa(o.destTNA.addr)) << "/" << o.destTNA.local_id;
 	os << " (via ctrlChannel: " << o.ctrlChanName.name;
