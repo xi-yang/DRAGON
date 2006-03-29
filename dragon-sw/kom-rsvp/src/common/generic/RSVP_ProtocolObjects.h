@@ -792,4 +792,74 @@ public:
 };
 #endif
 
+//////////////////////////////////////////////////////////////////////////
+/////                             UNI Object definitions                                                   /////
+/////////////////////////////////////////////////////////////////////////
+
+#define UNI_SUBOBJ_SRCTNA 1
+#define UNI_SUBOBJ_DESTTNA 2
+#define UNI_SUBOBJ_DIVERSITY 3
+#define UNI_SUBOBJ_EGRESSLABEL 4
+
+#define UNI_TNA_SUBTYPE_IPV4 1
+#define UNI_TNA_SUBTYPE_IPV6 2
+#define UNI_TNA_SUBTYPE_NSAP 3
+#define UNI_TNA_SUBTYPE_LCLID 4
+
+struct IPv4TNA {
+	uint16 length;
+	uint8 type;
+	uint8 sub_type;
+	struct in_addr addr;
+};
+
+struct LocalIdTNA {
+	uint16 length;
+	uint8 type;
+	uint8 sub_type;
+	struct in_addr addr;
+	uint32 local_id;
+};
+
+class DRAGON_UNI_Object: : public RefObject<DRAGON_UNI_Object> {
+	LocalIdTNA srcTNA;
+	LocalIdTNA destTNA;
+	friend ostream& operator<< ( ostream&, const DRAGON_UNI_Object& );
+	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_UNI_Object& );
+	uint16 size() const{ 
+		return (sizeof(struct LocalIdTNA)*2);
+	}
+	REF_OBJECT_METHODS(DRAGON_UNI_Object)
+
+public:
+	DRAGON_UNI_Object() {
+		srcTNA.length = sizeof(struct LocalIdTNA);
+		srcTNA.type = UNI_SUBOBJ_SRCTNA;
+		srcTNA.sub_type = UNI_TNA_SUBTYPE_LCLID;
+		srcTNA.addr.s_addr = srcTNA.addr.local_id = 0;
+		destTNA = srcTNA; destTNA.type = UNI_SUBOBJ_DESTTNA;
+	}
+	DRAGON_UNI_Object( struct in_addr src_addr, uint32 src_lclid, struct in_addr dest_addr, uint32 dest_lclid ) {
+		srcTNA.length = sizeof(struct LocalIdTNA);
+		srcTNA.type = UNI_SUBOBJ_SRCTNA;
+		srcTNA.sub_type = UNI_TNA_SUBTYPE_LCLID;
+		destTNA = srcTNA; destTNA.type = UNI_SUBOBJ_DESTTNA;
+		srcTNA.addr = src_addr;
+		srcTNA.local_id = src_lclid;
+		destTNA.addr = dest_addr;
+		destTNA.local_id = dest_lclid;
+	}
+	DRAGON_UNI_Object(INetworkBuffer& buffer, uint16 len) {
+		readFromBuffer( b, len );
+	}
+	void readFromBuffer( INetworkBuffer& buffer, uint16 len);
+	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
+	LocalIdTNA& getSrcTNA() const { return srcTNA; }
+	LocalIdTNA& getDestTNA() const { return destTNA; }
+	bool operator==(const DRAGON_UNI_Object& s){
+		return (memcmp(&srcTNA, &s.srcTNA, sizeof(struct LocalIdTNA)) == 0 && memcmp(&destTNA, &s.destTNA, sizeof(struct LocalIdTNA)) == 0);
+	}
+};
+extern inline DRAGON_UNI_Object::~DRAGON_UNI_Object() { }
+
 #endif /* _RSVP_ProtocolObjects_h_ */

@@ -318,6 +318,7 @@ void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port
 	const SENDER_TSPEC_Object& tspec, 
 	const LABEL_REQUEST_Object&  labelReqObj, 
 	EXPLICIT_ROUTE_Object* ero, 
+	DRAGON_UNI_Object* uni,
 	LABEL_SET_Object* labelSet, 
 	SESSION_ATTRIBUTE_Object* ssAttrib, 
 	UPSTREAM_LABEL_Object* upstreamLabel,
@@ -336,6 +337,7 @@ void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port
 	message.setTIME_VALUES_Object( TimeValue(0,0) );
 	message.setLABEL_REQUEST_Object(labelReqObj);
 	if (ero) message.setEXPLICIT_ROUTE_Object(*ero);
+	if (uni) message.setDRAGON_UNI_Object(*uni);
 	if (labelSet) message.setLABEL_SET_Object(*labelSet);
 	if (ssAttrib) message.setSESSION_ATTRIBUTE_Object(*ssAttrib);
 	if (upstreamLabel) message.setUPSTREAM_LABEL_Object(*upstreamLabel);
@@ -488,6 +490,7 @@ void zInitRsvpPathRequest(void* thisApi, struct _sessionParameters* para, uint8 
 	ADSPEC_Object *ao = NULL;
 	SENDER_TSPEC_Object *stb = NULL;
 	EXPLICIT_ROUTE_Object *ero = NULL;
+	DRAGON_UNI_Object *uni = NULL;
 	LABEL_SET_Object* labelSet = NULL;
 	SESSION_ATTRIBUTE_Object* ssAttrib = NULL;
 	UPSTREAM_LABEL_Object* upLabel = NULL;
@@ -554,7 +557,12 @@ void zInitRsvpPathRequest(void* thisApi, struct _sessionParameters* para, uint8 
 			}
 		}
 	}
-	
+	if (para->Dragon_Uni_Para) {
+		uni = new DRAGON_UNI_Object(para->Session_Para.srcAddr, 
+									para->Dragon_Uni_Para->srcLocalId, 
+									para->Session_Para.destAddr, 
+									para->Dragon_Uni_Para->destLocalId);
+	}
 	if (para->labelSet && para->labelSetSize > 0){
 	        labelSet = new LABEL_SET_Object();
 	        for (int i=0;i<para->labelSetSize;i++)
@@ -579,9 +587,10 @@ void zInitRsvpPathRequest(void* thisApi, struct _sessionParameters* para, uint8 
 		lr = new LABEL_REQUEST_Object (para->LabelRequest_Para.data.mpls_l3pid);
 
        api->createSender( session, para->Session_Para.srcPort, *stb, 
-       			      *lr, ero, labelSet, ssAttrib, upLabel, 50, ao, NULL );
+       			      *lr, ero, uni, labelSet, ssAttrib, upLabel, 50, ao, NULL );
 	if (ao) ao->destroy();
 	if (ero) ero->destroy();
+	if (uni) uni->destroy();
 	if (labelSet) labelSet->destroy();
 	if (lr) delete lr;
 	if (stb) delete stb;

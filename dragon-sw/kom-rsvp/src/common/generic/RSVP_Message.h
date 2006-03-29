@@ -74,7 +74,8 @@ protected:
 		HELLO				= (1 << 15),
 		SUGGESTED_LABEL 	= (1 << 16),
 		SESSION_ATTRIBUTE = (1 << 17),
-		UPSTREAM_LABEL	= (1 << 18)
+		UPSTREAM_LABEL	= (1 << 18),
+		//DRAGON_UNI		= (1 << 19)
 	};
 
 	mutable Status status;
@@ -111,6 +112,8 @@ protected:
 	MESSAGE_ID_NACK_List         nackList;
 #endif
 
+	DRAGON_UNI_Object*		DRAGON_UNI_Object_P;
+
 	bool checkFlowdescList() const;
 
 	friend ostream& operator<< ( ostream&, const Message& );
@@ -129,6 +132,8 @@ protected:
 	void checkEXPLICIT_ROUTE_Object( const EXPLICIT_ROUTE_Object* );
 	void checkLABEL_SET_Object(const LABEL_SET_Object*);
 
+	void checkDRAGON_UNI_Object(const DRAGON_UNI_Object*);
+
 	bool checkForFilter();
 	void checkStatus() const;
 
@@ -137,6 +142,7 @@ public:
 	status(Correct), objectFlags(0),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL), EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
+	, DRAGON_UNI_Object_P(NULL)
 	{}
 
 	Message( uint8 msgType, uint8 ttl, const SESSION_Object& session, bool clearE_Police = false )
@@ -144,6 +150,7 @@ public:
 	status(Correct), objectFlags(SESSION), SESSION_Object_O(session),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL) , EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
+	, DRAGON_UNI_Object_P(NULL)
 	{
 		length += SESSION_Object::total_size();
 	}
@@ -153,7 +160,7 @@ public:
 	length(headerSize()), status(Correct), objectFlags(MESSAGE_ID_LIST),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL), EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
-	, MESSAGE_ID_LIST_Object_O( 0, epoch )
+	, MESSAGE_ID_LIST_Object_O( 0, epoch ), DRAGON_UNI_Object_P(NULL)
 	{
 		length += MESSAGE_ID_LIST_Object_O.total_size();
 	}
@@ -161,6 +168,7 @@ public:
 	status(Correct), objectFlags(0),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL), EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
+	, DRAGON_UNI_Object_P(NULL)
 	{}
 #endif
 
@@ -339,6 +347,20 @@ public:
 		length += sizeof(sint32);
 	}
 #endif
+
+	DRAGON_UNI_Object* getDRAGON_UNI_Object() {
+		return DRAGON_UNI_Object_P;
+	}
+	void setDRAGON_UNI_Object( const DRAGON_UNI_Object& o ) {
+		checkDRAGON_UNI_Object( o.borrow() );
+	}
+	void clearDRAGON_UNI_Object() {
+		if (DRAGON_UNI_Object_P){
+			DRAGON_UNI_Object_P->destroy();
+			length -=  DRAGON_UNI_Object_P->total_size();
+			DRAGON_UNI_Object_P = NULL;
+		}
+	}
 
 	void revertToError( const ERROR_SPEC_Object& );
 

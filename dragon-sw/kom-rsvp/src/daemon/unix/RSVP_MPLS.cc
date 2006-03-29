@@ -655,7 +655,6 @@ EXPLICIT_ROUTE_Object* MPLS::getExplicitRoute(NetAddress& dest) {
               er->pushFront(AbstractNode(false, dest, (uint8)32));
 	}
 	//query from configured virtual routes...
-	//$$$$ may be handled similar to UNI_C
 	if (!er) {
 		LogicalInterface* outLif;
 		NetAddress nexthop, remote_nexthop, gw;

@@ -144,6 +144,11 @@ struct _Protection_Para {
 	uint8 pro_type;
 };
 
+struct _Dragon_Uni_Para {
+	uint32 srcLocalId;
+	uint32 destLocalId;
+};
+
 
 struct _sessionParameters {
 	//Mandatory parameters
@@ -155,6 +160,7 @@ struct _sessionParameters {
 	struct _SonetTSpec_Para* SonetTSpec_Para;
 	uint8 ERONodeNumber;	// 32 in Maximum
 	struct _EROAbstractNode_Para* EROAbstractNode_Para;
+	struct _Dragon_Uni_Para* Dragon_Uni_Para;
 	uint8 labelSetSize;	// 8 in maximum
 	uint32* labelSet;
 	struct _SessionAttribute_Para* SessionAttribute_Para;
@@ -198,18 +204,22 @@ public:
 	ApiStateBlockList::Iterator findSession(SESSION_Object &session, UpcallProcedure upcall=NULL, void* clientData=NULL );
 	SessionId createSession( const NetAddress&, uint16, uint32, UpcallProcedure = NULL, void* clientData = NULL );
 	void createSender( SessionId, const NetAddress&, uint16 port, const SENDER_TSPEC_Object&,
-		const LABEL_REQUEST_Object&  labelReqObj, EXPLICIT_ROUTE_Object* ero, LABEL_SET_Object* labelSet, SESSION_ATTRIBUTE_Object* ssAttrib,
+		const LABEL_REQUEST_Object&  labelReqObj, EXPLICIT_ROUTE_Object* ero, 
+		DRAGON_UNI_Object* uni,
+		LABEL_SET_Object* labelSet, SESSION_ATTRIBUTE_Object* ssAttrib,
 		UPSTREAM_LABEL_Object* upstreamLabel,
 		uint8 TTL, const ADSPEC_Object* = NULL, const POLICY_DATA_Object* = NULL,
 		bool reserve = false, uint16 senderRecvPort = 0, uint16 recvSendPort = 0);
 	void createSender( SessionId session, uint16 port, const SENDER_TSPEC_Object& tspec,
-		const LABEL_REQUEST_Object&  labelReqObj, EXPLICIT_ROUTE_Object* ero, LABEL_SET_Object* labelSet, SESSION_ATTRIBUTE_Object* ssAttrib,
+		const LABEL_REQUEST_Object&  labelReqObj, EXPLICIT_ROUTE_Object* ero, LABEL_SET_Object* labelSet, 
+		DRAGON_UNI_Object* uni,
+		SESSION_ATTRIBUTE_Object* ssAttrib,
 		UPSTREAM_LABEL_Object* upstreamLabel,
 		uint8 TTL, const ADSPEC_Object* adSpec = NULL,
 		const POLICY_DATA_Object* policyData = NULL, 
 		bool reserve = false,
 		uint16 senderRecvPort = 0, uint16 recvSendPort = 0 ) {
-		createSender( session, 0, port, tspec, labelReqObj, ero, labelSet, ssAttrib, upstreamLabel, TTL, adSpec, policyData, reserve, senderRecvPort, recvSendPort );
+		createSender( session, 0, port, tspec, labelReqObj, ero, uni, labelSet, ssAttrib, upstreamLabel, TTL, adSpec, policyData, reserve, senderRecvPort, recvSendPort );
 	}
 	void createReservation( SessionId, bool confRequest, FilterStyle,
 		const FlowDescriptorList&, const POLICY_DATA_Object* policyData = NULL );

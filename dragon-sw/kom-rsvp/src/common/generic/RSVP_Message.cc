@@ -67,6 +67,10 @@ void Message::init() {
 		LABEL_SET_Object_P->destroy();
 		LABEL_SET_Object_P = NULL;
 	}
+	if ( DRAGON_UNI_Object_P) {
+		DRAGON_UNI_Object_P->destroy();
+		DRAGON_UNI_Object_P = NULL;
+	}
 	RSVP_HOP_Object_O = RSVP_HOP_Object();
 	
 #if defined(REFRESH_REDUCTION)
@@ -220,7 +224,9 @@ INetworkBuffer& operator>> ( INetworkBuffer& buffer, Message& m ) {
 		case RSVP_ObjectHeader::EXPLICIT_ROUTE:
 			m.checkEXPLICIT_ROUTE_Object( new EXPLICIT_ROUTE_Object( buffer, object.getLength() ) );
 			break;
-
+		case RSVP_ObjectHeader::DRAGON_UNI:
+			m.checkDRAGON_UNI_Object(new DRAGON_UNI_Object(buffer, object.getLength) );
+			break;
 		case RSVP_ObjectHeader::LABEL_SET:
 			m.checkLABEL_SET_Object( new LABEL_SET_Object( buffer, object.getLength() ) );
 			break;
@@ -318,6 +324,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const Message& m ) {
 	if (m.objectFlags & Message::SUGGESTED_LABEL) buffer << m.SUGGESTED_LABEL_Object_O;
 	if (m.objectFlags & Message::UPSTREAM_LABEL) buffer << m.UPSTREAM_LABEL_Object_O;
 	if (m.EXPLICIT_ROUTE_Object_P) buffer << *m.EXPLICIT_ROUTE_Object_P;
+	if (m.DRAGON_UNI_Object_P) buffer << *m.DRAGON_UNI_Object_P;
 	if (m.LABEL_SET_Object_P) buffer << *m.LABEL_SET_Object_P;
 	if (m.objectFlags & Message::SESSION_ATTRIBUTE) buffer << m.SESSION_ATTRIBUTE_Object_O;
 	if (m.objectFlags & Message::ERROR_SPEC) buffer << m.ERROR_SPEC_Object_O;
@@ -388,6 +395,10 @@ void Message::checkEXPLICIT_ROUTE_Object( const EXPLICIT_ROUTE_Object* o ) {
 
 void Message::checkLABEL_SET_Object( const LABEL_SET_Object* o ) {
 	CHECK_OBJECT_REF(LABEL_SET)
+}
+
+void Message::checkDRAGON_UNI_Object( const DRAGON_UNI_Object* o ) {
+	CHECK_OBJECT_REF(DRAGON_UNI)
 }
 
 
@@ -581,6 +592,7 @@ ostream& operator<< ( ostream& os, const Message& m ) {
 	}
 	if (m.objectFlags & Message::LABEL_REQUEST) os << endl << " LABEL_REQUEST:" << m.LABEL_REQUEST_Object_O;
 	if (m.EXPLICIT_ROUTE_Object_P) os << endl << " EXPLICIT_ROUTE:" << *m.EXPLICIT_ROUTE_Object_P;
+	if (m.DRAGON_UNI_Object_P) os << endl << " DRAGON_UNI:" << *m.DRAGON_UNI_Object_P;
 	if (m.LABEL_SET_Object_P) os << endl << "LABEL_SET: " << *m.LABEL_SET_Object_P;
 	if (m.objectFlags & Message::SUGGESTED_LABEL) os << endl << "SUGGESTED_LABEL: " << m.SUGGESTED_LABEL_Object_O;
 	if (m.objectFlags & Message::UPSTREAM_LABEL) os << endl << "UPSTREAM_LABEL: " << m.UPSTREAM_LABEL_Object_O;
