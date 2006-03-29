@@ -911,7 +911,7 @@ DEFUN (dragon_set_lsp_uni_c,
 {
     struct lsp *lsp = (struct lsp *)(vty->index);
     lsp->uni_mode = 1;
-    lsp->common.DragonUni_Para = new (struct _Dragon_Uni_Para);
+    lsp->common.DragonUni_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_Uni_Para));
     memset(lsp->common.DragonUni_Para, 0, sizeof(struct _Dragon_Uni_Para));
     return CMD_SUCCESS;
 }

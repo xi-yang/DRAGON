@@ -441,8 +441,8 @@ struct _Protection_Para {
 
 
 struct _Dragon_Uni_Para {
-	uint32 srcLocalId;
-	uint32 destLocalId;
+	u_int32_t srcLocalId;
+	u_int32_t destLocalId;
 };
 
 struct _sessionParameters {
