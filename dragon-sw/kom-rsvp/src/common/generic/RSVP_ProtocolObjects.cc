@@ -631,24 +631,27 @@ void DRAGON_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 {
 	buffer >>srcTNA.length >> srcTNA.type >> srcTNA.sub_type >> srcTNA.addr.s_addr >> srcTNA.local_id;
 	buffer >>destTNA.length >> destTNA.type >> destTNA.sub_type >> destTNA.addr.s_addr >> destTNA.local_id;
-	buffer >>ctrlChanName;
+	buffer >>ctrlChanName.length >> ctrlChanName.type >> ctrlChanName.sub_type;
+	for (int i = 0; i < sizeof(struct CtrlChannel) - 4; i++)
+		buffer >> ctrlChanName.name[i];
 }
 
 ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_UNI_Object& o ) {
 	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::DRAGON_UNI, 1);
 	buffer <<o.srcTNA.length << o.srcTNA.type << o.srcTNA.sub_type << o.srcTNA.addr.s_addr << o.srcTNA.local_id;
 	buffer << o.destTNA.length << o.destTNA.type << o.destTNA.sub_type << o.destTNA.addr.s_addr << o.destTNA.local_id;
-	buffer <<o.ctrlChanName;
+	buffer << o.ctrlChanName.length << o.ctrlChanName.type << o.ctrlChanName.sub_type;
+	for (int i = 0; i < sizeof(struct CtrlChannel) - 4; i++)
+		buffer << o.ctrlChanName.name[i];
 	return buffer;
 }
 
 ostream& operator<< ( ostream& os, const DRAGON_UNI_Object& o ) {
 	char addr_str[20];
-	inet_ntoa()
 	os <<"[ source: " << String( inet_ntoa(o.srcTNA.addr)) <<"/" o.srcTNA.local_id;
 	os <<" <==> destination: ";
 	os << String( inet_ntoa(o.destTNA.addr)) << "/" << o.destTNA.local_id;
-	os << " (via ctrlChannel: " << o.ctrlChanName;
+	os << " (via ctrlChannel: " << o.ctrlChanName.name;
 	os << ") ]";
 	return os;
 }

@@ -800,7 +800,9 @@ public:
 #define UNI_SUBOBJ_DESTTNA 2
 #define UNI_SUBOBJ_DIVERSITY 3
 #define UNI_SUBOBJ_EGRESSLABEL 4
+#define UNI_SUBOBJ_CTRLCHAN 10
 
+#define UNI_TNA_SUBTYPE_NONE 0
 #define UNI_TNA_SUBTYPE_IPV4 1
 #define UNI_TNA_SUBTYPE_IPV6 2
 #define UNI_TNA_SUBTYPE_NSAP 3
@@ -821,14 +823,21 @@ struct LocalIdTNA {
 	uint32 local_id;
 };
 
+struct CtrlChannel {
+	uint16 length;
+	uint8 type;
+	uint8 sub_type;
+	uint8 name[12];
+};
+
 class DRAGON_UNI_Object: public RefObject<DRAGON_UNI_Object> {
 	LocalIdTNA srcTNA;
 	LocalIdTNA destTNA;
-	String ctrlChanName;
+	struct CtrlChannel ctrlChanName;
 	friend ostream& operator<< ( ostream&, const DRAGON_UNI_Object& );
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_UNI_Object& );
 	uint16 size() const{ 
-		return (sizeof(struct LocalIdTNA)*2 + ctrlChanName.length());
+		return (sizeof(struct LocalIdTNA)*2 + sizeof(struct CtrlChannel));
 	}
 	REF_OBJECT_METHODS(DRAGON_UNI_Object)
 
@@ -849,7 +858,10 @@ public:
 		srcTNA.local_id = src_lclid;
 		destTNA.addr = dest_addr;
 		destTNA.local_id = dest_lclid;
-		ctrlChanName = chan_name;
+		strncpy(ctrlChanName.name, chan_name);
+		ctrlChanName.length= sizeof(struct CtrlChannel);
+		ctrlChanName.type = UNI_SUBOBJ_CTRLCHAN;
+		ctrlChanName.sub_type = UNI_TNA_SUBTYPE_NONE;
 	}
 	DRAGON_UNI_Object(INetworkBuffer& buffer, uint16 len) {
 		readFromBuffer(buffer, len );
