@@ -2192,6 +2192,7 @@ DEFUN (config_exit,
       vty->node = KEYCHAIN_NODE;
       break;
     case OSPF_TE_IF_NODE:
+    case OSPF_TE_UNI_NODE:
     	if (config_end_callback_func)
     		config_end_callback_func(vty);
     	vty->node = OSPF_NODE;

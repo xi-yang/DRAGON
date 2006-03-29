@@ -1103,7 +1103,8 @@ DEFUN (dragon_commit_lsp_sender,
   {
   	  /* NARB address/port is not configured, try sending PATH requests without ERO */
 	  /* call RSVPD to set up the path */
-         if (lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE || lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE)
+         if ((lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE || lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE))
+		 	&& lsp->uni_mode != 1
          {
           	vty_out (vty, "NARB is required to setup LSP with localId.%s", VTY_NEWLINE);
         	return CMD_WARNING;
