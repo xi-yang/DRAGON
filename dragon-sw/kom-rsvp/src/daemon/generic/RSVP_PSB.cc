@@ -483,6 +483,7 @@ void PSB::sendTearMessage() {
 	Message msg( Message::PathTear, TTL, getSession() );
 	msg.setSENDER_TEMPLATE_Object( *this );
 	msg.setSENDER_TSPEC_Object(senderTSpec);
+	if (dragonUni) msg.setDRAGON_UNI_Object(*dragonUni); //hacks @@@@
 	LogicalInterfaceSet::ConstIterator lifIter = outLifSet.begin();
 	for ( ;lifIter != outLifSet.end(); ++lifIter ) {
 		msg.setRSVP_HOP_Object(dataOutRsvpHop);
