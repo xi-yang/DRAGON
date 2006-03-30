@@ -501,7 +501,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					if (narbClient->active()) {
 		                            explicitRoute = narbClient->getExplicitRoute(msg);
 						if (explicitRoute)
-							narbClient->hangleRsvpMessage(msg);
+							narbClient->handleRsvpMessage(msg);
 					}
 
 		                     //explicit routing using OSPFd
@@ -509,7 +509,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					       explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 								 hop.getLogicalInterface().getAddress(),
 								 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
-					}
 	                    	}
 			}
 			else{

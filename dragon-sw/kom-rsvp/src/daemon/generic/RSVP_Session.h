@@ -41,6 +41,7 @@ class FlowDescriptor;
 class LogicalInterfaceSet;
 class LogicalInterface;
 class OutISB;
+class NARB_APIClient;
 
 typedef Relationship1toMANY<Session,PSB,PSB_List,DoOnEmptyDelete1> RelationshipSession_PSB;
 typedef Relationship1toMANY<Session,PHopSB,PHOP_List> RelationshipSession_PHopSB;

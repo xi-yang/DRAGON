@@ -79,7 +79,7 @@ struct ero_search_entry
 		uint32 tunnel_id;
 		uint32 ext_tunnel_id;		
 	} index;
-	EXPLICIT_ROUTE_Object ero;
+	EXPLICIT_ROUTE_Object *ero;
 };
 extern inline bool operator== (struct ero_search_entry& a, struct ero_search_entry& b)
 {
@@ -90,23 +90,23 @@ extern inline bool operator!= (struct ero_search_entry& a, struct ero_search_ent
 	return (memcmp(&a.index, &b.index, 20) != 0);
 }
 
-SimpleList<struct ero_search_entry*> EroSearchList;
+typedef SimpleList<struct ero_search_entry*> EroSearchList;
 
 class Message;
 class NARB_APIClient{
 public:
-	NARB_APIClient():  _host(""), _port(0), fd(-1), lastMessage(0) {}
-	NARB_APIClient(const char *host, int port):_host(host), _port(port), lastMessage(0) {}
+	NARB_APIClient(): fd(-1), lastMessage(0) {}
+	NARB_APIClient(const char *host, int port): fd(-1), lastMessage(0) { _host = host; _port = port;}
 	~NARB_APIClient();
 	int doConnect(char *host, int port);
 	int doConnect();
 	void disconnect();
 	bool active();
-	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLclId, unit32 destLclId);
-	EXPLICIT_ROUTE_Object* getExplicitRoute(Message& msg);
+	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLclId, uint32 destLclId);
+	EXPLICIT_ROUTE_Object* getExplicitRoute(const Message& msg);
 	EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 src_addr, uint32 dest_addr, uint32 lsp_id, uint32 tunnel_id, uint32 ext_tunnel_id);
 
-	void hangleRsvpMessage(Message& msg);	//$$$$ //RESV CONFIRM	//RESV RELEASE ...
+	void handleRsvpMessage(const Message& msg);	//$$$$ //RESV CONFIRM	//RESV RELEASE ...
 
 	static void setHostPort(const char *host, int port);
 	static bool operational();
@@ -115,7 +115,7 @@ private:
 	static String _host;
 	static int _port;
 	int fd;
-	enum Message::Type lastMessage; //last message type ...
+	uint32 lastMessage; //last message type ...
 	EroSearchList eroSearchList; 
 };
 

@@ -147,8 +147,8 @@ NARB_APIClient::~NARB_APIClient()
     EroSearchList::Iterator iter = eroSearchList.begin();
     for ( ; iter != eroSearchList.end(); ++iter)
     {
-            if (*iter)->ero)
-                (*iter)->ero.destroy();
+            if ((*iter)->ero)
+                (*iter)->ero->destroy();
             delete (*iter);
     }
 
@@ -252,7 +252,7 @@ bool NARB_APIClient::active()
 }
 
 
-EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLocalId, unit32 destLocalId)
+EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLocalId, uint32 destLocalId)
 {
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
@@ -378,10 +378,10 @@ _RETURN:
     return ero;
 }
 
-EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(Message& msg)
+EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
 {
     uint32 srcAddr = 0, destAddr = 0, srcLocalId = 0, destLocalId = 0, vtag = 0;
-    DRAGON_UNI_Object* uni = msg.getDRAGON_UNI_Object();
+    DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
 
     if (uni) 
     {
@@ -400,8 +400,6 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(Message& msg)
         destAddr = msg.getSESSION_Object().getDestAddress().rawAddress();
     }
 
-SENDER_TEMPLATE_Object
-
     EXPLICIT_ROUTE_Object* ero = lookupExplicitRoute(srcAddr, destAddr, 
             (uint32)msg.getSENDER_TEMPLATE_Object().getLspId(),
             (uint32)msg.getSESSION_Object().getTunnelId(),
@@ -409,6 +407,7 @@ SENDER_TEMPLATE_Object
 
     if (ero) {
             struct ero_search_entry *entry = new (struct ero_search_entry);
+            memset (entry, 0, sizeof(struct ero_search_entry));
             entry->ero = ero;
             entry->index.src_addr = srcAddr;
             entry->index.dest_addr = destAddr;
@@ -421,7 +420,7 @@ SENDER_TEMPLATE_Object
     {
         ero = getExplicitRoute(srcAddr, destAddr, msg.getLABEL_REQUEST_Object().getSwitchingType(), 
                 msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
-                msg.getSENDER_TSPEC_Object().get_r()
+                msg.getSENDER_TSPEC_Object().get_r(),
                 vtag, srcLocalId, destLocalId);
     }
     return ero;
@@ -441,13 +440,13 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::lookupExplicitRoute(uint32 src_addr, uint
     for ( ; iter != eroSearchList.end(); ++iter)
     {
         if (*(*iter) == target)
-            return &(*iter)->ero;
+            return (*iter)->ero;
     }
 
     return NULL;
 }
 
-void NARB_APIClient::hangleRsvpMessage(Message& msg)
+void NARB_APIClient::handleRsvpMessage(const Message& msg)
 {
 
 }
