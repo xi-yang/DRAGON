@@ -92,16 +92,15 @@ extern inline bool operator!= (struct ero_search_entry& a, struct ero_search_ent
 
 SimpleList<struct ero_search_entry*> EroSearchList;
 
+class Message;
 class NARB_APIClient{
 public:
 	NARB_APIClient():  _host(""), _port(0), fd(-1), lastMessage(0) {}
 	NARB_APIClient(const char *host, int port):_host(host), _port(port), lastMessage(0) {}
 	~NARB_APIClient();
-	void setHostPort(const char *host, int port);
 	int doConnect(char *host, int port);
 	int doConnect();
 	void disconnect();
-	bool operational();
 	bool active();
 	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLclId, unit32 destLclId);
 	EXPLICIT_ROUTE_Object* getExplicitRoute(Message& msg);
@@ -109,9 +108,12 @@ public:
 
 	void hangleRsvpMessage(Message& msg);	//$$$$ //RESV CONFIRM	//RESV RELEASE ...
 
+	static void setHostPort(const char *host, int port);
+	static bool operational();
+
 private:
-	String _host;
-	int _port;
+	static String _host;
+	static int _port;
 	int fd;
 	enum Message::Type lastMessage; //last message type ...
 	EroSearchList eroSearchList; 

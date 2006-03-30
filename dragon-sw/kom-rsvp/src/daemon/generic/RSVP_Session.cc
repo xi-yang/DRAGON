@@ -46,7 +46,6 @@
 #include "RSVP_TrafficControl.h"
 #include "NARB_APIClient.h"
 #include "SwitchCtrl_Global.h"
-//#include "RSVP_UNI.h"
 
 // #define BETWEEN_APIS 1
 
@@ -57,12 +56,15 @@ Session::Session( const SESSION_Object &session) : SESSION_Object(session),
 	inLif = NULL;
 	gw = LogicalInterface::noGatewayAddress;
 	biDir = false;
+	narbClient = NULL;
 }
 
 Session::~Session() {
 	LOG(2)( Log::Session, "delete Session:", *this );
 	RSVP_Global::rsvp->removeSession( iterFromRSVP );
 	RSVP_Global::rsvp->getMPLS().deleteExplicitRouteBySession((uint32)this); //@@@@ use address as unique ID.
+	if (narbClient)
+		delete narbClient;
 }
 
 void Session::deleteAll() {
@@ -258,27 +260,17 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			{
 				LOG(2)( Log::MPLS, "MPLS: resolving loose hop by local routing module: ", explicitRoute->getAbstractNodeList().front() );
                             EXPLICIT_ROUTE_Object* ero = NULL;
-				/* @@@@ Use of NARB in loose hop expansion yet to be determinted
-                            uint32 vtag = (explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) ?
-                                   explicitRoute->getAbstractNodeList().front().getInterfaceID() & 0xffff : 0;
-                            if (NARB_APIClient::instance().operational())
-                                ero = NARB_APIClient::instance().getExplicitRoute(RSVP_Global::rsvp->getRoutingService().getLoopbackAddress().rawAddress(), 
-                                    getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
-                                    msg.getSENDER_TSPEC_Object().get_r(), vtag);
-                            */
+
                             if (!ero)
     				    ero  = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 											hop.getLogicalInterface().getAddress(),
 											explicitRoute->getAbstractNodeList().front().getAddress(), 
 											msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
+
 				if (ero && (!ero->getAbstractNodeList().front().isLoose())){
 					explicitRoute->popFront();
 					while (!ero->getAbstractNodeList().empty()){
-						//outLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
-						//	     ero->getAbstractNodeList().back().getAddress(),ifId, gw);
-						//if (!outLif)
-							explicitRoute->pushFront(ero->getAbstractNodeList().back());
-						//ero->popBack();
+						explicitRoute->pushFront(ero->getAbstractNodeList().back());
 					}
 				}
 				else{
@@ -501,35 +493,22 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	                    	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress);
 
 	                     //explicit routing using NARB
-	                     if (!explicitRoute && NARB_APIClient::instance().operational()) {
-	                            explicitRoute = NARB_APIClient::instance().getExplicitRoute(loopback.rawAddress(), 
-	                                    getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
-	                                    msg.getSENDER_TSPEC_Object().get_r(), 0);
+	                     if (explicitRoute && NARB_APIClient::operational()) {
+					if (!narbClient)
+						narbClient = new NARB_APIClient;
+					if (!narbClient->active())
+						narbClient->doConnect();
+					if (narbClient->active()) {
+		                            explicitRoute = narbClient->getExplicitRoute(msg);
+						if (explicitRoute)
+							narbClient->hangleRsvpMessage(msg);
+					}
 
 		                     //explicit routing using OSPFd
 		                     if (!explicitRoute)
 					       explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 								 hop.getLogicalInterface().getAddress(),
 								 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
-
-					//store ERO into erList //@@@@ to be changed ...
-					/*
-					if (explicitRoute) {
-						SimpleList<NetAddress> simple_ero;
-						AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
-						LogicalInterface * aLif;
-						for (; iter != explicitRoute->getAbstractNodeList().end(); ++iter){
-							if ((*iter).getAddress() != loopback) {
-								aLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData((*iter).getAddress(), 0); 
-								if (!aLif)
-								{
-									simple_ero.push_back((*iter).getAddress());
-								}
-							}
-						}
-						//@@@@use address as unique ID. Later on when the session quits, this ERO is removed from erList
-						RSVP_Global::rsvp->getMPLS().addExplicitRoute(destAddress, simple_ero, (uint32)this);
-					*/
 					}
 	                    	}
 			}

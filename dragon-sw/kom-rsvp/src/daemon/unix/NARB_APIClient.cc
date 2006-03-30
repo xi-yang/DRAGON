@@ -12,8 +12,11 @@ To be incorporated into KOM-RSVP-TE package
 #include <sys/socket.h>
 #include <errno.h>
 #include "RSVP_ProtocolObjects.h"
+#include "RSVP_Message.h"
 #include "NARB_APIClient.h"
 
+String NARB_APIClient::_host = "";
+int NARB_APIClient::_port = 0;
 
 int readn (int fd, char *ptr, int nbytes)
 {
@@ -60,6 +63,84 @@ int writen(int fd, char *ptr, int nbytes)
 	return nbytes - nleft;
 }
 
+
+void NARB_APIClient::setHostPort(const char *host, int port)
+{
+    _host = host;
+    _port = port;
+}
+
+bool NARB_APIClient::operational()
+{
+    if (_host.length() == 0 || _port == 0)
+        return false;
+
+    int val, ret=0;
+    int sock;
+    struct sockaddr_in addr;
+    struct hostent *hp;
+    int flags, old_flags;
+    fd_set sset;
+    struct timeval tv;
+    socklen_t lon;
+
+    sock = socket (AF_INET, SOCK_STREAM, 0);
+    if (sock < 0)
+      return -1;
+
+    flags = old_flags = fcntl(sock, F_GETFL, 0);
+#if defined(O_NONBLOCK)
+    flags |= O_NONBLOCK;
+#elif defined(O_NDELAY)
+    flags |= O_NDELAY;
+#elif defined(FNDELAY)
+    flags |= FNDELAY;
+#endif
+
+    if (fcntl(sock, F_SETFL, flags) == -1) {
+        return false;
+    }
+
+    hp = gethostbyname (_host.chars());
+    if (!hp)
+    {
+        LOG(2)(Log::Routing, "NARB_APIClient::Connect: no such host %s\n", _host);
+        return (false);
+    }
+
+    memset (&addr, 0, sizeof (struct sockaddr_in));
+    memcpy (&addr.sin_addr, hp->h_addr, hp->h_length);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons (_port);
+
+    ret = connect (sock, (struct sockaddr *) &addr, sizeof(struct sockaddr_in));
+    if(ret < 0) {
+       if (errno == EINPROGRESS) {
+           tv.tv_sec = 1;
+           tv.tv_usec = 0;
+           FD_ZERO(&sset);
+           FD_SET(sock, &sset);
+           if(select(sock+1, NULL, &sset, NULL, &tv) > 0) {
+               lon = sizeof(int);
+               getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&val), &lon); 
+               return ((val != 0)? false : true);
+           }
+           else {
+               return false;
+           }
+       }
+       else {
+           return false;
+       }
+   }
+
+    if (fcntl(sock, F_SETFL, old_flags) == -1) {
+         return false;
+    }
+    close (sock);
+    return true;
+}
+
 NARB_APIClient::~NARB_APIClient()
 {
     disconnect();
@@ -71,12 +152,6 @@ NARB_APIClient::~NARB_APIClient()
             delete (*iter);
     }
 
-}
-
-void NARB_APIClient::setHostPort(const char *host, int port)
-{
-    _host = host;
-    _port = port;
 }
 
 int NARB_APIClient::doConnect(char *host, int port)
@@ -176,78 +251,6 @@ bool NARB_APIClient::active()
     return (fd > 0);
 }
 
-bool NARB_APIClient::operational()
-{
-    if (fd > 0)
-        return true;
-    if (_host.length() == 0 || _port == 0)
-        return false;
-
-    int val, ret=0;
-    int sock;
-    struct sockaddr_in addr;
-    struct hostent *hp;
-    int flags, old_flags;
-    fd_set sset;
-    struct timeval tv;
-    socklen_t lon;
-
-    sock = socket (AF_INET, SOCK_STREAM, 0);
-    if (sock < 0)
-      return -1;
-
-    flags = old_flags = fcntl(sock, F_GETFL, 0);
-#if defined(O_NONBLOCK)
-    flags |= O_NONBLOCK;
-#elif defined(O_NDELAY)
-    flags |= O_NDELAY;
-#elif defined(FNDELAY)
-    flags |= FNDELAY;
-#endif
-
-    if (fcntl(sock, F_SETFL, flags) == -1) {
-        return false;
-    }
-
-    hp = gethostbyname (_host.chars());
-    if (!hp)
-    {
-        LOG(2)(Log::Routing, "NARB_APIClient::Connect: no such host %s\n", _host);
-        return (false);
-    }
-
-    memset (&addr, 0, sizeof (struct sockaddr_in));
-    memcpy (&addr.sin_addr, hp->h_addr, hp->h_length);
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons (_port);
-
-    ret = connect (sock, (struct sockaddr *) &addr, sizeof(struct sockaddr_in));
-    if(ret < 0) {
-       if (errno == EINPROGRESS) {
-           tv.tv_sec = 1;
-           tv.tv_usec = 0;
-           FD_ZERO(&sset);
-           FD_SET(sock, &sset);
-           if(select(sock+1, NULL, &sset, NULL, &tv) > 0) {
-               lon = sizeof(int);
-               getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&val), &lon); 
-               return ((val != 0)? false : true);
-           }
-           else {
-               return false;
-           }
-       }
-       else {
-           return false;
-       }
-   }
-
-    if (fcntl(sock, F_SETFL, old_flags) == -1) {
-         return false;
-    }
-    close (sock);
-    return true;
-}
 
 EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLocalId, unit32 destLocalId)
 {
@@ -442,4 +445,9 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::lookupExplicitRoute(uint32 src_addr, uint
     }
 
     return NULL;
+}
+
+void NARB_APIClient::hangleRsvpMessage(Message& msg)
+{
+
 }

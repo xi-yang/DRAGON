@@ -66,6 +66,9 @@ class Session :	public RelationshipSession_PSB,
 	//Uni- or Bi-dir
 	bool biDir;
 
+	//NARB client
+	NARB_APIClient* narbClient;
+
 	PHopSB* findOrCreatePHopSB( Hop&, uint32 );
 
 	void matchPSBsAndFiltersAndOutInterface( const FilterSpecList&, const LogicalInterface&, PSB_List& result, OutISB*& );

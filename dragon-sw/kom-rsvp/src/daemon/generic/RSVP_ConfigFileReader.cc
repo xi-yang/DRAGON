@@ -184,7 +184,7 @@ void ConfigFileReader::setApiPort( uint16 apiPort ) {
 }
 
 void ConfigFileReader::setNarbApiClient(String host, int port) {
-    NARB_APIClient::instance().setHostPort(host.chars(), port);
+    NARB_APIClient::setHostPort(host.chars(), port);
 }
 
 void ConfigFileReader::addSlot(String slot_type, uint16 slot_num) {
