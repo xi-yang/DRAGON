@@ -657,7 +657,7 @@ ostream& operator<< ( ostream& os, const DRAGON_UNI_Object& o ) {
 	os <<"[ source: " << String( inet_ntoa(o.srcTNA.addr)) <<"/" << o.srcTNA.local_id;
 	os <<" <==> destination: ";
 	os << String( inet_ntoa(o.destTNA.addr)) << "/" << o.destTNA.local_id;
-	os << " (via ingressChannel: " << o.ingressChannelName.name << " /egressChannel: " << o.egressChannelName;
+	os << " (via ingressChannel: " << o.ingressChannelName.name << " /egressChannel: " << o.egressChannelName.name;
 	os << ") ]";
 	return os;
 }

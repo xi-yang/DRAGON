@@ -11,7 +11,7 @@ To be incorporated into KOM-RSVP-TE package
 
 
 UNI::UNI(enum Type t, NetAddress& ipc, NetAddress& ipn, LogicalInterface* lif, NetAddress& lo) 
-: type(t), ip_c(ipc), ip_n(ipn), ingressChannel(lif), loopback(lo)
+: type(t), ip_c(ipc), ip_n(ipn), ctrlChannel(lif), loopback(lo)
 {
 
 }
