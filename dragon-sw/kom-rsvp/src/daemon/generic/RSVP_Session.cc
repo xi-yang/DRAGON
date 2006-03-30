@@ -448,7 +448,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		|| msg.getRSVP_HOP_Object().getAddress() == loopback)
 		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress()));
 
-	bool fromUniClient = (fromLocalAPI && hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
+	bool fromUniClient = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
 						&&((Message*)&msg)->getDRAGON_UNI_Object() != NULL);
 #endif
 
