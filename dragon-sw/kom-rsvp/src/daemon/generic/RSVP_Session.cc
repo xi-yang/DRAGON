@@ -442,7 +442,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 #endif
 
 	DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
-	bool isUniIngress = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
+	bool fromUniIngress = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
 					&&uni != NULL);
 	bool isUniEgress = (&hop.getLogicalInterface() != RSVP_Global::rsvp->getApiLif()
 					&& uni != NULL && uni->getDestTNA().addr.s_addr == loopback.rawAddress());
@@ -460,8 +460,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 	EXPLICIT_ROUTE_Object* explicitRoute = NULL;
 
-	if (isUniIngress) {
+	if (fromUniIngress) {
 		defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getIngressCtrlChannel().name));
+		if (!defaultOutLif) {
+			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
+			return;
+		}
 		RtOutL.insert_unique( defaultOutLif );
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 		RSVP_HOP_TLV_SUB_Object tlv (NetAddress(0));
@@ -469,7 +473,11 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		senderTemplate.setSrcAddress(NetAddress(uni->getSrcTNA().addr.s_addr));
 	} 
 	else if (isUniEgress) {
-		defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getIngressCtrlChannel().name));
+		defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getEgressCtrlChannel().name));
+		if (!defaultOutLif) {
+			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
+			return;
+		}
 		RtOutL.insert_unique( defaultOutLif );		
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 		setDestAddress(gateway);
