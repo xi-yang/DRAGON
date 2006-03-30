@@ -808,6 +808,9 @@ public:
 #define UNI_TNA_SUBTYPE_NSAP 3
 #define UNI_TNA_SUBTYPE_LCLID 4
 
+#define UNI_SUBOBJ_CTRLCHAN_INGRESS 1
+#define UNI_SUBOBJ_CTRLCHAN_EGRESS 1
+
 struct IPv4TNA {
 	uint16 length;
 	uint8 type;
@@ -833,7 +836,8 @@ struct CtrlChannel {
 class DRAGON_UNI_Object: public RefObject<DRAGON_UNI_Object> {
 	LocalIdTNA srcTNA;
 	LocalIdTNA destTNA;
-	struct CtrlChannel ctrlChanName;
+	struct CtrlChannel ingressChannelName;
+	struct CtrlChannel egressChannelName;
 	friend ostream& operator<< ( ostream&, const DRAGON_UNI_Object& );
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_UNI_Object& );
 	uint16 size() const{ 
@@ -848,8 +852,11 @@ public:
 		srcTNA.sub_type = UNI_TNA_SUBTYPE_LCLID;
 		srcTNA.addr.s_addr = srcTNA.local_id = 0;
 		destTNA = srcTNA; destTNA.type = UNI_SUBOBJ_DESTTNA;
+		memset (&ingressChannelName, 0, sizeof(struct CtrlChannel));
+		memset (&egressChannelName, 0, sizeof(struct CtrlChannel));
 	}
-	DRAGON_UNI_Object( struct in_addr src_addr, uint32 src_lclid, struct in_addr dest_addr, uint32 dest_lclid, char* chan_name ) {
+	DRAGON_UNI_Object( struct in_addr src_addr, uint32 src_lclid, struct in_addr dest_addr, 
+	uint32 dest_lclid, char* ing_chan_name, char* eg_chan_name ) {
 		srcTNA.length = sizeof(struct LocalIdTNA);
 		srcTNA.type = UNI_SUBOBJ_SRCTNA;
 		srcTNA.sub_type = UNI_TNA_SUBTYPE_LCLID;
@@ -858,10 +865,14 @@ public:
 		srcTNA.local_id = src_lclid;
 		destTNA.addr = dest_addr;
 		destTNA.local_id = dest_lclid;
-		strncpy((char*)ctrlChanName.name, chan_name, 12);
-		ctrlChanName.length= sizeof(struct CtrlChannel);
-		ctrlChanName.type = UNI_SUBOBJ_CTRLCHAN;
-		ctrlChanName.sub_type = UNI_TNA_SUBTYPE_NONE;
+		strncpy((char*)ingressChannelName.name, ing_chan_name, 12);
+		ingressChannelName.length= sizeof(struct CtrlChannel);
+		ingressChannelName.type = UNI_SUBOBJ_CTRLCHAN;
+		ingressChannelName.sub_type = UNI_SUBOBJ_CTRLCHAN_INGRESS;
+		strncpy((char*)egressChannelName.name, eg_chan_name, 12);
+		egressChannelName.length= sizeof(struct CtrlChannel);
+		egressChannelName.type = UNI_SUBOBJ_CTRLCHAN_EGRESS;
+		egressChannelName.sub_type = UNI_TNA_SUBTYPE_NONE;
 	}
 	DRAGON_UNI_Object(INetworkBuffer& buffer, uint16 len) {
 		readFromBuffer(buffer, len );
@@ -870,7 +881,8 @@ public:
 	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
 	LocalIdTNA& getSrcTNA() { return srcTNA; }
 	LocalIdTNA& getDestTNA(){ return destTNA; }
-	CtrlChannel& getCtrlChannelName(){ return ctrlChanName; }
+	CtrlChannel& getIngressCtrlChannel(){ return ingressChannelName; }
+	CtrlChannel& getEgressCtrlChannel(){ return egressChannelName; }
 	bool operator==(const DRAGON_UNI_Object& s){
 		return (memcmp(&srcTNA, &s.srcTNA, sizeof(struct LocalIdTNA)) == 0 && memcmp(&destTNA, &s.destTNA, sizeof(struct LocalIdTNA)) == 0);
 	}

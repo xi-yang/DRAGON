@@ -147,7 +147,8 @@ struct _Protection_Para {
 struct _Dragon_Uni_Para {
 	uint32 srcLocalId;
 	uint32 destLocalId;
-	char ctrlChannel[12];
+	char ingressChannel[12];
+	char egressChannel[12];
 };
 
 struct _sessionParameters {
