@@ -581,10 +581,9 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
                                 srcLocalId->data.uNumIfID.interfaceID = lsp->dragon.srcLocalId;
                                 srcLocalId->isLoose = 0;
                             }
-                            /*Create source localID subobj */
+                            /*Create destination localID subobj */
                             if(lsp->dragon.destLocalId >> 16 != LOCAL_ID_TYPE_NONE)
                             {
-
                                 destLocalId = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
                                 memset(destLocalId, 0, sizeof(struct _EROAbstractNode_Para));
                                 destLocalId->type = UNumIfID;

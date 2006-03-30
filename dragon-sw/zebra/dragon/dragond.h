@@ -443,7 +443,8 @@ struct _Protection_Para {
 struct _Dragon_Uni_Para {
 	u_int32_t srcLocalId;
 	u_int32_t destLocalId;
-	char ctrlChannel[12];
+	char ingressChannel[12];
+	char egressChannel[12];
 };
 
 struct _sessionParameters {

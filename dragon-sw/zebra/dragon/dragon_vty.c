@@ -902,9 +902,9 @@ DEFUN (dragon_set_lsp_ip,
   return CMD_SUCCESS;
 }
 
-DEFUN (dragon_set_lsp_uni_c,
-       dragon_set_lsp_unic_cmd,
-       "set uni (client|network|none) via NAME",
+DEFUN (dragon_set_lsp_uni,
+       dragon_set_lsp_uni_cmd,
+       "set uni (client|network|none) via NAME egress NAME",
        "Set LSP Mode as originated from UNI Client\n"
        "VLAN Tag from end to end\n"
 	)
@@ -918,8 +918,8 @@ DEFUN (dragon_set_lsp_uni_c,
 	    lsp->uni_mode = 0;
     lsp->common.DragonUni_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_Uni_Para));
     memset(lsp->common.DragonUni_Para, 0, sizeof(struct _Dragon_Uni_Para));
-    strncpy(lsp->common.DragonUni_Para->ctrlChannel, argv[1], 12);
-
+    strncpy(lsp->common.DragonUni_Para->ingressChannel, argv[1], 12);
+    strncpy(lsp->common.DragonUni_Para->egressChannel, argv[2], 12);
     return CMD_SUCCESS;
 }
 
@@ -1832,7 +1832,7 @@ dragon_supp_vty_init ()
   install_element(LSP_NODE, &dragon_set_lsp_sw_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_dir_cmd);
   install_element(LSP_NODE, &dragon_set_label_set_cmd);
-  install_element(LSP_NODE, &dragon_set_lsp_unic_cmd);
+  install_element(LSP_NODE, &dragon_set_lsp_uni_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_vtag_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_vtag_default_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_vtag_any_cmd);  
