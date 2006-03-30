@@ -437,12 +437,19 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	NetAddress loopback = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
 
 #if defined(WITH_API)
+/* OLD @@@@
+	bool fromLocalAPI = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
+		&& (msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress
+		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress())) );
+	bool ingressVLSR = fromLocalAPI? false : msg.getRSVP_HOP_Object().getAddress() == loopback;
+*/
 	bool fromLocalAPI = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
 		&& (msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress
 		|| msg.getRSVP_HOP_Object().getAddress() == loopback)
 		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress()));
 
-	bool fromUniClient = (fromLocalAPI && ((Message*)&msg)->getDRAGON_UNI_Object() != NULL);
+	bool fromUniClient = (fromLocalAPI && hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
+						&&((Message*)&msg)->getDRAGON_UNI_Object() != NULL);
 #endif
 
 	LogicalInterfaceSet RtOutL;
