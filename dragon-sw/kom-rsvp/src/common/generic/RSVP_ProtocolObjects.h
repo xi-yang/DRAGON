@@ -841,7 +841,7 @@ class DRAGON_UNI_Object: public RefObject<DRAGON_UNI_Object> {
 	friend ostream& operator<< ( ostream&, const DRAGON_UNI_Object& );
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_UNI_Object& );
 	uint16 size() const{ 
-		return (sizeof(struct LocalIdTNA)*2 + sizeof(struct CtrlChannel));
+		return (sizeof(struct LocalIdTNA)*2 + sizeof(struct CtrlChannel)*2);
 	}
 	REF_OBJECT_METHODS(DRAGON_UNI_Object)
 
