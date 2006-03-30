@@ -67,6 +67,7 @@ struct msg_app2narb_request
 };
 
 #define NARB_MSG_CHKSUM(X) (((u_int32_t*)&X)[0] + ((u_int32_t*)&X)[1] + ((u_int32_t*)&X)[2])
+#define ANY_VTAG 0xffff
 
 class EXPLICIT_ROUTE_Object;
 

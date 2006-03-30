@@ -267,6 +267,9 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
         if (doConnect() < 0)
             goto _RETURN;
 
+    if (srcLocalId != 0 || destLocalId != 0)
+        vtag = ANY_VTAG;
+
     //construct NARB API message
     msgheader->type = htons(1); // 1 == NARB_MSG_LSPQ
     msgheader->length = htons (sizeof(struct msg_app2narb_request));
