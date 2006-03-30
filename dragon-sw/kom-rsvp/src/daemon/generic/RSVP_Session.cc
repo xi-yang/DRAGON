@@ -480,7 +480,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		}
 		RtOutL.insert_unique( defaultOutLif );		
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
-		setDestAddress(gateway);
 		RSVP_HOP_TLV_SUB_Object tlv (NetAddress(uni->getDestTNA().addr.s_addr));
 		dataOutRsvpHop = RSVP_HOP_Object(NetAddress(uni->getDestTNA().addr.s_addr), defaultOutLif->getLIH(), tlv);
 		//senderTemplate.setSrcAddress(NetAddress(uni->getSrcTNA().addr.s_addr));
