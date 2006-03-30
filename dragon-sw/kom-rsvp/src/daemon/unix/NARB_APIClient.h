@@ -68,30 +68,53 @@ struct msg_app2narb_request
 
 #define NARB_MSG_CHKSUM(X) (((u_int32_t*)&X)[0] + ((u_int32_t*)&X)[1] + ((u_int32_t*)&X)[2])
 
-//@@@@ Need one APIClient in each session...
 class EXPLICIT_ROUTE_Object;
+
+struct ero_search_entry
+{
+	struct {
+		uint32 src_addr;
+		uint32 dest_addr;
+		uint32 lsp_id;
+		uint32 tunnel_id;
+		uint32 ext_tunnel_id;		
+	} index;
+	EXPLICIT_ROUTE_Object ero;
+};
+extern inline bool operator== (struct ero_search_entry& a, struct ero_search_entry& b)
+{
+	return (memcmp(&a.index, &b.index, 20) == 0);
+}
+extern inline bool operator!= (struct ero_search_entry& a, struct ero_search_entry& b)
+{
+	return (memcmp(&a.index, &b.index, 20) != 0);
+}
+
+SimpleList<struct ero_search_entry*> EroSearchList;
+
 class NARB_APIClient{
 public:
-	static NARB_APIClient& instance();
+	NARB_APIClient():  _host(""), _port(0), fd(-1), lastMessage(0) {}
+	NARB_APIClient(const char *host, int port):_host(host), _port(port), lastMessage(0) {}
+	~NARB_APIClient();
 	void setHostPort(const char *host, int port);
 	int doConnect(char *host, int port);
 	int doConnect();
 	void disconnect();
 	bool operational();
-	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag);
-	//socket remains connected after request, resvConfMessage and resvReleaseMessage should be sent...
-	//ERO kept in NARB ...
+	bool active();
+	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLclId, unit32 destLclId);
+	EXPLICIT_ROUTE_Object* getExplicitRoute(Message& msg);
+	EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 src_addr, uint32 dest_addr, uint32 lsp_id, uint32 tunnel_id, uint32 ext_tunnel_id);
 
-protected:
-	NARB_APIClient();
-	~NARB_APIClient();
-	NARB_APIClient(const NARB_APIClient& obj);
-	static NARB_APIClient apiclient;
+	void hangleRsvpMessage(Message& msg);	//$$$$ //RESV CONFIRM	//RESV RELEASE ...
 
 private:
 	String _host;
 	int _port;
 	int fd;
+	enum Message::Type lastMessage; //last message type ...
+	EroSearchList eroSearchList; 
 };
 
 #endif

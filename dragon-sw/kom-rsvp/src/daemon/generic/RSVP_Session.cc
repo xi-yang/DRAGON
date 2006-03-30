@@ -505,7 +505,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	                            explicitRoute = NARB_APIClient::instance().getExplicitRoute(loopback.rawAddress(), 
 	                                    getDestAddress().rawAddress(), msg.getLABEL_REQUEST_Object().getSwitchingType(), msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
 	                                    msg.getSENDER_TSPEC_Object().get_r(), 0);
-		                     //@@@@ set vtag == 0 for now. We need a mechanism to pass vtag request in some RESV object (LABEL_REQUEST_Object? SENDER_TSPEC? Or a new Ether_TSPEC!).
 
 		                     //explicit routing using OSPFd
 		                     if (!explicitRoute)
@@ -514,6 +513,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 								 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
 
 					//store ERO into erList //@@@@ to be changed ...
+					/*
 					if (explicitRoute) {
 						SimpleList<NetAddress> simple_ero;
 						AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
@@ -529,6 +529,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 						}
 						//@@@@use address as unique ID. Later on when the session quits, this ERO is removed from erList
 						RSVP_Global::rsvp->getMPLS().addExplicitRoute(destAddress, simple_ero, (uint32)this);
+					*/
 					}
 	                    	}
 			}

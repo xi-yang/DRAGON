@@ -14,25 +14,63 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_ProtocolObjects.h"
 #include "NARB_APIClient.h"
 
-int readn (int fd, char *ptr, int nbytes);
-int writen(int fd, char *ptr, int nbytes);
 
-NARB_APIClient NARB_APIClient::apiclient;
-
-NARB_APIClient& NARB_APIClient::instance()
+int readn (int fd, char *ptr, int nbytes)
 {
-    return apiclient;
-}
+  int nleft;
+  int nread;
 
-NARB_APIClient::NARB_APIClient()
+  nleft = nbytes;
+
+  while (nleft > 0) 
+    {
+      nread = read (fd, ptr, nleft);
+
+      if (nread < 0) 
+	return (nread);
+      else
+	if (nread == 0) 
+	  break;
+
+      nleft -= nread;
+      ptr += nread;
+    }
+
+  return nbytes - nleft;
+}  
+
+
+int writen(int fd, char *ptr, int nbytes)
 {
-    _host = ""; 
-    _port = 0; 
-    fd = -1;
+	int nleft;
+	int nwritten;
+
+	nleft = nbytes;
+
+	while (nleft > 0) 
+	{
+	  nwritten = write(fd, ptr, nleft);
+	  
+	  if (nwritten <= 0) 
+         return (nwritten);
+
+	  nleft -= nwritten;
+	  ptr += nwritten;
+	}
+	return nbytes - nleft;
 }
 
 NARB_APIClient::~NARB_APIClient()
 {
+    disconnect();
+    EroSearchList::Iterator iter = eroSearchList.begin();
+    for ( ; iter != eroSearchList.end(); ++iter)
+    {
+            if (*iter)->ero)
+                (*iter)->ero.destroy();
+            delete (*iter);
+    }
+
 }
 
 void NARB_APIClient::setHostPort(const char *host, int port)
@@ -133,6 +171,11 @@ void NARB_APIClient::disconnect()
     }
 }
 
+bool NARB_APIClient::active()
+{
+    return (fd > 0);
+}
+
 bool NARB_APIClient::operational()
 {
     if (fd > 0)
@@ -206,7 +249,7 @@ bool NARB_APIClient::operational()
     return true;
 }
 
-EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag)
+EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLocalId, unit32 destLocalId)
 {
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
@@ -312,55 +355,91 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
         ero->destroy();
         ero = NULL;
     }
-
-
+    else 
+    { 
+        // Create source localID subobj
+        if(srcLocalId >> 16 != LOCAL_ID_TYPE_NONE)
+        {
+            AbstractNode node(false, NetAddress(src), srcLocalId);
+            ero->pushFront(node);
+        }
+        //Create destination localID subobj
+        if(destLocalId >> 16 != LOCAL_ID_TYPE_NONE)
+        {
+            AbstractNode node(false, NetAddress(dest), destLocalId);
+            ero->pushBack(node);
+        }
+    }
+    
 _RETURN:
-    disconnect();
     return ero;
 }
 
-int readn (int fd, char *ptr, int nbytes)
+EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(Message& msg)
 {
-  int nleft;
-  int nread;
+    uint32 srcAddr = 0, destAddr = 0, srcLocalId = 0, destLocalId = 0, vtag = 0;
+    DRAGON_UNI_Object* uni = msg.getDRAGON_UNI_Object();
 
-  nleft = nbytes;
-
-  while (nleft > 0) 
+    if (uni) 
     {
-      nread = read (fd, ptr, nleft);
-
-      if (nread < 0) 
-	return (nread);
-      else
-	if (nread == 0) 
-	  break;
-
-      nleft -= nread;
-      ptr += nread;
+        srcAddr = uni->getSrcTNA().addr.s_addr;
+        srcLocalId = uni->getSrcTNA().local_id;
+        destAddr = uni->getDestTNA().addr.s_addr;
+        destLocalId = uni->getDestTNA().local_id;
+        if (srcLocalId >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP)
+            vtag = srcLocalId & 0xffff;
+        else if (destLocalId >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP)
+            vtag = destLocalId & 0xffff;
+    }
+    else 
+    {
+        srcAddr = msg.getSENDER_TEMPLATE_Object().getSrcAddress().rawAddress();
+        destAddr = msg.getSESSION_Object().getDestAddress().rawAddress();
     }
 
-  return nbytes - nleft;
-}  
+SENDER_TEMPLATE_Object
 
+    EXPLICIT_ROUTE_Object* ero = lookupExplicitRoute(srcAddr, destAddr, 
+            (uint32)msg.getSENDER_TEMPLATE_Object().getLspId(),
+            (uint32)msg.getSESSION_Object().getTunnelId(),
+            (uint32)msg.getSESSION_Object().getExtendedTunnelId() );
 
-int writen(int fd, char *ptr, int nbytes)
-{
-	int nleft;
-	int nwritten;
-
-	nleft = nbytes;
-
-	while (nleft > 0) 
-	{
-	  nwritten = write(fd, ptr, nleft);
-	  
-	  if (nwritten <= 0) 
-         return (nwritten);
-
-	  nleft -= nwritten;
-	  ptr += nwritten;
-	}
-	return nbytes - nleft;
+    if (ero) {
+            struct ero_search_entry *entry = new (struct ero_search_entry);
+            entry->ero = ero;
+            entry->index.src_addr = srcAddr;
+            entry->index.dest_addr = destAddr;
+            entry->index.lsp_id = (uint32)msg.getSENDER_TEMPLATE_Object().getLspId();
+            entry->index.tunnel_id = (uint32)msg.getSESSION_Object().getTunnelId();
+            entry->index.ext_tunnel_id = (uint32)msg.getSESSION_Object().getExtendedTunnelId();
+            eroSearchList.push_back(entry);
+    }
+    else
+    {
+        ero = getExplicitRoute(srcAddr, destAddr, msg.getLABEL_REQUEST_Object().getSwitchingType(), 
+                msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
+                msg.getSENDER_TSPEC_Object().get_r()
+                vtag, srcLocalId, destLocalId);
+    }
+    return ero;
 }
 
+
+EXPLICIT_ROUTE_Object* NARB_APIClient::lookupExplicitRoute(uint32 src_addr, uint32 dest_addr, uint32 lsp_id, uint32 tunnel_id, uint32 ext_tunnel_id)
+{
+    struct ero_search_entry target;
+    target.index.src_addr = src_addr;
+    target.index.dest_addr = dest_addr;
+    target.index.lsp_id = lsp_id;
+    target.index.tunnel_id = tunnel_id;
+    target.index.ext_tunnel_id = ext_tunnel_id;
+
+    EroSearchList::Iterator iter = eroSearchList.begin();
+    for ( ; iter != eroSearchList.end(); ++iter)
+    {
+        if (*(*iter) == target)
+            return &(*iter)->ero;
+    }
+
+    return NULL;
+}
