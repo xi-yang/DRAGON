@@ -493,7 +493,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	                    	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress);
 
 	                     //explicit routing using NARB
-	                     if (explicitRoute && NARB_APIClient::operational()) {
+	                     if (!explicitRoute && NARB_APIClient::operational()) {
 					if (!narbClient)
 						narbClient = new NARB_APIClient;
 					if (!narbClient->active())
