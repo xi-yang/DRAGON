@@ -447,7 +447,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	bool isUniEgress = (&hop.getLogicalInterface() != RSVP_Global::rsvp->getApiLif()
 					&& uni != NULL && uni->getDestTNA().addr.s_addr == loopback.rawAddress());
 
-	bool isUniEgressClient = (!fromUniIngress && !isUniEgress 
+	bool isUniEgressClient = (!isUniIngressClient && !isUniEgress 
 		&& RSVP_Global::rsvp->getApiLif() != NULL && msg.getEXPLICIT_ROUTE_Object() == NULL);
 		
 	LogicalInterfaceSet RtOutL;
