@@ -657,7 +657,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_UNI_Object& o 
 ostream& operator<< ( ostream& os, const DRAGON_UNI_Object& o ) {
 	char addr_str[20];
 	os <<"[ source: " << String( inet_ntoa(o.srcTNA.addr)) <<"/" << o.srcTNA.local_id;
-	os <<" <= vtag (", << o.vlanTag.vtag << ") => destination: ";
+	os <<" <= vtag (" << o.vlanTag.vtag << ") => destination: ";
 	os << String( inet_ntoa(o.destTNA.addr)) << "/" << o.destTNA.local_id;
 	os << " (via ingressChannel: " << o.ingressChannelName.name << " /egressChannel: " << o.egressChannelName.name;
 	os << ") ]";

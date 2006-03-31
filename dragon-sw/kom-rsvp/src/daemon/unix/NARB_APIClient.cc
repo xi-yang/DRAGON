@@ -389,8 +389,8 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
         srcLocalId = uni->getSrcTNA().local_id;
         destAddr = uni->getDestTNA().addr.s_addr;
         destLocalId = uni->getDestTNA().local_id;
-	 if (uni->vlanTag.vtag != 0)
-	 	vtag = uni->vlanTag.vtag;
+	 if (uni->getVlanTag().vtag != 0)
+	 	vtag = uni->getVlanTag().vtag;
         else if (srcLocalId >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP)
             vtag = srcLocalId & 0xffff;
         else if (destLocalId >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP)

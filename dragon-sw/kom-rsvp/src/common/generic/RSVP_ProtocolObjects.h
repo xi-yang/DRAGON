@@ -899,6 +899,7 @@ public:
 	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
 	LocalIdTNA& getSrcTNA() { return srcTNA; }
 	LocalIdTNA& getDestTNA(){ return destTNA; }
+	VlanTag& getVlanTag(){ return vlanTag; }
 	CtrlChannel& getIngressCtrlChannel(){ return ingressChannelName; }
 	CtrlChannel& getEgressCtrlChannel(){ return egressChannelName; }
 	bool operator==(const DRAGON_UNI_Object& s){
