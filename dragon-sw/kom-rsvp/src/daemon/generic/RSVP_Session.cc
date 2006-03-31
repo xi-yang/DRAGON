@@ -483,9 +483,18 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		}
 		explicitRoute = ((!fromLocalAPI) && (!hop.getLogicalInterface().hasEnabledMPLS())) ? NULL
 					   : const_cast<EXPLICIT_ROUTE_Object*>(msg.getEXPLICIT_ROUTE_Object());
+		if (explicitRoute && (!processERO(msg, hop, explicitRoute, fromLocalAPI, dataInRsvpHop, dataOutRsvpHop, vLSRoute)))
+		{
+			LOG(2)(Log::MPLS, "MPLS: Internal error in the ERO :", explicitRoute->getAbstractNodeList().front().getAddress());
+			explicitRoute = NULL;
+		}
 		if (explicitRoute && explicitRoute->abstractNodeList.empty()) {
 			explicitRoute->destroy();
 			explicitRoute = NULL;
+		}
+		else 
+		{
+			LOG(2)(Log::MPLS, "WARNING ! ERO at egress to UNI client should he empty but - ", *explicitRoute);
 		}
 		RtOutL.insert_unique( defaultOutLif );
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
