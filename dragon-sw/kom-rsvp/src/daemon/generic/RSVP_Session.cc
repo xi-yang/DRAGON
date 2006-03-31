@@ -488,8 +488,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			LOG(2)(Log::MPLS, "MPLS: Internal error in the ERO :", explicitRoute->getAbstractNodeList().front().getAddress());
 			explicitRoute = NULL;
 		}
-		if (explicitRoute && explicitRoute->abstractNodeList.empty()) {
-			explicitRoute->destroy();
+		if (explicitRoute && explicitRoute->getAbstractNodeList().empty()) {
+			//explicitRoute->destroy();
 			explicitRoute = NULL;
 		}
 		else 
