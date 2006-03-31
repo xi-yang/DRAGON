@@ -407,24 +407,24 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
             (uint32)msg.getSESSION_Object().getTunnelId(),
             (uint32)msg.getSESSION_Object().getExtendedTunnelId() );
 
-    if (ero) {
-            struct ero_search_entry *entry = new (struct ero_search_entry);
-            memset (entry, 0, sizeof(struct ero_search_entry));
-            entry->ero = ero;
-            entry->index.src_addr = srcAddr;
-            entry->index.dest_addr = destAddr;
-            entry->index.lsp_id = (uint32)msg.getSENDER_TEMPLATE_Object().getLspId();
-            entry->index.tunnel_id = (uint32)msg.getSESSION_Object().getTunnelId();
-            entry->index.ext_tunnel_id = (uint32)msg.getSESSION_Object().getExtendedTunnelId();
-            eroSearchList.push_back(entry);
-    }
-    else
-    {
+    if (!ero) {
         ero = getExplicitRoute(srcAddr, destAddr, msg.getLABEL_REQUEST_Object().getSwitchingType(), 
                 msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                 msg.getSENDER_TSPEC_Object().get_r(),
                 vtag, srcLocalId, destLocalId);
+	 if (ero) {
+	        struct ero_search_entry *entry = new (struct ero_search_entry);
+	        memset (entry, 0, sizeof(struct ero_search_entry));
+	        entry->ero = ero;
+	        entry->index.src_addr = srcAddr;
+	        entry->index.dest_addr = destAddr;
+	        entry->index.lsp_id = (uint32)msg.getSENDER_TEMPLATE_Object().getLspId();
+	        entry->index.tunnel_id = (uint32)msg.getSESSION_Object().getTunnelId();
+	        entry->index.ext_tunnel_id = (uint32)msg.getSESSION_Object().getExtendedTunnelId();
+	        eroSearchList.push_back(entry);
+	 }
     }
+
     return ero;
 }
 
