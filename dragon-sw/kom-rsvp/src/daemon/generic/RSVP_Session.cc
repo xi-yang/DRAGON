@@ -973,7 +973,11 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 				(*lifIter)->sendMessage( msg, (*psbIter)->getGateway());
 			else
 				(*lifIter)->sendMessage( msg, (*psbIter)->getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front().getAddress(), sender.getSrcAddress(), (*psbIter)->getGateway() );
-		} else
+		} else if ((*psbIter)->getDRAGON_UNI_Object()) {
+			if ((*psbIter)->getGateway() != LogicalInterface::noGatewayAddress)
+				(*lifIter)->sendMessage( msg, (*psbIter)->getGateway());
+		}
+		else
 			(*lifIter)->sendMessage( msg, getDestAddress(), sender.getSrcAddress(), (*psbIter)->getGateway() );
 	}
 #if defined(ONEPASS_RESERVATION)
