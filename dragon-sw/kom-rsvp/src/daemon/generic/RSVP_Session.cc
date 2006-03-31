@@ -844,8 +844,7 @@ search_psb:
 	if (labelSetObj) cPSB->updateLABEL_SET_Object(labelSetObj->borrow());
 
 	//hacks @@@@
-	if (uni != NULL)
-		cPSB->updateDRAGON_UNI_Object(((Message*)&msg)->getDRAGON_UNI_Object());
+	cPSB->updateDRAGON_UNI_Object(uni);
 
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {

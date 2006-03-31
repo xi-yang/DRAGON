@@ -708,7 +708,10 @@ bool PSB::updateDRAGON_UNI_Object( DRAGON_UNI_Object* uni ) {
 	} else if (!uni) {
 		return false;
 	}
-	dragonUni = uni->borrow();
+	if (uni)
+		dragonUni = uni->borrow();	
+	else
+		dragonUni = NULL;
 	return true;
 }
 
