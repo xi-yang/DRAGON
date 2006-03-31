@@ -111,10 +111,10 @@ public:
 
 	static void setHostPort(const char *host, int port);
 	static bool operational();
-
-private:
 	static String _host;
 	static int _port;
+
+private:
 	int fd;
 	uint32 lastMessage; //last message type ...
 	EroSearchList eroSearchList; 

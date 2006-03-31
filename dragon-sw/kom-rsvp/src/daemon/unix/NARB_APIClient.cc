@@ -263,7 +263,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     ipv4_prefix_subobj* subobj_ipv4;
     unum_if_subobj* subobj_unum;
 
-    if (_host.length() > 0 && _port != 0)
+    if (!active())
         if (doConnect() < 0)
             goto _RETURN;
 

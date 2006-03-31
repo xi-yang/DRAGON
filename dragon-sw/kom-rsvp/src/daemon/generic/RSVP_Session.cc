@@ -531,22 +531,29 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	                    	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress);
 
 	                     //explicit routing using NARB
-	                     if (!explicitRoute && NARB_APIClient::operational()) {
-					if (!narbClient)
-						narbClient = new NARB_APIClient;
-					if (!narbClient->active())
-						narbClient->doConnect();
-					if (narbClient->active()) {
-		                            explicitRoute = narbClient->getExplicitRoute(msg);
-						if (explicitRoute)
-							narbClient->handleRsvpMessage(msg);
+	                     if (!explicitRoute) {
+					if (NARB_APIClient::operational()) {
+						if (!narbClient)
+							narbClient = new NARB_APIClient;
+						if (!narbClient->active())
+							narbClient->doConnect();
+						if (narbClient->active()) {
+			                            explicitRoute = narbClient->getExplicitRoute(msg);
+							if (explicitRoute)
+								narbClient->handleRsvpMessage(msg);
+						}
 					}
-
+					else {
+						LOG(5)( Log::MPLS, "MPLS: NARB server ", NARB_APIClient::_host, ":", NARB_APIClient::_port, " is down...");
+					}
 		                     //explicit routing using OSPFd
 		                     if (!explicitRoute)
 					       explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 								 hop.getLogicalInterface().getAddress(),
 								 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
+					if (!explicitRoute) {
+						LOG(1)( Log::MPLS, "MPLS: requesting ERO from OSPF daemon failed ...");
+					}
 	                    	}
 			}
 			else{
