@@ -433,7 +433,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	bool fromLocalAPI = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
 		&& (msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress
 		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress())) );
-	bool ingressVLSR = fromLocalAPI? false : msg.getRSVP_HOP_Object().getAddress() == loopback;
 */
 	bool fromLocalAPI = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
 		&& (msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress
@@ -443,11 +442,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 	DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
 	bool isUniIngressClient = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
-					&&uni != NULL);
+					&& uni != NULL);
+	bool isUniIngress = (&hop.getLogicalInterface() != RSVP_Global::rsvp->getApiLif()
+					&& uni != NULL && uni->getSrcTNA().addr.s_addr == loopback.rawAddress());
 	bool isUniEgress = (&hop.getLogicalInterface() != RSVP_Global::rsvp->getApiLif()
 					&& uni != NULL && uni->getDestTNA().addr.s_addr == loopback.rawAddress());
-
-	bool isUniEgressClient = (!isUniIngressClient && !isUniEgress 
+	bool isUniEgressClient = (!isUniIngressClient && !isUniIngress && !isUniEgress 
 		&& RSVP_Global::rsvp->getApiLif() != NULL && msg.getEXPLICIT_ROUTE_Object() == NULL);
 		
 	LogicalInterfaceSet RtOutL;
