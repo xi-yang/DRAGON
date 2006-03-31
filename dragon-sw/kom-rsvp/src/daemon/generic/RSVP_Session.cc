@@ -976,7 +976,7 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 			if ((*psbIter)->getGateway() != LogicalInterface::noGatewayAddress)
 				(*lifIter)->sendMessage( msg, (*psbIter)->getGateway());
 			else //send rsvp-api (egress client)
-				RSVP::getApiServer().sendMessage( msg )
+				RSVP::getApiServer().sendMessage( msg );
 		}
 		else
 			(*lifIter)->sendMessage( msg, getDestAddress(), sender.getSrcAddress(), (*psbIter)->getGateway() );
