@@ -483,8 +483,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		}
 		RtOutL.insert_unique( defaultOutLif );		
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
-		RSVP_HOP_TLV_SUB_Object tlv (NetAddress(uni->getDestTNA().addr.s_addr));
-		dataOutRsvpHop = RSVP_HOP_Object(NetAddress(uni->getDestTNA().addr.s_addr), defaultOutLif->getLIH(), tlv);
 	}
 	else if (isUniDestination) {
 		defaultOutLif = RSVP_Global::rsvp->getApiLif();
