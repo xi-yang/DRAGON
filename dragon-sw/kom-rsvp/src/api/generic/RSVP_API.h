@@ -147,6 +147,7 @@ struct _Protection_Para {
 struct _Dragon_Uni_Para {
 	uint32 srcLocalId;
 	uint32 destLocalId;
+	uint32 vlanTag;
 	char ingressChannel[12];
 	char egressChannel[12];
 };

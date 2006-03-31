@@ -532,7 +532,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 	                     //explicit routing using NARB
 	                     if (!explicitRoute) {
-					if (NARB_APIClient::operational()) {
+					if (narbClient || NARB_APIClient::operational()) {
 						if (!narbClient)
 							narbClient = new NARB_APIClient;
 						if (!narbClient->active())

@@ -562,6 +562,7 @@ void zInitRsvpPathRequest(void* thisApi, struct _sessionParameters* para, uint8 
 									para->Dragon_Uni_Para->srcLocalId, 
 									para->Session_Para.destAddr, 
 									para->Dragon_Uni_Para->destLocalId,
+									para->Dragon_Uni_Para->vlanTag,
 									para->Dragon_Uni_Para->ingressChannel,
 									para->Dragon_Uni_Para->egressChannel);
 	}

@@ -800,9 +800,11 @@ public:
 #define UNI_SUBOBJ_DESTTNA 2
 #define UNI_SUBOBJ_DIVERSITY 3
 #define UNI_SUBOBJ_EGRESSLABEL 4
-#define UNI_SUBOBJ_CTRLCHAN 10
+#define UNI_SUBOBJ_VLANTAG 10
+#define UNI_SUBOBJ_CTRLCHAN 11
 
-#define UNI_TNA_SUBTYPE_NONE 0
+#define UNI_SUBTYPE_NONE 0
+
 #define UNI_TNA_SUBTYPE_IPV4 1
 #define UNI_TNA_SUBTYPE_IPV6 2
 #define UNI_TNA_SUBTYPE_NSAP 3
@@ -826,6 +828,13 @@ struct LocalIdTNA {
 	uint32 local_id;
 };
 
+struct VlanTag {
+	uint16 length;
+	uint8 type;
+	uint8 sub_type;
+	uint32 vtag;
+};
+
 struct CtrlChannel {
 	uint16 length;
 	uint8 type;
@@ -836,12 +845,13 @@ struct CtrlChannel {
 class DRAGON_UNI_Object: public RefObject<DRAGON_UNI_Object> {
 	LocalIdTNA srcTNA;
 	LocalIdTNA destTNA;
+	struct VlanTag vlanTag;
 	struct CtrlChannel ingressChannelName;
 	struct CtrlChannel egressChannelName;
 	friend ostream& operator<< ( ostream&, const DRAGON_UNI_Object& );
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_UNI_Object& );
 	uint16 size() const{ 
-		return (sizeof(struct LocalIdTNA)*2 + sizeof(struct CtrlChannel)*2);
+		return (sizeof(struct LocalIdTNA)*2 + sizeof(struct VlanTag) + sizeof(struct CtrlChannel)*2);
 	}
 	REF_OBJECT_METHODS(DRAGON_UNI_Object)
 
@@ -852,11 +862,15 @@ public:
 		srcTNA.sub_type = UNI_TNA_SUBTYPE_LCLID;
 		srcTNA.addr.s_addr = srcTNA.local_id = 0;
 		destTNA = srcTNA; destTNA.type = UNI_SUBOBJ_DESTTNA;
+		vlanTag.length = sizeof(struct VlanTag);
+		vlanTag.type = UNI_SUBOBJ_VLANTAG;
+		vlanTag.sub_type = UNI_SUBTYPE_NONE;
+		vlanTag.vtag = 0;
 		memset (&ingressChannelName, 0, sizeof(struct CtrlChannel));
 		memset (&egressChannelName, 0, sizeof(struct CtrlChannel));
 	}
 	DRAGON_UNI_Object( struct in_addr src_addr, uint32 src_lclid, struct in_addr dest_addr, 
-	uint32 dest_lclid, char* ing_chan_name, char* eg_chan_name ) {
+	uint32 dest_lclid, uint32 vtag, char* ing_chan_name, char* eg_chan_name ) {
 		srcTNA.length = sizeof(struct LocalIdTNA);
 		srcTNA.type = UNI_SUBOBJ_SRCTNA;
 		srcTNA.sub_type = UNI_TNA_SUBTYPE_LCLID;
@@ -865,6 +879,10 @@ public:
 		srcTNA.local_id = src_lclid;
 		destTNA.addr = dest_addr;
 		destTNA.local_id = dest_lclid;
+		vlanTag.length = sizeof(struct VlanTag);
+		vlanTag.type = UNI_SUBOBJ_VLANTAG;
+		vlanTag.sub_type = UNI_SUBTYPE_NONE;
+		vlanTag.vtag = vtag;
 		strncpy((char*)ingressChannelName.name, ing_chan_name, 12);
 		ingressChannelName.length= sizeof(struct CtrlChannel);
 		ingressChannelName.type = UNI_SUBOBJ_CTRLCHAN;
@@ -872,7 +890,7 @@ public:
 		strncpy((char*)egressChannelName.name, eg_chan_name, 12);
 		egressChannelName.length= sizeof(struct CtrlChannel);
 		egressChannelName.type = UNI_SUBOBJ_CTRLCHAN_EGRESS;
-		egressChannelName.sub_type = UNI_TNA_SUBTYPE_NONE;
+		egressChannelName.sub_type = UNI_SUBTYPE_NONE;
 	}
 	DRAGON_UNI_Object(INetworkBuffer& buffer, uint16 len) {
 		readFromBuffer(buffer, len );
