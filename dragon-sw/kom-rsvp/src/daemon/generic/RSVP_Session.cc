@@ -450,6 +450,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	bool isUniEgressClient = (!isUniIngressClient && !isUniIngress && !isUniEgress 
 		&& RSVP_Global::rsvp->getApiLif() != NULL && msg.getEXPLICIT_ROUTE_Object() == NULL);
 		
+	if (isUniIngress) fromLocalAPI  = true;
+
 	LogicalInterfaceSet RtOutL;
 	const LogicalInterface* RtInIf = &hop.getLogicalInterface();
 	const LogicalInterface* defaultOutLif = NULL;
