@@ -443,6 +443,7 @@ struct _Protection_Para {
 struct _Dragon_Uni_Para {
 	u_int32_t srcLocalId;
 	u_int32_t destLocalId;
+	u_int32_t vlanTag;
 	char ingressChannel[12];
 	char egressChannel[12];
 };

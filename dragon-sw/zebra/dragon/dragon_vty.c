@@ -951,6 +951,10 @@ DEFUN (dragon_set_lsp_vtag,
     }
 
     lsp->dragon.lspVtag = vtag;
+
+    if (lsp->common.DragonUni_Para)
+	lsp->common.DragonUni_Para->vlanTag = vtag;
+
     return CMD_SUCCESS;
 }
 
