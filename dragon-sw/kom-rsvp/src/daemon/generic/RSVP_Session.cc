@@ -481,7 +481,13 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
 			return;
 		}
-		RtOutL.insert_unique( defaultOutLif );		
+		explicitRoute = ((!fromLocalAPI) && (!hop.getLogicalInterface().hasEnabledMPLS())) ? NULL
+					   : const_cast<EXPLICIT_ROUTE_Object*>(msg.getEXPLICIT_ROUTE_Object());
+		if (explicitRoute && explicitRoute->abstractNodeList.empty()) {
+			explicitRoute->destroy();
+			explicitRoute = NULL;
+		}
+		RtOutL.insert_unique( defaultOutLif );
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 	}
 	else if (isUniEgressClient) {
