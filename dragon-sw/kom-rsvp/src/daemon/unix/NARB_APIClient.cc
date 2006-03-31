@@ -337,7 +337,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
 
         if (subobj_unum)
         {
-            AbstractNode node(((subobj_unum->l_and_type>>7) == 1), NetAddress(subobj_unum->addr.s_addr), subobj_unum->ifid);
+            AbstractNode node(((subobj_unum->l_and_type>>7) == 1), NetAddress(subobj_unum->addr.s_addr), nothl(subobj_unum->ifid));
       	    ero->pushBack(node);
             len -= sizeof(unum_if_subobj);
             offset += sizeof(unum_if_subobj);
