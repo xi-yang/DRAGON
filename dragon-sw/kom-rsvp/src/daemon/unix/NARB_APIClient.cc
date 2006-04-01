@@ -232,7 +232,7 @@ int NARB_APIClient::doConnect()
 
     if (fd > 0)
         close (fd);
-    if (fd = doConnect((char*)(_host.chars()), _port) < 0)
+    if ((fd = doConnect((char*)(_host.chars()), _port)) < 0)
     {
         return -1;
     }
@@ -259,18 +259,17 @@ static int buildNarbEroTlv (char *buf, EXPLICIT_ROUTE_Object* ero)
     u_int16_t type = htons(DMSG_CLI_TOPO_ERO);
     u_int16_t length = 4;
     char *p = buf + length;
-    int i;
 
-    AbstractNodeList& abstractNodeList = ero->getAbstractNodeList()
+    const AbstractNodeList& abstractNodeList = ero->getAbstractNodeList();
     if (abstractNodeList.empty())
         return 0;
 
-    AbstractNodeList::Iterator iter = abstractNodeList.begin();
+    AbstractNodeList::ConstIterator iter = abstractNodeList.begin();
     for (; iter != abstractNodeList.end(); ++iter)
     {
         if ((*iter).getType() == AbstractNode::IPv4)
         {
-            ((struct ipv4_prefix_subobj *)p)->l_and_type = (*iter).getType() | ((*iter).isLoose() ? 1 << 7));
+            ((struct ipv4_prefix_subobj *)p)->l_and_type = (*iter).getType() | ((*iter).isLoose() ? 1 << 7 : 0);
             ((struct ipv4_prefix_subobj *)p)->length = sizeof(struct ipv4_prefix_subobj );
             *(uint32*)((struct ipv4_prefix_subobj *)p)->addr = (*iter).getAddress().rawAddress();
             ((struct ipv4_prefix_subobj *)p)->prefix_len = (*iter).getPrefix();
@@ -280,7 +279,7 @@ static int buildNarbEroTlv (char *buf, EXPLICIT_ROUTE_Object* ero)
         }
         else if ((*iter).getType() == AbstractNode::UNumIfID)
         {
-            ((struct unum_if_subobj *)p)->l_and_type =  (*iter).getType() | ((*iter).isLoose() ? 1 << 7));
+            ((struct unum_if_subobj *)p)->l_and_type =  (*iter).getType() | ((*iter).isLoose() ? 1 << 7 : 0);
             ((struct unum_if_subobj *)p)->length = sizeof(struct unum_if_subobj);
             ((struct unum_if_subobj *)p)->addr.s_addr =  (*iter).getAddress().rawAddress();
             ((struct unum_if_subobj *)p)->ifid =  htonl( (*iter).getInterfaceID());
@@ -344,11 +343,7 @@ static void deleteNarbApiMessage(narb_api_msg_header* apiMsg)
     
 EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLocalId, uint32 destLocalId)
 {
-    if (!active())
-        if (doConnect() < 0)
-            goto _RETURN;
-
-    char *buf[1024];
+    char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CREATE
             , src, dest, swtype, encoding, bandwidth, vtag, srcLocalId, destLocalId);
@@ -357,8 +352,12 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     ipv4_prefix_subobj* subobj_ipv4;
     unum_if_subobj* subobj_unum;
 
+    if (!active())
+        if (doConnect() < 0)
+            goto _RETURN;
+
     //send query
-    len = writen(fd, msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
+    len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
     if (len < 0)
     {
         LOG(2)(Log::Routing, "NARB_APIClient::getExplicitRoute failed to write to: ", fd);
@@ -561,7 +560,7 @@ void NARB_APIClient::confirmReservation(const Message& msg)
     uint32 dest_addr = msg.getSESSION_Object().getDestAddress().rawAddress();
     uint32 tunnel_id = (uint32)msg.getSESSION_Object().getTunnelId();
     uint32 ext_tunnel_id = msg.getSESSION_Object().getExtendedTunnelId();
-    EXPLICIT_ROUTE_Object ero = lookupExplicitRoute(dest_addr, tunnel_id, ext_tunnel_id);
+    EXPLICIT_ROUTE_Object* ero = lookupExplicitRoute(dest_addr, tunnel_id, ext_tunnel_id);
     if (!ero)
         return;
 
@@ -570,7 +569,7 @@ void NARB_APIClient::confirmReservation(const Message& msg)
             , 0, dest_addr, 0, 0, 0, 0, 0, 0, ero);
 
     //send api message
-    int len = writen(fd, msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
+    int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
     if (len < 0)
     {
         LOG(2)(Log::Routing, "NARB_APIClient::confirmReservation failed to write to: ", fd);
@@ -594,7 +593,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
     uint32 dest_addr = msg.getSESSION_Object().getDestAddress().rawAddress();
     uint32 tunnel_id = (uint32)msg.getSESSION_Object().getTunnelId();
     uint32 ext_tunnel_id = msg.getSESSION_Object().getExtendedTunnelId();
-    EXPLICIT_ROUTE_Object ero = lookupExplicitRoute(dest_addr, tunnel_id, ext_tunnel_id);
+    EXPLICIT_ROUTE_Object* ero = lookupExplicitRoute(dest_addr, tunnel_id, ext_tunnel_id);
     if (!ero)
         return;
 
@@ -603,7 +602,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
             , 0, dest_addr, 0, 0, 0, 0, 0, 0, ero);
 
     //send api message
-    int len = writen(fd, msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
+    int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
     if (len < 0)
     {
         LOG(2)(Log::Routing, "NARB_APIClient::releaseReservation failed to write to: ", fd);

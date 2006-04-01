@@ -104,8 +104,8 @@ typedef SimpleList<struct ero_search_entry*> EroSearchList;
 class Message;
 class NARB_APIClient{
 public:
-	NARB_APIClient(): fd(-1), lastMessage(0) {}
-	NARB_APIClient(const char *host, int port): fd(-1), lastMessage(0) { _host = host; _port = port;}
+	NARB_APIClient(): fd(-1), lastState(0) {}
+	NARB_APIClient(const char *host, int port): fd(-1), lastState(0) { _host = host; _port = port;}
 	~NARB_APIClient();
 	int doConnect(char *host, int port);
 	int doConnect();
@@ -116,9 +116,10 @@ public:
 	//EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 src_addr, uint32 dest_addr, uint32 lsp_id, uint32 tunnel_id, uint32 ext_tunnel_id);
 	EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id);
 	void removeExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id);
+	void removeExplicitRoute( EXPLICIT_ROUTE_Object* ero );
 	void confirmReservation(const Message& msg);
 	void releaseReservation(const Message& msg);
-	void handleRsvpMessage(const Message& msg);
+	bool handleRsvpMessage(const Message& msg);
 
 	static void setHostPort(const char *host, int port);
 	static bool operational();
