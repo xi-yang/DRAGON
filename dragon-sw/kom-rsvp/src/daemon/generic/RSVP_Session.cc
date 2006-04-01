@@ -996,6 +996,11 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 	//if (inLif && inLif != RSVP_Global::rsvp->getApiLif() && biDir){
 	//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), inLif->getAddress(), bandwidth);
 	//}
+
+	//@@@@ update NARB client state (e.g., reply to NARB server with reservation release)
+	if (narbClient && narbClient->active())
+		narbClient->handleRsvpMessage(msg);
+
 #if defined(ONEPASS_RESERVATION)
 	}
 #endif
@@ -1262,6 +1267,10 @@ void Session::processRESV( const Message& msg, Hop& nhop ) {
 			//if (inLif && inLif != RSVP_Global::rsvp->getApiLif() && biDir){
 			//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), inLif->getAddress(), bandwidth);
 			//}
+
+			//@@@@ update NARB client state (e.g., reply to NARB server with reservation confirmation)
+			if (narbClient && narbClient->active())
+				narbClient->handleRsvpMessage(msg);
 		}
 	} // loop through flow descriptors
 }
@@ -1341,6 +1350,9 @@ void Session::processRERR( Message& msg, Hop& hop ) {
 				//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), inLif->getAddress(), bandwidth);
 				//}
 
+				//@@@@ update NARB client state (e.g., reply to NARB server with reservation release)
+				if (narbClient && narbClient->active())
+					narbClient->handleRsvpMessage(msg);
 			}
 		}
 	}

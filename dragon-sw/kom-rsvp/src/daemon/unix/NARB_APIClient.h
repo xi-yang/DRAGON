@@ -9,6 +9,14 @@ To be incorporated into KOM-RSVP-TE package
 #ifndef _NARB_APICLIENT_H_
 #define _NARB_APICLIENT_H_
 
+//App-NARB API message types
+#define NARB_MSG_LSPQ 0x0001
+#define DMSG_CLI_TO_NARB_BASE			0x01	/* 0x01 -- 0x1F */
+#define DMSG_CLI_TOPO_CREATE			DMSG_CLI_TO_NARB_BASE+1
+#define DMSG_CLI_TOPO_CONFIRM			DMSG_CLI_TO_NARB_BASE+2
+#define DMSG_CLI_TOPO_DELETE			DMSG_CLI_TO_NARB_BASE+3
+#define DMSG_CLI_TOPO_ERO				DMSG_CLI_TO_NARB_BASE+4
+
 
 struct te_tlv_header
 {
@@ -74,21 +82,21 @@ class EXPLICIT_ROUTE_Object;
 struct ero_search_entry
 {
 	struct {
-		uint32 src_addr;
 		uint32 dest_addr;
-		uint32 lsp_id;
 		uint32 tunnel_id;
 		uint32 ext_tunnel_id;		
+		//uint32 src_addr;
+		//uint32 lsp_id;
 	} index;
 	EXPLICIT_ROUTE_Object *ero;
 };
 extern inline bool operator== (struct ero_search_entry& a, struct ero_search_entry& b)
 {
-	return (memcmp(&a.index, &b.index, 20) == 0);
+	return (memcmp(&a.index, &b.index, 12) == 0);
 }
 extern inline bool operator!= (struct ero_search_entry& a, struct ero_search_entry& b)
 {
-	return (memcmp(&a.index, &b.index, 20) != 0);
+	return (memcmp(&a.index, &b.index, 12) != 0);
 }
 
 typedef SimpleList<struct ero_search_entry*> EroSearchList;
@@ -105,9 +113,12 @@ public:
 	bool active();
 	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLclId, uint32 destLclId);
 	EXPLICIT_ROUTE_Object* getExplicitRoute(const Message& msg);
-	EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 src_addr, uint32 dest_addr, uint32 lsp_id, uint32 tunnel_id, uint32 ext_tunnel_id);
-
-	void handleRsvpMessage(const Message& msg);	//$$$$ //RESV CONFIRM	//RESV RELEASE ...
+	//EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 src_addr, uint32 dest_addr, uint32 lsp_id, uint32 tunnel_id, uint32 ext_tunnel_id);
+	EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id);
+	void removeExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id);
+	void confirmReservation(const Message& msg);
+	void releaseReservation(const Message& msg);
+	void handleRsvpMessage(const Message& msg);
 
 	static void setHostPort(const char *host, int port);
 	static bool operational();
@@ -116,7 +127,7 @@ public:
 
 private:
 	int fd;
-	uint32 lastMessage; //last message type ...
+	uint32 lastState; // last state == last processed message type ...
 	EroSearchList eroSearchList; 
 };
 
