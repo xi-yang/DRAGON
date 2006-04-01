@@ -542,7 +542,9 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 						if (narbClient->active()) {
 			                            explicitRoute = narbClient->getExplicitRoute(msg);
 							if (explicitRoute)
-								narbClient->handleRsvpMessage(msg);
+                       					if (!narbClient->handleRsvpMessage(msg)) {
+                                                    		LOG(3)( Log::Routing, "The message type ", msg.getType(), " is not supposed handled by NARB API client here!");
+                                                         }
 						}
 					}
 					else {
@@ -999,7 +1001,9 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 
 	//@@@@ update NARB client state (e.g., reply to NARB server with reservation release)
 	if (narbClient && narbClient->active())
-		narbClient->handleRsvpMessage(msg);
+        	if (!narbClient->handleRsvpMessage(msg)) {
+             		LOG(3)( Log::Routing, "The message type ", msg.getType(), " is not supposed handled by NARB API client here!");
+              }
 
 #if defined(ONEPASS_RESERVATION)
 	}
@@ -1270,7 +1274,10 @@ void Session::processRESV( const Message& msg, Hop& nhop ) {
 
 			//@@@@ update NARB client state (e.g., reply to NARB server with reservation confirmation)
 			if (narbClient && narbClient->active())
-				narbClient->handleRsvpMessage(msg);
+				if (!narbClient->handleRsvpMessage(msg)) {
+                        		LOG(3)( Log::Routing, "The message type ", msg.getType(), " is not supposed handled by NARB API client here!");
+                               }
+
 		}
 	} // loop through flow descriptors
 }
@@ -1352,7 +1359,9 @@ void Session::processRERR( Message& msg, Hop& hop ) {
 
 				//@@@@ update NARB client state (e.g., reply to NARB server with reservation release)
 				if (narbClient && narbClient->active())
-					narbClient->handleRsvpMessage(msg);
+					if (!narbClient->handleRsvpMessage(msg)) {
+                            		LOG(3)( Log::Routing, "The message type ", msg.getType(), " is not supposed handled by NARB API client here!");
+                                   }
 			}
 		}
 	}
