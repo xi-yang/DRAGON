@@ -56,7 +56,7 @@ public:
 	SimpleList<Hop> hopList;
 	bool mpls_default;
 	String interfaceName;
-	NetAddress localAddress, remoteAddress, virtAddress, loopbackAddress;
+	NetAddress localAddress, remoteAddress, virtAddress;
 	uint16 virtMTU, localPort;
 	ieee32float bandwidth, lossProb;
 	uint32 refreshRate, latency, rapidRefreshRate;
@@ -89,7 +89,6 @@ public:
 	void setExplicitRoute();
 	void addHop( uint32 = 0 );
 	void setApiPort( uint16 );
-	void addUNI(uint32 type);
 	void cleanup();
 	void warn( const String& );
 	const SimpleList<Hop>& getHopList() { return hopList; }

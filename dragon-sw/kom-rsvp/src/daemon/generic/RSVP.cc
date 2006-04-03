@@ -48,7 +48,6 @@
 #include "RSVP_RoutingService.h"
 #include "RSVP_Session.h"
 #include "RSVP_SignalHandling.h"
-#include "RSVP_UNI.h"
 
 #if defined(WITH_API)
 API_Server* RSVP::apiServer = NULL;
@@ -397,14 +396,6 @@ void RSVP::removeHop( HopKey& key ) {
 		hopListArray[key.getLIH()].erase( iter );
 		delete hop;
 	}
-}
-
-void RSVP::addUNI(UNI *uni)
-{
-	if (uni->type == UNI::UNI_C) 
-		uni_cList.push_back(uni);
-	else if (uni->type == UNI::UNI_N) 
-		uni_nList.push_back(uni);
 }
 
 inline void RSVP::increaseSessionCount() {

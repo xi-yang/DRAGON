@@ -42,7 +42,6 @@
 #include "RSVP_SchedulerCBQ.h"
 #include "RSVP_SchedulerHFSC.h"
 #include "RSVP_SchedulerRate.h"
-#include "RSVP_UNI.h"
 
 void ConfigFileReader::setTimerTotal( uint32 x ) {
 	TimerSystem::totalPeriod = TimeValue( x, 0 );
@@ -200,35 +199,6 @@ void ConfigFileReader::addSlot(String slot_type, uint16 slot_num) {
 	se.slot_num = slot_num;
 	RSVP_Global::switchController->addSlotEntry(se);
 }
-
-void ConfigFileReader::addUNI(uint32 type) {
-	LogicalInterface* lif = NULL;
-	LogicalInterfaceList::Iterator lifIter = tmpLifList.begin();
-	for ( ; lifIter != tmpLifList.end(); ++lifIter ) {
-		if ( (*lifIter)->getName() == interfaceName ) {
-			lif = *lifIter;
-		}
-	}
-
-	if (!lif) {
-		ERROR(3)( Log::Config, "UNI Control Channel Interface:", interfaceName, "does not exist -> ignoring config settings" );
-		return;
-	}
-
-	UNI* uni = NULL;
-	switch (type) {
-	case UNI::UNI_C:
-		uni = new UNI((UNI::Type)type, localAddress,  remoteAddress, lif, loopbackAddress);
-		break;
-	case UNI::UNI_N:
-		uni = new UNI((UNI::Type)type, remoteAddress, localAddress, lif, loopbackAddress);
-		break;
-	default:
-		return;
-	}
-	if (uni) rsvp.addUNI(uni);
-}
-
 
 void ConfigFileReader::cleanup() {
 	interfaceName = "";
