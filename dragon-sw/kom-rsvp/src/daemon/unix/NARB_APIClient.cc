@@ -346,12 +346,12 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
 {
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
-    struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CREATE
-            , src, dest, swtype, encoding, bandwidth, vtag, srcLocalId, destLocalId);
-    te_tlv_header *tlv = (te_tlv_header*)((char*)msgheader + sizeof(struct narb_api_msg_header));
+    te_tlv_header *tlv = (te_tlv_header*)((char*)buf + sizeof(struct narb_api_msg_header));
     int len, offset;
     ipv4_prefix_subobj* subobj_ipv4;
     unum_if_subobj* subobj_unum;
+    struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CREATE
+            , src, dest, swtype, encoding, bandwidth, vtag, srcLocalId, destLocalId);
 
     if (!active())
         if (doConnect() < 0)
@@ -402,7 +402,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     subobj_ipv4  = (ipv4_prefix_subobj *)((char *)tlv + offset);
     while (len > 0)
     {
-        if ((subobj_ipv4->l_and_type & 0x7f) == 4)
+        if ((subobj_ipv4->l_and_type & 0x7f) == 4) //UnNumInterface
             subobj_unum = (unum_if_subobj *)((char *)tlv + offset);
         else
             subobj_unum = NULL;
