@@ -503,7 +503,11 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
 	 }
     }
 
-    return (new EXPLICIT_ROUTE_Object(*ero));
+    EXPLICIT_ROUTE_Object* ero_new = new EXPLICIT_ROUTE_Object;
+    AbstractNodeList::ConstIterator iter = ero->getAbstractNodeList().begin();
+    for (; iter != ero->getAbstractNodeList().end(); ++iter)
+        ero_new->pushBack(*iter);
+    return ero_new;
 }
 
 
@@ -527,12 +531,12 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::lookupExplicitRoute(uint32 dest_addr, uin
     return NULL;
 }
 
-ero_search_entry* NARB_APIClient::lookupEntry(EXPLICIT_ROUTE_Object* ero)
+struct ero_search_entry* NARB_APIClient::lookupEntry(EXPLICIT_ROUTE_Object* ero)
 {
     EroSearchList::Iterator iter = eroSearchList.begin();
     for ( ; iter != eroSearchList.end(); ++iter)
     {
-        if ((*iter)->ero == ero) {
+        if ((*iter)->ero == ero)
             return (*iter);
     }
 
@@ -553,7 +557,7 @@ void NARB_APIClient::removeExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uin
     for ( ; iter != eroSearchList.end(); ++iter)
     {
         if (*(*iter) == target) {
-            (*iter)->destroy();
+            (*iter)->ero->destroy();
             eroSearchList.erase(iter);
             return;
       	}
@@ -566,7 +570,7 @@ void NARB_APIClient::removeExplicitRoute(EXPLICIT_ROUTE_Object* ero)
     for ( ; iter != eroSearchList.end(); ++iter)
     {
         if ((*iter)->ero == ero) {
-            (*iter)->destroy();
+            (*iter)->ero->destroy();
             eroSearchList.erase(iter);
             return;
       	}
@@ -576,7 +580,6 @@ void NARB_APIClient::removeExplicitRoute(EXPLICIT_ROUTE_Object* ero)
 void NARB_APIClient::confirmReservation(const Message& msg)
 {
     //lookup ERO
-    uint32 src_addr = msg.getSENDER_TEMPLATE_Object().getSrcAddress().rawAddress();
     uint32 dest_addr = msg.getSESSION_Object().getDestAddress().rawAddress();
     uint32 tunnel_id = (uint32)msg.getSESSION_Object().getTunnelId();
     uint32 ext_tunnel_id = msg.getSESSION_Object().getExtendedTunnelId();
