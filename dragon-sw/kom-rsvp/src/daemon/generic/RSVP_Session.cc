@@ -543,7 +543,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			                            explicitRoute = narbClient->getExplicitRoute(msg);
 							if (explicitRoute)
                        					if (!narbClient->handleRsvpMessage(msg)) {
-                                                    		LOG(3)( Log::Routing, "The message type ", msg.getMsgType(), " is not supposed handled by NARB API client here!");
+                                                    		LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");
                                                          }
 						}
 					}
@@ -1002,7 +1002,7 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 	//@@@@ update NARB client state (e.g., reply to NARB server with reservation release)
 	if (narbClient && narbClient->active())
         	if (!narbClient->handleRsvpMessage(msg)) {
-             		LOG(3)( Log::Routing, "The message type ", msg.getMsgType(), " is not supposed handled by NARB API client here!");
+             		LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");
               }
 
 #if defined(ONEPASS_RESERVATION)
@@ -1275,7 +1275,7 @@ void Session::processRESV( const Message& msg, Hop& nhop ) {
 			//@@@@ update NARB client state (e.g., reply to NARB server with reservation confirmation)
 			if (narbClient && narbClient->active())
 				if (!narbClient->handleRsvpMessage(msg)) {
-                        		LOG(3)( Log::Routing, "The message type ", msg.getMsgType(), " is not supposed handled by NARB API client here!");
+                        		LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");
                                }
 
 		}
@@ -1360,7 +1360,7 @@ void Session::processRERR( Message& msg, Hop& hop ) {
 				//@@@@ update NARB client state (e.g., reply to NARB server with reservation release)
 				if (narbClient && narbClient->active())
 					if (!narbClient->handleRsvpMessage(msg)) {
-                            		LOG(3)( Log::Routing, "The message type ", msg.getMsgType(), " is not supposed handled by NARB API client here!");
+                            		LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");
                                    }
 			}
 		}

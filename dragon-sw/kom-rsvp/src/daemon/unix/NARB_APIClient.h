@@ -85,8 +85,9 @@ struct ero_search_entry
 		uint32 dest_addr;
 		uint32 tunnel_id;
 		uint32 ext_tunnel_id;		
-		//uint32 src_addr;
-		//uint32 lsp_id;
+		uint32 src_addr;
+		uint32 lsp_id;
+		float bw;
 	} index;
 	EXPLICIT_ROUTE_Object *ero;
 };
@@ -115,6 +116,7 @@ public:
 	EXPLICIT_ROUTE_Object* getExplicitRoute(const Message& msg);
 	//EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 src_addr, uint32 dest_addr, uint32 lsp_id, uint32 tunnel_id, uint32 ext_tunnel_id);
 	EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id);
+	ero_search_entry* lookupEntry(EXPLICIT_ROUTE_Object* ero);
 	void removeExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id);
 	void removeExplicitRoute( EXPLICIT_ROUTE_Object* ero );
 	void confirmReservation(const Message& msg);

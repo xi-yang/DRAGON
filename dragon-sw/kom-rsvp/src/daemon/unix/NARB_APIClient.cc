@@ -309,7 +309,7 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
     //construct NARB API message
     msgheader->type = htons(NARB_MSG_LSPQ);
     msgheader->seqnum = htonl (dest);
-    msgheader->ucid = htonl(dest);
+    msgheader->ucid = htonl(src);
     msgheader->tag = htonl(vtag);
     msgheader->options = htonl(0x07<<16); //OPT_STRICT | OPT_PREFERED |OPT_MRN
     if (vtag > 0)
@@ -493,11 +493,12 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
 	        struct ero_search_entry *entry = new (struct ero_search_entry);
 	        memset (entry, 0, sizeof(struct ero_search_entry));
 	        entry->ero = ero;
-	        //entry->index.src_addr = srcAddr;
 	        entry->index.dest_addr = destAddr;
-	        //entry->index.lsp_id = (uint32)msg.getSENDER_TEMPLATE_Object().getLspId();
 	        entry->index.tunnel_id = (uint32)msg.getSESSION_Object().getTunnelId();
 	        entry->index.ext_tunnel_id = (uint32)msg.getSESSION_Object().getExtendedTunnelId();
+	        entry->index.src_addr = srcAddr;
+	        entry->index.lsp_id = (uint32)msg.getSENDER_TEMPLATE_Object().getLspId();
+	        entry->index.bw = (float)((const TSpec &)msg.getSENDER_TSPEC_Object()).get_r();
 	        eroSearchList.push_back(entry);
 	 }
     }
@@ -521,6 +522,18 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::lookupExplicitRoute(uint32 dest_addr, uin
     {
         if (*(*iter) == target)
             return (*iter)->ero;
+    }
+
+    return NULL;
+}
+
+ero_search_entry* NARB_APIClient::lookupEntry(EXPLICIT_ROUTE_Object* ero)
+{
+    EroSearchList::Iterator iter = eroSearchList.begin();
+    for ( ; iter != eroSearchList.end(); ++iter)
+    {
+        if ((*iter)->ero == ero) {
+            return (*iter);
     }
 
     return NULL;
@@ -561,6 +574,7 @@ void NARB_APIClient::removeExplicitRoute(EXPLICIT_ROUTE_Object* ero)
 void NARB_APIClient::confirmReservation(const Message& msg)
 {
     //lookup ERO
+    uint32 src_addr = msg.getSENDER_TEMPLATE_Object().getSrcAddress().rawAddress();
     uint32 dest_addr = msg.getSESSION_Object().getDestAddress().rawAddress();
     uint32 tunnel_id = (uint32)msg.getSESSION_Object().getTunnelId();
     uint32 ext_tunnel_id = msg.getSESSION_Object().getExtendedTunnelId();
@@ -568,9 +582,12 @@ void NARB_APIClient::confirmReservation(const Message& msg)
     if (!ero)
         return;
 
+    ero_search_entry* entry = lookupEntry(ero);
+    assert(entry!=NULL);
+
     //send confirmation msg
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CONFIRM
-            , 0, dest_addr, 0, 0, 0, 0, 0, 0, ero);
+            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, 0, 0, ero);
 
     //send api message
     int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
@@ -601,9 +618,12 @@ void NARB_APIClient::releaseReservation(const Message& msg)
     if (!ero)
         return;
 
+    ero_search_entry* entry = lookupEntry(ero);
+    assert(entry!=NULL);
+
     //send release msg
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_DELETE
-            , 0, dest_addr, 0, 0, 0, 0, 0, 0, ero);
+            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, 0, 0, ero);
 
     //send api message
     int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
