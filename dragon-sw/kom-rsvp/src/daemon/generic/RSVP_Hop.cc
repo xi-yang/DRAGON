@@ -141,8 +141,8 @@ void Hop::processSrefresh( const Message& msg ) {
 #if defined(CHECK_UNICAST_ROUTING_FOR_PATH_REFRESH)
 					static NetAddress gw(0);
 					const LogicalInterface* lif;
-					DRAGON_UNI_Object* uni = (*stateIter).sb.psb->getSession().getDRAGON_UNI_Object();
 
+					DRAGON_UNI_Object* uni = (DRAGON_UNI_Object*)(*stateIter).sb.psb->getDRAGON_UNI_Object();
 #if defined(WITH_API)
 					if ((*stateIter).sb.psb->getSession().getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()) {
 						if (uni == NULL)
