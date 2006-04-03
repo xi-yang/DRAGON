@@ -141,10 +141,15 @@ void Hop::processSrefresh( const Message& msg ) {
 #if defined(CHECK_UNICAST_ROUTING_FOR_PATH_REFRESH)
 					static NetAddress gw(0);
 					const LogicalInterface* lif;
+					DRAGON_UNI_Object* uni = (*stateIter).sb.psb->getSession().getDRAGON_UNI_Object();
 
 #if defined(WITH_API)
-					if ((*stateIter).sb.psb->getSession().getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
+					if ((*stateIter).sb.psb->getSession().getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()) {
+						if (uni == NULL)
 							lif = RSVP_Global::rsvp->getApiLif();
+						else 
+							lif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getEgressCtrlChannel().name));
+					}
 					else
 #endif
 						if ( (*stateIter).sb.psb->getEXPLICIT_ROUTE_Object() )
@@ -160,8 +165,14 @@ void Hop::processSrefresh( const Message& msg ) {
 						else
 							lif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( (*stateIter).sb.psb->getSession().getDestAddress(), gw );
 					}
-					else
-						lif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( (*stateIter).sb.psb->getSession().getDestAddress(), gw );
+					else 
+					{
+						if (uni == NULL)
+							lif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( (*stateIter).sb.psb->getSession().getDestAddress(), gw );
+						else 
+							lif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getEgressCtrlChannel().name));
+
+					}
 #if defined(WITH_API)
 					if ( !lif
 						&& ( RSVP_Global::rsvp->findInterfaceByAddress( (*stateIter).sb.psb->getSession().getDestAddress() )
