@@ -53,7 +53,7 @@ static String yy_host;
 %token TC_C NONE CBQ_C HFSC_C RATE PEER
 %token TIMER SESSION_HASH API_HASH ID_HASH_SEND ID_HASH_RECV LIST_ALLOC SB_ALLOC
 %token EXPLICIT_ROUTE MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH
-%token NARB SLOTS UNI_C UNI_N
+%token NARB SLOTS
 
 %%
 
@@ -82,8 +82,6 @@ command:
 	| PEER local_address remote_address		{ cfr->addHop(); }
 	| NARB narb_host narb_port	 	{ }
 	| SLOTS if_type slot			{ }
-	| UNI_C local_address remote_address name loopback_address {cfr->addUNI(1); }
-	| UNI_N local_address remote_address name loopback_address {cfr->addUNI(2); }
 	;
 
 /*** Addtions by Xi Yang ***/
@@ -147,10 +145,6 @@ local_address:
 
 remote_address:
 	ip_address		{ cfr->remoteAddress = yy_ip_address; }
-	;
-
-loopback_address:
-	ip_address		{ cfr->loopbackAddress = yy_ip_address; }
 	;
 
 remote_port:
