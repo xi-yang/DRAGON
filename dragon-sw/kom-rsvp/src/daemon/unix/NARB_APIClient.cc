@@ -346,7 +346,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
 {
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
-    te_tlv_header *tlv = (te_tlv_header*)((char*)buf + sizeof(struct narb_api_msg_header));
+    te_tlv_header *tlv;
     int len, offset;
     ipv4_prefix_subobj* subobj_ipv4;
     unum_if_subobj* subobj_unum;
@@ -390,7 +390,9 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
         LOG(2)(Log::Routing, "NARB_APIClient::getExplicitRoute failed to read from: ", fd);
 	goto _RETURN;
     }
+
     //parse NARB reply
+    tlv = (te_tlv_header*)((char*)buf + sizeof(struct narb_api_msg_header));
     if (ntohs(tlv->type) != 3) // 3 == TLV_TYPE_NARB_ERO
         goto _RETURN;
 
