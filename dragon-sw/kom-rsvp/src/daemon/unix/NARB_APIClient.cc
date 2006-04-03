@@ -649,6 +649,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
     } 
 
     //receive and discard rsvp release confirmation from NARB
+    /*
     char buf[256];
     len = readn(fd, buf, sizeof(struct narb_api_msg_header));
     if (len < 0)
@@ -661,7 +662,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
     {
         LOG(2)(Log::Routing, "NARB_APIClient::releaseReservation failed to read from: ", fd);
     }
-
+    */
     //remove ERO
     removeExplicitRoute(ero);
 
