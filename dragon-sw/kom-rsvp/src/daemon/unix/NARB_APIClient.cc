@@ -676,9 +676,10 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
         switch(lastState) {
         case 0:
         case (uint32)Message::Path:
+            break;
         case (uint32)Message::Resv: 
         case (uint32)Message::PathResv:
-            break;
+            ret = true;
         default:
             goto out;
         }
