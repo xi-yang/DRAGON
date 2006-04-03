@@ -326,7 +326,7 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
 
     if (ero)
     {
-        bodylen += buildNarbEroTlv(buf, ero);
+        bodylen += buildNarbEroTlv(buf+sizeof(struct narb_api_msg_header)+sizeof(struct msg_app2narb_request), ero);
     }
 
     msgheader->length = htons (bodylen);
