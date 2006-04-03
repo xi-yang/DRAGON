@@ -503,7 +503,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
 	 }
     }
 
-    return ero;
+    return (new EXPLICIT_ROUTE_Object(*ero));
 }
 
 
@@ -553,6 +553,7 @@ void NARB_APIClient::removeExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uin
     for ( ; iter != eroSearchList.end(); ++iter)
     {
         if (*(*iter) == target) {
+            (*iter)->destroy();
             eroSearchList.erase(iter);
             return;
       	}
@@ -565,6 +566,7 @@ void NARB_APIClient::removeExplicitRoute(EXPLICIT_ROUTE_Object* ero)
     for ( ; iter != eroSearchList.end(); ++iter)
     {
         if ((*iter)->ero == ero) {
+            (*iter)->destroy();
             eroSearchList.erase(iter);
             return;
       	}
