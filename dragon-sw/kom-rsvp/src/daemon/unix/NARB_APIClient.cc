@@ -384,6 +384,10 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
         LOG(2)(Log::Routing, "NARB_APIClient::getExplicitRoute failed to read from: ", fd);
 	goto _RETURN;
     }
+
+    msgheader = (struct narb_api_msg_header*)buf;
+    tlv = (te_tlv_header*)((char*)buf + sizeof(struct narb_api_msg_header));
+
     len = readn(fd, buf+sizeof(struct narb_api_msg_header), ntohs(msgheader->length));
     if (len < 0)
     {
@@ -392,7 +396,6 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     }
 
     //parse NARB reply
-    tlv = (te_tlv_header*)((char*)buf + sizeof(struct narb_api_msg_header));
     if (ntohs(tlv->type) != 3) // 3 == TLV_TYPE_NARB_ERO
         goto _RETURN;
 
@@ -627,6 +630,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
     {
         LOG(2)(Log::Routing, "NARB_APIClient::releaseReservation failed to read from: ", fd);
     }
+    msgheader = (struct narb_api_msg_header*)buf;
     len = readn(fd, buf+sizeof(struct narb_api_msg_header), ntohs(msgheader->length));
     if (len < 0)
     {
