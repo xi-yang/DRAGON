@@ -314,7 +314,6 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
     msgheader->options = htonl(0x07<<16); //OPT_STRICT | OPT_PREFERED |OPT_MRN
     if (vtag > 0)
         msgheader->options |= htonl(0x30<<16); //OPT_BIDIRECTIONAL | OPT_E2E_VLAN
-    msgheader->chksum = NARB_MSG_CHKSUM(*msgheader);
 
     memset(msgbody, 0, sizeof(msg_app2narb_request));
     msgbody->type = htons(msgType); // 2 == REQUEST; 3 == CONFIRM; 4 == RELEASE
@@ -331,6 +330,8 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
     }
 
     msgheader->length = htons (bodylen);
+    msgheader->chksum = NARB_MSG_CHKSUM(*msgheader);
+
     msgheader = (struct narb_api_msg_header*) new char[sizeof(struct narb_api_msg_header) + bodylen];
     memcpy(msgheader, buf, sizeof(struct narb_api_msg_header) + bodylen);
     return msgheader;
