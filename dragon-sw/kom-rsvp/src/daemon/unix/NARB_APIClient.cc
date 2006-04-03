@@ -501,6 +501,8 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
 	        entry->index.bw = (float)((const TSpec &)msg.getSENDER_TSPEC_Object()).get_r();
 	        eroSearchList.push_back(entry);
 	 }
+	 else
+	 	return NULL;
     }
 
     EXPLICIT_ROUTE_Object* ero_new = new EXPLICIT_ROUTE_Object;
