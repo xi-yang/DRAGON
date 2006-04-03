@@ -583,7 +583,7 @@ void NARB_APIClient::confirmReservation(const Message& msg)
 	disconnect();
 	LOG(1)(Log::Routing, "connection closed for NARB_APIClient.");
     }
-    else if (len != sizeof(struct narb_api_msg_header)+sizeof(struct msg_app2narb_request))
+    else if (len != sizeof(struct narb_api_msg_header)+ntohs(msgheader->length))
     {
         LOG(2)(Log::Routing, "NARB_APIClient::confirmReservation cannot write the message to: ", fd);
     } 
@@ -616,7 +616,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
 	disconnect();
 	LOG(1)(Log::Routing, "connection closed for NARB_APIClient in ::releaseReservation.");
     }
-    else if (len != sizeof(struct narb_api_msg_header)+sizeof(struct msg_app2narb_request))
+    else if (len != sizeof(struct narb_api_msg_header)+ntohs(msgheader->length))
     {
         LOG(2)(Log::Routing, "NARB_APIClient::releaseReservation cannot write the message to: ", fd);
     } 
