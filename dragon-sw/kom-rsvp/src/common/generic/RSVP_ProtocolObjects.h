@@ -883,10 +883,12 @@ public:
 		vlanTag.type = UNI_SUBOBJ_VLANTAG;
 		vlanTag.sub_type = UNI_SUBTYPE_NONE;
 		vlanTag.vtag = vtag;
+		memset (&ingressChannelName, 0, sizeof(struct CtrlChannel));
 		strncpy((char*)ingressChannelName.name, ing_chan_name, 12);
 		ingressChannelName.length= sizeof(struct CtrlChannel);
 		ingressChannelName.type = UNI_SUBOBJ_CTRLCHAN;
 		ingressChannelName.sub_type = UNI_SUBOBJ_CTRLCHAN_INGRESS;
+		memset (&egressChannelName, 0, sizeof(struct CtrlChannel));
 		strncpy((char*)egressChannelName.name, eg_chan_name, 12);
 		egressChannelName.length= sizeof(struct CtrlChannel);
 		egressChannelName.type = UNI_SUBOBJ_CTRLCHAN_EGRESS;
@@ -903,7 +905,12 @@ public:
 	CtrlChannel& getIngressCtrlChannel(){ return ingressChannelName; }
 	CtrlChannel& getEgressCtrlChannel(){ return egressChannelName; }
 	bool operator==(const DRAGON_UNI_Object& s){
-		return (memcmp(&srcTNA, &s.srcTNA, sizeof(struct LocalIdTNA)) == 0 && memcmp(&destTNA, &s.destTNA, sizeof(struct LocalIdTNA)) == 0);
+		return (memcmp(&srcTNA, &s.srcTNA, sizeof(struct LocalIdTNA)) == 0 
+			&& memcmp(&destTNA, &s.destTNA, sizeof(struct LocalIdTNA)) == 0
+			&& memcmp(&vlanTag, &s.vlanTag, sizeof(struct VlanTag)) == 0
+			&& memcmp(&ingressChannelName, &s.ingressChannelName, sizeof(struct CtrlChannel)) == 0
+			&& memcmp(&egressChannelName, &s.egressChannelName, sizeof(struct CtrlChannel)) == 0	);
+
 	}
 };
 extern inline DRAGON_UNI_Object::~DRAGON_UNI_Object() { }
