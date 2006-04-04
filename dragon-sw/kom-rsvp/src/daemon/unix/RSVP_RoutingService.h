@@ -67,6 +67,7 @@ class RoutingService {
 	RoutingEntryList* rtList;
 	pid_t mainPID;
 	int ospf_socket;
+	bool ospf_operational;
 #if defined(Linux)
 	mutable uint32 queryCounter;
 #else
@@ -98,7 +99,8 @@ public:
 	RoutingService();
 	~RoutingService();
 	const int getOspfSocket() const { return ospf_socket; }
-	void disableOspfSocket() { ospf_socket = 0; }
+	void disableOspfSocket() { ospf_socket = 0; ospf_operational = false; }
+	bool ospfOperational() { return ospf_operational; }
 	bool ospf_socket_init ();
 	void getPeerIPAddr(const NetAddress& myAddr, NetAddress& peerAddr) const;
 	void init( LogicalInterfaceList& tmpLifList );

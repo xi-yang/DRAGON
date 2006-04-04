@@ -128,7 +128,7 @@ void API_Server::processMessage( const Message& msg, MessageProcessor& mp) {
 	const NetAddress& address = msg.getRSVP_HOP_Object().getAddress();
 
 	//Initialize OSPF socket 
-	if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
+	if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket() && RSVP_Global::rsvp->getRoutingService().ospfOperational()){
 		if (!RSVP_Global::rsvp->getRoutingService().ospf_socket_init()){
 			ERROR(1)( Log::Error, "Failed to init rsvp-ospf communication!" );
 			RSVP_Global::rsvp->getRoutingService().disableOspfSocket();

@@ -103,6 +103,7 @@ RoutingService::RoutingService() : rsrr(NULL), rtList(new RoutingEntryList),
 	rsrr = new RSRR();
 #endif
 	ospf_socket = 0;
+	ospf_operational = true;
 }
 
 RoutingService::~RoutingService() {
