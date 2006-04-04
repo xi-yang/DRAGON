@@ -107,7 +107,7 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 IF_METHOD = @IF_METHOD@
 IF_PROC = @IF_PROC@
-INCLUDES = @INCLUDES@ -I.. -I$(top_srcdir) -I$(top_srcdir)/lib -I$(RSVP_INC)
+INCLUDES = @INCLUDES@ -I.. -I$(top_srcdir) -I$(top_srcdir)/lib -I$(RSVP_INC) -I/usr/include -I/usr/local/include -I/usr/include/libxml2 -I/usr/local/include/libxml2
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -191,7 +191,7 @@ RSVP_INC = ${RSVP_ROOT}/include
 INSTALL_SDATA = @INSTALL@ -m 600
 dragon_SOURCES = dragon_main.c dragon_vty.c dragon_packet.c dragon_xml.c
 noinst_HEADERS = dragond.h
-dragon_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP -L/usr/local/lib -lxml2 -lz  -L/usr/local/lib -liconv
+dragon_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP -L/usr/lib -L/usr/local/lib -lxml2 -lz -L/usr/local/lib -liconv
 sysconf_DATA = dragon.conf.sample
 RC_SCRIPT = dragon.sh
 all: all-am
