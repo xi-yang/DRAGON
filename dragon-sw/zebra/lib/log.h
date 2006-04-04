@@ -48,7 +48,8 @@ typedef enum
   ZLOG_RIPNG,  
   ZLOG_OSPF6,
   ZLOG_MASC,
-  ZLOG_DRAGON
+  ZLOG_DRAGON,
+  ZLOG_ASTB,
 } zlog_proto_t;
 
 struct zlog 

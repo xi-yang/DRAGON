@@ -49,7 +49,7 @@ zerror (const char *fname, int type, size_t size)
 
 /* Memory allocation. */
 void *
-zmalloc (int type, size_t size)
+ze_malloc (int type, size_t size)
 {
   void *memory;
 
@@ -65,7 +65,7 @@ zmalloc (int type, size_t size)
 
 /* Memory allocation with num * size with cleared. */
 void *
-zcalloc (int type, size_t size)
+ze_calloc (int type, size_t size)
 {
   void *memory;
 
@@ -81,7 +81,7 @@ zcalloc (int type, size_t size)
 
 /* Memory reallocation. */
 void *
-zrealloc (int type, void *ptr, size_t size)
+ze_realloc (int type, void *ptr, size_t size)
 {
   void *memory;
 
@@ -93,7 +93,7 @@ zrealloc (int type, void *ptr, size_t size)
 
 /* Memory free. */
 void
-zfree (int type, void *ptr)
+ze_free (int type, void *ptr)
 {
   alloc_dec (type);
   free (ptr);
@@ -140,7 +140,7 @@ mtype_zmalloc (const char *file, int line, int type, size_t size)
   mstat[type].c_malloc++;
   mstat[type].t_malloc++;
 
-  memory = zmalloc (type, size);
+  memory = ze_malloc (type, size);
   mtype_log ("zmalloc", memory, file, line, type);
 
   return memory;
@@ -154,7 +154,7 @@ mtype_zcalloc (const char *file, int line, int type, size_t size)
   mstat[type].c_calloc++;
   mstat[type].t_calloc++;
 
-  memory = zcalloc (type, size);
+  memory = ze_calloc (type, size);
   mtype_log ("xcalloc", memory, file, line, type);
 
   return memory;
@@ -168,7 +168,7 @@ mtype_zrealloc (const char *file, int line, int type, void *ptr, size_t size)
   /* Realloc need before allocated pointer. */
   mstat[type].t_realloc++;
 
-  memory = zrealloc (type, ptr, size);
+  memory = ze_realloc (type, ptr, size);
 
   mtype_log ("xrealloc", memory, file, line, type);
 
@@ -183,7 +183,7 @@ mtype_zfree (const char *file, int line, int type, void *ptr)
 
   mtype_log ("xfree", ptr, file, line, type);
 
-  zfree (type, ptr);
+  ze_free (type, ptr);
 }
 
 char *

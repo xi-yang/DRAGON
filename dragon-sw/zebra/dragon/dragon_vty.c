@@ -40,6 +40,7 @@
 #include "log.h"
 #include "linklist.h"
 #include "dragon/dragond.h"
+#include "buffer.h"
 
 char lsp_prompt[100] = "%s(edit-lsp)# ";
 
@@ -60,6 +61,7 @@ struct dragon_module dmodule[] =
 	{MODULE_NARB_INTRA,   0,   	0,  		 "NARB-Intra"	 },
 	{MODULE_NARB_INTER,   0,   	0,   		"NARB-Inter"    },
 	{MODULE_PCE,	  0,   		0,    		"PCE"      }
+        {MODULE_XML,      0x100007f,   2618,     "XML"}
 };
 
 
@@ -292,6 +294,44 @@ void local_id_group_show(struct vty *vty, struct local_id *lid)
         vty_out(vty, "  %d", *ptag);
     }
     vty_out(vty, "%s", VTY_NEWLINE);
+}
+
+/*Fiona's addion in support of query in XML format*/
+void
+process_xml_query(FILE* fp, char* src)
+{
+  struct listnode *node;
+  struct lsp *lsp = NULL;
+  char *localid[] = {"lsp-id", "port", "tagged-group", "group"};
+
+  if (fp == NULL)
+    return;
+ 
+  LIST_LOOP(dmaster.dragon_lsp_table, lsp, node) {
+
+    fprintf(fp, "<resource>\n");
+    fprintf(fp, "<src>%s</src>\n", src);
+    fprintf(fp, "<ast_status>AST_SUCCESS</ast_status>\n");
+    fprintf(fp, "<lsp_name>%s</lsp_name>\n", (lsp->common.SessionAttribute_Para)->sessionName);    
+
+    fprintf(fp, "<src_ip>%s</src_ip>\n", inet_ntoa(lsp->common.Session_Para.srcAddr));
+    fprintf(fp, "<dest_ip>%s</dest_ip>\n", inet_ntoa(lsp->common.Session_Para.destAddr));
+    fprintf(fp, "<src_local_id_type>%s</src_local_id_type>\n", localid[lsp->dragon.srcLocalId>>16] );
+    fprintf(fp, "<src_local_id>%d</src_local_id>\n", lsp->common.Session_Para.srcPort);
+    fprintf(fp, "<dest_local_id_type>%s</dest_local_id_type>\n", localid[lsp->dragon.srcLocalId>>16]);
+    fprintf(fp, "<dest_local_id>%d</dest_local_id>\n", lsp->common.Session_Para.destPort);
+    fprintf(fp, "<lsp_status>%s</lsp_status>\n", value_to_string(&conv_lsp_status, lsp->status));
+
+    fprintf(fp, "<bandwidth>%s</bandwidth>\n", value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->R));
+    fprintf(fp, "<swcap>%s</swcap>\n",value_to_string (&conv_swcap, lsp->common.LabelRequest_Para.data.gmpls.switchingType) );
+    fprintf(fp, "<gpid>%s</gpid>\n", value_to_string (&conv_gpid, lsp->common.LabelRequest_Para.data.gmpls.gPid) );
+    fprintf(fp, "<encoding>%s</encoding>\n", value_to_string (&conv_encoding, lsp->common.LabelRequest_Para.data.gmpls.lspEncodingType) );
+    if (lsp->dragon.lspVtag == 0) 
+      fprintf(fp, "<vtag>any</vtag>\n");
+    else 
+      fprintf(fp, "<vtag>%d</vtag>\n", lsp->dragon.lspVtag);
+    fprintf(fp, "</resource>\n");
+  } 
 }
 
 
@@ -871,6 +911,13 @@ DEFUN (dragon_set_lsp_ip,
       return CMD_WARNING;
   }
 
+  lsp->common.Session_Para.srcAddr.s_addr = ip_src.s_addr;
+  lsp->common.Session_Para.srcPort = (u_int16_t)port_src;
+  lsp->common.Session_Para.destAddr.s_addr = ip_dst.s_addr;
+  lsp->common.Session_Para.destPort = (u_int16_t)port_dest;
+  lsp->dragon.srcLocalId = ((u_int32_t)type_src)<<16 |port_src;
+  lsp->dragon.destLocalId = ((u_int32_t)type_dest)<<16 |port_dest;
+
   /* Check if there is another LSP with the same session parameter */
   find = 0;
   if (dmaster.dragon_lsp_table)
@@ -886,13 +933,6 @@ DEFUN (dragon_set_lsp_ip,
   	zlog_info("Another LSP with the same session parameters already exists.\n");
 	return CMD_WARNING;
   }
-
-  lsp->common.Session_Para.srcAddr.s_addr = ip_src.s_addr;
-  lsp->common.Session_Para.srcPort = (u_int16_t)port_src;
-  lsp->common.Session_Para.destAddr.s_addr = ip_dst.s_addr;
-  lsp->common.Session_Para.destPort = (u_int16_t)port_dest;
-  lsp->dragon.srcLocalId = ((u_int32_t)type_src)<<16 |port_src;
-  lsp->dragon.destLocalId = ((u_int32_t)type_dest)<<16 |port_dest;
 
   if (lsp->common.DragonUni_Para) {
 	lsp->common.DragonUni_Para->srcLocalId = lsp->dragon.srcLocalId;
@@ -911,11 +951,11 @@ DEFUN (dragon_set_lsp_uni,
 {
     struct lsp *lsp = (struct lsp *)(vty->index);
     if (strcmp(argv[0], "client") == 0)
-	    lsp->uni_mode = 1;
+	    lsp->uni_mode = UNI_CLIENT;
     else if (strcmp(argv[0], "network") == 0)
-	    lsp->uni_mode = 2;
+	    lsp->uni_mode = UNI_NETWORK;
     else 
-	    lsp->uni_mode = 0;
+	    lsp->uni_mode = UNI_NONE;
     lsp->common.DragonUni_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_Uni_Para));
     memset(lsp->common.DragonUni_Para, 0, sizeof(struct _Dragon_Uni_Para));
     strncpy(lsp->common.DragonUni_Para->ingressChannel, argv[1], 12);

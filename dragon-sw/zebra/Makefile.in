@@ -114,10 +114,12 @@ LIB_REGEX = @LIB_REGEX@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MULTIPATH_NUM = @MULTIPATH_NUM@
+NARB = @NARB@
 OBJEXT = @OBJEXT@
 OSPF6D = @OSPF6D@
 OSPFAPI = @OSPFAPI@
 OSPFD = @OSPFD@
+AST_MASTER = @AST_MASTER@
 OTHER_METHOD = @OTHER_METHOD@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -174,7 +176,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-SUBDIRS = lib @ZEBRA@ @BGPD@ @RIPD@ @RIPNGD@ @OSPFD@ @OSPF6D@ @DRAGON@ @VTYSH@ doc
+SUBDIRS = lib @ZEBRA@ @BGPD@ @RIPD@ @RIPNGD@ @OSPFD@ @OSPF6D@ @AST_MASTER@ @DRAGON@ @NARB@ @VTYSH@ doc
 EXTRA_DIST = aclocal.m4 SERVICES TODO REPORTING-BUGS vtysh/Makefile.in \
 	vtysh/Makefile.am update-autotools
 

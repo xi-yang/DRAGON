@@ -32,6 +32,7 @@
 /* VTY port number. */
 #define DRAGON_VTY_PORT          2611
 #define DRAGON_VTYSH_PATH        "/tmp/.dragon"
+#define DRAGON_XML_PATH		 "/tmp/.dragon_xml"
 /* Default configuration file name for dragon. */
 #define DRAGON_DEFAULT_CONFIG   "dragon.conf"
 
@@ -51,6 +52,7 @@
 #define   MODULE_NARB_INTRA	5
 #define   MODULE_NARB_INTER	6
 #define   MODULE_PCE  		7
+#define   MODULE_XML		8
 
 /* The following defines DRAGON message types */
 /* CLI/ASTDL to NARB message */
@@ -654,6 +656,9 @@ extern void dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty);
 extern void lsp_del(struct lsp *lsp);
 extern int dragon_config_write(struct vty *vty);
 extern void set_lsp_default_para (struct lsp *lsp);
+
+/* Fiona: from xml */
+extern int xml_serv_sock (const char*, unsigned short, char *);
 
 /* The following functions are in libRSVP */
 extern void* zInitRsvpApiInstance();

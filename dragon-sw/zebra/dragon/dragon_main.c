@@ -37,6 +37,7 @@
 #include "log.h"
 #include "memory.h"
 
+#include "ast_master/ast_master.h"
 #include "dragon/dragond.h"
 
 /* Configuration filename and directory. */
@@ -201,6 +202,8 @@ main (int argc, char **argv)
   zlog_default = openzlog (progname, ZLOG_NOLOG, ZLOG_DRAGON,
 			   LOG_CONS|LOG_NDELAY|LOG_PID, LOG_DAEMON);
 
+  zlog_set_file(zlog_default, ZLOG_FILE, "/var/log/dragon.log");
+
   while (1) 
     {
       int opt;
@@ -263,13 +266,17 @@ main (int argc, char **argv)
   /* Process id file create. */
   pid_output (pid_file);
 
+  /* Print banner. */
+  zlog (NULL, LOG_INFO, "DRAGONd (%s) starts", ZEBRA_VERSION);
+
   /* Create VTY socket */
   vty_serv_sock (vty_addr,
 		 vty_port ? vty_port : DRAGON_VTY_PORT, DRAGON_VTYSH_PATH);
 
-  /* Print banner. */
-  zlog (NULL, LOG_INFO, "DRAGONd (%s) starts", ZEBRA_VERSION);
-
+  /* init xml socket */
+  /*DRAGON_XML_PORT defined in ast_master/ast_master.h*/
+  xml_serv_sock (vty_addr, DRAGON_XML_PORT, DRAGON_XML_PATH); 
+  
   /* Fetch next active thread. */
   while (thread_fetch (master, &thread))
     thread_call (&thread);

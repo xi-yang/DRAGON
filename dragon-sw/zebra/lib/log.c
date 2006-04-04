@@ -26,6 +26,7 @@
 #include "command.h"
 
 struct zlog *zlog_default = NULL;
+extern vector vtyvec;
 
 const char *zlog_proto_names[] = 
 {
@@ -37,8 +38,9 @@ const char *zlog_proto_names[] =
   "OSPF",
   "RIPNG",
   "OSPF6",
-  "DRAGON",
   "MASC",
+  "DRAGON",
+  "ASTB",
   NULL,
 };
 
@@ -143,7 +145,8 @@ vzlog (struct zlog *zl, int priority, const char *format, va_list *args)
     }
 
   /* Terminal monitor. */
-  vty_log (zlog_proto_names[zl->protocol], format, args[ZLOG_NOLOG_INDEX]);
+  if (vtyvec) 
+    vty_log (zlog_proto_names[zl->protocol], format, args[ZLOG_NOLOG_INDEX]);
 }
 
 void

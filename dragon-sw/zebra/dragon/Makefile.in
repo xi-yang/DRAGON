@@ -25,6 +25,7 @@ pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
 top_builddir = ..
+xml_include = /usr/local/include/libxml2
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
 install_sh_DATA = $(install_sh) -c -m 644
@@ -54,15 +55,16 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sysconfdir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_dragon_OBJECTS = dragon_main.$(OBJEXT) dragon_vty.$(OBJEXT) \
-	dragon_packet.$(OBJEXT)
+	dragon_packet.$(OBJEXT) dragon_xml.$(OBJEXT)
 dragon_OBJECTS = $(am_dragon_OBJECTS)
-dragon_DEPENDENCIES = ../lib/libzebra.a
+dragon_DEPENDENCIES = ../ast_master/libastb.a ../lib/libzebra.a /usr/local/lib/libxml2.a
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/dragon_main.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dragon_packet.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/dragon_vty.Po
+@AMDEP_TRUE@	./$(DEPDIR)/dragon_vty.Po \
+@AMDEP_TRUE@    ./$(DEPDIR)/dragon_xml.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -102,7 +104,7 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 IF_METHOD = @IF_METHOD@
 IF_PROC = @IF_PROC@
-INCLUDES = @INCLUDES@ -I.. -I$(top_srcdir) -I$(top_srcdir)/lib -I$(RSVP_INC)
+INCLUDES = @INCLUDES@ -I.. -I$(top_srcdir) -I$(top_srcdir)/lib -I$(RSVP_INC) -I/usr/local/include -I$(xml_include) 
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -112,12 +114,15 @@ KERNEL_METHOD = @KERNEL_METHOD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBPAM = @LIBPAM@
-LIBS = @LIBS@ @CURSES@ @LIBPAM@
+LIBS = @LIBS@ @CURSES@ 
+LIBXML = -L/usr/local/lib -lxml2 -lz -L/usr/local/lib -liconv -lm
+ZLIB = -lz
 LIB_IPV6 = @LIB_IPV6@
 LIB_REGEX = @LIB_REGEX@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MULTIPATH_NUM = @MULTIPATH_NUM@
+NARB = @NARB@
 OBJEXT = @OBJEXT@
 OSPF6D = @OSPF6D@
 OSPFAPI = @OSPFAPI@
@@ -182,9 +187,9 @@ RSVP_ROOT = ../../kom-rsvp
 RSVP_LIB = ${RSVP_ROOT}/lib
 RSVP_INC = ${RSVP_ROOT}/include
 INSTALL_SDATA = @INSTALL@ -m 600
-dragon_SOURCES = dragon_main.c dragon_vty.c dragon_packet.c
+dragon_SOURCES = dragon_main.c dragon_vty.c dragon_packet.c dragon_xml.c
 noinst_HEADERS = dragond.h
-dragon_LDADD = ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP
+dragon_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP -L/usr/local/lib -lxml2 -lz -L/usr/local/lib -liconv 
 sysconf_DATA = dragon.conf.sample
 RC_SCRIPT = dragon.sh
 all: all-am
@@ -256,6 +261,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_packet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_vty.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_xml.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

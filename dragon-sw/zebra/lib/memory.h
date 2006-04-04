@@ -203,18 +203,18 @@ enum
 #define XSTRDUP(mtype, str) \
   mtype_zstrdup (__FILE__, __LINE__, (mtype), (str))
 #else
-#define XMALLOC(mtype, size)       zmalloc ((mtype), (size))
-#define XCALLOC(mtype, size)       zcalloc ((mtype), (size))
-#define XREALLOC(mtype, ptr, size) zrealloc ((mtype), (ptr), (size))
-#define XFREE(mtype, ptr)          zfree ((mtype), (ptr))
+#define XMALLOC(mtype, size)       ze_malloc ((mtype), (size))
+#define XCALLOC(mtype, size)       ze_calloc ((mtype), (size))
+#define XREALLOC(mtype, ptr, size) ze_realloc ((mtype), (ptr), (size))
+#define XFREE(mtype, ptr)          ze_free ((mtype), (ptr))
 #define XSTRDUP(mtype, str)        zstrdup ((mtype), (str))
 #endif /* MEMORY_LOG */
 
 /* Prototypes of memory function. */
-void *zmalloc (int type, size_t size);
-void *zcalloc (int type, size_t size);
-void *zrealloc (int type, void *ptr, size_t size);
-void  zfree (int type, void *ptr);
+void *ze_malloc (int type, size_t size);
+void *ze_calloc (int type, size_t size);
+void *ze_realloc (int type, void *ptr, size_t size);
+void  ze_free (int type, void *ptr);
 char *zstrdup (int type, char *str);
 
 void *mtype_zmalloc (const char *file,

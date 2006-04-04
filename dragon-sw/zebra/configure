@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP AR ac_ct_AR RANLIB ac_ct_RANLIB EGREP MULTIPATH_NUM LIBPAM RT_METHOD KERNEL_METHOD OTHER_METHOD RTREAD_METHOD IF_METHOD IF_PROC IPFORWARD LIB_IPV6 ZEBRA BGPD RIPD RIPNGD OSPFD OSPF6D DRAGON OSPFAPI VTYSH INCLUDES CURSES LIB_REGEX LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO AMTAR install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP AR ac_ct_AR RANLIB ac_ct_RANLIB EGREP MULTIPATH_NUM LIBPAM RT_METHOD KERNEL_METHOD OTHER_METHOD RTREAD_METHOD IF_METHOD IF_PROC IPFORWARD LIB_IPV6 ZEBRA BGPD RIPD RIPNGD OSPFD OSPF6D AST_MASTER DRAGON NARB OSPFAPI VTYSH INCLUDES CURSES LIB_REGEX LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -868,6 +868,8 @@ Optional Features:
   --enable-opaque-lsa     enable OSPF Opaque-LSA with OSPFAPI support (RFC2370)
   --disable-ospfapi       do not build OSPFAPI to access the OSPF LSA Database,
                           (this is the default if --enable-opaque-lsa is not set)
+  --disable-narb          do not build OSPFAPI client for OSPFAPI,
+                          (this is the default if --disable-ospfapi is set)
   --enable-ospf-te        enable Traffic Engineering Extension to OSPF
   --enable-dragon         enable DRAGON configuration interface
   --enable-multipath=ARG  enable multipath function, ARG must be digit
@@ -3565,6 +3567,11 @@ if test "${enable_ospfapi+set}" = set; then
   enableval="$enable_ospfapi"
 
 fi;
+# Check whether --enable-narb or --disable-narb was given.
+if test "${enable_narb+set}" = set; then
+  enableval="$enable_narb"
+
+fi;
 # Check whether --enable-ospf-te or --disable-ospf-te was given.
 if test "${enable_ospf_te+set}" = set; then
   enableval="$enable_ospf_te"
@@ -3594,6 +3601,7 @@ if test "${enable_dragon}" = "yes"; then
   enable_ospf_te=yes
   enable_tcp_zebra=yes
   enable_ospfapi=yes
+  enable_narb=yes
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_DRAGON
@@ -6421,6 +6429,7 @@ else
   OSPFD="ospfd"
 fi
 
+NARB=""
 if test "${enable_opaque_lsa}" = "yes"; then
   if test "${enable_ospfapi}" != "no";then
 
@@ -6428,6 +6437,10 @@ cat >>confdefs.h <<\_ACEOF
 #define SUPPORT_OSPF_API
 _ACEOF
 
+
+    if test "${enable_narb}" != "no";then
+      NARB="narb"
+    fi
   fi
 fi
 
@@ -6435,6 +6448,12 @@ if test "${enable_dragon}" = "no";then
   DRAGON=""
 else
   DRAGON="dragon"
+fi
+
+if test "${enable_dragon}" = "no";then
+  AST_MASTER=""
+else
+  AST_MASTER="ast_master"
 fi
 
 case "${enable_ripngd}" in
@@ -6456,6 +6475,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 fi
+
 
 
 
@@ -8296,7 +8316,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_htonl_works" >&5
 echo "${ECHO_T}$ac_cv_htonl_works" >&6
 
-                                                                                                              ac_config_files="$ac_config_files Makefile lib/Makefile zebra/Makefile ripd/Makefile ripngd/Makefile bgpd/Makefile ospfd/Makefile ospf6d/Makefile vtysh/Makefile dragon/Makefile doc/Makefile"
+                                                                                                                        ac_config_files="$ac_config_files Makefile lib/Makefile zebra/Makefile ripd/Makefile ripngd/Makefile bgpd/Makefile ospfd/Makefile ospf6d/Makefile vtysh/Makefile ast_master/Makefile dragon/Makefile narb/Makefile doc/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -8855,7 +8875,9 @@ do
   "ospfd/Makefile" ) CONFIG_FILES="$CONFIG_FILES ospfd/Makefile" ;;
   "ospf6d/Makefile" ) CONFIG_FILES="$CONFIG_FILES ospf6d/Makefile" ;;
   "vtysh/Makefile" ) CONFIG_FILES="$CONFIG_FILES vtysh/Makefile" ;;
+  "ast_master/Makefile" ) CONFIG_FILES="$CONFIG_FILES ast_master/Makefile";;
   "dragon/Makefile" ) CONFIG_FILES="$CONFIG_FILES dragon/Makefile" ;;
+  "narb/Makefile" ) CONFIG_FILES="$CONFIG_FILES narb/Makefile" ;;
   "doc/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
@@ -9011,6 +9033,8 @@ s,@RIPNGD@,$RIPNGD,;t t
 s,@OSPFD@,$OSPFD,;t t
 s,@OSPF6D@,$OSPF6D,;t t
 s,@DRAGON@,$DRAGON,;t t
+s,@NARB@,$NARB,;t t
+s,@AST_MASTER@,$AST_MASTER,;t t
 s,@OSPFAPI@,$OSPFAPI,;t t
 s,@VTYSH@,$VTYSH,;t t
 s,@INCLUDES@,$INCLUDES,;t t

@@ -13,9 +13,9 @@ INSTALL_SDATA=@INSTALL@ -m 600
 
 bin_PROGRAMS = dragon
 
-dragon_SOURCES = dragon_main.c dragon_vty.c dragon_packet.c
+dragon_SOURCES = dragon_main.c dragon_vty.c dragon_packet.c dragon_xml.c
 noinst_HEADERS = dragond.h
-dragon_LDADD = ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP
+dragon_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP -L/usr/local/lib -lxml2 -lz  -L/usr/local/lib -liconv
 
 sysconf_DATA = dragon.conf.sample
 
