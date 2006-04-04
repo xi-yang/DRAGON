@@ -321,9 +321,6 @@
 /* SunOS 5 */
 #undef SUNOS_5
 
-/* OSPFAPI */
-#undef SUPPORT_OSPF_API
-
 /* Use PAM for authentication */
 #undef USE_PAM
 

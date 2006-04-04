@@ -60,7 +60,7 @@ struct dragon_module dmodule[] =
 	{MODULE_ASTDL,	  0,   		0,   		"ASTDL"   },
 	{MODULE_NARB_INTRA,   0,   	0,  		 "NARB-Intra"	 },
 	{MODULE_NARB_INTER,   0,   	0,   		"NARB-Inter"    },
-	{MODULE_PCE,	  0,   		0,    		"PCE"      }
+	{MODULE_PCE,	  0,   		0,    		"PCE"      },
         {MODULE_XML,      0x100007f,   2618,     "XML"}
 };
 
