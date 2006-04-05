@@ -3,6 +3,7 @@
 RSVP_ROOT = ../../kom-rsvp
 RSVP_LIB    =   ${RSVP_ROOT}/lib
 RSVP_INC   =   ${RSVP_ROOT}/include
+XML_LIBS = -L/usr/lib -L/usr/local/lib
 
 INCLUDES = @INCLUDES@ -I.. -I$(top_srcdir) -I$(top_srcdir)/lib -I$(RSVP_INC) -I/usr/include -I/usr/local/include -I/usr/include/libxml2 -I/usr/local/include/libxml2
 DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
@@ -15,7 +16,7 @@ bin_PROGRAMS = dragon
 
 dragon_SOURCES = dragon_main.c dragon_vty.c dragon_packet.c dragon_xml.c
 noinst_HEADERS = dragond.h
-dragon_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP -L/usr/lib -L/usr/local/lib -lxml2 -lz -L/usr/local/lib -liconv
+dragon_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP $(XML_LIBS) -lxml2 -lz 
 
 sysconf_DATA = dragon.conf.sample
 
