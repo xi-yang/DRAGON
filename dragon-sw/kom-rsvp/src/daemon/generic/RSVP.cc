@@ -327,7 +327,7 @@ const LogicalInterface* RSVP::findInterfaceByAddress( const NetAddress& addr ) c
 const LogicalInterface* RSVP::findInterfaceByLocalId( const uint32& lclId ) const {
 	uint32 i;
 	for ( i = 0; i < interfaceCount; ++i ) {
-		if ( lifArray[i]->getLocalId() == lclId ) {
+		if (((LogicalInterface*)lifArray[i])->getLocalId() == lclId ) {
 			return lifArray[i];
 		}
 	}

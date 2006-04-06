@@ -166,7 +166,7 @@ void LogicalInterface::setLocalId (String& lclId) {
 	}
 	if (sscanf(lclId.chars()+2, "%d", &value) != 1)
 		return;
-	localId = (((uint32)type) <<16) | (uint32)value);
+	localId = ((((uint32)type) <<16) | (uint32)value);
 }
 
 #if defined(WITH_API) || defined(VIRT_NETWORK)
