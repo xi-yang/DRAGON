@@ -596,7 +596,10 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		if ( explicitRoute && !explicitRoute->getAbstractNodeList().empty()) {
 			destAddress = explicitRoute->getAbstractNodeList().front().getAddress();
 		}
-		else{
+		else if (explicitRoute && (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData(destAddress, 0) != NULL) {
+			destAddress = loopback;
+			explicitRoute->pushFront(AbstractNode(false, destAddress, (uint8)32));
+		} else {
 			ERROR(2)( Log::Error, "Can't determine data interfaces!", *static_cast<SESSION_Object*>(this));
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
 			return;
@@ -667,8 +670,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		}
 #endif
 
-		if ( !RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) 
-			&& !explicitRoute && !explicitRoute.getAbstractNodeList().empty() ) {
+		if ( !RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) ) {
 		//if (!RSVP_Global::rsvp->getApiServer().findApiSession( *this ) ){
 			if ( destAddress.isMulticast() )  {
 				gateway = LogicalInterface::noGatewayAddress;
