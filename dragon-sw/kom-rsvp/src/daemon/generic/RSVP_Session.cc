@@ -487,7 +487,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			defaultOutLif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)uni->getDestTNA().local_id);	
 		else
 			defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(egressChanName);
-		defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getEgressCtrlChannel().name));
 		if (!defaultOutLif) {
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
 			return;
