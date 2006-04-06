@@ -107,6 +107,7 @@ public:
 	uint32 getInterfaceCount() const { return interfaceCount; }
 	const LogicalInterface* findInterfaceByName( const String& ) const;
 	const LogicalInterface* findInterfaceByAddress( const NetAddress& ) const;
+	const LogicalInterface* findInterfaceByLocalId( const uint32& lclId ) const;
 	const LogicalInterface* findInterfaceByLIH( uint32 LIH ) const {
 		if ( LIH < interfaceCount ) return lifArray[LIH];
 		return NULL;

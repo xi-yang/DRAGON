@@ -61,6 +61,7 @@ LogicalInterface::LogicalInterface( const String& name, const NetAddress&
 	clonedTC(false), trafficControl(NULL), obuffer(maxPayloadLength) {
 	maxUnfragmentMsgSize = MTU - PacketHeader::maxOutputSize();
 	mpls_enabled = RSVP_Global::mplsDefault && (sysIndex != -1);
+	localId = 0;
 #if defined(REFRESH_REDUCTION)
 	rapidRefreshInterval = TimeValue(0,0);
 	maxIdCount = (maxUnfragmentMsgSize - (MESSAGE_ID_LIST_Object::minSize() + Message::headerSize())) / MESSAGE_ID_LIST_Object::idSize();
@@ -140,6 +141,32 @@ void LogicalInterface::sendMessageInternal( const Message& msg, const NetAddress
 void LogicalInterface::disable() {
 	disabled = true;
 	LOG(2)( Log::Config, "Disabling interface:", *this );
+}
+
+void LogicalInterface::setLocalId (String& lclId) {
+	uint16 type;
+	uint16 value;
+	if (lclId.length() < 3)
+		return;
+	switch (lclId[0]) {
+	case 'p':
+	case 'P':
+		type = LOCAL_ID_TYPE_PORT;
+		break;
+	case 'g':
+	case 'G':
+		type = LOCAL_ID_TYPE_GROUP;
+		break;
+	case 't':
+	case 'T':
+		type = LOCAL_ID_TYPE_TAGGED_GROUP;
+		break;
+	default:
+		return;
+	}
+	if (sscanf(lclId.chars()+2, "%d", &value) != 1)
+		return;
+	localId = (((uint32)type) <<16) | (uint32)value);
 }
 
 #if defined(WITH_API) || defined(VIRT_NETWORK)

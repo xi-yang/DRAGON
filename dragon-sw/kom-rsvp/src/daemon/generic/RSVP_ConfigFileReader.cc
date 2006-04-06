@@ -125,6 +125,7 @@ void ConfigFileReader::createInterface() {
 #endif
 	if (refresh) lif->configureRefresh( refreshRate/1000 );
 	if (tc) lif->configureTC( tc );
+	if (localId.length() > 0) lif->setLocalId(localId);
 }
 
 void ConfigFileReader::createTC_NONE() {
@@ -202,6 +203,7 @@ void ConfigFileReader::addSlot(String slot_type, uint16 slot_num) {
 
 void ConfigFileReader::cleanup() {
 	interfaceName = "";
+	localId = "";
 	localAddress = remoteAddress = virtAddress = 0;
 	virtMTU = localPort = 0;
 	bandwidth = lossProb = 0;

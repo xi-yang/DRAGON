@@ -147,8 +147,13 @@ void Hop::processSrefresh( const Message& msg ) {
 					if ((*stateIter).sb.psb->getSession().getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()) {
 						if (uni == NULL)
 							lif = RSVP_Global::rsvp->getApiLif();
-						else 
-							lif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getEgressCtrlChannel().name));
+						else {
+							const String egressChanName = (const char*)uni->getEgressCtrlChannel().name;
+							if (egressChanName == "implicit")
+								lif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)uni->getDestTNA().local_id);	
+							else
+								lif = RSVP_Global::rsvp->findInterfaceByName(egressChanName);
+						}
 					}
 					else
 #endif

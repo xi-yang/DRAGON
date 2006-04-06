@@ -466,7 +466,11 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	EXPLICIT_ROUTE_Object* explicitRoute = NULL;
 
 	if (isUniIngressClient) {
-		defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getIngressCtrlChannel().name));
+		const String ingressChanName = (const char*)uni->getIngressCtrlChannel().name;
+		if (ingressChanName == "implicit")
+			defaultOutLif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)uni->getSrcTNA().local_id);	
+		else
+			defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(ingressChanName);
 		if (!defaultOutLif) {
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
 			return;
@@ -478,6 +482,11 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		senderTemplate.setSrcAddress(NetAddress(uni->getSrcTNA().addr.s_addr));
 	} 
 	else if (isUniEgress) {
+		const String egressChanName = (const char*)uni->getEgressCtrlChannel().name;
+		if (egressChanName == "implicit")
+			defaultOutLif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)uni->getDestTNA().local_id);	
+		else
+			defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(egressChanName);
 		defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getEgressCtrlChannel().name));
 		if (!defaultOutLif) {
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??

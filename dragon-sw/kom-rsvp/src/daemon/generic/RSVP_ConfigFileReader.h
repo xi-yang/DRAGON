@@ -56,6 +56,7 @@ public:
 	SimpleList<Hop> hopList;
 	bool mpls_default;
 	String interfaceName;
+	String localId;
 	NetAddress localAddress, remoteAddress, virtAddress;
 	uint16 virtMTU, localPort;
 	ieee32float bandwidth, lossProb;

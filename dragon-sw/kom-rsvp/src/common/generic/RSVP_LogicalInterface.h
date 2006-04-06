@@ -70,6 +70,7 @@ private:
 	TrafficControl* trafficControl;
 
 	bool mpls_enabled;
+	uint32 localId;
 #if defined(NS2)
 	String oif;
 #endif
@@ -129,6 +130,8 @@ public:
 	const TimeValue& getRefreshInterval() const { return refreshInterval; }
 	uint32 getMaxUnfragmentMsgSize() const { return maxUnfragmentMsgSize; }
 	TrafficControl& getTC() const { assert(trafficControl); return *trafficControl; }
+	void setLocalId (String& lclId);
+	const uint32 getLocalId () { return localId; }
 #if defined(REFRESH_REDUCTION)
 	void setRapidRefreshInterval( uint32 msec ) { rapidRefreshInterval = TimeValue(msec/MSECS_PER_SEC,msec*USECS_PER_MSEC); }
 	const TimeValue& getRapidRefreshInterval() const { return rapidRefreshInterval; }

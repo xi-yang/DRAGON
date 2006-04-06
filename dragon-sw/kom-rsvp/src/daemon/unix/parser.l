@@ -77,6 +77,7 @@ ieee32float_p yy_float;
 [0-9]+\.[0-9]+		{ yy_float = convertStringToFloat(yytext); return FLOAT; }
 [0-9]+  		{ yy_int = convertStringToInt(yytext); return INTEGER; }
 
+[PpGgTt]\/[0-9]+	{ yy_string = yytext; return LOCAL_ID; }
 
 [A-Za-z0-9\-\+]+	{ yy_string = yytext; return STRING; }
 

@@ -52,7 +52,7 @@ static String yy_host;
 %token INTERFACE API_C ROUTE REFRESH ENCAP VIRT DISABLE RAPID LOSS
 %token TC_C NONE CBQ_C HFSC_C RATE PEER
 %token TIMER SESSION_HASH API_HASH ID_HASH_SEND ID_HASH_RECV LIST_ALLOC SB_ALLOC
-%token EXPLICIT_ROUTE MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH
+%token EXPLICIT_ROUTE MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH LOCAL_ID
 %token NARB SLOTS
 
 %%
@@ -63,8 +63,8 @@ program:
 	;
 
 command:
-	INTERFACE name generic TC_C tc generic	{ cfr->createInterface(); cfr->cleanup(); }
-	| INTERFACE name generic		{ cfr->createInterface(); cfr->cleanup(); }
+	INTERFACE name generic TC_C tc generic { cfr->createInterface(); cfr->cleanup(); }
+	| INTERFACE name generic 	{ cfr->createInterface(); cfr->cleanup(); }
 	| ROUTE dest mask gateway name		{ cfr->createRoute(); cfr->cleanup(); }
 	| EXPLICIT_ROUTE route_hops		{ cfr->setExplicitRoute(); cfr->cleanup(); }
 	| API_C INTEGER				{ cfr->setApiPort( yy_int ); }
@@ -114,6 +114,7 @@ generic:
 	|
 	;
 
+
 detail:
 	ENCAP local_port remote_address remote_port virt	{ cfr->encap = true; }
 	| REFRESH INTEGER					{ cfr->refreshRate = yy_int; cfr->refresh = true; }
@@ -122,6 +123,7 @@ detail:
 	| LOSS FLOAT						{ cfr->lossProb = yy_float; }
 	| MPLS_C						{ cfr->mpls = true; }
 	| NOMPLS						{ cfr->mpls = false; }
+	| LOCAL_ID						{ cfr->localId = yy_string; }
 	;
 
 tc:
