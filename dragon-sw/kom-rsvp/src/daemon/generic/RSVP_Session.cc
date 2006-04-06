@@ -396,6 +396,8 @@ bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 				outLif = (LogicalInterface*)RSVP_Global::rsvp->findInterfaceByAddress((*iter).getAddress());
 				if (!outLif)  break;
 			}
+			else if (getDestAddress() == (*iter).getAddress())
+				return false;
 		}
 	}
 
