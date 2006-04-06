@@ -85,6 +85,7 @@ PSB::PSB( const SENDER_Object& senderTemplate )
 	inLabelRequested = false;
 	inLabel = NULL;
 	explicitRoute = NULL;
+	dragonUni = NULL;
 	labelSet = NULL;
 	hasSuggestedLabel = false;
 	hasUpstreamInLabel = hasUpstreamOutLabel = false;
