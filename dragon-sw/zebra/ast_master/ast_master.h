@@ -1,0 +1,172 @@
+#ifndef _ZEBRA_AST_MASTER_H
+#define _ZEBRA_AST_MASTER_H
+
+#include "adt.h"
+#include "buffer.h"
+
+#define AST_DIR         "/usr/local/dragon/ast"
+
+#define MASTER_PORT		2619
+#define DRAGON_XML_PORT         2618
+#ifdef RESOURCE_BROKER
+#define NODE_BROKER_PORT        2624
+#endif
+
+#define NODENAME_MAXLEN		30
+#define IP_MAXLEN 		15 
+#define NUM_LINK_TYPE		3
+#define NUM_NODE_TYPE		3
+#define LSP_NAME_LEN            13
+#define NODE_AGENT_PORT 	2623
+
+#define AST_UNKNOWN		0 
+#define AST_SUCCESS		1
+#define AST_FAILURE		2
+#define AST_AST_COMPLETE	3
+#define AST_APP_COMPLETE	4
+ 
+/* defines for application_cfg.function */
+#define SETUP_REQ		1
+#define SETUP_RESP		2
+#define AST_COMPLETE		3
+#define RELEASE_REQ		4
+#define RELEASE_RESP		5
+#define APP_COMPLETE		6
+#define QUERY_REQ		7
+#define QUERY_RESP		8
+#define INVALID_INCOMING_VALUE	9
+
+struct string_syntex_check {
+   int number;
+   struct {
+	const char* abbre;
+	const char* details;
+   } ss[50];
+};
+
+#define REG_TXT_FIELD_LEN	20
+
+/* structures defined for the xml files are:
+ * 1. struct application_cfg
+ * 2. struct node_cfg
+ * 3. struct link_cfg
+ */
+struct application_cfg {
+  int org_function;
+  int function;
+  int ast_status;
+  char* glob_ast_id;
+  char* ast_ip;
+  char details[200];
+  struct adtlist *node_list;
+  struct adtlist *link_list;
+};
+
+enum entity_type { PC = 1, correlator, computation_array };
+
+struct node_cfg {
+  int node_type;
+  int ast_status;
+
+  char name[NODENAME_MAXLEN + 1];
+  char ipadd[IP_MAXLEN+1];
+  char te_addr[IP_MAXLEN+1];
+  char *agent_message;
+  int agent_port;
+  char *command;
+  struct adtlist *link_list;
+};
+
+struct link_cfg {
+  int service_type;
+  int ast_status;
+  char name[NODENAME_MAXLEN + 1];
+  char *agent_message;
+  char lsp_name[LSP_NAME_LEN+1];
+  struct node_cfg *src;
+  struct node_cfg *dest;
+  int lsp_id; 
+  int tunnel_id; 
+
+  char src_local_id_type[REG_TXT_FIELD_LEN+1];
+  char dest_local_id_type[REG_TXT_FIELD_LEN+1];
+  int src_local_id;
+  int dest_local_id;
+  char vtag[REG_TXT_FIELD_LEN+1];
+  char bandwidth[REG_TXT_FIELD_LEN+1];
+  char swcap[REG_TXT_FIELD_LEN+1];
+  char encoding[REG_TXT_FIELD_LEN+1];
+  char gpid[REG_TXT_FIELD_LEN+1];
+  char frame_order[REG_TXT_FIELD_LEN+1];
+  int mtu; 
+  char src_ip[IP_MAXLEN+1];	// only for QUERY_RESP
+  char dest_ip[IP_MAXLEN+1];	// only for QUERY_RESP
+
+};
+
+struct application_cfg glob_app_cfg;
+struct adtlist glob_cfg_list;
+
+/* structurs defined for the resource agency
+ *
+ */
+struct resource_agent {
+  char *resource_type;
+  char *add;
+  int  port;
+};
+
+struct adtlist glob_agency_list;
+
+/* structures defined for link
+ */
+struct network_link {
+  char *service_name;
+  char *version;
+  char *xmlns;
+  char *frame_type;
+  char **bandwidth_minmax;
+  char **vlan_transport;
+  int vlan_transport_num;
+  char **spt_transpot;
+  int spt_transport_num;
+      
+  struct link_cfg default_cfg;
+};
+
+struct network_link *linkprofile[3];
+
+enum link_type { EtherPipeBasic = 1, EtherPipeUltra, TDMBasic };
+
+#define XML_SERVICE_DEF_FILE "/usr/local/dragon/ast_file/resource_broker.xml"
+#define XML_ETHERBASIC_FILE "/tmp/service_template/EtherPipeBasic.xml"
+#define XML_ETHERULTRA_FILE "/tmp/service_template/EtherPipeUltra.xml"
+#define XML_TDMBASIC_FILE "/tmp/service_template/TDMBasic.xml"
+#define XML_NEW_FILE "/tmp/app_ready.xml"
+#define XML_DRAGON_RETURN_FILE "/tmp/dragon_resp.xml"
+
+int service_xml_parser(char*);
+int master_locate_resource();
+int master_validate_graph(int);
+int master_send_task();
+
+#define FULL_VERSION	1
+#define BRIEF_VERSION	2
+
+int topo_xml_parser(char*, int);
+void print_xml_response(char*, int);
+void free_application_cfg(struct application_cfg*);
+void print_node(char*, struct node_cfg*);
+void print_link(char*, struct link_cfg*);
+struct adtlist* dragon_query_result_parser(char*, struct node_cfg*);
+int dragon_result_parser(char*, struct node_cfg *);
+void print_final(char*);
+void print_error_response(char*);
+int agent_final_parser(char*);
+
+#define ID_SETUP	1
+#define ID_TEMP		2
+#define ID_QUERY	3
+char* generate_ast_id(int);
+
+#endif /* _ZEBRA_AST_MASTER_H */
