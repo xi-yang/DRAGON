@@ -667,7 +667,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		}
 #endif
 
-		if ( !RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) ) {
+		if ( !RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) 
+			&& !explicitRoute && !explicitRoute.getAbstractNodeList().empty() ) {
 		//if (!RSVP_Global::rsvp->getApiServer().findApiSession( *this ) ){
 			if ( destAddress.isMulticast() )  {
 				gateway = LogicalInterface::noGatewayAddress;
