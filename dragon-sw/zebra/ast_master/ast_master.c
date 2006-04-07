@@ -27,8 +27,8 @@ char *link_type_name[] =
     "TDMBasic" };
 
 char *status_type_details[] =
-  { "AST_UNKNOWN", "AST_SUCCESS", "AST_FAILURE", "AST_AST_COMPLETE",
-    "AST_APP_COMPLETE" };
+  { "AST_UNKNOWN", "AST_SUCCESS", "AST_FAILURE", "AST_PENDING",
+    "AST_AST_COMPLETE", "AST_APP_COMPLETE" };
 
 char *function_type_details[] =
   { "VOID", "SETUP_REQ", "SETUP_RESP", "AST_COMPLETE",

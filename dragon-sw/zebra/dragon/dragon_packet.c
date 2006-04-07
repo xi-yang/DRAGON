@@ -42,6 +42,8 @@
 #include "log.h"
 #include "dragon/dragond.h"
 
+extern void dragon_upcall_callback(int, char*);
+
 int 
 is_mandated_params_set_for_lsp(struct lsp *lsp)
 {
@@ -855,6 +857,7 @@ void  rsvpUpcall(void* para)
 				/* send RESV message to RSVPD to set up the path */
 				zInitRsvpResvRequest(dmaster.api, para);
 				lsp->status = LSP_IS;
+				dragon_upcall_callback(p->code, (lsp->common.SessionAttribute_Para)->sessionName);
 			}
 
 			break;
@@ -874,6 +877,7 @@ void  rsvpUpcall(void* para)
 				/* Write packet to socket */
 				DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
 			}
+			dragon_upcall_callback(p->code, (lsp->common.SessionAttribute_Para)->sessionName);
 			break;
 
 		case PathTear:
@@ -884,6 +888,7 @@ void  rsvpUpcall(void* para)
 					zTearRsvpPathRequest(dmaster.api, &lsp->common); /* Remove API entry off the list in RSVP */
 				listnode_delete(dmaster.dragon_lsp_table, lsp);
 				lsp_del(lsp);
+				dragon_upcall_callback(p->code, (lsp->common.SessionAttribute_Para)->sessionName);
 			}
 			break;
 			
@@ -906,6 +911,7 @@ void  rsvpUpcall(void* para)
 			
 		case PathErr:
 		case ResvErr:
+			dragon_upcall_callback(p->code, (lsp->common.SessionAttribute_Para)->sessionName);
 			break;
 			
 		default:

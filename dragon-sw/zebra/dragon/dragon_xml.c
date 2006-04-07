@@ -22,6 +22,15 @@
 #define XML_FILE_RECV_BUF	250
 #define TIMEOUT_SECS		3
 
+struct dragon_callback {
+  char *glob_ast_id;
+  char lsp_name[LSP_NAME_LEN+1];
+  char src_name[NODENAME_MAXLEN+1];
+  char dest_name[NODENAME_MAXLEN+1];
+  char link_name[NODENAME_MAXLEN+1];
+};
+static struct adtlist pending_list;
+
 extern struct thread_master *master;
 extern char *status_type_details[];
 static struct vty* fake_vty = NULL;
@@ -32,6 +41,7 @@ extern void process_xml_query(FILE *, char*);
 
 static int dragon_link_provision();
 static int dragon_link_release();
+extern struct string_value_conversion conv_rsvp_event;
 
 static struct vty*
 generate_fake_vty()
@@ -42,6 +52,140 @@ generate_fake_vty()
   vty->type = VTY_FILE;
 
   return vty;
+}
+
+void
+dragon_upcall_callback(int msg_type, char *lsp_name)
+{
+  struct adtlistnode *prev, *curr, *next;
+  struct dragon_callback *data;
+  char path[105];
+  struct stat file_stat;
+  int ast_status = AST_UNKNOWN;
+  int xml_sock, fd;
+  struct sockaddr_in astAddr;
+  FILE *fp;
+
+  if (pending_list.count == 0)
+    return;
+
+  prev = NULL;
+  next = NULL;
+  for (curr = pending_list.head;
+	curr;
+	prev = curr, curr = curr->next) {
+    data = (struct dragon_callback*) curr->data;
+    if (strcmp(data->lsp_name, lsp_name) == 0) 
+      break;
+  }
+
+  if (!curr) 
+    return;
+  /* re-organize the list */
+  if (prev == NULL) 
+    pending_list.head = curr->next;
+  else 
+    prev->next = curr->next;
+  pending_list.count--;
+
+  free_application_cfg(&glob_app_cfg);
+
+  zlog_info("********* CALLBACK FOR LINK_AGNET msg_type: %d; lsp_name: %s", msg_type, lsp_name);
+  unlink(DRAGON_XML_RESULT);
+
+  /* now, read the file for glob_ast_id */
+  sprintf(path, "%s/%s/final.xml", 
+          LINK_AGENT_DIR, data->glob_ast_id);
+  if (stat(path, &file_stat) == -1) {
+    zlog_err("Can't locate the glob_ast_id final file");
+    free(data->glob_ast_id);
+    free(data);
+    return;
+  }
+ 
+  /* check the ast_status, if anything other than SETUP_RESP,
+   * return
+   */
+  if (agent_final_parser(path) != 1) {
+    zlog_err("Can't parse the final file successfully");
+    free(data->glob_ast_id);
+    free(data);
+    return;
+  }
+    
+  if (glob_app_cfg.function != SETUP_RESP) {
+    free_application_cfg(&glob_app_cfg);
+    zlog_err("final.xml is not SETUP_RESP, no need to send anything to ast_master");
+    free(data->glob_ast_id);
+    free(data);
+    return;
+  }
+
+  fp = fopen(DRAGON_XML_RESULT, "w");
+  fprintf(fp, "<topology>\n");
+  fprintf(fp, "<ast_func>SETUP_RESP</ast_func>\n");
+  fprintf(fp, "<glob_ast_id>%s</glob_ast_id>\n", glob_app_cfg.glob_ast_id);
+
+  /* if Path, Resv, ResvConf, return AST_SUCCESS to user
+   * if PathErr, ResvErr, return AST_FAILURE to user
+   */
+  switch (msg_type) {
+    case Path:
+    case Resv:
+    case ResvConf:
+      ast_status = AST_SUCCESS;
+      break; 
+    case PathErr:
+    case ResvErr:
+      ast_status = AST_FAILURE;
+      break;
+  }
+  fprintf(fp, "<ast_status>%s</ast_status>\n", 
+		ast_status == AST_SUCCESS? "AST_SUCCESS":"AST_FAILURE");
+  fprintf(fp, "<resource>\n<name>%s</name>\n</resource>\n", data->src_name);
+  fprintf(fp, "<resource>\n<name>%s</name>\n</resource>\n", data->dest_name);
+  fprintf(fp, "<resource>\n<src>%s</src>\n<dest>%s</dest>\n", data->src_name, data->dest_name);
+  fprintf(fp, "<name>%s</name>\n", data->link_name);
+  fprintf(fp, "<ast_status>%s</ast_status>\n", 
+		ast_status == AST_SUCCESS? "AST_SUCCESS":"AST_FAILURE");
+  fprintf(fp, "<lsp_name>%s</lsp_name>\n", data->lsp_name);
+  fprintf(fp, "</resource>\n</topology>\n");
+  fflush(fp);
+  fclose(fp);
+
+  zlog_info("sending SETUP_RESP to ast_master at %s", glob_app_cfg.ast_ip);
+  if ((xml_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+    zlog_err("socket() failed");
+  else {
+    memset(&astAddr, 0, sizeof(astAddr));
+    astAddr.sin_family = AF_INET;
+    astAddr.sin_addr.s_addr = inet_addr(glob_app_cfg.ast_ip);
+    astAddr.sin_port = htons(MASTER_PORT);
+
+    if (connect(xml_sock, (struct sockaddr*)&astAddr, sizeof(astAddr)) < 0) {
+      zlog_err("connect() failed to ast_master");
+      close(xml_sock);
+      xml_sock = -1;
+    }
+  }
+
+  if (xml_sock != -1) { 
+    fd = open(DRAGON_XML_RESULT, O_RDONLY);
+  #ifdef __FreeBSD__
+    sendfile(fd, xml_sock, 0, 0, NULL, NULL, 0);
+  #else
+    if (fstat(fd, &file_stat) == -1) {
+      zlog_err("fstat() failed on %s", XML_NEW_FILE);
+    }
+    sendfile(xml_sock, fd, 0, file_stat.st_size);
+  #endif
+    close(xml_sock);
+    close(fd);
+  }
+
+  free_application_cfg(&glob_app_cfg);
+  free(data->glob_ast_id);
+  free(data);
 }
 
 int
@@ -82,7 +226,7 @@ dragon_process_setup_req()
   if (dragon_link_provision() == 0) 
     glob_app_cfg.ast_status = AST_FAILURE;
   else
-    glob_app_cfg.ast_status = AST_SUCCESS;
+    glob_app_cfg.ast_status = AST_PENDING;
 
   glob_app_cfg.function = SETUP_RESP;
   print_xml_response(path, BRIEF_VERSION);
@@ -370,6 +514,7 @@ xml_module_init()
   for (i = 0; i < 7; i++) 
     argv[i] = assign+(i*50);
   memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
+  memset(&pending_list, 0, sizeof(struct adtlist));
 }
 
 static void
@@ -402,14 +547,14 @@ dragon_build_lsp(struct link_cfg *link)
   char lsp_name[LSP_NAME_LEN];
   int argc;
 
-  memset(link->lsp_name, 0, LSP_NAME_LEN);
+  bzero(link->lsp_name, LSP_NAME_LEN+1);
   link->ast_status = AST_FAILURE;
   generate_lsp_name(lsp_name);
   
   /* mirror what dragon_edit_lsp_cmd does
    */
   lsp = XMALLOC(MTYPE_OSPF_DRAGON, sizeof(struct lsp));
-  memset(lsp, 0, sizeof(struct lsp));
+  bzero(lsp, sizeof(struct lsp));
   set_lsp_default_para(lsp);
   lsp->status = LSP_EDIT;
   strcpy((lsp->common.SessionAttribute_Para)->sessionName, lsp_name);
@@ -438,19 +583,19 @@ dragon_build_lsp(struct link_cfg *link)
    */
   argc = 6;
   if (link->src_local_id_type[0] == '\0') {
-    strcpy(argv[0], link->src->te_addr);
+    strcpy(argv[0], link->src->ipadd);
     strcpy(argv[1], "lsp->id"); 
     sprintf(argv[2], "%d", random() % 3000); 
   } else {
     strcpy(argv[1], link->src_local_id_type);
     sprintf(argv[2], "%d", link->src_local_id);
     if (strcasecmp(link->src_local_id_type, "lsp-id") == 0) 
-      strcpy(argv[0], link->src->te_addr);
+      strcpy(argv[0], link->src->ipadd);
     else
       strcpy(argv[0], link->src->ipadd);
   }
   if (link->dest_local_id_type[0] == '\0') {
-    strcpy(argv[3], link->dest->te_addr);
+    strcpy(argv[3], link->dest->ipadd);
     strcpy(argv[4], "tunnel-id");
     sprintf(argv[5], "%d", random() % 3000);
   } else {
@@ -458,7 +603,7 @@ dragon_build_lsp(struct link_cfg *link)
 		"tunnel-id":link->dest_local_id_type);
     sprintf(argv[5], "%d", link->dest_local_id);
     if (strcasecmp(link->dest_local_id_type, "lsp-id") == 0) 
-      strcpy(argv[3], link->dest->te_addr);
+      strcpy(argv[3], link->dest->ipadd);
     else 
       strcpy(argv[3], link->dest->ipadd);
   }
@@ -546,7 +691,18 @@ dragon_link_provision()
     	  mylink->agent_message = buffer_getstr(fake_vty->obuf);
     	  buffer_reset(fake_vty->obuf);
 	  continue;
-	} 
+	} else {
+	  struct dragon_callback *data = malloc(sizeof(struct dragon_callback));
+	  bzero(data, sizeof(struct dragon_callback));
+          data->glob_ast_id = strdup(glob_app_cfg.glob_ast_id);
+	  strncpy(data->lsp_name, mylink->lsp_name, LSP_NAME_LEN);
+	  strncpy(data->src_name, mylink->src->name, NODENAME_MAXLEN);	
+	  strncpy(data->dest_name, mylink->dest->name, NODENAME_MAXLEN);
+	  strncpy(data->link_name, mylink->name, NODENAME_MAXLEN);
+	  adtlist_add(&pending_list, data);
+	  mylink->ast_status = AST_PENDING;
+        }
+	   
 	success++;
 	vty_out(fake_vty, "SUCCESS: Lsp has been set between %s and %s\n", 
 		mylink->src->name, mylink->dest->name); 

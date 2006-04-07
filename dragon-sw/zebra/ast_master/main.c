@@ -114,6 +114,143 @@ send_file_to_agent(char *ipadd, int port, char *newpath)
 }
 
 int
+master_process_setup_resp()
+{
+  char path[100];
+  struct stat fs;
+  struct application_cfg working_app_cfg;
+  struct adtlistnode *work_node, *glob_node; 
+  struct node_cfg *glob_node_cfg;
+  struct link_cfg *work_link_cfg, *glob_link_cfg;
+  int complete = 1;
+
+  if (glob_app_cfg.glob_ast_id == NULL) {
+    sprintf(glob_app_cfg.details, "For SETUP_RESP, glob_ast_id has to be set");
+    return 0;
+  }
+
+  zlog_info("Processing glob_ast_id: %s, ast_func: SETUP_RESP", glob_app_cfg.glob_ast_id);
+  sprintf(path, "%s/%s/final.xml", AST_DIR, glob_app_cfg.glob_ast_id);
+  if (stat(path, &fs) == -1) {
+    sprintf(glob_app_cfg.details, "Can't locate the glob_ast_id final file"); 
+    return 0;
+  }
+
+  memcpy (&working_app_cfg, &glob_app_cfg, sizeof(struct application_cfg));
+  memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
+
+  if (topo_xml_parser(path, BRIEF_VERSION) != 1) {
+    memcpy (&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
+    sprintf(glob_app_cfg.details, "didn't parse the glob_ast_id file successfully");
+    glob_app_cfg.ast_status = AST_FAILURE;
+    return 0;
+  }
+
+  if (glob_app_cfg.function == RELEASE_RESP) {
+    free_application_cfg(&glob_app_cfg);
+    memcpy (&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
+    sprintf(glob_app_cfg.details, "glob_ast_id has received RELEASE_REQ already");
+    glob_app_cfg.ast_status = AST_FAILURE;
+    return 0;
+  }
+
+  if (glob_app_cfg.function == AST_COMPLETE) {
+    free_application_cfg(&glob_app_cfg);
+    memcpy (&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
+    sprintf(glob_app_cfg.details, "glob_ast_id has send AST_COMPLETE already");
+    glob_app_cfg.ast_status = AST_FAILURE;
+    return 0;
+  }
+
+  if (glob_app_cfg.function == APP_COMPLETE) {
+    memcpy (&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
+    sprintf(glob_app_cfg.details, "glob_ast_id has send APP_COMPLETE already");
+    glob_app_cfg.ast_status = AST_FAILURE;
+    return 0;
+  }
+
+  glob_app_cfg.ast_status = AST_FAILURE;
+  glob_app_cfg.function = SETUP_RESP;
+
+  if (glob_app_cfg.link_list == NULL &&
+	glob_app_cfg.node_list == NULL) {
+    zlog_warn("The received SETUP_RESP message has no resources");
+    free_application_cfg(&glob_app_cfg);
+    free_application_cfg(&working_app_cfg);
+    glob_app_cfg.org_function = SETUP_RESP;
+    return 0;
+  }
+
+  /* now has to distinguish where this request is coming from,
+   * node_agent or link_agent (dragond)
+   */
+  if (working_app_cfg.link_list == NULL) {
+    /* error here; only link_agent will send async SETUP_RESP */
+    zlog_err("Recived async SETUP_RESP from node_agent");
+    free_application_cfg(&glob_app_cfg);
+    free_application_cfg(&working_app_cfg);
+    glob_app_cfg.org_function = SETUP_RESP;
+    return 0;
+  } else {
+    /* this is from link_agent */
+    for (work_node = working_app_cfg.link_list->head;
+	 work_node;
+	 work_node = work_node->next) {
+      work_link_cfg = (struct link_cfg*)work_node->data;
+      zlog_info("SETUP_RESP msg from link_agent %s", work_link_cfg->src->name);
+
+      for (glob_node = glob_app_cfg.link_list->head;
+	   glob_node;
+	   glob_node = glob_node->next) {
+	glob_link_cfg = (struct link_cfg*)glob_node->data;
+	if (strcmp(work_link_cfg->lsp_name, glob_link_cfg->lsp_name) == 0) {
+	  zlog_info("link %s return %s", work_link_cfg->name,
+			status_type_details[work_link_cfg->ast_status]);
+	  glob_link_cfg->ast_status = work_link_cfg->ast_status;
+	  break;
+	}
+      }
+    }
+  }
+
+  /* working_app_cfg is the coming in app_cfg xml, the above code
+   * has integrated this into final.xml
+   */
+  glob_app_cfg.org_function = SETUP_RESP;
+  free_application_cfg(&working_app_cfg);
+
+  for (glob_node = glob_app_cfg.node_list->head;
+       glob_node && complete;
+       glob_node = glob_node->next) {
+    glob_node_cfg = (struct node_cfg*)glob_node->data;
+
+    if (glob_node_cfg->ast_status != AST_SUCCESS)
+      complete = 0;
+  }
+
+  if (glob_app_cfg.link_list != NULL) {
+    for (glob_node = glob_app_cfg.link_list->head;
+	glob_node && complete;
+	glob_node = glob_node->next) {
+      glob_link_cfg = (struct link_cfg*)glob_node->data;
+      if (glob_link_cfg->ast_status != AST_SUCCESS)
+	complete = 0;
+    }
+  }
+
+  if (complete)
+    glob_app_cfg.ast_status = AST_SUCCESS;
+  else
+    glob_app_cfg.ast_status = AST_FAILURE;
+
+  /* anyway, now, it's time to save the whole file again
+   */
+  integrate_result();
+
+  return 1;
+}
+
+int
 master_process_app_complete()
 {
   char path[100], newpath[100];
@@ -168,6 +305,7 @@ master_process_app_complete()
     zlog_warn("The received APP_COMPLETE message has no resources");
     free_application_cfg(&glob_app_cfg);
     free_application_cfg(&working_app_cfg);
+    glob_app_cfg.org_function = APP_COMPLETE;
     return 0;
   }
 
@@ -471,7 +609,8 @@ master_process_xml(char* input_file)
   if (glob_app_cfg.function != SETUP_REQ && 
       glob_app_cfg.function != RELEASE_REQ &&
       glob_app_cfg.function != QUERY_REQ &&
-      glob_app_cfg.function != APP_COMPLETE) { 
+      glob_app_cfg.function != APP_COMPLETE &&
+      glob_app_cfg.function != SETUP_RESP ) { 
     sprintf(glob_app_cfg.details, "invalid ast_func in xml file");
     return 0;
   }
@@ -511,6 +650,8 @@ master_process_xml(char* input_file)
     master_process_query_req();
   else if ( glob_app_cfg.function == APP_COMPLETE) 
     master_process_app_complete();
+  else if ( glob_app_cfg.function == SETUP_RESP)
+    master_process_setup_resp();
 
   return 1;
 }
@@ -583,7 +724,9 @@ master_server_init()
     if (glob_app_cfg.details[0] != '\0')
       zlog_err(glob_app_cfg.details);
 
-    if (glob_app_cfg.org_function != APP_COMPLETE) {
+    if (glob_app_cfg.org_function != APP_COMPLETE && 
+	glob_app_cfg.org_function != AST_COMPLETE &&
+	glob_app_cfg.org_function != SETUP_RESP) {
       /* send result back to ast_master
        */
       if (stat(AST_XML_RESULT, &file_stat) == -1) {

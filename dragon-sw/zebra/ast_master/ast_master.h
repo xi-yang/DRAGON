@@ -22,8 +22,9 @@
 #define AST_UNKNOWN		0 
 #define AST_SUCCESS		1
 #define AST_FAILURE		2
-#define AST_AST_COMPLETE	3
-#define AST_APP_COMPLETE	4
+#define AST_PENDING		3
+#define AST_AST_COMPLETE	4
+#define AST_APP_COMPLETE	5
  
 /* defines for application_cfg.function */
 #define SETUP_REQ		1
