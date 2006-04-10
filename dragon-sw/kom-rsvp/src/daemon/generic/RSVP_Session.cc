@@ -674,6 +674,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			|| (explicitRoute && !explicitRoute->getAbstractNodeList().empty() && explicitRoute->getAbstractNodeList().front().getAddress() == destAddress) )  {
 			defaultOutLif = RSVP::getApiLif();
 			gateway = LogicalInterface::noGatewayAddress;
+			RtOutL.insert_unique( defaultOutLif );
 		} else {
 		//if (!RSVP_Global::rsvp->getApiServer().findApiSession( *this ) ){
 			if ( destAddress.isMulticast() )  {
