@@ -670,8 +670,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		}
 #endif
 
-		if ( RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) 
-			|| (explicitRoute && !explicitRoute->getAbstractNodeList().empty() && explicitRoute->getAbstractNodeList().front().getAddress() == destAddress) )  {
+		if ( RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) || destAddress == loopback )  {
 			defaultOutLif = RSVP::getApiLif();
 			gateway = LogicalInterface::noGatewayAddress;
 			RtOutL.insert_unique( defaultOutLif );
