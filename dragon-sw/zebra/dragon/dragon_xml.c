@@ -15,9 +15,9 @@
 #include "buffer.h"
 #include "dragon/dragond.h"
 
-#define DRAGON_XML_RESULT 	"/usr/local/dragon/dragon_ret.xml"
-#define DRAGON_XML_RECV 	"/usr/local/dragon/dragon_recv.xml"
-#define LINK_AGENT_DIR		"/usr/local/dragon/link_agent"
+#define DRAGON_XML_RESULT 	"/usr/local/dragon_ret.xml"
+#define DRAGON_XML_RECV 	"/usr/local/dragon_recv.xml"
+#define LINK_AGENT_DIR		"/usr/local/link_agent"
 #define LSP_NAME_LEN 		13
 #define XML_FILE_RECV_BUF	250
 #define TIMEOUT_SECS		3
@@ -583,19 +583,19 @@ dragon_build_lsp(struct link_cfg *link)
    */
   argc = 6;
   if (link->src_local_id_type[0] == '\0') {
-    strcpy(argv[0], link->src->ipadd);
+    strcpy(argv[0], link->src->te_addr);
     strcpy(argv[1], "lsp->id"); 
     sprintf(argv[2], "%d", random() % 3000); 
   } else {
     strcpy(argv[1], link->src_local_id_type);
     sprintf(argv[2], "%d", link->src_local_id);
     if (strcasecmp(link->src_local_id_type, "lsp-id") == 0) 
-      strcpy(argv[0], link->src->ipadd);
+      strcpy(argv[0], link->src->te_addr);
     else
       strcpy(argv[0], link->src->ipadd);
   }
   if (link->dest_local_id_type[0] == '\0') {
-    strcpy(argv[3], link->dest->ipadd);
+    strcpy(argv[3], link->dest->te_addr);
     strcpy(argv[4], "tunnel-id");
     sprintf(argv[5], "%d", random() % 3000);
   } else {
@@ -603,7 +603,7 @@ dragon_build_lsp(struct link_cfg *link)
 		"tunnel-id":link->dest_local_id_type);
     sprintf(argv[5], "%d", link->dest_local_id);
     if (strcasecmp(link->dest_local_id_type, "lsp-id") == 0) 
-      strcpy(argv[3], link->dest->ipadd);
+      strcpy(argv[3], link->dest->te_addr);
     else 
       strcpy(argv[3], link->dest->ipadd);
   }

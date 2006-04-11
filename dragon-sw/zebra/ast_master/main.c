@@ -31,8 +31,8 @@ extern char *status_type_details[];
 extern char *function_type_details[];
 
 #define MAXPENDING      12
-#define AST_XML_RESULT	"/usr/local/dragon/ast_master_ret.xml"
-#define AST_XML_RECV	"/usr/local/dragon/ast_master_recv.xml"
+#define AST_XML_RESULT	"/usr/local/ast_master_ret.xml"
+#define AST_XML_RECV	"/usr/local/ast_master_recv.xml"
 #define RCVBUFSIZE      100
 #define SENDBUFSIZE     5000
 
@@ -807,10 +807,8 @@ main(int argc, char* argv[])
   /* parse the service_def.xml where indicates where to locate
    * resource agency 
    */
-  if (service_xml_parser(XML_SERVICE_DEF_FILE) == 0) {
-    zlog_err("main: service_xml_parser(); exiting ...");
-    exit(EXIT_FAILURE);
-  }
+  if (service_xml_parser(XML_SERVICE_DEF_FILE) == 0) 
+    zlog_err("main: service_xml_parser() error");
   
   /* parse all service_template.xml and build the default
    * struct for each service template for later use

@@ -4,7 +4,7 @@
 #include "adt.h"
 #include "buffer.h"
 
-#define AST_DIR         "/usr/local/dragon/ast"
+#define AST_DIR         "/usr/local/ast"
 
 #define MASTER_PORT		2619
 #define DRAGON_XML_PORT         2618
@@ -139,10 +139,10 @@ struct network_link *linkprofile[3];
 
 enum link_type { EtherPipeBasic = 1, EtherPipeUltra, TDMBasic };
 
-#define XML_SERVICE_DEF_FILE "/usr/local/dragon/ast_file/resource_broker.xml"
-#define XML_ETHERBASIC_FILE "/tmp/service_template/EtherPipeBasic.xml"
-#define XML_ETHERULTRA_FILE "/tmp/service_template/EtherPipeUltra.xml"
-#define XML_TDMBASIC_FILE "/tmp/service_template/TDMBasic.xml"
+#define XML_SERVICE_DEF_FILE "/usr/local/ast_file/resource_broker.xml"
+#define XML_ETHERBASIC_FILE "/usr/local/ast_file/service_template/EtherPipeBasic.xml"
+#define XML_ETHERULTRA_FILE "/usr/local/ast_file/service_template/EtherPipeUltra.xml"
+#define XML_TDMBASIC_FILE "/usr/local/ast_file/service_template/TDMBasic.xml"
 #define XML_NEW_FILE "/tmp/app_ready.xml"
 #define XML_DRAGON_RETURN_FILE "/tmp/dragon_resp.xml"
 

@@ -585,13 +585,13 @@ master_template_parser(int profile_id)
   memset(linkprofile[profile_id], 0, sizeof(struct network_link));
  
   switch (profile_id) {
-    case 0:
+    case 1:
       strcpy(filename, XML_ETHERBASIC_FILE);
       break;
-    case 1:
+    case 2:
       strcpy(filename, XML_ETHERULTRA_FILE);
       break;
-    case 2:
+    case 3:
       strcpy(filename, XML_TDMBASIC_FILE);
       break;
     }   
@@ -956,10 +956,8 @@ topo_xml_parser(char* filename, int parser_type)
 	   * link provides, we need to read the template for this 
 	   * particular service type if it hasn't been read yet 
 	   */ 
-	  if (master_template_parser(i) == 0 && parser_type == FULL_VERSION) { 
+	  if (master_template_parser(i) == 0 && parser_type == FULL_VERSION) 
 	    zlog_err("topo_xml_parser: can't parse the file for \"%s\"", link_type_name[i]); 
-	    return 0; 
-	  }
 	}
       }
  

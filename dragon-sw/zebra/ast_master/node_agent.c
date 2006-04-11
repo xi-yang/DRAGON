@@ -27,9 +27,9 @@
 #include "memory.h"
 #include "buffer.h"
 
-#define NODE_AGENT_RET 	"/usr/local/dragon/noded_ret.xml"
-#define NODE_AGENT_RECV "/usr/local/dragon/noded_recv.xml"
-#define NODE_AGENT_DIR	"/usr/local/dragon/node_agent"
+#define NODE_AGENT_RET 	"/usr/local/noded_ret.xml"
+#define NODE_AGENT_RECV "/usr/local/noded_recv.xml"
+#define NODE_AGENT_DIR	"/usr/local/node_agent"
 #define RCVBUFSIZE	200
 #define MAXPENDING      12
 #define TIMEOUT_SECS	3
