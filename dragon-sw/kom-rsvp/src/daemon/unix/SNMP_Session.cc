@@ -99,7 +99,7 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
         if (vendor == RFC2674) {
             if (vpmUntagged)
                 ret&=setVLANPortTag(vpmUntagged->ports, vlanID); //make THIS port tagged
-            //if (venderSystemDescription =="PowerConnect 5224") //@@@@
+            if (venderSystemDescription =="PowerConnect 5224") //@@@@
                 ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID;
     	}
     	if (vpmAll)
