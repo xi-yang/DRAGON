@@ -182,7 +182,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	NetAddress phopLoopBackAddr;
 	const LogicalInterface* outLif = NULL;
 	uint32 ifId;
-	//RSVP_HOP_TLV_SUB_Object tlv;
+	RSVP_HOP_TLV_SUB_Object tlv;
 	uint32 inUnumIfID = 0;
 	uint32 outUnumIfID = 0;
 	NetAddress inRtId = NetAddress(0);
@@ -212,7 +212,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
                         }
 		}
 		//dataInRsvpHop = RSVP_HOP_Object(hop.getLogicalInterface().getAddress(), msg.getRSVP_HOP_Object().getLIH(), tlv);
-		dataInRsvpHop = RSVP_HOP_Object(hop.getLogicalInterface().getAddress(), msg.getRSVP_HOP_Object().getLIH(), msg.getRSVP_HOP_Object().getTLV());
+		dataInRsvpHop = RSVP_HOP_Object(hop.getLogicalInterface().getAddress(), msg.getRSVP_HOP_Object().getLIH(), (RSVP_HOP_TLV_SUB_Object&)msg.getRSVP_HOP_Object().getTLV());
 
 	}
        else  //ingress localID processing @@@@ hacked
