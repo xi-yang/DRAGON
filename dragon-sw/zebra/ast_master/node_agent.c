@@ -749,12 +749,14 @@ broker_accept(struct thread *thread)
 
     fp = fopen(NODE_AGENT_RECV, "w");
     total = 0;
+    alarm(TIMEOUT_SECS);
     while ((recvMsgSize = recv(clntSock, buffer, RCVBUFSIZE-1, 0)) > 0 ) {
       if (errno == EINTR) {
         /* alarm went off
          */
         zlog_warn("xml_accept: dragon probably has not received all datas");
         zlog_warn("recvMsgSize = %d", recvMsgSize);
+	total += recvMsgSize;
         break;
       }
       buffer[recvMsgSize]='\0';

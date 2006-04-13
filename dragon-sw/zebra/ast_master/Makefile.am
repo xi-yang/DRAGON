@@ -1,7 +1,7 @@
 ## Process this file with Automake to create Makefile.in
 
 INCLUDES = @INCLUDES@ -I.. -I$(top_srcdir) -I$(top_srcdir)/lib -I/usr/include -I/usr/local/include -I/usr/include/libxml2 -I/usr/local/include/libxml2 
-DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
+DEFS = @DEFS@ -DRESOURCE_BROKER -DSYSCONFDIR=\"$(sysconfdir)/\"
 XML_LIBS = -L/usr/lib -L/usr/local/lib
 
 LIBS = @LIBS@ @CURSES@ @LIBPAM@ $(XML_LIBS)
