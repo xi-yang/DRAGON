@@ -16,7 +16,7 @@ bin_PROGRAMS = dragon
 
 dragon_SOURCES = dragon_main.c dragon_vty.c dragon_packet.c dragon_xml.c
 noinst_HEADERS = dragond.h
-dragon_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP $(XML_LIBS) -lxml2 -lz 
+dragon_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP $(XML_LIBS) -lxml2
 
 sysconf_DATA = dragon.conf.sample
 
