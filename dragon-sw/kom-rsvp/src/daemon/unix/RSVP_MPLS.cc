@@ -361,7 +361,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 					}
 					else{
 						noError = false;
-						LOG(2)( Log::MPLS, "VLSR: Cannot find an empty VLAN : ", ethSw);
+						LOG(2)( Log::MPLS, "VLSR: Cannot find an empty VLAN on switch : ", ethSw);
 					}
 					break;
 				}

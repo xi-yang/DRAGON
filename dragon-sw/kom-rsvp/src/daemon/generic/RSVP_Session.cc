@@ -372,6 +372,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 	LogicalInterface* outLif;
 	uint32 ifId;
+	NetAddress address;
 
 	//if destination is reached, there is no need for nexthop route
 	NetAddress loopback =  RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
@@ -383,22 +384,24 @@ bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 	for (; iter != ero->getAbstractNodeList().end(); ++iter){
 		switch ((*iter).getType()) {
 		case AbstractNode::IPv4:
+			address = (*iter).getAddress();
 			ifId = 0;
 			break;
 		case AbstractNode::UNumIfID:
+			address = (*iter).getAddress();
 			ifId = (*iter).getInterfaceID();
 			break;
 		default:
 			return false;
 		}
-		if ((*iter).getAddress() != loopback) {
-			outLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData((*iter).getAddress(), ifId); 
+		if (address != loopback) {
+			outLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData(address, ifId); 
 			if (!outLif)
 			{
-				outLif = (LogicalInterface*)RSVP_Global::rsvp->findInterfaceByAddress((*iter).getAddress());
+				outLif = (LogicalInterface*)RSVP_Global::rsvp->findInterfaceByAddress(address);
 				if (!outLif)  break;
 			}
-			else if (getDestAddress() == (*iter).getAddress())
+			else if (getDestAddress() == address)
 				return false;
 		}
 	}
@@ -411,7 +414,7 @@ bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 		return true;
 	//rerouting for a hop OSPFd cannot resolve
 	outLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
-		     (*iter).getAddress(), ifId, gw);
+		     address, ifId, gw);
 	if (!outLif) return true;
 
 	//no nexthop routing
