@@ -576,38 +576,31 @@ dragon_build_lsp(struct link_cfg *link)
     dragon_delete_lsp(NULL, fake_vty, argc, &argv);
     return NULL;
   }
- 
-  /* mirror what dragon_set_lsp_ip does 
+
+  /* mirrow what dragon_set_lsp_uni does
    */
+  argc = 3;
+  strcpy(argv[0], "client");
+  strcpy(argv[1], "explicit");
+  strcpy(argv[2], "explicit");
+  if (dragon_set_lsp_uni (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+    argc = 1;
+    strcpy(argv[0], lsp_name);
+    dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+    return NULL;
+  }
+ 
   /* mirror what dragon_set_lsp_ip does
    */
   argc = 6;
-  if (link->src_local_id_type[0] == '\0') {
-    strcpy(argv[0], (link->src->te_addr[0] == '\0') ? link->src->ipadd:link->src->te_addr);
-    strcpy(argv[1], "lsp->id"); 
-    sprintf(argv[2], "%d", random() % 3000); 
-  } else {
-    strcpy(argv[1], link->src_local_id_type);
-    sprintf(argv[2], "%d", link->src_local_id);
-    if (strcasecmp(link->src_local_id_type, "lsp-id") == 0) 
-      strcpy(argv[0], (link->src->te_addr[0] == '\0') ? link->src->ipadd:link->src->te_addr);
-    else
-      strcpy(argv[0], link->src->ipadd);
-  }
-  if (link->dest_local_id_type[0] == '\0') {
-    strcpy(argv[3], (link->dest->te_addr[0] == '\0') ? link->dest->ipadd:link->dest->te_addr);
-    strcpy(argv[4], "tunnel-id");
-    sprintf(argv[5], "%d", random() % 3000);
-  } else {
-    strcpy(argv[4], strcasecmp(link->dest_local_id_type, "lsp-id") == 0 ? 
-		"tunnel-id":link->dest_local_id_type);
-    sprintf(argv[5], "%d", link->dest_local_id);
-    if (strcasecmp(link->dest_local_id_type, "lsp-id") == 0) 
-      strcpy(argv[3], (link->dest->te_addr[0] == '\0') ? link->dest->ipadd:link->dest->te_addr);
-    else 
-      strcpy(argv[3], link->dest->ipadd);
-  }
-
+  strcpy(argv[0], link->src_vlsr->lo_addr);
+  strcpy(argv[1], "port");
+  sprintf(argv[2], "%d", link->src_vlsr->local_id);
+  strcpy(argv[3], link->dest_vlsr->lo_addr);
+  strcpy(argv[4], "port");
+  sprintf(argv[5], "%d", link->dest_vlsr->local_id);
+  zlog_info("parameters to dragon_set_lsp_ip:");
+  zlog_info("%s | %s | %s | %s | %s | %s", argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
   if (dragon_set_lsp_ip (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
     
     argc = 1;

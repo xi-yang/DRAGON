@@ -441,6 +441,7 @@ master_process_setup_req()
   if (send_task_to_link_agent() == 0) 
     glob_app_cfg.ast_status = AST_FAILURE;
 
+  glob_app_cfg.function = SETUP_RESP;
   integrate_result();
 
   return 1;
@@ -486,6 +487,7 @@ master_process_query_req()
   if (send_task_to_link_agent() == 0) 
     glob_app_cfg.ast_status = AST_FAILURE;
 
+  glob_app_cfg.function = QUERY_RESP;
   integrate_result();
 
   return 1;
@@ -584,6 +586,7 @@ master_process_release_req()
   if (send_task_to_link_agent() == 0) 
     glob_app_cfg.ast_status = AST_FAILURE;
 
+  glob_app_cfg.function = RELEASE_RESP;
   integrate_result();
   
   return 1;
@@ -863,8 +866,6 @@ process_link_setup_result(struct application_cfg *working_app_cfg, struct node_c
     return;
   }
 
-  working_app_cfg->function = SETUP_RESP;
-
   for (curnode = glob_app_cfg.link_list->head;
        curnode;
        curnode = curnode->next) {
@@ -921,8 +922,6 @@ process_link_release_result(struct application_cfg *working_app_cfg, struct node
     return;
   }
 
-  working_app_cfg->function = RELEASE_RESP;
-
   for (curnode = glob_app_cfg.link_list->head;
 	curnode;
 	curnode = curnode->next) {
@@ -967,7 +966,6 @@ process_link_query_result(struct application_cfg *working_app_cfg, struct node_c
     return;
   }
 
-  working_app_cfg->function = QUERY_RESP;
   zlog_info("return: %d link(s) for node %s", 
 	adtlist_getcount(glob_app_cfg.link_list), srcnode->name);
 

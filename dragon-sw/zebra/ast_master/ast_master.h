@@ -72,10 +72,20 @@ struct node_cfg {
   char name[NODENAME_MAXLEN + 1];
   char ipadd[IP_MAXLEN+1];
   char te_addr[IP_MAXLEN+1];
+  int vlsr_total;
+  struct vlsr **vlsr_info;
   char *agent_message;
   int agent_port;
   char *command;
   struct adtlist *link_list;
+};
+
+struct vlsr {
+  char lo_addr[IP_MAXLEN+1];
+  char local_id_type[REG_TXT_FIELD_LEN+1];
+  int local_id;
+  char iface[REG_TXT_FIELD_LEN+1];
+  char link[NODENAME_MAXLEN+1];
 };
 
 struct link_cfg {
@@ -89,6 +99,8 @@ struct link_cfg {
   int lsp_id; 
   int tunnel_id; 
 
+  struct vlsr *src_vlsr;
+  struct vlsr *dest_vlsr;
   char src_local_id_type[REG_TXT_FIELD_LEN+1];
   char dest_local_id_type[REG_TXT_FIELD_LEN+1];
   int src_local_id;

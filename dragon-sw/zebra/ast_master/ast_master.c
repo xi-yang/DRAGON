@@ -145,7 +145,10 @@ free_application_cfg(struct application_cfg *app_cfg)
 	free(mynode->agent_message);
       if (mynode->command != NULL)
 	free(mynode->command);
-      free(mynode);
+      if (mynode->vlsr_info != NULL) {
+	free(mynode->vlsr_info[0]);
+ 	free(mynode->vlsr_info);
+      }	
      curnode->data = NULL;
     }
   }
@@ -215,6 +218,22 @@ print_node(char* buf, struct node_cfg* node)
     sprintf(buf+strlen(buf), "<te_addr>%s</te_addr>\n", node->te_addr);
   if (node->command != NULL) 
     sprintf(buf+strlen(buf), "<command>%s</command>\n", node->command);
+  if (node->vlsr_info != NULL) {
+    struct vlsr *vlsr_ptr;
+    int i;
+    for ( i = 0; i < node->vlsr_total; i++ ) {
+      vlsr_ptr = node->vlsr_info[i];
+
+      sprintf(buf+strlen(buf), "<vlsr>\n");
+      sprintf(buf+strlen(buf), "<lo_addr>%s</lo_addr>\n", vlsr_ptr->lo_addr);
+      sprintf(buf+strlen(buf), "<local_id>%d</local_id>\n", vlsr_ptr->local_id);
+      if (vlsr_ptr->iface[0] != '\0')
+	sprintf(buf+strlen(buf), "<iface>%s</iface>\n", vlsr_ptr->iface);
+      if (vlsr_ptr->link[0] != '\0')
+	sprintf(buf+strlen(buf), "<link>%s</link>\n", vlsr_ptr->link);
+      sprintf(buf+strlen(buf), "</vlsr>\n"); 
+    }
+  }
   sprintf(buf+strlen(buf), "</resource>\n");
 }
 
@@ -768,13 +787,14 @@ topo_xml_parser(char* filename, int parser_type)
 {
   xmlChar *key, *type;
   xmlDocPtr doc;
-  xmlNodePtr cur, topo_ptr, node_ptr, link_ptr, resource_ptr;
+  xmlNodePtr cur, topo_ptr, node_ptr, link_ptr, resource_ptr, vlsr_ptr;
   char keyToFound[100]; 
   struct node_cfg *newnode, *curnode;
   struct link_cfg *newlink;
   struct adtlistnode *curlistnode;
   struct adtlist *node_list, *link_list;
-  int i, j, found, found_type, found_src;
+  int i, j, found, found_type, found_src, vlsr_total, link_assign = 0;
+  struct vlsr *vlsr_cur;
 
   node_list = NULL;
   link_list = NULL;
@@ -870,7 +890,7 @@ topo_xml_parser(char* filename, int parser_type)
      */
     resource_ptr = cur;
     
-    for (node_ptr = cur->xmlChildrenNode, found_type = 0, found_src = 0, type = NULL; 
+    for (node_ptr = cur->xmlChildrenNode, found_type = 0, found_src = 0, type = NULL, vlsr_total = 0; 
 	 node_ptr; 
 	 node_ptr = node_ptr->next) {
 
@@ -879,6 +899,8 @@ topo_xml_parser(char* filename, int parser_type)
 	type = xmlNodeListGetString(doc, node_ptr->xmlChildrenNode, 1);
       } else if (strcasecmp(node_ptr->name, "src") == 0) 
 	found_src = 1;
+      else if (strcasecmp(node_ptr->name, "vlsr") == 0)
+	vlsr_total++;
     }
 
     if (!found_type && parser_type == FULL_VERSION && glob_app_cfg.function == SETUP_REQ) {
@@ -892,8 +914,16 @@ topo_xml_parser(char* filename, int parser_type)
     if (!found_src) {
       newnode = malloc(sizeof(struct node_cfg));
       memset(newnode, 0, sizeof(struct node_cfg));
+      if (vlsr_total != 0) {
+	void *ptr = malloc(vlsr_total*sizeof(struct vlsr));
+	int i;
+	newnode->vlsr_info = malloc(vlsr_total*sizeof(void*));
+	for (i = 0; i < vlsr_total; i++)
+	  newnode->vlsr_info[i] = ptr+(i*sizeof(struct vlsr));
+	newnode->vlsr_total = vlsr_total;
+      }
 
-      for (i = 0, found = 0;
+      for (i = 0, found = 0, vlsr_total = 0;
 	   i <= NUM_NODE_TYPE && !found && found_type; 
 	   i++) {
 
@@ -928,6 +958,28 @@ topo_xml_parser(char* filename, int parser_type)
 	  newnode->agent_message = strdup(key);
 	else if (strcasecmp(node_ptr->name, "command") == 0)
 	  newnode->command = strdup(key);
+	else if (strcasecmp(node_ptr->name, "vlsr") == 0) {
+	  vlsr_cur = newnode->vlsr_info[vlsr_total];
+	  vlsr_ptr = NULL;
+
+	  bzero(vlsr_cur, sizeof(struct vlsr));
+	  vlsr_total++;
+	  for ( vlsr_ptr = node_ptr->xmlChildrenNode;
+		vlsr_ptr;
+		vlsr_ptr = vlsr_ptr->next) {
+	    key = xmlNodeListGetString(doc, vlsr_ptr->xmlChildrenNode, 1);
+	    if (strcasecmp(vlsr_ptr->name, "lo_addr") == 0)
+	      strncpy(vlsr_cur->lo_addr, key, IP_MAXLEN);
+	    else if (strcasecmp(vlsr_ptr->name, "local_id") == 0)
+	      vlsr_cur->local_id = atoi(key);
+	    else if (strcasecmp(vlsr_ptr->name, "iface") == 0)
+	      strncpy(vlsr_cur->iface, key, REG_TXT_FIELD_LEN);
+	    else if (strcasecmp(vlsr_ptr->name, "link") == 0) {
+	      strncpy(vlsr_cur->link, key, NODENAME_MAXLEN);
+	      link_assign = 1;
+	    }
+	  }
+	}
       } 
 
       if (node_list == NULL) { 
@@ -990,7 +1042,7 @@ topo_xml_parser(char* filename, int parser_type)
 	      else 
 		newlink->dest = curnode; 
 	    } 
-	  } 
+	  }
 	} else if (strcasecmp(link_ptr->name, "name") == 0) 
 	  strncpy(newlink->name, key, NODENAME_MAXLEN); 
 	else if (strcasecmp(link_ptr->name, "bandwidth") == 0) 
@@ -1027,7 +1079,26 @@ topo_xml_parser(char* filename, int parser_type)
 	  }
 	} else if (strcasecmp(link_ptr->name, "agent_message") == 0) 
 	  newlink->agent_message = strdup(key);
-      } 
+      }
+
+      if (link_assign) {
+	/* link src's vlsr to this link */
+	for ( j = 0; j < newlink->src->vlsr_total; j++) {
+  	  vlsr_cur = newlink->src->vlsr_info[j];
+  	  if (strcasecmp(vlsr_cur->link, newlink->name) == 0) {
+  	    newlink->src_vlsr = vlsr_cur;
+	    break;
+  	  }
+	}
+  
+	for (j = 0; j < newlink->dest->vlsr_total; j++) {
+  	  vlsr_cur = newlink->dest->vlsr_info[j];
+  	  if (strcmp(vlsr_cur->link, newlink->name) == 0) {
+  	    newlink->dest_vlsr = vlsr_cur;
+  	    break;
+  	  }
+	} 
+      }
 
       if (link_list == NULL) { 
 	link_list = malloc(sizeof(struct adtlist)); 
@@ -1045,6 +1116,43 @@ topo_xml_parser(char* filename, int parser_type)
 	adtlist_add(newlink->src->link_list, newlink); 
       }
     } 
+  }
+
+
+  if (link_list != NULL && !link_assign) {
+    for (curlistnode = link_list->head;
+	 curlistnode;
+	 curlistnode = curlistnode->next) {
+      newlink = (struct link_cfg*)curlistnode->data;
+      if (newlink->src == NULL || newlink->dest == NULL) 
+	break;
+
+      for (i = 0; 
+	   i < newlink->src->vlsr_total && newlink->src_vlsr == NULL; 
+	   i++) {
+	vlsr_cur = newlink->src->vlsr_info[i];
+        if (strlen(newlink->src->vlsr_info[i]->link) == 0) {
+	  strncpy(newlink->src->vlsr_info[i]->link, newlink->name, NODENAME_MAXLEN);
+	  newlink->src_vlsr = vlsr_cur;
+	  break;
+	}
+      }
+      if (i != 0 && i == newlink->src->vlsr_total) 
+	zlog_err("topo_xml_parser: Can't locate vlsr for src");
+      
+      for (i = 0; 
+	   i < newlink->dest->vlsr_total && newlink->dest_vlsr == NULL; 
+	   i++) {
+	vlsr_cur = newlink->dest->vlsr_info[i];
+	if (strlen(newlink->dest->vlsr_info[i]->link) == 0) {
+	  strncpy(newlink->dest->vlsr_info[i]->link, newlink->name, NODENAME_MAXLEN);
+	  newlink->dest_vlsr = vlsr_cur;
+	  break;
+	}
+      }
+      if (i != 0 && i == newlink->dest->vlsr_total)
+	zlog_err("topo_xml_parser: Can't locate vlsr for dest");
+    }
   }
 
   glob_app_cfg.node_list = node_list;
