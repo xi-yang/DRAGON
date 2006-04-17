@@ -930,6 +930,7 @@ DEFUN (dragon_set_lsp_ip,
 	  }
   if (find)
   {
+	vty_out(vty, "Another LSP with the same session parameters already exists.");
   	zlog_info("Another LSP with the same session parameters already exists.\n");
 	return CMD_WARNING;
   }

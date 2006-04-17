@@ -675,6 +675,7 @@ dragon_link_provision()
 	   curnode1; 
 	   j++, curnode1 = curnode1->next) { 
 	mylink = (struct link_cfg*)(curnode1->data); 
+	buffer_reset(fake_vty->obuf);
 	lsp = dragon_build_lsp(mylink); 
 	if (!lsp) { 
 	  vty_out(fake_vty, "ERROR: lsp is not set between %s and %s\n", 
@@ -682,7 +683,6 @@ dragon_link_provision()
 	  mylink->ast_status = AST_FAILURE;
     	  buffer_putc(fake_vty->obuf, '\0');
     	  mylink->agent_message = buffer_getstr(fake_vty->obuf);
-    	  buffer_reset(fake_vty->obuf);
 	  continue;
 	} else {
 	  struct dragon_callback *data = malloc(sizeof(struct dragon_callback));
