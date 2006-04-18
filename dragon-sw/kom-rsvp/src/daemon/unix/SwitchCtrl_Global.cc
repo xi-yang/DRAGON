@@ -608,7 +608,7 @@ void SwitchCtrl_Global::addLocalId(uint16 type, uint16 value, uint16  tag)
 	lid.value = value;
 	localIdList.push_back(lid);
 	localIdList.back().group = new SimpleList<uint16>;
-	if (type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)
+	if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP) && tag != ANY_VTAG)
 	    localIdList.back().group->push_back(tag);
 }
 
