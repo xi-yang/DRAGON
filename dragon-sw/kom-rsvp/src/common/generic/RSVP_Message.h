@@ -224,7 +224,7 @@ public:
             lid->type = SESSION_Object_O.getTunnelId(); 
             lid->value = (uint16)(SESSION_Object_O.getExtendedTunnelId() >> 16); 
             lid->group = new SimpleList<uint16>;
-            if ((SESSION_Object_O.getExtendedTunnelId() & 0xffff) != 0)
+            if ((SESSION_Object_O.getExtendedTunnelId() & 0xffff) != 0xffff)
                 lid->group->push_back((uint16)(SESSION_Object_O.getExtendedTunnelId() & 0xffff));
             return lid; 
             }
