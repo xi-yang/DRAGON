@@ -231,6 +231,8 @@ print_node(char* buf, struct node_cfg* node)
 	sprintf(buf+strlen(buf), "<iface>%s</iface>\n", vlsr_ptr->iface);
       if (vlsr_ptr->link[0] != '\0')
 	sprintf(buf+strlen(buf), "<link>%s</link>\n", vlsr_ptr->link);
+      if (vlsr_ptr->assign_ip[0] != '\0')
+	sprintf(buf+strlen(buf), "<assign_ip>%s</assign_ip>\n", vlsr_ptr->assign_ip);
       sprintf(buf+strlen(buf), "</vlsr>\n"); 
     }
   }
@@ -977,7 +979,8 @@ topo_xml_parser(char* filename, int parser_type)
 	    else if (strcasecmp(vlsr_ptr->name, "link") == 0) {
 	      strncpy(vlsr_cur->link, key, NODENAME_MAXLEN);
 	      link_assign = 1;
-	    }
+	    } else if (strcasecmp(vlsr_ptr->name, "assign_ip") == 0)
+	      strncpy(vlsr_cur->assign_ip, key, IP_MAXLEN);
 	  }
 	}
       } 
@@ -1133,6 +1136,7 @@ topo_xml_parser(char* filename, int parser_type)
 	vlsr_cur = newlink->src->vlsr_info[i];
         if (strlen(newlink->src->vlsr_info[i]->link) == 0) {
 	  strncpy(newlink->src->vlsr_info[i]->link, newlink->name, NODENAME_MAXLEN);
+	  strncpy(vlsr_cur->assign_ip, newlink->src_ip, IP_MAXLEN);
 	  newlink->src_vlsr = vlsr_cur;
 	  break;
 	}
@@ -1146,6 +1150,7 @@ topo_xml_parser(char* filename, int parser_type)
 	vlsr_cur = newlink->dest->vlsr_info[i];
 	if (strlen(newlink->dest->vlsr_info[i]->link) == 0) {
 	  strncpy(newlink->dest->vlsr_info[i]->link, newlink->name, NODENAME_MAXLEN);
+	  strncpy(vlsr_cur->assign_ip, newlink->dest_ip, IP_MAXLEN);
 	  newlink->dest_vlsr = vlsr_cur;
 	  break;
 	}

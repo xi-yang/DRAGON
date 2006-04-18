@@ -5,6 +5,8 @@
 #include <fcntl.h>
 #include <time.h>
 #include <sys/wait.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
 #ifndef __FreeBSD__
 #include <sys/sendfile.h>
 #endif
@@ -86,6 +88,57 @@ static struct sigaction node_app_complete_action;
 static pid_t node_child_pid;
 
 int 
+node_assign_ip(struct node_cfg* node)
+{
+  struct ifreq if_info;
+  int sockfd = -1, i;
+  struct sockaddr_in *sock;
+  int ioctl_ret;
+  struct vlsr *vlsr_cur;
+
+  if (node->vlsr_total == 0)
+    return 1;
+
+  node->ast_status = AST_SUCCESS; 
+  for (i = 0; i < node->vlsr_total; i++) {
+    vlsr_cur = (struct vlsr*)node->vlsr_info[i];
+    if (vlsr_cur->assign_ip[0] != '\0') {
+      if (sockfd == -1) 
+	sockfd = socket(AF_INET, SOCK_DGRAM, 0); 
+
+      bzero(&if_info, sizeof(struct ifreq));
+      strcpy(if_info.ifr_name, vlsr_cur->iface);
+      bzero(&if_info.ifr_ifru.ifru_addr, sizeof(struct sockaddr));
+      sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_addr);
+      sock->sin_family = AF_INET;
+      sock->sin_addr.s_addr = inet_addr(vlsr_cur->assign_ip);
+      ioctl_ret = ioctl(sockfd, SIOCSIFADDR, &if_info);
+      if (ioctl_ret == -1) {
+	node->ast_status = AST_FAILURE;
+	node->agent_message = strdup("ifconfig failure");
+	zlog_err("ifconfig failed for %s", vlsr_cur->iface);
+	close(sockfd);
+	return 0;
+      }
+      
+      sock->sin_addr.s_addr = inet_addr("255.255.255.192");
+      ioctl_ret = ioctl(sockfd, SIOCSIFNETMASK, &if_info);
+      if (ioctl_ret == -1) {
+	node->ast_status = AST_FAILURE;
+	node->agent_message = strdup("ifconfig failure");
+	zlog_err("ifconfig failed for %s", vlsr_cur->iface);
+	close(sockfd);
+	return 0;
+      }
+    }
+  }
+  if (sockfd != -1)
+    close(sockfd);
+
+  return 1;
+}
+
+int 
 node_process_setup_req()
 {
   struct adtlistnode *curnode;
@@ -120,23 +173,25 @@ node_process_setup_req()
            NODE_AGENT_RECV, path, errno, strerror(errno));
 
   sprintf(path, "%s/setup_response.xml", directory);
-
+  glob_app_cfg.ast_status = AST_SUCCESS;
   for (curnode = glob_app_cfg.node_list->head;
        curnode;
 	curnode = curnode->next) {
     node = (struct node_cfg*) curnode->data;
-    node->ast_status = AST_SUCCESS;
+    if (!node_assign_ip(node)) {
+      glob_app_cfg.ast_status = AST_FAILURE;
+      break;
+    }
   } 
 
   glob_app_cfg.function = SETUP_RESP;
-  glob_app_cfg.ast_status = AST_SUCCESS;
   print_xml_response(path, BRIEF_VERSION);
   symlink(path, NODE_AGENT_RET);
 
   sprintf(path, "%s/final.xml", directory);
   print_final(path);
 
-  return 1;
+  return (glob_app_cfg.ast_status == AST_SUCCESS);
 }
 
 static void
@@ -461,7 +516,7 @@ main(int argc, char* argv[])
   struct thread thread;
   struct sigaction myAlarmAction;
 #ifdef RESOURCE_BROKER
-  char *resource_file;
+  char *resource_file = NULL;
 #endif
   
   progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
@@ -540,31 +595,33 @@ main(int argc, char* argv[])
   thread_add_read(master, agent_accept, NULL, servSock);
 
 #ifdef RESOURCE_BROKER
-  if (broker_init(resource_file) == 1) {
-    if ((servSock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-      zlog_err("socket() failed");
-      exit(EXIT_FAILURE);
-    }
+  if (resource_file != NULL) {
+    if (broker_init(resource_file) == 1) {
+      if ((servSock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+        zlog_err("socket() failed");
+        exit(EXIT_FAILURE);
+      }
+      
+      memset(&ServAddr, 0, sizeof(ServAddr));
+      ServAddr.sin_family = AF_INET;
+      ServAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+      ServAddr.sin_port = htons(NODE_BROKER_PORT);
     
-    memset(&ServAddr, 0, sizeof(ServAddr));
-    ServAddr.sin_family = AF_INET;
-    ServAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    ServAddr.sin_port = htons(NODE_BROKER_PORT);
-  
-    if (bind(servSock, (struct sockaddr*)&ServAddr, sizeof(ServAddr)) < 0) {
-      zlog_err("bind() failed");
-      exit(EXIT_FAILURE);
-    }
-  
-    if (listen(servSock, MAXPENDING) < 0) {
-      zlog_err("listen() failed");
-      exit(EXIT_FAILURE);
-    }
- 
-    zlog_err("BROKER: this node_agent will also serve as resource broker"); 
-    thread_add_read(master, broker_accept, NULL, servSock);
-  } else 
-    zlog_err("BROKER: can't read the resource file (%s)", resource_file);
+      if (bind(servSock, (struct sockaddr*)&ServAddr, sizeof(ServAddr)) < 0) {
+        zlog_err("bind() failed");
+        exit(EXIT_FAILURE);
+      }
+    
+      if (listen(servSock, MAXPENDING) < 0) {
+        zlog_err("listen() failed");
+        exit(EXIT_FAILURE);
+      }
+   
+      zlog_err("BROKER: this node_agent will also serve as resource broker"); 
+      thread_add_read(master, broker_accept, NULL, servSock);
+    } else 
+      zlog_err("BROKER: can't read the resource file (%s)", resource_file);
+  }
 #endif
 
     myAlarmAction.sa_handler = handleAlarm;
@@ -698,7 +755,7 @@ agent_accept(struct thread *thread)
         }
         total = sendfile(clntSock, fd, 0, file_stat.st_size);
         zlog_info("file_size is %d and sendfile() returns %d",
-                        file_stat.st_size, total);
+                        (int)file_stat.st_size, total);
 #endif
         if (total < 0)
           zlog_err("sendfile() failed; errno = %d (%s)\n",
@@ -725,7 +782,6 @@ broker_accept(struct thread *thread)
 {
   int servSock, clntSock;
   struct sockaddr_in clntAddr;
-  struct sockaddr_in astAddr;
   unsigned int clntLen;
   int recvMsgSize;
   char buffer[RCVBUFSIZE];
@@ -799,7 +855,7 @@ broker_accept(struct thread *thread)
       }
       total = sendfile(clntSock, fd, 0, file_stat.st_size);
       zlog_info("file_size is %d and sendfile() returns %d",
-                      file_stat.st_size, total);
+                      (int)file_stat.st_size, total);
 #endif
       if (total < 0)
         zlog_err("sendfile() failed; errno = %d (%s)\n",

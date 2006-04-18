@@ -86,6 +86,7 @@ struct vlsr {
   int local_id;
   char iface[REG_TXT_FIELD_LEN+1];
   char link[NODENAME_MAXLEN+1];
+  char assign_ip[IP_MAXLEN+1];
 };
 
 struct link_cfg {
@@ -114,7 +115,6 @@ struct link_cfg {
   int mtu; 
   char src_ip[IP_MAXLEN+1];	// only for QUERY_RESP
   char dest_ip[IP_MAXLEN+1];	// only for QUERY_RESP
-
 };
 
 struct application_cfg glob_app_cfg;
