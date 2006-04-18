@@ -226,9 +226,9 @@ public:
 
 	/*interact with dragond*/
         static LocalIdList localIdList;
-        static void addLocalId(uint16 type, uint16 value, uint16  tag = 0);
-        static void deleteLocalId(uint16 type, uint16 value, uint16  tag = 0);
-        static bool hasLocalId(uint16 type, uint16 value, uint16  tag = 0);
+        static void addLocalId(uint16 type, uint16 value, uint16  tag = ANY_VTAG);
+        static void deleteLocalId(uint16 type, uint16 value, uint16  tag = ANY_VTAG);
+        static bool hasLocalId(uint16 type, uint16 value, uint16  tag = ANY_VTAG);
         static void clearLocalIdList( ) { localIdList.clear(); }
         static void processLocalIdMessage(uint8 msgType, LocalId& lid);
         static void getPortsByLocalId(SimpleList<uint32>&portList, uint32 port);
