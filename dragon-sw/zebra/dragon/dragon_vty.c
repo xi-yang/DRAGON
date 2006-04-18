@@ -1668,7 +1668,7 @@ DEFUN (dragon_set_local_id,
     lid->type = type;
     lid->value = tag;
     listnode_add(registered_local_ids, lid);
-    zAddLocalId(dmaster.api, type, tag, 0);
+    zAddLocalId(dmaster.api, type, tag, 0xffff);
     preserve_local_ids();
     return CMD_SUCCESS;
 }
