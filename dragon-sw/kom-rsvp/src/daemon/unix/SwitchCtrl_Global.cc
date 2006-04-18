@@ -608,7 +608,7 @@ void SwitchCtrl_Global::addLocalId(uint16 type, uint16 value, uint16  tag)
 	lid.value = value;
 	localIdList.push_back(lid);
 	localIdList.back().group = new SimpleList<uint16>;
-	if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP) && tag != 0)
+	if (type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)
 	    localIdList.back().group->push_back(tag);
 }
 
@@ -766,7 +766,7 @@ bool SwitchCtrl_Global::hasLocalId(uint16 type, uint16 value, uint16  tag)
     for (it = localIdList.begin(); it != localIdList.end(); ++it) {
         lid = *it;
         if (lid.type == type && lid.value == value) {
-            if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP) && tag != 0) {
+            if (type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP) {
                 SimpleList<uint16>::Iterator it_uint16;
                 for (it_uint16 = lid.group->begin(); it_uint16 != lid.group->end(); ++it_uint16) {
                     if (*it_uint16 == tag)
