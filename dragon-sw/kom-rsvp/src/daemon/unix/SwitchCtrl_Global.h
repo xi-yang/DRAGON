@@ -14,6 +14,7 @@ To be incorporated into KOM-RSVP-TE package
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/session_api.h>
+#include "NARB_APIClient.h"
 
 /****************************************************************************
 
