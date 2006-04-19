@@ -390,7 +390,7 @@ bool SwitchCtrl_Session_Force10E600::hook_createVLAN(const uint32 vlanID)
     sprintf(createVlan, "interface vlan %d\n", vlanID);
     DIE_IF_NEGATIVE(n= writeShell(createVlan, 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, FORCE10_ERROR_PROMPT, 1, 10));
-    DIE_IF_NEGATIVE(n= writeShell("no shutdown", 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell("no shutdown\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, FORCE10_ERROR_PROMPT, 1, 10));
 
     //add the new *empty* vlan into PortMapListAll and portMapListUntagged
