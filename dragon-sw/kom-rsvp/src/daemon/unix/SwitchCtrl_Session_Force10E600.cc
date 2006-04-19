@@ -21,7 +21,7 @@ bool SwitchCtrl_Session_Force10E600::movePortToVLANAsUntagged(uint32 port, uint3
         return ret; //don't touch the control port!
 
     int old_vlan = getVLANbyUntaggedPort(port);
-    if (old_vlan) { //Remove untagged port from old VLAN
+    if (old_vlan > 1) { //Remove untagged port from old VLAN
         bit = Port2BitForce10(port);
         assert(bit < MAX_VLAN_PORT_BYTES*8);
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
@@ -389,6 +389,8 @@ bool SwitchCtrl_Session_Force10E600::hook_createVLAN(const uint32 vlanID)
 
     sprintf(createVlan, "interface vlan %d\n", vlanID);
     DIE_IF_NEGATIVE(n= writeShell(createVlan, 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, FORCE10_ERROR_PROMPT, 1, 10));
+    DIE_IF_NEGATIVE(n= writeShell("no shutdown", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, FORCE10_ERROR_PROMPT, 1, 10));
 
     //add the new *empty* vlan into PortMapListAll and portMapListUntagged
