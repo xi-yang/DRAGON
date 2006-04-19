@@ -673,12 +673,17 @@ agent_accept(struct thread *thread)
 
     fp = fopen(NODE_AGENT_RECV, "w");
     total = 0;
+    errno = 0;
+    alarm(TIMEOUT_SECS);
     while ((recvMsgSize = recv(clntSock, buffer, RCVBUFSIZE-1, 0)) > 0 ) {
       if (errno == EINTR) {
         /* alarm went off
          */
         zlog_warn("xml_accept: dragon probably has not received all datas");
         zlog_warn("recvMsgSize = %d", recvMsgSize);
+	buffer[recvMsgSize]='\0';
+	fprintf(fp, "%s", buffer);
+	total += recvMsgSize;
         break;
       }
       buffer[recvMsgSize]='\0';
@@ -805,6 +810,7 @@ broker_accept(struct thread *thread)
 
     fp = fopen(NODE_AGENT_RECV, "w");
     total = 0;
+    errno = 0;
     alarm(TIMEOUT_SECS);
     while ((recvMsgSize = recv(clntSock, buffer, RCVBUFSIZE-1, 0)) > 0 ) {
       if (errno == EINTR) {
@@ -837,7 +843,7 @@ broker_accept(struct thread *thread)
         resource_index = node_resource.head;
       node = (struct node_cfg *)resource_index->data;
        
-      zlog_info("BROKER: returns node (ipadd = %s, teadd = %s)\n", node->ipadd, node->te_addr);   
+      zlog_info("BROKER: returns node (ipadd = %s)\n", node->ipadd);   
       memset(buf_ret, 0, 300);
       print_node(buf_ret, node);
       fprintf(fp, buf_ret);
@@ -869,6 +875,7 @@ broker_accept(struct thread *thread)
     zlog_info("DONE!");
   }
   free_application_cfg(&glob_app_cfg);
+  resource_index = resource_index->next;
 
   thread_add_read(master, broker_accept, NULL, servSock);
   return 1;
@@ -878,8 +885,6 @@ int
 broker_init(char* file)
 {
   struct stat file_stat;
-  struct adtlistnode *curnode;
-  struct node_cfg *node;
    
   if (file == NULL) 
     return 0;
@@ -893,20 +898,9 @@ broker_init(char* file)
   if (glob_app_cfg.node_list == NULL) 
     return 0;
 
-  memset(&node_resource, 0, sizeof(struct adtlist));
-  for (curnode = glob_app_cfg.node_list->head;
-	curnode;
-	curnode = curnode->next) {
-    node = (struct node_cfg*) curnode->data;
-    if (node->ipadd[0] != '\0' && 
-	node->te_addr[0] != '\0') {
-      adtlist_add(&node_resource, node);
-      curnode->data = NULL;
-    }
-  }
-
-  if (node_resource.head == NULL)
-    return 0;
+  memcpy(&node_resource, glob_app_cfg.node_list, sizeof(struct adtlist));
+  bzero(glob_app_cfg.node_list, sizeof(struct adtlist));
+  free_application_cfg(&glob_app_cfg);
 
   resource_index = NULL; 
   return 1;

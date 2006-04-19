@@ -127,7 +127,7 @@ char* generate_ast_id(int type)
 void
 free_application_cfg(struct application_cfg *app_cfg)
 {
-  struct adtlistnode *curnode;
+  struct adtlistnode *curnode, *curnode1;
   struct node_cfg *mynode;
   struct link_cfg *mylink;
   
@@ -139,8 +139,18 @@ free_application_cfg(struct application_cfg *app_cfg)
 	 curnode;
 	 curnode = curnode->next) {
       mynode = (struct node_cfg*) curnode->data;
-      if (mynode->link_list != NULL) 
+      if (mynode->link_list != NULL) {
+	/* since both node->link_list and link_list shares 
+	 * the same ptr of data.  need to make sure
+	 * we won't free the data here
+	 */
+	for (curnode1 = mynode->link_list->head;
+	     curnode1;
+	     curnode1 = curnode1->next) {
+	  curnode1->data = NULL;
+	}
 	adtlist_free(mynode->link_list);
+      }
       if (mynode->agent_message != NULL)
 	free(mynode->agent_message);
       if (mynode->command != NULL)
@@ -149,7 +159,8 @@ free_application_cfg(struct application_cfg *app_cfg)
 	free(mynode->vlsr_info[0]);
  	free(mynode->vlsr_info);
       }	
-     curnode->data = NULL;
+      free(mynode);
+      curnode->data = NULL;
     }
   }
   adtlist_free(app_cfg->node_list); 
@@ -779,6 +790,60 @@ agent_final_parser(char* filename)
   return 1;
 }
 
+int
+finalize_graph(struct adtlist* link_list)
+{ 
+  struct adtlistnode *curlistnode;
+  struct link_cfg* newlink;
+  struct vlsr* vlsr_cur;
+  int i, ret = 1;
+
+  if (link_list == NULL) 
+    return 1;
+
+    for (curlistnode = link_list->head;
+	 curlistnode;
+	 curlistnode = curlistnode->next) {
+      newlink = (struct link_cfg*)curlistnode->data;
+      if (newlink->src == NULL || newlink->dest == NULL) 
+	break;
+
+      for (i = 0; 
+	   i < newlink->src->vlsr_total && newlink->src_vlsr == NULL; 
+	   i++) {
+	vlsr_cur = newlink->src->vlsr_info[i];
+        if (strlen(newlink->src->vlsr_info[i]->link) == 0) {
+	  strncpy(newlink->src->vlsr_info[i]->link, newlink->name, NODENAME_MAXLEN);
+	  if (newlink->src_ip[0] != '\0') 
+	    strncpy(vlsr_cur->assign_ip, newlink->src_ip, IP_MAXLEN);
+	  newlink->src_vlsr = vlsr_cur;
+	  break;
+	}
+      }
+      if (i != 0 && i == newlink->src->vlsr_total) 
+	zlog_err("topo_xml_parser: Can't locate vlsr for src");
+      
+      for (i = 0; 
+	   i < newlink->dest->vlsr_total && newlink->dest_vlsr == NULL; 
+	   i++) {
+	vlsr_cur = newlink->dest->vlsr_info[i];
+	if (strlen(newlink->dest->vlsr_info[i]->link) == 0) {
+	  strncpy(newlink->dest->vlsr_info[i]->link, newlink->name, NODENAME_MAXLEN);
+	  if (newlink->dest_ip[0] != '\0') 
+	    strncpy(vlsr_cur->assign_ip, newlink->dest_ip, IP_MAXLEN);
+	  newlink->dest_vlsr = vlsr_cur;
+	  break;
+	}
+      }
+      if (i != 0 && i == newlink->dest->vlsr_total) {
+	zlog_err("topo_xml_parser: Can't locate vlsr for dest");
+	ret = 0;
+      }
+    }
+
+  return ret;
+}
+
 /* parse xml and build internal representation;
  * parser_type:
  *	FULL_VERSION		1
@@ -1121,51 +1186,12 @@ topo_xml_parser(char* filename, int parser_type)
     } 
   }
 
-
-  if (link_list != NULL && !link_assign) {
-    for (curlistnode = link_list->head;
-	 curlistnode;
-	 curlistnode = curlistnode->next) {
-      newlink = (struct link_cfg*)curlistnode->data;
-      if (newlink->src == NULL || newlink->dest == NULL) 
-	break;
-
-      for (i = 0; 
-	   i < newlink->src->vlsr_total && newlink->src_vlsr == NULL; 
-	   i++) {
-	vlsr_cur = newlink->src->vlsr_info[i];
-        if (strlen(newlink->src->vlsr_info[i]->link) == 0) {
-	  strncpy(newlink->src->vlsr_info[i]->link, newlink->name, NODENAME_MAXLEN);
-	  strncpy(vlsr_cur->assign_ip, newlink->src_ip, IP_MAXLEN);
-	  newlink->src_vlsr = vlsr_cur;
-	  break;
-	}
-      }
-      if (i != 0 && i == newlink->src->vlsr_total) 
-	zlog_err("topo_xml_parser: Can't locate vlsr for src");
-      
-      for (i = 0; 
-	   i < newlink->dest->vlsr_total && newlink->dest_vlsr == NULL; 
-	   i++) {
-	vlsr_cur = newlink->dest->vlsr_info[i];
-	if (strlen(newlink->dest->vlsr_info[i]->link) == 0) {
-	  strncpy(newlink->dest->vlsr_info[i]->link, newlink->name, NODENAME_MAXLEN);
-	  strncpy(vlsr_cur->assign_ip, newlink->dest_ip, IP_MAXLEN);
-	  newlink->dest_vlsr = vlsr_cur;
-	  break;
-	}
-      }
-      if (i != 0 && i == newlink->dest->vlsr_total)
-	zlog_err("topo_xml_parser: Can't locate vlsr for dest");
-    }
-  }
-
   glob_app_cfg.node_list = node_list;
   glob_app_cfg.link_list = link_list;
 
   xmlFreeDoc(doc);
 
-  return 1;
+  return finalize_graph(glob_app_cfg.link_list);
 }
 
 #ifdef RESOURCE_BROKER
@@ -1252,8 +1278,7 @@ master_locate_resource()
       }
      
       newnode = (struct node_cfg*) glob_app_cfg.node_list->head->data; 
-      if (newnode->ipadd[0] == '\0' ||
-	  newnode->te_addr[0] == '\0') {
+      if (newnode->ipadd[0] == '\0') { 
 	zlog_err("Invalid response from resource broker");
 	close(sock);
 	free_application_cfg(&glob_app_cfg);
@@ -1261,12 +1286,19 @@ master_locate_resource()
 	return 0;
       }
 
+      /* assume that resource broker is going to return
+       * <ip_addr>...<ip_addr>
+       * <vlsr> ..</vlsr>
+       */
       strncpy(mynode->ipadd, newnode->ipadd, IP_MAXLEN);
-      strncpy(mynode->te_addr, newnode->te_addr, IP_MAXLEN);
+      mynode->vlsr_total = newnode->vlsr_total;
+      newnode->vlsr_total = 0;
+      mynode->vlsr_info = newnode->vlsr_info;
+      newnode->vlsr_info = NULL;
       zlog_info("location for node_type %s: %s",
 	     entity_type_name[mynode->node_type], mynode->name);
       zlog_info("\tip addr: %s", mynode->ipadd);
-      zlog_info("\tte addr: %s", mynode->te_addr);
+      zlog_info("\tvlsr_total: %d", mynode->vlsr_total);
 
       free_application_cfg(&glob_app_cfg);
       memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
@@ -1279,7 +1311,7 @@ master_locate_resource()
     close(sock);
   }
 
-  return 1;
+  return finalize_graph(glob_app_cfg.link_list);
 }
 #endif
 

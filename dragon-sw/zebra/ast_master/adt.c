@@ -41,7 +41,8 @@ void adtlist_free(struct adtlist* myadtlist)
     return;
 
   for (curr=myadtlist->head, nextnode = NULL; 
-       !curr; curr = nextnode) {
+       curr; 
+       curr = nextnode) {
     nextnode = curr->next;
     if (curr->data != NULL) 
       free(curr->data);
