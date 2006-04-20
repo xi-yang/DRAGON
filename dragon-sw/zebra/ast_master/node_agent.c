@@ -95,6 +95,7 @@ node_assign_ip(struct node_cfg* node)
   struct sockaddr_in *sock;
   int ioctl_ret;
   struct vlsr *vlsr_cur;
+  char command[150];
 
   if (node->vlsr_total == 0)
     return 1;
@@ -130,8 +131,15 @@ node_assign_ip(struct node_cfg* node)
 	close(sockfd);
 	return 0;
       }
+#ifdef __FreeBSD__
+      sprintf(command, "ifconfig %s %s netmask 255.255.255.192", 
+			vlsr_cur->iface, vlsr_cur->assign_ip);
+      zlog_info("command is %s", command);
+      system(command);
+#endif
     }
   }
+
   if (sockfd != -1)
     close(sockfd);
 
