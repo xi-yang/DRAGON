@@ -211,109 +211,111 @@ print_error_response(char *path)
   fclose(fp);
 }
 void
-print_node(char* buf, struct node_cfg* node)
+print_node(FILE* fp, struct node_cfg* node)
 {
   if (node == NULL)
     return;
 
-  sprintf(buf, "<resource>\n");
-  sprintf(buf+strlen(buf), "<name>%s</name>\n", node->name);
-  sprintf(buf+strlen(buf), "<ast_status>%s</ast_status>\n", status_type_details[node->ast_status]);
+  fprintf(fp, "<resource>\n");
+  fprintf(fp, "<name>%s</name>\n", node->name);
+  fprintf(fp, "<ast_status>%s</ast_status>\n", status_type_details[node->ast_status]);
   if (node->agent_message != NULL) 
-    sprintf(buf+strlen(buf), "<agent_message>%s</agent_message>\n", node->agent_message);
+    fprintf(fp, "<agent_message>%s</agent_message>\n", node->agent_message);
   if (node->node_type != 0) 
-    sprintf(buf+strlen(buf), "<resource_type>%s</resource_type>\n", entity_type_name[node->node_type]);
+    fprintf(fp, "<resource_type>%s</resource_type>\n", entity_type_name[node->node_type]);
   if (node->ipadd[0] != '\0')
-    sprintf(buf+strlen(buf), "<ip_addr>%s</ip_addr>\n", node->ipadd);
+    fprintf(fp, "<ip_addr>%s</ip_addr>\n", node->ipadd);
   if (node->te_addr[0] != '\0')
-    sprintf(buf+strlen(buf), "<te_addr>%s</te_addr>\n", node->te_addr);
+    fprintf(fp, "<te_addr>%s</te_addr>\n", node->te_addr);
   if (node->command != NULL) 
-    sprintf(buf+strlen(buf), "<command>%s</command>\n", node->command);
+    fprintf(fp, "<command>%s</command>\n", node->command);
   if (node->vlsr_info != NULL) {
     struct vlsr *vlsr_ptr;
     int i;
     for ( i = 0; i < node->vlsr_total; i++ ) {
       vlsr_ptr = node->vlsr_info[i];
 
-      sprintf(buf+strlen(buf), "<vlsr>\n");
-      sprintf(buf+strlen(buf), "<lo_addr>%s</lo_addr>\n", vlsr_ptr->lo_addr);
-      sprintf(buf+strlen(buf), "<local_id>%d</local_id>\n", vlsr_ptr->local_id);
+      fprintf(fp, "<vlsr>\n");
+      fprintf(fp, "<lo_addr>%s</lo_addr>\n", vlsr_ptr->lo_addr);
+      if (vlsr_ptr->local_id_type[0] != '\0')
+	fprintf(fp, "<local_id_type>%s</local_id_type>\n", vlsr_ptr->local_id_type);
+      fprintf(fp, "<local_id>%d</local_id>\n", vlsr_ptr->local_id);
       if (vlsr_ptr->iface[0] != '\0')
-	sprintf(buf+strlen(buf), "<iface>%s</iface>\n", vlsr_ptr->iface);
+	fprintf(fp, "<iface>%s</iface>\n", vlsr_ptr->iface);
       if (vlsr_ptr->link[0] != '\0')
-	sprintf(buf+strlen(buf), "<link>%s</link>\n", vlsr_ptr->link);
+	fprintf(fp, "<link>%s</link>\n", vlsr_ptr->link);
       if (vlsr_ptr->assign_ip[0] != '\0')
-	sprintf(buf+strlen(buf), "<assign_ip>%s</assign_ip>\n", vlsr_ptr->assign_ip);
-      sprintf(buf+strlen(buf), "</vlsr>\n"); 
+	fprintf(fp, "<assign_ip>%s</assign_ip>\n", vlsr_ptr->assign_ip);
+      fprintf(fp, "</vlsr>\n"); 
     }
   }
-  sprintf(buf+strlen(buf), "</resource>\n");
+  fprintf(fp, "</resource>\n");
 }
 
 void 
-print_link(char* buf, struct link_cfg* link)
+print_link(FILE* fp, struct link_cfg* link)
 {
-  if (link == NULL) 
+  if (link == NULL || fp == NULL) 
     return;
 
-  sprintf(buf, "<resource>\n");
-  sprintf(buf+strlen(buf), "<name>%s</name>\n", link->name);
-  sprintf(buf+strlen(buf), "<ast_status>%s</ast_status>\n", status_type_details[link->ast_status]);
+  fprintf(fp, "<resource>\n");
+  fprintf(fp, "<name>%s</name>\n", link->name);
+  fprintf(fp, "<ast_status>%s</ast_status>\n", status_type_details[link->ast_status]);
   if (link->agent_message) 
-    sprintf(buf+strlen(buf), "<agent_message>%s</agent_message>\n", link->agent_message);
+    fprintf(fp, "<agent_message>%s</agent_message>\n", link->agent_message);
   if (link->service_type != 0) 
-    sprintf(buf+strlen(buf), "<resource_type>%s</resource_type>\n", link_type_name[link->service_type]);
+    fprintf(fp, "<resource_type>%s</resource_type>\n", link_type_name[link->service_type]);
   if (link->src != NULL) 
-    sprintf(buf+strlen(buf), "<src>%s</src>\n", link->src->name);
+    fprintf(fp, "<src>%s</src>\n", link->src->name);
   if (link->dest != NULL) 
-    sprintf(buf+strlen(buf), "<dest>%s</dest>\n", link->dest->name);
+    fprintf(fp, "<dest>%s</dest>\n", link->dest->name);
   if (link->src_ip[0] != '\0')
-    sprintf(buf+strlen(buf), "<src_ip>%s</src_ip>\n", link->src_ip);
+    fprintf(fp, "<src_ip>%s</src_ip>\n", link->src_ip);
   if (link->dest_ip[0] != '\0')
-    sprintf(buf+strlen(buf), "<dest_ip>%s</dest_ip>\n", link->dest_ip);
+    fprintf(fp, "<dest_ip>%s</dest_ip>\n", link->dest_ip);
   if (link->lsp_name[0] != '\0') 
-    sprintf(buf+strlen(buf), "<lsp_name>%s</lsp_name>\n", link->lsp_name);
+    fprintf(fp, "<lsp_name>%s</lsp_name>\n", link->lsp_name);
   if (link->bandwidth[0] != '\0')
-    sprintf(buf+strlen(buf), "<bandwidth>%s</bandwidth>\n", link->bandwidth);
+    fprintf(fp, "<bandwidth>%s</bandwidth>\n", link->bandwidth);
   if (link->swcap[0] != '\0') 
-    sprintf(buf+strlen(buf), "<swcap>%s</swcap>\n", link->swcap); 
+    fprintf(fp, "<swcap>%s</swcap>\n", link->swcap); 
   if (link->encoding[0] != '\0')
-    sprintf(buf+strlen(buf), "<encoding>%s</encoding>\n", link->encoding); 
+    fprintf(fp, "<encoding>%s</encoding>\n", link->encoding); 
   if (link->gpid[0] != '\0')
-    sprintf(buf+strlen(buf), "<gpid>%s</gpid>\n", link->gpid);
+    fprintf(fp, "<gpid>%s</gpid>\n", link->gpid);
   if (link->src_local_id_type[0] != '\0') {
-    sprintf(buf+strlen(buf), "<src_local_id_type>%s</src_local_id_type>\n", link->src_local_id_type);
-    sprintf(buf+strlen(buf), "<src_local_id>%d</src_local_id>\n", link->src_local_id);
+    fprintf(fp, "<src_local_id_type>%s</src_local_id_type>\n", link->src_local_id_type);
+    fprintf(fp, "<src_local_id>%d</src_local_id>\n", link->src_local_id);
   }
   if (link->dest_local_id_type[0] != '\0') {
-    sprintf(buf+strlen(buf), "<dest_local_id_type>%s</dest_local_id_type>\n", link->dest_local_id_type);
-    sprintf(buf+strlen(buf), "<dest_local_id>%d</dest_local_id>\n", link->dest_local_id);
+    fprintf(fp, "<dest_local_id_type>%s</dest_local_id_type>\n", link->dest_local_id_type);
+    fprintf(fp, "<dest_local_id>%d</dest_local_id>\n", link->dest_local_id);
   }
   if (link->vtag[0] != '\0') 
-    sprintf(buf+strlen(buf), "<vtag>%s</vtag>\n", link->vtag);
-  sprintf(buf+strlen(buf), "</resource>\n");
+    fprintf(fp, "<vtag>%s</vtag>\n", link->vtag);
+  fprintf(fp, "</resource>\n");
 }
 
 void
-print_link_brief(char* buf, struct link_cfg* link)
+print_link_brief(FILE* fp, struct link_cfg* link)
 {
-  if (link == NULL) 
+  if (link == NULL || fp == NULL) 
     return;
 
-  sprintf(buf, "<resource>\n");
-  sprintf(buf+strlen(buf), "<name>%s</name>\n", link->name);
+  fprintf(fp, "<resource>\n");
+  fprintf(fp, "<name>%s</name>\n", link->name);
   if (link->src != NULL) 
-    sprintf(buf+strlen(buf), "<src>%s</src>\n", link->src->name);
+    fprintf(fp, "<src>%s</src>\n", link->src->name);
   if (link->dest != NULL)
-    sprintf(buf+strlen(buf), "<dest>%s</dest>\n", link->dest->name); 
+    fprintf(fp, "<dest>%s</dest>\n", link->dest->name); 
   if (link->service_type != 0)
-    sprintf(buf+strlen(buf), "<resource_type>%s</resource_type>\n", link_type_name[link->service_type]);
-  sprintf(buf+strlen(buf), "<ast_status>%s</ast_status>\n", status_type_details[link->ast_status]);
+    fprintf(fp, "<resource_type>%s</resource_type>\n", link_type_name[link->service_type]);
+  fprintf(fp, "<ast_status>%s</ast_status>\n", status_type_details[link->ast_status]);
   if (link->agent_message != NULL) 
-    sprintf(buf+strlen(buf), "<agent_message>%s</agent_message>\n", link->agent_message);
+    fprintf(fp, "<agent_message>%s</agent_message>\n", link->agent_message);
   if (link->lsp_name[0] != '\0') 
-    sprintf(buf+strlen(buf), "<lsp_name>%s</lsp_name>\n", link->lsp_name);
-  sprintf(buf+strlen(buf), "</resource>\n");
+    fprintf(fp, "<lsp_name>%s</lsp_name>\n", link->lsp_name);
+  fprintf(fp, "</resource>\n");
 }
 
 void
@@ -322,7 +324,6 @@ print_xml_response(char* path, int version)
   struct adtlistnode *curnode;
   struct node_cfg *mynode;
   struct link_cfg *mylink;
-  static char string[500];
   FILE* fp;
 
   if (!path)
@@ -332,7 +333,6 @@ print_xml_response(char* path, int version)
   if (!fp)
     return;
 
-  memset(string, 0, 500);
   fprintf(fp, "<topology>\n");
   fprintf(fp, "<ast_func>%s</ast_func>\n", function_type_details[glob_app_cfg.function]);
 
@@ -349,8 +349,7 @@ print_xml_response(char* path, int version)
   	curnode;  
   	curnode = curnode->next) {
       mynode = (struct node_cfg*)(curnode->data);
-      print_node(string, mynode);
-      fprintf(fp, string);
+      print_node(fp, mynode);
     }
   }
 
@@ -361,10 +360,9 @@ print_xml_response(char* path, int version)
       mylink = (struct link_cfg*)(curnode->data);
   
       if (version == FULL_VERSION)
-	print_link(string, mylink);
+	print_link(fp, mylink);
       else 
-	print_link_brief(string, mylink);
-      fprintf(fp, string);
+	print_link_brief(fp, mylink);
     }
   }
 
@@ -380,10 +378,8 @@ print_final(char *path)
   struct node_cfg *mynode;
   struct link_cfg *mylink;
   int i;
-  char string[500];
   FILE *file;
   
-  memset(string, 0, 500);
   if (!path)
     return;
 
@@ -411,8 +407,7 @@ print_final(char *path)
 	  i++, curnode = curnode->next) {
       mynode = (struct node_cfg*)(curnode->data);
 
-      print_node(string, mynode);
-      fprintf(file, string);
+      print_node(file, mynode);
 	
       if (glob_app_cfg.function == QUERY_RESP &&
 	  mynode->link_list != NULL) {
@@ -420,8 +415,7 @@ print_final(char *path)
 	     curnode1;
 	     curnode1 = curnode1->next) {
 	  mylink = (struct link_cfg*)curnode1->data;
-	  print_link(string, mylink);
-	  fprintf(file, string);
+	  print_link(file, mylink);
 	}
       }
     }
@@ -432,8 +426,7 @@ print_final(char *path)
 	curnode;
 	curnode = curnode->next) {
       mylink = (struct link_cfg*)curnode->data;
-      print_link(string, mylink); 
-      fprintf(file, string);
+      print_link(file, mylink); 
     }
   }
 
@@ -1046,6 +1039,8 @@ topo_xml_parser(char* filename, int parser_type)
 	      link_assign = 1;
 	    } else if (strcasecmp(vlsr_ptr->name, "assign_ip") == 0)
 	      strncpy(vlsr_cur->assign_ip, key, IP_MAXLEN);
+	    else if (strcasecmp(vlsr_ptr->name, "local_id_type") == 0)
+	      strncpy(vlsr_cur->local_id_type, key, REG_TXT_FIELD_LEN);
 	  }
 	}
       } 
@@ -1323,7 +1318,8 @@ master_validate_graph(int is_astb)
   struct adtlistnode *curnode, *curnode1;
   struct node_cfg *mynode, *mynode1;
   struct link_cfg *mylink, *mylink1;
-  int i;
+  struct vlsr *myvlsr;
+  int i, j;
 
   if (is_astb && (glob_app_cfg.function == SETUP_RESP ||
 			 glob_app_cfg.function == RELEASE_RESP ||
@@ -1339,6 +1335,39 @@ master_validate_graph(int is_astb)
 	glob_app_cfg.link_list == NULL) {
     printf("For SETUP_RESP, there should be at least 1 link in topology file\n");
     return 0;
+  }
+
+  if (glob_app_cfg.node_list != NULL) {
+    for (curnode = glob_app_cfg.node_list->head;
+	 curnode;
+	 curnode = curnode->next) {
+      mynode = (struct node_cfg*) curnode->data;
+  
+      if (mynode->name[0] == '\0') {
+        zlog_err("node's name is not set");
+        return 0;
+      }
+  
+      for (j = 0; j < mynode->vlsr_total; j++) {
+        myvlsr = mynode->vlsr_info[j];
+  
+        if (myvlsr->local_id_type[0] != '\0') {
+	 for (i = 0; i < local_field.number; i++) {
+	   if (strcasecmp(myvlsr->local_id_type, local_field.ss[i].abbre) == 0)
+	     break;
+	 }
+	 if (i == local_field.number) {
+	   zlog_err("For node %s, Invalid value for local: %s", mynode->name, myvlsr->local_id_type);
+	   if (is_astb) {
+	     printf("Valid values for local:\n");
+	     for (i = 0; i < local_field.number; i++)
+	       printf("%s\t:%s\n", local_field.ss[i].abbre, local_field.ss[i].details);
+	   }
+	   return 0;
+	 }
+        } 
+      }
+    }
   }
 
   if (glob_app_cfg.link_list != NULL) {

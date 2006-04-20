@@ -986,28 +986,26 @@ master_compose_link_request(struct application_cfg app_cfg, char *path, struct n
   struct adtlistnode *linknode;
   struct link_cfg *link;
   FILE *send_file;
-  static char buf[500];
 
   if (srcnode == NULL) 
     return 0;
 
   if (path == NULL || strlen(path) == 0) 
     return 0;
-
+  
   send_file = fopen(path, "w+");
   if (send_file == NULL) {
     zlog_err("Can't open the file %s; error = %d(%s)", 
 		path, errno, strerror(errno));
     return 0;
   }
- 
+  
   fprintf(send_file, "<topology>\n");
   fprintf(send_file, "<glob_ast_id>%s</glob_ast_id>\n", app_cfg.glob_ast_id); 
   fprintf(send_file, "<ast_func>%s</ast_func>\n", function_type_details[app_cfg.function]);
 
   if (app_cfg.function == QUERY_REQ) {
-    print_node(buf, srcnode);
-    fprintf(send_file, buf);
+    print_node(send_file, srcnode);
     fprintf(send_file, "</topology>");
     fflush(send_file);
     fclose(send_file);
@@ -1021,19 +1019,15 @@ master_compose_link_request(struct application_cfg app_cfg, char *path, struct n
     return 1;
   }
 
-  print_node(buf, srcnode);
-  fprintf(send_file, buf);
+  print_node(send_file, srcnode);
   for (	linknode = srcnode->link_list->head;
 	linknode;
 	linknode = linknode->next) {
       
     link = (struct link_cfg*)linknode->data;
    
-    print_node(buf, link->dest);
-    fprintf(send_file, buf); 
-
-    print_link(buf, link);
-    fprintf(send_file, buf);
+    print_node(send_file, link->dest);
+    print_link(send_file, link);
   }
 
   fprintf(send_file, "</topology>");
@@ -1047,7 +1041,6 @@ int
 master_compose_node_request(struct application_cfg app_cfg, char *path, struct node_cfg* srcnode)
 {
   FILE *send_file;
-  static char buf[500];
 
   if (srcnode == NULL) 
     return 0;
@@ -1061,12 +1054,11 @@ master_compose_node_request(struct application_cfg app_cfg, char *path, struct n
 		path, errno, strerror(errno));
     return 0;
   }
- 
+
   fprintf(send_file, "<topology>\n");
   fprintf(send_file, "<glob_ast_id>%s</glob_ast_id>\n", app_cfg.glob_ast_id); 
   fprintf(send_file, "<ast_func>%s</ast_func>\n", function_type_details[app_cfg.function]);
-  print_node(buf, srcnode);
-  fprintf(send_file, buf);
+  print_node(send_file, srcnode);
 
   fprintf(send_file, "</topology>");
   fflush(send_file);

@@ -793,7 +793,6 @@ broker_accept(struct thread *thread)
   FILE* fp;
   int fd, total;
   static struct stat file_stat;
-  static char buf_ret[300];
 
   servSock = THREAD_FD(thread);
 
@@ -844,9 +843,7 @@ broker_accept(struct thread *thread)
       node = (struct node_cfg *)resource_index->data;
        
       zlog_info("BROKER: returns node (ipadd = %s)\n", node->ipadd);   
-      memset(buf_ret, 0, 300);
-      print_node(buf_ret, node);
-      fprintf(fp, buf_ret);
+      print_node(fp, node);
       fprintf(fp, "</topology>");
       fflush(fp);
       fclose(fp);
