@@ -717,7 +717,7 @@ dragon_link_provision()
 	buffer_reset(fake_vty->obuf);
 	lsp = dragon_build_lsp(mylink); 
 	if (!lsp) { 
-	  vty_out(fake_vty, "ERROR: lsp is not set between %s and %s\n", 
+	  zlog_err("ERROR: lsp is not set between %s and %s\n", 
 		  mylink->src->name, mylink->dest->name); 
 	  mylink->ast_status = AST_FAILURE;
     	  buffer_putc(fake_vty->obuf, '\0');
@@ -736,7 +736,7 @@ dragon_link_provision()
         }
 	   
 	success++;
-	vty_out(fake_vty, "SUCCESS: Lsp has been set between %s and %s\n", 
+	zlog_info("lsp has been set between %s and %s\n", 
 		mylink->src->name, mylink->dest->name); 
       }
       break;
