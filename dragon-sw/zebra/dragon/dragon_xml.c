@@ -959,7 +959,7 @@ xml_serv_sock (const char *hostname, unsigned short port, char *path)
 
   memset (&req, 0, sizeof (struct addrinfo));
   req.ai_flags = AI_PASSIVE;
-  req.ai_family = AF_UNSPEC;
+  req.ai_family = AF_INET;
   req.ai_socktype = SOCK_STREAM;
   sprintf (port_str, "%d", port);
   port_str[sizeof (port_str) - 1] = '\0';
@@ -976,11 +976,7 @@ xml_serv_sock (const char *hostname, unsigned short port, char *path)
 
   do
     {
-      if (ainfo->ai_family != AF_INET
-#ifdef HAVE_IPV6
-	  && ainfo->ai_family != AF_INET6
-#endif /* HAVE_IPV6 */
-	  )
+      if (ainfo->ai_family != AF_INET)
 	continue;
 
       sock = socket (ainfo->ai_family, ainfo->ai_socktype, ainfo->ai_protocol);

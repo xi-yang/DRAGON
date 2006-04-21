@@ -177,7 +177,7 @@ free_application_cfg(struct application_cfg *app_cfg)
       curnode->data = NULL;
     }
   }
-  free(app_cfg->link_list);
+  adtlist_free(app_cfg->link_list);
   app_cfg->link_list = NULL;
 
   if (app_cfg->glob_ast_id != NULL) 
@@ -1170,7 +1170,7 @@ topo_xml_parser(char* filename, int parser_type)
 
       adtlist_add(link_list, newlink);    
 
-      if (glob_app_cfg.function != QUERY_RESP) { 
+      if (glob_app_cfg.function != QUERY_RESP && newlink->src != NULL) { 
 	/* also add the link the to src node */ 
 	if (newlink->src->link_list == NULL) { 
 	  newlink->src->link_list = malloc(sizeof(struct adtlist)); 
