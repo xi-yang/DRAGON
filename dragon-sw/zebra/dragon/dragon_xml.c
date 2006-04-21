@@ -508,9 +508,9 @@ xml_module_init()
   char* assign;
 
   fake_vty = generate_fake_vty();
-  assign = malloc(7*20*sizeof(char));
+  assign = malloc(7*(REG_TXT_FIELD_LEN+1)*sizeof(char));
   for (i = 0; i < 7; i++) 
-    argv[i] = assign+(i*50);
+    argv[i] = assign+(i*REG_TXT_FIELD_LEN+1);
   memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
   memset(&pending_list, 0, sizeof(struct adtlist));
 }
