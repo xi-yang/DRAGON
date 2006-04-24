@@ -308,7 +308,7 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
 
     //construct NARB API message
     msgheader->type = htons(NARB_MSG_LSPQ);
-    msgheader->seqnum = htonl (dest);
+    msgheader->seqnum = htonl (dest+destLocalId);
     msgheader->ucid = htonl(src);
     msgheader->tag = htonl(vtag);
     msgheader->options = htonl(0x07<<16); //OPT_STRICT | OPT_PREFERED |OPT_MRN
