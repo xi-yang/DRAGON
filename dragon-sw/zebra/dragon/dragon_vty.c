@@ -1485,7 +1485,7 @@ DEFUN (dragon_set_ucid,
        "UCID number\n"
 	)
 {
-    sscanf(argv[0], "%d", &ucid);
+    sscanf(argv[0], "%d", &UCID);
     return CMD_SUCCESS;
 }
 
