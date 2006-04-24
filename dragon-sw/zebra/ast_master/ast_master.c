@@ -217,36 +217,36 @@ print_node(FILE* fp, struct node_cfg* node)
     return;
 
   fprintf(fp, "<resource>\n");
-  fprintf(fp, "<name>%s</name>\n", node->name);
-  fprintf(fp, "<ast_status>%s</ast_status>\n", status_type_details[node->ast_status]);
+  fprintf(fp, "\t<name>%s</name>\n", node->name);
+  fprintf(fp, "\t<ast_status>%s</ast_status>\n", status_type_details[node->ast_status]);
   if (node->agent_message != NULL) 
-    fprintf(fp, "<agent_message>%s</agent_message>\n", node->agent_message);
+    fprintf(fp, "\t<agent_message>%s</agent_message>\n", node->agent_message);
   if (node->node_type != 0) 
-    fprintf(fp, "<resource_type>%s</resource_type>\n", entity_type_name[node->node_type]);
+    fprintf(fp, "\t<resource_type>%s</resource_type>\n", entity_type_name[node->node_type]);
   if (node->ipadd[0] != '\0')
-    fprintf(fp, "<ip_addr>%s</ip_addr>\n", node->ipadd);
+    fprintf(fp, "\t<ip_addr>%s</ip_addr>\n", node->ipadd);
   if (node->te_addr[0] != '\0')
-    fprintf(fp, "<te_addr>%s</te_addr>\n", node->te_addr);
+    fprintf(fp, "\t<te_addr>%s</te_addr>\n", node->te_addr);
   if (node->command != NULL) 
-    fprintf(fp, "<command>%s</command>\n", node->command);
+    fprintf(fp, "\t<command>%s</command>\n", node->command);
   if (node->vlsr_info != NULL) {
     struct vlsr *vlsr_ptr;
     int i;
     for ( i = 0; i < node->vlsr_total; i++ ) {
       vlsr_ptr = node->vlsr_info[i];
 
-      fprintf(fp, "<vlsr>\n");
-      fprintf(fp, "<lo_addr>%s</lo_addr>\n", vlsr_ptr->lo_addr);
+      fprintf(fp, "\t<vlsr>\n");
+      fprintf(fp, "\t\t<lo_addr>%s</lo_addr>\n", vlsr_ptr->lo_addr);
       if (vlsr_ptr->local_id_type[0] != '\0')
-	fprintf(fp, "<local_id_type>%s</local_id_type>\n", vlsr_ptr->local_id_type);
-      fprintf(fp, "<local_id>%d</local_id>\n", vlsr_ptr->local_id);
+	fprintf(fp, "\t\t<local_id_type>%s</local_id_type>\n", vlsr_ptr->local_id_type);
+      fprintf(fp, "\t\t<local_id>%d</local_id>\n", vlsr_ptr->local_id);
       if (vlsr_ptr->iface[0] != '\0')
-	fprintf(fp, "<iface>%s</iface>\n", vlsr_ptr->iface);
+	fprintf(fp, "\t\t<iface>%s</iface>\n", vlsr_ptr->iface);
       if (vlsr_ptr->link[0] != '\0')
-	fprintf(fp, "<link>%s</link>\n", vlsr_ptr->link);
+	fprintf(fp, "\t\t<link>%s</link>\n", vlsr_ptr->link);
       if (vlsr_ptr->assign_ip[0] != '\0')
-	fprintf(fp, "<assign_ip>%s</assign_ip>\n", vlsr_ptr->assign_ip);
-      fprintf(fp, "</vlsr>\n"); 
+	fprintf(fp, "\t\t<assign_ip>%s</assign_ip>\n", vlsr_ptr->assign_ip);
+      fprintf(fp, "\t</vlsr>\n"); 
     }
   }
   fprintf(fp, "</resource>\n");
@@ -259,40 +259,40 @@ print_link(FILE* fp, struct link_cfg* link)
     return;
 
   fprintf(fp, "<resource>\n");
-  fprintf(fp, "<name>%s</name>\n", link->name);
-  fprintf(fp, "<ast_status>%s</ast_status>\n", status_type_details[link->ast_status]);
+  fprintf(fp, "\t<name>%s</name>\n", link->name);
+  fprintf(fp, "\t<ast_status>%s</ast_status>\n", status_type_details[link->ast_status]);
   if (link->agent_message) 
-    fprintf(fp, "<agent_message>%s</agent_message>\n", link->agent_message);
+    fprintf(fp, "\t<agent_message>%s</agent_message>\n", link->agent_message);
   if (link->service_type != 0) 
-    fprintf(fp, "<resource_type>%s</resource_type>\n", link_type_name[link->service_type]);
+    fprintf(fp, "\t<resource_type>%s</resource_type>\n", link_type_name[link->service_type]);
   if (link->src != NULL) 
-    fprintf(fp, "<src>%s</src>\n", link->src->name);
+    fprintf(fp, "\t<src>%s</src>\n", link->src->name);
   if (link->dest != NULL) 
-    fprintf(fp, "<dest>%s</dest>\n", link->dest->name);
+    fprintf(fp, "\t<dest>%s</dest>\n", link->dest->name);
   if (link->src_ip[0] != '\0')
-    fprintf(fp, "<src_ip>%s</src_ip>\n", link->src_ip);
+    fprintf(fp, "\t<src_ip>%s</src_ip>\n", link->src_ip);
   if (link->dest_ip[0] != '\0')
-    fprintf(fp, "<dest_ip>%s</dest_ip>\n", link->dest_ip);
+    fprintf(fp, "\t<dest_ip>%s</dest_ip>\n", link->dest_ip);
   if (link->lsp_name[0] != '\0') 
-    fprintf(fp, "<lsp_name>%s</lsp_name>\n", link->lsp_name);
+    fprintf(fp, "\t<lsp_name>%s</lsp_name>\n", link->lsp_name);
   if (link->bandwidth[0] != '\0')
-    fprintf(fp, "<bandwidth>%s</bandwidth>\n", link->bandwidth);
+    fprintf(fp, "\t<bandwidth>%s</bandwidth>\n", link->bandwidth);
   if (link->swcap[0] != '\0') 
-    fprintf(fp, "<swcap>%s</swcap>\n", link->swcap); 
+    fprintf(fp, "\t<swcap>%s</swcap>\n", link->swcap); 
   if (link->encoding[0] != '\0')
-    fprintf(fp, "<encoding>%s</encoding>\n", link->encoding); 
+    fprintf(fp, "\t<encoding>%s</encoding>\n", link->encoding); 
   if (link->gpid[0] != '\0')
-    fprintf(fp, "<gpid>%s</gpid>\n", link->gpid);
+    fprintf(fp, "\t<gpid>%s</gpid>\n", link->gpid);
   if (link->src_local_id_type[0] != '\0') {
-    fprintf(fp, "<src_local_id_type>%s</src_local_id_type>\n", link->src_local_id_type);
-    fprintf(fp, "<src_local_id>%d</src_local_id>\n", link->src_local_id);
+    fprintf(fp, "\t<src_local_id_type>%s</src_local_id_type>\n", link->src_local_id_type);
+    fprintf(fp, "\t<src_local_id>%d</src_local_id>\n", link->src_local_id);
   }
   if (link->dest_local_id_type[0] != '\0') {
-    fprintf(fp, "<dest_local_id_type>%s</dest_local_id_type>\n", link->dest_local_id_type);
-    fprintf(fp, "<dest_local_id>%d</dest_local_id>\n", link->dest_local_id);
+    fprintf(fp, "\t<dest_local_id_type>%s</dest_local_id_type>\n", link->dest_local_id_type);
+    fprintf(fp, "\t<dest_local_id>%d</dest_local_id>\n", link->dest_local_id);
   }
   if (link->vtag[0] != '\0') 
-    fprintf(fp, "<vtag>%s</vtag>\n", link->vtag);
+    fprintf(fp, "\t<vtag>%s</vtag>\n", link->vtag);
   fprintf(fp, "</resource>\n");
 }
 
@@ -303,18 +303,18 @@ print_link_brief(FILE* fp, struct link_cfg* link)
     return;
 
   fprintf(fp, "<resource>\n");
-  fprintf(fp, "<name>%s</name>\n", link->name);
+  fprintf(fp, "\t<name>%s</name>\n", link->name);
   if (link->src != NULL) 
-    fprintf(fp, "<src>%s</src>\n", link->src->name);
+    fprintf(fp, "\t<src>%s</src>\n", link->src->name);
   if (link->dest != NULL)
-    fprintf(fp, "<dest>%s</dest>\n", link->dest->name); 
+    fprintf(fp, "\t<dest>%s</dest>\n", link->dest->name); 
   if (link->service_type != 0)
-    fprintf(fp, "<resource_type>%s</resource_type>\n", link_type_name[link->service_type]);
-  fprintf(fp, "<ast_status>%s</ast_status>\n", status_type_details[link->ast_status]);
+    fprintf(fp, "\t<resource_type>%s</resource_type>\n", link_type_name[link->service_type]);
+  fprintf(fp, "\t<ast_status>%s</ast_status>\n", status_type_details[link->ast_status]);
   if (link->agent_message != NULL) 
-    fprintf(fp, "<agent_message>%s</agent_message>\n", link->agent_message);
+    fprintf(fp, "\t<agent_message>%s</agent_message>\n", link->agent_message);
   if (link->lsp_name[0] != '\0') 
-    fprintf(fp, "<lsp_name>%s</lsp_name>\n", link->lsp_name);
+    fprintf(fp, "\t<lsp_name>%s</lsp_name>\n", link->lsp_name);
   fprintf(fp, "</resource>\n");
 }
 
