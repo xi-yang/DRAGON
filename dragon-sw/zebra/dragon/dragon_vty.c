@@ -40,6 +40,7 @@
 #include "buffer.h"
 
 char lsp_prompt[100] = "%s(edit-lsp)# ";
+u_int32_t UCID = 0;
 
 struct cmd_node lsp_node =
 {
@@ -1484,8 +1485,7 @@ DEFUN (dragon_set_ucid,
        "UCID number\n"
 	)
 {
-    struct lsp *lsp = (struct lsp *)(vty->index);
-    sscanf(argv[0], "%d", &lsp->ucid);
+    sscanf(argv[0], "%d", &ucid);
     return CMD_SUCCESS;
 }
 
