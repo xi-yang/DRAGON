@@ -28,9 +28,6 @@
 #include <sys/stat.h>
  #include <fcntl.h>
 
-#include <readline/readline.h>
-#include <readline/history.h>
-
 #include "command.h"
 #include "memory.h"
 #include "vector.h"
@@ -1480,7 +1477,7 @@ ALIAS (dragon_show_lsp,
        "Show LSP status\n");
 
 DEFUN (dragon_set_ucid,
-       dragon_set_ucid,
+       dragon_set_ucid_cmd,
        "set ucid ID",
        "Set Universal Client ID (UCID)\n"
        "UCID\n"
@@ -1875,6 +1872,7 @@ dragon_supp_vty_init ()
   install_element(VIEW_NODE, &dragon_commit_lsp_receiver_cmd);
   install_element(VIEW_NODE, &dragon_commit_lsp_default_cmd);
   install_element(VIEW_NODE, &dragon_delete_lsp_cmd);
+  install_element(VIEW_NODE, &dragon_set_ucid_cmd);
 
   registered_local_ids = list_new();
   install_element(VIEW_NODE, &dragon_show_local_id_cmd);
