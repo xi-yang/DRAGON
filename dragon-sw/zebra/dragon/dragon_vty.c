@@ -1478,7 +1478,7 @@ ALIAS (dragon_show_lsp,
 
 DEFUN (dragon_set_ucid,
        dragon_set_ucid_cmd,
-       "set ucid ID",
+       "set ucid NUM",
        "Set Universal Client ID (UCID)\n"
        "UCID\n"
        "UCID number\n"
@@ -1872,7 +1872,6 @@ dragon_supp_vty_init ()
   install_element(VIEW_NODE, &dragon_commit_lsp_receiver_cmd);
   install_element(VIEW_NODE, &dragon_commit_lsp_default_cmd);
   install_element(VIEW_NODE, &dragon_delete_lsp_cmd);
-  install_element(VIEW_NODE, &dragon_set_ucid_cmd);
 
   registered_local_ids = list_new();
   install_element(VIEW_NODE, &dragon_show_local_id_cmd);
@@ -1887,6 +1886,8 @@ dragon_supp_vty_init ()
   install_element(CONFIG_NODE, &dragon_delete_local_id_all_cmd);
   install_element(VIEW_NODE, &dragon_clear_local_id_cmd);
   install_element(CONFIG_NODE, &dragon_clear_local_id_cmd);
+  install_element(VIEW_NODE, &dragon_set_ucid_cmd);
+  install_element(CONFIG_NODE, &dragon_set_ucid_cmd);
   
   install_element(CONFIG_NODE, &dragon_set_pce_para_cmd);
   install_element(CONFIG_NODE, &dragon_set_pce_para_ip_cmd);
