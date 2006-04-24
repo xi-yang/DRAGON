@@ -1479,6 +1479,19 @@ ALIAS (dragon_show_lsp,
        SHOW_STR
        "Show LSP status\n");
 
+DEFUN (dragon_set_ucid,
+       dragon_set_ucid,
+       "set ucid ID",
+       "Set Universal Client ID (UCID)\n"
+       "UCID\n"
+       "UCID number\n"
+	)
+{
+    struct lsp *lsp = (struct lsp *)(vty->index);
+    sscanf(argv[0], "%d", &lsp->ucid);
+    return CMD_SUCCESS;
+}
+
 int
 dragon_master_init()
 {
