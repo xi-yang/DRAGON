@@ -91,7 +91,7 @@ int
 node_assign_ip(struct node_cfg* node)
 {
   struct ifreq if_info;
-  int sockfd = -1, i;
+  int sockfd = -1, i, j, k;
   struct sockaddr_in *sock;
   int ioctl_ret;
   struct vlsr *vlsr_cur;
@@ -104,6 +104,9 @@ node_assign_ip(struct node_cfg* node)
   for (i = 0; i < node->vlsr_total; i++) {
     vlsr_cur = (struct vlsr*)node->vlsr_info[i];
     if (vlsr_cur->assign_ip[0] != '\0') {
+      static char bcast[IP_MAXLEN+1];
+
+      bzero(bcast, IP_MAXLEN+1);
       if (sockfd == -1) 
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0); 
 
@@ -122,7 +125,7 @@ node_assign_ip(struct node_cfg* node)
 	return 0;
       }
       
-      sock->sin_addr.s_addr = inet_addr("255.255.255.192");
+      sock->sin_addr.s_addr = inet_addr("255.255.255.0");
       ioctl_ret = ioctl(sockfd, SIOCSIFNETMASK, &if_info);
       if (ioctl_ret == -1) {
 	node->ast_status = AST_FAILURE;
@@ -131,12 +134,19 @@ node_assign_ip(struct node_cfg* node)
 	close(sockfd);
 	return 0;
       }
-#ifdef __FreeBSD__
-      sprintf(command, "ifconfig %s %s netmask 255.255.255.192", 
-			vlsr_cur->iface, vlsr_cur->assign_ip);
+     
+      for (j = 0, k = 0; 
+	   j < strlen(vlsr_cur->assign_ip) && k != 3; j++) {
+	bcast[j] = vlsr_cur->assign_ip[j];
+	if (bcast[j] == '.')
+	  k++;
+      }
+      strcpy(bcast+j, "255");
+	 
+      sprintf(command, "ifconfig %s %s netmask 255.255.255.0 broadcast %s", 
+			vlsr_cur->iface, vlsr_cur->assign_ip, bcast);
       zlog_info("command is %s", command);
       system(command);
-#endif
     }
   }
 
