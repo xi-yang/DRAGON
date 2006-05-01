@@ -315,7 +315,7 @@ int main(int argc, char* argv[])
       }
       total+=bytesRcvd;
       buffer[bytesRcvd] = '\0';
-      printf("%s\n", buffer);
+      printf("%s", buffer);
       if (ret_file)
 	fprintf(ret_file, buffer);
     }

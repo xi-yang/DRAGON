@@ -124,7 +124,12 @@ node_assign_ip(struct node_cfg* node)
 	close(sockfd);
 	return 0;
       }
-      
+    
+#ifndef __FreeBSD__ 
+      sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_netmask); 
+#else
+      sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_addr);
+#endif
       sock->sin_addr.s_addr = inet_addr("255.255.255.0");
       ioctl_ret = ioctl(sockfd, SIOCSIFNETMASK, &if_info);
       if (ioctl_ret == -1) {
@@ -142,11 +147,21 @@ node_assign_ip(struct node_cfg* node)
 	  k++;
       }
       strcpy(bcast+j, "255");
-	 
+
+      sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_broadaddr);
+      sock->sin_addr.s_addr = inet_addr(bcast);
+      ioctl_ret = ioctl(sockfd, SIOCSIFBRDADDR, &if_info);
+      if (ioctl_ret == -1) {
+        node->ast_status = AST_FAILURE;
+        node->agent_message = strdup("ifconfig failure");
+        zlog_err("ifconfig failed for %s", vlsr_cur->iface);
+        close(sockfd);
+        return 0;
+      }
+
       sprintf(command, "ifconfig %s %s netmask 255.255.255.0 broadcast %s", 
 			vlsr_cur->iface, vlsr_cur->assign_ip, bcast);
-      zlog_info("command is %s", command);
-      system(command);
+      zlog_info("%s", command);
     }
   }
 
@@ -293,7 +308,7 @@ node_process_ast_complete()
       else if (node_child_pid == 0) {
 
 	/* Child process */
-	zlog_info("Running command %s", node->command);
+	zlog_info("Running command \"%s\"", node->command);
 	system(node->command);
         child_app_complete = 1;
       } else {
@@ -308,8 +323,8 @@ node_process_ast_complete()
           if (sigaction(SIGCHLD, &node_app_complete_action, 0) < 0)
             zlog_err("sigaction() failed");
         }
-      if (waitpid(node_child_pid, NULL, WNOHANG) < 0)
-        zlog_err("waitpid failed; error = %d(%s)", errno, strerror(errno));
+        if (waitpid(node_child_pid, NULL, WNOHANG) < 0)
+          zlog_err("waitpid failed; error = %d(%s)", errno, strerror(errno));
 	
       } 
     } else 
