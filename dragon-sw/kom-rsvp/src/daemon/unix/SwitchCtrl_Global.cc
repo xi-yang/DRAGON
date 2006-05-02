@@ -435,8 +435,7 @@ SwitchCtrl_Global::SwitchCtrl_Global()
 		first = false;
 	}
 
-	sessionsRefresher = new sessionsRefreshTimer(this, TimeValue(300));
-	//sessionsRefresher = NULL;
+	sessionsRefresher = NULL;
 }
 
 SwitchCtrl_Global::~SwitchCtrl_Global() {
@@ -447,6 +446,10 @@ SwitchCtrl_Global::~SwitchCtrl_Global() {
 		(*sessionIter)->disconnectSwitch();
 		sessionList.erase(sessionIter);
 	}
+}
+
+void SwitchCtrl_Global::startRefreshTimer() {
+	sessionsRefresher = new sessionsRefreshTimer(this, TimeValue(300));
 }
 
 bool SwitchCtrl_Global::refreshSessions()

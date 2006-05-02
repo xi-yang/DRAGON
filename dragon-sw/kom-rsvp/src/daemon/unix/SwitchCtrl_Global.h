@@ -222,6 +222,7 @@ public:
 	bool addSession(SwitchCtrl_Session* addSS);
 	SwitchCtrlSessionList& getSessionList() { return sessionList; }
 	bool refreshSessions();
+	void startRefreshTimer();
 
 	/*called by object functions  in SwitchCtrl_Session*/
 	static bool static_connectSwitch(struct snmp_session* &session, NetAddress &switchAddress);

@@ -153,9 +153,10 @@ int main( int argc, char** argv ) {
 	delete pidfile;
 #endif
 	Log::init( logstring_enable, logstring_disable, logfile );
-	RSVP* rsvp = new RSVP( configfile);
 	SwitchCtrl_Global* controller = &SwitchCtrl_Global::instance();
 	RSVP_Global::switchController = controller;
+	RSVP* rsvp = new RSVP( configfile);
+	RSVP_Global::switchController->startRefreshTimer();
 	if ( rsvp->properInit() ) rsvp->main();
 	delete rsvp;
 	delete controller;
