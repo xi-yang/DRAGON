@@ -11,6 +11,7 @@ To be incorporated into KOM-RSVP-TE package
 #define _SWITCHCTRL_GLOBAL_H_
 
 #include "RSVP_Lists.h"
+#include "BaseTimer.h"
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/session_api.h>
@@ -241,6 +242,18 @@ public:
 protected:
 	SwitchCtrl_Global();
 	SwitchCtrl_Global(const SwitchCtrl_Global& obj);
+
+protected:
+	class refreshSessionsTimer: public BaseTimer {
+	public:
+		sessionsRefreshTimer(): BaseTimer(const TimeValue(300)) {}
+		virtual void internalFire() {
+			cancel();
+			alarmTime += TimeValue(300);
+			start();
+			this->refreshSessions();
+		}
+	} sessionsRefresher;
 
 private:
 	SwitchCtrlSessionList sessionList;

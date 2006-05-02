@@ -118,7 +118,7 @@ void Hop::sendMessageReliable( const Message& msg, const NetAddress& dest, const
 }
 
 void Hop::processSrefresh( const Message& msg ) {
-       static int switch_refresh_counter = 1;
+       //static int switch_refresh_counter = 1;
        const SimpleList<sint32>& msgIdList = msg.getMESSAGE_ID_LIST_Object().getID_List();
 	SimpleList<sint32>::ConstIterator msgIter = msgIdList.begin();
 	Message* nackMsg = new Message( Message::Ack, 15 );
@@ -201,8 +201,8 @@ void Hop::processSrefresh( const Message& msg ) {
 					(*stateIter).sb.rsb->restartTimeout();
 
                                    //@@@@ To keep the telnet session alive; once every 5 minutes.
-                                   if (CLI_SESSION_TYPE != CLI_NONE && (switch_refresh_counter++)%10 == 0)
-                                       RSVP_Global::switchController->refreshSessions();
+                                   //if (CLI_SESSION_TYPE != CLI_NONE && (switch_refresh_counter++)%10 == 0)
+                                   //    RSVP_Global::switchController->refreshSessions();
 				}
 			} // found matching ID
 		}

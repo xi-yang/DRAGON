@@ -434,6 +434,8 @@ SwitchCtrl_Global::SwitchCtrl_Global()
 		readPreservedLocalIds();
 		first = false;
 	}
+
+	sessionsRefresher.start();
 }
 
 SwitchCtrl_Global::~SwitchCtrl_Global() {
