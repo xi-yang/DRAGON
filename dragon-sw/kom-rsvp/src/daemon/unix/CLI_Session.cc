@@ -360,7 +360,7 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
 	return(-1);
       }
 ///////// debug info ////////
-//      if (verbose) fputc(0xff & (int)line[n], stdout);
+      if (verbose) fputc(0xff & (int)line[n], stdout);
 ///////// debug info ////////
       if (line[n] == '\r') continue;
       if (text1 == SWITCH_PROMPT) {
@@ -395,9 +395,9 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
       n++;
     }
 ///////// debug info ////////
-//    if (!verbose) {
+    if (!verbose) {
 ///////// debug info ////////
-    if (verbose) {
+//    if (verbose) {
       line[++n] = '\0';
       if (++count > 1) {
 	// the very first line of information is the remains of  

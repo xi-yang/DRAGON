@@ -11,7 +11,8 @@ To be incorporated into KOM-RSVP-TE package
 #define _SWITCHCTRL_GLOBAL_H_
 
 #include "RSVP_Lists.h"
-#include "BaseTimer.h"
+#include "RSVP_TimeValue.h"
+#include "RSVP_BaseTimer.h"
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/session_api.h>
@@ -207,6 +208,7 @@ struct slot_entry {
 	uint16 slot_num;
 };
 
+class sessionsRefreshTimer;
 class SwitchCtrl_Global{
 public:
 	~SwitchCtrl_Global();
@@ -243,21 +245,25 @@ protected:
 	SwitchCtrl_Global();
 	SwitchCtrl_Global(const SwitchCtrl_Global& obj);
 
-protected:
-	class refreshSessionsTimer: public BaseTimer {
-	public:
-		sessionsRefreshTimer(): BaseTimer(const TimeValue(300)) {}
-		virtual void internalFire() {
-			cancel();
-			alarmTime += TimeValue(300);
-			start();
-			this->refreshSessions();
-		}
-	} sessionsRefresher;
-
 private:
+	sessionsRefreshTimer *sessionsRefresher;
 	SwitchCtrlSessionList sessionList;
 	SimpleList<slot_entry> slotList;
+};
+
+class sessionsRefreshTimer: public BaseTimer {
+public:
+	sessionsRefreshTimer(SwitchCtrl_Global* sc, const TimeValue& refreshTime): BaseTimer(refreshTime), switchController(sc), period(refreshTime) {}
+	virtual void internalFire() {
+		cancel();
+		alarmTime += period;
+		start();
+		switchController->refreshSessions();
+	}
+	void Start() { start(); }
+private:
+	SwitchCtrl_Global *switchController;
+	TimeValue period;
 };
 
 inline vlanPortMap *getVlanPortMapById(vlanPortMapList &vpmList, uint32 vid)
