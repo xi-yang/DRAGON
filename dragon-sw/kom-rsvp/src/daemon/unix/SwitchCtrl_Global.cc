@@ -436,11 +436,12 @@ SwitchCtrl_Global::SwitchCtrl_Global()
 	}
 
 	sessionsRefresher = new sessionsRefreshTimer(this, TimeValue(300));
-	sessionsRefresher->Start();
+	//sessionsRefresher = NULL;
 }
 
 SwitchCtrl_Global::~SwitchCtrl_Global() {
-	delete sessionsRefresher;
+	if (sessionsRefresher)
+		delete sessionsRefresher;
 	SwitchCtrlSessionList::Iterator sessionIter = sessionList.begin();
 	for ( ; sessionIter != sessionList.end(); ++sessionIter){
 		(*sessionIter)->disconnectSwitch();

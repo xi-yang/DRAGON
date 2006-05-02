@@ -154,8 +154,8 @@ int main( int argc, char** argv ) {
 #endif
 	Log::init( logstring_enable, logstring_disable, logfile );
 	SwitchCtrl_Global* controller = &SwitchCtrl_Global::instance();
-	RSVP_Global::switchController = controller;
 	RSVP* rsvp = new RSVP( configfile);
+	RSVP_Global::switchController = controller;
 	if ( rsvp->properInit() ) rsvp->main();
 	delete rsvp;
 	delete controller;
