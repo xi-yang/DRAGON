@@ -608,10 +608,7 @@ dragon_build_lsp(struct link_cfg *link)
     } else {
       strcpy(argv[1], link->src_local_id_type);
       sprintf(argv[2], "%d", link->src_local_id);
-      if (strcasecmp(link->src_local_id_type, "lsp-id") == 0) 
-        strcpy(argv[0], (link->src->te_addr[0] == '\0') ? link->src->ipadd:link->src->te_addr);
-      else
-        strcpy(argv[0], link->src->ipadd);
+      strcpy(argv[0], (link->src->te_addr[0] == '\0') ? link->src->ipadd:link->src->te_addr);
     }
   }
  
@@ -631,10 +628,7 @@ dragon_build_lsp(struct link_cfg *link)
       strcpy(argv[4], strcasecmp(link->dest_local_id_type, "lsp-id") == 0 ? 
                   "tunnel-id":link->dest_local_id_type);
       sprintf(argv[5], "%d", link->dest_local_id);
-      if (strcasecmp(link->dest_local_id_type, "lsp-id") == 0) 
-        strcpy(argv[3], (link->dest->te_addr[0] == '\0') ? link->dest->ipadd:link->dest->te_addr);
-      else 
-        strcpy(argv[3], link->dest->ipadd);
+      strcpy(argv[3], (link->dest->te_addr[0] == '\0') ? link->dest->ipadd:link->dest->te_addr);
     }
   }
 
