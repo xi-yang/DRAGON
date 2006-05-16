@@ -617,7 +617,7 @@ dragon_build_lsp(struct link_cfg *link)
     if (link->dest_vlsr->local_id_type[0] == '\0')
       strcpy(argv[4], "port");
     else
-      strcpy(argv[4], link->dest_vlsr->local_id_type);
+      strcpy(argv[4], (strcmp(link->dest_vlsr->local_id_type, "lsp-id") == 0) ? "tunnel-id" : link->dest_vlsr->local_id_type);
     sprintf(argv[5], "%d", link->dest_vlsr->local_id);
   } else {
     if (link->dest_local_id_type[0] == '\0') {
