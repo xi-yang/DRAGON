@@ -989,22 +989,6 @@ DEFUN (dragon_set_lsp_vtag,
     struct lsp *lsp = (struct lsp *)(vty->index);
     u_int32_t vtag = atoi(argv[0]);
     
-    if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP 
-        && (lsp->dragon.srcLocalId & 0xffff) != vtag)
-    {
-        vty_out(vty, "###Ingress Tag (%d) does not match the LSP Vtag (%d)!%s", 
-            (lsp->dragon.srcLocalId & 0xffff), vtag, VTY_NEWLINE);
-        return CMD_WARNING;
-    }
-
-    if ((lsp->dragon.destLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP 
-        && (lsp->dragon.destLocalId & 0xffff) != vtag)
-    {
-        vty_out(vty, "###Egress Tag (%d) does not match the LSP Vtag (%d)!%s", 
-            (lsp->dragon.destLocalId & 0xffff), vtag, VTY_NEWLINE);
-        return CMD_WARNING;
-    }
-
     lsp->dragon.lspVtag = vtag;
 
     if (lsp->common.DragonUni_Para)
@@ -1163,6 +1147,24 @@ DEFUN (dragon_commit_lsp_sender,
   {
   	vty_out (vty, "Mandated parameter not set for lsp %s. %s", argv[0], VTY_NEWLINE);
 	return CMD_WARNING;
+  }
+
+  if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP 
+      && (lsp->dragon.srcLocalId & 0xffff) != lsp->dragon.lspVtag 
+      && lsp->dragon.lspVtag  != ANY_VTAG)
+  {
+      vty_out(vty, "###Ingress port tag (%d) does not match the LSP Vtag (%d)!%s", 
+          (lsp->dragon.srcLocalId & 0xffff), lsp->dragon.lspVtag, VTY_NEWLINE);
+      return CMD_WARNING;
+  }
+  
+  if ((lsp->dragon.destLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP 
+      && (lsp->dragon.destLocalId & 0xffff) != lsp->dragon.lspVtag
+      && lsp->dragon.lspVtag  != ANY_VTAG)
+  {
+      vty_out(vty, "###Egress port tag (%d) does not match the LSP Vtag (%d)!%s", 
+          (lsp->dragon.destLocalId & 0xffff), lsp->dragon.lspVtag, VTY_NEWLINE);
+      return CMD_WARNING;
   }
 
   if (dmaster.module[MODULE_NARB_INTRA].ip_addr.s_addr == 0 || dmaster.module[MODULE_NARB_INTRA].port==0)
