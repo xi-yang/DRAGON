@@ -1146,6 +1146,7 @@ DEFUN (dragon_commit_lsp_sender,
   if (!is_mandated_params_set_for_lsp(lsp))
   {
   	vty_out (vty, "Mandated parameter not set for lsp %s. %s", argv[0], VTY_NEWLINE);
+  	vty_out (vty, "LSP \"%s\" could not be committed... %s", (lsp->common.SessionAttribute_Para)->sessionName,  VTY_NEWLINE);
 	return CMD_WARNING;
   }
 
@@ -1155,6 +1156,7 @@ DEFUN (dragon_commit_lsp_sender,
   {
       vty_out(vty, "###Ingress port tag (%d) does not match the LSP Vtag (%d)!%s", 
           (lsp->dragon.srcLocalId & 0xffff), lsp->dragon.lspVtag, VTY_NEWLINE);
+  	vty_out (vty, "LSP \"%s\" could not be committed... %s", (lsp->common.SessionAttribute_Para)->sessionName,  VTY_NEWLINE);
       return CMD_WARNING;
   }
   
@@ -1164,6 +1166,7 @@ DEFUN (dragon_commit_lsp_sender,
   {
       vty_out(vty, "###Egress port tag (%d) does not match the LSP Vtag (%d)!%s", 
           (lsp->dragon.destLocalId & 0xffff), lsp->dragon.lspVtag, VTY_NEWLINE);
+  	vty_out (vty, "LSP \"%s\" could not be committed... %s", (lsp->common.SessionAttribute_Para)->sessionName,  VTY_NEWLINE);
       return CMD_WARNING;
   }
 
@@ -1175,6 +1178,7 @@ DEFUN (dragon_commit_lsp_sender,
 		 	&& lsp->uni_mode != 1 )
          {
           	vty_out (vty, "NARB is required to setup LSP with localId.%s", VTY_NEWLINE);
+	  	vty_out (vty, "LSP \"%s\" could not be committed... %s", (lsp->common.SessionAttribute_Para)->sessionName,  VTY_NEWLINE);
         	return CMD_WARNING;
          }
 	  zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
@@ -1185,6 +1189,7 @@ DEFUN (dragon_commit_lsp_sender,
 	  if (lsp->narb_fd < 0) 
 	  {
 	  	lsp->narb_fd = 0;
+	  	vty_out (vty, "LSP \"%s\" could not be committed... %s", (lsp->common.SessionAttribute_Para)->sessionName,  VTY_NEWLINE);
 	  	return CMD_WARNING;
 	  }
 	  /* Assign a unique sequence number */
