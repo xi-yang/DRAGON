@@ -592,9 +592,18 @@ void NARB_APIClient::confirmReservation(const Message& msg)
     ero_search_entry* entry = lookupEntry(ero);
     assert(entry!=NULL);
 
+    DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
+    uint32 vtag = 0, srcLocalId = 0, destLocalId = 0;
+    if (uni) 
+    {
+        vtag = uni->getVlanTag().vtag;
+        srcLocalId = uni->getSrcTNA().local_id;
+        destLocalId = uni->getDestTNA().local_id;
+    }
+
     //send confirmation msg
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CONFIRM
-            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, 0, 0, ero);
+            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, vtag, srcLocalId, destLocalId, ero);
 
     //send api message
     int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
@@ -628,9 +637,18 @@ void NARB_APIClient::releaseReservation(const Message& msg)
     ero_search_entry* entry = lookupEntry(ero);
     assert(entry!=NULL);
 
+    DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
+    uint32 vtag = 0, srcLocalId = 0, destLocalId = 0;
+    if (uni) 
+    {
+        vtag = uni->getVlanTag().vtag;
+        srcLocalId = uni->getSrcTNA().local_id;
+        destLocalId = uni->getDestTNA().local_id;
+    }
+
     //send release msg
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_DELETE
-            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, 0, 0, ero);
+            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, vtag, srcLocalId, destLocalId, ero);
 
     //send api message
     int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
