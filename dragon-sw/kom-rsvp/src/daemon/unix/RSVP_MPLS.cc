@@ -317,6 +317,9 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                 (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);
                                                  (*sessionIter)->limitOutputBandwidth(true, port, vlan,  (*iter).bandwidth);
 
+							//deduct bandwidth from the link associated with the port (revserse link bandwidth for bidirectional LSP only)
+							//$$$$ This logic should have been associated with bidirectional LSP PATH/RESV handling
+							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true); //true == deduct
                                                 portList.pop_front();
                                           }
                                           portList.clear();
@@ -352,12 +355,18 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true); //true == deduct
                                                 portList.pop_front();
                                           }
+										  
                                           if (taggedPorts != 0)
                                             {
-                                  		(*sessionIter)->setVLANPortsTagged(taggedPorts, vlan); //Set vlan ports to be "tagged"
-							RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF(vlan, true); //true == hold
-            					LOG(4)(Log::MPLS, "VLSR: Set tagged ports:",  taggedPorts, " in VLAN #", vlan);
-                                            }
+                                                 //Set vlan ports to be "tagged"
+	                                  		(*sessionIter)->setVLANPortsTagged(taggedPorts, vlan);
+							//remove the VTAG that is taken by the LSP
+							LOG(4)(Log::MPLS, "VLSR: Set tagged ports:",  taggedPorts, " in VLAN #", vlan);
+							if ((((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort & 0xffff, (*iter).vlanTag, true); //false == hold
+							if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort & 0xffff, (*iter).vlanTag, true); //false == hold
+                                          }
 					}
 					else{
 						noError = false;
@@ -496,6 +505,10 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                             }
 
                                             if (vlanID !=  0) {
+                                                //increase the bandwidth by the amount taken by the removed LSP (on revserse link for bidirectional LSP only)
+                                                //$$$$ This logic should have been associated with bidirectional LSP PATH/RESV handling
+                                                RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false); //false == increase
+
              					     //Undo rate policing and limitation on the port, which is both input and output port
             					     //as the VLAN is duplex.
                                                 LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
@@ -543,12 +556,13 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                             portList.pop_front();
                                       }
 
-                                    if ((((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
-                                        || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
-                                            && (*iter).vlanTag != 0 && !(*sessionIter)->VLANHasTaggedPort((*iter).vlanTag))
+                                    if ((*iter).vlanTag != 0 && !(*sessionIter)->VLANHasTaggedPort((*iter).vlanTag))
                                     {
-                                          //Increase link bandwidth by the amount that is released from removing the VLAN.
-                                        RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).vlanTag, false); //false == release
+                                        //restore the VTAG that has been released from removing the VLAN.
+                                        if ((((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+	                                        RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort & 0xffff, (*iter).vlanTag, false); //false == release
+                                        if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+	                                        RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort & 0xffff, (*iter).vlanTag, false); //false == release
  					}
 
                                    if ((*sessionIter)->isVLANEmpty(vlanID)) {

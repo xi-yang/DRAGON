@@ -113,7 +113,7 @@ public:
 	const LogicalInterface* findOutLifByOSPF( const NetAddress& , const uint32 , NetAddress& );
 	const void getVLSRRoutebyOSPF(const NetAddress& inRtID, const NetAddress& outRtID, const uint32 inIfId, const uint32 outIfId, VLSR_Route& vlsr);
 	const void holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold = true);
-	const void holdVtagbyOSPF(u_int32_t vtag, bool hold = true);
+	const void holdVtagbyOSPF(u_int32_t port, u_int32_t vtag, bool hold = true);
 	NetAddress getLoopbackAddress();
 	const LogicalInterface* getUnicastRoute( const NetAddress&, NetAddress& );
 	const LogicalInterface* getMulticastRoute( const NetAddress&, const NetAddress&, LogicalInterfaceSet& );
