@@ -421,7 +421,7 @@ out:
 }
 
 void
-ospf_hold_vtag(u_int32_t vtag, u_int8_t hold_flag)
+ospf_hold_vtag(u_int32_t port, u_int32_t vtag, u_int8_t hold_flag)
 {
 	struct ospf_interface *oi;
 	struct listnode *node1, *node2;
@@ -433,7 +433,7 @@ ospf_hold_vtag(u_int32_t vtag, u_int8_t hold_flag)
 	{
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
-			if (oi && INTERFACE_MPLS_ENABLED(oi)) {
+			if (oi && INTERFACE_MPLS_ENABLED(oi) && oi->vlsr_if.switch_port == port) {
 				if (!HAS_VLAN(oi->vlsr_if.vtag_bitmask, vtag))
 					continue;
 				if (hold_flag == 1 && HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
@@ -898,9 +898,10 @@ ospf_rsvp_read (struct thread *thread)
      break;
 
     case HoldVtagbyOSPF:
+	port = stream_getl(s);	
 	vtag = stream_getl(s);	
 	hold_flag = stream_getc(s);	
-	ospf_hold_vtag(vtag, hold_flag);
+	ospf_hold_vtag(port, vtag, hold_flag);
      break;
 
     case OspfPathTear:
