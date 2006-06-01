@@ -434,7 +434,7 @@ ospf_hold_vtag(u_int32_t port, u_int32_t vtag, u_int8_t hold_flag)
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
 			if (oi && INTERFACE_MPLS_ENABLED(oi) && oi->vlsr_if.switch_port == port) {
-				if (!HAS_VLAN(oi->vlsr_if.vtag_bitmask, vtag))
+				if (!HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
 					continue;
 				if (hold_flag == 1 && HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
 				{
