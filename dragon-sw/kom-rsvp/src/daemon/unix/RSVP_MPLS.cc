@@ -315,10 +315,10 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							//Perform rate policing and limitation on the port, which is both input and output port
 							//as the VLAN is duplex.
                                                 (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);
-                                                 (*sessionIter)->limitOutputBandwidth(true, port, vlan,  (*iter).bandwidth);
+                                                 (*sessionIter)->limitOutputBandwidth(true, port, vlan,  (*iter).bandwidth); //$$$$ To be moved into bindUpstreamInAndOut
 
 							//deduct bandwidth from the link associated with the port (revserse link bandwidth for bidirectional LSP only)
-							//$$$$ This logic should have been associated with bidirectional LSP PATH/RESV handling
+							//$$$$ To be moved into bindUpstreamInAndOut
 							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true); //true == deduct
                                                 portList.pop_front();
                                           }
@@ -348,7 +348,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                  LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  port, "for VLAN #", vlan);
 							//Perform rate policing and limitation on the port, which is both input and output port
 							//as the VLAN is duplex.
-                                                (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);
+                                                (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);  //$$$$ To be moved into bindUpstreamInAndOut
                                                  (*sessionIter)->limitOutputBandwidth(true, port, vlan,  (*iter).bandwidth);
 
 							//deduct bandwidth from the link associated with the port
@@ -362,7 +362,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 	                                  		(*sessionIter)->setVLANPortsTagged(taggedPorts, vlan);
 							//remove the VTAG that is taken by the LSP
 							LOG(4)(Log::MPLS, "VLSR: Set tagged ports:",  taggedPorts, " in VLAN #", vlan);
-							if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+							if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)   //$$$$ To be moved into bindUpstreamInAndOut
 								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort & 0xffff, (*iter).vlanTag, true); //false == hold
 							if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
 								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort & 0xffff, (*iter).vlanTag, true); //false == hold
@@ -506,14 +506,14 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
                                             if (vlanID !=  0) {
                                                 //increase the bandwidth by the amount taken by the removed LSP (on revserse link for bidirectional LSP only)
-                                                //$$$$ This logic should have been associated with bidirectional LSP PATH/RESV handling
+                                                //$$$$ To be moved into deleteUpstreamInLabel
                                                 RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false); //false == increase
 
              					     //Undo rate policing and limitation on the port, which is both input and output port
             					     //as the VLAN is duplex.
                                                 LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
-                                                (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth);
-                                                (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);
+                                                (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth); 
+                                                (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);//$$$$ To be moved into deleteUpstreamInLabel
                                             }
 
                                             portList.pop_front();
@@ -550,7 +550,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                 //Undo rate policing and limitation on the port, which is both input and output port
                                                 //as the VLAN is duplex.
                                                 LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
-                                                (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth);
+                                                (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth);//$$$$ To be moved into deleteUpstreamInLabel
                                                 (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);
                                             }
                                             portList.pop_front();
@@ -559,7 +559,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                     if ((*iter).vlanTag != 0 && !(*sessionIter)->VLANHasTaggedPort((*iter).vlanTag))
                                     {
                                         //restore the VTAG that has been released from removing the VLAN.
-                                        if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+                                        if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) //$$$$ To be moved into deleteUpstreamInLabel
 	                                        RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort & 0xffff, (*iter).vlanTag, false); //false == release
                                         if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
 	                                        RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort & 0xffff, (*iter).vlanTag, false); //false == release
