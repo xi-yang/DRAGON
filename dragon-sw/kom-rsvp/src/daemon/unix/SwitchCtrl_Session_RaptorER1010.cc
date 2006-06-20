@@ -88,6 +88,11 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsTagged(uint32 port, uint32
 }
 
 
+void SwitchCtrl_Session_RaptorER1010::setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID)
+{
+    return true;
+}
+
 bool SwitchCtrl_Session_RaptorER1010::removePortFromVLAN(uint32 port, uint32 vlanID)
 {
     bool ret = true;

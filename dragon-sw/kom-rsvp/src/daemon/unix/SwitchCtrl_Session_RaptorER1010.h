@@ -23,6 +23,8 @@ public:
 	////////// Below are vendor specific functions/////////
 	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID);
 	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
+	virtual bool setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID);
+
 	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID);
 	virtual uint32 getActiveVlanId(uint32 port) { if (activeVlanId > 0) return activeVlanId; return getVLANbyUntaggedPort(port); }
 
