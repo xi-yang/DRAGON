@@ -556,7 +556,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                             portList.pop_front();
                                       }
 
-                                    if ((*iter).vlanTag != 0 && !(*sessionIter)->VLANHasTaggedPort((*iter).vlanTag))
+                                    if ((*iter).vlanTag != 0)// && !(*sessionIter)->VLANHasTaggedPort((*iter).vlanTag))
                                     {
                                         //restore the VTAG that has been released from removing the VLAN.
                                         if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) //$$$$ To be moved into deleteUpstreamInLabel
