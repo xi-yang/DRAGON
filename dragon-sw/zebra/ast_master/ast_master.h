@@ -6,7 +6,7 @@
 
 #define AST_DIR         "/usr/local/ast"
 
-#define MASTER_PORT		2627
+#define MASTER_PORT		2619
 #define DRAGON_XML_PORT         2618
 #ifdef RESOURCE_BROKER
 #define NODE_BROKER_PORT        2624
