@@ -42,10 +42,11 @@ case "`uname`" in
                 dragon_pid=`ps axwww | grep -v awk | awk '{if (match($5, ".*/dragon$")      || $5 == "dragon") print $1}'`
                 narb_pid=`ps   axwww | grep -v awk | awk '{if (match($5, ".*/narb$")        || $5 == "narb")   print $1}'`
                 rce_pid=`ps   axwww | grep -v awk | awk '{if (match($5, ".*/rce$")        || $5 == "rce")   print $1}'`
+                telnet_pid=`ps   axwww | grep -v awk | awk '{if ($5 == match($5, ".*/telnet$") ||   "telnet")   print $1}'`
 
                 # XXX ugh...there must be a better way to do this...this is a kludge
                 # maybe search for OSPF_INTER_ARGS and OSPF_INTRA_ARGS...or OSPF_ARGS?
-                ospf_intra_pid=`ps axwww | grep -v awk | awk '{if (match($0, ".*/ospfd-intra")  || match($0, ".*/ospfd\.conf")) print $1}'`
+                ospf_intra_pid=`ps axwww | grep -v awk | awk '{if (match($0, ".*/ospfd-intra")  || match($0, ".*/ospfd.*conf")) print $1}'`
                 ospf_inter_pid=`ps axwww | grep -v awk | awk '{if (match($0, ".*/ospfd-inter")) print $1}'`
                 ;;
         *)
@@ -56,6 +57,7 @@ case "`uname`" in
                 dragon_pid=""
                 narb_pid=""
                 rce_pid=""
+                telnet_pid=""
                 ;;
 esac
 
@@ -65,6 +67,11 @@ esac
 
 case $1 in
     start-vlsr | startvlsr | restart-vlsr)
+        # XXX for CLI based switch control only
+        if test "$telnet_pid" != ""; then
+	    killall -9 telnet
+	fi
+
         if test "$zebra_pid" != ""; then
 	    kill $zebra_pid
 	fi
@@ -181,6 +188,10 @@ case $1 in
 	;;
     
     stop)   
+        if test "$telnet_pid" != ""; then
+	    killall -9 telnet
+	fi
+
         if test "$zebra_pid" != ""; then
 	    kill $zebra_pid
 	    echo "dragon-sw: stopped zebra daemon."
