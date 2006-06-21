@@ -19,10 +19,10 @@ DRAGON_ARGS="-d -f $ETC_DIR/dragon.conf"
 # OSPF_DAEMON/OSPF_ARGS variables are not used for NARBs:
 
 OSPF_INTER_DAEMON=$PREFIX/sbin/ospfd
-OSPF_INTER_ARGS="-d -I -P 2604 -f $ETC_DIR/ospfd-inter.conf"
+OSPF_INTER_ARGS="-d -I -P 2614 -f $ETC_DIR/ospfd-inter.conf"
 
 OSPF_INTRA_DAEMON=$PREFIX/sbin/ospfd
-OSPF_INTRA_ARGS="-d -P 2614 -f $ETC_DIR/ospfd-intra.conf"
+OSPF_INTRA_ARGS="-d -P 2604 -f $ETC_DIR/ospfd-intra.conf"
 
 NARB_DAEMON=$PREFIX/bin/run_narb.sh
 NARB_ARGS=""
