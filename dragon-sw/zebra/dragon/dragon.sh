@@ -31,7 +31,7 @@ case "`uname`" in
 
                 # XXX ugh...there must be a better way to do this...this is a kludge
                 # maybe search for OSPF_INTER_ARGS and OSPF_INTRA_ARGS...or OSPF_ARGS?
-                ospfd_pid=`ps axwww | grep -v awk | awk '{if (match($0, ".*/ospfd.conf")) print $1}'`
+                ospfd_pid=`ps axwww | grep -v awk | awk '{if (match($0, ".*/ospf.*conf")) print $1}'`
                 ;;
         *)
                 zebra_pid=""
@@ -46,7 +46,7 @@ esac
 #
 
 case $1 in
-    start-vlsr | startvlsr | restart-vlsr)
+    start | start-vlsr | startvlsr | restart-vlsr)
 	echo "dragon-sw: starting under VLSR mode."
 	echo ""
         if test "$zebra_pid" != ""; then
@@ -135,7 +135,7 @@ case $1 in
 
         if test "$ospfd_pid" != ""; then
 	    kill $ospfd_pid
-	    echo "dragon-sw: stopped intra-domain ospf daemon."
+	    echo "dragon-sw: stopped ospf daemon."
 	fi
 
         if test "$dragon_pid" != ""; then
@@ -167,7 +167,7 @@ case $1 in
 	;;
     
     *)
-        echo "Usage: $0 {start-vlsr|restart-vlsr|start-uni|restart-uni|status|stop}"
+        echo "Usage: $0 {start|start-vlsr|restart-vlsr|start-uni|restart-uni|status|stop}"
 	exit 1
 	;;
 esac
