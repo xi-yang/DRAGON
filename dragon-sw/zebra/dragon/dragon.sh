@@ -1,6 +1,11 @@
 #!/bin/sh
 
-PREFIX=/usr/local/dragon
+if test "$DRAGON_PREFIX" = ""; then
+    PREFIX=/usr/local/dragon
+else
+    PREFIX=$DRAGON_PREFIX
+fi
+
 ETC_DIR=$PREFIX/etc
 
 ZEBRA_DAEMON=$PREFIX/sbin/zebra
