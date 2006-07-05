@@ -321,6 +321,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		VLSR_Route vlsr;
 		memset(&vlsr, 0, sizeof(VLSR_Route));
 		RSVP_Global::rsvp->getRoutingService().getVLSRRoutebyOSPF(inRtId, outRtId, inUnumIfID, outUnumIfID, vlsr);
+		//$$$$ should have error check here. Note that when no VLAN configured on interfaces, there might be unreported error from OSPFD
 		vlsr.bandwidth = msg.getSENDER_TSPEC_Object().get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
 		if (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0))
 		{
