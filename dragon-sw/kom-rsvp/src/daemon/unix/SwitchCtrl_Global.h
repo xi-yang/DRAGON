@@ -67,6 +67,8 @@ struct vlanRefID{
 };
 typedef SimpleList<vlanRefID> vlanRefIDList;
 
+typedef SimpleList<uint16> PortList;
+
 struct LocalId {
        uint16 type;
        uint16 value;

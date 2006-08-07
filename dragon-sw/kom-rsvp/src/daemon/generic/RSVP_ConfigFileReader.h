@@ -42,7 +42,6 @@
 class RSVP;
 class TrafficControl;
 class LogicalInterface;
-typedef SimpleList<uint16> PortList;
 
 class ConfigFileReader {
 	RSVP& rsvp;
