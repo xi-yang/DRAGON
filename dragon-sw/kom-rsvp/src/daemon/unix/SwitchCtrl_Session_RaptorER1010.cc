@@ -240,7 +240,7 @@ bool SwitchCtrl_Session_RaptorER1010::hook_hasPortinVlanPortMap(vlanPortMap &vpm
     return HasPortBit(vpm.portbits, port-1);
 }
 
-bool SNMP_Session::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
+bool SwitchCtrl_Session_RaptorER1010::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
 {
     uint16 port;
     uint32 bit;

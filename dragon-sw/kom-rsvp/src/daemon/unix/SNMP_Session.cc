@@ -305,7 +305,7 @@ bool SNMP_Session::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
     portList.clear();
     for (port = 1; port <= 32; port++)
     {
-        if (vpmAll->ports)&(1<<(32-port))
+        if ((vpmAll->ports)&(1<<(32-port)) != 0)
             portList.push_back(port);
     }
 
