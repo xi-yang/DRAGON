@@ -243,6 +243,8 @@ public:
        void addLocalId(uint16 type, uint16 value, uint16 tag);
        //@@@@ hacked
        void deleteLocalId(uint16 type, uint16 value, uint16 tag);
+       //@@@@ hacked
+       void refreshLocalId(uint16 type, uint16 value, uint16 tag);
 };
 
 //The following functions are called by outside C applications such as Zebra-OSPF-TE
@@ -256,6 +258,7 @@ extern "C" {
 	extern void zInitRsvpResvRequest(void* api, struct _rsvp_upcall_parameter* upcallPara);
 	extern void zAddLocalId(void* api, uint16 type, uint16 value, uint16 tag);
 	extern void zDeleteLocalId(void* api, uint16 type, uint16 value, uint16 tag);
+	extern void zRefreshLocalId(void* api, uint16 type, uint16 value, uint16 tag);
 }
 
 #endif /* _RSVP_API_h */

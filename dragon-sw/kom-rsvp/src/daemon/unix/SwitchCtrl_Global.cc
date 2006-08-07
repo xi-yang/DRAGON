@@ -661,6 +661,22 @@ void SwitchCtrl_Global::deleteLocalId(uint16 type, uint16 value, uint16  tag)
 	    }
 }
 
+void SwitchCtrl_Global::refreshLocalId(uint16 type, uint16 value) 
+{
+	LocalIdList::Iterator it;
+	LocalId lid;
+        if ((type != LOCAL_ID_TYPE_GROUP && type != LOCAL_ID_TYPE_TAGGED_GROUP)) {
+	        return;
+	    }
+	for (it = localIdList.begin(); it != localIdList.end(); ++it) {
+	    lid = *it;
+	    if (lid.type == type && lid.value == value) {
+               SET_LOCALID_REFRESH(lid);
+               return;
+	        }
+	    }
+}
+
 void SwitchCtrl_Global::readPreservedLocalIds() 
 {
 	ifstream inFile;
@@ -729,6 +745,9 @@ void SwitchCtrl_Global::processLocalIdMessage(uint8 msgType, LocalId& lid)
             }
         else
             deleteLocalId(lid.type, lid.value);
+        break;
+    case Message::RefreshLocalId:
+        refreshLocalId(lid.type, lid.value);
         break;
     default:
         break;

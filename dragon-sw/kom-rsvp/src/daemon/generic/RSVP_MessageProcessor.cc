@@ -75,7 +75,8 @@ void MessageProcessor::processMessage() {
 		return;
 	}
 
-	if ( currentMessage.getMsgType() == Message::AddLocalId || currentMessage.getMsgType() == Message::DeleteLocalId) {
+	if ( currentMessage.getMsgType() == Message::AddLocalId || currentMessage.getMsgType() == Message::DeleteLocalId
+            || currentMessage.getMsgType() == Message::RefreshLocalId) {
 		LocalId *lid = currentMessage.getLocalIdObject();
 		SwitchCtrl_Global::processLocalIdMessage(currentMessage.getMsgType(), *lid);
 		delete lid;
@@ -206,6 +207,7 @@ void MessageProcessor::processMessage() {
 	//@@@@hacked
 	case Message::AddLocalId:
 	case Message::DeleteLocalId:
+	case Message::RefreshLocalId:
 		break;
 	default:
 		LOG(2)( Log::Msg, "ignoring unknown message type:", currentMessage.getMsgType() );

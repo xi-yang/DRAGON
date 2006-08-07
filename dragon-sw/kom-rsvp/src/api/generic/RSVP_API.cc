@@ -312,6 +312,17 @@ void RSVP_API::deleteLocalId(uint16 type, uint16 value, uint16 tag)
 	apiLif->sendMessage( msg, NetAddress(0), apiLif->getLocalAddress() );
 }
 
+//@@@@ hacked
+void RSVP_API::refreshLocalId(uint16 type, uint16 value, uint16 tag)
+{
+	uint8 msgType = Message::RefreshLocalId;
+	uint8 TTL = 1;
+	SESSION_Object session(NetAddress(0), type, (value<<16)|tag);	
+	Message msg( msgType, TTL, session);
+	msg.setRSVP_HOP_Object( *apiLif );
+	apiLif->sendMessage( msg, NetAddress(0), apiLif->getLocalAddress() );
+}
+
 // the ip address in SENDER_TEMPLATE is set to 0, if no explicit one is given.
 // this is adjusted by message processing in the daemon
 void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port, 
@@ -707,4 +718,8 @@ void zAddLocalId(void* api, uint16 type, uint16 value, uint16 tag)
 void zDeleteLocalId(void* api, uint16 type, uint16 value, uint16 tag)
 {
     ((RSVP_API *)api)->deleteLocalId(type, value, tag);
+}
+void zRefreshLocalId(void* api, uint16 type, uint16 value, uint16 tag)
+{
+    ((RSVP_API *)api)->refreshLocalId(type, value, tag);
 }

@@ -80,6 +80,10 @@ typedef SimpleList<LocalId> LocalIdList;
 #define LOCAL_ID_TYPE_TAGGED_GROUP (uint16)0x3
 #define LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL (uint16)0x4
 
+#define SET_LOCALID_REFRESH(X) X.type |= 0x10
+#define RESET_LOCALID_REFRESH(X) X.type &= (~0x10)
+#define IS_LOCALID_REFRESHED(X) ((X.type &= 0x10) != 0)
+
 class SwitchCtrl_Session{
 public:
 	SwitchCtrl_Session():sessionName(), switchInetAddr(0), snmpSessionHandle(NULL) {
