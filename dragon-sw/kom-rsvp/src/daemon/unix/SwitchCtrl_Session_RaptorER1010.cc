@@ -240,4 +240,27 @@ bool SwitchCtrl_Session_RaptorER1010::hook_hasPortinVlanPortMap(vlanPortMap &vpm
     return HasPortBit(vpm.portbits, port-1);
 }
 
+bool SNMP_Session::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
+{
+    uint16 port;
+    uint32 bit;
+    vlanPortMap* vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
+    if(!vpmAll)
+        return false;
+
+    portList.clear();
+    for (bit = 0; bit < sizeof(vpmAll->portbits)*8; bit++)
+    {
+        if (HasPortBit(vpmAll->portbits, bit))
+        {
+            port = (uint16)(bit+1);
+            portList.push_back(port);
+        }
+    }
+
+    if (portList.size() == 0)
+        return false;
+    return true;
+}
+
 

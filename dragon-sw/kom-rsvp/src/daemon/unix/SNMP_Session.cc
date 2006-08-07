@@ -295,3 +295,22 @@ bool SNMP_Session::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
     return false;
 }
 
+bool SNMP_Session::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
+{
+    uint16 port;
+    vlanPortMap* vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
+    if(!vpmAll)
+        return false;
+
+    portList.clear();
+    for (port = 1; port <= 32; port++)
+    {
+        if (vpmAll->ports)&(1<<(32-port))
+            portList.push_back(port);
+    }
+
+    if (portList.size() == 0)
+        return false;
+    return true;
+}
+

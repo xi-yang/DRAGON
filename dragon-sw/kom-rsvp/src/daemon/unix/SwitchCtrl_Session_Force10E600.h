@@ -41,6 +41,7 @@ public:
        virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars);
 	virtual bool hook_createVlanInterfaceToIDRefTable(vlanRefIDList &convList);
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port);
+	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID);
 	virtual uint32 hook_convertVLANInterfaceToID(uint32 id);
 	virtual uint32 hook_convertVLANIDToInterface(uint32 id);
 
@@ -70,6 +71,15 @@ inline uint32 Port2BitForce10(uint32 port)
     return ((port>>4)&0xf)*96 + ((port)&0xf); //FTOS-ED-6.2.1
 #else
     return ((port>>4)&0xf)*24 + ((port)&0xf) + 1; //FTOS-ED-5.3.1
+#endif
+}
+
+inline uint32 Bit2PortForce10(uint32 bit)
+{
+#ifdef FORCE10_SOFTWARE_V6
+    return ((bit/96)<<4) | ((bit%96)&0xf); //FTOS-ED-6.2.1
+#else
+    return (((bit-1)/24)<<4) | (((bit-1)%24) & 0xf) ; //FTOS-ED-5.3.1
 #endif
 }
 

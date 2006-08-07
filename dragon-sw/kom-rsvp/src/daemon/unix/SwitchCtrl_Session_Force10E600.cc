@@ -507,9 +507,31 @@ bool SwitchCtrl_Session_Force10E600::hook_createVlanInterfaceToIDRefTable(vlanRe
 
 bool SwitchCtrl_Session_Force10E600::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 {
-        if (HasPortBit(vpm.portbits, Port2BitForce10(port)))
-            return true;
+    if (HasPortBit(vpm.portbits, Port2BitForce10(port)))
+        return true;
+    return false;
+}
+
+bool SwitchCtrl_Session_Force10E600::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
+{
+    uint32 bit;
+    uint16 port;
+    vlanPortMap* vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
+    if(!vpmAll)
         return false;
+    portList.clear();
+    for (bit = 0; bit < sizeof(vpmAll->portbits)*8; bit++)
+    {
+        if (HasPortBit(vpmAll->portbits, bit))
+        {
+            port = (uint16)Bit2PortForce10(bit);
+            portList.push_back(port);
+        }
+    }
+
+    if (portList.size() == 0)
+        return false;
+    return true;
 }
 
 uint32 SwitchCtrl_Session_Force10E600::hook_convertVLANInterfaceToID(uint32 id)

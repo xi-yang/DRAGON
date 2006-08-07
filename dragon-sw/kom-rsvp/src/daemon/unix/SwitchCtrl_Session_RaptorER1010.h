@@ -38,6 +38,7 @@ public:
 	virtual bool hook_isVLANEmpty(const vlanPortMap &vpm);
        virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars);
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port);
+	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID);
 
 	///////------Vendor/model specific functions--------///////
 
