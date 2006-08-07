@@ -1189,6 +1189,7 @@ DEFUN (dragon_commit_lsp_sender,
 	  if (lsp->narb_fd < 0) 
 	  {
 	  	lsp->narb_fd = 0;
+          	vty_out (vty, "Failed to connect to the NARB server.%s", VTY_NEWLINE);
 	  	vty_out (vty, "LSP \"%s\" could not be committed... %s", (lsp->common.SessionAttribute_Para)->sessionName,  VTY_NEWLINE);
 	  	return CMD_WARNING;
 	  }
@@ -1860,6 +1861,32 @@ DEFUN (dragon_show_local_id,
     return CMD_SUCCESS;
 }
 
+DEFUN (dragon_set_local_id_group_refresh,
+       dragon_set_local_id_group_refresh_cmd,
+       "set local-id (group|tagged-group) <0-65535> refresh",
+       SET_STR
+       "A local ingress/egress port identifier\n"
+       "Is the localId associated with a group of untagged or tagged ports?\n"
+       "Port number in the range <0-65535>\n"
+       "Refresh a port from the tagged/untagged group?\n" )
+{
+    u_int16_t type = strcmp(argv[0], "group") == 0 ? LOCAL_ID_TYPE_GROUP: LOCAL_ID_TYPE_TAGGED_GROUP;
+    u_int16_t  value = atoi(argv[1]);
+    struct local_id * lid = NULL;
+    listnode node;
+
+    LIST_LOOP(registered_local_ids, lid, node)
+    {
+        if (type == lid->type && value == lid->value) {
+            zRefreshLocalId(dmaster.api, lid.type, lid.value, 0);
+            return CMD_SUCCESS;
+        }
+    }
+
+    vty_out(vty, "Local ID type (%d) value (%d) cannot be refreshed --> not registered. %s", type, value, VTY_NEWLINE);
+    return CMD_WARNING;
+}
+
 void
 dragon_supp_vty_init ()
 {
@@ -1893,6 +1920,8 @@ dragon_supp_vty_init ()
   install_element(CONFIG_NODE, &dragon_delete_local_id_all_cmd);
   install_element(VIEW_NODE, &dragon_clear_local_id_cmd);
   install_element(CONFIG_NODE, &dragon_clear_local_id_cmd);
+  install_element(VIEW_NODE, &dragon_set_local_id_group_refresh_cmd);
+  install_element(CONFIG_NODE, &dragon_set_local_id_group_refresh_cmd);
   install_element(VIEW_NODE, &dragon_set_ucid_cmd);
   install_element(CONFIG_NODE, &dragon_set_ucid_cmd);
   
