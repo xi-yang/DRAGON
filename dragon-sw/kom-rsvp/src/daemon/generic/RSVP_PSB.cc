@@ -506,13 +506,14 @@ void PSB::sendTearMessage() {
 
 
 void PSB::refreshVLSRbyLocalId() {
-	LocalIdList::ConstIterator iter = LocalIdList.begin();
+	LocalIdList::Iterator iter = SwitchCtrl_Global::localIdList.begin();
 	uint32 lclid = 0;
-	for (; iter != LocalIdList.end(); ++iter) {
-		if (IS_LOCALID_REFRESHED(*iter) {
-			lclid = (((*iter).type) << 16) | ((*iter).value);
+	for (; iter != SwitchCtrl_Global::localIdList.end(); ++iter) {
+                LocalId &lid = *iter;
+		if ( IS_LOCALID_REFRESHED(lid) ) {
+			lclid = ((lid.type) << 16) | (lid.value);
 			RSVP_Global::rsvp->getMPLS().refreshVLSRbyLocalId(*this, lclid);
-			RESET_LOCALID_REFRESH(*iter);
+			RESET_LOCALID_REFRESH(lid);
 		}
 	}
 }
