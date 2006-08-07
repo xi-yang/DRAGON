@@ -397,18 +397,12 @@ bool MPLS::refreshVLSRbyLocalId( PSB& psb, uint32 lclid) {
                                    if ((*iter).inPort == lclid)
                                     {
                                       vlan = (*iter).vlanTag;
-                                      //(*sessionIter)->adjustPortsbyLocalId(vlan, lclid, (*iter).outPort);
-					   // remove all ports but (*iter)outPort from the VLAN
-					   // !!!! Note that we assume that this VLAN does not contain any other pors not serving for this LSP at the edge.
-					   // move all ports represented by the localId into the VLAN
+                                      (*sessionIter)->adjustVLANbyLocalId(vlan, lclid, (*iter).outPort);
                                     }
                                    if ((*iter).outPort == lclid)
                                     {
                                       vlan = (*iter).vlanTag;
-                                      //(*sessionIter)->adjustPortsbyLocalId(vlan, lclid, (*iter).inPort);
-					   // remove all ports but (*iter)inPort from the VLAN
-					   // !!!! Note that we assume that this VLAN does not contain any other pors not serving for this LSP at the edge.
-					   // move all ports represented by the localId into the VLAN
+                                      (*sessionIter)->adjustVLANbyLocalId(vlan, lclid, (*iter).inPort);
                                     }
 				}
 			}

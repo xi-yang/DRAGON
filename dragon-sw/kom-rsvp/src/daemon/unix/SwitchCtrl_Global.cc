@@ -413,6 +413,15 @@ bool SwitchCtrl_Session::setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID)
 }
 
 
+bool SwitchCtrl_Session::adjustVLANbyLocalId(uint32 vlanID, uint32 lclID, uint32 trunkPort)
+{
+    // !!##!! Note that we assume that this VLAN does not contain any other pors not serving for this LSP at the edge.
+    
+    //hook_getPortsbyVLAN
+    //remove all but the trunkport
+    //getPortsbyLocalId (the refreshed port lists)
+    //move all ports into the VLAN
+}
 
 /////////////////////////////////////////////////////////////
 //////////////////SwitchCtrl_Global Implementation///////////////

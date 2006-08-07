@@ -153,7 +153,8 @@ public:
 	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID) = 0;
 	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID) = 0;
 	virtual uint32 getActiveVlanId(uint32 port) { return getVLANbyUntaggedPort(port); }
-	
+	virtual bool adjustVLANbyLocalId(uint32 vlanID, uint32 lclID, uint32 trunkPort);
+
 	bool movePortToDefaultVLAN(uint32 port)	{ // RFC2674
 	    if ((!active) || port==SWITCH_CTRL_PORT)
 	        return false;
