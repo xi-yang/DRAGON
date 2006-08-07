@@ -1878,7 +1878,7 @@ DEFUN (dragon_set_local_id_group_refresh,
     LIST_LOOP(registered_local_ids, lid, node)
     {
         if (type == lid->type && value == lid->value) {
-            zRefreshLocalId(dmaster.api, lid.type, lid.value, 0);
+            zRefreshLocalId(dmaster.api, type, value, 0);
             return CMD_SUCCESS;
         }
     }
