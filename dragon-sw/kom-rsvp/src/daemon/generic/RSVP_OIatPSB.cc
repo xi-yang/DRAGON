@@ -141,6 +141,7 @@ inline void MessageProcessor::refreshOIatPSB( OIatPSB& o ) {
 
 inline void OIatPSB::doRefresh() {
 	RelationshipOIatPSB_PSB::followRelationship()->sendRefresh( *RSVP_Global::rsvp->findInterfaceByLIH( LIH ) );
+	RelationshipOIatPSB_PSB::followRelationship()->refreshVLSRbyLocalId();
 }
 
 inline void OIatPSB::timeout() {

@@ -115,6 +115,7 @@ public:
 	void handleOutLabel( OIatPSB&, uint32 label, const Hop& );
 	const MPLS_InLabel* setInLabel( PSB& );
 	bool bindInAndOut( PSB& psb, const MPLS_InLabel&, const MPLS_OutLabel&, const MPLS* = NULL );
+	bool refreshVLSRbyLocalId( PSB& psb, uint32 lclid); //!!!!DRAGON addition
 	void createIngressClassifier( const SESSION_Object&, const SENDER_Object&, const MPLS_OutLabel& );
 	void createEgressBinding( const MPLS_InLabel&, const LogicalInterface& );
 	bool bindUpstreamInAndOut( PSB& psb);

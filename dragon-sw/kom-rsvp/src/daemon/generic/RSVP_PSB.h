@@ -159,6 +159,7 @@ public:
 	bool getE_Police() const { return E_Police; }
 
 	void sendRefresh( const LogicalInterface& outLif );
+	void refreshVLSRbyLocalId(); //!!!! DRAGON Addition
 	void sendTearMessage();
 	inline void timeout();
 

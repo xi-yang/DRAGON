@@ -385,6 +385,37 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
 }
 
+bool MPLS::refreshVLSRbyLocalId( PSB& psb, uint32 lclid) {
+	if (!psb.getVLSR_Route().empty()) {
+		VLSRRoute::ConstIterator iter = psb.getVLSR_Route().begin();
+		for ( ; iter != psb.getVLSR_Route().end(); ++iter ) {
+			NetAddress ethSw = (*iter).switchID;
+			SwitchCtrlSessionList::Iterator sessionIter = RSVP_Global::switchController->getSessionList().begin();
+			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter) {
+				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()) {
+					uint32 vlan;
+                                   if ((*iter).inPort == lclid)
+                                    {
+                                      vlan = (*iter).vlanTag;
+					   // remove all ports but (*iter)outPort from the VLAN
+					   // !!!! Note that we assume that this VLAN does not contain any other pors not serving for this LSP at the edge.
+					   // move all ports represented by the localId into the VLAN
+                                    }
+                                   if ((*iter).outPort == lclid)
+                                    {
+                                      vlan = (*iter).vlanTag;
+					   // remove all ports but (*iter)inPort from the VLAN
+					   // !!!! Note that we assume that this VLAN does not contain any other pors not serving for this LSP at the edge.
+					   // move all ports represented by the localId into the VLAN
+                                    }
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
 void MPLS::createIngressClassifier( const SESSION_Object& session, const SENDER_Object& sender, const MPLS_OutLabel& ol ) {
 	LOG(5)( Log::MPLS, "MPLS: creating ingress binding for", session, sender, "to label", ol.getLabel() );
 	// create filter (i.e. routing entry)

@@ -405,7 +405,8 @@ bool PSB::matchOI( const LogicalInterface& lif ) const {
 }
 
 void PSB::sendRefresh( const LogicalInterface& outLif ) {
-                                                             assert( TTL > 0 );
+       assert( TTL > 0 );
+	
 #if defined(WITH_API)
 	if ( localOnly && &outLif != RSVP_Global::rsvp->getApiLif() )
 		return;
@@ -500,6 +501,19 @@ void PSB::sendTearMessage() {
 		else
 			(*lifIter)->sendMessage( msg, getSession().getDestAddress(), getSrcAddress(), gateway );
 		msg.clearRSVP_HOP_Object(msg.getRSVP_HOP_Object());
+	}
+}
+
+
+void PSB::refreshVLSRbyLocalId() {
+	LocalIdList::ConstIterator iter = LocalIdList.begin();
+	uint32 lclid = 0;
+	for (; iter != LocalIdList.end(); ++iter) {
+		if (IS_LOCALID_REFRESHED(*iter) {
+			lclid = (((*iter).type) << 16) | ((*iter).value);
+			RSVP_Global::rsvp->getMPLS().refreshVLSRbyLocalId(*this, lclid);
+			RESET_LOCALID_REFRESH(*iter);
+		}
 	}
 }
 
