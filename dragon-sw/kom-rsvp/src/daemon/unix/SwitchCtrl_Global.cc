@@ -661,7 +661,7 @@ void SwitchCtrl_Global::deleteLocalId(uint16 type, uint16 value, uint16  tag)
 	    }
 }
 
-void SwitchCtrl_Global::refreshLocalId(uint16 type, uint16 value) 
+void SwitchCtrl_Global::refreshLocalId(uint16 type, uint16 value, uint16 tag) 
 {
 	LocalIdList::Iterator it;
 	LocalId lid;
