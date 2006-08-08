@@ -297,7 +297,7 @@ bool SNMP_Session::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 
 bool SNMP_Session::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
 {
-    uint16 port;
+    uint32 port;
     vlanPortMap* vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if(!vpmAll)
         return false;

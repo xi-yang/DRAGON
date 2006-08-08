@@ -288,7 +288,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
 					//if (vlan){
 					if (noError){
-        					SimpleList<uint32> portList;
+        					PortList portList;
                                           uint32 port = (*iter).inPort;
                                           uint32 taggedPorts = 0;
                                           if ((port >> 16) == LOCAL_ID_TYPE_NONE)
@@ -504,7 +504,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 			SwitchCtrlSessionList::Iterator sessionIter = RSVP_Global::switchController->getSessionList().begin();
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
 				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()){
-                                      SimpleList<uint32> portList;
+                                      PortList portList;
                                       uint32 vlanID;
                                       uint32 port = (*iter).inPort;
 

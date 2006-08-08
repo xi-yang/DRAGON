@@ -515,7 +515,7 @@ bool SwitchCtrl_Session_Force10E600::hook_hasPortinVlanPortMap(vlanPortMap &vpm,
 bool SwitchCtrl_Session_Force10E600::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
 {
     uint32 bit;
-    uint16 port;
+    uint32 port;
     vlanPortMap* vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if(!vpmAll)
         return false;
@@ -524,7 +524,7 @@ bool SwitchCtrl_Session_Force10E600::hook_getPortListbyVLAN(PortList& portList, 
     {
         if (HasPortBit(vpmAll->portbits, bit))
         {
-            port = (uint16)Bit2PortForce10(bit);
+            port = Bit2PortForce10(bit);
             portList.push_back(port);
         }
     }

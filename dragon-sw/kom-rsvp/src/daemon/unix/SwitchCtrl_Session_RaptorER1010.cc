@@ -242,7 +242,7 @@ bool SwitchCtrl_Session_RaptorER1010::hook_hasPortinVlanPortMap(vlanPortMap &vpm
 
 bool SwitchCtrl_Session_RaptorER1010::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
 {
-    uint16 port;
+    uint32 port;
     uint32 bit;
     vlanPortMap* vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if(!vpmAll)
@@ -253,7 +253,7 @@ bool SwitchCtrl_Session_RaptorER1010::hook_getPortListbyVLAN(PortList& portList,
     {
         if (HasPortBit(vpmAll->portbits, bit))
         {
-            port = (uint16)(bit+1);
+            port = bit+1;
             portList.push_back(port);
         }
     }

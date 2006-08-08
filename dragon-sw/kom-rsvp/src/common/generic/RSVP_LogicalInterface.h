@@ -41,7 +41,7 @@ class Message;
 class TrafficControl;
 class Hop;
 
-typedef SimpleList<uint16> PortList;
+typedef SimpleList<uint32> PortList;
 
 #if defined(WITH_API) || defined(VIRT_NETWORK)
 #define VIRTUAL virtual
