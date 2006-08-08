@@ -416,11 +416,40 @@ bool SwitchCtrl_Session::setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID)
 bool SwitchCtrl_Session::adjustVLANbyLocalId(uint32 vlanID, uint32 lclID, uint32 trunkPort)
 {
     // !!##!! Note that we assume that this VLAN does not contain any other pors not serving for this LSP at the edge.
-    
-    //hook_getPortsbyVLAN
-    //remove all but the trunkport
-    //getPortsbyLocalId (the refreshed port lists)
-    //move all ports into the VLAN
+    PortList portList;
+    uint32 port;
+    if (!hook_getPortListbyVLAN(portList, vlanID))
+    {
+        LOG(3)( Log::MPLS, "VLSR: adjustVLANbyLocalId: hook_getPortListbyVLAN(", vlanID, ") failed...");
+        return false;
+    }
+    //remove all ports in the current portList but the trunkport
+    PortList::Iterator iter = portList.begin();
+    for (; iter != portList.end(); ++iter)
+    {
+        port = *iter;
+        if (port != trunkPort)
+            removePortFromVLAN(port, vlanID);
+    }
+
+    SwitchCtrl_Global::getPortsByLocalId(portList, lclID);
+    //move the adjusted ports (as represented by lclID) into the VLAN
+    PortList::Iterator iter = portList.begin();
+    for (; iter != portList.end(); ++iter)
+    {
+        port = *iter;
+        if ((lclID >> 16) == LOCAL_ID_TYPE_GROUP)
+            movePortToVLANAsUntagged(port, vlanID);
+        else if ((lclID >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+            movePortToVLANAsTagged(port, vlanID);
+	else
+       {
+            LOG(2)( Log::MPLS, "VLSR: adjustVLANbyLocalId: Invalid localID", lclID);
+            return false;
+       }
+    }
+
+    return true;
 }
 
 /////////////////////////////////////////////////////////////
