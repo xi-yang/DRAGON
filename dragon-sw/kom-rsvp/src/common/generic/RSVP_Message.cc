@@ -802,6 +802,7 @@ void Message::checkStatus() const {
 	//@@@@hacked
 	case Message::AddLocalId:
 	case Message::DeleteLocalId:
+	case Message::RefreshLocalId:
 		break;
 	default:
 		ERROR(2)( Log::Error, "ERROR in Message: unknown message type: ", (uint16)msgType );
