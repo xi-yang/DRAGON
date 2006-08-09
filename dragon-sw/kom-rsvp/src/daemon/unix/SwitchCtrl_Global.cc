@@ -631,27 +631,28 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
 void SwitchCtrl_Global::addLocalId(uint16 type, uint16 value, uint16  tag) 
 {
 	LocalIdList::Iterator it;
-	LocalId lid;
 
 	for (it = localIdList.begin(); it != localIdList.end(); ++it) {
-	lid = *it;
-	if (lid.type == type && lid.value == value) {
-	    if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP) && tag != ANY_VTAG)  {
-	        SimpleList<uint16>::Iterator it_uint16;
-	        for (it_uint16 = lid.group->begin(); it_uint16 != lid.group->end(); ++it_uint16) {
-	            if (*it_uint16 == tag)
-	                return;
-	            }
-	        lid.group->push_back(tag);
-	        return;
-	        }
-	    else
-	        return;
-	    }
+        	LocalId& lid = *it;
+        	if (lid.type == type && lid.value == value) {
+        	    if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP) && tag != ANY_VTAG)  {
+        	        SimpleList<uint16>::Iterator it_uint16;
+        	        for (it_uint16 = lid.group->begin(); it_uint16 != lid.group->end(); ++it_uint16) {
+        	            if (*it_uint16 == tag)
+        	                return;
+        	            }
+        	        lid.group->push_back(tag);
+        	        return;
+        	        }
+        	    else
+        	        return;
+        	    }
 	}
-	lid.type = type;
-	lid.value = value;
-	localIdList.push_back(lid);
+
+	LocalId newlid;
+	newlid.type = type;
+	newlid.value = value;
+	localIdList.push_back(newlid);
 	localIdList.back().group = new SimpleList<uint16>;
 	if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP) && tag != ANY_VTAG)
 	    localIdList.back().group->push_back(tag);
@@ -660,7 +661,6 @@ void SwitchCtrl_Global::addLocalId(uint16 type, uint16 value, uint16  tag)
 void SwitchCtrl_Global::deleteLocalId(uint16 type, uint16 value, uint16  tag) 
 {
 	LocalIdList::Iterator it;
-	LocalId lid;
 	if (type == 0xffff && value == 0xffff) {
 	        //for (it = localIdList.begin(); it != localIdList.end(); ++it)
 	         //   if (lid.group)
@@ -669,7 +669,7 @@ void SwitchCtrl_Global::deleteLocalId(uint16 type, uint16 value, uint16  tag)
 	        return;
 	    }
 	for (it = localIdList.begin(); it != localIdList.end(); ++it) {
-	    lid = *it;
+	    LocalId &lid = *it;
 	    if (lid.type == type && lid.value == value) {
 	        if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)) {
 	            if (tag == ANY_VTAG && lid.group) {
@@ -679,9 +679,11 @@ void SwitchCtrl_Global::deleteLocalId(uint16 type, uint16 value, uint16  tag)
 	            else {
 	                SimpleList<uint16>::Iterator it_uint16;
 	                for (it_uint16 = lid.group->begin(); it_uint16 != lid.group->end(); ++it_uint16) {
-	                    if (*it_uint16 == tag)
+	                    if (*it_uint16 == tag) {
 	                        lid.group->erase(it_uint16);
-	                    }
+	                        break;
+	                        }
+	                   }
 	                if (lid.group->size() == 0) {
 	                    delete lid.group;
 	                    localIdList.erase(it);
@@ -701,12 +703,11 @@ void SwitchCtrl_Global::deleteLocalId(uint16 type, uint16 value, uint16  tag)
 void SwitchCtrl_Global::refreshLocalId(uint16 type, uint16 value, uint16 tag) 
 {
 	LocalIdList::Iterator it;
-	LocalId lid;
         if ((type != LOCAL_ID_TYPE_GROUP && type != LOCAL_ID_TYPE_TAGGED_GROUP)) {
 	        return;
 	    }
 	for (it = localIdList.begin(); it != localIdList.end(); ++it) {
-	    lid = *it;
+           LocalId &lid = *it;
 	    if (lid.type == type && lid.value == value) {
                SET_LOCALID_REFRESH(lid);
                return;
@@ -807,10 +808,9 @@ void SwitchCtrl_Global::getPortsByLocalId(SimpleList<uint32>&portList, uint32 po
         return;
             
     LocalIdList::Iterator it;
-    LocalId lid;
     for (it = localIdList.begin(); it != localIdList.end(); ++it) 
     {
-        lid = *it;
+        LocalId &lid = *it;
         if (lid.type == type && lid.value == value) 
         {
             if (!lid.group || lid.group->size() == 0)
@@ -826,9 +826,8 @@ void SwitchCtrl_Global::getPortsByLocalId(SimpleList<uint32>&portList, uint32 po
 bool SwitchCtrl_Global::hasLocalId(uint16 type, uint16 value, uint16  tag)
 {
     LocalIdList::Iterator it;
-    LocalId lid;
     for (it = localIdList.begin(); it != localIdList.end(); ++it) {
-        lid = *it;
+        LocalId& lid = *it;
         if (lid.type == type && lid.value == value) {
             if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP) && tag != ANY_VTAG) {
                 SimpleList<uint16>::Iterator it_uint16;
