@@ -511,9 +511,9 @@ void PSB::refreshVLSRbyLocalId() {
 	for (; iter != SwitchCtrl_Global::localIdList.end(); ++iter) {
                 LocalId &lid = *iter;
 		if ( IS_LOCALID_REFRESHED(lid) ) {
+			RESET_LOCALID_REFRESH(lid);
 			lclid = ((lid.type) << 16) | (lid.value);
 			RSVP_Global::rsvp->getMPLS().refreshVLSRbyLocalId(*this, lclid);
-			RESET_LOCALID_REFRESH(lid);
 		}
 	}
 }
