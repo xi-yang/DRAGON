@@ -429,18 +429,27 @@ bool SwitchCtrl_Session::adjustVLANbyLocalId(uint32 vlanID, uint32 lclID, uint32
     {
         port = *iter;
         if (port != trunkPort)
+        {
+            LOG(4)( Log::MPLS, "VLSR: adjustVLANbyLocalId: Removing port ", port, " from VLAN ", vlanID);
             removePortFromVLAN(port, vlanID);
+        }
     }
 
     SwitchCtrl_Global::getPortsByLocalId(portList, lclID);
     //move the adjusted ports (as represented by lclID) into the VLAN
-    for (; iter != portList.end(); ++iter)
+    for (iter = portList.begin(); iter != portList.end(); ++iter)
     {
         port = *iter;
         if ((lclID >> 16) == LOCAL_ID_TYPE_GROUP)
+        {
+            LOG(4)( Log::MPLS, "VLSR: adjustVLANbyLocalId: Moving untagged port ", port, " into VLAN ", vlanID);
             movePortToVLANAsUntagged(port, vlanID);
+        }
         else if ((lclID >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+        {
+            LOG(4)( Log::MPLS, "VLSR: adjustVLANbyLocalId: Moving tagged port ", port, " into VLAN ", vlanID);
             movePortToVLANAsTagged(port, vlanID);
+        }
 	else
        {
             LOG(2)( Log::MPLS, "VLSR: adjustVLANbyLocalId: Invalid localID", lclID);

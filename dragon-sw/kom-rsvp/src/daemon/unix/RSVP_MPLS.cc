@@ -397,12 +397,12 @@ bool MPLS::refreshVLSRbyLocalId( PSB& psb, uint32 lclid) {
                                    if ((*iter).inPort == lclid)
                                     {
                                       vlan = (*iter).vlanTag;
-                                      (*sessionIter)->adjustVLANbyLocalId(vlan, lclid, (*iter).outPort);
+                                      (*sessionIter)->adjustVLANbyLocalId(vlan, lclid, ((*iter).outPort & 0xffff));
                                     }
                                    if ((*iter).outPort == lclid)
                                     {
                                       vlan = (*iter).vlanTag;
-                                      (*sessionIter)->adjustVLANbyLocalId(vlan, lclid, (*iter).inPort);
+                                      (*sessionIter)->adjustVLANbyLocalId(vlan, lclid, ((*iter).inPort & 0xffff));
                                     }
 				}
 			}
