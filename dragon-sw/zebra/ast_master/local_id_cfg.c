@@ -77,7 +77,7 @@ compose_id_req(struct application_cfg working_app_cfg, char* path, struct id_cfg
 
   send_file = fopen(path, "w+");
   if (!send_file) {
-    zlog_err("Can't open the file %s", path);
+    zlog_err("compose_id_req: Can't open the file %s", path);
     return 0;
   }
 
@@ -170,7 +170,7 @@ process_id_result(struct application_cfg *working_app_cfg, struct id_cfg_res* re
 	new_cfg->msg = NULL;
       }
     } else {
-      zlog_err("The order of id and type should be the same in both master and returned result");
+      zlog_err("process_id_result: The order of id and type should be the same in both master and returned result");
       ret_val = 0;
     }
   }
@@ -255,7 +255,7 @@ id_xml_parser(char* filename, int agent)
   cur = xmlDocGetRootElement(doc);
  
   if (cur == NULL) {
-    zlog_err("topo_xml_parser: Empty document");
+    zlog_err("id_xml_parser: Empty document");
     xmlFreeDoc(doc);
     return 0;
   }
@@ -308,7 +308,7 @@ id_xml_parser(char* filename, int agent)
     }
 
     if (myres->stype == 0 || myres->name[0] == '\0') {
-      zlog_err("resource doesn't have valid stype nor a name");
+      zlog_err("id_xml_parser: resource doesn't have valid stype nor a name");
       free_id_cfg_res(myres);
       continue;
     }
@@ -335,32 +335,32 @@ id_xml_parser(char* filename, int agent)
 	  if (strcasecmp(attr->name, "id") == 0) {
 	    myIDcfg->id = atoi(attr->children->content);
 	    if (myIDcfg->id < 0 || myIDcfg->id > 65535) {
-	      zlog_err("local_id (%d) ignored: not within range <0-65535>", myIDcfg->id);
+	      zlog_err("id_xml_parser: local_id (%d) ignored: not within range <0-65535>", myIDcfg->id);
 	      err = 1;
 	    }
 	  } else if (strcasecmp(attr->name, "action") == 0) {
 	    myIDcfg->action = get_id_action_by_name(attr->children->content);
 	    if (!myIDcfg->action) {
-	      zlog_err("<local_id action> is invalid: %s", attr->children->content);
+	      zlog_err("id_xml_parser: <local_id action> is invalid: %s", attr->children->content);
 	      err = 1;
 	    } 
 	  } else if (strcasecmp(attr->name, "type") == 0) {
 	    myIDcfg->type = get_type_by_name(attr->children->content);
 	    if (!myIDcfg->type) {
-	      zlog_err("<local_id type> is invalid: %s", attr->children->content);
+	      zlog_err("id_xml_parser: <local_id type> is invalid: %s", attr->children->content);
 	      err = 1;
 	    }
 	  }
 	}
 
         if (!myIDcfg->action) {
-	  zlog_err("No action defined for a <local_id>; ignored ...");
+	  zlog_err("id_xml_parser: No action defined for a <local_id>; ignored ...");
 	  err = 1;
         } else if (!myIDcfg->type) {
-	  zlog_err("No type defined for a <local_id>; ignored ...");
+	  zlog_err("id_xml_parser: No type defined for a <local_id>; ignored ...");
 	  err = 1;
  	} else if (myIDcfg->id == -1) {
-	  zlog_err("No id defined for a <local_id>; ignored ...");
+	  zlog_err("id_xml_parser: No id defined for a <local_id>; ignored ...");
 	  err = 1;
 	}
 	if (err) {
@@ -389,24 +389,24 @@ id_xml_parser(char* filename, int agent)
 	   
 	  
 	    if (myIDcfg->action == ID_MODIFY && myIDcfg->type == 3) { 
-	      zlog_err("For type port, it can't be modified"); 
+	      zlog_err("id_xml_parser: For type port, it can't be modified"); 
 	      err = 1; 
 	      break; 
 	    } 
 
 	    if (myIDcfg->type == 3 && myIDcfg->num_mem != 0) { 
-	      zlog_warn("For type port, there doesn't need to have any member");
+	      zlog_warn("id_xml_parser: For type port, there doesn't need to have any member");
 	      myIDcfg->num_mem = 0; 
 	    } else if ((myIDcfg->type == 1 || myIDcfg->type == 2) && 
 			myIDcfg->num_mem == 0) { 
-	      zlog_err("For type group or tagged-group, there should be at least one member defined"); 
+	      zlog_err("id_xml_parser: For type group or tagged-group, there should be at least one member defined"); 
 	      err = 1; 
 	    } 
 	    break;
 
 	  case ID_DELETE:
 	   if (myIDcfg->num_mem) {
-	     zlog_warn("For delete, all <member> defined will be ignored as only <id> is required");
+	     zlog_warn("id_xml_parser: For delete, all <member> defined will be ignored as only <id> is required");
 	     myIDcfg->num_mem = 0;
 	   }
 	   break;
@@ -432,7 +432,7 @@ id_xml_parser(char* filename, int agent)
 	  if (strcasecmp(cur2->name, "member") == 0 && myIDcfg->num_mem) {
   
 	    if (i==myIDcfg->num_mem) {
-	      zlog_err("the num_mem calculated before is wrong");
+	      zlog_err("id_xml_parser: the num_mem calculated before is wrong");
 	      break;
 	    }
 	    myIDcfg->mems[i] = atoi(key);
@@ -495,10 +495,10 @@ master_process_id(char* filename)
   }
 
   glob_app_cfg.ast_id = generate_cfg_id();
-
+  zlog_info("Processing glob_ast_id: %s <local_id_cfg> file", glob_app_cfg.ast_id);
   strcpy(directory, ID_DIR);
   if (mkdir(directory, 0755) == -1 && errno != EEXIST) {
-    zlog_err("Can't create directory %s", directory);
+    zlog_err("master_process_id: Can't create directory %s", directory);
     return 0;
   }
 
@@ -506,11 +506,11 @@ master_process_id(char* filename)
   if (mkdir(directory, 0755) == -1) {
     if (errno == EEXIST) {
       if (remove(directory) == -1) {
-	zlog_err("Can't remove the directory: %s", directory);
+	zlog_err("master_process_id: Can't remove the directory: %s", directory);
 	return 0;
       }
     } else {
-      zlog_err("Can't create the directory: %s; error = %d(%s)",
+      zlog_err("master_process_id: Can't create the directory: %s; error = %d(%s)",
 			directory, errno, strerror(errno));
       return 0;
     }
@@ -518,7 +518,7 @@ master_process_id(char* filename)
 
   sprintf(newpath, "%s/orig.xml", directory);
   if (rename(filename, newpath) == -1)
-    zlog_err("Can't rename %s to %s; errno = %d(%s)",
+    zlog_err("master_process_id: Can't rename %s to %s; errno = %d(%s)",
 		filename, newpath, errno, strerror(errno));
 
   /* copy the current into working_app_cfg */
@@ -538,7 +538,7 @@ master_process_id(char* filename)
     compose_id_req(working_app_cfg, newpath, myres);
 
     /* call send_file_to_agent */
-    zlog_info("sending request to %s (%s:%d)", 
+    zlog_info("master_process_id: sending request to %s (%s:%d)", 
 	      myres->name, myres->ip, DRAGON_XML_PORT);
     sock = send_file_to_agent(myres->ip, DRAGON_XML_PORT, newpath);
 
@@ -556,11 +556,11 @@ master_process_id(char* filename)
     while ((bytesRcvd = recv(sock, buffer, RCVBUFSIZE-1, 0))  > 0) {
       
       if (!total) {
-	zlog_info("Received confirmation from %s", myres->name);
+	zlog_info("master_process_id: Received confirmation from %s", myres->name);
 	sprintf(newpath, "%s/resp_%s.xml", directory, myres->name);
 	ret_file = fopen(newpath, "w");
 	if (!ret_file) {
-	  zlog_err("send_task_to_link_agent: can't open %s; error = %d(%s)",
+	  zlog_err("master_process_id: can't open %s; error = %d(%s)",
 		      newpath, errno, strerror(errno));
 	  ret_value = 0;
 	  continue;
@@ -573,7 +573,7 @@ master_process_id(char* filename)
     }
 
     if (total == 0) {
-      zlog_err("No confirmation from %s", myres->name);
+      zlog_err("master_process_id: No confirmation from %s", myres->name);
       myres->status = AST_UNKNOWN;
       ret_value = 0;
     } else {
@@ -582,7 +582,7 @@ master_process_id(char* filename)
       fclose(ret_file);
 
       if (id_xml_parser(newpath, MASTER) == 0) {
-	zlog_err("%s is not parsed correctly", newpath);
+	zlog_err("master_process_id: returned file (%s) is not parsed correctly", newpath);
 	myres->status = AST_UNKNOWN;
 	myres->msg = strdup("The response file is not parsed correctly");
 	ret_value = 0;
@@ -607,5 +607,4 @@ master_process_id(char* filename)
   print_id_response(newpath, MASTER);
 
   return ret_value;
-
 }
