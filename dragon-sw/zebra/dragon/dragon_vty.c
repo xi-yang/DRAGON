@@ -212,6 +212,20 @@ static list registered_local_ids;
 
 char *lid_types[] = {"none id", "single port", "untagged group", "tagged group"};
 
+struct local_id *
+search_local_id(u_int16_t tag, u_int16_t type)
+{
+    struct local_id *lid = NULL;
+    listnode node;
+
+    LIST_LOOP(registered_local_ids, lid, node) {
+      if (lid->type == type && lid->value == tag)
+	break;
+    }
+
+    return lid;
+}
+
 /* local_id_group_mapping operators */
 void local_id_group_add(struct local_id *lid, u_int16_t  tag)
 {
