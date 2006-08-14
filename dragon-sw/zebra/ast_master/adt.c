@@ -24,12 +24,16 @@ void adtlist_add(struct adtlist* myadtlist, void* mydata)
 
   mynode->data = mydata;
 
-  if (myadtlist->head == NULL) 
+  if (myadtlist->head == NULL) {
+    myadtlist->head = mynode;
+    myadtlist->tail = mynode;
     mynode->next = NULL;
-  else 
-    mynode->next = myadtlist->head;
+  } else {
+    myadtlist->tail->next = mynode;
+    myadtlist->tail = mynode;
+    mynode->next = NULL;
+  }
 
-  myadtlist->head = mynode;
   myadtlist->count++;
 }
 

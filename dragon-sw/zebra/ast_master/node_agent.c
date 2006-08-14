@@ -32,7 +32,6 @@
 #define NODE_AGENT_RET 	"/usr/local/noded_ret.xml"
 #define NODE_AGENT_RECV "/usr/local/noded_recv.xml"
 #define NODE_AGENT_DIR	"/usr/local/node_agent"
-#define RCVBUFSIZE	200
 #define MAXPENDING      12
 #define TIMEOUT_SECS	3
 
@@ -88,81 +87,84 @@ static struct sigaction node_app_complete_action;
 static pid_t node_child_pid;
 
 int 
-node_assign_ip(struct node_cfg* node)
+node_assign_ip(struct resource* node)
 {
   struct ifreq if_info;
-  int sockfd = -1, i, j, k;
+  int sockfd = -1, j, k;
   struct sockaddr_in *sock;
   int ioctl_ret;
-  struct vlsr *vlsr_cur;
+  struct if_ip *ifp;
   char command[150];
+  struct adtlistnode* curnode;
 
-  if (node->vlsr_total == 0)
+  if (!node->res.n.if_list)
     return 1;
 
-  node->ast_status = AST_SUCCESS; 
-  for (i = 0; i < node->vlsr_total; i++) {
-    vlsr_cur = (struct vlsr*)node->vlsr_info[i];
-    if (vlsr_cur->assign_ip[0] != '\0') {
-      static char bcast[IP_MAXLEN+1];
+  node->status = AST_SUCCESS; 
+  for (curnode = node->res.n.if_list->head;
+	curnode;
+	curnode = curnode->next) {
+    static char bcast[IP_MAXLEN+1];
 
-      bzero(bcast, IP_MAXLEN+1);
-      if (sockfd == -1) 
-	sockfd = socket(AF_INET, SOCK_DGRAM, 0); 
+    ifp = (struct if_ip*)curnode->data;
 
-      bzero(&if_info, sizeof(struct ifreq));
-      strcpy(if_info.ifr_name, vlsr_cur->iface);
-      bzero(&if_info.ifr_ifru.ifru_addr, sizeof(struct sockaddr));
-      sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_addr);
-      sock->sin_family = AF_INET;
-      sock->sin_addr.s_addr = inet_addr(vlsr_cur->assign_ip);
-      ioctl_ret = ioctl(sockfd, SIOCSIFADDR, &if_info);
-      if (ioctl_ret == -1) {
-	node->ast_status = AST_FAILURE;
-	node->agent_message = strdup("ifconfig failure");
-	zlog_err("ifconfig failed for %s", vlsr_cur->iface);
-	close(sockfd);
-	return 0;
-      }
+    bzero(bcast, IP_MAXLEN+1);
+    if (sockfd == -1) 
+      sockfd = socket(AF_INET, SOCK_DGRAM, 0); 
+
+    bzero(&if_info, sizeof(struct ifreq));
+    strcpy(if_info.ifr_name, ifp->iface);
+    bzero(&if_info.ifr_ifru.ifru_addr, sizeof(struct sockaddr));
+    sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_addr);
+    sock->sin_family = AF_INET;
+    sock->sin_addr.s_addr = inet_addr(ifp->assign_ip);
+    ioctl_ret = ioctl(sockfd, SIOCSIFADDR, &if_info);
+    if (ioctl_ret == -1) {
+      node->status = AST_FAILURE;
+      node->agent_message = strdup("ifconfig failure");
+      zlog_err("ifconfig failed for %s", ifp->iface);
+      close(sockfd);
+      return 0;
+    }
     
 #ifndef __FreeBSD__ 
-      sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_netmask); 
+    sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_netmask); 
 #else
-      sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_addr);
+    sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_addr);
 #endif
-      sock->sin_addr.s_addr = inet_addr("255.255.255.0");
-      ioctl_ret = ioctl(sockfd, SIOCSIFNETMASK, &if_info);
-      if (ioctl_ret == -1) {
-	node->ast_status = AST_FAILURE;
-	node->agent_message = strdup("ifconfig failure");
-	zlog_err("ifconfig failed for %s", vlsr_cur->iface);
-	close(sockfd);
-	return 0;
-      }
-     
-      for (j = 0, k = 0; 
-	   j < strlen(vlsr_cur->assign_ip) && k != 3; j++) {
-	bcast[j] = vlsr_cur->assign_ip[j];
-	if (bcast[j] == '.')
-	  k++;
-      }
-      strcpy(bcast+j, "255");
-
-      sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_broadaddr);
-      sock->sin_addr.s_addr = inet_addr(bcast);
-      ioctl_ret = ioctl(sockfd, SIOCSIFBRDADDR, &if_info);
-      if (ioctl_ret == -1) {
-        node->ast_status = AST_FAILURE;
-        node->agent_message = strdup("ifconfig failure");
-        zlog_err("ifconfig failed for %s", vlsr_cur->iface);
-        close(sockfd);
-        return 0;
-      }
-
-      sprintf(command, "ifconfig %s %s netmask 255.255.255.0 broadcast %s", 
-			vlsr_cur->iface, vlsr_cur->assign_ip, bcast);
-      zlog_info("%s", command);
+    sock->sin_addr.s_addr = inet_addr("255.255.255.0");
+    ioctl_ret = ioctl(sockfd, SIOCSIFNETMASK, &if_info);
+    if (ioctl_ret == -1) {
+      node->status = AST_FAILURE;
+      node->agent_message = strdup("ifconfig failure");
+      zlog_err("ifconfig failed for %s", ifp->iface);
+      close(sockfd);
+      return 0;
     }
+     
+    for( j = 0, k = 0; 
+	 j < strlen(ifp->assign_ip) && k != 3; j++) {
+	
+      bcast[j] = ifp->assign_ip[j];
+      if (bcast[j] == '.') 
+	k++; 
+    }
+    strcpy(bcast+j, "255");
+
+    sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_broadaddr);
+    sock->sin_addr.s_addr = inet_addr(bcast);
+    ioctl_ret = ioctl(sockfd, SIOCSIFBRDADDR, &if_info);
+    if (ioctl_ret == -1) {
+      node->status = AST_FAILURE;
+      node->agent_message = strdup("ifconfig failure");
+      zlog_err("ifconfig failed for %s", ifp->iface);
+      close(sockfd);
+      return 0;
+    }
+
+    sprintf(command, "ifconfig %s %s netmask 255.255.255.0 broadcast %s", 
+			ifp->iface, ifp->assign_ip, bcast);
+    zlog_info("%s", command);
   }
 
   if (sockfd != -1)
@@ -175,12 +177,12 @@ int
 node_process_setup_req()
 {
   struct adtlistnode *curnode;
-  struct node_cfg *node;
+  struct resource *node;
   char path[105];
   char directory[80];
 
-  glob_app_cfg.function = SETUP_RESP;
-  zlog_info("Processing glob_ast_id: %s, SETUP_REQ", glob_app_cfg.glob_ast_id);
+  glob_app_cfg.action = SETUP_RESP;
+  zlog_info("Processing ast_id: %s, SETUP_REQ", glob_app_cfg.ast_id);
 
   strcpy(directory, NODE_AGENT_DIR);
   if (mkdir(directory, 0755) == -1 && errno != EEXIST) {
@@ -188,10 +190,10 @@ node_process_setup_req()
     return 0;
   }
 
-  sprintf(directory+strlen(directory), "/%s", glob_app_cfg.glob_ast_id);
+  sprintf(directory+strlen(directory), "/%s", glob_app_cfg.ast_id);
   if (mkdir(directory, 0755) == -1) {
     if (errno == EEXIST) {
-      zlog_err("<glob_ast_id> %s exists already", glob_app_cfg.glob_ast_id);
+      zlog_err("<ast_id> %s exists already", glob_app_cfg.ast_id);
       return 0;
     } else {
       zlog_err("Can't create the directory: %s; error = %d(%s)",
@@ -206,25 +208,25 @@ node_process_setup_req()
            NODE_AGENT_RECV, path, errno, strerror(errno));
 
   sprintf(path, "%s/setup_response.xml", directory);
-  glob_app_cfg.ast_status = AST_SUCCESS;
+  glob_app_cfg.status = AST_SUCCESS;
   for (curnode = glob_app_cfg.node_list->head;
        curnode;
 	curnode = curnode->next) {
-    node = (struct node_cfg*) curnode->data;
+    node = (struct resource*) curnode->data;
     if (!node_assign_ip(node)) {
-      glob_app_cfg.ast_status = AST_FAILURE;
+      glob_app_cfg.status = AST_FAILURE;
       break;
     }
   } 
 
-  glob_app_cfg.function = SETUP_RESP;
-  print_xml_response(path, BRIEF_VERSION);
+  glob_app_cfg.action = SETUP_RESP;
+  print_xml_response(path, NODE_AGENT);
   symlink(path, NODE_AGENT_RET);
 
   sprintf(path, "%s/final.xml", directory);
   print_final(path);
 
-  return (glob_app_cfg.ast_status == AST_SUCCESS);
+  return (glob_app_cfg.status == AST_SUCCESS);
 }
 
 static void
@@ -239,19 +241,19 @@ int
 node_process_ast_complete()
 {
   struct adtlistnode *curnode;
-  struct node_cfg *node;
+  struct resource *node;
   char path[105];
   struct stat fs;
   struct application_cfg working_app_cfg;
 
-  glob_app_cfg.org_function = glob_app_cfg.function;
-  glob_app_cfg.function = APP_COMPLETE;
-  zlog_info("Processing glob_ast_id: %s, AST_COMPLETE", glob_app_cfg.glob_ast_id);
+  glob_app_cfg.org_action = glob_app_cfg.action;
+  glob_app_cfg.action = APP_COMPLETE;
+  zlog_info("Processing ast_id: %s, AST_COMPLETE", glob_app_cfg.ast_id);
 
   sprintf(path, "%s/%s/final.xml",
-          NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+          NODE_AGENT_DIR, glob_app_cfg.ast_id);
   if (stat(path, &fs) == -1) {
-    sprintf(glob_app_cfg.details, "Can't locate the glob_ast_id final file");
+    sprintf(glob_app_cfg.details, "Can't locate the ast_id final file");
     return 0;
   }
 
@@ -260,16 +262,16 @@ node_process_ast_complete()
 
   if (agent_final_parser(path) != 1) {
     memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "didn't parse the glob_ast_id file successfully");
-    glob_app_cfg.ast_status = AST_FAILURE;
+    sprintf(glob_app_cfg.details, "didn't parse the ast_id file successfully");
+    glob_app_cfg.status = AST_FAILURE;
     return 0;
   }
 
-  if (glob_app_cfg.function == RELEASE_RESP) {
+  if (glob_app_cfg.action == RELEASE_RESP) {
     free_application_cfg(&glob_app_cfg);
     memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "glob_ast_id has received RELEASE_REQ already");
-    glob_app_cfg.ast_status = AST_FAILURE;
+    sprintf(glob_app_cfg.details, "ast_id has received RELEASE_REQ already");
+    glob_app_cfg.status = AST_FAILURE;
     return 0;
   }
 
@@ -277,21 +279,21 @@ node_process_ast_complete()
     zlog_warn("ast_ip is %s in this AST_COMPLETE, but is %s in the original SETUP_REQ",
                 working_app_cfg.ast_ip, glob_app_cfg.ast_ip);
 
-  sprintf(path, "%s/%s/setup_response.xml", NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+  sprintf(path, "%s/%s/setup_response.xml", NODE_AGENT_DIR, glob_app_cfg.ast_id);
   free_application_cfg(&glob_app_cfg);
-  if (topo_xml_parser(path, BRIEF_VERSION) != 1) {
+  if (topo_xml_parser(path, LINK_AGENT) != 1) {
     memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "didn't parse the glob_ast_id file successfully");
-    glob_app_cfg.ast_status = AST_FAILURE;
+    sprintf(glob_app_cfg.details, "didn't parse the ast_id file successfully");
+    glob_app_cfg.status = AST_FAILURE;
     return 0;
   }
-  glob_app_cfg.function = working_app_cfg.function;
+  glob_app_cfg.action = working_app_cfg.action;
   glob_app_cfg.ast_ip = working_app_cfg.ast_ip;
   working_app_cfg.ast_ip = NULL;
   free_application_cfg(&working_app_cfg);
 
   sprintf(path, "%s/%s/ast_complete.xml",
-          NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+          NODE_AGENT_DIR, glob_app_cfg.ast_id);
 
   if (rename(NODE_AGENT_RECV, path) == -1)
     zlog_err("Can't rename %s to %s; errno = %d(%s)",
@@ -300,16 +302,16 @@ node_process_ast_complete()
   for (curnode = glob_app_cfg.node_list->head;
        curnode;
         curnode = curnode->next) {
-    node = (struct node_cfg*) curnode->data;
-    if (node->command) {
+    node = (struct resource*) curnode->data;
+    if (node->res.n.command) {
       node_child = 1;
       if ((node_child_pid = fork()) < 0) 
 	zlog_err("Fork() failed; error = %d(%s)", errno, strerror(errno));
       else if (node_child_pid == 0) {
 
 	/* Child process */
-	zlog_info("Running command \"%s\"", node->command);
-	system(node->command);
+	zlog_info("Running command \"%s\"", node->res.n.command);
+	system(node->res.n.command);
         child_app_complete = 1;
       } else {
 	/* Parent process */
@@ -330,11 +332,11 @@ node_process_ast_complete()
     } else 
       zlog_info("Nothing needs to be executed");
 
-    node->ast_status = AST_APP_COMPLETE;
+    node->status = AST_APP_COMPLETE;
   }
-  glob_app_cfg.ast_status = AST_APP_COMPLETE;
+  glob_app_cfg.status = AST_APP_COMPLETE;
   sprintf(path, "%s/%s/final.xml",
-          NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+          NODE_AGENT_DIR, glob_app_cfg.ast_id);
   print_final(path);
   symlink(path, NODE_AGENT_RET);
 
@@ -345,19 +347,19 @@ int
 node_process_release_req()
 {
   struct adtlistnode *curnode;
-  struct node_cfg *node;
+  struct resource *node;
   char path[105];
   struct stat fs;
   struct application_cfg working_app_cfg;
 
-  glob_app_cfg.org_function = glob_app_cfg.function;
-  glob_app_cfg.function = RELEASE_RESP;
-  zlog_info("Processing glob_ast_id: %s, RELEASE_REQ", glob_app_cfg.glob_ast_id);
+  glob_app_cfg.org_action = glob_app_cfg.action;
+  glob_app_cfg.action = RELEASE_RESP;
+  zlog_info("Processing ast_id: %s, RELEASE_REQ", glob_app_cfg.ast_id);
 
   sprintf(path, "%s/%s/final.xml",
-          NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+          NODE_AGENT_DIR, glob_app_cfg.ast_id);
   if (stat(path, &fs) == -1) {
-    sprintf(glob_app_cfg.details, "Can't locate the glob_ast_id final file");
+    sprintf(glob_app_cfg.details, "Can't locate the ast_id final file");
     return 0;
   }
 
@@ -366,18 +368,18 @@ node_process_release_req()
 
   if (agent_final_parser(path) != 1) {
     memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "didn't parse the file for glob_ast_id successfully");
-    glob_app_cfg.ast_status = AST_FAILURE;
+    sprintf(glob_app_cfg.details, "didn't parse the file for ast_id successfully");
+    glob_app_cfg.status = AST_FAILURE;
     return 0;
   }
 
-  /* before processing, set all link's ast_status = AST_FAILURE
+  /* before processing, set all link's status = AST_FAILURE
    */
-  if (glob_app_cfg.function == RELEASE_RESP) {
+  if (glob_app_cfg.action == RELEASE_RESP) {
     free_application_cfg(&glob_app_cfg);
     memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "glob_ast_id has received RELEASE_REQ already");
-    glob_app_cfg.ast_status = AST_FAILURE;
+    sprintf(glob_app_cfg.details, "ast_id has received RELEASE_REQ already");
+    glob_app_cfg.status = AST_FAILURE;
     return 0;
   }
 
@@ -385,44 +387,44 @@ node_process_release_req()
     zlog_warn("ast_ip is %s in this RELEASE_REQ, but is %s in the original SETUP_REQ",
 		working_app_cfg.ast_ip, glob_app_cfg.ast_ip);
 
-  sprintf(path, "%s/%s/setup_response.xml", NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+  sprintf(path, "%s/%s/setup_response.xml", NODE_AGENT_DIR, glob_app_cfg.ast_id);
   free_application_cfg(&glob_app_cfg);
-  if (topo_xml_parser(path, BRIEF_VERSION) != 1) {
+  if (topo_xml_parser(path, LINK_AGENT) != 1) {
     memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "didn't parse the file for glob_ast_id successfully");
-    glob_app_cfg.ast_status = AST_FAILURE;
+    sprintf(glob_app_cfg.details, "didn't parse the file for ast_id successfully");
+    glob_app_cfg.status = AST_FAILURE;
     return 0;
   }
 
   glob_app_cfg.ast_ip = working_app_cfg.ast_ip;
   working_app_cfg.ast_ip = NULL;
   free_application_cfg(&working_app_cfg);
-  glob_app_cfg.function = RELEASE_RESP;
+  glob_app_cfg.action = RELEASE_RESP;
 
   sprintf(path, "%s/%s/release_origianl.xml",
-          NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+          NODE_AGENT_DIR, glob_app_cfg.ast_id);
 
   if (rename(NODE_AGENT_RECV, path) == -1)
     zlog_err("Can't rename %s to %s; errno = %d(%s)",
            NODE_AGENT_RECV, path, errno, strerror(errno));
 
   sprintf(path, "%s/%s/release_response.xml",
-          NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+          NODE_AGENT_DIR, glob_app_cfg.ast_id);
 
   for (curnode = glob_app_cfg.node_list->head;
        curnode;
         curnode = curnode->next) {
-    node = (struct node_cfg*) curnode->data;
-    node->ast_status = AST_SUCCESS;
+    node = (struct resource*) curnode->data;
+    node->status = AST_SUCCESS;
   }
   
-  glob_app_cfg.ast_status = AST_SUCCESS;
-  glob_app_cfg.function = RELEASE_RESP;
-  print_xml_response(path, BRIEF_VERSION);
+  glob_app_cfg.status = AST_SUCCESS;
+  glob_app_cfg.action = RELEASE_RESP;
+  print_xml_response(path, NODE_AGENT);
   symlink(path, NODE_AGENT_RET);
 
   sprintf(path, "%s/%s/final.xml",
-          NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+          NODE_AGENT_DIR, glob_app_cfg.ast_id);
   print_final(path);
 
   return 1;
@@ -432,13 +434,13 @@ int
 node_process_query_req()
 {
   struct adtlistnode *curnode;
-  struct node_cfg *node;
+  struct resource *node;
   char path[105];
   char directory[80];
 
-  glob_app_cfg.org_function = glob_app_cfg.function;
-  glob_app_cfg.function = QUERY_RESP;
-  zlog_info("Processing glob_ast_id: %s, QUERY_REQ", glob_app_cfg.glob_ast_id);
+  glob_app_cfg.org_action = glob_app_cfg.action;
+  glob_app_cfg.action = QUERY_RESP;
+  zlog_info("Processing ast_id: %s, QUERY_REQ", glob_app_cfg.ast_id);
 
   strcpy(directory, NODE_AGENT_DIR);
   if (mkdir(directory, 0755) == -1 && errno != EEXIST) {
@@ -446,30 +448,30 @@ node_process_query_req()
     return 0;
   }
 
-  sprintf(directory, "%s/%s", NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+  sprintf(directory, "%s/%s", NODE_AGENT_DIR, glob_app_cfg.ast_id);
   if (mkdir(directory, 0755) == -1) {
     zlog_err("Can't create directory %s", directory);
     return 0;
   }
 
   sprintf(path, "%s/%s/query_original.xml",
-        NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+        NODE_AGENT_DIR, glob_app_cfg.ast_id);
 
   if (rename(NODE_AGENT_RECV, path) == -1)
     zlog_err("Can't rename %s to %s; errno = %d(%s)",
            NODE_AGENT_RECV, path, errno, strerror(errno));
 
   sprintf(path, "%s/%s/query_response.xml",
-        NODE_AGENT_DIR, glob_app_cfg.glob_ast_id);
+        NODE_AGENT_DIR, glob_app_cfg.ast_id);
 
-  glob_app_cfg.function = QUERY_RESP;
-  glob_app_cfg.ast_status = AST_SUCCESS;
+  glob_app_cfg.action = QUERY_RESP;
+  glob_app_cfg.status = AST_SUCCESS;
 
   for (curnode = glob_app_cfg.node_list->head;
        curnode;
         curnode = curnode->next) {
-    node = (struct node_cfg*) curnode->data;
-    node->ast_status = AST_SUCCESS;
+    node = (struct resource*) curnode->data;
+    node->status = AST_SUCCESS;
   }
 
   print_final(path);
@@ -495,19 +497,24 @@ noded_process_xml(char* input_file)
     return 0;
   }
 
-  if (glob_app_cfg.function != SETUP_REQ &&
-      glob_app_cfg.function != RELEASE_REQ &&
-      glob_app_cfg.function != QUERY_REQ &&
-      glob_app_cfg.function != AST_COMPLETE) {
-    zlog_err("noded_process_xml: invalid <ast_func> in xml file");
-    sprintf(glob_app_cfg.details, "invalid ast_func in xml file");
+  if (topo_validate_graph(NODE_AGENT) == 0) {
+    zlog_err("noded_process_xml: topo_validate_graph() failed");
     return 0;
   }
 
-  if (glob_app_cfg.function != SETUP_REQ &&
-        glob_app_cfg.glob_ast_id == NULL) {
-    zlog_err("noded_process_xml: <glob_ast_id> should be set in non-setup request case");
-    sprintf(glob_app_cfg.details, "glob_ast_id should be set in non-setup request case");
+  if (glob_app_cfg.action != SETUP_REQ &&
+      glob_app_cfg.action != RELEASE_REQ &&
+      glob_app_cfg.action != QUERY_REQ &&
+      glob_app_cfg.action != AST_COMPLETE) {
+    zlog_err("noded_process_xml: invalid <action> in xml file");
+    sprintf(glob_app_cfg.details, "invalid action in xml file");
+    return 0;
+  }
+
+  if (glob_app_cfg.action != SETUP_REQ &&
+        glob_app_cfg.ast_id == NULL) {
+    zlog_err("noded_process_xml: <ast_id> should be set in non-setup request case");
+    sprintf(glob_app_cfg.details, "ast_id should be set in non-setup request case");
     return 0;
   }
 
@@ -516,13 +523,13 @@ noded_process_xml(char* input_file)
     return 0;
   }
 
-  if (glob_app_cfg.function == SETUP_REQ) {
+  if (glob_app_cfg.action == SETUP_REQ) {
     node_process_setup_req();
-  } else if ( glob_app_cfg.function == AST_COMPLETE) {
+  } else if ( glob_app_cfg.action == AST_COMPLETE) {
     node_process_ast_complete();
-  } else if (glob_app_cfg.function == RELEASE_REQ) {
+  } else if (glob_app_cfg.action == RELEASE_REQ) {
     node_process_release_req();
-  } else if (glob_app_cfg.function == QUERY_REQ) {
+  } else if (glob_app_cfg.action == QUERY_REQ) {
     node_process_query_req();
   }
 
@@ -659,13 +666,13 @@ main(int argc, char* argv[])
 
     myAlarmAction.sa_handler = handleAlarm;
     if (sigfillset(&myAlarmAction.sa_mask) < 0) {
-      zlog_err("xml_accept: sigfillset() failed");
+      zlog_err("main: sigfillset() failed");
       return 0;
     }
     myAlarmAction.sa_flags = 0;
 
     if (sigaction(SIGALRM, &myAlarmAction, 0) < 0) {
-      zlog_err("xml_accept: sigaction() failed");
+      zlog_err("main: sigaction() failed");
       return 0;
     }
 
@@ -712,7 +719,7 @@ agent_accept(struct thread *thread)
       if (errno == EINTR) {
         /* alarm went off
          */
-        zlog_warn("xml_accept: dragon probably has not received all datas");
+        zlog_warn("agent_accept: dragon probably has not received all datas");
         zlog_warn("recvMsgSize = %d", recvMsgSize);
 	buffer[recvMsgSize]='\0';
 	fprintf(fp, "%s", buffer);
@@ -726,7 +733,7 @@ agent_accept(struct thread *thread)
     }
     alarm(0);
  
-    zlog_info("xml_accept: total byte received = %d", total);
+    zlog_info("agent_accept: total byte received = %d", total);
     if (total != 0) {
       fflush(fp);
       fclose(fp);
@@ -736,17 +743,17 @@ agent_accept(struct thread *thread)
       glob_app_cfg.ast_ip = strdup(inet_ntoa(clntAddr.sin_addr));
 
       if (noded_process_xml(NODE_AGENT_RECV) == 1) 
-        glob_app_cfg.ast_status = AST_SUCCESS;
+        glob_app_cfg.status = AST_SUCCESS;
       else 
-        glob_app_cfg.ast_status = AST_FAILURE;
+        glob_app_cfg.status = AST_FAILURE;
 
-      if (glob_app_cfg.function == APP_COMPLETE && node_child && !child_app_complete) {
+      if (glob_app_cfg.action == APP_COMPLETE && node_child && !child_app_complete) {
 	close(clntSock);
         thread_add_read(master, agent_accept, NULL, servSock);
 	return 1;
       } 
     
-      if (glob_app_cfg.function == APP_COMPLETE) {
+      if (glob_app_cfg.action == APP_COMPLETE) {
 
         /* the clntSock should have been void */
         close(clntSock);
@@ -769,18 +776,18 @@ agent_accept(struct thread *thread)
       if (stat(NODE_AGENT_RET, &file_stat) == -1) {
         /* the result file hasn't been written
          */
-        glob_app_cfg.ast_status = AST_FAILURE;
+        glob_app_cfg.status = AST_FAILURE;
         print_error_response(NODE_AGENT_RET);
       }
 
       if (clntSock!= -1) {
-	if (glob_app_cfg.function == APP_COMPLETE) 
-	  zlog_info("Sending APP_COMPLETE for glob_ast_id: %s to ast_master at (%s:%d)",
-			glob_app_cfg.glob_ast_id,
+	if (glob_app_cfg.action == APP_COMPLETE) 
+	  zlog_info("Sending APP_COMPLETE for ast_id: %s to ast_master at (%s:%d)",
+			glob_app_cfg.ast_id,
 			glob_app_cfg.ast_ip, MASTER_PORT);
 	else
           zlog_info("sending confirmation (%s) to ast_master at (%s:%d)",
-                  status_type_details[glob_app_cfg.ast_status],
+                  status_type_details[glob_app_cfg.status],
                   glob_app_cfg.ast_ip, MASTER_PORT);
 
         fd = open(NODE_AGENT_RET, O_RDONLY);
@@ -825,7 +832,6 @@ broker_accept(struct thread *thread)
   char buffer[RCVBUFSIZE];
   FILE* fp;
   int fd, total;
-  static struct stat file_stat;
 
   servSock = THREAD_FD(thread);
 
@@ -848,7 +854,7 @@ broker_accept(struct thread *thread)
       if (errno == EINTR) {
         /* alarm went off
          */
-        zlog_warn("xml_accept: dragon probably has not received all datas");
+        zlog_warn("broker_accept: dragon probably has not received all datas");
         zlog_warn("recvMsgSize = %d", recvMsgSize);
 	total += recvMsgSize;
         break;
@@ -862,7 +868,7 @@ broker_accept(struct thread *thread)
  
     zlog_info("broker_accept: total byte received = %d", total);
     if (total != 0) {
-      struct node_cfg *node;
+      struct resource *node;
 
       fflush(fp);
       fclose(fp);
@@ -873,9 +879,9 @@ broker_accept(struct thread *thread)
       fprintf(fp, "<topology>\n");
       if (resource_index == NULL) 
         resource_index = node_resource.head;
-      node = (struct node_cfg *)resource_index->data;
+      node = (struct resource *)resource_index->data;
        
-      zlog_info("BROKER: returns node (ipadd = %s)\n", node->ipadd);   
+      zlog_info("BROKER: returns node (ipadd = %s)\n", node->res.n.ip);   
       print_node(fp, node);
       fprintf(fp, "</topology>");
       fflush(fp);
@@ -922,7 +928,7 @@ broker_init(char* file)
   if (stat(file, &file_stat) == -1) 
     return 0;
 
-  if (topo_xml_parser(file, BRIEF_VERSION) == 0) 
+  if (topo_xml_parser(file, LINK_AGENT) == 0) 
     return 0;
 
   if (glob_app_cfg.node_list == NULL) 

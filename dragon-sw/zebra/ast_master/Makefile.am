@@ -12,13 +12,13 @@ bin_PROGRAMS = ast_master node_agent astb
 noinst_LIBRARIES = libastb.a
 
 noinst_HEADERS = adt.h ast_master.h
-ast_master_SOURCES = adt.c ast_master.c main.c
+ast_master_SOURCES = adt.c ast_master.c main.c local_id_cfg.c
 ast_master_LDADD =  ../lib/libzebra.a  $(XML_LIBS) -lcrypt -lxml2 -lm
 node_agent_SOURCES = node_agent.c adt.c ast_master.c
 node_agent_LDADD =  ../lib/libzebra.a $(XML_LIBS) -lcrypt -lxml2 -lm
-astb_SOURCES = adt.c ast_master.c astb.c
-astb_LDADD =  ../lib/libzebra.a  $(XML_LIBS) -lcrypt -lxml2 -lm
-libastb_a_SOURCES = adt.c ast_master.c 
+astb_SOURCES = astb.c
+astb_LDADD =  libastb.a ../lib/libzebra.a  $(XML_LIBS) -lcrypt -lxml2 -lm
+libastb_a_SOURCES = adt.c ast_master.c local_id_cfg.c
 
 sysconf_DATA = ast_master.conf.sample
 

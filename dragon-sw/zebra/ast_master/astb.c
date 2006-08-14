@@ -11,7 +11,6 @@
 #include "getopt.h"
 #include "ast_master.h"
 
-#define RCVBUFSIZE 		100	
 #define ASTB_RESULT_FILE	"/tmp/astb_result.xml"
 #define ASTB_SEND_FILE		"/tmp/astb_sent.xml"
 #define LINK_AGENT_DIR	  "/usr/local/dragon/link_agent"
@@ -23,7 +22,7 @@ struct option astb_opts[] =
 {
   { "input_file", 	required_argument, NULL, 'f'},
   { "help",       	no_argument,       NULL, 'h'},
-  { "glob_ast_id", 	required_argument, NULL, 'g'},
+  { "ast_id", 	required_argument, NULL, 'g'},
   { "type",		required_argument, NULL, 't'},
   { "signal",		required_argument, NULL, 's'},
   { 0 }
@@ -39,14 +38,14 @@ usage (char *progname, int status)
 NSF AST Builder.\n\n\
 -i, --input file   	File to ast_master\n\
 -h, --help	 	Display this help and exit\n\
--g, --glob_ast_id  	glob_ast_id\n\
+-g, --ast_id  	ast_id\n\
 -t, --resource_type	Resourse type, node or link\n\
 -s, --signal	   	Signal sent to ast_master\n\
 -v, --validate	   	File to be validated\n\
 \n", progname);
     printf("To send file to ast_master, \"astb -f <file>\"\n");
     printf("To validate file to send to ast_master, \"astb -v <file>\"\n");
-    printf("To send signal, \"astb -t node|type -s APP_COMPLETE -g <glob_ast_id>\"\n");
+    printf("To send signal, \"astb -t node|type -s APP_COMPLETE -g <ast_id>\"\n");
   }
 
   exit (status);
@@ -59,64 +58,64 @@ send_app_complete(int type)
   struct stat fs;
   char* ast_id;
   struct adtlistnode *curnode;
-  struct node_cfg *node;
-  struct link_cfg *link;
+  struct resource *node, *link;
   int sock, fd, total;
   struct sockaddr_in astServ;
 
-  ast_id = glob_app_cfg.glob_ast_id;
-  glob_app_cfg.glob_ast_id = NULL;
+  ast_id = glob_app_cfg.ast_id;
+  glob_app_cfg.ast_id = NULL;
 
   sprintf(file, "%s/%s/setup_response.xml", 
 		type == 1 ? NODE_AGENT_DIR:LINK_AGENT_DIR, ast_id);
   if (stat(file, &fs) == -1) {
-    printf("Can't locate glob_ast_id file for %s\n", type == 1 ? "node":"link");
+    printf("Can't locate ast_id file for %s\n", type == 1 ? "node":"link");
     exit(0);
   }
 
-  free(glob_app_cfg.glob_ast_id);
-  if (topo_xml_parser(file, BRIEF_VERSION) != 1) {
-    printf("Error in glob_ast_id file\n");
+  free(glob_app_cfg.ast_id);
+  
+  if (topo_xml_parser(file, ASTB) != 1) {
+    printf("Error in ast_id file\n");
     exit(0);
   }
 
-  if (glob_app_cfg.function == RELEASE_RESP) {
-    printf("glob_ast_id file indicate this the resource has been released\n");
+  if (glob_app_cfg.action == RELEASE_RESP) {
+    printf("ast_id file indicate this the resource has been released\n");
     exit(0);
   }
  
   if (glob_app_cfg.ast_ip == NULL) {
-    printf("glob_ast_id file has no ast_ip specified; don't know how to contact the agent\n");
+    printf("ast_id file has no ast_ip specified; don't know how to contact the agent\n");
     exit(0);
   }
  
   if (type == 1) {
     if (glob_app_cfg.node_list == NULL) {
-      printf("the node_agent file for glob_ast_id contains no node\n");
+      printf("the node_agent file for ast_id contains no node\n");
       exit(0);
     }
 
     for (curnode = glob_app_cfg.node_list->head;
 	 curnode;
 	 curnode = curnode->next) {
-      node = (struct node_cfg*) curnode->data;
-      node->ast_status = AST_APP_COMPLETE;
+      node = (struct resource*) curnode->data;
+      node->status = AST_APP_COMPLETE;
     }
   } else {
     if (glob_app_cfg.link_list == NULL) {
-      printf("the link_agent file for glob_ast_id contains no link\n");
+      printf("the link_agent file for ast_id contains no link\n");
       exit(0);
     } 
 
     for (curnode = glob_app_cfg.link_list->head;
 	 curnode;
 	 curnode = curnode->next) {
-      link = (struct link_cfg*) curnode->data;
-      link->ast_status = AST_APP_COMPLETE;
+      link = (struct resource*) curnode->data;
+      link->status = AST_APP_COMPLETE;
     }
   }
-  glob_app_cfg.ast_status = AST_APP_COMPLETE;
-  glob_app_cfg.function = APP_COMPLETE;
+  glob_app_cfg.status = AST_APP_COMPLETE;
+  glob_app_cfg.action = APP_COMPLETE;
 
   sprintf(file, "%s/%s/final.xml",
 	        type == 1 ? NODE_AGENT_DIR:LINK_AGENT_DIR, ast_id);
@@ -221,14 +220,14 @@ int main(int argc, char* argv[])
       case 's':
 	signal_mode = 1;
 	if (strcmp(optarg, "APP_COMPLETE") == 0)
-	  glob_app_cfg.function = APP_COMPLETE;
+	  glob_app_cfg.action = APP_COMPLETE;
 	else {
 	  printf("You must specify \"APP_COMPLETE\" for signal (-s)\n");
 	  usage(progname, 0);
 	}
 	break;
       case 'g':
-	glob_app_cfg.glob_ast_id = optarg;
+	glob_app_cfg.ast_id = optarg;
 	break;
       default:
 	usage (progname, 0);
@@ -239,7 +238,7 @@ int main(int argc, char* argv[])
     if (input_file) 
       usage (progname, 0);
 
-    if (!type || !glob_app_cfg.glob_ast_id) 
+    if (!type || !glob_app_cfg.ast_id) 
       usage (progname, 0);
 
     send_app_complete(type);
@@ -253,16 +252,34 @@ int main(int argc, char* argv[])
     exit(1);
   }
 
-  if (topo_xml_parser(input_file, BRIEF_VERSION) == 0) {
+  glob_app_cfg.xml_type = xml_parser(input_file);
+
+  switch (glob_app_cfg.xml_type) {
+
+  case TOPO_XML:
+
+  if (topo_xml_parser(input_file, ASTB) == 0) {
     printf("Validation Failed\n");
     exit(1);
   }
 
-  if (master_validate_graph(1) != 1) {
+  if (topo_validate_graph(ASTB) != 1) {
     printf("Validation Failed\n");
     exit(1);
   }
   
+  break;
+
+  case ID_XML:
+
+  if (id_xml_parser(input_file, ASTB) == 0) {
+    printf("Validation Failed\n");
+    exit(1);
+  }
+
+  break;
+  }
+
   if (validate) {
     printf("File is validated\n");
     exit(1);

@@ -4,6 +4,7 @@
 struct adtlist {
   int count;
   struct adtlistnode* head;
+  struct adtlistnode* tail;
 };
 
 struct adtlistnode {

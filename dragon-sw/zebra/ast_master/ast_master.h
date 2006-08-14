@@ -12,10 +12,32 @@
 #define NODE_BROKER_PORT        2624
 #endif
 
+/* types of agents in AST suite */
+#define NODE_AGENT		1
+#define LINK_AGENT		2
+#define MASTER			3
+#define ASTB			4
+
+/* types of Resource in AST */
+#define	NODE_RES		1
+#define	LINK_RES		2
+
+/* types of XML_FILES */
+#define TOPO_XML		1
+#define ID_XML			2
+
+/* buffer size */
+#define RCVBUFSIZE              100
+#define SENDBUFSIZE     	5000
+
 #define NODENAME_MAXLEN		30
 #define IP_MAXLEN 		15 
 #define NUM_LINK_TYPE		3
 #define NUM_NODE_TYPE		3
+#define NUM_LINK_STYPE		3
+#define NUM_FUNCTION_TYPE	8
+#define NUM_STATUS_TYPE		5
+#define NUM_NODE_STYPE		3
 #define LSP_NAME_LEN            13
 #define NODE_AGENT_PORT 	2623
 
@@ -53,70 +75,71 @@ struct string_syntex_check {
  * 3. struct link_cfg
  */
 struct application_cfg {
-  int org_function;
-  int function;
-  int ast_status;
-  char* glob_ast_id;
+  int xml_type;
+  int org_action;
+  int action;
+  int status;
+  char* ast_id;
   char* ast_ip;
   char details[200];
   struct adtlist *node_list;
   struct adtlist *link_list;
 };
 
+enum node_stype { es = 1, vlsr, proxy };
+enum link_stype { uni = 1, non_uni, vlsr_vlsr, vlsr_es };
 enum entity_type { PC = 1, correlator, computation_array };
 
-struct node_cfg {
-  int node_type;
-  int ast_status;
+struct if_ip {
+  char *iface;
+  char *assign_ip;
+}; 
 
-  char name[NODENAME_MAXLEN + 1];
-  char ipadd[IP_MAXLEN+1];
-  char te_addr[IP_MAXLEN+1];
-  int vlsr_total;
-  struct vlsr **vlsr_info;
-  char *agent_message;
-  int agent_port;
+struct node_cfg {
+  enum node_stype stype;
+  char ip[IP_MAXLEN+1];
+  char router_id[IP_MAXLEN+1];
   char *command;
+  struct adtlist *if_list;
   struct adtlist *link_list;
 };
 
-struct vlsr {
-  char lo_addr[IP_MAXLEN+1];
+struct endpoint {
+  struct resource *es;
+  struct resource *vlsr;
+  struct resource *proxy;
+  struct if_ip *ifp;
   char local_id_type[REG_TXT_FIELD_LEN+1];
   int local_id;
-  char iface[REG_TXT_FIELD_LEN+1];
-  char link[NODENAME_MAXLEN+1];
-  char assign_ip[IP_MAXLEN+1];
 };
 
 struct link_cfg {
+  enum link_stype stype;
   int service_type;
-  int ast_status;
-  char name[NODENAME_MAXLEN + 1];
-  char *agent_message;
   char lsp_name[LSP_NAME_LEN+1];
-  struct node_cfg *src;
-  struct node_cfg *dest;
-  int lsp_id; 
-  int tunnel_id; 
+  struct endpoint *src;
+  struct endpoint *dest;
+  struct resource *dragon;
 
-  struct vlsr *src_vlsr;
-  struct vlsr *dest_vlsr;
-  char src_local_id_type[REG_TXT_FIELD_LEN+1];
-  char dest_local_id_type[REG_TXT_FIELD_LEN+1];
-  int src_local_id;
-  int dest_local_id;
+  /* te_params */
   char vtag[REG_TXT_FIELD_LEN+1];
   char bandwidth[REG_TXT_FIELD_LEN+1];
   char swcap[REG_TXT_FIELD_LEN+1];
   char encoding[REG_TXT_FIELD_LEN+1];
   char gpid[REG_TXT_FIELD_LEN+1];
-  char frame_order[REG_TXT_FIELD_LEN+1];
-  int mtu; 
-  char src_ip[IP_MAXLEN+1];	// only for QUERY_RESP
-  char dest_ip[IP_MAXLEN+1];	// only for QUERY_RESP
 };
 
+struct resource {
+  int type;		/* indicate this is link or node */
+  char name[NODENAME_MAXLEN + 1];
+  int status;
+  char *agent_message;
+
+  union {
+    struct node_cfg n;
+    struct link_cfg l;
+  } res; 
+};
 struct application_cfg glob_app_cfg;
 struct adtlist glob_cfg_list;
 
@@ -158,6 +181,8 @@ enum link_type { EtherPipeBasic = 1, EtherPipeUltra, TDMBasic };
 #define XML_NEW_FILE "/tmp/app_ready.xml"
 #define XML_DRAGON_RETURN_FILE "/tmp/dragon_resp.xml"
 
+#define AST_XML_RESULT  "/usr/local/ast_master_ret.xml"
+
 int service_xml_parser(char*);
 int master_locate_resource();
 int master_validate_graph(int);
@@ -167,10 +192,13 @@ int master_send_task();
 #define BRIEF_VERSION	2
 
 int topo_xml_parser(char*, int);
+int topo_validate_graph(int);
+int xml_parser(char*);
 void print_xml_response(char*, int);
 void free_application_cfg(struct application_cfg*);
-void print_node(FILE*, struct node_cfg*);
-void print_link(FILE*, struct link_cfg*);
+void print_node(FILE*, struct resource*);
+void print_link(FILE*, struct resource*);
+void print_endpoint(FILE*, struct endpoint*);
 struct adtlist* dragon_query_result_parser(char*, struct node_cfg*);
 int dragon_result_parser(char*, struct node_cfg *);
 void print_final(char*);
