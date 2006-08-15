@@ -185,6 +185,13 @@
 #define CLI_USERNAME "unknown"
 #define CLI_PASSWORD "unknown"
 
+/* Define TL1 session type for VLSR control */
+#define TL1_SESSION_TYPE TL1_NONE
+
+/* Define TL1 username and password for VLSR access to the switch */
+#define TL1_USERNAME "unknown"
+#define TL1_PASSWORD "unknown"
+
 /* If this option is defined, enable VLSR switch port shutdown operations 
    (currently used only for Force10 switches) */
 #undef ENABLE_SWITCH_PORT_SHUTDOWN
