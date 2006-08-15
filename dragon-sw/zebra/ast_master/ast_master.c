@@ -499,6 +499,8 @@ print_link_brief(FILE* fp, struct resource* link)
     fprintf(fp, "\t<agent_message>%s</agent_message>\n", link->agent_message);
   if (link->res.l.lsp_name[0] != '\0') 
     fprintf(fp, "\t<lsp_name>%s</lsp_name>\n", link->res.l.lsp_name);
+  if (link->res.l.dragon)
+    fprintf(fp, "\t<dragon>%s</dragon>\n", link->res.l.dragon->name);
   fprintf(fp, "</resource>\n");
 }
 
@@ -907,6 +909,150 @@ service_xml_parser(char* filename)
   return (1);
 }
 
+static int 
+establish_relationship()
+{
+  struct resource *mylink, *dragon;
+  struct adtlistnode *curnode;
+
+  if (!glob_app_cfg.link_list)
+    return 1;
+
+  for ( curnode = glob_app_cfg.link_list->head;
+	curnode;
+	curnode = curnode->next) {
+    mylink = (struct resource*) curnode->data;
+
+    if (!mylink->res.l.src || !mylink->res.l.dest) 
+      continue;
+
+    switch (mylink->res.l.stype) {
+      case uni:
+      case non_uni:
+	if (!mylink->res.l.src->es || !mylink->res.l.dest->es) {
+	  zlog_err("link (%s) should have both src and dest es defined", mylink->name);
+	  return 0;
+	}
+
+	if (mylink->res.l.src->es->res.n.router_id[0] == '\0' ||
+	    mylink->res.l.dest->es->res.n.router_id[0] == '\0') {
+	  zlog_err("link (%s) should have <router_id> defined in its src and dest ES", mylink->name);
+	  return 0;
+	}
+
+	if (mylink->res.l.stype == uni && 
+	    (mylink->res.l.src->local_id_type[0] == '\0' ||
+	     mylink->res.l.dest->local_id_type[0] == '\0')) {
+	  zlog_err("For uni, link (%s) should have src and dest <local_id> defined", mylink->name);
+	  return 0;
+	}
+
+	if (mylink->res.l.src->proxy) 
+	  mylink->res.l.dragon = mylink->res.l.src->proxy;
+	else 
+	  mylink->res.l.dragon = mylink->res.l.src->es;
+
+	dragon = mylink->res.l.dragon;
+	if (!dragon->res.n.link_list) { 
+	  dragon->res.n.link_list = malloc(sizeof(struct adtlist)); 
+	  memset(dragon->res.n.link_list, 0, sizeof(struct adtlist)); 
+	} 
+	adtlist_add(dragon->res.n.link_list, mylink);
+
+	mylink->res.l.src->vlsr = NULL;
+	mylink->res.l.dest->vlsr = NULL;
+
+	break;
+	
+      case vlsr_vlsr:
+	if (!mylink->res.l.src->vlsr || !mylink->res.l.dest->vlsr) {
+	  zlog_err("link (%s) should have both src and dest vlsr defined", mylink->name);
+	  return 0;
+	}
+
+	if (mylink->res.l.src->vlsr->res.n.router_id[0] == '\0' ||
+	    mylink->res.l.dest->vlsr->res.n.router_id[0] == '\0') {
+	  zlog_err("link (%s) should have <router_id> defined in vlsr", mylink->name);
+	  return 0;
+	}
+
+	mylink->res.l.dragon = mylink->res.l.src->vlsr;
+	mylink->res.l.src->proxy = NULL;
+	mylink->res.l.src->es = NULL;
+	mylink->res.l.dest->proxy = NULL;
+	mylink->res.l.dest->es = NULL;
+
+	dragon = mylink->res.l.dragon;
+	if (!dragon->res.n.link_list) { 
+	  dragon->res.n.link_list = malloc(sizeof(struct adtlist)); 
+	  memset(dragon->res.n.link_list, 0, sizeof(struct adtlist)); 
+	} 
+	adtlist_add(dragon->res.n.link_list, mylink);
+
+	if (mylink->res.l.src->ifp) {
+	  free(mylink->res.l.src->ifp->iface);
+	  free(mylink->res.l.src->ifp->assign_ip);
+	  free(mylink->res.l.src->ifp);
+	  mylink->res.l.src->ifp = NULL;
+	}
+
+	if (mylink->res.l.dest->ifp) {
+	  free(mylink->res.l.dest->ifp->iface);
+	  free(mylink->res.l.dest->ifp->assign_ip);
+	  free(mylink->res.l.dest->ifp);
+	  mylink->res.l.dest->ifp = NULL;
+	}
+
+	break;
+	
+      case vlsr_es:
+
+	/* first, let's see if src:vlsr and dest:es will work
+	 */
+	if (mylink->res.l.src->vlsr && mylink->res.l.dest->es) {
+	  if (mylink->res.l.src->vlsr->res.n.router_id[0] == '\0' ||
+	      mylink->res.l.dest->es->res.n.router_id[0] == '\0') {
+	    zlog_err("link (%s) should have both src vlsr router_id and dest es router_id defined", mylink->name);
+	    return 0;
+	  }
+
+	  mylink->res.l.src->es = NULL;
+	  mylink->res.l.src->proxy = NULL;
+	  mylink->res.l.dest->vlsr = NULL;
+	  mylink->res.l.dragon = mylink->res.l.src->vlsr;
+	} else if (mylink->res.l.src->es && mylink->res.l.dest->vlsr) {
+	  if (mylink->res.l.src->es->res.n.router_id[0] == '\0' ||
+	      mylink->res.l.dest->vlsr->res.n.router_id[0] == '\0') {
+	    zlog_err("link (%s) should have both src ES router_id and dest vlsr router_id defined", mylink->name);
+	    return 0;
+	  }
+
+	  mylink->res.l.dest->es = NULL;
+	  mylink->res.l.dest->proxy = NULL;
+	  mylink->res.l.src->vlsr = NULL;
+	  if (mylink->res.l.src->proxy)
+	    mylink->res.l.dragon = mylink->res.l.src->proxy;
+	  else
+	    mylink->res.l.dragon = mylink->res.l.src->es;
+	} else {
+	  zlog_err("link (%s) should have (src:vlsr and dest:es) or (src:es and dest:vlsr) defined", mylink->name);
+	  return 0;
+	}
+
+	dragon = mylink->res.l.dragon;
+	if (!dragon->res.n.link_list) { 
+	  dragon->res.n.link_list = malloc(sizeof(struct adtlist)); 
+	  memset(dragon->res.n.link_list, 0, sizeof(struct adtlist)); 
+	} 
+	adtlist_add(dragon->res.n.link_list, mylink);
+
+	break;
+    }
+  }
+  
+  return 1;
+}
+
 int
 agent_final_parser(char* filename)
 {
@@ -971,6 +1117,15 @@ agent_final_parser(char* filename)
 
   xmlFreeDoc(doc);
   return 1;
+}
+
+int
+master_final_parser(char* filename)
+{
+  if (topo_xml_parser(filename, MASTER) == 0)
+    return 0;
+
+  return (establish_relationship());
 }
 
   
@@ -1470,7 +1625,6 @@ topo_validate_graph(int agent)
 {
   struct adtlistnode *curnode;
   struct resource *mynode, *mylink;
-  struct resource *dragon;
   int i;
 
   /* first check the validity of funciton and ast_id
@@ -1541,6 +1695,9 @@ topo_validate_graph(int agent)
 	  zlog_err("No link defined in this topology"); 
 	  return 0;
         } else { 
+	  if (!establish_relationship())
+	    return 0;
+
 	  for ( curnode = glob_app_cfg.link_list->head; 
 		curnode; 
 		curnode = curnode->next) { 
@@ -1551,130 +1708,6 @@ topo_validate_graph(int agent)
 	      return 0;
 	    }
 
-	    switch (mylink->res.l.stype) {
-	      case uni:
-	      case non_uni:
-		if (!mylink->res.l.src->es || !mylink->res.l.dest->es) {
-		  zlog_err("link (%s) should have both src and dest es defined", mylink->name);
-		  return 0;
-		}
-
-		if (mylink->res.l.src->es->res.n.router_id[0] == '\0' ||
-		    mylink->res.l.dest->es->res.n.router_id[0] == '\0') {
-		  zlog_err("link (%s) should have <router_id> defined in its src and dest ES", mylink->name);
-		  return 0;
-		}
-
-		if (mylink->res.l.stype == uni && 
-		    (mylink->res.l.src->local_id_type[0] == '\0' ||
-		     mylink->res.l.dest->local_id_type[0] == '\0')) {
-		  zlog_err("For uni, link (%s) should have src and dest <local_id> defined", mylink->name);
-		  return 0;
-		}
-
-		if (mylink->res.l.src->proxy) 
-		  mylink->res.l.dragon = mylink->res.l.src->proxy;
-		else 
-		  mylink->res.l.dragon = mylink->res.l.src->es;
-
-		dragon = mylink->res.l.dragon;
-		if (!dragon->res.n.link_list) { 
-		  dragon->res.n.link_list = malloc(sizeof(struct adtlist)); 
-		  memset(dragon->res.n.link_list, 0, sizeof(struct adtlist)); 
-		} 
-		adtlist_add(dragon->res.n.link_list, mylink);
-
-		mylink->res.l.src->vlsr = NULL;
-		mylink->res.l.dest->vlsr = NULL;
-
-		break;
-		
-	      case vlsr_vlsr:
-		if (!mylink->res.l.src->vlsr || !mylink->res.l.dest->vlsr) {
-		  zlog_err("link (%s) should have both src and dest vlsr defined", mylink->name);
-		  return 0;
-		}
-
-		if (mylink->res.l.src->vlsr->res.n.router_id[0] == '\0' ||
-		    mylink->res.l.dest->vlsr->res.n.router_id[0] == '\0') {
-		  zlog_err("link (%s) should have <router_id> defined in vlsr", mylink->name);
-		  return 0;
-		}
-
-		mylink->res.l.dragon = mylink->res.l.src->vlsr;
-		mylink->res.l.src->proxy = NULL;
-		mylink->res.l.src->es = NULL;
-		mylink->res.l.dest->proxy = NULL;
-		mylink->res.l.dest->es = NULL;
-
-		dragon = mylink->res.l.dragon;
-		if (!dragon->res.n.link_list) { 
-		  dragon->res.n.link_list = malloc(sizeof(struct adtlist)); 
-		  memset(dragon->res.n.link_list, 0, sizeof(struct adtlist)); 
-		} 
-		adtlist_add(dragon->res.n.link_list, mylink);
-
-		if (mylink->res.l.src->ifp) {
-		  free(mylink->res.l.src->ifp->iface);
-		  free(mylink->res.l.src->ifp->assign_ip);
-		  free(mylink->res.l.src->ifp);
-		  mylink->res.l.src->ifp = NULL;
-		}
-
-		if (mylink->res.l.dest->ifp) {
-		  free(mylink->res.l.dest->ifp->iface);
-		  free(mylink->res.l.dest->ifp->assign_ip);
-		  free(mylink->res.l.dest->ifp);
-		  mylink->res.l.dest->ifp = NULL;
-		}
-
-		break;
-		
-	      case vlsr_es:
-
-		/* first, let's see if src:vlsr and dest:es will work
-		 */
-		if (mylink->res.l.src->vlsr && mylink->res.l.dest->es) {
-		  if (mylink->res.l.src->vlsr->res.n.router_id[0] == '\0' ||
-		      mylink->res.l.dest->es->res.n.router_id[0] == '\0') {
-		    zlog_err("link (%s) should have both src vlsr router_id and dest es router_id defined", mylink->name);
-		    return 0;
-		  }
-
-		  mylink->res.l.src->es = NULL;
-		  mylink->res.l.src->proxy = NULL;
-		  mylink->res.l.dest->vlsr = NULL;
-		  mylink->res.l.dragon = mylink->res.l.src->vlsr;
-		} else if (mylink->res.l.src->es && mylink->res.l.dest->vlsr) {
-		  if (mylink->res.l.src->es->res.n.router_id[0] == '\0' ||
-		      mylink->res.l.dest->vlsr->res.n.router_id[0] == '\0') {
-		    zlog_err("link (%s) should have both src ES router_id and dest vlsr router_id defined", mylink->name);
-		    return 0;
-		  }
-
-		  mylink->res.l.dest->es = NULL;
-		  mylink->res.l.dest->proxy = NULL;
-		  mylink->res.l.src->vlsr = NULL;
-		  if (mylink->res.l.src->proxy)
-		    mylink->res.l.dragon = mylink->res.l.src->proxy;
-		  else
-		    mylink->res.l.dragon = mylink->res.l.src->es;
-		} else {
-		  zlog_err("link (%s) should have (src:vlsr and dest:es) or (src:es and dest:vlsr) defined", mylink->name);
-		  return 0;
-		}
-
-		dragon = mylink->res.l.dragon;
-		if (!dragon->res.n.link_list) { 
-		  dragon->res.n.link_list = malloc(sizeof(struct adtlist)); 
-		  memset(dragon->res.n.link_list, 0, sizeof(struct adtlist)); 
-		} 
-		adtlist_add(dragon->res.n.link_list, mylink);
-
-		break;
-	    }
-
-	    
 	    if (mylink->res.l.bandwidth[0] != '\0') { 
 	      for (i = 0; i < bandwidth_field.number; i++) {
 		if (strcasecmp(mylink->res.l.bandwidth, bandwidth_field.ss[i].abbre) == 0)

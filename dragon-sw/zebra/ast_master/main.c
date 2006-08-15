@@ -90,7 +90,7 @@ master_process_setup_resp()
   memcpy (&working_app_cfg, &glob_app_cfg, sizeof(struct application_cfg));
   memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
 
-  if (topo_xml_parser(path, MASTER) != 1) {
+  if (master_final_parser(path, MASTER) != 1) {
     memcpy (&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
     sprintf(glob_app_cfg.details, "didn't parse the ast_id file successfully");
     glob_app_cfg.status = AST_FAILURE;
@@ -229,7 +229,7 @@ master_process_app_complete()
   memcpy (&working_app_cfg, &glob_app_cfg, sizeof(struct application_cfg));
   memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
 
-  if (topo_xml_parser(path, MASTER) != 1) {
+  if (master_final_parser(path, MASTER) != 1) {
     memcpy (&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
     sprintf(glob_app_cfg.details, "didn't parse the ast_id file successfully");
     glob_app_cfg.status = AST_FAILURE;
@@ -478,7 +478,7 @@ master_process_release_req()
       memcpy(&working_app_cfg, &glob_app_cfg, sizeof(struct application_cfg));
       memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
     
-      if (topo_xml_parser(path, MASTER) != 1) {
+      if (master_final_parser(path, MASTER) != 1) {
         sprintf(glob_app_cfg.details, "didn't parsed the ast_id file successfully");
         memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
         glob_app_cfg.status = AST_FAILURE;

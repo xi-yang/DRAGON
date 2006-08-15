@@ -62,6 +62,31 @@ generate_fake_vty()
   return vty;
 }
 
+static void
+dragon_establish_relationship()
+{
+  struct resource *mylink, *dragon;
+  struct adtlistnode *curnode;
+  
+  if (!glob_app_cfg.link_list)
+    return;
+
+  for (curnode = glob_app_cfg.link_list->head;
+	curnode;
+	curnode = curnode->next) {
+    mylink = (struct resource*) curnode->data;
+
+    dragon = mylink->res.l.dragon;
+    if (dragon) {
+      if (!dragon->res.n.link_list) {
+	dragon->res.n.link_list = malloc(sizeof(struct adtlist));
+	memset(dragon->res.n.link_list, 0, sizeof(struct adtlist));
+      }
+      adtlist_add(dragon->res.n.link_list, mylink);
+    }
+  }
+}
+
 void
 dragon_upcall_callback(int msg_type, char *lsp_name)
 {
@@ -522,6 +547,7 @@ dragon_process_release_req()
     glob_app_cfg.status = AST_FAILURE;
     return 0;
   }
+  dragon_establish_relationship();
 
   glob_app_cfg.ast_ip = working_app_cfg.ast_ip;
   working_app_cfg.ast_ip = NULL;
@@ -670,6 +696,7 @@ dragon_process_ast_complete()
     glob_app_cfg.status = AST_FAILURE;
     return 0;
   }
+  dragon_establish_relationship();
 
   glob_app_cfg.ast_ip = working_app_cfg.ast_ip;
   working_app_cfg.ast_ip = NULL;
@@ -684,7 +711,7 @@ dragon_process_ast_complete()
   }
   glob_app_cfg.status = AST_APP_COMPLETE;
   sprintf(path,  "%s/%s/final.xml", LINK_AGENT_DIR, glob_app_cfg.ast_id);
-  print_final(path);
+  print_xml_response(path, LINK_AGENT);
   symlink(path, DRAGON_XML_RESULT);
   
   sprintf(path, "%s/%s/ast_complete.xml", 
