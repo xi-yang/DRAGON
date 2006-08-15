@@ -827,6 +827,7 @@ broker_accept(struct thread *thread)
 {
   int servSock, clntSock;
   struct sockaddr_in clntAddr;
+  static struct stat file_stat;
   unsigned int clntLen;
   int recvMsgSize;
   char buffer[RCVBUFSIZE];
