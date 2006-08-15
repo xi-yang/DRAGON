@@ -26,15 +26,18 @@
 struct dragon_callback {
   char *ast_id;
   char lsp_name[LSP_NAME_LEN+1];
-  char src_name[NODENAME_MAXLEN+1];
-  char dest_name[NODENAME_MAXLEN+1];
+  enum link_stype stype;
+  enum node_stype node_stype;
   char link_name[NODENAME_MAXLEN+1];
+  char link_agent[NODENAME_MAXLEN+1];
 };
 static struct adtlist pending_list;
 
 extern struct thread_master *master;
 extern char *status_type_details[];
 extern char *action_type_details[];
+extern char* link_stype_name[];
+extern char* node_stype_name[];
 extern char *local_id_name[];
 extern char *id_action_name[];
 static struct vty* fake_vty = NULL;
@@ -145,13 +148,13 @@ dragon_upcall_callback(int msg_type, char *lsp_name)
   }
   fprintf(fp, "<status>%s</status>\n", 
 		status == AST_SUCCESS? "AST_SUCCESS":"AST_FAILURE");
-  fprintf(fp, "<resource>\n<name>%s</name>\n</resource>\n", data->src_name);
-  fprintf(fp, "<resource>\n<name>%s</name>\n</resource>\n", data->dest_name);
-  fprintf(fp, "<resource>\n<src>%s</src>\n<dest>%s</dest>\n", data->src_name, data->dest_name);
-  fprintf(fp, "<name>%s</name>\n", data->link_name);
-  fprintf(fp, "<status>%s</status>\n", 
+  fprintf(fp, "<resource name=\"%s\" type=\"%s\">\n", data->link_agent, node_stype_name[data->node_stype]);
+  fprintf(fp, "</resource>\n");
+  fprintf(fp, "<resource name=\"%s\" type=\"%s\">\n", data->link_name, link_stype_name[data->stype]);
+  fprintf(fp, "\t<status>%s</status>\n", 
 		status == AST_SUCCESS? "AST_SUCCESS":"AST_FAILURE");
-  fprintf(fp, "<lsp_name>%s</lsp_name>\n", data->lsp_name);
+  fprintf(fp, "\t<lsp_name>%s</lsp_name>\n", data->lsp_name);
+  fprintf(fp, "\t<dragon>%s</dragon>\n", data->link_agent);
   fprintf(fp, "</resource>\n</topology>\n");
   fflush(fp);
   fclose(fp);
@@ -1003,12 +1006,13 @@ dragon_link_provision()
 	  bzero(data, sizeof(struct dragon_callback));
           data->ast_id = strdup(glob_app_cfg.ast_id);
 	  strncpy(data->lsp_name, mylink->res.l.lsp_name, LSP_NAME_LEN);
+	  data->stype = mylink->res.l.stype;
 
 	  switch (mylink->res.l.stype) {
 	    case uni:
 	    case non_uni:
-	      strncpy(data->src_name, mylink->res.l.src->es->name, NODENAME_MAXLEN);
-	      strncpy(data->dest_name, mylink->res.l.dest->es->name, NODENAME_MAXLEN);
+	      strcpy(data->link_agent, mylink->res.l.src->es->name);
+	      data->node_stype = mylink->res.l.src->es->res.n.stype;
 	      zlog_info("lsp has been set between ES(%s) and ES(%s)\n", 
 			mylink->res.l.src->es->name, 
 			mylink->res.l.dest->es->name);
@@ -1016,8 +1020,8 @@ dragon_link_provision()
 	      break;
 
 	    case vlsr_vlsr:
-	      strncpy(data->src_name, mylink->res.l.src->vlsr->name, NODENAME_MAXLEN);
-	      strncpy(data->dest_name, mylink->res.l.dest->vlsr->name, NODENAME_MAXLEN);
+	      strcpy(data->link_agent, mylink->res.l.src->vlsr->name);
+	      data->node_stype = mylink->res.l.src->vlsr->res.n.stype;
 	      zlog_info("lsp has been set between vlsr(%s) and vlsr(%s)\n",
 			mylink->res.l.src->vlsr->name, 
 			mylink->res.l.dest->vlsr->name);
@@ -1025,14 +1029,14 @@ dragon_link_provision()
 
 	    case vlsr_es:
 	      if (mylink->res.l.src->vlsr && mylink->res.l.dest->es) {
-		strncpy(data->src_name, mylink->res.l.src->vlsr->name, NODENAME_MAXLEN);
-		strncpy(data->dest_name, mylink->res.l.dest->es->name, NODENAME_MAXLEN);
+		strcpy(data->link_agent, mylink->res.l.src->vlsr->name);
+		data->node_stype = mylink->res.l.src->vlsr->res.n.stype;
 		zlog_info("lsp has been set between vlsr(%s) and ES(%s)\n",
 			mylink->res.l.src->vlsr->name,
 			mylink->res.l.dest->es->name);
 	      } else {
-		strncpy(data->src_name, mylink->res.l.src->es->name, NODENAME_MAXLEN);
-		strncpy(data->dest_name, mylink->res.l.dest->vlsr->name, NODENAME_MAXLEN);
+		strcpy(data->link_agent, mylink->res.l.src->es->name);
+		data->node_stype = mylink->res.l.src->es->res.n.stype;
 		zlog_info("lsp has been set between ES(%s) and vlsr(%s)\n",
 			mylink->res.l.src->es->name,
 			mylink->res.l.dest->vlsr->name);

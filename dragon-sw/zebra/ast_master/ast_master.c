@@ -1321,6 +1321,8 @@ topo_xml_parser(char* filename, int agent)
 	  myres->status = get_status_by_str(key);
 	else if (strcasecmp(link_ptr->name, "agent_message") == 0) 
 	  myres->agent_message = strdup(key);
+	else if (strcasecmp(link_ptr->name, "dragon") == 0)
+	  myres->res.l.dragon = search_node_by_name(key);
       }
 
       if (link_list == NULL) { 
