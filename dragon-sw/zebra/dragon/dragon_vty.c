@@ -217,13 +217,19 @@ search_local_id(u_int16_t tag, u_int16_t type)
 {
     struct local_id *lid = NULL;
     listnode node;
+    int found = 0;
 
     LIST_LOOP(registered_local_ids, lid, node) {
-      if (lid->type == type && lid->value == tag)
+      if (lid->type == type && lid->value == tag) {
+	found = 1;
 	break;
+      }
     }
 
-    return lid;
+    if (found)
+      return lid;
+    else
+      return NULL;
 }
 
 /* local_id_group_mapping operators */
