@@ -581,6 +581,9 @@ master_process_id(char* filename)
       fflush(ret_file);
       fclose(ret_file);
 
+      free_application_cfg(&glob_app_cfg);
+      memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
+
       if (id_xml_parser(newpath, MASTER) == 0) {
 	zlog_err("master_process_id: returned file (%s) is not parsed correctly", newpath);
 	myres->status = AST_UNKNOWN;
