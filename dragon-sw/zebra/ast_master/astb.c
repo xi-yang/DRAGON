@@ -17,6 +17,7 @@
 #define NODE_AGENT_DIR  	"/usr/local/dragon/node_agent"
 
 struct thread_master *master; /* master = dmaster.master */
+extern int id_xml_parser(char*, int);
 
 struct option astb_opts[] =
 {

@@ -46,6 +46,7 @@ static char* argv[7];
 extern void set_lsp_default_para(struct lsp*);
 extern void process_xml_query(FILE *, char*);
 extern struct local_id * search_local_id(u_int16_t, u_int16_t);
+extern void print_id_response(char *, int);
 
 static int dragon_link_provision();
 static int dragon_link_release();
@@ -880,6 +881,11 @@ dragon_build_lsp(struct resource *link)
 
   switch (link->res.l.stype) {
     case uni:
+
+      strcpy(argv[0], link->res.l.src->vlsr->res.n.router_id);
+      strcpy(argv[3], link->res.l.dest->vlsr->res.n.router_id);
+      break;
+
     case non_uni:
 
       strcpy(argv[0], link->res.l.src->es->res.n.router_id);

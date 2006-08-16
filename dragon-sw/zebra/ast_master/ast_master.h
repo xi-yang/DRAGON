@@ -34,7 +34,7 @@
 #define IP_MAXLEN 		15 
 #define NUM_LINK_TYPE		3
 #define NUM_NODE_TYPE		3
-#define NUM_LINK_STYPE		3
+#define NUM_LINK_STYPE		4	
 #define NUM_FUNCTION_TYPE	8
 #define NUM_STATUS_TYPE		5
 #define NUM_NODE_STYPE		3

@@ -31,6 +31,8 @@ extern char *status_type_details[];
 extern char *action_type_details[];
 
 extern int master_process_id(char*);
+extern int master_final_parser(char*, int);
+extern int send_file_to_agent(char *, int, char *);
 int master_process_release_req();
 
 #define MAXPENDING      12
@@ -979,12 +981,16 @@ master_compose_link_request(struct application_cfg app_cfg,
       case non_uni:
 	if (link->res.l.src->proxy) 
 	  print_node(send_file, link->res.l.src->es);
+	if (link->res.l.dest->vlsr)
+	  print_node(send_file, link->res.l.src->vlsr);
 	print_node(send_file, link->res.l.dest->es);
+	if (link->res.l.dest->vlsr)
+	  print_node(send_file, link->res.l.dest->vlsr);
 	print_link(send_file, link);
  	break;	
 
       case vlsr_vlsr:
-	print_node(send_file, link->res.l.dest->es);
+	print_node(send_file, link->res.l.dest->vlsr);
 	print_link(send_file, link);
 	break;
 
@@ -995,8 +1001,8 @@ master_compose_link_request(struct application_cfg app_cfg,
 	  if (link->res.l.src->proxy)
 	    print_node(send_file, link->res.l.src->es);
 	  print_node(send_file, link->res.l.dest->vlsr);
-	  print_link(send_file, link);
 	}
+	print_link(send_file, link);
     } 
   }
 
@@ -1142,6 +1148,7 @@ send_task_to_link_agent()
       if (topo_xml_parser(newpath, MASTER) == 0) {
 	zlog_err("%s is not parsed correctly", newpath);
 	srcnode->status = AST_UNKNOWN;
+	set_alllink_fail(srcnode->res.n.link_list, NULL);
 	ret_value = 0;
       } else if (topo_validate_graph(MASTER) == 0) {
 	zlog_err("%s failed at validation", newpath);

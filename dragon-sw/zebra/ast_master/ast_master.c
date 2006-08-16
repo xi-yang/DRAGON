@@ -928,6 +928,38 @@ establish_relationship()
 
     switch (mylink->res.l.stype) {
       case uni:
+	if (!mylink->res.l.src->es || !mylink->res.l.dest->es ||
+	    !mylink->res.l.src->vlsr || !mylink->res.l.dest->vlsr) {
+	  zlog_err("link (%s) should have both src and dest es and vlsr defined", mylink->name);
+	  return 0;
+	}
+
+	if (mylink->res.l.src->vlsr->res.n.router_id[0] == '\0' ||
+	    mylink->res.l.src->vlsr->res.n.router_id[0] == '\0') {
+	  zlog_err("link (%s) should have <router_id> defined in its src and dest vlsr", mylink->name);
+	  return 0;
+	}
+
+	if (mylink->res.l.src->local_id_type[0] == '\0' ||
+	    mylink->res.l.dest->local_id_type[0] == '\0') {
+	  zlog_err("For uni, link (%s) should have src and dest <local_id> defined", mylink->name);
+	  return 0;
+	}
+
+	if (mylink->res.l.src->proxy) 
+	  mylink->res.l.dragon = mylink->res.l.src->proxy;
+	else 
+	  mylink->res.l.dragon = mylink->res.l.src->es;
+
+	dragon = mylink->res.l.dragon;
+	if (!dragon->res.n.link_list) { 
+	  dragon->res.n.link_list = malloc(sizeof(struct adtlist)); 
+	  memset(dragon->res.n.link_list, 0, sizeof(struct adtlist)); 
+	} 
+	adtlist_add(dragon->res.n.link_list, mylink);
+
+	break;
+
       case non_uni:
 	if (!mylink->res.l.src->es || !mylink->res.l.dest->es) {
 	  zlog_err("link (%s) should have both src and dest es defined", mylink->name);
@@ -937,13 +969,6 @@ establish_relationship()
 	if (mylink->res.l.src->es->res.n.router_id[0] == '\0' ||
 	    mylink->res.l.dest->es->res.n.router_id[0] == '\0') {
 	  zlog_err("link (%s) should have <router_id> defined in its src and dest ES", mylink->name);
-	  return 0;
-	}
-
-	if (mylink->res.l.stype == uni && 
-	    (mylink->res.l.src->local_id_type[0] == '\0' ||
-	     mylink->res.l.dest->local_id_type[0] == '\0')) {
-	  zlog_err("For uni, link (%s) should have src and dest <local_id> defined", mylink->name);
 	  return 0;
 	}
 
@@ -1120,9 +1145,9 @@ agent_final_parser(char* filename)
 }
 
 int
-master_final_parser(char* filename)
+master_final_parser(char* filename, int agent)
 {
-  if (topo_xml_parser(filename, MASTER) == 0)
+  if (topo_xml_parser(filename, agent) == 0)
     return 0;
 
   return (establish_relationship());
@@ -1704,7 +1729,7 @@ topo_validate_graph(int agent)
 	    mylink = (struct resource*) curnode->data;
 
 	    if (!mylink->res.l.src || !mylink->res.l.dest) {
-	      zlog_err("link (%s) shoudl have src and dest defined", mylink->name);
+	      zlog_err("link (%s) should have src and dest defined", mylink->name);
 	      return 0;
 	    }
 
