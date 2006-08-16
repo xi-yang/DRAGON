@@ -1108,7 +1108,7 @@ dragon_link_release()
 	i++, curnode = curnode->next) {
     mynode = (struct resource*)(curnode->data);
 
-    if (!mynode->res.n.link_list) {
+    if (mynode->res.n.link_list) {
       for (j = 1, curnode1 = mynode->res.n.link_list->head;
 	   curnode1;
 	   j++, curnode1 = curnode1->next) {
