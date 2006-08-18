@@ -845,21 +845,6 @@ dragon_build_lsp(struct resource *link)
   fake_vty->index = lsp;
   listnode_add(dmaster.dragon_lsp_table, lsp);
 
-  /* mirror what dragon_set_lsp_sw_cmd does
-   */
-  argc = 4;
-  strcpy(argv[0], link->res.l.bandwidth);
-  strcpy(argv[1], link->res.l.swcap);
-  strcpy(argv[2], link->res.l.encoding);
-  strcpy(argv[3], link->res.l.gpid);  
-  if (dragon_set_lsp_sw (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
-
-    argc = 1;
-    strcpy(argv[0], lsp_name);
-    dragon_delete_lsp(NULL, fake_vty, argc, &argv);
-    return NULL;
-  }
-
   /* mirrow what dragon_set_lsp_uni does
    */
   if (link->res.l.stype == uni) {
@@ -930,6 +915,21 @@ dragon_build_lsp(struct resource *link)
   zlog_info("%s | %s | %s | %s | %s | %s", argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
   if (dragon_set_lsp_ip (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
     
+    argc = 1;
+    strcpy(argv[0], lsp_name);
+    dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+    return NULL;
+  }
+
+  /* mirror what dragon_set_lsp_sw_cmd does
+   */
+  argc = 4;
+  strcpy(argv[0], link->res.l.bandwidth);
+  strcpy(argv[1], link->res.l.swcap);
+  strcpy(argv[2], link->res.l.encoding);
+  strcpy(argv[3], link->res.l.gpid);  
+  if (dragon_set_lsp_sw (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+
     argc = 1;
     strcpy(argv[0], lsp_name);
     dragon_delete_lsp(NULL, fake_vty, argc, &argv);
