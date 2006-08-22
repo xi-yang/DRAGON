@@ -90,6 +90,8 @@ public:
 		iterFromRSVP = iter;
 	}
 
+	NARB_APIClient* getNarbClient() { return narbClient; }
+
 	OutISB* findOutISB( const LogicalInterface&, const PSB& );
 
 	bool shouldReroute( const EXPLICIT_ROUTE_Object* ero );

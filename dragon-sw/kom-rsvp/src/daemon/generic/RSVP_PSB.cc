@@ -502,6 +502,13 @@ void PSB::sendTearMessage() {
 			(*lifIter)->sendMessage( msg, getSession().getDestAddress(), getSrcAddress(), gateway );
 		msg.clearRSVP_HOP_Object(msg.getRSVP_HOP_Object());
 	}
+
+	if (getSession().getNarbClient() && getSession().getNarbClient()->active())
+    		if (!getSession().getNarbClient()->handleRsvpMessage(msg)) {
+			LOG(3)( Log::Routing, "The message type ", (int)msg.getMsgType(), 
+				" is not supposed handled by NARB API client here!");
+		}
+
 }
 
 

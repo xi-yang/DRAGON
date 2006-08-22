@@ -435,6 +435,8 @@ bool SwitchCtrl_Session::adjustVLANbyLocalId(uint32 vlanID, uint32 lclID, uint32
         }
     }
 
+    // A better scheme is to compare the two separte list and remove and add the only necessary ports 
+    // (no remove and move on the same port).
     SwitchCtrl_Global::getPortsByLocalId(portList, lclID);
     //move the adjusted ports (as represented by lclID) into the VLAN
     for (iter = portList.begin(); iter != portList.end(); ++iter)
