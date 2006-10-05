@@ -879,86 +879,113 @@ DEFUN (dragon_set_lsp_ip,
 	"LSP ID, integer between 1 and 65535\n"
        )
 {
-  struct lsp *lsp = (struct lsp *)(vty->index);
-  struct in_addr ip_src, ip_dst;
-  u_int16_t type_src, type_dest;
-  int port_src, port_dest;
-  struct lsp *l;
-  struct local_id * lid = NULL;
-  listnode node;
-  u_int8_t find = 0;
+    struct lsp *lsp = (struct lsp *)(vty->index);
+    struct in_addr ip_src, ip_dst;
+    u_int16_t type_src, type_dest;
+    int port_src, port_dest;
+    struct lsp *l;
+    struct local_id * lid = NULL;
+    listnode node;
+    u_int8_t find = 0;
+    
+    inet_aton(argv[0], &ip_src);
+    if (strcmp(argv[1], "port") == 0)
+        type_src = LOCAL_ID_TYPE_PORT;
+    else if (strcmp(argv[1], "group") == 0)
+        type_src = LOCAL_ID_TYPE_GROUP;
+    else if (strcmp(argv[1], "tagged-group") == 0)
+        type_src = LOCAL_ID_TYPE_TAGGED_GROUP;
+    else
+        type_src = LOCAL_ID_TYPE_NONE;
   
-  inet_aton(argv[0], &ip_src);
-  if (strcmp(argv[1], "port") == 0)
-      type_src = LOCAL_ID_TYPE_PORT;
-  else if (strcmp(argv[1], "group") == 0)
-      type_src = LOCAL_ID_TYPE_GROUP;
-  else if (strcmp(argv[1], "tagged-group") == 0)
-      type_src = LOCAL_ID_TYPE_TAGGED_GROUP;
-  else
-      type_src = LOCAL_ID_TYPE_NONE;
-  if (sscanf (argv[2], "%d", &port_src) != 1)
-  {
-      vty_out (vty, "Invalid source port: %s%s", strerror (errno), VTY_NEWLINE);
-      return CMD_WARNING;
-  }
-  /*check type_src /port against registered_local_ids*/
-  LIST_LOOP(registered_local_ids, lid, node)
-  {
-      if (lid->type == type_src && lid->value == port_src)
-          break;
-  }    
-  if (node == NULL && type_src != LOCAL_ID_TYPE_NONE)
-  {
-      vty_out (vty, "Unregistered source %s: %s.%s",  argv[1], argv[2], VTY_NEWLINE);
-      return CMD_WARNING;
-  }
+    if (lsp->common.DragonUni_Para && type_src == LOCAL_ID_TYPE_TAGGED_GROUP && strcasecmp(argv[2], "any") == 0)
+    {
+        port_src = ANY_VTAG;
+    }
+    else if (sscanf (argv[2], "%d", &port_src) != 1)
+    {
+        vty_out (vty, "Invalid source port: %s%s", strerror (errno), VTY_NEWLINE);
+        return CMD_WARNING;
+    }
 
-  inet_aton(argv[3], &ip_dst);
-  if (strcmp(argv[4], "port") == 0)
-      type_dest = LOCAL_ID_TYPE_PORT;
-  else if (strcmp(argv[4], "group") == 0)
-      type_dest = LOCAL_ID_TYPE_GROUP;
-  else if (strcmp(argv[4], "tagged-group") == 0)
-      type_dest = LOCAL_ID_TYPE_TAGGED_GROUP;
-  else
-      type_dest = LOCAL_ID_TYPE_NONE;
-  if (sscanf (argv[5], "%d", &port_dest) != 1)
-  {
-      vty_out (vty, "Invalid destination port: %s%s", strerror (errno), VTY_NEWLINE);
-      return CMD_WARNING;
-  }
+    /*check type_src /port against registered_local_ids*/
+    LIST_LOOP(registered_local_ids, lid, node)
+    {
+        if (lid->type == type_src && lid->value == port_src)
+            break;
+    }    
+    if (node == NULL && type_src != LOCAL_ID_TYPE_NONE)
+    {
+        vty_out (vty, "Unregistered source %s: %s.%s",  argv[1], argv[2], VTY_NEWLINE);
+        return CMD_WARNING;
+    }
+  
+    inet_aton(argv[3], &ip_dst);
+    if (strcmp(argv[4], "port") == 0)
+        type_dest = LOCAL_ID_TYPE_PORT;
+    else if (strcmp(argv[4], "group") == 0)
+        type_dest = LOCAL_ID_TYPE_GROUP;
+    else if (strcmp(argv[4], "tagged-group") == 0)
+        type_dest = LOCAL_ID_TYPE_TAGGED_GROUP;
+    else
+        type_dest = LOCAL_ID_TYPE_NONE;
 
-  lsp->common.Session_Para.srcAddr.s_addr = ip_src.s_addr;
-  lsp->common.Session_Para.srcPort = (u_int16_t)port_src;
-  lsp->common.Session_Para.destAddr.s_addr = ip_dst.s_addr;
-  lsp->common.Session_Para.destPort = (u_int16_t)port_dest;
-  lsp->dragon.srcLocalId = ((u_int32_t)type_src)<<16 |port_src;
-  lsp->dragon.destLocalId = ((u_int32_t)type_dest)<<16 |port_dest;
+    if (lsp->common.DragonUni_Para && type_dest== LOCAL_ID_TYPE_TAGGED_GROUP && strcasecmp(argv[5], "any") == 0)
+    {
+        port_dest = ANY_VTAG;
+    }
+    else if (sscanf (argv[5], "%d", &port_dest) != 1)
+    {
+        vty_out (vty, "Invalid destination port: %s%s", strerror (errno), VTY_NEWLINE);
+        return CMD_WARNING;
+    }
+  
+    lsp->common.Session_Para.srcAddr.s_addr = ip_src.s_addr;
+    lsp->common.Session_Para.srcPort = (u_int16_t)port_src;
+    lsp->common.Session_Para.destAddr.s_addr = ip_dst.s_addr;
+    lsp->common.Session_Para.destPort = (u_int16_t)port_dest;
+    lsp->dragon.srcLocalId = ((u_int32_t)type_src)<<16 |port_src;
+    lsp->dragon.destLocalId = ((u_int32_t)type_dest)<<16 |port_dest;
 
-  /* Check if there is another LSP with the same session parameter */
-  find = 0;
-  if (dmaster.dragon_lsp_table)
-	  LIST_LOOP(dmaster.dragon_lsp_table, l , node)
-	  {
-		if (lsp!=l && LSP_SAME_SESSION(lsp, l))
-		{
-			find = 1;
-		}
-	  }
-  if (find)
-  {
-	vty_out(vty, "Another LSP with the same session parameters already exists.");
-  	zlog_info("Another LSP with the same session parameters already exists.\n");
-	return CMD_WARNING;
-  }
+    if (type_src  == LOCAL_ID_TYPE_TAGGED_GROUP 
+        && type_dest == LOCAL_ID_TYPE_TAGGED_GROUP
+        && port_src != port_dest)
+    {
+        vty_out(vty, "###Ingress Tag (%d) and Egress Tag (%d) do not match!%s", 
+            port_src, port_dest, VTY_NEWLINE);
+        return CMD_WARNING;
+    }
 
-  if (lsp->common.DragonUni_Para) {
-	lsp->common.DragonUni_Para->srcLocalId = lsp->dragon.srcLocalId;
-	lsp->common.DragonUni_Para->destLocalId = lsp->dragon.destLocalId;
-  }
+    if (type_src == LOCAL_ID_TYPE_TAGGED_GROUP)
+        lsp->dragon.lspVtag = port_src;
+    else  if (type_dest  == LOCAL_ID_TYPE_TAGGED_GROUP)
+        lsp->dragon.lspVtag = port_dest;
+    
+    /* Check if there is another LSP with the same session parameter */
+    find = 0;
+    if (dmaster.dragon_lsp_table)
+  	  LIST_LOOP(dmaster.dragon_lsp_table, l , node)
+  	  {
+  		if (lsp!=l && LSP_SAME_SESSION(lsp, l))
+  		{
+  			find = 1;
+  		}
+  	  }
+    if (find)
+    {
+  	vty_out(vty, "Another LSP with the same session parameters already exists.");
+    	zlog_info("Another LSP with the same session parameters already exists.\n");
+  	return CMD_WARNING;
+    }
+    
+    if (lsp->common.DragonUni_Para) {
+  	lsp->common.DragonUni_Para->srcLocalId = lsp->dragon.srcLocalId;
+  	lsp->common.DragonUni_Para->destLocalId = lsp->dragon.destLocalId;
+       if (lsp->dragon.lspVtag != 0)
+           lsp->common.DragonUni_Para->vlanTag = lsp->dragon.lspVtag;
+    }
 
-  return CMD_SUCCESS;
+    return CMD_SUCCESS;
 }
 
 DEFUN (dragon_set_lsp_uni,
@@ -989,6 +1016,14 @@ DEFUN (dragon_set_lsp_uni,
         strcpy(lsp->common.DragonUni_Para->egressChannel, "implicit");
     else
         strncpy(lsp->common.DragonUni_Para->egressChannel, argv[2], 12);
+
+    if (strncmp(lsp->common.DragonUni_Para->ingressChannel, "implicit", 8) ==0 && lsp->dragon.srcLocalId != 0)
+        lsp->common.DragonUni_Para->srcLocalId = lsp->dragon.srcLocalId;
+    if (strncmp(lsp->common.DragonUni_Para->egressChannel, "implicit", 8) ==0 && lsp->dragon.destLocalId != 0)
+        lsp->common.DragonUni_Para->destLocalId = lsp->dragon.srcLocalId;
+    if (lsp->dragon.lspVtag != 0)
+        lsp->common.DragonUni_Para->vlanTag = lsp->dragon.lspVtag;
+		
     return CMD_SUCCESS;
 }
 
@@ -1009,6 +1044,27 @@ DEFUN (dragon_set_lsp_vtag,
     struct lsp *lsp = (struct lsp *)(vty->index);
     u_int32_t vtag = atoi(argv[0]);
     
+    if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP
+        && vtag != (lsp->dragon.srcLocalId & 0xffff) )
+    {
+        vty_out(vty, "###Ingress Tag (%d) do not match LSP VLAN Tag!%s", 
+            (lsp->dragon.srcLocalId & 0xffff), VTY_NEWLINE);
+        return CMD_WARNING;
+    }
+
+    if ((lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP
+        && vtag != (lsp->dragon.destLocalId & 0xffff) )
+    {
+        vty_out(vty, "###Egress Tag (%d) do not match LSP VLAN Tag!%s", 
+            (lsp->dragon.destLocalId & 0xffff), VTY_NEWLINE);
+        return CMD_WARNING;
+    }
+
+    else if ((lsp->dragon.destLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP)
+        lsp->dragon.lspVtag = (lsp->dragon.destLocalId & 0xffff);
+    else
+        lsp->dragon.lspVtag = ANY_VTAG;
+
     lsp->dragon.lspVtag = vtag;
 
     if (lsp->common.DragonUni_Para)
@@ -1024,14 +1080,6 @@ DEFUN (dragon_set_lsp_vtag_default,
        "VLAN Tag from end to end; To be computed\n")
 {
     struct lsp *lsp = (struct lsp *)(vty->index);
-    if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP 
-        && (lsp->dragon.destLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP
-        && (lsp->dragon.srcLocalId & 0xffff) != (lsp->dragon.destLocalId & 0xffff))
-    {
-        vty_out(vty, "###Ingress Tag (%d) and Egress Tag (%d) do not match!%s", 
-            (lsp->dragon.srcLocalId & 0xffff), (lsp->dragon.destLocalId & 0xffff), VTY_NEWLINE);
-        return CMD_WARNING;
-    }
 
     if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP)
         lsp->dragon.lspVtag = (lsp->dragon.srcLocalId & 0xffff);
