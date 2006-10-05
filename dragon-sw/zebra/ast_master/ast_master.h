@@ -4,7 +4,9 @@
 #include "adt.h"
 #include "buffer.h"
 
-#define AST_DIR         "/usr/local/ast"
+#define AST_DIR		"/usr/local/ast"
+#define NODE_AGENT_DIR	"/usr/local/node_agent"
+#define LINK_AGENT_DIR	"/usr/local/link_agent"
 
 #define MASTER_PORT		2619
 #define DRAGON_XML_PORT         2618
@@ -62,9 +64,22 @@
 struct string_syntex_check {
    int number;
    struct {
-	const char* abbre;
-	const char* details;
+	char* abbre;
+	char* details;
    } ss[50];
+};
+
+struct vtag_tank {
+  int number;
+  int vtags[20];
+};
+
+struct narb_tank {
+  int number;
+  struct {
+    char* prefix;
+    char* narb_ip;
+  } narbs[5];
 };
 
 #define REG_TXT_FIELD_LEN	20
@@ -76,9 +91,16 @@ struct string_syntex_check {
  */
 struct application_cfg {
   int xml_type;
+  int clnt_sock;
   int org_action;
   int action;
   int status;
+  
+  /* counters */
+  u_int8_t setup_ready;
+  u_int8_t release_ready;
+  u_int8_t complete_ready;
+ 
   char* ast_id;
   char* ast_ip;
   char details[200];
@@ -93,6 +115,7 @@ enum entity_type { PC = 1, correlator, computation_array };
 struct if_ip {
   char *iface;
   char *assign_ip;
+  int vtag;
 }; 
 
 struct node_cfg {
@@ -129,10 +152,29 @@ struct link_cfg {
   char gpid[REG_TXT_FIELD_LEN+1];
 };
 
+#define FLAG_SETUP_REQ		0x01
+#define FLAG_SETUP_RESP		0x02
+#define FLAG_AST_COMPLETE	0x04
+#define FLAG_APP_COMPLETE	0x08
+#define FLAG_RELEASE_REQ	0x10
+#define FLAG_RELEASE_RESP	0x20
+#define FLAG_QUERY_REQ		0x40
+#define FLAG_QUERY_RESP		0x80
+
+#define IS_SET_SETUP_REQ(X)	((X) & FLAG_SETUP_REQ)
+#define IS_SET_SETUP_RESP(X)	((X) & FLAG_SETUP_RESP)
+#define IS_SET_AST_COMPLETE(X)	((X) & FLAG_AST_COMPLETE)
+#define IS_SET_APP_COMPLETE(X)	((X) & FLAG_APP_COMPLETE)
+#define IS_SET_RELEASE_REQ(X)	((X) & FLAG_RELEASE_REQ)
+#define IS_SET_RELEASE_RESP(X)	((X) & FLAG_RELEASE_RESP)
+
 struct resource {
   int type;		/* indicate this is link or node */
+  int noded_sock;		/* sock to connect to the minions */
+  int dragon_sock;
   char name[NODENAME_MAXLEN + 1];
   int status;
+  u_int16_t flags;
   char *agent_message;
 
   union {
@@ -140,8 +182,8 @@ struct resource {
     struct link_cfg l;
   } res; 
 };
-struct application_cfg glob_app_cfg;
-struct adtlist glob_cfg_list;
+struct application_cfg *glob_app_cfg;
+struct adtlist app_list;
 
 /* structurs defined for the resource agency
  *
@@ -191,8 +233,9 @@ int master_send_task();
 #define FULL_VERSION	1
 #define BRIEF_VERSION	2
 
-int topo_xml_parser(char*, int);
-int topo_validate_graph(int);
+struct application_cfg* topo_xml_parser(char*, int);
+struct application_cfg* retrieve_app_cfg(char*, int);
+int topo_validate_graph(int, struct application_cfg*);
 int xml_parser(char*);
 void print_xml_response(char*, int);
 void free_application_cfg(struct application_cfg*);
@@ -203,7 +246,14 @@ struct adtlist* dragon_query_result_parser(char*, struct node_cfg*);
 int dragon_result_parser(char*, struct node_cfg *);
 void print_final(char*);
 void print_error_response(char*);
-int agent_final_parser(char*);
+struct application_cfg* agent_final_parser(char*);
+void add_cfg_to_list();
+struct resource * search_node_by_name(struct application_cfg*, char*);
+void set_allres_fail(char*);
+void app_cfg_pre_req();
+
+int send_file_over_sock(int, char*);
+int send_file_to_agent(char*, int, char*);
 
 #define ID_SETUP	1
 #define ID_TEMP		2

@@ -18,13 +18,13 @@
 
 #define DRAGON_XML_RESULT 	"/usr/local/dragon_ret.xml"
 #define DRAGON_XML_RECV 	"/usr/local/dragon_recv.xml"
-#define LINK_AGENT_DIR		"/usr/local/link_agent"
 #define LSP_NAME_LEN 		13
 #define XML_FILE_RECV_BUF	250
 #define TIMEOUT_SECS		3
 
 struct dragon_callback {
   char *ast_id;
+  int clnt_sock;
   char lsp_name[LSP_NAME_LEN+1];
   enum link_stype stype;
   enum node_stype node_stype;
@@ -42,6 +42,8 @@ extern char *local_id_name[];
 extern char *id_action_name[];
 static struct vty* fake_vty = NULL;
 static char* argv[7];
+static int clnt_sock;
+static int FIN_accept(struct thread *);
 
 extern void set_lsp_default_para(struct lsp*);
 extern void process_xml_query(FILE *, char*);
@@ -69,10 +71,10 @@ dragon_establish_relationship()
   struct resource *mylink, *dragon;
   struct adtlistnode *curnode;
   
-  if (!glob_app_cfg.link_list)
+  if (!glob_app_cfg->link_list)
     return;
 
-  for (curnode = glob_app_cfg.link_list->head;
+  for (curnode = glob_app_cfg->link_list->head;
 	curnode;
 	curnode = curnode->next) {
     mylink = (struct resource*) curnode->data;
@@ -93,11 +95,7 @@ dragon_upcall_callback(int msg_type, char *lsp_name)
 {
   struct adtlistnode *prev, *curr, *next;
   struct dragon_callback *data;
-  char path[105];
-  struct stat file_stat;
   int status = AST_UNKNOWN;
-  int xml_sock, fd;
-  struct sockaddr_in astAddr;
   FILE *fp;
 
   if (pending_list.count == 0)
@@ -122,41 +120,31 @@ dragon_upcall_callback(int msg_type, char *lsp_name)
     prev->next = curr->next;
   pending_list.count--;
 
-  free_application_cfg(&glob_app_cfg);
+  free_application_cfg(glob_app_cfg);
+  glob_app_cfg = NULL;
 
-  zlog_info("********* CALLBACK FOR LINK_AGNET msg_type: %d; lsp_name: %s", msg_type, lsp_name);
+  zlog_info("dragon_upcall_callback(): START");
+  zlog_info("********* msg_type: %d; lsp_name: %s", msg_type, lsp_name);
   unlink(DRAGON_XML_RESULT);
 
-  /* now, read the file for ast_id */
-  sprintf(path, "%s/%s/final.xml", 
-          LINK_AGENT_DIR, data->ast_id);
-  if (stat(path, &file_stat) == -1) {
-    zlog_err("Can't locate the ast_id final file");
+  glob_app_cfg = retrieve_app_cfg(data->ast_id, LINK_AGENT);
+  if (!glob_app_cfg) {
     free(data->ast_id);
     free(data);
     return;
   }
  
-  /* check the status, if anything other than SETUP_RESP,
-   * return
-   */
-  if (agent_final_parser(path) != 1) {
-    zlog_err("Can't parse the final file successfully");
-    free(data->ast_id);
-    free(data);
-    return;
-  }
-    
-  if (glob_app_cfg.action != SETUP_RESP) {
-    free_application_cfg(&glob_app_cfg);
-    zlog_err("final.xml is not SETUP_RESP, no need to send anything to ast_master");
+  if (glob_app_cfg->action == RELEASE_RESP) {
+    free_application_cfg(glob_app_cfg);
+    glob_app_cfg = NULL;
+    zlog_err("final.xml is in RELEASE_RESP, no need to send anything to ast_master");
     free(data->ast_id);
     free(data);
     return;
   }
 
   fp = fopen(DRAGON_XML_RESULT, "w");
-  fprintf(fp, "<topology ast_id=\"%s\" action=\"SETUP_RESP\">\n", glob_app_cfg.ast_id);
+  fprintf(fp, "<topology ast_id=\"%s\" action=\"SETUP_RESP\">\n", glob_app_cfg->ast_id);
 
   /* if Path, Resv, ResvConf, return AST_SUCCESS to user
    * if PathErr, ResvErr, return AST_FAILURE to user
@@ -185,39 +173,22 @@ dragon_upcall_callback(int msg_type, char *lsp_name)
   fflush(fp);
   fclose(fp);
 
-  zlog_info("sending SETUP_RESP to ast_master at %s", glob_app_cfg.ast_ip);
-  if ((xml_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-    zlog_err("socket() failed");
-  else {
-    memset(&astAddr, 0, sizeof(astAddr));
-    astAddr.sin_family = AF_INET;
-    astAddr.sin_addr.s_addr = inet_addr(glob_app_cfg.ast_ip);
-    astAddr.sin_port = htons(MASTER_PORT);
+  zlog_info("sending SETUP_RESP to ast_master at %s", glob_app_cfg->ast_ip);
 
-    if (connect(xml_sock, (struct sockaddr*)&astAddr, sizeof(astAddr)) < 0) {
-      zlog_err("connect() failed to ast_master");
-      close(xml_sock);
-      xml_sock = -1;
-    }
+  if (send_file_over_sock(data->clnt_sock, DRAGON_XML_RESULT) == 0) 
+    data->clnt_sock = send_file_to_agent(glob_app_cfg->ast_ip, MASTER_PORT, DRAGON_XML_RESULT);
+
+  glob_app_cfg = NULL;
+  
+  /* FIONA */
+  if (data->clnt_sock) {
+    thread_remove_read(master, FIN_accept, NULL, data->clnt_sock);
+    close(data->clnt_sock); 
+    data->clnt_sock = 0;
   }
-
-  if (xml_sock != -1) { 
-    fd = open(DRAGON_XML_RESULT, O_RDONLY);
-  #ifdef __FreeBSD__
-    sendfile(fd, xml_sock, 0, 0, NULL, NULL, 0);
-  #else
-    if (fstat(fd, &file_stat) == -1) {
-      zlog_err("fstat() failed on %s", XML_NEW_FILE);
-    }
-    sendfile(xml_sock, fd, 0, file_stat.st_size);
-  #endif
-    close(xml_sock);
-    close(fd);
-  }
-
-  free_application_cfg(&glob_app_cfg);
   free(data->ast_id);
   free(data);
+  zlog_info("dragon_upcall_callback(): DONE");
 }
 
 int 
@@ -239,12 +210,12 @@ dragon_process_id_cfg()
 
   zlog_info("dragon_process_id_cfg: start ...");
 
-  if (!glob_app_cfg.node_list) {
+  if (!glob_app_cfg->node_list) {
     zlog_warn("dragon_process_id_cfg: nothing to do; no resource");
     return 1;
   }
 
-  res = (struct id_cfg_res*) glob_app_cfg.node_list->head->data;
+  res = (struct id_cfg_res*) glob_app_cfg->node_list->head->data;
 
   /* loop through all the local_id_cfg in it */
   if (!res->cfg_list) {
@@ -411,10 +382,10 @@ dragon_process_id_cfg()
 
   if (ret_val) {
     res->status = AST_SUCCESS;
-    glob_app_cfg.status = AST_SUCCESS;
+    glob_app_cfg->status = AST_SUCCESS;
   } else {
     res->status = AST_FAILURE;
-    glob_app_cfg.status = AST_FAILURE;
+    glob_app_cfg->status = AST_FAILURE;
   }
 
   if (mkdir(LINK_AGENT_DIR, 0755) == -1 && errno != EEXIST) {
@@ -422,10 +393,10 @@ dragon_process_id_cfg()
     return 0;
   }
 
-  sprintf(path, "%s/%s", LINK_AGENT_DIR, glob_app_cfg.ast_id);
+  sprintf(path, "%s/%s", LINK_AGENT_DIR, glob_app_cfg->ast_id);
   if (mkdir(path, 0755) == -1) {
     if (errno == EEXIST) 
-      zlog_warn("<ast_id> %s exists already", glob_app_cfg.ast_id);
+      zlog_warn("<ast_id> %s exists already", glob_app_cfg->ast_id);
     else {
       zlog_err("Can't create the directory: %s; error = %d(%s)",
 		path, errno, strerror(errno));
@@ -434,13 +405,13 @@ dragon_process_id_cfg()
   }
 
   sprintf(path, "%s/%s/org.xml", 
-	  LINK_AGENT_DIR, glob_app_cfg.ast_id);
+	  LINK_AGENT_DIR, glob_app_cfg->ast_id);
   if (rename(DRAGON_XML_RECV, path) == -1)
     zlog_err("Can't rename %s to %s; errno = %d(%s)",
 	DRAGON_XML_RECV, path, errno, strerror(errno));
 
   sprintf(path, "%s/%s/ret.xml",
-	LINK_AGENT_DIR, glob_app_cfg.ast_id);
+	LINK_AGENT_DIR, glob_app_cfg->ast_id);
 
   symlink(path, DRAGON_XML_RESULT);
   print_id_response(path, LINK_AGENT);
@@ -454,9 +425,8 @@ dragon_process_setup_req()
   char path[105];
   char directory[80];
 
-  glob_app_cfg.org_action = SETUP_REQ;
-  glob_app_cfg.action = SETUP_RESP;
-  zlog_info("Processing ast_id: %s, SETUP_REQ", glob_app_cfg.ast_id);
+  glob_app_cfg->action = SETUP_RESP;
+  zlog_info("Processing ast_id: %s, SETUP_REQ", glob_app_cfg->ast_id);
 
   strcpy(directory, LINK_AGENT_DIR);
   if (mkdir(directory, 0755) == -1 && errno != EEXIST) {
@@ -464,10 +434,10 @@ dragon_process_setup_req()
     return 0;
   }
 
-  sprintf(directory+strlen(directory), "/%s", glob_app_cfg.ast_id);
+  sprintf(directory+strlen(directory), "/%s", glob_app_cfg->ast_id);
   if (mkdir(directory, 0755) == -1) {
     if (errno == EEXIST) {
-      zlog_err("<ast_id> %s exists already", glob_app_cfg.ast_id);
+      zlog_err("<ast_id> %s exists already", glob_app_cfg->ast_id);
       return 0;
     } else {
       zlog_err("Can't create the directory: %s; error = %d(%s)",
@@ -483,12 +453,13 @@ dragon_process_setup_req()
 
   sprintf(path, "%s/setup_response.xml", directory);
 
+  app_cfg_pre_req();
   if (dragon_link_provision() == 0) 
-    glob_app_cfg.status = AST_FAILURE;
+    glob_app_cfg->status = AST_FAILURE;
   else
-    glob_app_cfg.status = AST_PENDING;
+    glob_app_cfg->status = AST_PENDING;
 
-  glob_app_cfg.action = SETUP_RESP;
+  glob_app_cfg->action = SETUP_RESP;
   print_xml_response(path, LINK_AGENT);
   symlink(path, DRAGON_XML_RESULT);
 
@@ -503,79 +474,77 @@ dragon_process_release_req()
 {
   char path[105];
   struct stat fs;
-  struct application_cfg working_app_cfg;
+  struct application_cfg *working_app_cfg;
 
-  glob_app_cfg.org_action = glob_app_cfg.action;
-  glob_app_cfg.action = RELEASE_RESP;
-  zlog_info("Processing ast_id: %s, RELEASE_REQ", glob_app_cfg.ast_id);
+  glob_app_cfg->action = RELEASE_RESP;
+  zlog_info("Processing ast_id: %s, RELEASE_REQ", glob_app_cfg->ast_id);
 
   sprintf(path, "%s/%s/final.xml", 
-	  LINK_AGENT_DIR, glob_app_cfg.ast_id);
+	  LINK_AGENT_DIR, glob_app_cfg->ast_id);
   if (stat(path, &fs) == -1) {
-    sprintf(glob_app_cfg.details, "Can't locate the ast_id final file");
+    sprintf(glob_app_cfg->details, "Can't locate the ast_id final file");
     return 0;
   }
 
-  memcpy(&working_app_cfg, &glob_app_cfg, sizeof(struct application_cfg));
-  memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
+  working_app_cfg = glob_app_cfg;
 
-  if (agent_final_parser(path) != 1) {
-    memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "didn't parse the file for ast_id successfully");
-    glob_app_cfg.status = AST_FAILURE;
+  if ((glob_app_cfg = agent_final_parser(path)) == NULL) {
+    glob_app_cfg = working_app_cfg;
+    sprintf(glob_app_cfg->details, "didn't parse the file for ast_id successfully");
+    glob_app_cfg->status = AST_FAILURE;
     return 0;
   }
 
   /* before processing, set all link's status = AST_FAILURE
    */
-  if (glob_app_cfg.action == RELEASE_RESP) {
-    free_application_cfg(&glob_app_cfg);
-    memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "ast_id has received RELEASE_REQ already");
-    glob_app_cfg.status = AST_FAILURE;
+  if (glob_app_cfg->action == RELEASE_RESP) {
+    free_application_cfg(glob_app_cfg);
+    glob_app_cfg = working_app_cfg;
+    sprintf(glob_app_cfg->details, "ast_id has received RELEASE_REQ already");
+    glob_app_cfg->status = AST_FAILURE;
     return 0;
   }
 
-  if (strcmp(glob_app_cfg.ast_ip, working_app_cfg.ast_ip) != 0)
-    zlog_warn("ast_ip is %s in this RELEASE_REQ, but is %s in the original SETUP_REQ",
-                working_app_cfg.ast_ip, glob_app_cfg.ast_ip);
+  if (strcmp(glob_app_cfg->ast_ip, working_app_cfg->ast_ip) != 0)
+    zlog_warn("NEW ast_ip: %s, OLD ast_ip: %s",
+                working_app_cfg->ast_ip, glob_app_cfg->ast_ip);
 
-  sprintf(path, "%s/%s/setup_response.xml", LINK_AGENT_DIR, glob_app_cfg.ast_id);
-  free_application_cfg(&glob_app_cfg);
-  if (topo_xml_parser(path, LINK_AGENT) != 1) {
-    memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "didn't parse the file for ast_id successfully");
-    glob_app_cfg.status = AST_FAILURE;
+  sprintf(path, "%s/%s/setup_response.xml", LINK_AGENT_DIR, glob_app_cfg->ast_id);
+  free_application_cfg(glob_app_cfg);
+  if ((glob_app_cfg = topo_xml_parser(path, LINK_AGENT)) == NULL) {
+    glob_app_cfg = working_app_cfg;
+    sprintf(glob_app_cfg->details, "didn't parse the file for ast_id successfully");
+    glob_app_cfg->status = AST_FAILURE;
     return 0;
   }
   dragon_establish_relationship();
 
-  glob_app_cfg.ast_ip = working_app_cfg.ast_ip;
-  working_app_cfg.ast_ip = NULL;
-  free_application_cfg(&working_app_cfg);
-  glob_app_cfg.action = RELEASE_RESP;
+  glob_app_cfg->ast_ip = working_app_cfg->ast_ip;
+  working_app_cfg->ast_ip = NULL;
+  free_application_cfg(working_app_cfg);
+  working_app_cfg = NULL;
+  glob_app_cfg->action = RELEASE_RESP;
 
   sprintf(path, "%s/%s/release_origianl.xml", 
-	  LINK_AGENT_DIR, glob_app_cfg.ast_id);
+	  LINK_AGENT_DIR, glob_app_cfg->ast_id);
 
   if (rename(DRAGON_XML_RECV, path) == -1)
     zlog_err("Can't rename %s to %s; errno = %d(%s)",
 	   DRAGON_XML_RECV, path, errno, strerror(errno));
 
   sprintf(path, "%s/%s/release_response.xml", 
-	  LINK_AGENT_DIR, glob_app_cfg.ast_id);
+	  LINK_AGENT_DIR, glob_app_cfg->ast_id);
 
-  glob_app_cfg.action = RELEASE_RESP;
+  glob_app_cfg->action = RELEASE_RESP;
+  app_cfg_pre_req();
   if (dragon_link_release() == 0) 
-    glob_app_cfg.status = AST_FAILURE;
-  else
-    glob_app_cfg.status = AST_SUCCESS;
+    glob_app_cfg->status = AST_FAILURE;
 
   print_xml_response(path, LINK_AGENT);
   symlink(path, DRAGON_XML_RESULT);
 
   sprintf(path, "%s/%s/final.xml",
-	  LINK_AGENT_DIR, glob_app_cfg.ast_id);
+	  LINK_AGENT_DIR, glob_app_cfg->ast_id);
   print_final(path);
  
   return 1;
@@ -589,9 +558,8 @@ dragon_process_query_req()
   struct resource *mynode;
   FILE* fp;
 
-  glob_app_cfg.org_action = glob_app_cfg.action;
-  glob_app_cfg.action = QUERY_RESP;
-  zlog_info("Processing ast_id: %s, QUERY_REQ", glob_app_cfg.ast_id);
+  glob_app_cfg->action = QUERY_RESP;
+  zlog_info("Processing ast_id: %s, QUERY_REQ", glob_app_cfg->ast_id);
 
   strcpy(directory, LINK_AGENT_DIR);
   if (mkdir(directory, 0755) == -1 && errno != EEXIST) {
@@ -599,24 +567,24 @@ dragon_process_query_req()
     return 0;
   }
 
-  sprintf(directory, "%s/%s", LINK_AGENT_DIR, glob_app_cfg.ast_id);
+  sprintf(directory, "%s/%s", LINK_AGENT_DIR, glob_app_cfg->ast_id);
   if (mkdir(directory, 0755) == -1) {
     zlog_err("Can't create directory %s", directory);
     return 0;
   }
 
   sprintf(path, "%s/%s/query_original.xml", 
-	LINK_AGENT_DIR, glob_app_cfg.ast_id);
+	LINK_AGENT_DIR, glob_app_cfg->ast_id);
 
   if (rename(DRAGON_XML_RECV, path) == -1)
     zlog_err("Can't rename %s to %s; errno = %d(%s)",
 	   DRAGON_XML_RECV, path, errno, strerror(errno));
 
   sprintf(path, "%s/%s/query_response.xml", 
-	LINK_AGENT_DIR, glob_app_cfg.ast_id);
+	LINK_AGENT_DIR, glob_app_cfg->ast_id);
 
-  glob_app_cfg.action = QUERY_RESP;
-  glob_app_cfg.status = AST_SUCCESS;
+  glob_app_cfg->action = QUERY_RESP;
+  glob_app_cfg->status = AST_SUCCESS;
 
   fp = fopen(path, "w+");
   if (fp == NULL) {
@@ -628,9 +596,9 @@ dragon_process_query_req()
   /* prepare ret_buf before sending into process_xml_query
    */
   fprintf(fp, "<topology ast_id=\"%s\", action=\"%s\">\n", 
-		glob_app_cfg.ast_id, action_type_details[glob_app_cfg.action]);
+		glob_app_cfg->ast_id, action_type_details[glob_app_cfg->action]);
   fprintf(fp, "<status>AST_SUCCESS</status>\n");
-  mynode = (struct resource*)(glob_app_cfg.node_list->head->data);
+  mynode = (struct resource*)(glob_app_cfg->node_list->head->data);
   mynode->status = AST_SUCCESS;
   print_node(fp, mynode);
   process_xml_query(fp, mynode->name);
@@ -648,75 +616,74 @@ dragon_process_ast_complete()
 {
   char path[105];
   struct stat fs;
-  struct application_cfg working_app_cfg;
+  struct application_cfg *working_app_cfg;
   struct resource *link;
   struct adtlistnode *curnode;
 
-  glob_app_cfg.org_action = glob_app_cfg.action;
-  glob_app_cfg.action = APP_COMPLETE;
-  zlog_info("Processing ast_id: %s, AST_COMPLETE", glob_app_cfg.ast_id);
+  glob_app_cfg->action = APP_COMPLETE;
+  zlog_info("Processing ast_id: %s, AST_COMPLETE", glob_app_cfg->ast_id);
 
   sprintf(path, "%s/%s/final.xml",
-	  LINK_AGENT_DIR, glob_app_cfg.ast_id);
+	  LINK_AGENT_DIR, glob_app_cfg->ast_id);
   if (stat(path, &fs) == -1) {
-    sprintf(glob_app_cfg.details, "Can't locate the ast_id final file");
+    sprintf(glob_app_cfg->details, "Can't locate the ast_id final file");
     return 0;
   }
 
-  memcpy(&working_app_cfg, &glob_app_cfg, sizeof(struct application_cfg));
-  memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
+  working_app_cfg = glob_app_cfg;
 
-  if (agent_final_parser(path) != 1) {
-    memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "didn't parse the ast_id file successfully");
-    glob_app_cfg.status = AST_FAILURE;
+  if ((glob_app_cfg = agent_final_parser(path)) == NULL) {
+    glob_app_cfg = working_app_cfg;
+    sprintf(glob_app_cfg->details, "didn't parse the ast_id file successfully");
+    glob_app_cfg->status = AST_FAILURE;
     return 0;
   }
 
-  if (glob_app_cfg.action == RELEASE_RESP) {
-    free_application_cfg(&glob_app_cfg);
-    memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "ast_id has received RELEASE_REQ already");
-    glob_app_cfg.status = AST_FAILURE;
+  if (glob_app_cfg->action == RELEASE_RESP) {
+    free_application_cfg(glob_app_cfg);
+    glob_app_cfg = working_app_cfg;
+    sprintf(glob_app_cfg->details, "ast_id has received RELEASE_REQ already");
+    glob_app_cfg->status = AST_FAILURE;
     return 0;
   }
 
-  if (strcmp(glob_app_cfg.ast_ip, working_app_cfg.ast_ip) != 0)
+  if (strcmp(glob_app_cfg->ast_ip, working_app_cfg->ast_ip) != 0)
     zlog_warn("ast_ip is %s in this AST_COMPLETE, but is %s in the original SETUP_REQ",
-                working_app_cfg.ast_ip, glob_app_cfg.ast_ip);
+                working_app_cfg->ast_ip, glob_app_cfg->ast_ip);
 
   /* for link_agent, there is nothing to do for AST_COMPLETE;
    * 1. save the original final file (glob_app_cfg) as final.xml
    * 2. save the incoming file (working_app_cfg) as ast_complete.xml
    */
-  sprintf(path, "%s/%s/setup_response.xml", LINK_AGENT_DIR, glob_app_cfg.ast_id);
-  free_application_cfg(&glob_app_cfg);
-  if (topo_xml_parser(path, LINK_AGENT) != 1) {
-    memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
-    sprintf(glob_app_cfg.details, "didn't parse the ast_id file successfully");
-    glob_app_cfg.status = AST_FAILURE;
+  sprintf(path, "%s/%s/setup_response.xml", LINK_AGENT_DIR, glob_app_cfg->ast_id);
+  free_application_cfg(glob_app_cfg);
+  if ((glob_app_cfg = topo_xml_parser(path, LINK_AGENT)) == NULL) {
+    glob_app_cfg = working_app_cfg;
+    sprintf(glob_app_cfg->details, "didn't parse the ast_id file successfully");
+    glob_app_cfg->status = AST_FAILURE;
     return 0;
   }
   dragon_establish_relationship();
 
-  glob_app_cfg.ast_ip = working_app_cfg.ast_ip;
-  working_app_cfg.ast_ip = NULL;
-  glob_app_cfg.action = working_app_cfg.action;
-  free_application_cfg(&working_app_cfg);
+  glob_app_cfg->ast_ip = working_app_cfg->ast_ip;
+  working_app_cfg->ast_ip = NULL;
+  glob_app_cfg->action = working_app_cfg->action;
+  free_application_cfg(working_app_cfg);
+  working_app_cfg = NULL;
 
-  for (curnode = glob_app_cfg.link_list->head;
+  for (curnode = glob_app_cfg->link_list->head;
 	curnode;
 	curnode = curnode->next) {
     link = (struct resource*) curnode->data;
     link->status = AST_APP_COMPLETE;
   }
-  glob_app_cfg.status = AST_APP_COMPLETE;
-  sprintf(path,  "%s/%s/final.xml", LINK_AGENT_DIR, glob_app_cfg.ast_id);
+  glob_app_cfg->status = AST_APP_COMPLETE;
+  sprintf(path,  "%s/%s/final.xml", LINK_AGENT_DIR, glob_app_cfg->ast_id);
   print_xml_response(path, LINK_AGENT);
   symlink(path, DRAGON_XML_RESULT);
   
   sprintf(path, "%s/%s/ast_complete.xml", 
-	  LINK_AGENT_DIR, glob_app_cfg.ast_id);
+	  LINK_AGENT_DIR, glob_app_cfg->ast_id);
 
   if (rename(DRAGON_XML_RECV, path) == -1) 
     zlog_err("Can't rename %s to %s; errno = %d(%s)",
@@ -726,41 +693,40 @@ dragon_process_ast_complete()
 }
 
 int
-dragon_process_xml()
+dragon_process_xml(struct in_addr clntAddr)
 {
   int ret_value = 1;
 
-  glob_app_cfg.xml_type = xml_parser(DRAGON_XML_RECV);
-  
-  switch(glob_app_cfg.xml_type) {
+  switch(xml_parser(DRAGON_XML_RECV)) {
 
   case TOPO_XML:
 
-  if (topo_xml_parser(DRAGON_XML_RECV, LINK_AGENT) != 1) { 
+  if ((glob_app_cfg = topo_xml_parser(DRAGON_XML_RECV, LINK_AGENT)) == NULL) { 
     zlog_err("dragon_process_xml: received xml file with error"); 
     vty_out(fake_vty, "ERROR: received xml file parse with error\n"); 
     return 0; 
   }
   
-  if (topo_validate_graph(LINK_AGENT) == 0) {
+  if (topo_validate_graph(LINK_AGENT, glob_app_cfg) == 0) {
     zlog_err("dragon_process_xml: topo_validate_graph() failed");
     return 0;
   }
 
-  if (glob_app_cfg.action == SETUP_REQ) 
+  glob_app_cfg->ast_ip = strdup(inet_ntoa(clntAddr));
+  if (glob_app_cfg->action == SETUP_REQ) 
     ret_value = dragon_process_setup_req();
-  else if (glob_app_cfg.action == RELEASE_REQ)
+  else if (glob_app_cfg->action == RELEASE_REQ)
     ret_value = dragon_process_release_req();
-  else if (glob_app_cfg.action == QUERY_REQ)
+  else if (glob_app_cfg->action == QUERY_REQ)
     ret_value = dragon_process_query_req();
-  else if (glob_app_cfg.action == AST_COMPLETE)
+  else if (glob_app_cfg->action == AST_COMPLETE)
     ret_value = dragon_process_ast_complete();
 
   break;
 
   case ID_XML:
 
-  if (id_xml_parser(DRAGON_XML_RECV, LINK_AGENT) != 1) {
+  if ((glob_app_cfg = id_xml_parser(DRAGON_XML_RECV, LINK_AGENT)) == NULL) {
     zlog_err("dragon_process_xml: recieved xml file with error");
     vty_out(fake_vty, "ERROR: recieved xml file with error\n");
     return 0;
@@ -774,14 +740,12 @@ dragon_process_xml()
 
   zlog_err("dragon_process_xml: this is neither a <topology> nor <local_id_cfg> request");
   ret_value = 0;
-  glob_app_cfg.status = AST_FAILURE;
+  glob_app_cfg->status = AST_FAILURE;
 
   }
 
-  if (ret_value) 
-    glob_app_cfg.status = AST_SUCCESS;
-  else
-    glob_app_cfg.status = AST_FAILURE;
+  if (!ret_value) 
+    glob_app_cfg->status = AST_FAILURE;
 
   return ret_value;
 }
@@ -796,7 +760,9 @@ xml_module_init()
   assign = malloc(7*(REG_TXT_FIELD_LEN+1)*sizeof(char));
   for (i = 0; i < 7; i++) 
     argv[i] = assign+(i*REG_TXT_FIELD_LEN+1);
-  memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
+  free_application_cfg(glob_app_cfg);
+  glob_app_cfg = NULL;
+  memset(&app_list, 0, sizeof(struct adtlist));
   memset(&pending_list, 0, sizeof(struct adtlist));
 }
 
@@ -804,7 +770,8 @@ static void
 xml_module_reset()
 {
   buffer_reset(fake_vty->obuf);
-  free_application_cfg(&glob_app_cfg);
+  free_application_cfg(glob_app_cfg);
+  glob_app_cfg = NULL;
   unlink(DRAGON_XML_RESULT);
   unlink(DRAGON_XML_RECV);
 }
@@ -866,11 +833,6 @@ dragon_build_lsp(struct resource *link)
 
   switch (link->res.l.stype) {
     case uni:
-
-      strcpy(argv[0], link->res.l.src->vlsr->res.n.router_id);
-      strcpy(argv[3], link->res.l.dest->vlsr->res.n.router_id);
-      break;
-
     case non_uni:
 
       strcpy(argv[0], link->res.l.src->es->res.n.router_id);
@@ -972,8 +934,6 @@ dragon_release_lsp(struct resource *link)
   strcpy(argv[0], link->res.l.lsp_name);
   if (dragon_delete_lsp (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) 
     link->status = AST_FAILURE;
-  else 
-    link->status = AST_SUCCESS;
 }
 
 
@@ -991,7 +951,7 @@ dragon_link_provision()
    * so that the show lsp in CLI can also show the link provisioned by 
    * AST
    */ 
-  for ( i = 1, success = 0, curnode = glob_app_cfg.node_list->head; 
+  for ( i = 1, success = 0, curnode = glob_app_cfg->node_list->head; 
 	curnode;
 	i++, curnode = curnode->next) {
     mynode = (struct resource*)(curnode->data);
@@ -1037,7 +997,7 @@ dragon_link_provision()
 	} else {
 	  struct dragon_callback *data = malloc(sizeof(struct dragon_callback));
 	  bzero(data, sizeof(struct dragon_callback));
-          data->ast_id = strdup(glob_app_cfg.ast_id);
+          data->ast_id = strdup(glob_app_cfg->ast_id);
 	  strncpy(data->lsp_name, mylink->res.l.lsp_name, LSP_NAME_LEN);
 	  data->stype = mylink->res.l.stype;
 
@@ -1077,6 +1037,7 @@ dragon_link_provision()
 	      break;
 
 	  }
+	  data->clnt_sock = clnt_sock;
 	  strncpy(data->link_name, mylink->name, NODENAME_MAXLEN);
 	  adtlist_add(&pending_list, data);
 	  mylink->status = AST_PENDING;
@@ -1088,12 +1049,10 @@ dragon_link_provision()
     }
   }
 
-  if (success == adtlist_getcount(glob_app_cfg.link_list))
-    glob_app_cfg.status = AST_SUCCESS;
-  else
-    glob_app_cfg.status = AST_FAILURE;
+  if (success != adtlist_getcount(glob_app_cfg->link_list))
+    glob_app_cfg->status = AST_FAILURE;
   
-  return (success == adtlist_getcount(glob_app_cfg.link_list));
+  return (success == adtlist_getcount(glob_app_cfg->link_list));
 }
 
 static int
@@ -1109,7 +1068,7 @@ dragon_link_release()
    * so that the show lsp in CLI can also show the link provisioned by
    * AST
    */
-  for ( i = 1, success = 0, curnode = glob_app_cfg.node_list->head;
+  for ( i = 1, success = 0, curnode = glob_app_cfg->node_list->head;
 	curnode;
 	i++, curnode = curnode->next) {
     mynode = (struct resource*)(curnode->data);
@@ -1129,12 +1088,12 @@ dragon_link_release()
     }
   }
 
-  if (success == adtlist_getcount(glob_app_cfg.link_list))
-    glob_app_cfg.status = AST_SUCCESS;
+  if (success == adtlist_getcount(glob_app_cfg->link_list))
+    glob_app_cfg->status = AST_SUCCESS;
   else
-    glob_app_cfg.status = AST_FAILURE;
+    glob_app_cfg->status = AST_FAILURE;
 
-  return (success == adtlist_getcount(glob_app_cfg.link_list));
+  return (success == adtlist_getcount(glob_app_cfg->link_list));
 }
 
 static void
@@ -1149,13 +1108,12 @@ xml_accept(struct thread *thread)
 {
   int xml_sock, accept_sock, total = 0;
   struct sockaddr_in clientAddr;
-  struct sockaddr_in astAddr;
   int recvMsgSize, clientLen;
   static char buffer[XML_FILE_RECV_BUF];
   struct sigaction myAction;
-  int fd;
   static struct stat file_stat;
 
+  zlog_info("xml_accept(): START");
   accept_sock = THREAD_FD (thread);
   xml_module_reset();
   clientLen = sizeof(clientAddr);
@@ -1166,8 +1124,7 @@ xml_accept(struct thread *thread)
   } else {
     FILE* fp;
 
-    glob_app_cfg.ast_ip = strdup(inet_ntoa(clientAddr.sin_addr));
-    zlog_info("xml_accept: Handling client %s ...", glob_app_cfg.ast_ip);
+    zlog_info("xml_accept: Handling client %s ...", inet_ntoa(clientAddr.sin_addr));
     unlink(DRAGON_XML_RECV);
     unlink(DRAGON_XML_RESULT);
 
@@ -1216,73 +1173,49 @@ xml_accept(struct thread *thread)
       fflush(fp);
       fclose(fp); 
 
-      if (dragon_process_xml())
-	glob_app_cfg.status = AST_SUCCESS;
-      else
-	glob_app_cfg.status = AST_FAILURE;
+      clnt_sock = xml_sock;
+      dragon_process_xml(clientAddr.sin_addr);
+      clnt_sock = 0;
 
-      if (glob_app_cfg.action == APP_COMPLETE) {
-
-	/* the clntSock should have been void */
-	close(xml_sock);
-	if ((xml_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-	  zlog_err("socket() failed");
-	else {
-	  memset(&astAddr, 0, sizeof(astAddr));
-	  astAddr.sin_family = AF_INET;
-	  astAddr.sin_addr.s_addr = inet_addr(glob_app_cfg.ast_ip);
-	  astAddr.sin_port = htons(MASTER_PORT);
-  
-	  if (connect(xml_sock, (struct sockaddr*)&astAddr, sizeof(astAddr)) < 0) {
-	    zlog_err("connect() failed to ast_master");
-	    close(xml_sock);
-	    xml_sock = -1;
-	  }
-	}
+      if (glob_app_cfg->action == SETUP_RESP && 
+		glob_app_cfg->status == AST_PENDING) {
+	thread_add_read(master, FIN_accept, NULL, xml_sock);
+	thread_add_read(master, xml_accept, NULL, accept_sock);
+	return 1;
       }
 
-      if (stat(DRAGON_XML_RESULT, &file_stat) == -1) {
-	/* the result file hasn't been written
-	 */
-	glob_app_cfg.status = AST_FAILURE;
-	print_error_response(DRAGON_XML_RESULT);
+      if (glob_app_cfg->action == APP_COMPLETE) {
+	close(xml_sock);
+	xml_sock = 0;
       }
 
-      if (xml_sock!= -1) {
-	if (glob_app_cfg.action == APP_COMPLETE) 
-	  zlog_info("Sending APP_COMPLETE for ast_id: %s to ast_master at (%s:%d)",
-	 	glob_app_cfg.ast_id,
-		glob_app_cfg.ast_ip, MASTER_PORT);
-	else 
-	  zlog_info("sending confirmation (%s) to ast_master at (%s:%d)",
-                  status_type_details[glob_app_cfg.status],
-                  glob_app_cfg.ast_ip, MASTER_PORT);
+      if (stat(DRAGON_XML_RESULT, &file_stat) == -1)
+        print_error_response(DRAGON_XML_RESULT);
 
-	fd = open(DRAGON_XML_RESULT, O_RDONLY);
-#ifdef __FreeBSD__
-	total = sendfile(fd, xml_sock, 0, 0, NULL, NULL, 0);
-	zlog_info("sendfile() returns %d", total);
-#else
-	if (fstat(fd, &file_stat) == -1) {
-  	  zlog_err("fstat() failed on %s", XML_NEW_FILE);
-	}
-	total = sendfile(xml_sock, fd, 0, file_stat.st_size);
-	zlog_info("file_size is %d and sendfile() returns %d", 
-			file_stat.st_size, total); 
-#endif
-	if (total < 0) 
-    	  zlog_err("sendfile() failed; errno = %d (%s)\n",
-		 errno, strerror(errno)); 
-
-	close(fd);
-	close(xml_sock);
-      } 
+      switch (glob_app_cfg->action) {
+	case SETUP_RESP:
+	  zlog_info("Sending SETUP_RESP for ast_id: %s to ast_master", glob_app_cfg->ast_ip);
+	  break;
+	case APP_COMPLETE:
+	  zlog_info("Sending APP_COMPLETE for ast_id: %s to ast_master", glob_app_cfg->ast_ip);
+	  break;
+	case RELEASE_RESP:
+	  zlog_info("Sending RELEASE_RESP for ast_id: %s to ast_master", glob_app_cfg->ast_ip);
+	  break;
+	default:
+	  zlog_info("Sending error message to ast_master");
+	  break;
+      }
+	
+      if (!send_file_over_sock(xml_sock, DRAGON_XML_RESULT))
+        xml_sock = send_file_to_agent(glob_app_cfg->ast_ip, MASTER_PORT, DRAGON_XML_RESULT); 
+      if (xml_sock != -1) 
+        close(xml_sock);
     } else
       fclose(fp);
-
-    zlog_info("DONE!");
   }
 
+  zlog_info("xml_accept(): DONE");
   thread_add_read(master, xml_accept, NULL, accept_sock);
   return 1;
 }
@@ -1351,4 +1284,48 @@ xml_serv_sock (const char *hostname, unsigned short port, char *path)
   freeaddrinfo (ainfo_save);
 
   return sock;
+}
+
+/* FIN_accept is used to handle any connection close on the other side */
+static int
+FIN_accept(struct thread *thread)
+{
+  int servSock, total;
+  static char buffer[RCVBUFSIZE];
+  static char ret_buf[SENDBUFSIZE];
+  int bytesRcvd, ret_value = 1;
+  FILE* ret_file = NULL;
+
+  servSock = THREAD_FD(thread);
+
+  zlog_info("FIN_accept(): START");
+
+  total = 0;
+  memset(ret_buf, 0, SENDBUFSIZE);
+  while ((bytesRcvd = recv(servSock, buffer, RCVBUFSIZE-1, 0)) > 0) {
+    if (!total) {
+      ret_file = fopen("/usr/local/dragon_void.xml", "w");
+      if (!ret_file) {
+        ret_value = 0;
+        continue;  
+      }
+    }
+    total+=bytesRcvd;
+    buffer[bytesRcvd] = '\0';
+    sprintf(ret_buf+strlen(ret_buf), buffer);
+    fprintf(ret_file, buffer);
+  }
+
+  if (total == 0) {
+    ret_value = 0;
+  } else {
+    fflush(ret_file); 
+    fclose(ret_file);
+
+    zlog_err("SHOULD NOT RECEIVED ANYTHING HERE: look at /usr/local/dragon_void.xml");
+  }
+
+  close(servSock);
+  zlog_info("FIN_accept(): END");
+  return 1;
 }

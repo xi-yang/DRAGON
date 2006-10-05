@@ -121,6 +121,8 @@ struct thread
 struct thread_master *thread_master_create ();
 struct thread *thread_add_read (struct thread_master *, 
 				int (*)(struct thread *), void *, int);
+struct thread *thread_remove_read (struct thread_master *,
+				int (*)(struct thread *), void *, int);
 struct thread *thread_add_write (struct thread_master *,
 				 int (*)(struct thread *), void *, int);
 struct thread *thread_add_timer (struct thread_master *,

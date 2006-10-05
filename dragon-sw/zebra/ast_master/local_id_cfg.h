@@ -30,4 +30,4 @@ struct local_id_cfg {
 
 struct adtlist *glob_id_cfg_list;
 
-int id_xml_parser(char*, int);
+struct application_cfg* id_xml_parser(char*, int);

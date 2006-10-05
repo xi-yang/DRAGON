@@ -10,14 +10,12 @@
 #include <sys/stat.h>
 #include "getopt.h"
 #include "ast_master.h"
+#include "local_id_cfg.h"
 
 #define ASTB_RESULT_FILE	"/tmp/astb_result.xml"
 #define ASTB_SEND_FILE		"/tmp/astb_sent.xml"
-#define LINK_AGENT_DIR	  "/usr/local/dragon/link_agent"
-#define NODE_AGENT_DIR  	"/usr/local/dragon/node_agent"
 
 struct thread_master *master; /* master = dmaster.master */
-extern int id_xml_parser(char*, int);
 
 struct option astb_opts[] =
 {
@@ -63,8 +61,8 @@ send_app_complete(int type)
   int sock, fd, total;
   struct sockaddr_in astServ;
 
-  ast_id = glob_app_cfg.ast_id;
-  glob_app_cfg.ast_id = NULL;
+  ast_id = glob_app_cfg->ast_id;
+  glob_app_cfg->ast_id = NULL;
 
   sprintf(file, "%s/%s/setup_response.xml", 
 		type == 1 ? NODE_AGENT_DIR:LINK_AGENT_DIR, ast_id);
@@ -73,57 +71,57 @@ send_app_complete(int type)
     exit(0);
   }
 
-  free(glob_app_cfg.ast_id);
+  free(glob_app_cfg->ast_id);
   
-  if (topo_xml_parser(file, ASTB) != 1) {
+  if ((glob_app_cfg = topo_xml_parser(file, ASTB)) == NULL) {
     printf("Error in ast_id file\n");
     exit(0);
   }
 
-  if (glob_app_cfg.action == RELEASE_RESP) {
+  if (glob_app_cfg->action == RELEASE_RESP) {
     printf("ast_id file indicate this the resource has been released\n");
     exit(0);
   }
  
-  if (glob_app_cfg.ast_ip == NULL) {
+  if (glob_app_cfg->ast_ip == NULL) {
     printf("ast_id file has no ast_ip specified; don't know how to contact the agent\n");
     exit(0);
   }
  
   if (type == 1) {
-    if (glob_app_cfg.node_list == NULL) {
+    if (glob_app_cfg->node_list == NULL) {
       printf("the node_agent file for ast_id contains no node\n");
       exit(0);
     }
 
-    for (curnode = glob_app_cfg.node_list->head;
+    for (curnode = glob_app_cfg->node_list->head;
 	 curnode;
 	 curnode = curnode->next) {
       node = (struct resource*) curnode->data;
       node->status = AST_APP_COMPLETE;
     }
   } else {
-    if (glob_app_cfg.link_list == NULL) {
+    if (glob_app_cfg->link_list == NULL) {
       printf("the link_agent file for ast_id contains no link\n");
       exit(0);
     } 
 
-    for (curnode = glob_app_cfg.link_list->head;
+    for (curnode = glob_app_cfg->link_list->head;
 	 curnode;
 	 curnode = curnode->next) {
       link = (struct resource*) curnode->data;
       link->status = AST_APP_COMPLETE;
     }
   }
-  glob_app_cfg.status = AST_APP_COMPLETE;
-  glob_app_cfg.action = APP_COMPLETE;
+  glob_app_cfg->status = AST_APP_COMPLETE;
+  glob_app_cfg->action = APP_COMPLETE;
 
   sprintf(file, "%s/%s/final.xml",
 	        type == 1 ? NODE_AGENT_DIR:LINK_AGENT_DIR, ast_id);
   print_final(file);
 
   printf("Sending APP_COMPLETE to ast_master at %s:%d\n",
-	glob_app_cfg.ast_ip, MASTER_PORT);
+	glob_app_cfg->ast_ip, MASTER_PORT);
 
   if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
     printf("socket() failed\n");
@@ -132,7 +130,7 @@ send_app_complete(int type)
 
   memset(&astServ, 0, sizeof(astServ));
   astServ.sin_family = AF_INET;
-  astServ.sin_addr.s_addr = inet_addr(glob_app_cfg.ast_ip);
+  astServ.sin_addr.s_addr = inet_addr(glob_app_cfg->ast_ip);
   astServ.sin_port = htons(MASTER_PORT);
 
   fd = open(file, O_RDONLY);
@@ -221,14 +219,14 @@ int main(int argc, char* argv[])
       case 's':
 	signal_mode = 1;
 	if (strcmp(optarg, "APP_COMPLETE") == 0)
-	  glob_app_cfg.action = APP_COMPLETE;
+	  glob_app_cfg->action = APP_COMPLETE;
 	else {
 	  printf("You must specify \"APP_COMPLETE\" for signal (-s)\n");
 	  usage(progname, 0);
 	}
 	break;
       case 'g':
-	glob_app_cfg.ast_id = optarg;
+	glob_app_cfg->ast_id = optarg;
 	break;
       default:
 	usage (progname, 0);
@@ -239,7 +237,7 @@ int main(int argc, char* argv[])
     if (input_file) 
       usage (progname, 0);
 
-    if (!type || !glob_app_cfg.ast_id) 
+    if (!type || !glob_app_cfg->ast_id) 
       usage (progname, 0);
 
     send_app_complete(type);
@@ -253,18 +251,16 @@ int main(int argc, char* argv[])
     exit(1);
   }
 
-  glob_app_cfg.xml_type = xml_parser(input_file);
-
-  switch (glob_app_cfg.xml_type) {
+  switch (xml_parser(input_file)) {
 
   case TOPO_XML:
 
-  if (topo_xml_parser(input_file, ASTB) == 0) {
+  if ( (glob_app_cfg = topo_xml_parser(input_file, ASTB)) == NULL) {
     printf("Validation Failed\n");
     exit(1);
   }
 
-  if (topo_validate_graph(ASTB) != 1) {
+  if (topo_validate_graph(ASTB, glob_app_cfg) != 1) {
     printf("Validation Failed\n");
     exit(1);
   }
@@ -273,7 +269,7 @@ int main(int argc, char* argv[])
 
   case ID_XML:
 
-  if (id_xml_parser(input_file, ASTB) == 0) {
+  if ((glob_app_cfg = id_xml_parser(input_file, ASTB)) == NULL) {
     printf("Validation Failed\n");
     exit(1);
   }

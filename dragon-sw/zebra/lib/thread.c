@@ -280,6 +280,44 @@ thread_add_read (struct thread_master *m,
   return thread;
 }
 
+struct thread * 
+thread_search (struct thread_list *list, 
+		int (*func) (struct thread *), void *arg, int fd)
+{
+  struct thread* elem;
+  
+  for (elem = list->head;
+	elem;
+	elem = elem->next ) {
+    if (elem->func == func && elem->u.fd == fd && elem->arg == arg)
+      return elem;
+  }
+
+  return NULL;
+}
+
+struct thread *
+thread_remove_read (struct thread_master *m, 
+		    int (*func) (struct thread *), void *arg, int fd)
+{
+  struct thread *thread;
+
+  assert (m != NULL);
+
+  if (!FD_ISSET (fd, &m->readfd))
+    {
+      zlog(NULL, LOG_WARNING, "This is not a read fd [%d]", fd);
+      return NULL;
+    }
+
+  FD_CLR (fd, &m->readfd);
+  thread = thread_search(&m->read, func, arg, fd);
+  thread = thread_list_delete(&thread->master->read, thread);
+  XFREE (MTYPE_THREAD, thread);
+  
+  return NULL;
+}
+
 /* Add new write thread. */
 struct thread *
 thread_add_write (struct thread_master *m,

@@ -65,7 +65,7 @@ get_id_action_by_name(char* action)
 }
 
 int
-compose_id_req(struct application_cfg working_app_cfg, char* path, struct id_cfg_res *res)
+compose_id_req(struct application_cfg *app_cfg, char* path, struct id_cfg_res *res)
 {
   struct adtlistnode *cur;
   struct local_id_cfg *id_cfg;
@@ -81,7 +81,7 @@ compose_id_req(struct application_cfg working_app_cfg, char* path, struct id_cfg
     return 0;
   }
 
-  fprintf(send_file, "<local_id_cfg ast_id=\"%s\">\n", working_app_cfg.ast_id);
+  fprintf(send_file, "<local_id_cfg ast_id=\"%s\">\n", app_cfg->ast_id);
   fprintf(send_file, "<resource type=\"%s\" name=\"%s\">\n", node_stype_name[res->stype], res->name);
   fprintf(send_file, "\t<ip>%s</ip>\n", res->ip);
   
@@ -118,19 +118,19 @@ process_id_result(struct application_cfg *working_app_cfg, struct id_cfg_res* re
   struct local_id_cfg *old_cfg, *new_cfg;
   int found, ret_val = 1;
 
-  if (!glob_app_cfg.node_list) {
+  if (!glob_app_cfg->node_list) {
     zlog_err("process_id_result: no resource in the file");
     res->status = AST_FAILURE;
     return 0;
   }
 
-  if (adtlist_getcount(glob_app_cfg.node_list) != 1) 
+  if (adtlist_getcount(glob_app_cfg->node_list) != 1) 
     zlog_warn("process_id_result: there should be only 1 resource in the return file");
 
   /* have to found the the resource that matches "res" 
    * from the working_app_cfg.node_list 
    */
-  for (cur = glob_app_cfg.node_list->head, found = 0;
+  for (cur = glob_app_cfg->node_list->head, found = 0;
 	cur && !found;
 	cur = cur->next) {
     newres = (struct id_cfg_res*) cur->data;
@@ -194,11 +194,20 @@ print_id_response(char * path, int agent)
   if (!fp)
     return;
 
-  fprintf(fp, "<local_id_cfg ast_id=\"%s\">\n", glob_app_cfg.ast_id);
-  fprintf(fp, "<status>%s</status>\n", status_type_details[glob_app_cfg.status]);
+  if (!glob_app_cfg) {
+    fprintf(fp, "<local_id_cfg>\n");
+    fprintf(fp, "<status>AST_FAILURE</status>\n");
+    fprintf(fp, "</local_id_cfg>\n");
+    fflush(fp);
+    fclose(fp);
+    return;
+  }
 
-  if (glob_app_cfg.node_list) {
-    for (cur = glob_app_cfg.node_list->head;
+  fprintf(fp, "<local_id_cfg ast_id=\"%s\">\n", glob_app_cfg->ast_id);
+  fprintf(fp, "<status>%s</status>\n", status_type_details[glob_app_cfg->status]);
+
+  if (glob_app_cfg->node_list) {
+    for (cur = glob_app_cfg->node_list->head;
 	 cur;
 	 cur = cur->next) {
       myres = (struct id_cfg_res*) cur->data;
@@ -234,7 +243,7 @@ print_id_response(char * path, int agent)
   fclose(fp);
 }
 
-int 
+struct application_cfg* 
 id_xml_parser(char* filename, int agent)
 {
   xmlChar *key;
@@ -244,12 +253,13 @@ id_xml_parser(char* filename, int agent)
   struct _xmlAttr* attr;
   struct id_cfg_res *myres;
   struct local_id_cfg* myIDcfg;
+  struct application_cfg* app_cfg;
 
   doc = xmlParseFile(filename);
 
   if (!doc) {
     zlog_err("id_xml_parser: document not parsed successfully");
-    return 0;
+    return NULL;
   }
 
   cur = xmlDocGetRootElement(doc);
@@ -257,7 +267,7 @@ id_xml_parser(char* filename, int agent)
   if (cur == NULL) {
     zlog_err("id_xml_parser: Empty document");
     xmlFreeDoc(doc);
-    return 0;
+    return NULL;
   }
 
   /* first locate the <local_id_cfg> keyword
@@ -266,14 +276,17 @@ id_xml_parser(char* filename, int agent)
   if (!cur) {
     zlog_err("id_xml_parser: Can't locate <local_id_cfg>");
     xmlFreeDoc(doc);
-    return 0;
+    return NULL;
   }
+
+  app_cfg = (struct application_cfg*) malloc(sizeof(struct application_cfg));
+  memset(app_cfg, 0, sizeof(struct application_cfg));
 
   for (attr = cur->properties;
 	attr;
 	attr = attr->next) {
     if (strcasecmp(attr->name, "ast_id") == 0) {
-      glob_app_cfg.ast_id = strdup(attr->children->content);
+      app_cfg->ast_id = strdup(attr->children->content);
       break;
     }
   }
@@ -457,15 +470,15 @@ id_xml_parser(char* filename, int agent)
     if (!myres->cfg_list) {
       free_id_cfg_res(myres);
     } else {
-      if (!glob_app_cfg.node_list) {
-	glob_app_cfg.node_list = (struct adtlist*) malloc (sizeof(struct adtlist));
-	memset(glob_app_cfg.node_list, 0, sizeof(struct adtlist));
+      if (!app_cfg->node_list) {
+	app_cfg->node_list = (struct adtlist*) malloc (sizeof(struct adtlist));
+	memset(app_cfg->node_list, 0, sizeof(struct adtlist));
       }
-      adtlist_add(glob_app_cfg.node_list, myres);
+      adtlist_add(app_cfg->node_list, myres);
     }
   }
 
-  return 1;
+  return app_cfg;
 }
 
 int
@@ -480,29 +493,28 @@ master_process_id(char* filename)
   FILE* ret_file = NULL;
   char directory[80];
   char newpath[105];
-  struct application_cfg working_app_cfg;
+  struct application_cfg *working_app_cfg;
 
-  if (id_xml_parser(filename, MASTER) == 0) {
-    glob_app_cfg.status = AST_FAILURE;
+  if ((glob_app_cfg = id_xml_parser(filename, MASTER)) == NULL) {
     print_id_response(AST_XML_RESULT, MASTER);
     return 0;
   }
 
-  if (!glob_app_cfg.node_list) {
-    glob_app_cfg.status = AST_SUCCESS;
+  if (!glob_app_cfg->node_list) {
+    glob_app_cfg->status = AST_SUCCESS;
     print_id_response(AST_XML_RESULT, MASTER);
     return 1;
   }
 
-  glob_app_cfg.ast_id = generate_cfg_id();
-  zlog_info("Processing glob_ast_id: %s <local_id_cfg> file", glob_app_cfg.ast_id);
+  glob_app_cfg->ast_id = generate_cfg_id();
+  zlog_info("Processing glob_ast_id: %s <local_id_cfg> file", glob_app_cfg->ast_id);
   strcpy(directory, ID_DIR);
   if (mkdir(directory, 0755) == -1 && errno != EEXIST) {
     zlog_err("master_process_id: Can't create directory %s", directory);
     return 0;
   }
 
-  sprintf(directory+strlen(directory), "/%s", glob_app_cfg.ast_id);
+  sprintf(directory+strlen(directory), "/%s", glob_app_cfg->ast_id);
   if (mkdir(directory, 0755) == -1) {
     if (errno == EEXIST) {
       if (remove(directory) == -1) {
@@ -521,13 +533,10 @@ master_process_id(char* filename)
     zlog_err("master_process_id: Can't rename %s to %s; errno = %d(%s)",
 		filename, newpath, errno, strerror(errno));
 
-  /* copy the current into working_app_cfg */
-  memcpy(&working_app_cfg, &glob_app_cfg, sizeof(struct application_cfg));
-  memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
   memset(buffer, 0, RCVBUFSIZE);
 
   /* now, send the task list to all related node */
-  for (cur = working_app_cfg.node_list->head;
+  for (cur = glob_app_cfg->node_list->head;
        cur;
        cur = cur->next) {
     myres = (struct id_cfg_res*) cur->data;
@@ -535,7 +544,7 @@ master_process_id(char* filename)
     sprintf(newpath, "%s/%s.xml", directory, myres->name);
     
     /* compose the sending file */
-    compose_id_req(working_app_cfg, newpath, myres);
+    compose_id_req(glob_app_cfg, newpath, myres);
 
     /* call send_file_to_agent */
     zlog_info("master_process_id: sending request to %s (%s:%d)", 
@@ -581,29 +590,27 @@ master_process_id(char* filename)
       fflush(ret_file);
       fclose(ret_file);
 
-      free_application_cfg(&glob_app_cfg);
-      memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
+      free_application_cfg(glob_app_cfg);
+      glob_app_cfg = NULL;
 
-      if (id_xml_parser(newpath, MASTER) == 0) {
+      if ((working_app_cfg = id_xml_parser(newpath, MASTER)) == NULL) {
 	zlog_err("master_process_id: returned file (%s) is not parsed correctly", newpath);
 	myres->status = AST_UNKNOWN;
 	myres->msg = strdup("The response file is not parsed correctly");
 	ret_value = 0;
       } else 
-	if (process_id_result(&working_app_cfg, myres) != 1)
+	if (process_id_result(working_app_cfg, myres) != 1)
 	  ret_value = 0;
+	free_application_cfg(working_app_cfg);
     }
     close(sock);
   }
 
   /* integrate the result and put the result into AST_XML_RESULT */
-  free_application_cfg(&glob_app_cfg);
-  memcpy (&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
- 
   if (ret_value)
-    glob_app_cfg.status = AST_SUCCESS;
+    glob_app_cfg->status = AST_SUCCESS;
   else
-    glob_app_cfg.status = AST_FAILURE;
+    glob_app_cfg->status = AST_FAILURE;
 
   sprintf(newpath, "%s/final.xml", directory);
   symlink(newpath, AST_XML_RESULT);

@@ -111,6 +111,120 @@ struct string_syntex_check gpid_field =
 	 {"sdh",	"SONET/SDH"}}
 };
 
+struct application_cfg* master_final_parser(char*, int);
+
+void 
+set_allres_fail(char* error_msg)
+{
+  struct adtlistnode *curnode;
+  struct resource *myres;
+
+  glob_app_cfg->status = AST_FAILURE;
+  if (error_msg) {
+    strcpy(glob_app_cfg->details, error_msg);
+    zlog_err(error_msg);
+  }
+  if (glob_app_cfg->node_list) {
+    for (curnode = glob_app_cfg->node_list->head;
+         curnode;
+         curnode = curnode->next) {
+      myres = (struct resource*) curnode->data;
+      myres->status = AST_FAILURE;
+    }
+  }
+  if (glob_app_cfg->link_list) {
+    for (curnode = glob_app_cfg->link_list->head;
+         curnode;
+         curnode = curnode->next) {
+      myres = (struct resource*) curnode->data;
+      myres->status = AST_FAILURE;
+    }
+  }
+}
+
+struct application_cfg*
+search_cfg_in_list(char* ast_id)
+{
+  struct adtlistnode *curnode;
+  struct application_cfg *curcfg;
+
+  for (curnode = app_list.head;
+        curnode;
+        curnode = curnode->next) {
+    curcfg = (struct application_cfg*)curnode->data;
+
+    if (strcmp(curcfg->ast_id, ast_id) == 0)
+      return curcfg;
+  }
+
+  return NULL;
+}
+
+void
+add_cfg_to_list()
+{
+  struct adtlistnode *curnode;
+  struct application_cfg *curcfg;
+
+  if (!glob_app_cfg || !glob_app_cfg->ast_id)
+    return;
+
+  zlog_info("Adding <ast_id>:%s into glob_list", glob_app_cfg->ast_id);
+
+  curcfg = search_cfg_in_list(glob_app_cfg->ast_id);
+
+  if (!curcfg)
+    adtlist_add(&app_list, glob_app_cfg);
+  else if (curcfg != glob_app_cfg) {
+
+    zlog_warn("Finding another copy of <ast_id>:%s in app_list", glob_app_cfg->ast_id);
+
+    for (curnode = app_list.head;
+         curnode;
+         curnode = curnode->next) {
+      if (curcfg == curnode->data) {
+        free_application_cfg(curcfg);
+        curnode->data = glob_app_cfg;
+      }
+    }
+  }
+}
+
+struct application_cfg* 
+retrieve_app_cfg(char* ast_id, int agent)
+{
+  char path[100];
+  struct application_cfg *ret = NULL;
+  struct stat fs;
+
+  if (!ast_id)
+    return NULL;
+
+  ret = search_cfg_in_list(ast_id);
+  if (ret)
+    return ret;
+
+  if (agent == MASTER) 
+    sprintf(path, "%s/%s/final.xml", AST_DIR, ast_id);
+  else if (agent == NODE_AGENT)
+    sprintf(path, "%s/%s/final.xml", NODE_AGENT_DIR, ast_id); 
+  else if (agent == LINK_AGENT) 
+    sprintf(path, "%s/%s/final.xml", LINK_AGENT_DIR, ast_id);
+  else 
+    return NULL;
+
+  if (stat(path, &fs) == -1) 
+    return NULL;
+
+  if (agent == MASTER) 
+    ret = master_final_parser(path, MASTER);       
+  else 
+    ret = agent_final_parser(path);
+
+  if (agent == MASTER)  
+    add_cfg_to_list();
+  return ret;
+}
 
 char* generate_ast_id(int type)
 {
@@ -162,14 +276,15 @@ get_action_by_str(char* key)
 
   return 0;
 }
+
 struct resource * 
-search_node_by_name(char* str)
+search_node_by_name(struct application_cfg* app_cfg, char* str)
 {
   struct adtlistnode *curnode;
   struct resource *res;
 
-  if (glob_app_cfg.node_list) {
-    for (curnode = glob_app_cfg.node_list->head;
+  if (app_cfg && app_cfg->node_list) {
+    for (curnode = app_cfg->node_list->head;
 	 curnode;
 	 curnode = curnode->next) {
       res = (struct resource*) curnode->data;
@@ -314,7 +429,51 @@ free_application_cfg(struct application_cfg *app_cfg)
 
   }
 
-  memset(app_cfg, 0, sizeof(struct application_cfg));
+  free(app_cfg);
+}
+
+int 
+send_file_over_sock(int sock, char* newpath)
+{
+  int fd, total;
+#ifndef __FreeBSD__
+  static struct stat file_stat;
+#endif
+
+  if (sock <= 0 || !newpath)
+    return 0;
+  
+  fd = open(newpath, O_RDONLY);
+
+  if (fd == -1) 
+    return 0;
+
+#ifdef __FreeBSD__
+  total = sendfile(fd, sock, 0, 0, NULL, NULL, 0);
+  if (total == 0) {
+    zlog_err("send_file_over_sock: sock %d has been void", sock);
+    close(sock);
+    close(fd);
+    return (0);
+  } else if (total < 0) {
+#else
+  if (fstat(fd, &file_stat) == -1) {
+    zlog_err("send_file_over_sock: fstat() failed on %s", newpath);
+    close(sock);
+    close(fd);
+    return (0);
+  }
+  total = sendfile(sock, fd, 0, file_stat.st_size);
+  if (total < 0) {
+#endif
+    zlog_err("send_file_over_sock: sendfile() failed; %d(%s)", errno, strerror(errno));
+    close(sock);
+    close(fd);
+    return (0);
+  }
+
+  close(fd);
+  return 1;
 }
 
 int
@@ -326,6 +485,9 @@ send_file_to_agent(char *ipadd, int port, char *newpath)
 #ifndef __FreeBSD__
   static struct stat file_stat;
 #endif
+
+  if (!ipadd || !newpath) 
+    return -1;
 
   if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
     zlog_err("send_file_to_agent: socket() failed");
@@ -377,13 +539,22 @@ print_error_response(char *path)
   fp = fopen(path, "w+");
   if (!fp)
     return;
-  
+
+  if (!glob_app_cfg) {
+    fprintf(fp, "<topology>\n");
+    fprintf(fp, "<status>AST_FAILURE</status>\n");
+    fprintf(fp, "<details>Incoming XML file can't be parsed successfully</details>\n");
+    fprintf(fp, "</topology>\n");
+    fflush(fp);
+    fclose(fp);
+  }
+
   fprintf(fp, "<topology ast_id=\"%s\" action=\"%s\">\n",
-		glob_app_cfg.ast_id,
-  		action_type_details[glob_app_cfg.action]);
+		glob_app_cfg->ast_id,
+  		action_type_details[glob_app_cfg->action]);
   fprintf(fp, "<status>AST_FAILURE</status>\n");
-  if (glob_app_cfg.details[0] != '\0')
-    fprintf(fp, "<details>%s</details>\n", glob_app_cfg.details);
+  if (glob_app_cfg->details[0] != '\0')
+    fprintf(fp, "<details>%s</details>\n", glob_app_cfg->details);
   fprintf(fp, "</topology>\n");
   fflush(fp);
   fclose(fp);
@@ -421,6 +592,8 @@ print_node(FILE* fp, struct resource* node)
       fprintf(fp, "\t<ifaces>\n");
       fprintf(fp, "\t\t<iface>%s</iface>\n", ifp->iface);
       fprintf(fp, "\t\t<assign_ip>%s</assign_ip>\n", ifp->assign_ip);
+      if (ifp->vtag)
+	fprintf(fp, "\t\t<vtag>%d</vtag>\n", ifp->vtag);
       fprintf(fp, "\t</ifaces>\n");
     }
   } 
@@ -518,15 +691,17 @@ print_xml_response(char* path, int agent)
   if (!fp)
     return;
 
-  fprintf(fp, "<topology ast_id=\"%s\" action=\"%s\">\n", glob_app_cfg.ast_id, action_type_details[glob_app_cfg.action]);
+  fprintf(fp, "<topology ast_id=\"%s\" action=\"%s\">\n", glob_app_cfg->ast_id, action_type_details[glob_app_cfg->action]);
 
-  if (glob_app_cfg.ast_ip) 
-    fprintf(fp, "<ast_ip>%s</ast_ip>\n", glob_app_cfg.ast_ip);
+  if (glob_app_cfg->ast_ip) 
+    fprintf(fp, "<ast_ip>%s</ast_ip>\n", glob_app_cfg->ast_ip);
 
-  fprintf(fp, "<status>%s</status>\n", status_type_details[glob_app_cfg.status]);
+  fprintf(fp, "<status>%s</status>\n", status_type_details[glob_app_cfg->status]);
+  if (glob_app_cfg->details[0] != '\0')
+    fprintf(fp, "<details>%s</details>\n", glob_app_cfg->details);
 
-  if (glob_app_cfg.node_list) {
-    for ( curnode = glob_app_cfg.node_list->head;
+  if (glob_app_cfg->node_list) {
+    for ( curnode = glob_app_cfg->node_list->head;
   	curnode;  
   	curnode = curnode->next) {
       mynode = (struct resource*)(curnode->data);
@@ -538,8 +713,8 @@ print_xml_response(char* path, int agent)
     }
   }
 
-  if (glob_app_cfg.link_list) {
-    for ( curnode = glob_app_cfg.link_list->head;
+  if (glob_app_cfg->link_list) {
+    for ( curnode = glob_app_cfg->link_list->head;
   	curnode;
   	curnode = curnode->next) {
       mylink = (struct resource*)(curnode->data);
@@ -567,25 +742,25 @@ print_final(char *path)
   if (!file)
     return;
 
-  fprintf(file, "<topology ast_id=\"%s\" action=\"%s\">\n",  glob_app_cfg.ast_id, action_type_details[glob_app_cfg.action]);
+  fprintf(file, "<topology ast_id=\"%s\" action=\"%s\">\n",  glob_app_cfg->ast_id, action_type_details[glob_app_cfg->action]);
 
-  fprintf(file, "<status>%s</status>\n", status_type_details[glob_app_cfg.status]);
+  fprintf(file, "<status>%s</status>\n", status_type_details[glob_app_cfg->status]);
 
-  if (glob_app_cfg.details[0] != '\0') 
-    fprintf(file, "<details>%s</details>\n", glob_app_cfg.details);
+  if (glob_app_cfg->details[0] != '\0') 
+    fprintf(file, "<details>%s</details>\n", glob_app_cfg->details);
  
-  if (glob_app_cfg.ast_ip) 
-    fprintf(file, "<ast_ip>%s</ast_ip>\n", glob_app_cfg.ast_ip);
+  if (glob_app_cfg->ast_ip) 
+    fprintf(file, "<ast_ip>%s</ast_ip>\n", glob_app_cfg->ast_ip);
 
-  if (glob_app_cfg.node_list) { 
-    for ( i = 1, curnode = glob_app_cfg.node_list->head;
+  if (glob_app_cfg->node_list) { 
+    for ( i = 1, curnode = glob_app_cfg->node_list->head;
 	  curnode;  
 	  i++, curnode = curnode->next) {
       mynode = (struct resource*)(curnode->data);
 
       print_node(file, mynode);
 	
-      if (glob_app_cfg.action == QUERY_RESP &&
+      if (glob_app_cfg->action == QUERY_RESP &&
 	  mynode->res.n.link_list) {
 	for (curnode1 = mynode->res.n.link_list->head;
 	     curnode1;
@@ -597,8 +772,8 @@ print_final(char *path)
     }
   }
 
-  if (glob_app_cfg.link_list) {
-    for (curnode = glob_app_cfg.link_list->head;
+  if (glob_app_cfg->link_list) {
+    for (curnode = glob_app_cfg->link_list->head;
 	curnode;
 	curnode = curnode->next) {
       mylink = (struct resource*)curnode->data;
@@ -910,15 +1085,15 @@ service_xml_parser(char* filename)
 }
 
 static int 
-establish_relationship()
+establish_relationship(struct application_cfg* app_cfg)
 {
   struct resource *mylink, *dragon;
   struct adtlistnode *curnode;
 
-  if (!glob_app_cfg.link_list)
+  if (!app_cfg->link_list)
     return 1;
 
-  for ( curnode = glob_app_cfg.link_list->head;
+  for ( curnode = app_cfg->link_list->head;
 	curnode;
 	curnode = curnode->next) {
     mylink = (struct resource*) curnode->data;
@@ -928,15 +1103,14 @@ establish_relationship()
 
     switch (mylink->res.l.stype) {
       case uni:
-	if (!mylink->res.l.src->es || !mylink->res.l.dest->es ||
-	    !mylink->res.l.src->vlsr || !mylink->res.l.dest->vlsr) {
-	  zlog_err("link (%s) should have both src and dest es and vlsr defined", mylink->name);
+	if (!mylink->res.l.src->es || !mylink->res.l.dest->es) {
+	  zlog_err("link (%s) should have both src and dest es defined", mylink->name);
 	  return 0;
 	}
 
-	if (mylink->res.l.src->vlsr->res.n.router_id[0] == '\0' ||
-	    mylink->res.l.src->vlsr->res.n.router_id[0] == '\0') {
-	  zlog_err("link (%s) should have <router_id> defined in its src and dest vlsr", mylink->name);
+	if (mylink->res.l.src->es->res.n.router_id[0] == '\0' ||
+	    mylink->res.l.src->es->res.n.router_id[0] == '\0') {
+	  zlog_err("link (%s) should have <router_id> defined in its src and dest es", mylink->name);
 	  return 0;
 	}
 
@@ -1078,7 +1252,7 @@ establish_relationship()
   return 1;
 }
 
-int
+struct application_cfg*
 agent_final_parser(char* filename)
 {
   xmlChar *key;
@@ -1086,18 +1260,19 @@ agent_final_parser(char* filename)
   xmlNodePtr cur;
   char keyToFound[100]; 
   struct _xmlAttr* attr;
+  struct application_cfg *app_cfg;
 
   doc = xmlParseFile(filename);
   if (doc == NULL) {
     zlog_err("agent_final_parser: Document not parsed successfully.");
-    return 0;
+    return NULL;
   }
 
   cur = xmlDocGetRootElement(doc);
   if (cur == NULL) {
     zlog_err("agent_final_parser: Empty document");
     xmlFreeDoc(doc);
-    return 0;
+    return NULL;
   }
 
   /* first locate "topology" keyword
@@ -1108,21 +1283,25 @@ agent_final_parser(char* filename)
   if (!cur) {
     zlog_err("agent_final_parser: Can't locate <%s> in the document", keyToFound);
     xmlFreeDoc(doc);
-    return 0;
+    return NULL;
   }
+
+  app_cfg = (struct application_cfg*)malloc(sizeof(struct application_cfg));
+  memset(app_cfg, 0, sizeof(struct application_cfg));
 
   /* parse the ast_id and action */
   for (attr = cur->properties;
 	attr;
 	attr = attr->next) {
     if (strcasecmp(attr->name, "action") == 0) {
-      glob_app_cfg.action = get_action_by_str(attr->children->content);
-      if (glob_app_cfg.action == 0) {
+      app_cfg->action = get_action_by_str(attr->children->content);
+      if (app_cfg->action == 0) {
 	xmlFreeDoc(doc);
-	return (0);
+	free(app_cfg);
+	return NULL;
       }
     } else if (strcasecmp(attr->name, "ast_id") == 0) 
-      glob_app_cfg.ast_id = strdup(glob_app_cfg.ast_id = strdup(attr->children->content));
+      app_cfg->ast_id = strdup(app_cfg->ast_id = strdup(attr->children->content));
   } 
 	 
   for (cur = cur->xmlChildrenNode;
@@ -1132,25 +1311,27 @@ agent_final_parser(char* filename)
     key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 
     if (strcasecmp(cur->name, "status") == 0) 
-      glob_app_cfg.status = get_status_by_str(key);
+      app_cfg->status = get_status_by_str(key);
     else if (strcasecmp(cur->name, "ast_ip") == 0) 
-      glob_app_cfg.ast_ip = strdup(key);
+      app_cfg->ast_ip = strdup(key);
 
     if (strcasecmp(cur->name, "resource") != 0) 
       continue;
   }
 
   xmlFreeDoc(doc);
-  return 1;
+  return app_cfg;
 }
 
-int
+struct application_cfg*
 master_final_parser(char* filename, int agent)
 {
-  if (topo_xml_parser(filename, agent) == 0)
-    return 0;
+  struct application_cfg* ret;
 
-  return (establish_relationship());
+  ret = topo_xml_parser(filename, agent);
+  establish_relationship(ret);
+
+  return (ret);
 }
 
   
@@ -1159,7 +1340,7 @@ master_final_parser(char* filename, int agent)
  *	FULL_VERSION		1
  *	BRIEF_VERSION		2
  */
-int
+struct application_cfg *
 topo_xml_parser(char* filename, int agent)
 {
   xmlChar *key;
@@ -1173,6 +1354,7 @@ topo_xml_parser(char* filename, int agent)
   struct _xmlAttr* attr;
   struct if_ip *myifp;
   struct endpoint *ep;
+  struct application_cfg* app_cfg;
 
   node_list = NULL;
   link_list = NULL;
@@ -1181,7 +1363,7 @@ topo_xml_parser(char* filename, int agent)
  
   if (doc == NULL) {
     zlog_err("topo_xml_parser: Document not parsed successfully.");
-    return 0;
+    return NULL;
   }
 
   cur = xmlDocGetRootElement(doc);
@@ -1189,7 +1371,7 @@ topo_xml_parser(char* filename, int agent)
   if (cur == NULL) {
     zlog_err("topo_xml_parser: Empty document");
     xmlFreeDoc(doc);
-    return 0;
+    return NULL;
   }
 
   /* first locate "topology" keyword
@@ -1200,9 +1382,11 @@ topo_xml_parser(char* filename, int agent)
   if (!cur) {
     zlog_err("topo_xml_parser: Can't locate <%s> in the document", keyToFound);
     xmlFreeDoc(doc);
-    return 0;
+    return NULL;
   }
   topo_ptr = cur;
+  app_cfg = (struct application_cfg*)malloc(sizeof(struct application_cfg));
+  memset(app_cfg, 0, sizeof(struct application_cfg));
 
   /* parse the parameter inside topology tab 
    */
@@ -1210,14 +1394,15 @@ topo_xml_parser(char* filename, int agent)
 	attr;
 	attr = attr->next) {
     if (strcasecmp(attr->name, "action") == 0) {
-      glob_app_cfg.action = get_action_by_str(attr->children->content);
-      if (glob_app_cfg.action == 0) {
+      app_cfg->action = get_action_by_str(attr->children->content);
+      if (app_cfg->action == 0) {
 	zlog_err("Invalid <topology action> found: %s", key);
 	xmlFreeDoc(doc);
-	return (0);
+	free(app_cfg);
+	return (NULL);
       }
     } else if (strcasecmp(attr->name, "ast_id") == 0) 
-      glob_app_cfg.ast_id = strdup(attr->children->content);
+      app_cfg->ast_id = strdup(attr->children->content);
   }
       
   /* parse all the nodes 
@@ -1232,11 +1417,11 @@ topo_xml_parser(char* filename, int agent)
     key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 
     if (strcasecmp(cur->name, "status") == 0) 
-      glob_app_cfg.status = get_status_by_str(key);
+      app_cfg->status = get_status_by_str(key);
     else if (strcasecmp(cur->name, "ast_ip") == 0) 
-      glob_app_cfg.ast_ip = strdup(key);
+      app_cfg->ast_ip = strdup(key);
     else if (strcasecmp(cur->name, "details") == 0) 
-      strncpy(glob_app_cfg.details, key, 200-1);
+      strncpy(app_cfg->details, key, 200-1);
     
     if (strcasecmp(cur->name, "resource") != 0) 
       continue;
@@ -1279,12 +1464,16 @@ topo_xml_parser(char* filename, int agent)
 
 	if (myres->type == 0) {
 	  zlog_err("Invalid <resource type> found: %s", attr->children->content);
-	  xmlFreeDoc(doc);
-	  return (0);
+	  free(myres);
+	  myres = NULL;
+	  break;
         }
       } else if (strcasecmp(attr->name, "name") == 0) 
 	strncpy(myres->name, attr->children->content, NODENAME_MAXLEN);
     }
+
+    if (!myres)
+      continue;
 
     if (myres->name[0] == '\0') {
       zlog_err("RESource doesn't have a name; ignore ...");
@@ -1367,7 +1556,7 @@ topo_xml_parser(char* filename, int agent)
       if (node_list == NULL) { 
 	node_list = malloc(sizeof(struct adtlist)); 
 	memset(node_list, 0, sizeof(struct adtlist)); 
-	glob_app_cfg.node_list = node_list;
+	app_cfg->node_list = node_list;
       } 
       adtlist_add(node_list, myres); 
     } else {
@@ -1415,11 +1604,11 @@ topo_xml_parser(char* filename, int agent)
 	    key = xmlNodeListGetString(doc, node_ptr->xmlChildrenNode, 1); 
 	
 	    if (strcasecmp(node_ptr->name, "es") == 0)
-	      ep->es = search_node_by_name(key);
+	      ep->es = search_node_by_name(app_cfg, key);
 	    else if (strcasecmp(node_ptr->name, "vlsr") == 0)
-	      ep->vlsr = search_node_by_name(key);
+	      ep->vlsr = search_node_by_name(app_cfg, key);
 	    else if (strcasecmp(node_ptr->name, "proxy") == 0)
-	      ep->proxy = search_node_by_name(key);
+	      ep->proxy = search_node_by_name(app_cfg, key);
 	    else if (strcasecmp(node_ptr->name, "local_id") == 0) {
 	      switch(key[0]) {
 		case 'l':
@@ -1495,20 +1684,20 @@ topo_xml_parser(char* filename, int agent)
 	      strncpy(myres->res.l.vtag, key, REG_TXT_FIELD_LEN);
 	  }
 	} else if (strcasecmp(link_ptr->name, "lsp_name") == 0 && 
-		glob_app_cfg.action != SETUP_REQ ) 
+		app_cfg->action != SETUP_REQ ) 
 	  strncpy(myres->res.l.lsp_name, key, LSP_NAME_LEN); 
 	else if (strcasecmp(link_ptr->name, "status") == 0) 
 	  myres->status = get_status_by_str(key);
 	else if (strcasecmp(link_ptr->name, "agent_message") == 0) 
 	  myres->agent_message = strdup(key);
 	else if (strcasecmp(link_ptr->name, "dragon") == 0)
-	  myres->res.l.dragon = search_node_by_name(key);
+	  myres->res.l.dragon = search_node_by_name(app_cfg, key);
       }
 
       if (link_list == NULL) { 
 	link_list = malloc(sizeof(struct adtlist)); 
 	memset(link_list, 0, sizeof(struct adtlist)); 
-	glob_app_cfg.link_list = link_list;
+	app_cfg->link_list = link_list;
       } 
 
       adtlist_add(link_list, myres);    
@@ -1517,7 +1706,7 @@ topo_xml_parser(char* filename, int agent)
 
   xmlFreeDoc(doc);
 
-  return 1;
+  return app_cfg;
 }
 
 #ifdef RESOURCE_BROKER
@@ -1536,7 +1725,7 @@ master_locate_resource()
   FILE *fp;
   struct application_cfg working_app_cfg; 
   
-  for ( i = 1, curnode = glob_app_cfg.node_list->head;
+  for ( i = 1, curnode = glob_app_cfg->node_list->head;
 	curnode;
 	i++, curnode = curnode->next) {
     mynode = (struct node_cfg*)(curnode->data);
@@ -1593,23 +1782,24 @@ master_locate_resource()
       fflush(fp);
       fclose(fp);
 
-      memcpy(&working_app_cfg, &glob_app_cfg, sizeof(struct application_cfg));
-      memset(&glob_app_cfg, 0, sizeof(struct application_cfg));
-      if (topo_xml_parser(RESOURCE_REC, BRIEF_VERSION) == 0 ||
-	  glob_app_cfg.node_list == NULL) {
+      working_app_cfg = glob_app_cfg;
+      glob_app_cfg = NULL;
+      if ((glob_app_cfg = topo_xml_parser(RESOURCE_REC, BRIEF_VERSION)) == NULL ||
+	  glob_app_cfg->node_list == NULL) {
 	zlog_err("Invalid response from resource broker");
         close(sock);
-        free_application_cfg(&glob_app_cfg);
-	memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
+        free_application_cfg(glob_app_cfg);
+	glob_app_cfg = NULL;
+	glob_app_cfg = working_app_cfg;
         return 0;
       }
      
-      newnode = (struct node_cfg*) glob_app_cfg.node_list->head->data; 
+      newnode = (struct node_cfg*) glob_app_cfg->node_list->head->data; 
       if (newnode->ipadd[0] == '\0') { 
 	zlog_err("Invalid response from resource broker");
 	close(sock);
-	free_application_cfg(&glob_app_cfg);
-	memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
+	free_application_cfg(glob_app_cfg);
+	glob_app_cfg = working_app_cfg;
 	return 0;
       }
 
@@ -1627,8 +1817,8 @@ master_locate_resource()
       zlog_info("\tip addr: %s", mynode->ipadd);
       zlog_info("\tvlsr_total: %d", mynode->vlsr_total);
 
-      free_application_cfg(&glob_app_cfg);
-      memcpy(&glob_app_cfg, &working_app_cfg, sizeof(struct application_cfg));
+      free_application_cfg(glob_app_cfg);
+      glob_app_cfg = working_app_cfg;
     } else {
       zlog_err("No response from resource broker");
       close(sock);
@@ -1646,7 +1836,7 @@ master_locate_resource()
 /* validate the graph
  */
 int
-topo_validate_graph(int agent) 
+topo_validate_graph(int agent, struct application_cfg *app_cfg)
 {
   struct adtlistnode *curnode;
   struct resource *mynode, *mylink;
@@ -1658,35 +1848,35 @@ topo_validate_graph(int agent)
 
     case NODE_AGENT:
     case LINK_AGENT:
-      if (glob_app_cfg.action == SETUP_RESP ||
-	  glob_app_cfg.action == APP_COMPLETE ||
-	  glob_app_cfg.action == RELEASE_RESP ||
-	  glob_app_cfg.action == QUERY_RESP) {
+      if (app_cfg->action == SETUP_RESP ||
+	  app_cfg->action == APP_COMPLETE ||
+	  app_cfg->action == RELEASE_RESP ||
+	  app_cfg->action == QUERY_RESP) {
 	zlog_err("Invalid action defined for this topology");
 	return (0);
       }
-      if (glob_app_cfg.ast_id == NULL) {
+      if (app_cfg->ast_id == NULL) {
         zlog_err("ast_id should be set for this topology");
 	return (0);
       }
       break;
     
     case MASTER:
-      if (glob_app_cfg.action == AST_COMPLETE) {
+      if (app_cfg->action == AST_COMPLETE) {
 	zlog_err("Invalid action defined for this topology");
 	return (0);
       }
-      if ((glob_app_cfg.action != SETUP_REQ &&  
-	   glob_app_cfg.action != QUERY_REQ) && 
-	   glob_app_cfg.ast_id == NULL) {
+      if ((app_cfg->action != SETUP_REQ &&  
+	   app_cfg->action != QUERY_REQ) && 
+	   app_cfg->ast_id == NULL) {
 	zlog_err("ast_id should be set for this topology");
 	return (0);
       } 
       break;
     
     case ASTB:
-      if (glob_app_cfg.action == AST_COMPLETE || 
-	  glob_app_cfg.action == QUERY_RESP) {
+      if (app_cfg->action == AST_COMPLETE || 
+	  app_cfg->action == QUERY_RESP) {
     
 	zlog_err("Invalid action defined for this topology"); 
 	printf("Valide Values are:\n"); 
@@ -1697,13 +1887,13 @@ topo_validate_graph(int agent)
   }
 
   /* now, validate the cfg according to the action type */
-  switch (glob_app_cfg.action) {
+  switch (app_cfg->action) {
     case SETUP_REQ:
-      if (!glob_app_cfg.node_list) {
+      if (!app_cfg->node_list) {
 	zlog_err("No node defined in this topology");
 	return 0;
       } else {
-	for ( curnode = glob_app_cfg.node_list->head;
+	for ( curnode = app_cfg->node_list->head;
 	      curnode;
 	      curnode = curnode->next) {
 	  mynode = (struct resource*) curnode->data;
@@ -1716,14 +1906,14 @@ topo_validate_graph(int agent)
       }
 
       if (agent != NODE_AGENT) {
-	if (!glob_app_cfg.link_list) {
+	if (!app_cfg->link_list) {
 	  zlog_err("No link defined in this topology"); 
 	  return 0;
         } else { 
-	  if (!establish_relationship())
+	  if (!establish_relationship(glob_app_cfg))
 	    return 0;
 
-	  for ( curnode = glob_app_cfg.link_list->head; 
+	  for ( curnode = app_cfg->link_list->head; 
 		curnode; 
 		curnode = curnode->next) { 
 	    mylink = (struct resource*) curnode->data;
@@ -1811,4 +2001,43 @@ topo_validate_graph(int agent)
   }
 
   return 1;
+}
+
+void
+app_cfg_pre_req()
+{
+  struct adtlistnode *curnode;
+  struct resource *res_cfg;
+
+  if (!glob_app_cfg)
+    return;
+
+  memset(glob_app_cfg->details, 0, 200);
+  glob_app_cfg->status = AST_SUCCESS;
+  
+  if (glob_app_cfg->node_list)
+    for (curnode = glob_app_cfg->node_list->head;
+	 curnode;
+	 curnode = curnode->next) {
+      res_cfg = (struct resource*) curnode->data;
+
+      res_cfg->status = AST_SUCCESS;
+      if (res_cfg->agent_message) {
+	free(res_cfg->agent_message);
+	res_cfg->agent_message = NULL;
+      }
+    }
+ 
+  if (glob_app_cfg->link_list)
+    for (curnode = glob_app_cfg->link_list->head;
+	 curnode;
+	 curnode = curnode->next) {
+      res_cfg = (struct resource*) curnode->data;
+
+      res_cfg->status = AST_SUCCESS;
+      if (res_cfg->agent_message) {
+	free(res_cfg->agent_message);
+	res_cfg->agent_message = NULL;
+      }
+    }
 }
