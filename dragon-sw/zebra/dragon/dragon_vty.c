@@ -864,7 +864,7 @@ DEFUN (dragon_set_label_set,
 
 DEFUN (dragon_set_lsp_ip,
        dragon_set_lsp_ip_cmd,
-       "set source ip-address A.B.C.D (port|group|tagged-group|lsp-id) <0-65535> destination ip-address A.B.C.D  (port|group|tagged-group|tunnel-id) <0-65535>",
+       "set source ip-address A.B.C.D (port|group|tagged-group|lsp-id) ID destination ip-address A.B.C.D  (port|group|tagged-group|tunnel-id) ID",
        "Set LSP parameters\n"
        "Source and destination nodes\n"
        "source node IP address"
@@ -873,10 +873,10 @@ DEFUN (dragon_set_lsp_ip,
        "Destination node IP address\n"
        "IP address\n"
        "IP address, where A, B, C, and D are integers 0 to 255\n"
-	"Tunnel ID, or destination port number\n"
-	"Tunnel ID, integer between 1 and 65535\n"
-	"LSP ID, or source port number\n"
-	"LSP ID, integer between 1 and 65535\n"
+	"Tunnel ID, or destination port number, or localID\n"
+	"Tunnel ID, integer between 1 and 65535, or any (for localID)\n"
+	"LSP ID, or source port number, or localID\n"
+	"LSP ID, integer between 1 and 65535, or any (for localID)\n"
        )
 {
     struct lsp *lsp = (struct lsp *)(vty->index);
