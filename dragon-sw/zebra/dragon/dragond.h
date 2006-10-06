@@ -479,7 +479,7 @@ u_int16_t destPort;
 	(X->common.Session_Para.srcAddr.s_addr == Y->common.Session_Para.srcAddr.s_addr && \
 	 X->common.Session_Para.destAddr.s_addr == Y->common.Session_Para.destAddr.s_addr && \
 	 X->common.Session_Para.destPort == Y->common.Session_Para.destPort \
-	 && (X->common.session_Para.destPort & 0xffff) !=  ANY_VTAG )
+	 && (X->common.Session_Para.destPort & 0xffff) !=  ANY_VTAG )
 
 struct _rsvp_upcall_parameter {
 	struct in_addr destAddr;	//tunnelAddress
