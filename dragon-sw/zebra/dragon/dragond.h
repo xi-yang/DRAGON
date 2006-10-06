@@ -492,11 +492,12 @@ struct _rsvp_upcall_parameter {
 	u_int8_t lspEncodingType; //LSP encoding type
 	u_int8_t switchingType; // LSP switching type
 	u_int16_t gPid;		//G-Pid
+       struct _Dragon_Uni_Para* dragonUniPara;
 	void* sendTSpec;  //Sender TSpec
 	void* adSpec;
 	void* session;	//RSVP_API::SessionId
 	void* senderTemplate;
-       void* dragonUni;
+	void* dragonUni;
 	u_int8_t code;			//error/success code
 };
 typedef void (*zUpcall)(void* para);

@@ -856,7 +856,12 @@ void  rsvpUpcall(void* para)
 				/* send RESV message to RSVPD to set up the path */
 				zInitRsvpResvRequest(dmaster.api, para);
 				lsp->status = LSP_IS;
-			}
+                            /* update LSP */
+                            lsp->common.DragonUni_Para = p->dragonUniPara;
+                            lsp->dragon.srcLocalId = lsp->common.DragonUni_Para.srcLocalId;
+                            lsp->dragon.destLocalId = lsp->common.DragonUni_Para.destLocalId;
+                            lsp->dragon.lspVtag = lsp->common.DragonUni_Para.vlanTag;
+                     }
 
 			break;
 			
