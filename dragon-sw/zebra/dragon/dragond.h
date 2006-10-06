@@ -478,13 +478,14 @@ u_int16_t destPort;
 #define LSP_SAME_SESSION(X, Y) \
 	(X->common.Session_Para.srcAddr.s_addr == Y->common.Session_Para.srcAddr.s_addr && \
 	 X->common.Session_Para.destAddr.s_addr == Y->common.Session_Para.destAddr.s_addr && \
-	 X->common.Session_Para.destPort == Y->common.Session_Para.destPort)
+	 X->common.Session_Para.destPort == Y->common.Session_Para.destPort \
+	 && (X->common.session_Para.destPort & 0xffff) !=  ANY_VTAG )
 
 struct _rsvp_upcall_parameter {
 	struct in_addr destAddr;	//tunnelAddress
-	u_int16_t destPort;		//tunnelID
 	struct in_addr srcAddr;	//extendedTunnelID
 	u_int16_t srcPort;	//lsp-id
+	u_int16_t destPort;	//tunnelID
 	const char* name;		//Name of the LSP
 	u_int32_t upstreamLabel;		//!=0 if bi-dir
 	u_int32_t bandwidth;	//bandwidth
@@ -495,6 +496,7 @@ struct _rsvp_upcall_parameter {
 	void* adSpec;
 	void* session;	//RSVP_API::SessionId
 	void* senderTemplate;
+       void* dragonUni;
 	u_int8_t code;			//error/success code
 };
 typedef void (*zUpcall)(void* para);
