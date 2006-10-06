@@ -316,7 +316,6 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
     if (vtag > 0)
         msgheader->options |= htonl(0x30<<16); //OPT_BIDIRECTIONAL | OPT_E2E_VLAN
 
-    memset(msgbody, 0, sizeof(msg_app2narb_request));
     msgbody1->type = htons(msgType); // 2 == REQUEST; 3 == CONFIRM; 4 == RELEASE; 5 == VTAG_MASK
     msgbody1->length = htons(sizeof(struct msg_app2narb_request) - 4);
     msgbody1->src.s_addr = src;
@@ -325,7 +324,7 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
     msgbody1->encoding_type = encoding;
     msgbody1->bandwidth = bandwidth;
 
-    struct msg_app2narb_vtag_mask msgbody2  = (struct msg_app2narb_vtag_mask*)(buf + 
+    struct msg_app2narb_vtag_mask* msgbody2  = (struct msg_app2narb_vtag_mask*)(buf + 
         sizeof(struct narb_api_msg_header) + sizeof(struct msg_app2narb_request));
 
     if (msgType == TLV_TYPE_NARB_REQUEST && vtag == ANY_VTAG) // Request with tag_bitmask
@@ -434,18 +433,18 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
             if (srcLocalId == ((LOCAL_ID_TYPE_TAGGED_GROUP<<16) | ANY_VTAG) 
                 && (ntohl(subobj_unum->ifid)>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) 
             {
-                assert (vtag == ANY_VTAG || vtag == (0xffff&ntohl(subobj_unum->ifid));
+                assert (vtag == ANY_VTAG || vtag == (0xffff&ntohl(subobj_unum->ifid)));
 
                 vtag = (0xffff&ntohl(subobj_unum->ifid));
-                srcLocalId = (LOCAL_ID_TYPE_TAGGED_GROUP<<16) |vtag);
+                srcLocalId = ((LOCAL_ID_TYPE_TAGGED_GROUP<<16) |vtag);
             }
             if (destLocalId == ((LOCAL_ID_TYPE_TAGGED_GROUP<<16) | ANY_VTAG)
                 && (ntohl(subobj_unum->ifid)>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) 
             {
-                assert (vtag == ANY_VTAG || vtag == (0xffff&ntohl(subobj_unum->ifid));
+                assert (vtag == ANY_VTAG || vtag == (0xffff&ntohl(subobj_unum->ifid)));
                     
                 vtag = (0xffff&ntohl(subobj_unum->ifid));
-                destLocalId = (LOCAL_ID_TYPE_TAGGED_GROUP<<16) |vtag);
+                destLocalId = ((LOCAL_ID_TYPE_TAGGED_GROUP<<16) |vtag);
             }
         }
         else
@@ -521,12 +520,12 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
                 msg.getSENDER_TSPEC_Object().get_r(),
                 vtag, srcLocalId, destLocalId);
 	 if (ero) {
-            if (uni && uni->vlanTag.vtag == ANY_VTAG)
-            {`
+            if (uni && uni->getVlanTag().vtag == ANY_VTAG)
+            {
                 assert (vtag != ANY_VTAG); //the vtag should have been reassigned
                 //uni->srcTNA.local_id = srcLocalId; //The ANY_VTAG indicated to be used by MPLS module
                 //uni->destTNA.local_id = destLocalId; // for re-mapping edge ports  @@@@
-                uni->vlanTag.vtag = vtag;
+                uni->getVlanTag().vtag = vtag;
                 //@@@@ update ==> the next search will miss target?
                 //(uint32)msg.getSESSION_Object().setTunnelId((uint16)vtag);
             }

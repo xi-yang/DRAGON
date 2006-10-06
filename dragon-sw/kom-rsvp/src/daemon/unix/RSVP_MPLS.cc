@@ -296,9 +296,9 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           else if ((inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                                               portList.push_back(inPort & 0xffff);
                                           else {
-                                              const DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                              DRAGON_UNI_Object* uni = (DRAGON_UNI_Object*)psb.getDRAGON_UNI_Object();
                                               if (uni && uni->getSrcTNA().local_id == UNI_AUTO_TAGGED_LCLID)
-                                                  inPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getIngressCtrlChannel().name);
+                                                  inPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getIngressCtrlChannel().name);
                                               SwitchCtrl_Global::getPortsByLocalId(portList, inPort);
                                           }
                                           if (portList.size() == 0){
@@ -334,9 +334,9 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           else if ((outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                                               portList.push_back(outPort & 0xffff);
                                           else {
-                                              const DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                              DRAGON_UNI_Object* uni = (DRAGON_UNI_Object*)psb.getDRAGON_UNI_Object();
                                               if (uni && uni->getDestTNA().local_id == UNI_AUTO_TAGGED_LCLID)
-                                                  outPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getEgressCtrlChannel().name);
+                                                  outPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getEgressCtrlChannel().name);
                                               SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
                                           }
                                           if (portList.size() == 0){
@@ -522,9 +522,9 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                           portList.push_back(inPort & 0xffff);
                                       else
                                       {
-                                          const DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                          DRAGON_UNI_Object* uni = (DRAGON_UNI_Object*)psb.getDRAGON_UNI_Object();
                                           if (uni && uni->getSrcTNA().local_id == UNI_AUTO_TAGGED_LCLID)
-                                              inPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getIngressCtrlChannel().name);
+                                              inPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getIngressCtrlChannel().name);
                                           SwitchCtrl_Global::getPortsByLocalId(portList, inPort);
                                       }
                                       if (portList.size() == 0){
@@ -566,9 +566,9 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                           portList.push_back(outPort & 0xffff);
                                       else
                                       {
-                                          const DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                          DRAGON_UNI_Object* uni = (DRAGON_UNI_Object*)psb.getDRAGON_UNI_Object();
                                           if (uni && uni->getDestTNA().local_id == UNI_AUTO_TAGGED_LCLID)
-                                              outPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getEgressCtrlChannel().name);
+                                              outPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getEgressCtrlChannel().name);
                                           SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
                                       }
                                       if (portList.size() == 0){
