@@ -521,6 +521,16 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
                 msg.getSENDER_TSPEC_Object().get_r(),
                 vtag, srcLocalId, destLocalId);
 	 if (ero) {
+            if (uni && uni->vlanTag.vtag == ANY_VTAG)
+            {`
+                assert (vtag != ANY_VTAG); //the vtag should have been reassigned
+                //uni->srcTNA.local_id = srcLocalId; //The ANY_VTAG indicated to be used by MPLS module
+                //uni->destTNA.local_id = destLocalId; // for re-mapping edge ports  @@@@
+                uni->vlanTag.vtag = vtag;
+                //@@@@ update ==> the next search will miss target?
+                //(uint32)msg.getSESSION_Object().setTunnelId((uint16)vtag);
+            }
+
             //keeping the returned ero for reuse in future
             struct ero_search_entry *entry = new (struct ero_search_entry);
             memset (entry, 0, sizeof(struct ero_search_entry));
@@ -532,15 +542,8 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
             entry->index.lsp_id = (uint32)msg.getSENDER_TEMPLATE_Object().getLspId();
             entry->index.bw = (float)((const TSpec &)msg.getSENDER_TSPEC_Object()).get_r();
             eroSearchList.push_back(entry);
+            //using  Session pointer as unique ref ID???
 
-            if (uni && uni->vlanTag.vtag == ANY_VTAG)
-            {`
-                assert (vtag != ANY_VTAG); //the vtag should have been reassigned
-                //uni->srcTNA.local_id = srcLocalId; //The ANY_VTAG indicated to be used by MPLS module
-                //uni->destTNA.local_id = destLocalId; // for re-mapping edge ports 
-                //@@@@ use some special type of srcTNA.local_id and destTNA.local_id????
-                uni->vlanTag.vtag = vtag; 
-            }
 	 }
 	 else
 	 	return NULL;

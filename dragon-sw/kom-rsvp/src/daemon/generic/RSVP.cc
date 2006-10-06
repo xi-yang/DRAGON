@@ -334,6 +334,11 @@ const LogicalInterface* RSVP::findInterfaceByLocalId( const uint32& lclId ) cons
 	return NULL;
 }
 
+uint32 RSVP::getLocalIdByIfName(char* name) const {
+    String sName((const char*)name);
+    const LogicalInterface* lif = findInterfaceByName(sName);
+    return lif->getLocalId();
+}
 
 #if defined(NS2)
 const LogicalInterface* RSVP::findInterfaceByOif( const String& oif ) const {

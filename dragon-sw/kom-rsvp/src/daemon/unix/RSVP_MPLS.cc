@@ -296,7 +296,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           else if ((inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                                               portList.push_back(inPort & 0xffff);
                                           else {
-                                              DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                              const DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
                                               if (uni && uni->getSrcTNA().local_id == UNI_AUTO_TAGGED_LCLID)
                                                   inPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getIngressCtrlChannel().name);
                                               SwitchCtrl_Global::getPortsByLocalId(portList, inPort);
@@ -334,7 +334,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           else if ((outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                                               portList.push_back(outPort & 0xffff);
                                           else {
-                                              DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                              const DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
                                               if (uni && uni->getDestTNA().local_id == UNI_AUTO_TAGGED_LCLID)
                                                   outPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getEgressCtrlChannel().name);
                                               SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
@@ -522,7 +522,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                           portList.push_back(inPort & 0xffff);
                                       else
                                       {
-                                          DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                          const DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
                                           if (uni && uni->getSrcTNA().local_id == UNI_AUTO_TAGGED_LCLID)
                                               inPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getIngressCtrlChannel().name);
                                           SwitchCtrl_Global::getPortsByLocalId(portList, inPort);
@@ -562,11 +562,11 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                       uint32 outPort = (*iter).outPort;
                                       if ((outPort >> 16) == LOCAL_ID_TYPE_NONE)
                                          portList.push_back(outPort);
-                                      else if ((port >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+                                      else if ((outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                                           portList.push_back(outPort & 0xffff);
                                       else
                                       {
-                                          DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                          const DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
                                           if (uni && uni->getDestTNA().local_id == UNI_AUTO_TAGGED_LCLID)
                                               outPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getEgressCtrlChannel().name);
                                           SwitchCtrl_Global::getPortsByLocalId(portList, outPort);

@@ -113,6 +113,8 @@ public:
 		return NULL;
 	}
 
+	uint32 getLocalIdByIfName(char* name) const;
+
 #if defined(NS2)
 	const LogicalInterface* findInterfaceByOif( const String& ) const;
 #endif

@@ -251,9 +251,27 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 				zUpcallParam.session = (void*)&iter;
 			else
 				zUpcallParam.session = NULL;
+
 			SENDER_TEMPLATE_Object stm = SENDER_TEMPLATE_Object(msg.getSENDER_TEMPLATE_Object());
 			zUpcallParam.senderTemplate = (void*)&stm;
 		}
+              if(msg.getDRAGON_UNI_Object())
+              {
+                   zUpcallParam.dragonUniPara = new (struct _Dragon_Uni_Para);
+                   zUpcallParam.dragonUniPara->srcLocalId = msg.getDRAGON_UNI_Object().getSrcTNA().local_id;
+                   zUpcallParam.dragonUniPara->destLocalId = msg.getDRAGON_UNI_Object().getDestTNA().local_id;
+                   zUpcallParam.dragonUniPara->vlanTag = msg.getDRAGON_UNI_Object().getVlanTag().vtag
+                   memcpy(zUpcallParam.dragonUniPara->ingressChannel, msg.getDRAGON_UNI_Object().getIngressCtrlChannel().name, 12);
+                   memcpy(zUpcallParam.dragonUniPara->egressChannel, msg.getDRAGON_UNI_Object().getEgressCtrlChannel().name, 12);
+                   zUpcallParam.dragonUni = (void*)msg.getDRAGON_UNI_Object();
+              }
+              else
+              {
+                   zUpcallParam.dragonUniPara = NULL;
+                   zUpcallParam.dragonUni = NULL;
+
+              }
+
 		upcall(&zUpcallParam); //upcall to Zebra
 	}
 
@@ -365,7 +383,7 @@ void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port
 
 void RSVP_API::createReservation( SessionId iter, bool confRequest,
 	FilterStyle style, const FlowDescriptorList& fdList,
-	const POLICY_DATA_Object* policyData ) {
+	const POLICY_DATA_Object* policyData, DRAGON_UNI_Object* dragonUni) {
 	Message message( Message::Resv, 127, **iter );
 
 	message.setRSVP_HOP_Object( *apiLif );
@@ -380,7 +398,9 @@ void RSVP_API::createReservation( SessionId iter, bool confRequest,
 		}
 		message.addFILTER_SPEC_Objects( (*flowdescIter).filterSpecList );
 	}
-       //$$$$ Add DRAGON_UNI_Object if applicable
+
+       if (dragonUni)
+            message.setDRAGON_UNI_Object(*dragonUni)
 	apiLif->sendMessage( message, NetAddress(0), apiLif->getLocalAddress() );
 }
 
@@ -649,8 +669,7 @@ void zInitRsvpResvRequest(void* api, struct _rsvp_upcall_parameter* upcallPara)
 		}
 	}
        //$$$$ Add DRAGON_UNI_Object if applicable
-	((RSVP_API*)api)->createReservation( *((RSVP_API::SessionId*)(upcallPara->session)), false, FF, fdList);
-
+	((RSVP_API*)api)->createReservation( *((RSVP_API::SessionId*)(upcallPara->session)), false, FF, fdList, NULL, (DRAGON_UNI_Object*)upcallPara->dragonUni);
 }
 
 void zTearRsvpPathRequest(void* api, struct _sessionParameters* para)

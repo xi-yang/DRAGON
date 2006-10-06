@@ -57,11 +57,12 @@ struct _rsvp_upcall_parameter {
 	uint8 lspEncodingType; //LSP encoding type
 	uint8 switchingType; // LSP switching type
 	uint16 gPid;		//G-Pid
+       struct _Dragon_Uni_Para* dragonUniPara;
 	void* sendTSpec;  //Sender TSpec
 	void* adSpec;
 	void* session;	//RSVP_API::SessionId
 	void* senderTemplate;
-       void* dragonUni;
+	void* dragonUni;
 	uint8 code;			//error/success code
 };
 typedef void (*zUpcall)(void* para);
@@ -226,7 +227,8 @@ public:
 		createSender( session, 0, port, tspec, labelReqObj, ero, uni, labelSet, ssAttrib, upstreamLabel, TTL, adSpec, policyData, reserve, senderRecvPort, recvSendPort );
 	}
 	void createReservation( SessionId, bool confRequest, FilterStyle,
-		const FlowDescriptorList&, const POLICY_DATA_Object* policyData = NULL );
+		const FlowDescriptorList&, const POLICY_DATA_Object* policyData = NULL, 
+		DRAGON_UNI_Object* dragonUni = NULL);
 	void releaseSession( SessionId );
 	void releaseSession( SESSION_Object& session ) ;
 	void releaseSender( SessionId, const NetAddress&, uint16 port, uint8 TTL );
