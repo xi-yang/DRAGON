@@ -129,6 +129,8 @@ public:
 	NetAddress& getSwitchInetAddr() {return switchInetAddr;}
 	bool isValidSession() const {return active;}
 
+	bool resetVtagBitMask(uint8* bitmask); //reset bits corresponding to existing vlans
+
 	virtual bool connectSwitch();
 	virtual void disconnectSwitch();
 	virtual bool getSwitchVendorInfo();
@@ -251,6 +253,9 @@ public:
 	void addSlotEntry(slot_entry &se) { slotList.push_back(se); }
 	uint16 getSlotType(uint16 slot_num);
 
+	/*services for narbClient*/
+	bool getVtagBitMask(uint8* bitmask);
+
 protected:
 	SwitchCtrl_Global();
 	SwitchCtrl_Global(const SwitchCtrl_Global& obj);
@@ -308,6 +313,10 @@ inline void RevertWordBytes(uint32& x)
 	x = (x<<24) | (x>>24) | ((x&0x00ff0000)>>8) | ((x&0x0000ff00)<<8);
 }
 
+//macros for seeting VLAN bitmask
+#define HAS_VLAN(P, VID) ((P[VID/8] & (0x80 >> (VID-1)%8)) != 0)
+#define SET_VLAN(P, VID) P[VID/8] = (P[VID/8] | (0x80 >> (VID-1)%8))
+#define RESET_VLAN(P, VID) P[VID/8] = (P[VID/8] & ~(0x80 >> (VID-1)%8))
 
 #endif //#ifndef _SWITCHCTRL_GLOBAL_H_
 

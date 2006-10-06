@@ -302,9 +302,10 @@ static int buildNarbEroTlv (char *buf, EXPLICIT_ROUTE_Object* ero)
 static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLocalId, uint32 destLocalId, EXPLICIT_ROUTE_Object* ero = NULL)
 {
     char buf[1024];
+    memset(buf, 0, sizeof(buf));
     struct narb_api_msg_header* msgheader = (struct narb_api_msg_header*)buf;
     uint16 bodylen = sizeof(struct msg_app2narb_request);
-    struct msg_app2narb_request* msgbody = (struct msg_app2narb_request*)(buf + sizeof(struct narb_api_msg_header));
+    struct msg_app2narb_request* msgbody1 = (struct msg_app2narb_request*)(buf + sizeof(struct narb_api_msg_header));
 
     //construct NARB API message
     msgheader->type = htons(NARB_MSG_LSPQ);
@@ -316,13 +317,27 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
         msgheader->options |= htonl(0x30<<16); //OPT_BIDIRECTIONAL | OPT_E2E_VLAN
 
     memset(msgbody, 0, sizeof(msg_app2narb_request));
-    msgbody->type = htons(msgType); // 2 == REQUEST; 3 == CONFIRM; 4 == RELEASE
-    msgbody->length = htons(sizeof(struct msg_app2narb_request));
-    msgbody->src.s_addr = src;
-    msgbody->dest.s_addr = dest;
-    msgbody->switching_type = swtype;
-    msgbody->encoding_type = encoding;
-    msgbody->bandwidth = bandwidth;
+    msgbody1->type = htons(msgType); // 2 == REQUEST; 3 == CONFIRM; 4 == RELEASE; 5 == VTAG_MASK
+    msgbody1->length = htons(sizeof(struct msg_app2narb_request) - 4);
+    msgbody1->src.s_addr = src;
+    msgbody1->dest.s_addr = dest;
+    msgbody1->switching_type = swtype;
+    msgbody1->encoding_type = encoding;
+    msgbody1->bandwidth = bandwidth;
+
+    struct msg_app2narb_vtag_mask msgbody2  = (struct msg_app2narb_vtag_mask*)(buf + 
+        sizeof(struct narb_api_msg_header) + sizeof(struct msg_app2narb_request));
+
+    if (msgType == TLV_TYPE_NARB_REQUEST && vtag == ANY_VTAG) // Request with tag_bitmask
+    {
+        msgbody2->type = htons(TLV_TYPE_NARB_VTAG_MASK);
+        msgbody2->length = htons(sizeof(struct msg_app2narb_vtag_mask) - 4);
+        if (RSVP_Global::switchController->getVtagBitMask(msgbody2->bitmask))
+        {
+            bodylen += sizeof(struct msg_app2narb_vtag_mask);
+            msgheader->options = htonl(ntohl(msgheader->options) | (0x80<<16)); //OPT_VTAG_MASK
+        }
+    }
 
     if (ero)
     {
@@ -342,7 +357,7 @@ static void deleteNarbApiMessage(narb_api_msg_header* apiMsg)
    delete []((char*)apiMsg);
 }
     
-EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLocalId, uint32 destLocalId)
+EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLocalId, uint32& destLocalId)
 {
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
@@ -413,14 +428,30 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
         if (subobj_unum)
         {
             AbstractNode node(((subobj_unum->l_and_type>>7) == 1), NetAddress(subobj_unum->addr.s_addr), (uint32)ntohl(subobj_unum->ifid));
-      	    ero->pushBack(node);
+      	     ero->pushBack(node);
             len -= sizeof(unum_if_subobj);
             offset += sizeof(unum_if_subobj);
+            if (srcLocalId == ((LOCAL_ID_TYPE_TAGGED_GROUP<<16) | ANY_VTAG) 
+                && (ntohl(subobj_unum->ifid)>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) 
+            {
+                assert (vtag == ANY_VTAG || vtag == (0xffff&ntohl(subobj_unum->ifid));
+
+                vtag = (0xffff&ntohl(subobj_unum->ifid));
+                srcLocalId = (LOCAL_ID_TYPE_TAGGED_GROUP<<16) |vtag);
+            }
+            if (destLocalId == ((LOCAL_ID_TYPE_TAGGED_GROUP<<16) | ANY_VTAG)
+                && (ntohl(subobj_unum->ifid)>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) 
+            {
+                assert (vtag == ANY_VTAG || vtag == (0xffff&ntohl(subobj_unum->ifid));
+                    
+                vtag = (0xffff&ntohl(subobj_unum->ifid));
+                destLocalId = (LOCAL_ID_TYPE_TAGGED_GROUP<<16) |vtag);
+            }
         }
         else
         {
             AbstractNode node(((subobj_ipv4->l_and_type>>7) == 1), NetAddress(*(uint32*)subobj_ipv4->addr), (uint8)32);
-      	    ero->pushBack(node);
+      	     ero->pushBack(node);
             len -= sizeof(ipv4_prefix_subobj);
             offset += sizeof(ipv4_prefix_subobj);
         }
@@ -490,16 +521,26 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
                 msg.getSENDER_TSPEC_Object().get_r(),
                 vtag, srcLocalId, destLocalId);
 	 if (ero) {
-	        struct ero_search_entry *entry = new (struct ero_search_entry);
-	        memset (entry, 0, sizeof(struct ero_search_entry));
-	        entry->ero = ero;
-	        entry->index.dest_addr = destAddr;
-	        entry->index.tunnel_id = (uint32)msg.getSESSION_Object().getTunnelId();
-	        entry->index.ext_tunnel_id = (uint32)msg.getSESSION_Object().getExtendedTunnelId();
-	        entry->index.src_addr = srcAddr;
-	        entry->index.lsp_id = (uint32)msg.getSENDER_TEMPLATE_Object().getLspId();
-	        entry->index.bw = (float)((const TSpec &)msg.getSENDER_TSPEC_Object()).get_r();
-	        eroSearchList.push_back(entry);
+            //keeping the returned ero for reuse in future
+            struct ero_search_entry *entry = new (struct ero_search_entry);
+            memset (entry, 0, sizeof(struct ero_search_entry));
+            entry->ero = ero;
+            entry->index.dest_addr = destAddr;
+            entry->index.tunnel_id = (uint32)msg.getSESSION_Object().getTunnelId();
+            entry->index.ext_tunnel_id = (uint32)msg.getSESSION_Object().getExtendedTunnelId();
+            entry->index.src_addr = srcAddr;
+            entry->index.lsp_id = (uint32)msg.getSENDER_TEMPLATE_Object().getLspId();
+            entry->index.bw = (float)((const TSpec &)msg.getSENDER_TSPEC_Object()).get_r();
+            eroSearchList.push_back(entry);
+
+            if (uni && uni->vlanTag.vtag == ANY_VTAG)
+            {`
+                assert (vtag != ANY_VTAG); //the vtag should have been reassigned
+                //uni->srcTNA.local_id = srcLocalId; //The ANY_VTAG indicated to be used by MPLS module
+                //uni->destTNA.local_id = destLocalId; // for re-mapping edge ports 
+                //@@@@ use some special type of srcTNA.local_id and destTNA.local_id????
+                uni->vlanTag.vtag = vtag; 
+            }
 	 }
 	 else
 	 	return NULL;

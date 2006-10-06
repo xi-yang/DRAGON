@@ -813,6 +813,8 @@ public:
 #define UNI_SUBOBJ_CTRLCHAN_INGRESS 1
 #define UNI_SUBOBJ_CTRLCHAN_EGRESS 2
 
+#define UNI_AUTO_TAGGED_LCLID  0x0003ffff // ((LOCAL_ID_TYPE_TAGGED_GROUP << 16)|ANY_VTAG)
+
 struct IPv4TNA {
 	uint16 length;
 	uint8 type;

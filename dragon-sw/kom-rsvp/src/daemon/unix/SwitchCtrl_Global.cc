@@ -52,9 +52,9 @@ void SwitchCtrl_Session::disconnectSwitch()
 
 bool SwitchCtrl_Session::getSwitchVendorInfo()
 { 
-    bool ret;
+    bool ret = false;
     if (!snmp_enabled)
-        return false;
+        return ret;
 
     ret = SwitchCtrl_Global::static_getSwitchVendorInfo(snmpSessionHandle, vendor, venderSystemDescription); 
     switch (vendor) {
@@ -67,6 +67,19 @@ bool SwitchCtrl_Session::getSwitchVendorInfo()
     return ret;
 }
 
+bool SwitchCtrl_Session::resetVtagBitMask(uint8* bitmask)
+{
+    bool ret = false;
+
+    vlanPortMapList::ConstIterator iter = vlanPortMapListAll.begin();
+    for (; iter != vlanPortMapListAll.end(); ++iter) {
+        RESET_VLAN(bitmask, (*iter).vid);
+        ret = true;
+    }
+
+    return ret;
+}
+    
 bool SwitchCtrl_Session::createVLAN(uint32 &vlanID)
 {
     vlanPortMapList::ConstIterator iter;
@@ -865,6 +878,17 @@ uint16 SwitchCtrl_Global::getSlotType(uint16 slot_num)
     return SLOT_TYPE_ILLEGAL;
 }
 
+
+bool SwitchCtrl_Global::getVtagBitMask(uint8* bitmask)
+{
+    assert(bitmask!=NULL);
+    bool ret = false;
+    SwitchCtrlSessionList::Iterator it =  sessionList.begin();
+    for (; it != sessionList.end(); ++it) {
+        ret = (ret || (*it)->resetVtagBitMask(bitmask));
+    }
+    return ret;
+}
 
 //End of file : SwitchCtrl_Global.cc
 

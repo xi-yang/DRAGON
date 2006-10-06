@@ -289,20 +289,24 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 					//if (vlan){
 					if (noError){
         					PortList portList;
-                                          uint32 port = (*iter).inPort;
+                                          uint32 inPort = (*iter).inPort;
                                           uint32 taggedPorts = 0;
-                                          if ((port >> 16) == LOCAL_ID_TYPE_NONE)
-                                              portList.push_back(port);
-                                          else if ((port >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
-                                              portList.push_back(port & 0xffff);
-                                          else
-                                              SwitchCtrl_Global::getPortsByLocalId(portList, port);
+                                          if ((inPort >> 16) == LOCAL_ID_TYPE_NONE)
+                                              portList.push_back(inPort);
+                                          else if ((inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+                                              portList.push_back(inPort & 0xffff);
+                                          else {
+                                              DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                              if (uni && uni->getSrcTNA().local_id == UNI_AUTO_TAGGED_LCLID)
+                                                  inPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getIngressCtrlChannel().name);
+                                              SwitchCtrl_Global::getPortsByLocalId(portList, inPort);
+                                          }
                                           if (portList.size() == 0){
-        					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress.");
+                                                LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress.");
                                                 return false;
                                           }
                                           while (portList.size()) {
-                                                port = portList.front();
+                                                 uint32 port = portList.front(); //reuse the variable port
         						LOG(4)(Log::MPLS, "VLSR: Moving ingress port#",  port, " to VLAN #", vlan);
                                                  if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
                                                         (*sessionIter)->movePortToVLANAsTagged(port, vlan);
@@ -324,19 +328,23 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           }
                                           portList.clear();
                                           //taggedPorts = 0;
-                                          port = (*iter).outPort;
-                                          if ((port >> 16) == LOCAL_ID_TYPE_NONE)
-                                              portList.push_back(port);
-                                          else if ((port >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
-                                              portList.push_back(port & 0xffff);
-                                          else
-                                              SwitchCtrl_Global::getPortsByLocalId(portList, port);
+                                          uint32 outPort = (*iter).outPort;
+                                          if ((outPort >> 16) == LOCAL_ID_TYPE_NONE)
+                                              portList.push_back(outPort);
+                                          else if ((outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+                                              portList.push_back(outPort & 0xffff);
+                                          else {
+                                              DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                              if (uni && uni->getDestTNA().local_id == UNI_AUTO_TAGGED_LCLID)
+                                                  outPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getEgressCtrlChannel().name);
+                                              SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
+                                          }
                                           if (portList.size() == 0){
         					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
                                                 return false;
                                           }
                                           while (portList.size()) {
-                                                port = portList.front();
+                                                 uint32 port = portList.front();
         						LOG(4)(Log::MPLS, "VLSR: Moving egress port#",  port, " to VLAN #", vlan);
                                                  if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
                                                         (*sessionIter)->movePortToVLANAsTagged(port, vlan);
@@ -506,20 +514,25 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()){
                                       PortList portList;
                                       uint32 vlanID;
-                                      uint32 port = (*iter).inPort;
+                                      uint32 inPort = (*iter).inPort;
 
-                                      if ((port >> 16) == LOCAL_ID_TYPE_NONE)
-                                         portList.push_back(port);
-                                      else if ((port >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
-                                          portList.push_back(port & 0xffff);
+                                      if ((inPort >> 16) == LOCAL_ID_TYPE_NONE)
+                                         portList.push_back(inPort);
+                                      else if ((inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+                                          portList.push_back(inPort & 0xffff);
                                       else
-                                          SwitchCtrl_Global::getPortsByLocalId(portList, port);
+                                      {
+                                          DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                          if (uni && uni->getSrcTNA().local_id == UNI_AUTO_TAGGED_LCLID)
+                                              inPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getIngressCtrlChannel().name);
+                                          SwitchCtrl_Global::getPortsByLocalId(portList, inPort);
+                                      }
                                       if (portList.size() == 0){
     					       LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress.");
                                           continue;
                                       }
                                       while (portList.size()) {
-                                            port = portList.front();
+                                            uint32 port = portList.front();
                                             vlanID = (*iter).vlanTag;
                                             if (vlanID ==0)
                                                 vlanID = (*sessionIter)->getActiveVlanId(port);
@@ -546,19 +559,24 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                             portList.pop_front();
                                       }
                                       portList.clear();
-                                      port = (*iter).outPort;
-                                      if ((port >> 16) == LOCAL_ID_TYPE_NONE)
-                                         portList.push_back(port);
+                                      uint32 outPort = (*iter).outPort;
+                                      if ((outPort >> 16) == LOCAL_ID_TYPE_NONE)
+                                         portList.push_back(outPort);
                                       else if ((port >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
-                                          portList.push_back(port & 0xffff);
+                                          portList.push_back(outPort & 0xffff);
                                       else
-                                          SwitchCtrl_Global::getPortsByLocalId(portList, port);
+                                      {
+                                          DRAGON_UNI_Object* uni = psb.getDRAGON_UNI_Object();
+                                          if (uni && uni->getDestTNA().local_id == UNI_AUTO_TAGGED_LCLID)
+                                              outPort = RSVP_Global::rsvp->getLocalIdByIfName(uni->getEgressCtrlChannel().name);
+                                          SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
+                                      }
                                       if (portList.size() == 0){
     					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
                                             continue;
                                       }
                                       while (portList.size()) {
-                                            port = portList.front();
+                                            uint32 port = portList.front();
                                             vlanID = (*iter).vlanTag;
                                             if (vlanID ==0)
                                                 vlanID = (*sessionIter)->getActiveVlanId(port);

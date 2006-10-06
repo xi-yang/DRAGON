@@ -48,8 +48,8 @@ typedef SortableList<API_StateBlock*,SESSION_Object*> ApiStateBlockList;
 
 struct _rsvp_upcall_parameter {
 	in_addr destAddr;	//tunnelAddress
-	uint16 destPort;		//tunnelID
 	in_addr srcAddr;	//extendedTunnelID
+	uint16 destPort;		//tunnelID
 	uint16 srcPort;	//lsp-id
 	const char* name;		//Name of the LSP
 	uint32 upstreamLabel;		//!=0 if bi-dir
@@ -61,6 +61,7 @@ struct _rsvp_upcall_parameter {
 	void* adSpec;
 	void* session;	//RSVP_API::SessionId
 	void* senderTemplate;
+       void* dragonUni;
 	uint8 code;			//error/success code
 };
 typedef void (*zUpcall)(void* para);

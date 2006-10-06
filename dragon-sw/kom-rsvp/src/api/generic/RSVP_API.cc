@@ -380,6 +380,7 @@ void RSVP_API::createReservation( SessionId iter, bool confRequest,
 		}
 		message.addFILTER_SPEC_Objects( (*flowdescIter).filterSpecList );
 	}
+       //$$$$ Add DRAGON_UNI_Object if applicable
 	apiLif->sendMessage( message, NetAddress(0), apiLif->getLocalAddress() );
 }
 
@@ -647,6 +648,7 @@ void zInitRsvpResvRequest(void* api, struct _rsvp_upcall_parameter* upcallPara)
 			return;
 		}
 	}
+       //$$$$ Add DRAGON_UNI_Object if applicable
 	((RSVP_API*)api)->createReservation( *((RSVP_API::SessionId*)(upcallPara->session)), false, FF, fdList);
 
 }

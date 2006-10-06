@@ -74,6 +74,24 @@ struct msg_app2narb_request
     float bandwidth;
 };
 
+#define MAX_VLAN_NUM 4096
+// APP->NARB optional constraint structs
+struct msg_app2narb_vtag_mask
+{
+    u_int16_t type;
+    u_int16_t length;
+    u_char bitmask[MAX_VLAN_NUM/8];
+};
+
+// each NARB<->APP contains a TLV in its message body
+enum  narb_tlv_type
+{
+    TLV_TYPE_NARB_REQUEST = 0x02,
+    TLV_TYPE_NARB_ERO = 0x03,
+    TLV_TYPE_NARB_ERROR_CODE = 0x04,
+    TLV_TYPE_NARB_VTAG_MASK = 0x05,
+};
+
 #define NARB_MSG_CHKSUM(X) (((u_int32_t*)&X)[0] + ((u_int32_t*)&X)[1] + ((u_int32_t*)&X)[2])
 #define ANY_VTAG 0xffff
 
@@ -112,7 +130,7 @@ public:
 	int doConnect();
 	void disconnect();
 	bool active();
-	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLclId, uint32 destLclId);
+	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLclId, uint32& destLclId);
 	EXPLICIT_ROUTE_Object* getExplicitRoute(const Message& msg);
 	//EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 src_addr, uint32 dest_addr, uint32 lsp_id, uint32 tunnel_id, uint32 ext_tunnel_id);
 	EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id);
