@@ -858,9 +858,9 @@ void  rsvpUpcall(void* para)
 				lsp->status = LSP_IS;
                             /* update LSP */
                             lsp->common.DragonUni_Para = p->dragonUniPara;
-                            lsp->dragon.srcLocalId = lsp->common.DragonUni_Para.srcLocalId;
-                            lsp->dragon.destLocalId = lsp->common.DragonUni_Para.destLocalId;
-                            lsp->dragon.lspVtag = lsp->common.DragonUni_Para.vlanTag;
+                            lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
+                            lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
+                            lsp->dragon.lspVtag = lsp->common.DragonUni_Para->vlanTag;
                      }
 
 			break;
