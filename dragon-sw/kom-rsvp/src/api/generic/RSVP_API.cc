@@ -258,11 +258,11 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
               if(msg.getDRAGON_UNI_Object())
               {
                    zUpcallParam.dragonUniPara = new (struct _Dragon_Uni_Para);
-                   zUpcallParam.dragonUniPara->srcLocalId = msg.getDRAGON_UNI_Object().getSrcTNA().local_id;
-                   zUpcallParam.dragonUniPara->destLocalId = msg.getDRAGON_UNI_Object().getDestTNA().local_id;
-                   zUpcallParam.dragonUniPara->vlanTag = msg.getDRAGON_UNI_Object().getVlanTag().vtag
-                   memcpy(zUpcallParam.dragonUniPara->ingressChannel, msg.getDRAGON_UNI_Object().getIngressCtrlChannel().name, 12);
-                   memcpy(zUpcallParam.dragonUniPara->egressChannel, msg.getDRAGON_UNI_Object().getEgressCtrlChannel().name, 12);
+                   zUpcallParam.dragonUniPara->srcLocalId = msg.getDRAGON_UNI_Object()->getSrcTNA().local_id;
+                   zUpcallParam.dragonUniPara->destLocalId = msg.getDRAGON_UNI_Object()->getDestTNA().local_id;
+                   zUpcallParam.dragonUniPara->vlanTag = msg.getDRAGON_UNI_Object()->getVlanTag().vtag;
+                   memcpy(zUpcallParam.dragonUniPara->ingressChannel, msg.getDRAGON_UNI_Object()->getIngressCtrlChannel().name, 12);
+                   memcpy(zUpcallParam.dragonUniPara->egressChannel, msg.getDRAGON_UNI_Object()->getEgressCtrlChannel().name, 12);
                    zUpcallParam.dragonUni = (void*)msg.getDRAGON_UNI_Object();
               }
               else
@@ -400,7 +400,7 @@ void RSVP_API::createReservation( SessionId iter, bool confRequest,
 	}
 
        if (dragonUni)
-            message.setDRAGON_UNI_Object(*dragonUni)
+            message.setDRAGON_UNI_Object(*dragonUni);
 	apiLif->sendMessage( message, NetAddress(0), apiLif->getLocalAddress() );
 }
 
