@@ -863,7 +863,7 @@ void  rsvpUpcall(void* para)
 				/* send RESV message to RSVPD to set up the path */
 				zInitRsvpResvRequest(dmaster.api, para);
 				lsp->status = LSP_IS;
-                            /* update LSP */
+                            /* update LSP baed on DRAGON UNI Object */
                             if (p->dragonUniPara) {
                                 lsp->common.DragonUni_Para = p->dragonUniPara;
                                 lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
@@ -878,6 +878,13 @@ void  rsvpUpcall(void* para)
 		case ResvConf:
 			/* Update the status of the LSP */
 			lsp->status = LSP_IS;
+                     /* update LSP baed on DRAGON UNI Object */
+			if (p->dragonUniPara) {
+				lsp->common.DragonUni_Para = p->dragonUniPara;
+				lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
+				lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
+				lsp->dragon.lspVtag = lsp->common.DragonUni_Para->vlanTag;
+                     }
 
 			if (lsp->narb_fd && (!(lsp->flag & LSP_FLAG_RECEIVER)))
 			{
