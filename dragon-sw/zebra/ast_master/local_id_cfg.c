@@ -118,19 +118,19 @@ process_id_result(struct application_cfg *working_app_cfg, struct id_cfg_res* re
   struct local_id_cfg *old_cfg, *new_cfg;
   int found, ret_val = 1;
 
-  if (!glob_app_cfg->node_list) {
+  if (!working_app_cfg->node_list) {
     zlog_err("process_id_result: no resource in the file");
     res->status = AST_FAILURE;
     return 0;
   }
 
-  if (adtlist_getcount(glob_app_cfg->node_list) != 1) 
+  if (adtlist_getcount(working_app_cfg->node_list) != 1) 
     zlog_warn("process_id_result: there should be only 1 resource in the return file");
 
   /* have to found the the resource that matches "res" 
    * from the working_app_cfg.node_list 
    */
-  for (cur = glob_app_cfg->node_list->head, found = 0;
+  for (cur = working_app_cfg->node_list->head, found = 0;
 	cur && !found;
 	cur = cur->next) {
     newres = (struct id_cfg_res*) cur->data;
@@ -589,9 +589,6 @@ master_process_id(char* filename)
 
       fflush(ret_file);
       fclose(ret_file);
-
-      free_application_cfg(glob_app_cfg);
-      glob_app_cfg = NULL;
 
       if ((working_app_cfg = id_xml_parser(newpath, MASTER)) == NULL) {
 	zlog_err("master_process_id: returned file (%s) is not parsed correctly", newpath);
