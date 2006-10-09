@@ -711,7 +711,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
 
 void NARB_APIClient::addVtagInUse(const Message& msg)
 {
-    DRAGON_UNI_Object* uni = msg.getDRAGON_UNI_Object();
+    DRAGON_UNI_Object* uni = const_cast<Message&>(msg).getDRAGON_UNI_Object();
     if (uni)
     {
         uint32 vtag = uni->getVlanTag().vtag;
@@ -729,7 +729,7 @@ void NARB_APIClient::addVtagInUse(const Message& msg)
 
 void NARB_APIClient::removeVtagInUse(const Message& msg)
 {
-    DRAGON_UNI_Object* uni = msg.getDRAGON_UNI_Object();
+    DRAGON_UNI_Object* uni = const_cast<Message&>(msg).getDRAGON_UNI_Object();
     if (uni)
     {
         uint32 vtag = uni->getVlanTag().vtag;
@@ -750,7 +750,7 @@ void NARB_APIClient::resetCurrentVtags(uint8* bitmask)
     UsedVtagList::Iterator it = vtagsInUse.begin();
     for (; it != vtagsInUse.end(); ++it)
     {
-        RESET_VLAN(bitmask, *it)
+        RESET_VLAN(bitmask, *it);
     }
 }
 
