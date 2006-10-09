@@ -1088,6 +1088,9 @@ DEFUN (dragon_set_lsp_vtag_default,
     else
         lsp->dragon.lspVtag = ANY_VTAG;
 
+    if (lsp->common.DragonUni_Para)
+	lsp->common.DragonUni_Para->vlanTag = lsp->dragon.lspVtag;
+
     return CMD_SUCCESS;
 }
 
