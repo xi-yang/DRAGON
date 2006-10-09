@@ -556,7 +556,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 						if (!narbClient->active())
 							narbClient->doConnect();
 						if (narbClient->active()) {
-			                            explicitRoute = narbClient->getExplicitRoute(msg);
+			                            explicitRoute = narbClient->getExplicitRoute(msg, (void*)this);
 							if (explicitRoute) {
                        					if (!narbClient->handleRsvpMessage(msg)) {
                                                     		LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");

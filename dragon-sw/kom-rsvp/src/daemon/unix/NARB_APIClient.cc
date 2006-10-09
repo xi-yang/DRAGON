@@ -484,7 +484,7 @@ _RETURN:
     return ero;
 }
 
-EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
+EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void* ss_ptr)
 {
     uint32 srcAddr = 0, destAddr = 0, srcLocalId = 0, destLocalId = 0, vtag = 0;
     DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
@@ -512,7 +512,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
 
     EXPLICIT_ROUTE_Object* ero = lookupExplicitRoute(destAddr, 
             (uint32)msg.getSESSION_Object().getTunnelId(),
-            (uint32)msg.getSESSION_Object().getExtendedTunnelId() );
+            (uint32)msg.getSESSION_Object().getExtendedTunnelId(), ss_ptr);
 
     if (!ero) {
         ero = getExplicitRoute(srcAddr, destAddr, msg.getLABEL_REQUEST_Object().getSwitchingType(), 
@@ -540,9 +540,8 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
             entry->index.src_addr = srcAddr;
             entry->index.lsp_id = (uint32)msg.getSENDER_TEMPLATE_Object().getLspId();
             entry->index.bw = (float)((const TSpec &)msg.getSENDER_TSPEC_Object()).get_r();
+            entry->session_ptr = ss_ptr;  //using  Session pointer as unique ref ID
             eroSearchList.push_back(entry);
-            //using  Session pointer as unique ref ID???
-
 	 }
 	 else
 	 	return NULL;
@@ -556,15 +555,14 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg)
 }
 
 
-EXPLICIT_ROUTE_Object* NARB_APIClient::lookupExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id)
+EXPLICIT_ROUTE_Object* NARB_APIClient::lookupExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id, void* session_ptr)
 {
     struct ero_search_entry target;
     memset(&target, 0, sizeof(struct ero_search_entry));
     target.index.dest_addr = dest_addr;
     target.index.tunnel_id = tunnel_id;
     target.index.ext_tunnel_id = ext_tunnel_id;
-    //target.index.src_addr = src_addr;
-    //target.index.lsp_id = lsp_id;
+    target.session_ptr = session_ptr;
 
     EroSearchList::Iterator iter = eroSearchList.begin();
     for ( ; iter != eroSearchList.end(); ++iter)

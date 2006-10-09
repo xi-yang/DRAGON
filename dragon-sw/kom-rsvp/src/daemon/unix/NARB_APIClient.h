@@ -107,15 +107,22 @@ struct ero_search_entry
 		uint32 lsp_id;
 		float bw;
 	} index;
+	void * session_ptr;
 	EXPLICIT_ROUTE_Object *ero;
 };
 extern inline bool operator== (struct ero_search_entry& a, struct ero_search_entry& b)
 {
-	return (memcmp(&a.index, &b.index, 12) == 0);
+	if (a.session_ptr == NULL || b.session_ptr == NULL)
+		return (memcmp(&a.index, &b.index, 12) == 0);
+	else
+		return (memcmp(&a.index, &b.index, 12) == 0 && a.session_ptr == b.session_ptr);
 }
 extern inline bool operator!= (struct ero_search_entry& a, struct ero_search_entry& b)
 {
-	return (memcmp(&a.index, &b.index, 12) != 0);
+	if (a.session_ptr == NULL || b.session_ptr == NULL)
+		return (memcmp(&a.index, &b.index, 12) != 0);
+	else 
+		return (memcmp(&a.index, &b.index, 12) != 0 || a.session_ptr == b.session_ptr);
 }
 
 typedef SimpleList<struct ero_search_entry*> EroSearchList;
@@ -131,9 +138,9 @@ public:
 	void disconnect();
 	bool active();
 	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLclId, uint32& destLclId);
-	EXPLICIT_ROUTE_Object* getExplicitRoute(const Message& msg);
+	EXPLICIT_ROUTE_Object* getExplicitRoute(const Message& msg, void* ss_ptr = NULL);
 	//EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 src_addr, uint32 dest_addr, uint32 lsp_id, uint32 tunnel_id, uint32 ext_tunnel_id);
-	EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id);
+	EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id, void* session_ptr = NULL);
 	struct ero_search_entry* lookupEntry(EXPLICIT_ROUTE_Object* ero);
 	void removeExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id);
 	void removeExplicitRoute( EXPLICIT_ROUTE_Object* ero );
