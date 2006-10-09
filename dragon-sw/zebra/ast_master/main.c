@@ -1398,24 +1398,6 @@ master_accept(struct thread *thread)
 	glob_app_cfg->clnt_sock = clntSock;
       }
 
-#ifdef FIONA
-      if (glob_app_cfg->org_action != APP_COMPLETE && 
-	  glob_app_cfg->org_action != AST_COMPLETE && 
-	  glob_app_cfg->org_action != SETUP_RESP) {
-
-	/* send result back to ast_master
-	 */
-	if (stat(AST_XML_RESULT, &file_stat) == -1) {
-      
-	  /* build the xml result file */ 
-	  glob_app_cfg->status = AST_FAILURE; 
-	  print_error_response(AST_XML_RESULT); 
-	  free_application_cfg(glob_app_cfg);
-	}
-      }
-      glob_app_cfg = NULL;
-#endif
-
       break;
 
     case ID_XML:

@@ -108,9 +108,8 @@ struct application_cfg {
   struct adtlist *link_list;
 };
 
-enum node_stype { es = 1, vlsr, proxy };
+enum node_stype { PC = 1, correlator, computation_array };
 enum link_stype { uni = 1, non_uni, vlsr_vlsr, vlsr_es };
-enum entity_type { PC = 1, correlator, computation_array };
 
 struct if_ip {
   char *iface;
@@ -152,14 +151,15 @@ struct link_cfg {
   char gpid[REG_TXT_FIELD_LEN+1];
 };
 
-#define FLAG_SETUP_REQ		0x01
-#define FLAG_SETUP_RESP		0x02
-#define FLAG_AST_COMPLETE	0x04
-#define FLAG_APP_COMPLETE	0x08
-#define FLAG_RELEASE_REQ	0x10
-#define FLAG_RELEASE_RESP	0x20
-#define FLAG_QUERY_REQ		0x40
-#define FLAG_QUERY_RESP		0x80
+#define FLAG_SETUP_REQ		0x0001
+#define FLAG_SETUP_RESP		0x0002
+#define FLAG_AST_COMPLETE	0x0004
+#define FLAG_APP_COMPLETE	0x0008
+#define FLAG_RELEASE_REQ	0x0010
+#define FLAG_RELEASE_RESP	0x0020
+#define FLAG_QUERY_REQ		0x0040
+#define FLAG_QUERY_RESP		0x0080
+#define FLAG_UNFIXED		0x1000
 
 #define IS_SET_SETUP_REQ(X)	((X) & FLAG_SETUP_REQ)
 #define IS_SET_SETUP_RESP(X)	((X) & FLAG_SETUP_RESP)
@@ -167,14 +167,15 @@ struct link_cfg {
 #define IS_SET_APP_COMPLETE(X)	((X) & FLAG_APP_COMPLETE)
 #define IS_SET_RELEASE_REQ(X)	((X) & FLAG_RELEASE_REQ)
 #define IS_SET_RELEASE_RESP(X)	((X) & FLAG_RELEASE_RESP)
+#define IS_RES_UNFIXED(X)	((X) & FLAG_UNFIXED)
 
 struct resource {
-  int type;		/* indicate this is link or node */
+  int type;			/* indicate this is link or node */
   int noded_sock;		/* sock to connect to the minions */
   int dragon_sock;
   char name[NODENAME_MAXLEN + 1];
   int status;
-  u_int16_t flags;
+  u_int32_t flags;
   char *agent_message;
 
   union {

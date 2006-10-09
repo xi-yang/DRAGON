@@ -15,7 +15,7 @@
 #define RESOURCE_REC	"/tmp/resource.xml"
 #endif
 
-char *entity_type_name[] =
+char *node_stype_name[] =
   { "None",
     "PC",
     "correlator",
@@ -42,12 +42,6 @@ char *link_stype_name[] =
     "non_uni",
     "vlsr_vlsr",
     "vlsr_es" };
-
-char *node_stype_name[] = 
-  { "none",
-    "es",
-    "vlsr", 
-    "proxy" };
 
 struct string_syntex_check local_field =
 {
