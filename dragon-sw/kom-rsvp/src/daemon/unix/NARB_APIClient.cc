@@ -332,7 +332,7 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
         msgbody2->type = htons(TLV_TYPE_NARB_VTAG_MASK);
         msgbody2->length = htons(sizeof(struct msg_app2narb_vtag_mask) - 4);
         memset(msgbody2->bitmask, 0xff, MAX_VLAN_NUM/8);
-        if (RSVP_Global::switchController->getVtagBitMask(msgbody2->bitmask))
+        if (RSVP_Global::switchController->getVtagBitMask(msgbody2->bitmask)) // Always adding (reset) vlan bits without removals (set)
         {
             bodylen += sizeof(struct msg_app2narb_vtag_mask);
             msgheader->options = htonl(ntohl(msgheader->options) | (0x80<<16)); //OPT_VTAG_MASK
