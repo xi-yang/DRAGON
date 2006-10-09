@@ -152,7 +152,6 @@ public:
 	static bool operational();
 	static String _host;
 	static int _port;
-
 private:
 	int fd;
 	uint32 lastState; // last state == last processed message type ...

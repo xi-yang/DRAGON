@@ -331,6 +331,7 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
     {
         msgbody2->type = htons(TLV_TYPE_NARB_VTAG_MASK);
         msgbody2->length = htons(sizeof(struct msg_app2narb_vtag_mask) - 4);
+        memset(msgbody2->bitmask, 0xff, MAX_VLAN_NUM/8);
         if (RSVP_Global::switchController->getVtagBitMask(msgbody2->bitmask))
         {
             bodylen += sizeof(struct msg_app2narb_vtag_mask);
@@ -355,7 +356,7 @@ static void deleteNarbApiMessage(narb_api_msg_header* apiMsg)
 {
    delete []((char*)apiMsg);
 }
-    
+
 EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLocalId, uint32& destLocalId)
 {
     char buf[1024];
@@ -380,12 +381,11 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     }
     else if (len ==0)
     {
-
        disconnect();
 	LOG(1)(Log::Routing, "connection closed for NARB_APIClient in ::getExplicitRoute.");
         goto _RETURN;
     }
-    else if (len != sizeof(struct narb_api_msg_header)+sizeof(struct msg_app2narb_request))
+    else if (len != sizeof(struct narb_api_msg_header)+ntohs(msgheader->length))
     {
         LOG(2)(Log::Routing, "NARB_APIClient::getExplicitRoute cannot write the message to: ", fd);
         goto _RETURN; 
