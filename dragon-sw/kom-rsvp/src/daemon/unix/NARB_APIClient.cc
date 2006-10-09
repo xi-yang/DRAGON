@@ -430,20 +430,20 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
       	     ero->pushBack(node);
             len -= sizeof(unum_if_subobj);
             offset += sizeof(unum_if_subobj);
-            if (srcLocalId == ((LOCAL_ID_TYPE_TAGGED_GROUP<<16) | ANY_VTAG) 
-                && (ntohl(subobj_unum->ifid)>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) 
+            if (vtag == ANY_VTAG)
             {
-                assert (vtag == ANY_VTAG || vtag == (0xffff&ntohl(subobj_unum->ifid)));
-
                 vtag = (0xffff&ntohl(subobj_unum->ifid));
+            }
+            if (srcLocalId == ((LOCAL_ID_TYPE_TAGGED_GROUP<<16) | ANY_VTAG) 
+                && (ntohl(subobj_unum->ifid)>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
+                && (vtag != ANY_VTAG && vtag > 0) )
+            {
                 srcLocalId = ((LOCAL_ID_TYPE_TAGGED_GROUP<<16) |vtag);
             }
             if (destLocalId == ((LOCAL_ID_TYPE_TAGGED_GROUP<<16) | ANY_VTAG)
-                && (ntohl(subobj_unum->ifid)>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) 
+                && (ntohl(subobj_unum->ifid)>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
+                && (vtag != ANY_VTAG && vtag > 0) )
             {
-                assert (vtag == ANY_VTAG || vtag == (0xffff&ntohl(subobj_unum->ifid)));
-                    
-                vtag = (0xffff&ntohl(subobj_unum->ifid));
                 destLocalId = ((LOCAL_ID_TYPE_TAGGED_GROUP<<16) |vtag);
             }
         }
@@ -523,11 +523,9 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void
             if (uni && uni->getVlanTag().vtag == ANY_VTAG)
             {
                 assert (vtag != ANY_VTAG); //the vtag should have been reassigned
-                //uni->srcTNA.local_id = srcLocalId; //The ANY_VTAG indicated to be used by MPLS module
-                //uni->destTNA.local_id = destLocalId; // for re-mapping edge ports  @@@@
+                //uni->srcTNA.local_id = srcLocalId; // A tagged-group local-id with ANY_VTAG will be used by
+                //uni->destTNA.local_id = destLocalId; // the MPLS module to indicate using tagged ports at edge.
                 uni->getVlanTag().vtag = vtag;
-                //@@@@ update ==> the next search will miss target?
-                //(uint32)msg.getSESSION_Object().setTunnelId((uint16)vtag);
             }
 
             //keeping the returned ero for reuse in future
