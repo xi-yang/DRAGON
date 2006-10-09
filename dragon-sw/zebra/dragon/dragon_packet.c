@@ -822,6 +822,13 @@ void rsvpupcall_register_lsp(struct _rsvp_upcall_parameter* p)
 		zInitRsvpResvRequest(dmaster.api, p);
 		lsp->status = LSP_IS;
 	}
+        /* update LSP based on dragonUNI*/
+	if ( p->dragonUniPara) {
+		lsp->common.DragonUni_Para = p->dragonUniPara;
+		lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
+		lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
+		lsp->dragon.lspVtag = lsp->common.DragonUni_Para->vlanTag;
+	}
 }
 
 void  rsvpUpcall(void* para)
@@ -857,10 +864,12 @@ void  rsvpUpcall(void* para)
 				zInitRsvpResvRequest(dmaster.api, para);
 				lsp->status = LSP_IS;
                             /* update LSP */
-                            lsp->common.DragonUni_Para = p->dragonUniPara;
-                            lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
-                            lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
-                            lsp->dragon.lspVtag = lsp->common.DragonUni_Para->vlanTag;
+                            if (p->dragonUniPara) {
+                                lsp->common.DragonUni_Para = p->dragonUniPara;
+                                lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
+                                lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
+                                lsp->dragon.lspVtag = lsp->common.DragonUni_Para->vlanTag;
+                            }
                      }
 
 			break;
