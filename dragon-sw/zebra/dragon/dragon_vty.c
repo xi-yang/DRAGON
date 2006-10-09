@@ -914,7 +914,7 @@ DEFUN (dragon_set_lsp_ip,
         if (lid->type == type_src && lid->value == port_src)
             break;
     }    
-    if (node == NULL && type_src != LOCAL_ID_TYPE_NONE)
+    if (node == NULL && type_src != LOCAL_ID_TYPE_NONE && port_src != ANY_VTAG)
     {
         vty_out (vty, "Unregistered source %s: %s.%s",  argv[1], argv[2], VTY_NEWLINE);
         return CMD_WARNING;
