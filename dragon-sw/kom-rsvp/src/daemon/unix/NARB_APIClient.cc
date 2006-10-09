@@ -17,6 +17,7 @@ To be incorporated into KOM-RSVP-TE package
 
 String NARB_APIClient::_host = "";
 int NARB_APIClient::_port = 0;
+UsedVtagList NARB_APIClient::vtagsInUse;
 
 int readn (int fd, char *ptr, int nbytes)
 {
@@ -151,7 +152,6 @@ NARB_APIClient::~NARB_APIClient()
                 (*iter)->ero->destroy();
             delete (*iter);
     }
-
 }
 
 int NARB_APIClient::doConnect(char *host, int port)
@@ -337,6 +337,7 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
             bodylen += sizeof(struct msg_app2narb_vtag_mask);
             msgheader->options = htonl(ntohl(msgheader->options) | (0x80<<16)); //OPT_VTAG_MASK
         }
+        NARB_APIClient::resetCurrentVtags(msgbody2->bitmask);
     }
 
     if (ero)
@@ -708,6 +709,51 @@ void NARB_APIClient::releaseReservation(const Message& msg)
     deleteNarbApiMessage(msgheader);
 }
 
+void NARB_APIClient::addVtagInUse(const Message& msg)
+{
+    DRAGON_UNI_Object* uni = msg.getDRAGON_UNI_Object();
+    if (uni)
+    {
+        uint32 vtag = uni->getVlanTag().vtag;
+        if (vtag == 0 || vtag == ANY_VTAG)
+            return;
+        UsedVtagList::Iterator it = vtagsInUse.begin();
+        for (; it != vtagsInUse.end(); ++it)
+        {
+            if (*it == vtag)
+                return;
+        }
+        vtagsInUse.push_back(uni->getVlanTag().vtag);
+    }
+}
+
+void NARB_APIClient::removeVtagInUse(const Message& msg)
+{
+    DRAGON_UNI_Object* uni = msg.getDRAGON_UNI_Object();
+    if (uni)
+    {
+        uint32 vtag = uni->getVlanTag().vtag;
+        UsedVtagList::Iterator it = vtagsInUse.begin();
+        for (; it != vtagsInUse.end(); ++it)
+        {
+            if (*it == vtag)
+            {
+                vtagsInUse.erase(it);
+                return;
+            }
+        }
+    }
+}
+
+void NARB_APIClient::resetCurrentVtags(uint8* bitmask)
+{
+    UsedVtagList::Iterator it = vtagsInUse.begin();
+    for (; it != vtagsInUse.end(); ++it)
+    {
+        RESET_VLAN(bitmask, *it)
+    }
+}
+
 bool NARB_APIClient::handleRsvpMessage(const Message& msg)
 {
     bool ret = false;
@@ -715,6 +761,9 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
     uint32 currentState = (uint32)msg.getMsgType();
     switch (currentState) {
     case (uint32)Message::Path:
+
+        addVtagInUse(msg);
+
         switch(lastState) {
         case 0:
         case (uint32)Message::Path:
@@ -728,6 +777,9 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
         break;
 
     case (uint32)Message::Resv:
+
+        addVtagInUse(msg);
+
         switch(lastState) {
         case (uint32)Message::Path:
             confirmReservation(msg);
@@ -740,6 +792,9 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
         break;
 
     case (uint32)Message::PathResv:
+
+        addVtagInUse(msg);
+
         switch(lastState) {
         case 0:
             confirmReservation(msg);
@@ -750,6 +805,9 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
         break;
 
     case (uint32)Message::PathTear:
+
+        removeVtagInUse(msg);
+
         switch(lastState) {
         case (uint32)Message::Resv: 
         case (uint32)Message::PathResv:
@@ -765,6 +823,9 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
 
     case Message::PathErr:
     case Message::ResvErr:
+
+        removeVtagInUse(msg);
+
         switch(lastState) {
         case (uint32)Message::Path: 
             currentState = 0;

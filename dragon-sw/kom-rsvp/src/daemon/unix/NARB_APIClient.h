@@ -126,6 +126,7 @@ extern inline bool operator!= (struct ero_search_entry& a, struct ero_search_ent
 }
 
 typedef SimpleList<struct ero_search_entry*> EroSearchList;
+typedef SimpleList<uint32> UsedVtagList;
 
 class Message;
 class NARB_APIClient{
@@ -148,10 +149,16 @@ public:
 	void releaseReservation(const Message& msg);
 	bool handleRsvpMessage(const Message& msg);
 
+	static UsedVtagList vtagsInUse;
+	static void addVtagInUse(const Message& msg);
+	static void removeVtagInUse(const Message& msg);
+       static void resetCurrentVtags(uint8* bitmask);
+
 	static void setHostPort(const char *host, int port);
 	static bool operational();
 	static String _host;
 	static int _port;
+
 private:
 	int fd;
 	uint32 lastState; // last state == last processed message type ...
