@@ -49,8 +49,8 @@ typedef SortableList<API_StateBlock*,SESSION_Object*> ApiStateBlockList;
 struct _rsvp_upcall_parameter {
 	in_addr destAddr;	//tunnelAddress
 	in_addr srcAddr;	//extendedTunnelID
-	uint16 destPort;		//tunnelID
 	uint16 srcPort;	//lsp-id
+	uint16 destPort;		//tunnelID
 	const char* name;		//Name of the LSP
 	uint32 upstreamLabel;		//!=0 if bi-dir
 	uint32 bandwidth;	//bandwidth
