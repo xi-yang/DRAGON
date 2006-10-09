@@ -307,7 +307,7 @@ void MessageProcessor::refreshReservations() {
 			resvMsg->setRSVP_HOP_Object( (*psbIter)->getDataInRsvpHop() );
 			resvMsg->setTIME_VALUES_Object( inLif.getRefreshInterval() );
 			if ((*psbIter)->getDRAGON_UNI_Object())
-				resvMsg->setDRAGON_UNI_Object(*(*psbIter)->getDRAGON_UNI_Object());
+				resvMsg->setDRAGON_UNI_Object(*((DRAGON_UNI_Object*)(*psbIter)->getDRAGON_UNI_Object()));
 
 			if ( forwardConfirm && currentMessage.hasRESV_CONFIRM_Object() ) {
 				RESV_CONFIRM_Object confirm = currentMessage.getRESV_CONFIRM_Object();
