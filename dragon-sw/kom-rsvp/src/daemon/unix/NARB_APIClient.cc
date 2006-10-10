@@ -17,7 +17,7 @@ To be incorporated into KOM-RSVP-TE package
 
 String NARB_APIClient::_host = "";
 int NARB_APIClient::_port = 0;
-UsedVtagList NARB_APIClient::vtagsInUse;
+UsedVtagList* NARB_APIClient::vtagsInUse;
 
 int readn (int fd, char *ptr, int nbytes)
 {
@@ -717,13 +717,13 @@ void NARB_APIClient::addVtagInUse(const Message& msg)
         uint32 vtag = uni->getVlanTag().vtag;
         if (vtag == 0 || vtag == ANY_VTAG)
             return;
-        UsedVtagList::Iterator it = vtagsInUse.begin();
-        for (; it != vtagsInUse.end(); ++it)
+        UsedVtagList::Iterator it = vtagsInUse->begin();
+        for (; it != vtagsInUse->end(); ++it)
         {
             if (*it == vtag)
                 return;
         }
-        vtagsInUse.push_back(uni->getVlanTag().vtag);
+        vtagsInUse->push_back(uni->getVlanTag().vtag);
     }
 }
 
@@ -733,12 +733,12 @@ void NARB_APIClient::removeVtagInUse(const Message& msg)
     if (uni)
     {
         uint32 vtag = uni->getVlanTag().vtag;
-        UsedVtagList::Iterator it = vtagsInUse.begin();
-        for (; it != vtagsInUse.end(); ++it)
+        UsedVtagList::Iterator it = vtagsInUse->begin();
+        for (; it != vtagsInUse->end(); ++it)
         {
             if (*it == vtag)
             {
-                vtagsInUse.erase(it);
+                vtagsInUse->erase(it);
                 return;
             }
         }
@@ -747,8 +747,8 @@ void NARB_APIClient::removeVtagInUse(const Message& msg)
 
 void NARB_APIClient::resetCurrentVtags(uint8* bitmask)
 {
-    UsedVtagList::Iterator it = vtagsInUse.begin();
-    for (; it != vtagsInUse.end(); ++it)
+    UsedVtagList::Iterator it = vtagsInUse->begin();
+    for (; it != vtagsInUse->end(); ++it)
     {
         RESET_VLAN(bitmask, *it);
     }
@@ -826,7 +826,7 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
     case Message::ResvErr:
 
         //clear all VtagsInUse 
-        vtagsInUse.clear();
+        vtagsInUse->clear();
 
         switch(lastState) {
         case (uint32)Message::Path: 

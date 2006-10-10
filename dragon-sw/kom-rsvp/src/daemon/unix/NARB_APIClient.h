@@ -131,9 +131,13 @@ typedef SimpleList<uint32> UsedVtagList;
 class Message;
 class NARB_APIClient{
 public:
-	NARB_APIClient(): fd(-1), lastState(0) {}
-	NARB_APIClient(const char *host, int port): fd(-1), lastState(0) { _host = host; _port = port;}
+	NARB_APIClient() { Init(); }
+	NARB_APIClient(const char *host, int port) { _host = host; _port = port; Init(); }
 	~NARB_APIClient();
+	void Init() {
+	  fd = -1; lastState = 0;
+	  if (!vtagsInUse) vtagsInUse = new UsedVtagList;
+	}
 	int doConnect(char *host, int port);
 	int doConnect();
 	void disconnect();
@@ -149,10 +153,10 @@ public:
 	void releaseReservation(const Message& msg);
 	bool handleRsvpMessage(const Message& msg);
 
-	static UsedVtagList vtagsInUse;
+	static UsedVtagList* vtagsInUse;
 	static void addVtagInUse(const Message& msg);
 	static void removeVtagInUse(const Message& msg);
-       static void resetCurrentVtags(uint8* bitmask);
+	static void resetCurrentVtags(uint8* bitmask);
 
 	static void setHostPort(const char *host, int port);
 	static bool operational();
