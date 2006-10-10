@@ -38,6 +38,20 @@ static int dragon_callback(struct thread *);
 extern int master_process_id(char*);
 extern struct application_cfg* master_final_parser(char*, int);
 extern int send_file_to_agent(char *, int, char *);
+
+struct vtag_tank {
+  int number;
+  int vtags[20];
+};
+
+struct narb_tank {
+  int number;
+  struct {
+    char* prefix;
+    char* narb_ip;
+  } narbs[5];
+};
+
 static struct vtag_tank vtag_pool;
 static struct narb_tank narb_pool;
 
@@ -867,6 +881,7 @@ main(int argc, char* argv[])
 
   memset(&vtag_pool, 0, sizeof(struct vtag_tank));
   memset(&narb_pool, 0, sizeof(struct narb_tank));
+  memset(&es_pool, 0, sizeof(struct es_tank));
 
   if (config_file) 
     master_read_config(config_file);
@@ -1617,10 +1632,34 @@ master_read_config(char *config_file)
 	continue;
       token = strtok(NULL, " ");
       if (token) {
+	token[strlen(token)-1]='\0';
 	narb_pool.narbs[narb_pool.number].narb_ip = strdup(token);
 	narb_pool.number++;
       } else 
 	free(narb_pool.narbs[narb_pool.number].prefix);
+    } else if (strcmp(token, "es") == 0) {
+      token = strtok(NULL, " ");
+      if (token)
+	es_pool.es[es_pool.number].ip = strdup(token);
+      else 
+	continue;
+      token = strtok(NULL, " ");
+      if (token) 
+	es_pool.es[es_pool.number].router_id = strdup(token);
+      else {
+	free(es_pool.es[es_pool.number].ip);
+        continue;
+      }
+      token = strtok(NULL, " ");
+      if (token) {
+	token[strlen(token)-1]='\0';
+	es_pool.es[es_pool.number].tunnel = strdup(token);
+      } else {
+	free(es_pool.es[es_pool.number].ip);
+	free(es_pool.es[es_pool.number].tunnel);
+        continue;
+      }
+      es_pool.number++;
     } else 
       continue;
   }

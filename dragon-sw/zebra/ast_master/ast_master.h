@@ -69,18 +69,15 @@ struct string_syntex_check {
    } ss[50];
 };
 
-struct vtag_tank {
-  int number;
-  int vtags[20];
-};
-
-struct narb_tank {
+struct es_tank {
   int number;
   struct {
-    char* prefix;
-    char* narb_ip;
-  } narbs[5];
+    char* ip;
+    char* router_id; 
+    char* tunnel;
+  } es[20];
 };
+struct es_tank es_pool;
 
 #define REG_TXT_FIELD_LEN	20
 
@@ -121,6 +118,7 @@ struct node_cfg {
   enum node_stype stype;
   char ip[IP_MAXLEN+1];
   char router_id[IP_MAXLEN+1];
+  char tunnel[10];
   char *command;
   struct adtlist *if_list;
   struct adtlist *link_list;

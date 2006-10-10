@@ -106,6 +106,7 @@ struct string_syntex_check gpid_field =
 };
 
 struct application_cfg* master_final_parser(char*, int);
+int autofill_es_info(struct resource*);
 
 void 
 set_allres_fail(char* error_msg)
@@ -572,6 +573,8 @@ print_node(FILE* fp, struct resource* node)
     fprintf(fp, "\t<ip>%s</ip>\n", node->res.n.ip);
   if (node->res.n.router_id[0] != '\0')
     fprintf(fp, "\t<router_id>%s</router_id>\n", node->res.n.router_id);
+  if (node->res.n.tunnel[0] != '\0')
+    fprintf(fp, "\t<tunnel>%s</tunnel>\n", node->res.n.tunnel);
   if (node->res.n.command) 
     fprintf(fp, "\t<command>%s</command>\n", node->res.n.command);
 
@@ -1510,6 +1513,8 @@ topo_xml_parser(char* filename, int agent)
 	  strncpy(myres->res.n.ip, key, IP_MAXLEN); 
 	else if (strcasecmp(node_ptr->name, "router_id") == 0)
 	  strncpy(myres->res.n.router_id, key, IP_MAXLEN);
+        else if (strcasecmp(node_ptr->name, "tunnel") == 0)
+          strncpy(myres->res.n.tunnel, key, 10);
 	else if (strcasecmp(node_ptr->name, "status") == 0) 
 	  myres->status = get_status_by_str(key);
 	else if (strcasecmp(node_ptr->name, "agent_message") == 0)
@@ -1529,6 +1534,8 @@ topo_xml_parser(char* filename, int agent)
 	      myifp->iface = strdup(key);
 	    else if (strcasecmp(link_ptr->name, "assign_ip") == 0) 
 	      myifp->assign_ip = strdup(key);
+	    else if (strcasecmp(link_ptr->name, "vtag") == 0)
+	      myifp->vtag = atoi(key);
 	  }
 
 	  if (!myifp->iface || !myifp->assign_ip) {
@@ -1634,7 +1641,25 @@ topo_xml_parser(char* filename, int agent)
 		memset(ep->ifp, 0, sizeof(struct if_ip));
 	      }
 	      ep->ifp->assign_ip = strdup(key);
+	    } else if (strcasecmp(node_ptr->name, "vtag") == 0) {
+	      if (!ep->ifp) {
+		ep->ifp = (struct if_ip*) malloc (sizeof(struct if_ip));
+		memset(ep->ifp, 0, sizeof(struct if_ip));
+	      }
+	      ep->ifp->vtag = atoi(key);
 	    }
+	  }
+
+	  if (!ep->es) {
+	    if (ep->ifp) {
+	      if (ep->ifp->iface)
+		free(ep->ifp->iface);
+	      if (ep->ifp->assign_ip);
+		free(ep->ifp->assign_ip);
+	    }
+	    free(ep->es);
+	    free(ep);
+	    continue;
 	  }
 
 	  if (strcasecmp(link_ptr->name, "src") == 0) {
@@ -1893,13 +1918,28 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 	  mynode = (struct resource*) curnode->data;
 	  
 	  if (mynode->res.n.ip[0] == '\0') {
-	    zlog_err("node (%s) should have <ip> defined", mynode->name);
-	    return 0;
+	    if (agent == MASTER) {
+	      zlog_info("node (%s) is undefined; need to contact reousrce broker later", mynode->name);
+	      mynode->res.n.router_id[0] = '\0';
+	      mynode->res.n.tunnel[0] = '\0';
+	      mynode->flags |= FLAG_UNFIXED;
+	    } else { 
+	      zlog_err("node (%s) should have <ip> defined", mynode->name); 
+	      return 0;
+	    }
+	  } else {
+
+	    /* even the node ip is defined; still need to figure out the tunnel and router_id
+	     */
+	    if ( agent == MASTER && !autofill_es_info(mynode)) {
+	      zlog_err("node (%s:%s) is not in our ES pool\n", mynode->name, mynode->res.n.ip);
+	      return 0;
+	    }
 	  }
 	}
       }
 
-      if (agent != NODE_AGENT) {
+      if (agent != NODE_AGENT && agent != ASTB) {
 	if (!app_cfg->link_list) {
 	  zlog_err("No link defined in this topology"); 
 	  return 0;
@@ -2034,4 +2074,22 @@ app_cfg_pre_req()
 	res_cfg->agent_message = NULL;
       }
     }
+}
+
+int
+autofill_es_info(struct resource* res)
+{
+  int i;
+  
+  if (res->type != NODE_RES)
+    return 0;
+
+  for (i = 0; i < es_pool.number; i++) {
+    if (strcmp(es_pool.es[i].ip, res->res.n.ip) == 0) {
+      strncpy(res->res.n.router_id, es_pool.es[i].router_id, IP_MAXLEN);
+      strncpy(res->res.n.tunnel, es_pool.es[i].tunnel, 9);
+      return 1;
+    }
+  }
+  return 0;
 }
