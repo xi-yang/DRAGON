@@ -516,6 +516,14 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void
             (uint32)msg.getSESSION_Object().getExtendedTunnelId(), ss_ptr);
 
     if (!ero) {
+
+        //$$$$$$$$ Mapping SESSION_ATTRIBUTE_Object.sessionName into layer-exclusion options.
+        //      TODO    TODO    TODO
+        // The strstr based mapping could be configured in RSVPD.con
+        // For example: exclude layer-1 (-2, -tdm, -3) str1, str2, str3 ...
+        // Or hard coded within this piece of code.
+        //$$$$$$$$ Then pass the options in narb_api messages...
+
         ero = getExplicitRoute(srcAddr, destAddr, msg.getLABEL_REQUEST_Object().getSwitchingType(), 
                 msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                 msg.getSENDER_TSPEC_Object().get_r(),
@@ -544,6 +552,17 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void
 	 }
 	 else
 	 	return NULL;
+    }
+    else //ERO has existed
+    {
+        // updating the DRAGON_UNI based on information in the ero
+        vtag = getVtagFromERO(ero);
+        if (uni && uni->getVlanTag().vtag == ANY_VTAG && vtag != 0 && vtag != ANY_VTAG)
+        {
+            uni->getVlanTag().vtag = vtag;
+            //uni->srcTNA.local_id = srcLocalId; // A tagged-group local-id with ANY_VTAG will be used by
+            //uni->destTNA.local_id = destLocalId; // the MPLS module to indicate using tagged ports at edge.
+        }
     }
 
     EXPLICIT_ROUTE_Object* ero_new = new EXPLICIT_ROUTE_Object;
@@ -583,6 +602,17 @@ struct ero_search_entry* NARB_APIClient::lookupEntry(EXPLICIT_ROUTE_Object* ero)
     }
 
     return NULL;
+}
+
+uint32 NARB_APIClient::getVtagFromERO(EXPLICIT_ROUTE_Object* ero)
+{
+    if (!ero)
+        return 0;
+    AbstractNode node;
+    AbstractNodeList::ConstIterator iter = ero->getAbstractNodeList().begin();
+    for (; iter != ero->getAbstractNodeList().end(); ++iter)
+        if ((*iter).getType() == AbstractNode::UNumIfID && ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+            return (*iter).getInterfaceID() & 0xffff;
 }
 
 void NARB_APIClient::removeExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id)
