@@ -981,9 +981,9 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 		//Hop* hop = RSVP_Global::rsvp->findHop( inlif, msg.getRSVP_HOP_Object().getAddress() );
 		//@@@@hack
 		DRAGON_UNI_Object* uni_psb = (DRAGON_UNI_Object*)(*psbIter)->getDRAGON_UNI_Object();
-		DRAGON_UNI_Object* uni_msg = (DRAGON_UNI_Object*)(*psbIter)->getDRAGON_UNI_Object();
+		DRAGON_UNI_Object* uni_msg = (DRAGON_UNI_Object*)(const_cast<Message&>(msg).getDRAGON_UNI_Object());
 		if (uni_psb && uni_msg && (uni_msg->getVlanTag().vtag == ANY_VTAG || uni_msg->getVlanTag().vtag == 0))
-			const_cast<Message&>(msg).setDRAGON_UNI_Object(*uni_psb);
+			uni_msg->getVlanTag().vtag = uni_psb->getVlanTag().vtag;
 		//@@@@hack end
 		if ( hop && (*psbIter)->getPHopSB().checkPHOP_Data( *hop, msg.getRSVP_HOP_Object().getLIH() ) ) {
 			break;
