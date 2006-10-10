@@ -979,6 +979,12 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 	for ( ; psbIter != RelationshipSession_PSB::followRelationship().end() && **psbIter == sender; ++psbIter ) {
 		Hop* hop = RSVP_Global::rsvp->findHop( inlif, hdr.getSrcAddress());
 		//Hop* hop = RSVP_Global::rsvp->findHop( inlif, msg.getRSVP_HOP_Object().getAddress() );
+		//@@@@hack
+		DRAGON_UNI_Object* uni_psb = (*psbIter)->getDRAGON_UNI_Object();
+		DRAGON_UNI_Object* uni_msg = (*psbIter)->getDRAGON_UNI_Object();
+		if (uni_psb && uni_msg && (uni_msg->getVlanTag() == ANY_VTAG || uni_msg->getVlanTag() == 0))
+			msg.setDRAGON_UNI_Object(*uni_psb);
+		//@@@@hack end
 		if ( hop && (*psbIter)->getPHopSB().checkPHOP_Data( *hop, msg.getRSVP_HOP_Object().getLIH() ) ) {
 			break;
 		}

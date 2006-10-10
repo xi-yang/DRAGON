@@ -13,9 +13,6 @@ To be incorporated into KOM-RSVP-TE package
 #include <errno.h>
 #include "RSVP_ProtocolObjects.h"
 #include "RSVP_Message.h"
-#include "RSVP_SENDER_Object.h"
-#include "RSVP_List.h"
-#include "RSVP_PSB.h"
 #include "NARB_APIClient.h"
 
 String NARB_APIClient::_host = "";
@@ -732,21 +729,17 @@ void NARB_APIClient::addVtagInUse(const Message& msg)
 
 void NARB_APIClient::removeVtagInUse(const Message& msg)
 {
-    const SENDER_Object& sender = msg.getSENDER_TEMPLATE_Object();
-    PSB_List::Iterator psbIter = RelationshipSession_PSB::followRelationship().find( const_cast<SENDER_Object*>(&sender) );
-    for ( ; psbIter != RelationshipSession_PSB::followRelationship().end() && **psbIter == sender; ++psbIter ) {
-        DRAGON_UNI_Object* uni = (*psbIter)->getDRAGON_UNI_Object();
-        if (uni)
+    DRAGON_UNI_Object* uni = const_cast<Message&>(msg).getDRAGON_UNI_Object();
+    if (uni)
+    {
+        uint32 vtag = uni->getVlanTag().vtag;
+        UsedVtagList::Iterator it = vtagsInUse.begin();
+        for (; it != vtagsInUse.end(); ++it)
         {
-            uint32 vtag = uni->getVlanTag().vtag;
-            UsedVtagList::Iterator it = vtagsInUse.begin();
-            for (; it != vtagsInUse.end(); ++it)
+            if (*it == vtag)
             {
-                if (*it == vtag)
-                {
-                    vtagsInUse.erase(it);
-                    return;
-                }
+                vtagsInUse.erase(it);
+                return;
             }
         }
     }
@@ -799,7 +792,6 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
         break;
 
     case (uint32)Message::PathResv:
-
         addVtagInUse(msg);
 
         switch(lastState) {
@@ -812,16 +804,18 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
         break;
 
     case (uint32)Message::PathTear:
+    case (uint32)Message::ResvTear:
 
         removeVtagInUse(msg);
 
         switch(lastState) {
-        case (uint32)Message::Resv: 
+        case (uint32)Message::Resv:
         case (uint32)Message::PathResv:
             releaseReservation(msg);
             currentState = 0;
             break;
         case (uint32)Message::PathTear:
+        case (uint32)Message::ResvTear:
             break;
         default:
             goto out;
@@ -831,7 +825,8 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
     case Message::PathErr:
     case Message::ResvErr:
 
-        removeVtagInUse(msg);
+        //clear all VtagsInUse 
+        vtagsInUse.clear();
 
         switch(lastState) {
         case (uint32)Message::Path: 
