@@ -13,6 +13,9 @@ To be incorporated into KOM-RSVP-TE package
 #include <errno.h>
 #include "RSVP_ProtocolObjects.h"
 #include "RSVP_Message.h"
+#include "RSVP_SENDER_Object.h"
+#include "RSVP_List.h"
+#include "RSVP_PSB.h"
 #include "NARB_APIClient.h"
 
 String NARB_APIClient::_host = "";
@@ -729,17 +732,21 @@ void NARB_APIClient::addVtagInUse(const Message& msg)
 
 void NARB_APIClient::removeVtagInUse(const Message& msg)
 {
-    DRAGON_UNI_Object* uni = const_cast<Message&>(msg).getDRAGON_UNI_Object();
-    if (uni)
-    {
-        uint32 vtag = uni->getVlanTag().vtag;
-        UsedVtagList::Iterator it = vtagsInUse.begin();
-        for (; it != vtagsInUse.end(); ++it)
+    const SENDER_Object& sender = msg.getSENDER_TEMPLATE_Object();
+    PSB_List::Iterator psbIter = RelationshipSession_PSB::followRelationship().find( const_cast<SENDER_Object*>(&sender) );
+    for ( ; psbIter != RelationshipSession_PSB::followRelationship().end() && **psbIter == sender; ++psbIter ) {
+        DRAGON_UNI_Object* uni = (*psbIter)->getDRAGON_UNI_Object();
+        if (uni)
         {
-            if (*it == vtag)
+            uint32 vtag = uni->getVlanTag().vtag;
+            UsedVtagList::Iterator it = vtagsInUse.begin();
+            for (; it != vtagsInUse.end(); ++it)
             {
-                vtagsInUse.erase(it);
-                return;
+                if (*it == vtag)
+                {
+                    vtagsInUse.erase(it);
+                    return;
+                }
             }
         }
     }
@@ -851,3 +858,5 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
 out:
     return ret;
 }
+
+
