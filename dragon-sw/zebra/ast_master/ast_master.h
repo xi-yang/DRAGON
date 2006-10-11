@@ -167,6 +167,11 @@ struct link_cfg {
 #define IS_SET_RELEASE_RESP(X)	((X->flags) & FLAG_RELEASE_RESP)
 #define IS_RES_UNFIXED(X)	((X->flags) & FLAG_UNFIXED)
 
+#define IS_VTAG_ANY(X) \
+	(X->res.l.stype == uni && X->res.l.src->local_id_type[0] == '\0' && \
+	X->res.l.dest->local_id_type[0] == '\0' && \
+	X->res.l.vtag[0] == '\0')
+
 struct resource {
   int type;			/* indicate this is link or node */
   int noded_sock;		/* sock to connect to the minions */

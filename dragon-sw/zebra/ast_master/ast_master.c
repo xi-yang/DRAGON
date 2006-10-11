@@ -602,7 +602,8 @@ print_node(FILE* fp, struct resource* node)
       ifp = (struct if_ip*) curnode->data;
 
       fprintf(fp, "\t<ifaces>\n");
-      fprintf(fp, "\t\t<iface>%s</iface>\n", ifp->iface);
+      if (ifp->iface) 
+	fprintf(fp, "\t\t<iface>%s</iface>\n", ifp->iface);
       fprintf(fp, "\t\t<assign_ip>%s</assign_ip>\n", ifp->assign_ip);
       if (ifp->vtag)
 	fprintf(fp, "\t\t<vtag>%d</vtag>\n", ifp->vtag);
@@ -625,7 +626,8 @@ print_endpoint(FILE* fp, struct endpoint* ep)
   if (ep->proxy)
     fprintf(fp, "\t\t<proxy>%s</proxy>\n", ep->proxy->name);
   if (ep->ifp) {
-    fprintf(fp, "\t\t<iface>%s</iface>\n", ep->ifp->iface);
+    if (ep->ifp->iface) 
+      fprintf(fp, "\t\t<iface>%s</iface>\n", ep->ifp->iface);
     fprintf(fp, "\t\t<assign_ip>%s</assign_ip>\n", ep->ifp->assign_ip);
   }
   if (ep->local_id_type[0] != '\0') 
@@ -1103,6 +1105,7 @@ establish_relationship(struct application_cfg* app_cfg)
 {
   struct resource *mylink, *dragon;
   struct adtlistnode *curnode;
+  struct endpoint *src, *dest;
 
   if (!app_cfg->link_list)
     return 1;
@@ -1118,23 +1121,32 @@ establish_relationship(struct application_cfg* app_cfg)
     switch (mylink->res.l.stype) {
       case uni:
       case non_uni:
-	if (!mylink->res.l.src->es || !mylink->res.l.dest->es) {
+	src = mylink->res.l.src;
+	dest = mylink->res.l.dest;
+	if (!src->es || !dest->es) {
 	  zlog_err("link (%s) should have both src and dest es defined", mylink->name);
 	  return 0;
 	}
 
-	if ((mylink->res.l.src->es->res.n.router_id[0] == '\0' && 
-		!IS_RES_UNFIXED(mylink->res.l.src->es))||
-	    (mylink->res.l.dest->es->res.n.router_id[0] == '\0' &&
-		!IS_RES_UNFIXED(mylink->res.l.dest->es))) {
+	if ((src->es->res.n.router_id[0] == '\0' && 
+		!IS_RES_UNFIXED(src->es))||
+	    (dest->es->res.n.router_id[0] == '\0' &&
+		!IS_RES_UNFIXED(dest->es))) {
 	  zlog_err("link (%s) should have <router_id> defined in its src and dest es", mylink->name);
 	  return 0;
 	}
 
-	if (mylink->res.l.src->local_id_type[0] == '\0' ||
-	    mylink->res.l.dest->local_id_type[0] == '\0') {
-	  zlog_err("For uni, link (%s) should have src and dest <local_id> defined", mylink->name);
-	  return 0;
+	if (src->local_id_type[0] == '\0' && dest->local_id_type[0] != '\0')
+	  dest->local_id_type[0] = '\0';
+	else if (src->local_id_type[0] != '\0' || dest->local_id_type[0] == '\0') 
+	  src->local_id_type[0] = '\0';
+
+	if (src->local_id_type[0] == '\0' && dest->local_id_type[0] == '\0' &&
+		mylink->res.l.vtag[0] != '\0') {
+	  sprintf(src->local_id_type, "tagged-group");
+	  sprintf(dest->local_id_type, "tagged-group");
+          src->local_id = atoi(mylink->res.l.vtag);
+	  dest->local_id = atoi(mylink->res.l.vtag);  
 	}
 
 	if (mylink->res.l.src->proxy) 
@@ -1529,11 +1541,13 @@ topo_xml_parser(char* filename, int agent)
 	      myifp->vtag = atoi(key);
 	  }
 
-	  if (!myifp->iface || !myifp->assign_ip) {
+	  /* in face, if IP is not set, there is no need to play attention to 
+	   * <iface> or link this interface to node
+	   */
+	  if (!myifp->assign_ip) {
 	    if (myifp->iface)
 	      free(myifp->iface);
-	    if (myifp->assign_ip)
-	      free(myifp->assign_ip);
+	    free(myifp->assign_ip);
 	    free(myifp);
 	  } else {
 	    if (!myres->res.n.if_list && agent != LINK_AGENT) {
@@ -1690,8 +1704,14 @@ topo_xml_parser(char* filename, int agent)
 	      strncpy(myres->res.l.encoding, key, REG_TXT_FIELD_LEN); 
 	    else if (strcasecmp(node_ptr->name, "gpid") == 0) 
 	      strncpy(myres->res.l.gpid, key, REG_TXT_FIELD_LEN); 
-	    else if (strcasecmp(node_ptr->name, "vtag") == 0)
+	    else if (strcasecmp(node_ptr->name, "vtag") == 0) {
 	      strncpy(myres->res.l.vtag, key, REG_TXT_FIELD_LEN);
+	    
+	      if (myres->res.l.src && myres->res.l.src->ifp) 
+		myres->res.l.src->ifp->vtag = atoi(key);
+	      if (myres->res.l.dest && myres->res.l.dest->ifp)
+		myres->res.l.dest->ifp->vtag = atoi(key);
+	    }
 	  }
 	} else if (strcasecmp(link_ptr->name, "lsp_name") == 0 && 
 		app_cfg->action != SETUP_REQ ) 

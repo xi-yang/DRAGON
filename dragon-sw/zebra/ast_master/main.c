@@ -296,6 +296,8 @@ master_process_setup_resp()
   
 	  /* parameters update */
 	  strcpy(glob_res_cfg->res.l.lsp_name, work_res_cfg->res.l.lsp_name);
+	  if (glob_res_cfg->res.l.vtag[0] == '\0')
+	    strcpy(glob_res_cfg->res.l.vtag, work_res_cfg->res.l.vtag);
 	}
       }
     
@@ -636,8 +638,6 @@ master_process_setup_req()
   char directory[100];
   char newpath[105];
   
-  glob_app_cfg->ast_id = generate_ast_id(ID_SETUP);
-
   /* pre-processing */
   strcpy(directory, AST_DIR);
   if (mkdir(directory, 0755) == -1 && errno != EEXIST) {
@@ -670,7 +670,6 @@ master_process_setup_req()
   if (send_task_to_link_agent() == 0) 
     glob_app_cfg->status = AST_FAILURE;
   integrate_result();
-
   return 1;
 }
 
@@ -831,6 +830,10 @@ master_process_topo(char* input_file)
     sprintf(glob_app_cfg->details, "Failed at locating unknown resource(s)");
     return 0;
   }
+
+  if (glob_app_cfg->action == SETUP_REQ)
+    glob_app_cfg->ast_id = generate_ast_id(ID_SETUP);
+
   zlog_info("Processing ast_id: %s, action: %s",
 		glob_app_cfg->ast_id,
 		action_type_details[glob_app_cfg->action]);

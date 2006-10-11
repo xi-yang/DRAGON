@@ -41,7 +41,7 @@
 #include "dragon/dragond.h"
 
 extern u_int32_t UCID;
-extern void dragon_upcall_callback(int, char*);
+extern void dragon_upcall_callback(int, struct lsp*);
 
 int 
 is_mandated_params_set_for_lsp(struct lsp *lsp)
@@ -963,7 +963,7 @@ void  rsvpUpcall(void* para)
 		default:
 			break;
 	}
-	dragon_upcall_callback(p->code, (lsp->common.SessionAttribute_Para)->sessionName);
+	dragon_upcall_callback(p->code, lsp);
 }
 
 int

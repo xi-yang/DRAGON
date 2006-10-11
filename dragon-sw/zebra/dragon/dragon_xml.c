@@ -91,14 +91,14 @@ dragon_establish_relationship()
 }
 
 void
-dragon_upcall_callback(int msg_type, char *lsp_name)
+dragon_upcall_callback(int msg_type, struct lsp* lsp)
 {
   struct adtlistnode *prev, *curr, *next;
   struct dragon_callback *data;
   int status = AST_UNKNOWN;
   FILE *fp;
 
-  if (pending_list.count == 0)
+  if (pending_list.count == 0 || !lsp)
     return;
 
   prev = NULL;
@@ -107,7 +107,7 @@ dragon_upcall_callback(int msg_type, char *lsp_name)
 	curr;
 	prev = curr, curr = curr->next) {
     data = (struct dragon_callback*) curr->data;
-    if (strcmp(data->lsp_name, lsp_name) == 0) 
+    if (strcmp(data->lsp_name, (lsp->common.SessionAttribute_Para)->sessionName) == 0) 
       break;
   }
 
@@ -124,7 +124,7 @@ dragon_upcall_callback(int msg_type, char *lsp_name)
   glob_app_cfg = NULL;
 
   zlog_info("dragon_upcall_callback(): START");
-  zlog_info("********* msg_type: %d; lsp_name: %s", msg_type, lsp_name);
+  zlog_info("********* msg_type: %d; lsp_name: %s", msg_type, data->lsp_name);
   unlink(DRAGON_XML_RESULT);
 
   glob_app_cfg = retrieve_app_cfg(data->ast_id, LINK_AGENT);
@@ -169,6 +169,9 @@ dragon_upcall_callback(int msg_type, char *lsp_name)
 		status == AST_SUCCESS? "AST_SUCCESS":"AST_FAILURE");
   fprintf(fp, "\t<lsp_name>%s</lsp_name>\n", data->lsp_name);
   fprintf(fp, "\t<dragon>%s</dragon>\n", data->link_agent);
+  fprintf(fp, "\t<te_params>\n");
+  fprintf(fp, "\t\t<vtag>%d</vtag>\n", lsp->dragon.lspVtag);
+  fprintf(fp, "\t</te_params>\n");
   fprintf(fp, "</resource>\n</topology>\n");
   fflush(fp);
   fclose(fp);
@@ -812,13 +815,23 @@ dragon_build_lsp(struct resource *link)
   fake_vty->index = lsp;
   listnode_add(dmaster.dragon_lsp_table, lsp);
 
+  if (IS_VTAG_ANY(link))
+    link->flags |= FLAG_UNFIXED;
+
   /* mirrow what dragon_set_lsp_uni does
    */
   if (link->res.l.stype == uni) {
+
     argc = 3;
     strcpy(argv[0], "client");
-    strcpy(argv[1], "implicit");
-    strcpy(argv[2], "implicit");
+    if (IS_RES_UNFIXED(link)) {
+      strcpy(argv[1], link->res.l.src->es->res.n.tunnel);
+      strcpy(argv[2], link->res.l.dest->es->res.n.tunnel);
+    } else {
+      strcpy(argv[1], "implicit");
+      strcpy(argv[2], "implicit");
+    }
+
     if (dragon_set_lsp_uni (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
       argc = 1;
       strcpy(argv[0], lsp_name);
@@ -857,21 +870,12 @@ dragon_build_lsp(struct resource *link)
       break;
   }
 
-  if (link->res.l.src->local_id_type[0] == '\0') {
-    strcpy(argv[1], "lsp-id");
-    sprintf(argv[2], "%d", random() % 3000);
-  } else { 
-    strcpy(argv[1], link->res.l.src->local_id_type); 
-    sprintf(argv[2], "%d", link->res.l.src->local_id);
-  }
-
-  if (link->res.l.dest->local_id_type[0] == '\0') {
-    strcpy(argv[4], "tunnel-id");
-    sprintf(argv[5], "%d", random() % 3000);
-  } else {
-    strcpy(argv[4], link->res.l.dest->local_id_type);
-    sprintf(argv[5], "%d", link->res.l.dest->local_id);
-  }
+  if (IS_RES_UNFIXED(link)) {
+    strcpy(argv[1], "tagged-group");
+    strcpy(argv[2], "any");
+    strcpy(argv[4], "tagged-group");
+    strcpy(argv[5], "any");
+  } 
 
   zlog_info("parameters to dragon_set_lsp_ip:");
   zlog_info("%s | %s | %s | %s | %s | %s", argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
