@@ -878,6 +878,18 @@ uint16 SwitchCtrl_Global::getSlotType(uint16 slot_num)
     return SLOT_TYPE_ILLEGAL;
 }
 
+uint32 SwitchCtrl_Global::getExclEntry(String session_name)
+{
+    uint32 excl_options = 0;	
+    SimpleList<sw_layer_excl_name_entry>::Iterator it = exclList.begin();
+    for (; it != exclList.end(); ++it) {
+        if (strstr(session_name.chars(), (*it).excl_name) != NULL) {
+            excl_options |= (*it).sw_layer;
+        }
+    }
+    return excl_options;
+}
+
 
 bool SwitchCtrl_Global::getVtagBitMask(uint8* bitmask)
 {

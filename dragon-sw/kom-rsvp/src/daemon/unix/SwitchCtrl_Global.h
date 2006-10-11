@@ -218,6 +218,16 @@ struct slot_entry {
 	uint16 slot_num;
 };
 
+/*manual configured exclusion of certain switching layers from routing computation based on session_name matching*/
+#define		SW_EXCL_L_1 0x0010
+#define		SW_EXCL_TDM 0x0020
+#define		SW_EXCL_L_2 0x0040
+#define		SW_EXCL_L_3 0x0080
+struct sw_layer_excl_name_entry {
+	uint32 sw_layer;
+	char excl_name[16]; 
+};
+
 class sessionsRefreshTimer;
 class SwitchCtrl_Global{
 public:
@@ -252,6 +262,8 @@ public:
 	/*RSVPD.cof*/
 	void addSlotEntry(slot_entry &se) { slotList.push_back(se); }
 	uint16 getSlotType(uint16 slot_num);
+	void addExclEntry(sw_layer_excl_name_entry &ee) { exclList.push_back(ee); }
+	uint32 getExclEntry(String session_name);
 
 	/*services for narbClient*/
 	bool getVtagBitMask(uint8* bitmask);
@@ -264,6 +276,7 @@ private:
 	sessionsRefreshTimer *sessionsRefresher;
 	SwitchCtrlSessionList sessionList;
 	SimpleList<slot_entry> slotList;
+	SimpleList<sw_layer_excl_name_entry> exclList;
 };
 
 class sessionsRefreshTimer: public BaseTimer {

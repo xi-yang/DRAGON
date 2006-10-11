@@ -358,7 +358,7 @@ static void deleteNarbApiMessage(narb_api_msg_header* apiMsg)
    delete []((char*)apiMsg);
 }
 
-EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLocalId, uint32& destLocalId)
+EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLocalId, uint32& destLocalId, uint32 excl_options)
 {
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
@@ -368,6 +368,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     unum_if_subobj* subobj_unum;
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CREATE
             , src, dest, swtype, encoding, bandwidth, vtag, srcLocalId, destLocalId);
+    msgheader->options = htonl(ntohl(msgheader->options) | excl_options); //@@@@
 
     if (!active())
         if (doConnect() < 0)
@@ -524,10 +525,12 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void
         // Or hard coded within this piece of code.
         //$$$$$$$$ Then pass the options in narb_api messages...
 
+        uint32 excl_options = RSVP_Global::switchController->getExclEntry(msg.getSESSION_ATTRIBUTE_Object().getSessionName());
+
         ero = getExplicitRoute(srcAddr, destAddr, msg.getLABEL_REQUEST_Object().getSwitchingType(), 
                 msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                 msg.getSENDER_TSPEC_Object().get_r(),
-                vtag, srcLocalId, destLocalId);
+                vtag, srcLocalId, destLocalId, excl_options);
 	 if (ero) {
             if (uni && uni->getVlanTag().vtag == ANY_VTAG)
             {

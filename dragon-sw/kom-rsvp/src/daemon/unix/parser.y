@@ -46,6 +46,7 @@ static const char* configfile = NULL;
 static bool fatalError = false;
 static String yy_ifType;
 static String yy_host;
+static String yy_swLayer;
 %}
 
 %token INTEGER FLOAT STRING IP_ADDRESS
@@ -82,6 +83,7 @@ command:
 	| PEER local_address remote_address		{ cfr->addHop(); }
 	| NARB narb_host narb_port	 	{ }
 	| SLOTS if_type slot			{ }
+	| EXCLUDE sw_layer excl_name		{ }
 	;
 
 /*** Addtions by Xi Yang ***/
@@ -98,6 +100,13 @@ if_type:
 slot:
 	slot INTEGER	{ cfr->addSlot(yy_ifType, yy_int); }
 	| INTEGER	{ cfr->addSlot(yy_ifType, yy_int); }
+	;
+sw_layer:
+	STRING		{ yy_swLayer = yy_string; }
+	;
+excl_name:
+	excl_name STRING { cfr->addLayerExclusion(yy_swLayer, yy_string); }
+	| STRING	 { cfr->addLayerExclusion(yy_swLayer, yy_string); }
 	;
 /*** END: Addtions by Xi Yang ***/
 

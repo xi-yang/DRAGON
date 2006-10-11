@@ -94,6 +94,7 @@ public:
 	const SimpleList<Hop>& getHopList() { return hopList; }
 	void setNarbApiClient(String host, int port);
 	void addSlot(String slot_type, uint16 slot_num);
+	void addLayerExclusion(String sw_layer, String excl_name);
 };
 
 #endif /* _RSVP_ConfigFileReader_h_ */

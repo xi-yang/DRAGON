@@ -201,6 +201,27 @@ void ConfigFileReader::addSlot(String slot_type, uint16 slot_num) {
 	RSVP_Global::switchController->addSlotEntry(se);
 }
 
+void ConfigFileReader::addLayerExclusion(String sw_layer, String excl_name)
+{
+	sw_layer_excl_name_entry ee;
+	if (sw_layer == "l-1"){
+		ee.sw_layer = SW_EXCL_L_1;
+	}
+	else if (sw_layer == "tdm"){
+		ee.sw_layer = SW_EXCL_TDM;
+	}
+	else if (sw_layer == "l-2"){
+		ee.sw_layer = SW_EXCL_L_2;
+	}
+	else if (sw_layer == "l-3"){
+		ee.sw_layer = SW_EXCL_L_3;
+	}
+	else
+		return;
+	strncpy(ee.excl_name, excl_name.chars(), 15);
+        RSVP_Global::switchController->addExclEntry(ee);
+}
+
 void ConfigFileReader::cleanup() {
 	interfaceName = "";
 	localId = "";
