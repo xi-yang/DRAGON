@@ -31,17 +31,31 @@
 
 #define NODE_AGENT_RET 	"/usr/local/noded_ret.xml"
 #define NODE_AGENT_RECV "/usr/local/noded_recv.xml"
+#define BROKER_FILE	"/usr/local/etc/broker.xml"
 #define MAXPENDING      12
 #define TIMEOUT_SECS	3
 
 #ifdef RESOURCE_BROKER
-static struct adtlist node_resource;
-static struct adtlistnode *resource_index;
-int broker_init(char*);
+struct node_tank {
+  int number;
+  int index;
+  struct {
+    char* name;
+    char* ip;
+    char* router_id;
+    char *tunnel;
+  } es[20];
+};
+static struct node_tank node_pool[NUM_NODE_TYPE+1];
+
+int broker_init();
 static int broker_accept(struct thread*);
+static int broker_read_app_cfg();
+static int broker_process();
 #endif
 
 extern char *status_type_details[];
+extern char * node_stype_name[];
 struct thread_master *master; /* master = dmaster.master */
 static int agent_accept(struct thread *);
 static char* interface;
@@ -52,7 +66,7 @@ struct option ast_master_opts[] =
   { "daemon",     no_argument,       NULL, 'd'},
   { "help",       no_argument,       NULL, 'h'},
 #ifdef RESOURCE_BROKER
-  { "file",	  required_argument, NULL, 'f'},
+  { "broker",	  no_argument, 	NULL, 'b'},
 #endif
   { "config_file", required_argument, NULL, 'c'},
   { 0 }
@@ -99,7 +113,7 @@ usage (char *progname, int status)
 NSF NODE_AGENT.\n\n\
 -d, --daemon       Runs in daemon mode\n\
 -h, --help       Display this help and exit\n\
--f, --file	 File contains resources for node\n\
+-b, --broker	 Serve as resource broker\n\
 -c, --config_file   Set configuraiton file name\n\
 \n", progname);
 #else
@@ -560,11 +574,9 @@ main(int argc, char* argv[])
   char *p;
   char *progname, *config_file = NULL;
   int daemon_mode = 0;
+  int broker_mode = 0;
   struct thread thread;
   struct sigaction myAlarmAction;
-#ifdef RESOURCE_BROKER
-  char *resource_file = NULL;
-#endif
   
   progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
 
@@ -572,7 +584,7 @@ main(int argc, char* argv[])
     int opt;
 
 #ifdef RESOURCE_BROKER
-    opt = getopt_long (argc, argv, "dhf:c:", ast_master_opts, 0);
+    opt = getopt_long (argc, argv, "dhbc:", ast_master_opts, 0);
     if (argc > 6) {
       usage(progname, 1);
       exit(EXIT_FAILURE);
@@ -598,8 +610,8 @@ main(int argc, char* argv[])
         usage(progname, 0);
         break;
 #ifdef RESOURCE_BROKER
-      case 'f':
-        resource_file = optarg;
+      case 'b':
+	broker_mode = 1;
 	break;
 #endif
       case 'c':
@@ -653,8 +665,8 @@ main(int argc, char* argv[])
   thread_add_read(master, agent_accept, NULL, servSock);
 
 #ifdef RESOURCE_BROKER
-  if (resource_file != NULL) {
-    if (broker_init(resource_file) == 1) {
+  if (broker_mode) {
+    if (broker_init() == 1) {
       if ((servSock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
         zlog_err("socket() failed");
         exit(EXIT_FAILURE);
@@ -678,7 +690,7 @@ main(int argc, char* argv[])
       zlog_err("BROKER: this node_agent will also serve as resource broker"); 
       thread_add_read(master, broker_accept, NULL, servSock);
     } else 
-      zlog_err("BROKER: can't read the resource file (%s)", resource_file);
+      zlog_err("BROKER: failed to init");
   }
 #endif
 
@@ -794,9 +806,7 @@ agent_accept(struct thread *thread)
 	
       }
 
-      if (!send_file_over_sock(clntSock, NODE_AGENT_RET)) 
-	clntSock = send_file_to_agent(glob_app_cfg->ast_ip, MASTER_PORT, NODE_AGENT_RET);
-
+      send_file_over_sock(clntSock, NODE_AGENT_RET);
       close(clntSock);
       if (child_app_complete) 
 	_exit(2);
@@ -830,7 +840,8 @@ broker_accept(struct thread *thread)
   unlink(NODE_AGENT_RECV);
   child_app_complete = 0;
   node_child = 0;
-   
+  
+  zlog_info("BROKER: START"); 
   if ((clntSock = accept(servSock, (struct sockaddr*)&clntAddr, &clntLen)) < 0) 
     zlog_err("accept() failed; error = %d(%s)", errno, strerror(errno));
   else {
@@ -844,7 +855,7 @@ broker_accept(struct thread *thread)
       if (errno == EINTR) {
         /* alarm went off
          */
-        zlog_warn("broker_accept: dragon probably has not received all datas");
+        zlog_warn("broker_accept: probably has not received all data");
         zlog_warn("recvMsgSize = %d", recvMsgSize);
 	total += recvMsgSize;
         break;
@@ -858,66 +869,52 @@ broker_accept(struct thread *thread)
  
     zlog_info("broker_accept: total byte received = %d", total);
     if (total != 0) {
-      struct resource *node;
-
       fflush(fp);
       fclose(fp);
 
-      /* basically, we will ignore this input file and just give back whatever we have
-       */
-      fp = fopen(NODE_AGENT_RET, "w+");
-      fprintf(fp, "<topology>\n");
-      if (resource_index == NULL) 
-        resource_index = node_resource.head;
-      node = (struct resource *)resource_index->data;
-       
-      zlog_info("BROKER: returns node (ipadd = %s)\n", node->res.n.ip);   
-      print_node(fp, node);
-      fprintf(fp, "</topology>");
-      fflush(fp);
-      fclose(fp);
-	
+      glob_app_cfg = topo_xml_parser(NODE_AGENT_RECV, NODE_AGENT);
+
+      if (!glob_app_cfg) {
+	zlog_err("Incoming file failed at parsing");
+        print_error_response(NODE_AGENT_RET);
+      } else 
+	broker_process();
+
       if (send_file_over_sock(clntSock, NODE_AGENT_RET) == 0) 
         zlog_err("Failed to return result to user");
 
       close(clntSock);
     } else 
       fclose(fp);
-
     close(clntSock);  
-    zlog_info("DONE!");
+    zlog_info("BROKER: DONE!");
   }
   free_application_cfg(glob_app_cfg);
   glob_app_cfg = NULL;
-  resource_index = resource_index->next;
 
   thread_add_read(master, broker_accept, NULL, servSock);
   return 1;
 }
 
 int 
-broker_init(char* file)
+broker_init()
 {
-  struct stat file_stat;
-   
-  if (file == NULL) 
-    return 0;
+  int ret_value = 1;
 
-  if (stat(file, &file_stat) == -1) 
-    return 0;
+  memset(&node_pool, 0, (NUM_NODE_TYPE+1)*sizeof(struct node_tank));
 
-  if ((glob_app_cfg = topo_xml_parser(file, LINK_AGENT)) == NULL) 
+  if ((glob_app_cfg = topo_xml_parser(BROKER_FILE, NODE_AGENT)) == NULL) 
     return 0;
 
   if (glob_app_cfg->node_list == NULL) 
-    return 0;
+    ret_value = 0;
 
-  memcpy(&node_resource, glob_app_cfg->node_list, sizeof(struct adtlist));
-  bzero(glob_app_cfg->node_list, sizeof(struct adtlist));
+  if (ret_value && !broker_read_app_cfg())
+    ret_value = 0;
+
   free_application_cfg(glob_app_cfg);
   glob_app_cfg = NULL;
 
-  resource_index = NULL; 
   return 1;
 }  
 #endif
@@ -962,5 +959,106 @@ FIN_accept(struct thread *thread)
 
   close(servSock);
   zlog_info("FIN_accept(): END");
+  return 1;
+}
+
+static int 
+broker_read_app_cfg()
+{
+  struct adtlistnode *curnode;
+  struct resource *res_cfg;
+  struct node_tank *nodes;
+
+  for (curnode = glob_app_cfg->node_list->head;
+	curnode;
+	curnode = curnode->next) {
+    res_cfg = (struct resource*) curnode->data;
+ 
+    nodes = &node_pool[res_cfg->res.n.stype];
+    nodes->es[nodes->number].ip = strdup(res_cfg->res.n.ip);
+    nodes->es[nodes->number].router_id = strdup(res_cfg->res.n.router_id);
+    nodes->es[nodes->number].tunnel = strdup(res_cfg->res.n.tunnel);
+    nodes->es[nodes->number].name = strdup(res_cfg->name);
+    nodes->number++;
+  }
+     
+  return 1;
+}
+
+static void
+print_broker_response(char* path)
+{
+  struct adtlistnode *curnode;
+  struct resource *mynode;
+  FILE* fp;
+
+  if (!path)
+    return;
+
+  fp = fopen(path, "w+");
+  if (!fp)
+    return;
+  
+  fprintf(fp, "<topology>\n");
+
+  fprintf(fp, "<status>%s</status>\n", status_type_details[glob_app_cfg->status]);
+  if (glob_app_cfg->details[0] != '\0')
+    fprintf(fp, "<details>%s</details>\n", glob_app_cfg->details);
+
+  if (glob_app_cfg->node_list) {
+    for ( curnode = glob_app_cfg->node_list->head;
+        curnode;
+        curnode = curnode->next) {
+      mynode = (struct resource*)(curnode->data);
+
+      print_node(fp, mynode);
+    }
+  } 
+
+  fprintf(fp, "</topology>");
+  fflush(fp);
+  fclose(fp);
+}
+
+static int
+broker_process()
+{
+  struct adtlistnode *curnode;
+  struct resource *res_cfg;
+  struct node_tank *nodes;
+
+  if (!glob_app_cfg->node_list) {
+    zlog_err("No nodes in the incoming file");
+    strcpy(glob_app_cfg->details, "No nodes in the incoming file");
+    glob_app_cfg->status = AST_FAILURE;
+    print_error_response(NODE_AGENT_RET);
+    return 0;
+  }
+
+  for (curnode = glob_app_cfg->node_list->head;
+	curnode;
+	curnode = curnode->next) {
+    res_cfg = (struct resource*) curnode->data;
+
+    nodes = &node_pool[res_cfg->res.n.stype];
+    if (nodes->number == 0) {
+      zlog_err("Broker doesn't have type: %s", node_stype_name[res_cfg->res.n.stype]);
+      res_cfg->agent_message = strdup("Broker doesn't have any of this type");
+      res_cfg->status = AST_FAILURE;
+      glob_app_cfg->status = AST_FAILURE;
+    } else {
+      if (nodes->index == nodes->number)
+	nodes->index = 0;
+      zlog_info("Broker is giving out: %s", nodes->es[nodes->index].name);
+      strncpy(res_cfg->res.n.ip, nodes->es[nodes->index].ip, IP_MAXLEN);
+      strncpy(res_cfg->res.n.router_id, nodes->es[nodes->index].router_id, IP_MAXLEN);
+      strncpy(res_cfg->res.n.tunnel, nodes->es[nodes->index].tunnel, 9);
+      nodes->index++;
+      res_cfg->status = AST_SUCCESS;
+      glob_app_cfg->status = AST_SUCCESS;
+    }
+  }
+
+  print_broker_response(NODE_AGENT_RET);
   return 1;
 }

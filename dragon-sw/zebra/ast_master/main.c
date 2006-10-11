@@ -26,9 +26,15 @@
 #include "memory.h"
 #include "buffer.h"
 
+#ifdef RESOURCE_BROKER
+#define BROKER_SEND     "/tmp/broker_send.xml"
+#define BROKER_RECV     "/tmp/broker_resp.xml"
+#endif
+
 struct thread_master *master; /* master = dmaster.master */
 extern char *status_type_details[];
 extern char *action_type_details[];
+extern char *node_stype_name[];
 
 static void master_read_config(char *);
 static int master_accept(struct thread *);
@@ -54,6 +60,15 @@ struct narb_tank {
 
 static struct vtag_tank vtag_pool;
 static struct narb_tank narb_pool;
+
+/* structurs defined for the resource agency
+ *
+ */
+struct resource_agent {
+  char *add;
+  int  port;
+};
+static struct resource_agent agency[NUM_NODE_TYPE+1]; 
 
 int master_process_release_req();
 
@@ -145,7 +160,7 @@ master_process_setup_resp()
     zlog_info("From node_agent: %s", work_res_cfg->name);
 
     /* counter update */
-    if (IS_SET_SETUP_RESP(glob_res_cfg->flags)) 
+    if (IS_SET_SETUP_RESP(glob_res_cfg)) 
 	zlog_warn("SETUP_RESP has been recieved, so this is an UPDATE"); 
     else { 
 	glob_app_cfg->setup_ready++; 
@@ -213,7 +228,7 @@ master_process_setup_resp()
   
 	  /* counter update */
 	  if (glob_res_cfg->status != AST_PENDING) {
-	    if (IS_SET_SETUP_RESP(glob_res_cfg->flags)) 
+	    if (IS_SET_SETUP_RESP(glob_res_cfg)) 
 	      zlog_warn("SETUP_RESP has been recieved, so this is an update");
 	    else { 
 	      glob_app_cfg->setup_ready++; 
@@ -257,7 +272,7 @@ master_process_setup_resp()
   
 	  /* counter update */
 	  if (glob_res_cfg->status != AST_PENDING) {
-	    if (IS_SET_SETUP_RESP(glob_res_cfg->flags)) 
+	    if (IS_SET_SETUP_RESP(glob_res_cfg)) 
 	      zlog_warn("SETUP_RESP has been recieved, so this is an update");
 	    else { 
 	      glob_app_cfg->setup_ready++; 
@@ -364,7 +379,7 @@ master_process_release_resp()
     zlog_info("From node_agent: %s", work_res_cfg->name);
 
     /* counter update */
-    if (IS_SET_RELEASE_RESP(glob_res_cfg->flags)) 
+    if (IS_SET_RELEASE_RESP(glob_res_cfg)) 
 	zlog_warn("RELEASE_RESP has been recieved, so this is an update"); 
     else { 
 	glob_app_cfg->release_ready++; 
@@ -427,7 +442,7 @@ master_process_release_resp()
 	                status_type_details[work_res_cfg->status]);
 
 	/* counter update */
-	if (IS_SET_RELEASE_RESP(glob_res_cfg->flags)) 
+	if (IS_SET_RELEASE_RESP(glob_res_cfg)) 
 	  zlog_warn("RELEASE_RESP has been recieved, so this is an update");
  	else {
 	  glob_app_cfg->release_ready++;
@@ -525,7 +540,7 @@ master_process_app_complete()
     zlog_info("From node_agent: %s", work_res_cfg->name);
 
     /* counter update */
-    if (IS_SET_APP_COMPLETE(glob_res_cfg->flags))
+    if (IS_SET_APP_COMPLETE(glob_res_cfg))
         zlog_warn("APP_COMPLETE has been recieved");
     else {
         glob_app_cfg->complete_ready++;
@@ -574,7 +589,7 @@ master_process_app_complete()
                 status_type_details[work_res_cfg->status],
                 work_res_cfg->res.l.lsp_name);
         /* counter update */
-        if (IS_SET_APP_COMPLETE(glob_res_cfg->flags))
+        if (IS_SET_APP_COMPLETE(glob_res_cfg))
           zlog_warn("APP_COMPLETE has been recieved, so this is an update");
         else {
           glob_app_cfg->complete_ready++;
@@ -812,6 +827,10 @@ master_process_topo(char* input_file)
     return 0;
   }
 
+  if (glob_app_cfg->action == SETUP_REQ && master_locate_resource() == 0) {
+    sprintf(glob_app_cfg->details, "Failed at locating unknown resource(s)");
+    return 0;
+  }
   zlog_info("Processing ast_id: %s, action: %s",
 		glob_app_cfg->ast_id,
 		action_type_details[glob_app_cfg->action]);
@@ -882,6 +901,7 @@ main(int argc, char* argv[])
   memset(&vtag_pool, 0, sizeof(struct vtag_tank));
   memset(&narb_pool, 0, sizeof(struct narb_tank));
   memset(&es_pool, 0, sizeof(struct es_tank));
+  memset(&agency, 0, 3*sizeof(struct resource_agent));
 
   if (config_file) 
     master_read_config(config_file);
@@ -898,11 +918,13 @@ main(int argc, char* argv[])
   /* print banner */
   zlog_info("AST_MASTER starts: pid = %d", getpid());
 
+#ifdef OLD_CODE
   /* parse the service_def.xml where indicates where to locate
    * resource agency 
    */
   if (service_xml_parser(XML_SERVICE_DEF_FILE) == 0) 
     zlog_err("main: service_xml_parser() error");
+#endif
   
   /* parse all service_template.xml and build the default
    * struct for each service template for later use
@@ -1084,6 +1106,32 @@ master_compose_node_request(struct application_cfg *app_cfg,
   fprintf(send_file, "<topology ast_id=\"%s\" action=\"%s\">\n", app_cfg->ast_id, action_type_details[app_cfg->action]);
   print_node(send_file, srcnode);
 
+  fprintf(send_file, "</topology>");
+  fflush(send_file);
+  fclose(send_file);
+
+  return 1;
+}
+
+int
+master_compose_broker_request(struct resource *myres, char* path)
+{
+  FILE *send_file;
+
+  if (!myres)
+    return 0;
+   
+  if (!path || strlen(path) == 0)
+    return 0;
+
+  send_file = fopen(path, "w+");
+  if (!send_file) 
+    return 0;
+
+  fprintf(send_file, "<topology>\n");
+  fprintf(send_file, "<resource type=\"%s\" name=\"%s\">\n",
+		node_stype_name[myres->res.n.stype], myres->name);
+  fprintf(send_file, "</resource>\n"); 
   fprintf(send_file, "</topology>");
   fflush(send_file);
   fclose(send_file);
@@ -1660,8 +1708,112 @@ master_read_config(char *config_file)
         continue;
       }
       es_pool.number++;
-    } else 
-      continue;
+    } else if (strcmp(token, "broker") == 0) {
+      int type = -1;
+
+      token = strtok(NULL, " ");
+      if (!token)
+	continue;
+      type = get_node_stype_by_str(token);
+      if (!type)
+	continue; 
+
+      token = strtok(NULL, " ");
+      if (token) 
+ 	agency[type].add = strdup(token);
+      else 
+	continue;
+
+      token = strtok(NULL, " ");
+      if (token) 
+	agency[type].port = atoi(token);
+      else {
+	free(agency[type].add);
+	continue;
+      }
+    }	
   }
 }
 
+#ifdef RESOURCE_BROKER
+int 
+master_locate_resource()
+{
+  struct adtlistnode *curnode;
+  struct resource *myres, *newres;
+  int sock;
+  char buffer[501];
+  int bytesRcvd;
+  FILE *fp;
+  struct application_cfg *working_app_cfg; 
+  struct resource_agent *agent;
+
+  unlink(BROKER_SEND);
+  unlink(BROKER_RECV);
+
+  if (!glob_app_cfg->node_list)
+    return 0;
+
+  for ( curnode = glob_app_cfg->node_list->head;
+	curnode;
+	curnode = curnode->next) {
+    myres = (struct resource*)(curnode->data);
+
+    if (!IS_RES_UNFIXED(myres))
+      continue;
+
+    zlog_info("Trying to locate node resource %s", myres->name);
+    agent = &agency[myres->res.n.stype];
+    if (!agent->add || !agent->port) {
+      set_res_fail("Can't find the agency", myres);
+      return 0;
+    }
+
+    if (!master_compose_broker_request(myres, BROKER_SEND)) {
+      set_res_fail("Fail to compose broker request", myres);
+      return 0;
+    }
+    sock = send_file_to_agent(agent->add, agent->port, BROKER_SEND);
+
+    if (sock == -1) {
+      set_res_fail("Error in connecting the broker", myres);
+      return 0;
+    }
+
+    if ((bytesRcvd = recv(sock, buffer, 500, 0))  > 0) {
+      buffer[bytesRcvd] = '\0';
+      fp = fopen(BROKER_RECV, "w+");
+      fprintf(fp, buffer);
+      fflush(fp);
+      fclose(fp);
+      close(sock);
+      if ((working_app_cfg = topo_xml_parser(BROKER_RECV, BRIEF_VERSION)) == NULL) { 
+	set_res_fail("Broker resource can't be parsed successfully", myres);
+        return 0;
+      } else if (!working_app_cfg->node_list) {
+	set_res_fail("Return file doesn't have any node", myres);
+	return 0;
+      }
+     
+      newres = (struct resource*) working_app_cfg->node_list->head->data; 
+      if (newres->res.n.ip == '\0' || 
+	  newres->res.n.router_id[0] == '\0' ||
+	  newres->res.n.tunnel[0] == '\0') { 
+	set_res_fail("Invalid response from resource broker", myres);
+	return 0;
+      }
+
+      strncpy(myres->res.n.ip, newres->res.n.ip, IP_MAXLEN);
+      strncpy(myres->res.n.router_id, newres->res.n.router_id, IP_MAXLEN);
+      strncpy(myres->res.n.tunnel, newres->res.n.tunnel, 9);
+      free(working_app_cfg);
+    } else {
+      set_res_fail("No response from resource broker", myres);
+      close(sock);
+      return 0;
+    }
+  }
+
+  return 1;
+}
+#endif

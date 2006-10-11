@@ -159,13 +159,13 @@ struct link_cfg {
 #define FLAG_QUERY_RESP		0x0080
 #define FLAG_UNFIXED		0x1000
 
-#define IS_SET_SETUP_REQ(X)	((X) & FLAG_SETUP_REQ)
-#define IS_SET_SETUP_RESP(X)	((X) & FLAG_SETUP_RESP)
-#define IS_SET_AST_COMPLETE(X)	((X) & FLAG_AST_COMPLETE)
-#define IS_SET_APP_COMPLETE(X)	((X) & FLAG_APP_COMPLETE)
-#define IS_SET_RELEASE_REQ(X)	((X) & FLAG_RELEASE_REQ)
-#define IS_SET_RELEASE_RESP(X)	((X) & FLAG_RELEASE_RESP)
-#define IS_RES_UNFIXED(X)	((X) & FLAG_UNFIXED)
+#define IS_SET_SETUP_REQ(X)	((X->flags) & FLAG_SETUP_REQ)
+#define IS_SET_SETUP_RESP(X)	((X->flags) & FLAG_SETUP_RESP)
+#define IS_SET_AST_COMPLETE(X)	((X->flags) & FLAG_AST_COMPLETE)
+#define IS_SET_APP_COMPLETE(X)	((X->flags) & FLAG_APP_COMPLETE)
+#define IS_SET_RELEASE_REQ(X)	((X->flags) & FLAG_RELEASE_REQ)
+#define IS_SET_RELEASE_RESP(X)	((X->flags) & FLAG_RELEASE_RESP)
+#define IS_RES_UNFIXED(X)	((X->flags) & FLAG_UNFIXED)
 
 struct resource {
   int type;			/* indicate this is link or node */
@@ -183,17 +183,6 @@ struct resource {
 };
 struct application_cfg *glob_app_cfg;
 struct adtlist app_list;
-
-/* structurs defined for the resource agency
- *
- */
-struct resource_agent {
-  char *resource_type;
-  char *add;
-  int  port;
-};
-
-struct adtlist glob_agency_list;
 
 /* structures defined for link
  */
@@ -249,7 +238,9 @@ struct application_cfg* agent_final_parser(char*);
 void add_cfg_to_list();
 struct resource * search_node_by_name(struct application_cfg*, char*);
 void set_allres_fail(char*);
+void set_res_fail(char*, struct resource *);
 void app_cfg_pre_req();
+int get_node_stype_by_str(char*);
 
 int send_file_over_sock(int, char*);
 int send_file_to_agent(char*, int, char*);

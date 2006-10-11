@@ -11,10 +11,6 @@
 #include "log.h"
 #include "local_id_cfg.h"
 
-#ifdef RESOURCE_BROKER
-#define RESOURCE_REC	"/tmp/resource.xml"
-#endif
-
 char *node_stype_name[] =
   { "None",
     "PC",
@@ -135,6 +131,18 @@ set_allres_fail(char* error_msg)
       myres->status = AST_FAILURE;
     }
   }
+}
+
+void
+set_res_fail(char* error_msg, struct resource *res)
+{
+  zlog_err(error_msg);
+  if (res->agent_message) {
+    free(res->agent_message); 
+    res->agent_message = strdup(error_msg);
+  }
+  res->status = AST_FAILURE;
+  glob_app_cfg->status = AST_FAILURE;
 }
 
 struct application_cfg*
@@ -267,6 +275,18 @@ get_action_by_str(char* key)
 
   for (i = 0; key && i <= NUM_FUNCTION_TYPE; i++) 
     if (strcasecmp(key, action_type_details[i]) == 0) 
+      return i;
+
+  return 0;
+}
+
+int 
+get_node_stype_by_str(char* key)
+{ 
+  int i;
+
+  for (i = 0; key && i <= NUM_NODE_TYPE; i++)
+    if (strcasecmp(key, node_stype_name[i]) == 0)
       return i;
 
   return 0;
@@ -445,12 +465,7 @@ send_file_over_sock(int sock, char* newpath)
 
 #ifdef __FreeBSD__
   total = sendfile(fd, sock, 0, 0, NULL, NULL, 0);
-  if (total == 0) {
-    zlog_err("send_file_over_sock: sock %d has been void", sock);
-    close(sock);
-    close(fd);
-    return (0);
-  } else if (total < 0) {
+  if (total < 0) {
 #else
   if (fstat(fd, &file_stat) == -1) {
     zlog_err("send_file_over_sock: fstat() failed on %s", newpath);
@@ -523,7 +538,6 @@ send_file_to_agent(char *ipadd, int port, char *newpath)
   return sock;
 }
 
-
 void
 print_error_response(char *path)
 {
@@ -542,6 +556,7 @@ print_error_response(char *path)
     fprintf(fp, "</topology>\n");
     fflush(fp);
     fclose(fp);
+    return;
   }
 
   fprintf(fp, "<topology ast_id=\"%s\" action=\"%s\">\n",
@@ -1012,6 +1027,7 @@ master_template_parser(int profile_id)
   return 1;
 }
 
+#ifdef OLD_CODE
 /* parse service xml resource broker location file
  */
 int
@@ -1080,6 +1096,7 @@ service_xml_parser(char* filename)
   xmlFreeDoc(doc);
   return (1);
 }
+#endif
 
 static int 
 establish_relationship(struct application_cfg* app_cfg)
@@ -1100,13 +1117,16 @@ establish_relationship(struct application_cfg* app_cfg)
 
     switch (mylink->res.l.stype) {
       case uni:
+      case non_uni:
 	if (!mylink->res.l.src->es || !mylink->res.l.dest->es) {
 	  zlog_err("link (%s) should have both src and dest es defined", mylink->name);
 	  return 0;
 	}
 
-	if (mylink->res.l.src->es->res.n.router_id[0] == '\0' ||
-	    mylink->res.l.src->es->res.n.router_id[0] == '\0') {
+	if ((mylink->res.l.src->es->res.n.router_id[0] == '\0' && 
+		!IS_RES_UNFIXED(mylink->res.l.src->es))||
+	    (mylink->res.l.dest->es->res.n.router_id[0] == '\0' &&
+		!IS_RES_UNFIXED(mylink->res.l.dest->es))) {
 	  zlog_err("link (%s) should have <router_id> defined in its src and dest es", mylink->name);
 	  return 0;
 	}
@@ -1131,35 +1151,6 @@ establish_relationship(struct application_cfg* app_cfg)
 
 	break;
 
-      case non_uni:
-	if (!mylink->res.l.src->es || !mylink->res.l.dest->es) {
-	  zlog_err("link (%s) should have both src and dest es defined", mylink->name);
-	  return 0;
-	}
-
-	if (mylink->res.l.src->es->res.n.router_id[0] == '\0' ||
-	    mylink->res.l.dest->es->res.n.router_id[0] == '\0') {
-	  zlog_err("link (%s) should have <router_id> defined in its src and dest ES", mylink->name);
-	  return 0;
-	}
-
-	if (mylink->res.l.src->proxy) 
-	  mylink->res.l.dragon = mylink->res.l.src->proxy;
-	else 
-	  mylink->res.l.dragon = mylink->res.l.src->es;
-
-	dragon = mylink->res.l.dragon;
-	if (!dragon->res.n.link_list) { 
-	  dragon->res.n.link_list = malloc(sizeof(struct adtlist)); 
-	  memset(dragon->res.n.link_list, 0, sizeof(struct adtlist)); 
-	} 
-	adtlist_add(dragon->res.n.link_list, mylink);
-
-	mylink->res.l.src->vlsr = NULL;
-	mylink->res.l.dest->vlsr = NULL;
-
-	break;
-	
       case vlsr_vlsr:
 	if (!mylink->res.l.src->vlsr || !mylink->res.l.dest->vlsr) {
 	  zlog_err("link (%s) should have both src and dest vlsr defined", mylink->name);
@@ -1728,129 +1719,6 @@ topo_xml_parser(char* filename, int agent)
   return app_cfg;
 }
 
-#ifdef RESOURCE_BROKER
-int 
-master_locate_resource()
-{
-#ifdef FIONA
-  int i, found;
-  struct adtlistnode *curnode, *curnode1;
-  struct node_cfg *mynode, *newnode;
-  struct resource_agent *myagency;
-  int sock;
-  struct sockaddr_in echoServAddr;
-  char buffer[501];
-  int bytesRcvd;
-  FILE *fp;
-  struct application_cfg working_app_cfg; 
-  
-  for ( i = 1, curnode = glob_app_cfg->node_list->head;
-	curnode;
-	i++, curnode = curnode->next) {
-    mynode = (struct node_cfg*)(curnode->data);
-    if (mynode->ipadd[0] != '\0') 
-      continue;
-
-    if (mynode->node_type == 0) {
-      zlog_err("Unknown resource type; don't know how to locate node %s", mynode->name);
-      return 0;
-    }
-
-    zlog_info("Trying to locate node resource %s: %s", mynode->name, entity_type_name[mynode->node_type]);
-
-    for ( found = 0, curnode1 = glob_agency_list.head;
-	  curnode1 && !found;
-	  curnode1 = curnode1->next ) {
-      myagency = (struct resource_agent*)(curnode1->data);
- 
-      if (strcasecmp(entity_type_name[mynode->node_type], myagency->resource_type) == 0)
-	found = 1;
-    }
-  
-    if (!found) { 
-      zlog_err("master_locate_resource: undefined resource type \"%s\"", 
-	     entity_type_name[mynode->node_type]); 
-      return 0;
-    }
-
-    if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-      zlog_err("master_locate_resource: socket() failed");
-      return 0;
-    }
-
-    memset(&echoServAddr, 0, sizeof(echoServAddr));
-    echoServAddr.sin_family = AF_INET;
-    echoServAddr.sin_addr.s_addr = inet_addr(myagency->add);
-    echoServAddr.sin_port = htons(myagency->port);
-
-    if (connect(sock, (struct sockaddr*)&echoServAddr, sizeof(echoServAddr)) < 0) {
-      zlog_err("master_locate_resource: connect() failed to %s port %d", myagency->add, myagency->port);
-      return 0;
-    }
-
-    if (send(sock, "testing", 7, 0) != 7) {
-      zlog_err("master_locate_resource: sendto() failed to %s port %d", myagency-> add, myagency->port);
-      return 0;
-    }
-
-    if ((bytesRcvd = recv(sock, buffer, 500, 0))  > 0) {
-      buffer[bytesRcvd] = '\0';
-      unlink(RESOURCE_REC);
-      fp = fopen(RESOURCE_REC, "w+");
-      fprintf(fp, buffer);
-      fflush(fp);
-      fclose(fp);
-
-      working_app_cfg = glob_app_cfg;
-      glob_app_cfg = NULL;
-      if ((glob_app_cfg = topo_xml_parser(RESOURCE_REC, BRIEF_VERSION)) == NULL ||
-	  glob_app_cfg->node_list == NULL) {
-	zlog_err("Invalid response from resource broker");
-        close(sock);
-        free_application_cfg(glob_app_cfg);
-	glob_app_cfg = NULL;
-	glob_app_cfg = working_app_cfg;
-        return 0;
-      }
-     
-      newnode = (struct node_cfg*) glob_app_cfg->node_list->head->data; 
-      if (newnode->ipadd[0] == '\0') { 
-	zlog_err("Invalid response from resource broker");
-	close(sock);
-	free_application_cfg(glob_app_cfg);
-	glob_app_cfg = working_app_cfg;
-	return 0;
-      }
-
-      /* assume that resource broker is going to return
-       * <ip>...<ip>
-       * <vlsr> ..</vlsr>
-       */
-      strncpy(mynode->ipadd, newnode->ipadd, IP_MAXLEN);
-      mynode->vlsr_total = newnode->vlsr_total;
-      newnode->vlsr_total = 0;
-      mynode->vlsr_info = newnode->vlsr_info;
-      newnode->vlsr_info = NULL;
-      zlog_info("location for node_type %s: %s",
-	     entity_type_name[mynode->node_type], mynode->name);
-      zlog_info("\tip addr: %s", mynode->ipadd);
-      zlog_info("\tvlsr_total: %d", mynode->vlsr_total);
-
-      free_application_cfg(glob_app_cfg);
-      glob_app_cfg = working_app_cfg;
-    } else {
-      zlog_err("No response from resource broker");
-      close(sock);
-      return 0;
-    }
-
-    close(sock);
-  }
-
-#endif /* FIONA */
-  return 1;
-}
-#endif
 
 /* validate the graph
  */
@@ -1918,7 +1786,7 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 	  mynode = (struct resource*) curnode->data;
 	  
 	  if (mynode->res.n.ip[0] == '\0') {
-	    if (agent == MASTER) {
+	    if (agent == MASTER || agent == ASTB) {
 	      zlog_info("node (%s) is undefined; need to contact reousrce broker later", mynode->name);
 	      mynode->res.n.router_id[0] = '\0';
 	      mynode->res.n.tunnel[0] = '\0';
