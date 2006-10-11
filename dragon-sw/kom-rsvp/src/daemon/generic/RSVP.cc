@@ -307,7 +307,7 @@ int RSVP::main() {
 const LogicalInterface* RSVP::findInterfaceByName( const String& name ) const {
 	uint32 i;
 	for ( i = 0; i < interfaceCount; ++i ) {
-		if ( lifArray[i]->getName().leftequal( name ) ) {
+		if ( lifArray[i]->getName() == name ) {
 			return lifArray[i];
 		}
 	}
