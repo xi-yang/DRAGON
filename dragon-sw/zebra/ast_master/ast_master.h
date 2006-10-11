@@ -74,7 +74,8 @@ struct es_tank {
   struct {
     char* ip;
     char* router_id; 
-    char* tunnel;
+    char* i_tunnel;
+    char* e_tunnel;
   } es[20];
 };
 struct es_tank es_pool;
@@ -118,7 +119,8 @@ struct node_cfg {
   enum node_stype stype;
   char ip[IP_MAXLEN+1];
   char router_id[IP_MAXLEN+1];
-  char tunnel[10];
+  char i_tunnel[10];
+  char e_tunnel[10];
   char *command;
   struct adtlist *if_list;
   struct adtlist *link_list;

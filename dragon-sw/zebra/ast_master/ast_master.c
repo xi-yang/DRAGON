@@ -588,8 +588,10 @@ print_node(FILE* fp, struct resource* node)
     fprintf(fp, "\t<ip>%s</ip>\n", node->res.n.ip);
   if (node->res.n.router_id[0] != '\0')
     fprintf(fp, "\t<router_id>%s</router_id>\n", node->res.n.router_id);
-  if (node->res.n.tunnel[0] != '\0')
-    fprintf(fp, "\t<tunnel>%s</tunnel>\n", node->res.n.tunnel);
+  if (node->res.n.i_tunnel[0] != '\0')
+    fprintf(fp, "\t<i_tunnel>%s</i_tunnel>\n", node->res.n.i_tunnel);
+  if (node->res.n.e_tunnel[0] != '\0')
+    fprintf(fp, "\t<e_tunnel>%s</e_tunnel>\n", node->res.n.e_tunnel);
   if (node->res.n.command) 
     fprintf(fp, "\t<command>%s</command>\n", node->res.n.command);
 
@@ -1516,8 +1518,10 @@ topo_xml_parser(char* filename, int agent)
 	  strncpy(myres->res.n.ip, key, IP_MAXLEN); 
 	else if (strcasecmp(node_ptr->name, "router_id") == 0)
 	  strncpy(myres->res.n.router_id, key, IP_MAXLEN);
-        else if (strcasecmp(node_ptr->name, "tunnel") == 0)
-          strncpy(myres->res.n.tunnel, key, 10);
+        else if (strcasecmp(node_ptr->name, "i_tunnel") == 0)
+          strncpy(myres->res.n.i_tunnel, key, 10);
+	else if (strcasecmp(node_ptr->name, "e_tunnel") == 0)
+	  strncpy(myres->res.n.e_tunnel, key, 10); 
 	else if (strcasecmp(node_ptr->name, "status") == 0) 
 	  myres->status = get_status_by_str(key);
 	else if (strcasecmp(node_ptr->name, "agent_message") == 0)
@@ -1809,7 +1813,8 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 	    if (agent == MASTER || agent == ASTB) {
 	      zlog_info("node (%s) is undefined; need to contact reousrce broker later", mynode->name);
 	      mynode->res.n.router_id[0] = '\0';
-	      mynode->res.n.tunnel[0] = '\0';
+	      mynode->res.n.i_tunnel[0] = '\0';
+	      mynode->res.n.e_tunnel[0] = '\0';
 	      mynode->flags |= FLAG_UNFIXED;
 	    } else { 
 	      zlog_err("node (%s) should have <ip> defined", mynode->name); 
@@ -1975,7 +1980,8 @@ autofill_es_info(struct resource* res)
   for (i = 0; i < es_pool.number; i++) {
     if (strcmp(es_pool.es[i].ip, res->res.n.ip) == 0) {
       strncpy(res->res.n.router_id, es_pool.es[i].router_id, IP_MAXLEN);
-      strncpy(res->res.n.tunnel, es_pool.es[i].tunnel, 9);
+      strncpy(res->res.n.i_tunnel, es_pool.es[i].i_tunnel, 9);
+      strncpy(res->res.n.e_tunnel, es_pool.es[i].e_tunnel, 9);
       return 1;
     }
   }

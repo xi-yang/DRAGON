@@ -1694,6 +1694,7 @@ master_read_config(char *config_file)
 	es_pool.es[es_pool.number].ip = strdup(token);
       else 
 	continue;
+
       token = strtok(NULL, " ");
       if (token) 
 	es_pool.es[es_pool.number].router_id = strdup(token);
@@ -1701,15 +1702,25 @@ master_read_config(char *config_file)
 	free(es_pool.es[es_pool.number].ip);
         continue;
       }
+
       token = strtok(NULL, " ");
-      if (token) {
-	token[strlen(token)-1]='\0';
-	es_pool.es[es_pool.number].tunnel = strdup(token);
+      if (token) 
+	es_pool.es[es_pool.number].i_tunnel = strdup(token);
+      else {
+	free(es_pool.es[es_pool.number].ip);
+	free(es_pool.es[es_pool.number].router_id);
+        continue;
+      } 
+
+      token = strtok(NULL, " ");
+      if (token) { 
+        token[strlen(token)-1]='\0';
+	es_pool.es[es_pool.number].e_tunnel = strdup(token);
       } else {
 	free(es_pool.es[es_pool.number].ip);
-	free(es_pool.es[es_pool.number].tunnel);
-        continue;
-      }
+	free(es_pool.es[es_pool.number].router_id);
+	free(es_pool.es[es_pool.number].i_tunnel);
+      }	
       es_pool.number++;
     } else if (strcmp(token, "broker") == 0) {
       int type = -1;
@@ -1801,14 +1812,16 @@ master_locate_resource()
       newres = (struct resource*) working_app_cfg->node_list->head->data; 
       if (newres->res.n.ip == '\0' || 
 	  newres->res.n.router_id[0] == '\0' ||
-	  newres->res.n.tunnel[0] == '\0') { 
+	  newres->res.n.i_tunnel[0] == '\0' ||
+	  newres->res.n.e_tunnel[0] == '\0') { 
 	set_res_fail("Invalid response from resource broker", myres);
 	return 0;
       }
 
       strncpy(myres->res.n.ip, newres->res.n.ip, IP_MAXLEN);
       strncpy(myres->res.n.router_id, newres->res.n.router_id, IP_MAXLEN);
-      strncpy(myres->res.n.tunnel, newres->res.n.tunnel, 9);
+      strncpy(myres->res.n.i_tunnel, newres->res.n.i_tunnel, 9);
+      strncpy(myres->res.n.e_tunnel, newres->res.n.e_tunnel, 9);
       free(working_app_cfg);
     } else {
       set_res_fail("No response from resource broker", myres);

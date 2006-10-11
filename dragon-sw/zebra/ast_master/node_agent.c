@@ -43,7 +43,8 @@ struct node_tank {
     char* name;
     char* ip;
     char* router_id;
-    char *tunnel;
+    char *i_tunnel;
+    char *e_tunnel;
   } es[20];
 };
 static struct node_tank node_pool[NUM_NODE_TYPE+1];
@@ -980,7 +981,8 @@ broker_read_app_cfg()
     nodes = &node_pool[res_cfg->res.n.stype];
     nodes->es[nodes->number].ip = strdup(res_cfg->res.n.ip);
     nodes->es[nodes->number].router_id = strdup(res_cfg->res.n.router_id);
-    nodes->es[nodes->number].tunnel = strdup(res_cfg->res.n.tunnel);
+    nodes->es[nodes->number].i_tunnel = strdup(res_cfg->res.n.i_tunnel);
+    nodes->es[nodes->number].e_tunnel = strdup(res_cfg->res.n.e_tunnel);
     nodes->es[nodes->number].name = strdup(res_cfg->name);
     nodes->number++;
   }
@@ -1055,7 +1057,8 @@ broker_process()
       zlog_info("Broker is giving out: %s", nodes->es[nodes->index].name);
       strncpy(res_cfg->res.n.ip, nodes->es[nodes->index].ip, IP_MAXLEN);
       strncpy(res_cfg->res.n.router_id, nodes->es[nodes->index].router_id, IP_MAXLEN);
-      strncpy(res_cfg->res.n.tunnel, nodes->es[nodes->index].tunnel, 9);
+      strncpy(res_cfg->res.n.i_tunnel, nodes->es[nodes->index].i_tunnel, 9);
+      strncpy(res_cfg->res.n.e_tunnel, nodes->es[nodes->index].e_tunnel, 9);
       nodes->index++;
       res_cfg->status = AST_SUCCESS;
       glob_app_cfg->status = AST_SUCCESS;
