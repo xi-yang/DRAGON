@@ -806,7 +806,10 @@ agent_accept(struct thread *thread)
 	
       }
 
-      send_file_over_sock(clntSock, NODE_AGENT_RET);
+     if (!send_file_over_sock(clntSock, NODE_AGENT_RET)) 
+	clntSock = send_file_to_agent(glob_app_cfg->ast_ip, MASTER_PORT, NODE_AGENT_RET);
+
+
       close(clntSock);
       if (child_app_complete) 
 	_exit(2);
