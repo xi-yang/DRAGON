@@ -826,16 +826,16 @@ void rsvpupcall_register_lsp(struct _rsvp_upcall_parameter* p)
 	if ( p->dragonUniPara) {
 		lsp->common.DragonUni_Para = p->dragonUniPara;
 		lsp->dragon.lspVtag = lsp->common.DragonUni_Para->vlanTag;
-		if ((lsp->common.DragonUni_Para->srcLocalId & 0xffff) == ANY_VTAG)
-		{
-			lsp->common.DragonUni_Para->srcLocalId &= 0xffff0000; 
-			lsp->common.DragonUni_Para->srcLocalId |= lsp->dragon.lspVtag ;
-		}
-		if ((lsp->common.DragonUni_Para->destLocalId & 0xffff) == ANY_VTAG)
-		{
-			lsp->common.DragonUni_Para->destLocalId &= 0xffff0000; 
-			lsp->common.DragonUni_Para->destLocalId |= lsp->dragon.lspVtag ;
-		}
+		//if ((lsp->common.DragonUni_Para->srcLocalId & 0xffff) == ANY_VTAG)
+		//{
+		//	lsp->common.DragonUni_Para->srcLocalId &= 0xffff0000; 
+		//	lsp->common.DragonUni_Para->srcLocalId |= lsp->dragon.lspVtag ;
+		//}
+		//if ((lsp->common.DragonUni_Para->destLocalId & 0xffff) == ANY_VTAG)
+		//{
+		//	lsp->common.DragonUni_Para->destLocalId &= 0xffff0000; 
+		//	lsp->common.DragonUni_Para->destLocalId |= lsp->dragon.lspVtag ;
+		//}
 		lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
 		lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
 	}
@@ -877,16 +877,16 @@ void  rsvpUpcall(void* para)
                             if (p->dragonUniPara) {
 					lsp->common.DragonUni_Para = p->dragonUniPara;
 					lsp->dragon.lspVtag = lsp->common.DragonUni_Para->vlanTag;
-					if ((lsp->common.DragonUni_Para->srcLocalId & 0xffff) == ANY_VTAG)
-					{
-						lsp->common.DragonUni_Para->srcLocalId &= 0xffff0000; 
-						lsp->common.DragonUni_Para->srcLocalId |= lsp->dragon.lspVtag ;
-					}
-					if ((lsp->common.DragonUni_Para->destLocalId & 0xffff) == ANY_VTAG)
-					{
-						lsp->common.DragonUni_Para->destLocalId &= 0xffff0000; 
-						lsp->common.DragonUni_Para->destLocalId |= lsp->dragon.lspVtag ;
-					}
+					//if ((lsp->common.DragonUni_Para->srcLocalId & 0xffff) == ANY_VTAG)
+					//{
+					//	lsp->common.DragonUni_Para->srcLocalId &= 0xffff0000; 
+					//	lsp->common.DragonUni_Para->srcLocalId |= lsp->dragon.lspVtag ;
+					//}
+					//if ((lsp->common.DragonUni_Para->destLocalId & 0xffff) == ANY_VTAG)
+					//{
+					//	lsp->common.DragonUni_Para->destLocalId &= 0xffff0000; 
+					//	lsp->common.DragonUni_Para->destLocalId |= lsp->dragon.lspVtag ;
+					//}
 					lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
 					lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
                             }
@@ -902,16 +902,16 @@ void  rsvpUpcall(void* para)
 			if (p->dragonUniPara) {
 				lsp->common.DragonUni_Para = p->dragonUniPara;
 				lsp->dragon.lspVtag = lsp->common.DragonUni_Para->vlanTag;
-				if ((lsp->common.DragonUni_Para->srcLocalId & 0xffff) == ANY_VTAG)
-				{
-					lsp->common.DragonUni_Para->srcLocalId &= 0xffff0000; 
-					lsp->common.DragonUni_Para->srcLocalId |= lsp->dragon.lspVtag ;
-				}
-				if ((lsp->common.DragonUni_Para->destLocalId & 0xffff) == ANY_VTAG)
-				{
-					lsp->common.DragonUni_Para->destLocalId &= 0xffff0000; 
-					lsp->common.DragonUni_Para->destLocalId |= lsp->dragon.lspVtag ;
-				}
+				//if ((lsp->common.DragonUni_Para->srcLocalId & 0xffff) == ANY_VTAG)
+				//{
+				//	lsp->common.DragonUni_Para->srcLocalId &= 0xffff0000; 
+				//	lsp->common.DragonUni_Para->srcLocalId |= lsp->dragon.lspVtag ;
+				//}
+				//if ((lsp->common.DragonUni_Para->destLocalId & 0xffff) == ANY_VTAG)
+				//{
+				//	lsp->common.DragonUni_Para->destLocalId &= 0xffff0000; 
+				//	lsp->common.DragonUni_Para->destLocalId |= lsp->dragon.lspVtag ;
+				//}
 				lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
 				lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
                      }

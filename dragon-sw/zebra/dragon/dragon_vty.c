@@ -904,7 +904,7 @@ DEFUN (dragon_set_lsp_ip,
     }
     else if (sscanf (argv[2], "%d", &port_src) != 1)
     {
-        vty_out (vty, "Invalid source port: %s%s", strerror (errno), VTY_NEWLINE);
+        vty_out (vty, "Invalid source port: %s%s", argv[2], VTY_NEWLINE);
         return CMD_WARNING;
     }
 
@@ -936,7 +936,7 @@ DEFUN (dragon_set_lsp_ip,
     }
     else if (sscanf (argv[5], "%d", &port_dest) != 1)
     {
-        vty_out (vty, "Invalid destination port: %s%s", strerror (errno), VTY_NEWLINE);
+        vty_out (vty, "Invalid destination port: %s%s", argv[5], VTY_NEWLINE);
         return CMD_WARNING;
     }
   
