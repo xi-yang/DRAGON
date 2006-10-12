@@ -40,6 +40,7 @@ static void master_read_config(char *);
 static int master_accept(struct thread *);
 static int noded_callback(struct thread *);
 static int dragon_callback(struct thread *);
+static int master_setup_req_to_node();
 
 extern int master_process_id(char*);
 extern struct application_cfg* master_final_parser(char*, int);
@@ -667,9 +668,7 @@ master_process_setup_req()
    */
 
   app_cfg_pre_req();
-  if (send_task_to_node_agent() == 0) 
-    glob_app_cfg->status = AST_FAILURE;
-  if (send_task_to_link_agent() == 0) 
+  if (send_task_to_link_agent() == 0)
     glob_app_cfg->status = AST_FAILURE;
   integrate_result();
   return 1;
@@ -1262,7 +1261,14 @@ integrate_result()
     case SETUP_RESP:
       if (glob_app_cfg->setup_ready == total_res) 
 	sprintf(path_prefix, "%s/setup_", directory);
-      else 
+      else if (glob_app_cfg->setup_ready == adtlist_getcount(glob_app_cfg->link_list)) {
+	if (glob_app_cfg->status == AST_SUCCESS) {
+  	  if (master_setup_req_to_node() == 0) 
+	    glob_app_cfg->status = AST_FAILURE;
+	  else
+	    return;
+	}
+      } else  
 	return;
       break;
 
@@ -1823,3 +1829,42 @@ master_locate_resource()
   return 1;
 }
 #endif
+
+static int
+master_setup_req_to_node()
+{
+  struct adtlistnode *curnode;
+  struct resource *myres;
+  struct endpoint *src, *dest;
+  int ret_value = 1;
+
+  /* change the action to SETUP_REQ temporarily
+   */
+  glob_app_cfg->action = SETUP_REQ;
+
+  /* update if_ip vtag values
+   */
+  for (curnode = glob_app_cfg->link_list->head;
+	curnode;
+	curnode = curnode->next) {
+    myres = (struct resource*) curnode->data;
+
+    src = myres->res.l.src;
+    dest = myres->res.l.dest;
+
+    if (src->ifp)
+      src->ifp->vtag = atoi(myres->res.l.vtag);
+    if (dest->ifp) 
+      dest->ifp->vtag = atoi(myres->res.l.vtag);
+  }
+
+  /* now, I can send this to the node_agent
+   */
+  if (send_task_to_node_agent() == 0) {
+    glob_app_cfg->status = AST_FAILURE;
+    ret_value = 0;
+  }
+
+  glob_app_cfg->action = SETUP_RESP;
+  return ret_value;
+}
