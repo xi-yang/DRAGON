@@ -825,8 +825,8 @@ dragon_build_lsp(struct resource *link)
     argc = 3;
     strcpy(argv[0], "client");
     if (IS_RES_UNFIXED(link)) {
-      strcpy(argv[1], link->res.l.src->es->res.n.i_tunnel);
-      strcpy(argv[2], link->res.l.dest->es->res.n.e_tunnel);
+      strcpy(argv[1], link->res.l.src->es->res.n.tunnel);
+      strcpy(argv[2], link->res.l.dest->es->res.n.tunnel);
     } else {
       strcpy(argv[1], "implicit");
       strcpy(argv[2], "implicit");
