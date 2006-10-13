@@ -45,6 +45,7 @@ struct te_lsa_para_ptr
   struct te_link_subtlv_link_protype  *p_link_protype;
   list   p_link_ifswcap_list;
   struct te_tlv_header	*p_link_srlg;   
+  struct te_link_subtlv_link_protype  *p_link_te_lambda;
 };
 
 

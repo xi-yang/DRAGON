@@ -106,7 +106,11 @@ set_linkparams_link_header (struct ospf_interface *oi)
 
 	  /* TE_LINK_SUBTLV_IFSWCAP */
 	  SET_LINK_PARAMS_LINK_HEADER_TLV(link_srlg)
+
+	  /* TE_LINK_SUBTLV_TE_LAMBDA */
+	  SET_LINK_PARAMS_LINK_HEADER_TLV(link_te_lambda)
   }
+  
 
   para->link.header.type   = htons (TE_TLV_LINK);
   para->link.header.length = htons (length);
@@ -151,6 +155,7 @@ FUNC_BUILD_LINK_SUBTLV(rsc_clsclr)
 FUNC_BUILD_LINK_SUBTLV(link_lcrmt_id)
 FUNC_BUILD_LINK_SUBTLV(link_protype)
 /* FUNC_BUILD_LINK_SUBTLV(link_ifswcap) */
+FUNC_BUILD_LINK_SUBTLV(link_te_lambda)
 
 static void 
 build_link_subtlv_link_srlg (struct stream *s, struct te_link_subtlv_link_srlg *lp) 
@@ -248,6 +253,7 @@ ospf_te_area_lsa_link_body_set (struct stream *s, struct ospf_interface *oi)
 	BUILD_LINK_SUBTLV(link_protype);
 	BUILD_LINK_SUBTLV(link_ifswcap);
 	BUILD_LINK_SUBTLV(link_srlg);
+	BUILD_LINK_SUBTLV(link_te_lambda);
   }
   return;
 }
@@ -419,6 +425,9 @@ ospf_te_lsa_parse (struct ospf_lsa *new)
 					break;
 				case TE_LINK_SUBTLV_LINK_SRLG:
 					new->tepara_ptr->p_link_srlg = (struct te_tlv_header *)sub_tlvh;
+					break;
+				case TE_LINK_SUBTLV_LINK_TE_LAMBDA:
+					new->tepara_ptr->p_link_te_lambda = (struct te_link_subtlv_link_te_lambda *)sub_tlvh;
 					break;
 				default: /* Unrecognized link sub-tlv, just ignore it */
 					break;
@@ -1409,6 +1418,8 @@ set_linkparams_uni_link_header (struct ospf_interface *oi)
 
 	  /* TE_LINK_SUBTLV_IFSWCAP */
 	  SET_LINK_PARAMS_LINK_HEADER_TLV(link_srlg)
+
+	  SET_LINK_PARAMS_LINK_HEADER_TLV(link_te_lambda)
   }
 
   para->link.header.type   = htons (TE_TLV_LINK);
@@ -1439,6 +1450,7 @@ ospf_te_area_lsa_uni_link_body_set (struct stream *s, struct ospf_interface *oi)
 	BUILD_UNI_SUBTLV(link_protype);
 	BUILD_UNI_SUBTLV(link_ifswcap);
 	BUILD_UNI_SUBTLV(link_srlg);
+	BUILD_UNI_SUBTLV(link_te_lambda);
   }
   return;
 }

@@ -119,6 +119,70 @@ struct str_val_conv str_val_conv_encoding =
 };
 
 
+struct str_val_conv str_val_conv_wavelength = 
+{
+	40,
+	{{ "1560.61", 	192100, 			7}, 
+	{ "1559.79", 	192200, 			7}, 
+	{ "1558.98", 	192300, 			7}, 
+	{ "1558.17", 	192400, 			7}, 
+	{ "1557.36", 	192500, 			7}, 
+	{ "1556.55", 	192600, 			7}, 
+	{ "1555.74", 	192700, 			7}, 
+	{ "1554.94", 	192800, 			7}, 
+	{ "1554.13", 	192900, 			7}, 
+	{ "1553.33", 	193000, 			7}, 
+	{ "1552.52", 	193100, 			7}, 
+	{ "1551.72", 	193200, 			7}, 
+	{ "1550.92", 	193300, 			7}, 
+	{ "1550.12", 	193400, 			7}, 
+	{ "1549.31", 	193500, 			7}, 
+	{ "1548.51", 	193600, 			7}, 
+	{ "1547.71", 	193700, 			7}, 
+	{ "1546.92", 	193800, 			7}, 
+	{ "1546.12", 	193900, 			7}, 
+	{ "1545.32", 	194000, 			7}, 
+	{ "1544.52", 	194100, 			7}, 
+	{ "1543.73", 	194200, 			7}, 
+	{ "1542.94", 	194300, 			7}, 
+	{ "1542.14", 	194400, 			7}, 
+	{ "1541.35", 	194500, 			7}, 
+	{ "1540.56", 	194600, 			7}, 
+	{ "1539.77", 	194700, 			7}, 
+	{ "1538.98", 	194800, 			7}, 
+	{ "1538.19", 	194900, 			7}, 
+	{ "1537.40", 	195000, 			7}, 
+	{ "1536.61", 	195100, 			7}, 
+	{ "1535.82", 	195200, 			7}, 
+	{ "1535.04", 	195300, 			7}, 
+	{ "1534.25", 	195400, 			7}, 
+	{ "1533.46", 	195500, 			7}, 
+	{ "1532.68", 	195600, 			7}, 
+	{ "1531.90", 	195700, 			7}, 
+	{ "1531.12", 	195800, 			7}, 
+	{ "1530.33", 	195900, 			7}, 
+	{ "1529.55", 	196000, 			7}}
+};
+
+u_int32_t channel2frequency(char* channel)
+{
+	int chan_id;
+	sscanf(channel, "%d", &chan_id);
+	if (chan_id > 20 && chan_id < 61)
+		return ((chan_id-20)*100+192000);
+	return 0;
+}
+
+u_int32_t wavelength2frequency(char* wavelength)
+{
+	return str2val(&str_val_conv_wavelength, (const char*)wavelength);
+}
+
+const char* frequency2wavelength(u_int32_t frequency)
+{
+	return val2str(&str_val_conv_wavelength, frequency);
+}
+	
 /* Flag to indicate whether the parameters are changed ever since last configuration */ 
 struct ospf_te_config_para te_config;
 
@@ -538,6 +602,16 @@ set_linkparams_srlg (struct te_link_subtlv_link_srlg *para, u_int32_t value, u_c
    return 1;
 }
 
+static void
+set_linkparams_te_lambda (struct te_link_subtlv_link_te_lambda *para, u_int32_t freq)
+{
+  para->header.type   = htons (TE_LINK_SUBTLV_LINK_TE_LAMBDA);
+  para->header.length = htons (sizeof (para->frequency));
+  para->frequency = htonl(freq);
+  return;
+}
+
+
 /* We should read interface switching capability from the kernel*/ /*XXX*/
 static void
 set_linkparams_ifsw_cap1 (struct te_link_subtlv_link_ifswcap *para, u_char swcap, u_char enc)
@@ -631,6 +705,8 @@ ospf_te_set_configed_link_para(struct ospf_interface *oi, struct ospf_te_config_
 		  		}
 			}
 		}
+		if (ntohs (conf->te_para.link_te_lambda.header.type) != 0)
+			memcpy(&old_para->link_te_lambda, &conf->te_para.link_te_lambda, sizeof(struct te_link_subtlv_link_te_lambda));
 	}
 	
 }
@@ -1111,6 +1187,23 @@ show_vty_link_subtlv_srlg (struct vty *vty, struct te_tlv_header *tlvh, int loca
 }
 
 static u_int16_t
+show_vty_link_subtlv_te_lambda (struct vty *vty, struct te_tlv_header *tlvh)
+{
+  struct te_link_subtlv_link_te_lambda *top;
+  const char *p;
+  
+  top = (struct te_link_subtlv_link_protype *) tlvh;
+  p = frequency2wavelength(ntohl(top->frequency));
+ 
+  if (vty != NULL)
+    vty_out (vty, "  DRAGON TE Lambda: %u (%s nm)%s", ntohl(top->frequency), p, VTY_NEWLINE);
+  else
+    zlog_info ("   DRAGON TE Lambda: %u (%s nm)", ntohl(top->frequency), p);
+
+  return TLV_SIZE (tlvh);
+}
+
+static u_int16_t
 show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh)
 {
   struct te_link_subtlv_link_ifswcap *top;
@@ -1347,7 +1440,10 @@ ospf_te_show_link_subtlv (struct vty *vty, struct te_tlv_header *tlvh0,
         case TE_LINK_SUBTLV_LINK_IFSWCAP:
           sum += show_vty_link_subtlv_ifsw_cap_network(vty,  tlvh);
           break;
-         default:
+        case TE_LINK_SUBTLV_LINK_TE_LAMBDA:
+          sum += show_vty_link_subtlv_te_lambda(vty,  tlvh);
+          break;
+        default:
           sum += show_vty_unknown_tlv (vty, tlvh);
           break;
         }
@@ -1634,6 +1730,12 @@ static void ospf_te_config_write (struct vty *vty)
 		{
 			if (ntohl(oi->te_para.link_lcrmt_id.link_remote_id)!=0)
 			    vty_out(vty, "		 remote-interface-id 0x%x(%u) %s", ntohl(oi->te_para.link_lcrmt_id.link_remote_id), ntohl(oi->te_para.link_lcrmt_id.link_remote_id), VTY_NEWLINE);
+		}
+
+		if (ntohs(oi->te_para.link_te_lambda.header.type) != 0)
+		{
+			if (ntohl(oi->te_para.link_te_lambda.frequency)!=0)
+			    vty_out(vty, "		 DRAGON TE Lambda: frequency %d (%s nm)%s", ntohl(oi->te_para.link_te_lambda.frequency), frequency2wavelength(ntohl(oi->te_para.link_te_lambda.frequency)), VTY_NEWLINE);
 		}
 			
 	    	vty_out(vty, "     exit %s", VTY_NEWLINE);
@@ -2118,6 +2220,36 @@ DEFUN (ospf_te_interface_protection_type,
  return CMD_SUCCESS;
 }
 
+
+DEFUN (ospf_te_interface_te_lambda,
+       ospf_te_interface_te_lambda_cmd,
+       "lambda (frequency|wavelength|channel) NUMBER",
+       "Link TE lambda (DRAGON specific)\n"
+       "In frequency format e.g. 192300 (ghz)\n"
+       "In wavelength format e.g. 1539.77 (nm)\n"
+       "Channel number e.g. 33\n"
+       "Frequency/wavelength/channel number\n")
+{
+  u_int32_t freq;
+
+  if (strncmp(argv[0], "f", 1) == 0)
+  	sscanf(argv[1], "%u", &freq);
+  else if (strncmp(argv[0], "c", 1) == 0)
+  	freq = channel2frequency(argv[1]);
+  else if (strncmp(argv[0], "w", 1) == 0)
+  	freq = wavelength2frequency(argv[1]);
+
+  if (freq < 192100 || freq > 196000 || freq%100 != 0)
+    {
+      vty_out (vty, "invalid lambda frequency: %u %s", freq, VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  
+  set_linkparams_te_lambda(&te_config.te_para.link_te_lambda, freq);
+  return CMD_SUCCESS;
+}
+
+
 DEFUN (ospf_te_interface_srlg,
        ospf_te_interface_srlg_cmd,
        "srlg (add|delete) <0-4294967295>",
@@ -2460,6 +2592,8 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 	          show_vty_link_subtlv_ifsw_cap_local(vty, &oi->te_para.link_ifswcap.header);
       	   if (ntohs(oi->te_para.link_srlg.header.type)!=0)
 	          show_vty_link_subtlv_srlg(vty, &oi->te_para.link_srlg.header, 1);
+      	   if (ntohs(oi->te_para.link_te_lambda.header.type)!=0)
+	          show_vty_link_subtlv_te_lambda(vty, &oi->te_para.link_te_lambda.header, &oi->te_para.link_te_lambda.header);
       }
   }
   else
@@ -2652,8 +2786,8 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap3b_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4a_cmd);
-
-  /*@@@@ UNI hacks */
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_te_lambda_cmd);
+  /*@@@@ UNI hacks ==> Obsolete*/
   install_node (&ospf_te_uni_node, NULL);
   install_default(OSPF_TE_UNI_NODE);
   install_element (OSPF_TE_UNI_NODE, &ospf_te_data_interface_noproto_cmd);

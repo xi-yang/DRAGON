@@ -316,6 +316,14 @@ struct te_link_subtlv_link_srlg
   list		srlg_list;	/* SRLG value, each of which is 4-octet */
 };
 
+/* DRAGON specific TLVs*/
+#define	TE_LINK_SUBTLV_LINK_TE_LAMBDA	16641 /* or 0x4101 = DRAGO_BASE+0x101*/
+struct te_link_subtlv_link_te_lambda
+{
+  struct te_tlv_header	header;		/* Value length is variable-length octets. */
+  u_int32_t	frequency;			/*Lambda in frequency format*/
+};
+
 enum sched_opcode {
   REORIGINATE_THIS_LSA, REFRESH_THIS_LSA, FLUSH_THIS_LSA
 };
@@ -333,6 +341,10 @@ struct str_val_conv {
 extern struct str_val_conv str_val_conv_protection;
 extern struct str_val_conv str_val_conv_swcap;
 extern struct str_val_conv str_val_conv_encoding;
+
+extern u_int32_t channel2frequency(char* channel);
+extern u_int32_t wavelength2frequency(char* wavelength);
+extern const char* frequency2wavelength(u_int32_t frequency);
 
 #define INTERFACE_MPLS_ENABLED(X) \
 	X->te_enabled >= INTERFACE_TE_MPLS
@@ -365,6 +377,7 @@ struct te_area_lsa_para
   struct te_link_subtlv_link_protype  link_protype;
   struct te_link_subtlv_link_ifswcap link_ifswcap;
   struct te_link_subtlv_link_srlg	link_srlg;   /* length is variable */
+  struct te_link_subtlv_link_te_lambda	 link_te_lambda;
 };
 
 /* te_link_local_lsa_para is present for each type-9 ospf_te_lsa */
