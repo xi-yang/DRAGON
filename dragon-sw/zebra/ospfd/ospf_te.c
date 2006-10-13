@@ -163,25 +163,6 @@ struct str_val_conv str_val_conv_wavelength =
 	{ "1530.33", 	195900, 			7}, 
 	{ "1529.55", 	196000, 			7}}
 };
-
-u_int32_t channel2frequency(char* channel)
-{
-	int chan_id;
-	sscanf(channel, "%d", &chan_id);
-	if (chan_id > 20 && chan_id < 61)
-		return ((chan_id-20)*100+192000);
-	return 0;
-}
-
-u_int32_t wavelength2frequency(char* wavelength)
-{
-	return str2val(&str_val_conv_wavelength, (const char*)wavelength);
-}
-
-const char* frequency2wavelength(u_int32_t frequency)
-{
-	return val2str(&str_val_conv_wavelength, frequency);
-}
 	
 /* Flag to indicate whether the parameters are changed ever since last configuration */ 
 struct ospf_te_config_para te_config;
@@ -222,6 +203,25 @@ val2str(struct str_val_conv *db, u_int32_t value)
 	return def_string;
 }
 #endif
+
+u_int32_t channel2frequency(char* channel)
+{
+	int chan_id;
+	sscanf(channel, "%d", &chan_id);
+	if (chan_id > 20 && chan_id < 61)
+		return ((chan_id-20)*100+192000);
+	return 0;
+}
+
+u_int32_t wavelength2frequency(char* wavelength)
+{
+	return str2val(&str_val_conv_wavelength, (const char*)wavelength);
+}
+
+const char* frequency2wavelength(u_int32_t frequency)
+{
+	return val2str(&str_val_conv_wavelength, frequency);
+}
 
 static void
 ospf_te_config_para_del(struct ospf_te_config_para *oc)
@@ -444,7 +444,7 @@ static void set_linkparams_rmtif_addr(struct ospf_interface *oi)
     if(oi->type == OSPF_IFTYPE_POINTOPOINT)
     {
       /* Take the router ID of the neighbor. */
-      if (((nbr = ospf_nbr_lookup_ptop (oi)) && (nbr->state == NSM_Full) || oi->uni_data) /*@@@@ UNI hacks*/
+      if ((((nbr = ospf_nbr_lookup_ptop (oi)) && (nbr->state == NSM_Full)) || oi->uni_data) /*@@@@ UNI hacks*/
       	     && ntohs(oi->te_para.lclif_ipaddr.header.type) != 0 )
       {
 	   oi->te_para.rmtif_ipaddr.header.type = htons (TE_LINK_SUBTLV_RMTIF_IPADDR);
@@ -2457,7 +2457,7 @@ DEFUN (ospf_te_interface_ifsw_cap4,
     }
   else
     {
-        vty_out (vty, "ospf_te_interface_ifsw_cap4: invalid command", VTY_NEWLINE);
+        vty_out (vty, "ospf_te_interface_ifsw_cap4: invalid command%s", VTY_NEWLINE);
 	 return CMD_WARNING;
     }
   return CMD_SUCCESS;
@@ -2593,7 +2593,7 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
       	   if (ntohs(oi->te_para.link_srlg.header.type)!=0)
 	          show_vty_link_subtlv_srlg(vty, &oi->te_para.link_srlg.header, 1);
       	   if (ntohs(oi->te_para.link_te_lambda.header.type)!=0)
-	          show_vty_link_subtlv_te_lambda(vty, &oi->te_para.link_te_lambda.header, &oi->te_para.link_te_lambda.header);
+	          show_vty_link_subtlv_te_lambda(vty, &oi->te_para.link_te_lambda.header);
       }
   }
   else
