@@ -79,6 +79,9 @@ noded_read_config(char* config_file)
   FILE *fp;
   char *ret, *token;
  
+  interface = NULL;
+  loopback = NULL;
+
   if (!config_file)
     return;
   fp = fopen(config_file, "r");
@@ -92,12 +95,21 @@ noded_read_config(char* config_file)
     token = strtok(NULL, " ");
     if (!token)
       continue;
+
     if (strcmp(token, "interface") == 0) {
       token = strtok(NULL, " ");
-      interface = token ? token:NULL;
+      token[strlen(token)-1] = '\0';
+      if (token)
+        interface = strdup(token);
+      else
+	continue;
     } else if (strcmp(token, "router_id") == 0) {
       token = strtok (NULL, " ");
-      loopback = token ? token:NULL;
+      token[strlen(token)-1] = '\0';
+      if (token)
+	loopback = strdup(token);
+      else
+	continue;
     }
   } 
 }
@@ -144,6 +156,9 @@ node_assign_ip(struct resource* node)
   struct if_ip *ifp;
   char command[150];
   struct adtlistnode* curnode;
+#ifndef __FreeBSD__
+  static char iface_name[50];
+#endif
 
   if (!node->res.n.if_list)
     return 1;
@@ -159,6 +174,22 @@ node_assign_ip(struct resource* node)
     bzero(bcast, IP_MAXLEN+1);
     if (sockfd == -1) 
       sockfd = socket(AF_INET, SOCK_DGRAM, 0); 
+
+    if (interface) {
+#ifndef __FreeBSD__
+      if (ifp->vtag != 0) {
+	sprintf(iface_name, "%s:%d", interface, ifp->vtag);
+	ifp->iface = strdup(iface_name);
+
+	sprintf(iface_name, "vconfig add %s %d", interface, ifp->vtag);
+	system(iface_name);
+      } else
+#endif
+	ifp->iface = strdup(interface);
+    }
+
+    if (!ifp->iface)
+      continue;
 
     bzero(&if_info, sizeof(struct ifreq));
     strcpy(if_info.ifr_name, ifp->iface);
@@ -622,9 +653,6 @@ main(int argc, char* argv[])
     }
   }
 
-  interface = NULL;
-  loopback = NULL;
-  
   if (config_file) 
     noded_read_config(config_file); 
   else
