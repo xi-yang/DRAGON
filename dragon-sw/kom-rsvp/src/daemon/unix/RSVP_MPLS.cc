@@ -149,6 +149,8 @@ inline uint32 MPLS::allocateInLabel() {
 inline void MPLS::freeInLabel( uint32 label ) {
 	LOG(2)( Log::MPLS, "MPLS: freeing label", label );
 	numberOfAllocatedLabels -= 1;
+	if (numberOfAllocatedLabels >= RSVP_Global::labelHashCount)
+		numberOfAllocatedLabels = 0; 
 	labelHash[label%RSVP_Global::labelHashCount] = 0;
 }
 
