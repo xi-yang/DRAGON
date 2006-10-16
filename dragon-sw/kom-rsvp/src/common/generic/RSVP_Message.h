@@ -96,6 +96,7 @@ protected:
 	FlowDescriptorList           flowDescriptorList;
 	UnknownObjectList            unknownObjectList;
 	LABEL_REQUEST_Object         LABEL_REQUEST_Object_O;
+	LABEL_Object                 LABEL_Object_O;
 	const EXPLICIT_ROUTE_Object* EXPLICIT_ROUTE_Object_P;
 	uint16 EXPLICIT_ROUTE_Object_Length;
 	const LABEL_SET_Object* LABEL_SET_Object_P;
@@ -198,6 +199,8 @@ public:
 	const UnknownObjectList& getUnknownObjectList() const { return unknownObjectList; }
 	const LABEL_REQUEST_Object& getLABEL_REQUEST_Object() const { assert(objectFlags & LABEL_REQUEST); return LABEL_REQUEST_Object_O; }
 	bool hasLABEL_REQUEST_Object() const { return (objectFlags & LABEL_REQUEST); }
+	LABEL_Object& getLABEL_Object() const { assert(objectFlags & LABEL); return LABEL_Object_O; }
+	bool hasLABEL_Object() const { return (objectFlags & LABEL); }
 	const EXPLICIT_ROUTE_Object* getEXPLICIT_ROUTE_Object() const { return EXPLICIT_ROUTE_Object_P; }
 	const LABEL_SET_Object* getLABEL_SET_Object() const { return LABEL_SET_Object_P; }
 	const SUGGESTED_LABEL_Object& getSUGGESTED_LABEL_Object() const { assert(objectFlags & SUGGESTED_LABEL); return SUGGESTED_LABEL_Object_O; }
@@ -287,6 +290,9 @@ public:
 	void addUnknownObjects( const UnknownObjectList& );
 	void setLABEL_REQUEST_Object( const LABEL_REQUEST_Object& o ) {
 		Message_CHECK_OBJECT(LABEL_REQUEST)
+	}
+	void setLABEL_Object( const LABEL_Object& o ) {
+		Message_CHECK_OBJECT(LABEL)
 	}
 	void setEXPLICIT_ROUTE_Object( const EXPLICIT_ROUTE_Object& o ) {
 		checkEXPLICIT_ROUTE_Object( o.borrow() );

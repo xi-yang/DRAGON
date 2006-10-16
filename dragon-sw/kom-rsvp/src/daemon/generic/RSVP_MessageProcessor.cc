@@ -308,6 +308,14 @@ void MessageProcessor::refreshReservations() {
 			resvMsg->setTIME_VALUES_Object( inLif.getRefreshInterval() );
 			if (currentMessage.getDRAGON_UNI_Object())
 				resvMsg->setDRAGON_UNI_Object(*currentMessage.getDRAGON_UNI_Object());
+			if ( (*psbIter)->hasSUGGESTED_LABEL_Object() ) {
+                            LABEL_Object & labelObject = resvMsg.getLABEL_Object();
+                            SUGGESTED_LABEL_Object & suggestedLabelObject = (*psbIter)->getSUGGESTED_LABEL_Object();
+                            labelObject.setLabel(suggestedLabelObject.getLabel());
+                            labelObject.setLabelCType(suggestedLabelObject.getLabelCType());
+				resvMsg->setLABEL_Object(const_cast<LABEL_Object&>(labelObject));
+			}
+			resvMsg->setTIME_VALUES_Object( inLif.getRefreshInterval() );			
                     //$$$$ end
 
 			if ( forwardConfirm && currentMessage.hasRESV_CONFIRM_Object() ) {
