@@ -311,7 +311,7 @@ void MessageProcessor::refreshReservations() {
 			if ( (*psbIter)->hasSUGGESTED_LABEL_Object() ) {
                             const SUGGESTED_LABEL_Object & suggestedLabelObject = (*psbIter)->getSUGGESTED_LABEL_Object();
                             const LABEL_Object labelObject(suggestedLabelObject.getLabel(), suggestedLabelObject.getLabelCType());
-                            //resvMsg->setLABEL_Object(labelObject);
+                            resvMsg->setLABEL_Object(labelObject);
 			}
                         //$$$$ end
 

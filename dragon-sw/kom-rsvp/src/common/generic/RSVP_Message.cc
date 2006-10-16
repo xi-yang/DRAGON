@@ -321,6 +321,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const Message& m ) {
 	if (m.objectFlags & Message::RSVP_HOP) buffer << m.RSVP_HOP_Object_O;
 	if (m.objectFlags & Message::TIME_VALUES) buffer << m.TIME_VALUES_Object_O;
 	if (m.objectFlags & Message::LABEL_REQUEST) buffer << m.LABEL_REQUEST_Object_O;
+	if (m.objectFlags & Message::LABEL) buffer << m.LABEL_Object_O;
 	if (m.objectFlags & Message::SUGGESTED_LABEL) buffer << m.SUGGESTED_LABEL_Object_O;
 	if (m.objectFlags & Message::UPSTREAM_LABEL) buffer << m.UPSTREAM_LABEL_Object_O;
 	if (m.EXPLICIT_ROUTE_Object_P) buffer << *m.EXPLICIT_ROUTE_Object_P;

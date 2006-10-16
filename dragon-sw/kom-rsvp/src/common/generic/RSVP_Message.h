@@ -292,8 +292,6 @@ public:
 		Message_CHECK_OBJECT(LABEL_REQUEST)
 	}
 	void setLABEL_Object( const LABEL_Object& o ) {
-		if ((objectFlags & LABEL) == 0)
-			length += o.total_size();
 		Message_CHECK_OBJECT(LABEL)
 	}
 	void setEXPLICIT_ROUTE_Object( const EXPLICIT_ROUTE_Object& o ) {
