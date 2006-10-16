@@ -199,7 +199,7 @@ public:
 	const UnknownObjectList& getUnknownObjectList() const { return unknownObjectList; }
 	const LABEL_REQUEST_Object& getLABEL_REQUEST_Object() const { assert(objectFlags & LABEL_REQUEST); return LABEL_REQUEST_Object_O; }
 	bool hasLABEL_REQUEST_Object() const { return (objectFlags & LABEL_REQUEST); }
-	LABEL_Object& getLABEL_Object() const { assert(objectFlags & LABEL); return LABEL_Object_O; }
+	const LABEL_Object& getLABEL_Object() const { assert(objectFlags & LABEL); return LABEL_Object_O; }
 	bool hasLABEL_Object() const { return (objectFlags & LABEL); }
 	const EXPLICIT_ROUTE_Object* getEXPLICIT_ROUTE_Object() const { return EXPLICIT_ROUTE_Object_P; }
 	const LABEL_SET_Object* getLABEL_SET_Object() const { return LABEL_SET_Object_P; }
@@ -292,6 +292,8 @@ public:
 		Message_CHECK_OBJECT(LABEL_REQUEST)
 	}
 	void setLABEL_Object( const LABEL_Object& o ) {
+		if ((objectFlags & LABEL) == 0)
+			length += o.total_size();
 		Message_CHECK_OBJECT(LABEL)
 	}
 	void setEXPLICIT_ROUTE_Object( const EXPLICIT_ROUTE_Object& o ) {
