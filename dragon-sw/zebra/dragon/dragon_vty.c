@@ -41,6 +41,7 @@
 
 char lsp_prompt[100] = "%s(edit-lsp)# ";
 u_int32_t UCID = 0;
+u_int32_t narb_extra_options = 0;
 
 struct cmd_node lsp_node =
 {
@@ -537,13 +538,57 @@ DEFUN (dragon_set_narb_para,
 ALIAS (dragon_set_narb_para,
        dragon_set_narb_para_ip_cmd,
        "configure narb (intra-domain|inter-domain) ip-address A.B.C.D",
-       "Set IP address and port of supported software modules\n"
+       "Configure NARB parameters\n"
        "NARB\n"
 	"NARB Intra-domain (default: localhost/2614)\n"
 	"NARB Inter-domain (default: localhost/2604)\n"
        "IP address\n"
 	"IP address, where A, B, C, and D are integers 0 to 255\n");
 
+DEFUN (dragon_set_narb_extra_options,
+       dragon_set_narb_extra_options_cmd,
+       "set narb-extra-options (use-movaz-speical|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3)",
+       "Set NARB extra options\n"
+       "NARB options\n"
+       "Instructing NARB to compute a path using Movaz proprietary information\n"
+       "Routing-layer exclusion\n"
+       "Routing-layer exclusion\n"
+       "Routing-layer exclusion\n"
+       "Routing-layer exclusion\n"
+       )
+{
+  if (strncmp (argv[0], "use-movaz-speical", 12) == 0)
+	narb_extra_options |= LSP_OPT_VIA_MOVAZ;
+  else if (strncmp (argv[0], "exclude-layer1", 14) == 0)
+	narb_extra_options |= LSP_OPT_EXCLUD_L1;
+  else if (strncmp (argv[0], "exclude-layer2", 14) == 0)
+	narb_extra_options |= LSP_OPT_EXCLUD_L2
+  else if (strncmp (argv[0], "exclude-tdm", 11) == 0)
+	narb_extra_options |= LSP_OPT_EXCLUD_TDM
+  else if (strncmp (argv[0], "exclude-layer3", 14) == 0)
+	narb_extra_options |= LSP_OPT_EXCLUD_L3;
+
+  return CMD_SUCCESS;
+}
+
+DEFUN (dragon_show_narb_extra_options,
+       dragon_show_narb_extra_options_cmd,
+       "show narb-extra-options",
+       "Show NARB extra options\n"
+       "NARB options\n"
+       )
+{
+  if ((narb_extra_options & LSP_OPT_VIA_MOVAZ) != 0)
+  	vty_out("\t:use-movaz-speical%s", VTY_NEWLINE);
+  if ((narb_extra_options & LSP_OPT_EXCLUD_L1) != 0)
+  	vty_out("\t:exclude-layer1%s", VTY_NEWLINE);
+  if ((narb_extra_options & LSP_OPT_EXCLUD_TDM) != 0)
+  	vty_out("\t:exclude-tdm%s", VTY_NEWLINE);
+  if ((narb_extra_options & LSP_OPT_EXCLUD_L2) != 0)
+  	vty_out("\t:exclude-layer2%s", VTY_NEWLINE);
+  if ((narb_extra_options & LSP_OPT_EXCLUD_L3) != 0)
+  	vty_out("\t:exclude-layer3%s", VTY_NEWLINE);
+}
 
 DEFUN (dragon_telnet_module,
        dragon_telnet_module_cmd,
@@ -1977,6 +2022,7 @@ dragon_supp_vty_init ()
   install_element(VIEW_NODE, &dragon_commit_lsp_receiver_cmd);
   install_element(VIEW_NODE, &dragon_commit_lsp_default_cmd);
   install_element(VIEW_NODE, &dragon_delete_lsp_cmd);
+  install_element(VIEW_NODE, &dragon_show_narb_extra_options_cmd);
 
   registered_local_ids = list_new();
   install_element(VIEW_NODE, &dragon_show_local_id_cmd);
@@ -1994,7 +2040,8 @@ dragon_supp_vty_init ()
   install_element(VIEW_NODE, &dragon_set_local_id_group_refresh_cmd);
   install_element(CONFIG_NODE, &dragon_set_local_id_group_refresh_cmd);
   install_element(VIEW_NODE, &dragon_set_ucid_cmd);
-  install_element(CONFIG_NODE, &dragon_set_ucid_cmd);
+  install_element(VIEW_NODE, &dragon_set_narb_extra_options_cmd);
+  install_element(CONFIG_NODE, &dragon_set_narb_extra_options_cmd);
   
   install_element(CONFIG_NODE, &dragon_set_pce_para_cmd);
   install_element(CONFIG_NODE, &dragon_set_pce_para_ip_cmd);

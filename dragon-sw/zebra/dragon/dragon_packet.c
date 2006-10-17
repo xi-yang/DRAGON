@@ -41,6 +41,7 @@
 #include "dragon/dragond.h"
 
 extern u_int32_t UCID;
+extern u_int32_t narb_extra_options;
 extern void dragon_upcall_callback(int, struct lsp*);
 
 int 
@@ -310,10 +311,10 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 
   if (lsp->dragon.lspVtag)
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, UCID, lsp->seqno, 
-        LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG, lsp->dragon.lspVtag);
+        LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG | narb_extra_options, lsp->dragon.lspVtag);
   else
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, UCID, lsp->seqno,
-        LSP_OPT_STRICT, 0);
+        LSP_OPT_STRICT|narb_extra_options, 0);
 
   /*$$$$ ucid (=0 now) be assigned a meaningful id in the future.*/
 
@@ -343,7 +344,7 @@ dragon_topology_confirm_msg_new(struct lsp *lsp)
   dmsgh = build_dragon_msg_header(s, DMSG_CLI_TOPO_CONFIRM, lsp->seqno);
   */
   amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20 + ero_len, UCID, lsp->seqno,
-    LSP_OPT_STRICT, lsp->dragon.lspVtag);
+    LSP_OPT_STRICT|narb_extra_options, lsp->dragon.lspVtag);
 
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_CONFIRM, lsp);
@@ -374,7 +375,7 @@ dragon_topology_remove_msg_new(struct lsp *lsp)
   dmsgh = build_dragon_msg_header(s, DMSG_CLI_TOPO_DELETE, lsp->seqno);
   */
   amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20 + ero_len, UCID, lsp->seqno,
-      LSP_OPT_STRICT, lsp->dragon.lspVtag);
+      LSP_OPT_STRICT|narb_extra_options, lsp->dragon.lspVtag);
 
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_DELETE, lsp);

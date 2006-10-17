@@ -183,12 +183,20 @@ struct api_msg_header
 #define API_MSG_CHKSUM(X) (((u_int32_t*)&X)[0] + ((u_int32_t*)&X)[1] + ((u_int32_t*)&X)[2])
 
 /* api_msg options*/
+
+// Indicating layers excluded from path computation
+#define LSP_OPT_EXCLUD_L1      0x0010
+#define LSP_OPT_EXCLUD_TDM   0x0020
+#define LSP_OPT_EXCLUD_L2      0x0040
+#define LSP_OPT_EXCLUD_L3      0x0080
+
 /* LSP computation options*/
 #define LSP_OPT_STRICT  ((u_int32_t)(0x01 << 16)) /*otherwise LSP_OPT_LOOSE*/
 #define LSP_OPT_PREFERRED ((u_int32_t)(0x02 << 16)) /*otherwise LSP_OPT_ONLY*/
 #define LSP_OPT_MRN 0x04 << 16  /*otherwise SINGLE_REGION*/
 #define LSP_OPT_BIDIRECTIONAL 0x10 << 16  /* otherwise UNIDIRECTIONAL*/
 #define LSP_OPT_E2E_VTAG  ((u_int32_t)(0x20 << 16)) //otherwise Untgged VLAN for E2E Ethernet
+#define LSP_OPT_VIA_MOVAZ  ((u_int32_t)(0x0040 << 16)) //using MOVAZ proprietary TLVs for optical layer routing
 
 #ifdef roundup
 #  define ROUNDUP(val, gran)	roundup(val, gran)
