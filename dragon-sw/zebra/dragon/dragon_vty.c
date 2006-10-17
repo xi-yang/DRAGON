@@ -562,9 +562,9 @@ DEFUN (dragon_set_narb_extra_options,
   else if (strncmp (argv[0], "exclude-layer1", 14) == 0)
 	narb_extra_options |= LSP_OPT_EXCLUD_L1;
   else if (strncmp (argv[0], "exclude-layer2", 14) == 0)
-	narb_extra_options |= LSP_OPT_EXCLUD_L2
+	narb_extra_options |= LSP_OPT_EXCLUD_L2;
   else if (strncmp (argv[0], "exclude-tdm", 11) == 0)
-	narb_extra_options |= LSP_OPT_EXCLUD_TDM
+	narb_extra_options |= LSP_OPT_EXCLUD_TDM;
   else if (strncmp (argv[0], "exclude-layer3", 14) == 0)
 	narb_extra_options |= LSP_OPT_EXCLUD_L3;
 
@@ -579,15 +579,15 @@ DEFUN (dragon_show_narb_extra_options,
        )
 {
   if ((narb_extra_options & LSP_OPT_VIA_MOVAZ) != 0)
-  	vty_out("\t:use-movaz-speical%s", VTY_NEWLINE);
+  	vty_out(vty, "    >use-movaz-speical%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_L1) != 0)
-  	vty_out("\t:exclude-layer1%s", VTY_NEWLINE);
+  	vty_out(vty, "    >exclude-layer1%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_TDM) != 0)
-  	vty_out("\t:exclude-tdm%s", VTY_NEWLINE);
+  	vty_out(vty, "    >exclude-tdm%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_L2) != 0)
-  	vty_out("\t:exclude-layer2%s", VTY_NEWLINE);
+  	vty_out(vty, "    >exclude-layer2%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_L3) != 0)
-  	vty_out("\t:exclude-layer3%s", VTY_NEWLINE);
+  	vty_out(vty, "    >exclude-layer3%s", VTY_NEWLINE);
 }
 
 DEFUN (dragon_telnet_module,
