@@ -634,11 +634,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			else
 				defaultOutLif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( destAddress, gateway );
 			policyData = msg.getPolicyList().front();
-			//$$$$ Update RSVP_HOP_Object in PATH message. (Important for VLSR--->Movaz interop)
-			if (msg.getRSVP_HOP_Object().getAddress() == loopback) {
-				const_cast<RSVP_HOP_Object&>(msg.getRSVP_HOP_Object()).setAddress( defaultOutLif->getAddress() );
-			}
-			//$$$$ End
 			if ( senderTemplate.getSrcAddress() == NetAddress(0) 
 				|| senderTemplate.getSrcAddress() == LogicalInterface::loopbackAddress 
 				|| senderTemplate.getSrcAddress() == loopback ) {
