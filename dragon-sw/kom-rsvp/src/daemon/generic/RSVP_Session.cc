@@ -202,6 +202,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			++next;
 			if ((*next).getAddress() == (*head).getAddress())
 				explicitRoute->popFront();
+			else
+				break;
 		}
 		
                 //E2E tagged VLAN processing (inbound) @@@@ DRAGON
