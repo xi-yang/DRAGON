@@ -155,6 +155,9 @@ public:
 	void releaseReservation(const Message& msg);
 	bool handleRsvpMessage(const Message& msg);
 
+	static uint32 extra_options;
+	static void setExtraOption(String opt_str);
+
 	static UsedVtagList* vtagsInUse;
 	static void addVtagInUse(const Message& msg);
 	static void removeVtagInUse(const Message& msg);
@@ -164,6 +167,7 @@ public:
 	static bool operational();
 	static String _host;
 	static int _port;
+
 
 private:
 	int fd;

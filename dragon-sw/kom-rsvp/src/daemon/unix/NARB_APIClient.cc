@@ -17,7 +17,9 @@ To be incorporated into KOM-RSVP-TE package
 
 String NARB_APIClient::_host = "";
 int NARB_APIClient::_port = 0;
+uint32 NARB_APIClient::extra_options = 0;
 UsedVtagList* NARB_APIClient::vtagsInUse;
+
 
 int readn (int fd, char *ptr, int nbytes)
 {
@@ -368,7 +370,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     unum_if_subobj* subobj_unum;
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CREATE
             , src, dest, swtype, encoding, bandwidth, vtag, srcLocalId, destLocalId);
-    msgheader->options = htonl(ntohl(msgheader->options) | excl_options); //@@@@
+    msgheader->options = htonl(ntohl(msgheader->options) | excl_options | NARB_APIClient::extra_options); //@@@@
 
     if (!active())
         if (doConnect() < 0)
@@ -742,6 +744,20 @@ void NARB_APIClient::releaseReservation(const Message& msg)
     deleteNarbApiMessage(msgheader);
 }
 
+void NARB_APIClient::setExtraOption(String opt_str)
+{
+	if (opt_str=="via_movaz")
+	{
+		NARB_APIClient::extra_options |= (0x0040<<16);
+	}
+	else 
+	{
+	        LOG(2)(Log::Routing, "NARB_APIClient::setExtraOption: Unrecognized option name: ", opt_str);
+	}
+
+	return true;
+}
+	
 void NARB_APIClient::addVtagInUse(const Message& msg)
 {
     DRAGON_UNI_Object* uni = const_cast<Message&>(msg).getDRAGON_UNI_Object();

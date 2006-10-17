@@ -95,6 +95,7 @@ public:
 	void setNarbApiClient(String host, int port);
 	void addSlot(String slot_type, uint16 slot_num);
 	void addLayerExclusion(String sw_layer, String excl_name);
+	void ConfigFileReader::setNarbExtraOption(String option_name) { NARB_APIClient::setExtraOption(option_name); }
 };
 
 #endif /* _RSVP_ConfigFileReader_h_ */
