@@ -754,8 +754,6 @@ void NARB_APIClient::setExtraOption(String opt_str)
 	{
 	        LOG(2)(Log::Routing, "NARB_APIClient::setExtraOption: Unrecognized option name: ", opt_str);
 	}
-
-	return true;
 }
 	
 void NARB_APIClient::addVtagInUse(const Message& msg)

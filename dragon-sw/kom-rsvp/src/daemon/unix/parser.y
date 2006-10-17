@@ -54,7 +54,7 @@ static String yy_swLayer;
 %token TC_C NONE CBQ_C HFSC_C RATE PEER
 %token TIMER SESSION_HASH API_HASH ID_HASH_SEND ID_HASH_RECV LIST_ALLOC SB_ALLOC
 %token EXPLICIT_ROUTE MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH LOCAL_ID
-%token NARB SLOTS EXCLUDE
+%token NARB SLOTS EXCLUDE NARB_EXTRA_OPTIONS
 
 %%
 
@@ -84,6 +84,7 @@ command:
 	| NARB narb_host narb_port	 	{ }
 	| SLOTS if_type slot			{ }
 	| EXCLUDE sw_layer excl_name		{ }
+	| NARB_EXTRA_OPTIONS option_name	{ }
 	;
 
 /*** Addtions by Xi Yang ***/
@@ -107,6 +108,10 @@ sw_layer:
 excl_name:
 	excl_name STRING { cfr->addLayerExclusion(yy_swLayer, yy_string); }
 	| STRING	 { cfr->addLayerExclusion(yy_swLayer, yy_string); }
+	;
+option_name:
+	option_name STRING { cfr->setNarbExtraOption(yy_string); }
+	| STRING	 { cfr->setNarbExtraOption(yy_string); }
 	;
 /*** END: Addtions by Xi Yang ***/
 

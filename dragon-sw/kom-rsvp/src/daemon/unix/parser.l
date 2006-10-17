@@ -72,6 +72,7 @@ ieee32float_p yy_float;
 "slots"			return SLOTS;
 "narb"			return NARB;
 "exclude"		return EXCLUDE;
+"narb_extra_options"	return NARB_EXTRA_OPTIONS;
 
 [0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?	{ yy_string = yytext; return IP_ADDRESS; }
 
