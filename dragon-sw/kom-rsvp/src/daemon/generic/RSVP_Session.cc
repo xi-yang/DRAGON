@@ -62,7 +62,7 @@ Session::Session( const SESSION_Object &session) : SESSION_Object(session),
 Session::~Session() {
 	LOG(2)( Log::Session, "delete Session:", *this );
 	RSVP_Global::rsvp->removeSession( iterFromRSVP );
-	RSVP_Global::rsvp->getMPLS().deleteExplicitRouteBySession((uint32)this); //@@@@ use address as unique ID.
+	RSVP_Global::rsvp->getMPLS().deleteExplicitRouteBySession((uint32)this); //@@@@ use pointer address as unique ID (DRAGON)
 	if (narbClient)
 		delete narbClient;
 }
@@ -158,7 +158,6 @@ PHopSB* Session::findOrCreatePHopSB( Hop& hop, uint32 LIH ) {
 	PHOP_List::Iterator phopIter = RelationshipSession_PHopSB::followRelationship().lower_bound( &key );
 	if ( (phopIter != RelationshipSession_PHopSB::followRelationship().end() && (**phopIter == key))
 	) {
-//		LOG(2)( Log::Process, "found", **phopIter );
 		return *phopIter;
 	} else {
 		PHopSB* phopState = new PHopSB( hop, LIH );
@@ -192,8 +191,20 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	if (!fromLocalAPI){
 		if (!RSVP_Global::rsvp->getRoutingService().findDataByInterface(hop.getLogicalInterface(), inRtId, inUnumIfID))
 			return false;
+
+		//$$$$ Removing redundant inbound IPv4 subobjects 
+		//$$$$ Routers such as Movaz RayExpress may insert an IPv4 subobject for numbered egress interface towayds VLSR.
+		while (explicitRoute->getAbstractNodeList().size() > 1 
+		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4)
+		{
+			AbstractNodeList::Iterator head = explicitRoute->getAbstractNodeList().begin();
+			AbstractNodeList::Iterator next = head;
+			++next;
+			if ((*next).getAddress() == ((*head).getAddress())
+				explicitRoute->popFront();
+		}
 		
-                //E2E tagged VLAN processing (inbound) @@@@ hacked
+                //E2E tagged VLAN processing (inbound) @@@@ DRAGON
 		if (explicitRoute->getAbstractNodeList().size() > 1 
 		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 		&& explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
@@ -215,7 +226,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		dataInRsvpHop = RSVP_HOP_Object(hop.getLogicalInterface().getAddress(), msg.getRSVP_HOP_Object().getLIH(), (RSVP_HOP_TLV_SUB_Object&)msg.getRSVP_HOP_Object().getTLV());
 
 	}
-       else  //ingress localID processing @@@@ hacked
+       else  //$$$$ DRAGON ingress localID processing
        {
            if (explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::UNumIfID)
            {
@@ -238,11 +249,11 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				if (!outLif)  break;
 			}
 		} else if (explicitRoute->getAbstractNodeList().size() == 1 && explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::UNumIfID) {
-	             //egress localID processing @@@@ hacked
+	             //egress localID processing @@@@ DRAGON
                     outUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
               }
 		explicitRoute->popFront();
-		// E2E tagged VLAN processing (outbound) @@@@ hacked
+		// E2E tagged VLAN processing (outbound) @@@@ DRAGON
 		if (explicitRoute->getAbstractNodeList().size() > 1 
 		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 		&& explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
@@ -868,8 +879,9 @@ search_psb:
 	LABEL_SET_Object* labelSetObj = const_cast<LABEL_SET_Object*>(msg.getLABEL_SET_Object());
 	if (labelSetObj) cPSB->updateLABEL_SET_Object(labelSetObj->borrow());
 
-	//hacks @@@@
+	//$$$$ DRAGON UNI
 	cPSB->updateDRAGON_UNI_Object(uni);
+	//$$$$ DRAGON UNI End
 
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {
@@ -978,12 +990,13 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 	for ( ; psbIter != RelationshipSession_PSB::followRelationship().end() && **psbIter == sender; ++psbIter ) {
 		Hop* hop = RSVP_Global::rsvp->findHop( inlif, hdr.getSrcAddress());
 		//Hop* hop = RSVP_Global::rsvp->findHop( inlif, msg.getRSVP_HOP_Object().getAddress() );
-		//@@@@hack
+
+		//$$$$ DRAGON UNI
 		DRAGON_UNI_Object* uni_psb = (DRAGON_UNI_Object*)(*psbIter)->getDRAGON_UNI_Object();
 		DRAGON_UNI_Object* uni_msg = (DRAGON_UNI_Object*)(const_cast<Message&>(msg).getDRAGON_UNI_Object());
 		if (uni_psb && uni_msg && (uni_msg->getVlanTag().vtag == ANY_VTAG || uni_msg->getVlanTag().vtag == 0))
 			uni_msg->getVlanTag().vtag = uni_psb->getVlanTag().vtag;
-		//@@@@hack end
+		//$$$$ DRAGON UNI end
 		if ( hop && (*psbIter)->getPHopSB().checkPHOP_Data( *hop, msg.getRSVP_HOP_Object().getLIH() ) ) {
 			break;
 		}
@@ -1028,11 +1041,12 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 	//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), inLif->getAddress(), bandwidth);
 	//}
 
-	//@@@@ update NARB client state (e.g., reply to NARB server with reservation release)
+	//$$$$ DRAGON update NARB client state (e.g., reply to NARB server with reservation release)
 	if (narbClient && narbClient->active())
         	if (!narbClient->handleRsvpMessage(msg)) {
              		LOG(3)( Log::Routing, "The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
               }
+	//$$$$ End
 
 #if defined(ONEPASS_RESERVATION)
 	}
