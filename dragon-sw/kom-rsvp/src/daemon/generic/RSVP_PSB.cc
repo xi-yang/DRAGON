@@ -454,13 +454,12 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 	}
 	message.setSENDER_TEMPLATE_Object( *this );
 	message.setSENDER_TSPEC_Object( senderTSpec );
+	message.setRSVP_HOP_Object(dataOutRsvpHop);
 	//$$$$ Update RSVP_HOP_Object in PATH message. (Important for VLSR--->Movaz interop)
-	if (dataOutRsvpHop == 	message.getSENDER_TEMPLATE_Object().getSrcAddress()) {
-		const_cast<RSVP_HOP_Object&>(message.getRSVP_HOP_Object()).setAddress( outLif->getAddress() );
-	}	//$$$$ End
-	else {
-		message.setRSVP_HOP_Object(dataOutRsvpHop);
+	if (dataOutRsvpHop.getAddress() == message.getSENDER_TEMPLATE_Object().getSrcAddress()) {
+		const_cast<RSVP_HOP_Object&>(message.getRSVP_HOP_Object()).setAddress( outLif.getAddress() );
 	}
+	//$$$$ End
 	message.setTIME_VALUES_Object( outLif.getRefreshInterval() );
 #if defined(ONEPASS_RESERVATION)
 	if ( getOutISB(outLif.getLIH()) && getOutISB(outLif.getLIH())->isOnepass() && duplexObject ) {
