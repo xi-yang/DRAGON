@@ -75,7 +75,7 @@ protected:
 		SUGGESTED_LABEL 	= (1 << 16),
 		SESSION_ATTRIBUTE = (1 << 17),
 		UPSTREAM_LABEL	= (1 << 18),
-		//DRAGON_UNI		= (1 << 19)
+		//DRAGON_UNI		= (1 << 19) //Indicated by pointer != NULL
 	};
 
 	mutable Status status;
@@ -199,8 +199,8 @@ public:
 	const UnknownObjectList& getUnknownObjectList() const { return unknownObjectList; }
 	const LABEL_REQUEST_Object& getLABEL_REQUEST_Object() const { assert(objectFlags & LABEL_REQUEST); return LABEL_REQUEST_Object_O; }
 	bool hasLABEL_REQUEST_Object() const { return (objectFlags & LABEL_REQUEST); }
-	const LABEL_Object& getLABEL_Object() const { assert(objectFlags & LABEL); return LABEL_Object_O; }
-	bool hasLABEL_Object() const { return (objectFlags & LABEL); }
+	const LABEL_Object& getLABEL_Object() const { assert(objectFlags & LABEL); return LABEL_Object_O; }//DRAGON Additiion
+	bool hasLABEL_Object() const { return (objectFlags & LABEL); }//DRAGON Additiion
 	const EXPLICIT_ROUTE_Object* getEXPLICIT_ROUTE_Object() const { return EXPLICIT_ROUTE_Object_P; }
 	const LABEL_SET_Object* getLABEL_SET_Object() const { return LABEL_SET_Object_P; }
 	const SUGGESTED_LABEL_Object& getSUGGESTED_LABEL_Object() const { assert(objectFlags & SUGGESTED_LABEL); return SUGGESTED_LABEL_Object_O; }
@@ -221,8 +221,7 @@ public:
 	const MESSAGE_ID_LIST_Object& getMESSAGE_ID_LIST_Object() const { assert(objectFlags & MESSAGE_ID_LIST); return MESSAGE_ID_LIST_Object_O; }
 #endif
 
-        //@@@@ hacked
-        LocalId* getLocalIdObject() { 
+        LocalId* getLocalIdObject() {    //DRAGON Additiion
             LocalId* lid = new LocalId; 
             lid->type = SESSION_Object_O.getTunnelId(); 
             lid->value = (uint16)(SESSION_Object_O.getExtendedTunnelId() >> 16); 
@@ -291,7 +290,7 @@ public:
 	void setLABEL_REQUEST_Object( const LABEL_REQUEST_Object& o ) {
 		Message_CHECK_OBJECT(LABEL_REQUEST)
 	}
-	void setLABEL_Object( const LABEL_Object& o ) {
+	void setLABEL_Object( const LABEL_Object& o ) { //DRAGON Additiion
 		Message_CHECK_OBJECT(LABEL)
 	}
 	void setEXPLICIT_ROUTE_Object( const EXPLICIT_ROUTE_Object& o ) {
