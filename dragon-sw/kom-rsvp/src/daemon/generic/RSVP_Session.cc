@@ -197,10 +197,10 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		while (explicitRoute->getAbstractNodeList().size() > 1 
 		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4)
 		{
-			AbstractNodeList::Iterator head = explicitRoute->getAbstractNodeList().begin();
-			AbstractNodeList::Iterator next = head;
+			AbstractNodeList::ConstIterator head = explicitRoute->getAbstractNodeList().begin();
+			AbstractNodeList::ConstIterator next = head;
 			++next;
-			if ((*next).getAddress() == ((*head).getAddress())
+			if ((*next).getAddress() == (*head).getAddress())
 				explicitRoute->popFront();
 		}
 		
