@@ -2040,6 +2040,7 @@ dragon_supp_vty_init ()
   install_element(VIEW_NODE, &dragon_set_local_id_group_refresh_cmd);
   install_element(CONFIG_NODE, &dragon_set_local_id_group_refresh_cmd);
   install_element(VIEW_NODE, &dragon_set_ucid_cmd);
+  install_element(CONFIG_NODE, &dragon_set_ucid_cmd);
   install_element(VIEW_NODE, &dragon_set_narb_extra_options_cmd);
   install_element(CONFIG_NODE, &dragon_set_narb_extra_options_cmd);
   
