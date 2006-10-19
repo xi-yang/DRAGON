@@ -487,7 +487,7 @@ send_file_over_sock(int sock, char* newpath)
   static struct stat file_stat;
 #endif
 
-  if (sock <= 0 || !newpath)
+  if (sock < 0 || !newpath)
     return 0;
   
   fd = open(newpath, O_RDONLY);

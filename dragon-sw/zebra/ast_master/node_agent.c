@@ -150,7 +150,7 @@ int
 node_assign_ip(struct resource* node)
 {
   struct ifreq if_info;
-  int sockfd = -1, j, k;
+  int sockfd = -1, i, j, k;
   struct sockaddr_in *sock;
   int ioctl_ret;
   struct if_ip *ifp;
@@ -159,6 +159,11 @@ node_assign_ip(struct resource* node)
 #ifndef __FreeBSD__
   static char iface_name[50];
 #endif
+  struct in_addr ip;
+  struct in_addr boardcast;
+  struct in_addr netmask;
+  char *c;
+  u_int8_t *byte;
 
   if (!node->res.n.if_list)
     return 1;
@@ -191,12 +196,61 @@ node_assign_ip(struct resource* node)
     if (!ifp->iface)
       continue;
 
+    c = strstr(ifp->assign_ip, "/");
+    if (!c) {
+      ip.s_addr = inet_addr(ifp->assign_ip);
+      netmask.s_addr = inet_addr("255.255.255.0");
+      boardcast.s_addr = ip.s_addr | ~(netmask.s_addr);
+    } else {
+      *c = '\0';
+      ip.s_addr = inet_addr(ifp->assign_ip);
+      if (strlen(c+1) <= 2) {
+        netmask.s_addr = 0xffffffff >> (32-atoi(c+1));
+	byte = (u_int8_t*)&(netmask.s_addr);
+	for (i = 0; i < 4; i++) {
+          if (byte[i] != 0xff && byte[i] != 0x00) {
+	    switch (atoi(c+1) % 8) {
+	      case 1:
+		byte[i] = 0x80;
+		break;
+	      case 2:
+		byte[i] = 0xc0;
+		break;
+	      case 3:
+		byte[i] = 0xe0;
+		break;
+	      case 4:
+		byte[i] = 0xf0;
+	        break;
+	      case 5:
+		byte[i] = 0xf8;
+	        break;
+	      case 6:
+		byte[i] = 0xfc;
+		break;
+	      case 7:
+		byte[i] = 0xfe;
+		break;
+	    }
+	    break;
+          }
+        }
+      } else 
+        netmask.s_addr = inet_addr(c+1);
+      boardcast.s_addr = ip.s_addr | ~(netmask.s_addr);
+      *c = '/';
+    }
+
+    zlog_info("ip: %s", inet_ntoa(ip));
+    zlog_info("netmask: %s", inet_ntoa(netmask));
+    zlog_info("broadcast: %s", inet_ntoa(boardcast));
+
     bzero(&if_info, sizeof(struct ifreq));
     strcpy(if_info.ifr_name, ifp->iface);
     bzero(&if_info.ifr_ifru.ifru_addr, sizeof(struct sockaddr));
     sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_addr);
     sock->sin_family = AF_INET;
-    sock->sin_addr.s_addr = inet_addr(ifp->assign_ip);
+    sock->sin_addr = ip;
     ioctl_ret = ioctl(sockfd, SIOCSIFADDR, &if_info);
     if (ioctl_ret == -1) {
       node->status = AST_FAILURE;
@@ -205,12 +259,13 @@ node_assign_ip(struct resource* node)
       close(sockfd);
       return 0;
     }
-    
+
 #ifndef __FreeBSD__ 
     sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_netmask); 
 #else
     sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_addr);
 #endif
+
     sock->sin_addr.s_addr = inet_addr("255.255.255.0");
     ioctl_ret = ioctl(sockfd, SIOCSIFNETMASK, &if_info);
     if (ioctl_ret == -1) {

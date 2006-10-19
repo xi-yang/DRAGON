@@ -1316,7 +1316,7 @@ integrate_result()
     if (send_file_over_sock(glob_app_cfg->clnt_sock, newpath) == 0)
       zlog_err("Failed to send the result back to client");
     close(glob_app_cfg->clnt_sock);
-    glob_app_cfg->clnt_sock = 0;
+    glob_app_cfg->clnt_sock = -1;
   }
 
   /* see if need to send out AST_COMPLETE */
@@ -1938,7 +1938,7 @@ master_check_app_list()
       if (send_file_over_sock(app_cfg->clnt_sock, newpath) == 0)
 	zlog_err("Failed to send the result back to client");
       close(app_cfg->clnt_sock);
-      app_cfg->clnt_sock = 0;
+      app_cfg->clnt_sock = -1;
 
     } else if (IS_SET_SETUP_REQ(app_cfg) && !IS_SET_SETUP_RESP(app_cfg)) {
 
@@ -1963,7 +1963,7 @@ master_check_app_list()
       if (send_file_over_sock(app_cfg->clnt_sock, newpath) == 0)
 	zlog_err("Failed to send the result back to client");
       close(app_cfg->clnt_sock);
-      app_cfg->clnt_sock = 0;
+      app_cfg->clnt_sock = -1;
     }
   }
 
