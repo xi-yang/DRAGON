@@ -858,7 +858,8 @@ search_psb:
 		else{
 			cPSB->updateUPSTREAM_OUT_LABEL_Object(msg.getUPSTREAM_LABEL_Object());
 			if (!RSVP_Global::rsvp->findInterfaceByAddress(destAddress)){
-				uint32 upstreamInLabel = RSVP_Global::rsvp->getMPLS().allocUpstreamInLabel();
+				uint32 upstreamInLabel = outLif->getUpstreamLabel();
+				if (upstreamInLabel == 0) RSVP_Global::rsvp->getMPLS().allocUpstreamInLabel();
 				if (upstreamInLabel==0){
 					RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure);
 					return;

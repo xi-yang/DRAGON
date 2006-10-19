@@ -56,6 +56,7 @@ public:
 	bool mpls_default;
 	String interfaceName;
 	String localId;
+	String upstreamLabel;
 	NetAddress localAddress, remoteAddress, virtAddress;
 	uint16 virtMTU, localPort;
 	ieee32float bandwidth, lossProb;

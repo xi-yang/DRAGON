@@ -71,6 +71,7 @@ private:
 
 	bool mpls_enabled;
 	uint32 localId;
+	uint32 upstreamLabel;
 #if defined(NS2)
 	String oif;
 #endif
@@ -132,6 +133,8 @@ public:
 	TrafficControl& getTC() const { assert(trafficControl); return *trafficControl; }
 	void setLocalId (String& lclId);
 	const uint32 getLocalId () { return localId; }
+	void setUpstreamLabel (String& labelStr);
+	const uint32 getUpstreamLabel () { return upstreamLabel; }
 #if defined(REFRESH_REDUCTION)
 	void setRapidRefreshInterval( uint32 msec ) { rapidRefreshInterval = TimeValue(msec/MSECS_PER_SEC,msec*USECS_PER_MSEC); }
 	const TimeValue& getRapidRefreshInterval() const { return rapidRefreshInterval; }

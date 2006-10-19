@@ -62,6 +62,7 @@ LogicalInterface::LogicalInterface( const String& name, const NetAddress&
 	maxUnfragmentMsgSize = MTU - PacketHeader::maxOutputSize();
 	mpls_enabled = RSVP_Global::mplsDefault && (sysIndex != -1);
 	localId = 0;
+	upstreamLabel = 0;
 #if defined(REFRESH_REDUCTION)
 	rapidRefreshInterval = TimeValue(0,0);
 	maxIdCount = (maxUnfragmentMsgSize - (MESSAGE_ID_LIST_Object::minSize() + Message::headerSize())) / MESSAGE_ID_LIST_Object::idSize();
@@ -167,6 +168,13 @@ void LogicalInterface::setLocalId (String& lclId) {
 	if (sscanf(lclId.chars()+2, "%u", &value) != 1)
 		return;
 	localId = ((type <<16) | value);
+}
+
+void LogicalInterface::setUpstreamLabel (String& labelStr) {
+	String prefix = "upstream-label=";
+	if (labelStr.equalLeft(prefix)) {
+		sscanf(labelStr.chars()+prefix.length(), "%u", &upstreamLabel);
+	}
 }
 
 #if defined(WITH_API) || defined(VIRT_NETWORK)

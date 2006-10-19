@@ -126,6 +126,7 @@ void ConfigFileReader::createInterface() {
 	if (refresh) lif->configureRefresh( refreshRate/1000 );
 	if (tc) lif->configureTC( tc );
 	if (localId.length() > 0) lif->setLocalId(localId);
+	if (upstreamLabel.length() > 0) lif->setUpstreamLabel(upstreamLabel);
 }
 
 void ConfigFileReader::createTC_NONE() {
@@ -225,6 +226,7 @@ void ConfigFileReader::addLayerExclusion(String sw_layer, String excl_name)
 void ConfigFileReader::cleanup() {
 	interfaceName = "";
 	localId = "";
+	upstreamLabel = "";
 	localAddress = remoteAddress = virtAddress = 0;
 	virtMTU = localPort = 0;
 	bandwidth = lossProb = 0;
