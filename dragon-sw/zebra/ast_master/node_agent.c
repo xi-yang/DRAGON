@@ -150,7 +150,7 @@ int
 node_assign_ip(struct resource* node)
 {
   struct ifreq if_info;
-  int sockfd = -1, i, j, k;
+  int sockfd = -1, i;
   struct sockaddr_in *sock;
   int ioctl_ret;
   struct if_ip *ifp;
@@ -160,7 +160,7 @@ node_assign_ip(struct resource* node)
   static char iface_name[50];
 #endif
   struct in_addr ip;
-  struct in_addr boardcast;
+  struct in_addr broadcast;
   struct in_addr netmask;
   char *c;
   u_int8_t *byte;
@@ -200,7 +200,7 @@ node_assign_ip(struct resource* node)
     if (!c) {
       ip.s_addr = inet_addr(ifp->assign_ip);
       netmask.s_addr = inet_addr("255.255.255.0");
-      boardcast.s_addr = ip.s_addr | ~(netmask.s_addr);
+      broadcast.s_addr = ip.s_addr | ~(netmask.s_addr);
     } else {
       *c = '\0';
       ip.s_addr = inet_addr(ifp->assign_ip);
@@ -237,13 +237,14 @@ node_assign_ip(struct resource* node)
         }
       } else 
         netmask.s_addr = inet_addr(c+1);
-      boardcast.s_addr = ip.s_addr | ~(netmask.s_addr);
+      broadcast.s_addr = ip.s_addr | ~(netmask.s_addr);
       *c = '/';
     }
 
+    zlog_info("iface: %s", ifp->iface);
     zlog_info("ip: %s", inet_ntoa(ip));
     zlog_info("netmask: %s", inet_ntoa(netmask));
-    zlog_info("broadcast: %s", inet_ntoa(boardcast));
+    zlog_info("broadcast: %s", inet_ntoa(broadcast));
 
     bzero(&if_info, sizeof(struct ifreq));
     strcpy(if_info.ifr_name, ifp->iface);
@@ -266,7 +267,7 @@ node_assign_ip(struct resource* node)
     sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_addr);
 #endif
 
-    sock->sin_addr.s_addr = inet_addr("255.255.255.0");
+    sock->sin_addr = netmask;
     ioctl_ret = ioctl(sockfd, SIOCSIFNETMASK, &if_info);
     if (ioctl_ret == -1) {
       node->status = AST_FAILURE;
@@ -276,17 +277,8 @@ node_assign_ip(struct resource* node)
       return 0;
     }
      
-    for( j = 0, k = 0; 
-	 j < strlen(ifp->assign_ip) && k != 3; j++) {
-	
-      bcast[j] = ifp->assign_ip[j];
-      if (bcast[j] == '.') 
-	k++; 
-    }
-    strcpy(bcast+j, "255");
-
     sock = (struct sockaddr_in*)&(if_info.ifr_ifru.ifru_broadaddr);
-    sock->sin_addr.s_addr = inet_addr(bcast);
+    sock->sin_addr = broadcast;
     ioctl_ret = ioctl(sockfd, SIOCSIFBRDADDR, &if_info);
     if (ioctl_ret == -1) {
       node->status = AST_FAILURE;
