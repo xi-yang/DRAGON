@@ -70,7 +70,7 @@ public:
 #if defined(ONEPASS_RESERVATION)
 		DUPLEX = 208,								// uses one of the reserved value
 #endif
-		DRAGON_UNI = 229, //using the same class-num for GENERALIZED UNI Object
+		DRAGON_UNI = 253, //using the same class-num for GENERALIZED UNI Object
 	};
 protected:
 	uint16 length;
