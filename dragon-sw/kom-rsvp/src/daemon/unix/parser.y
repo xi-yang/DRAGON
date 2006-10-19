@@ -53,7 +53,7 @@ static String yy_swLayer;
 %token INTERFACE API_C ROUTE REFRESH ENCAP VIRT DISABLE RAPID LOSS
 %token TC_C NONE CBQ_C HFSC_C RATE PEER
 %token TIMER SESSION_HASH API_HASH ID_HASH_SEND ID_HASH_RECV LIST_ALLOC SB_ALLOC
-%token EXPLICIT_ROUTE MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH LOCAL_ID
+%token EXPLICIT_ROUTE MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH LOCAL_ID UPSTREAM_LABEL
 %token NARB SLOTS EXCLUDE NARB_EXTRA_OPTIONS
 
 %%
@@ -138,6 +138,7 @@ detail:
 	| MPLS_C						{ cfr->mpls = true; }
 	| NOMPLS						{ cfr->mpls = false; }
 	| LOCAL_ID						{ cfr->localId = yy_string; }
+	| UPSTREAM_LABEL					{ cfr->upstreamLabel = yy_string; }
 	;
 
 tc:

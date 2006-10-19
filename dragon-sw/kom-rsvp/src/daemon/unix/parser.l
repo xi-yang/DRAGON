@@ -81,6 +81,8 @@ ieee32float_p yy_float;
 
 [PpGgTt]\/[0-9]+	{ yy_string = yytext; return LOCAL_ID; }
 
+upstream\-label\=[0-9]+	{ yy_string = yytext; return UPSTREAM_LABEL; }
+
 [A-Za-z0-9\-\+]+	{ yy_string = yytext; return STRING; }
 
 [ \t\n]+	;	/* ignore whitespace */

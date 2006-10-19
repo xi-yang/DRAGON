@@ -171,8 +171,8 @@ void LogicalInterface::setLocalId (String& lclId) {
 }
 
 void LogicalInterface::setUpstreamLabel (String& labelStr) {
-	String prefix = "upstream-label=";
-	if (labelStr.equalLeft(prefix)) {
+	const String prefix = "upstream-label=";
+	if (labelStr.leftequal(prefix)) {
 		sscanf(labelStr.chars()+prefix.length(), "%u", &upstreamLabel);
 	}
 }
