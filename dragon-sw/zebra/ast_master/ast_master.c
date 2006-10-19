@@ -193,6 +193,38 @@ add_cfg_to_list()
   }
 }
 
+void
+del_cfg_from_list(struct application_cfg* app_cfg)
+{
+  struct adtlistnode *curnode, *prevnode;
+
+  if (!app_cfg) 
+    return;
+
+  zlog_info("Adding <ast_id>:%s into glob_list", app_cfg->ast_id);
+
+  for (prevnode = NULL, curnode = app_list.head;
+       curnode;
+       prevnode = curnode, curnode = curnode->next) {
+    if (app_cfg == curnode->data) {
+
+      if (prevnode) 
+        prevnode->next = curnode->next;
+      else
+        app_list.head = curnode->next;
+
+      if (app_list.tail == curnode)
+        app_list.tail = NULL;
+
+      app_list.count--;
+      free_application_cfg(app_cfg); 
+      free(curnode);
+
+      return;
+    } 
+  }
+}
+
 struct application_cfg* 
 retrieve_app_cfg(char* ast_id, int agent)
 {
@@ -1943,7 +1975,7 @@ app_cfg_pre_req()
 	 curnode = curnode->next) {
       res_cfg = (struct resource*) curnode->data;
 
-      res_cfg->status = AST_SUCCESS;
+      res_cfg->status = AST_UNKNOWN;
       if (res_cfg->agent_message) {
 	free(res_cfg->agent_message);
 	res_cfg->agent_message = NULL;
@@ -1956,7 +1988,7 @@ app_cfg_pre_req()
 	 curnode = curnode->next) {
       res_cfg = (struct resource*) curnode->data;
 
-      res_cfg->status = AST_SUCCESS;
+      res_cfg->status = AST_UNKNOWN;
       if (res_cfg->agent_message) {
 	free(res_cfg->agent_message);
 	res_cfg->agent_message = NULL;

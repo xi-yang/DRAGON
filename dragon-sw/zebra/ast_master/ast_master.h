@@ -92,6 +92,8 @@ struct application_cfg {
   int org_action;
   int action;
   int status;
+  u_int32_t flags;
+  struct timeval start_time;
   
   /* counters */
   u_int8_t setup_ready;
@@ -241,6 +243,7 @@ void print_final(char*);
 void print_error_response(char*);
 struct application_cfg* agent_final_parser(char*);
 void add_cfg_to_list();
+void del_cfg_from_list(struct application_cfg*);
 struct resource * search_node_by_name(struct application_cfg*, char*);
 void set_allres_fail(char*);
 void set_res_fail(char*, struct resource *);

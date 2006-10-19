@@ -296,8 +296,10 @@ node_process_setup_req()
     node = (struct resource*) curnode->data;
     if (!node_assign_ip(node)) {
       glob_app_cfg->status = AST_FAILURE;
+      node->status = AST_FAILURE;
       break;
-    }
+    } else
+      node->status = AST_SUCCESS;
   } 
 
   glob_app_cfg->action = SETUP_RESP;

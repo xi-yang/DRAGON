@@ -31,6 +31,8 @@
 #define BROKER_RECV     "/tmp/broker_resp.xml"
 #endif
 
+#define CLIENT_TIMEOUT	20
+
 struct thread_master *master; /* master = dmaster.master */
 extern char *status_type_details[];
 extern char *action_type_details[];
@@ -41,7 +43,8 @@ static int master_accept(struct thread *);
 static int noded_callback(struct thread *);
 static int dragon_callback(struct thread *);
 static int master_setup_req_to_node();
-
+static void master_check_app_list();
+static void handle_alarm(int);
 extern int master_process_id(char*);
 extern struct application_cfg* master_final_parser(char*, int);
 extern int send_file_to_agent(char *, int, char *);
@@ -485,6 +488,8 @@ master_process_release_resp()
     zlog_err("Can't rename %s to %s; errno = %d(%s)",
 	AST_XML_RECV, newpath, errno, strerror(errno));
 
+  gettimeofday(&(glob_app_cfg->start_time), NULL);
+
   /* anyway, now, it's time to save the whole file again
    */
   integrate_result();
@@ -664,12 +669,13 @@ master_process_setup_req()
     zlog_err("Can't rename %s to %s; errno = %d(%s)",
 	     AST_XML_RECV, newpath, errno, strerror(errno));
 
-  /* FIONA: we need something here to make sure that all links will have a vlan to use
-   */
-
   app_cfg_pre_req();
+  glob_app_cfg->flags |= FLAG_SETUP_REQ;
+  gettimeofday(&(glob_app_cfg->start_time), NULL);
   if (send_task_to_link_agent() == 0)
     glob_app_cfg->status = AST_FAILURE;
+
+
   integrate_result();
   return 1;
 }
@@ -794,6 +800,10 @@ master_process_release_req()
 	     AST_XML_RECV, path, errno, strerror(errno));
 
   app_cfg_pre_req();
+  glob_app_cfg->flags |= FLAG_RELEASE_REQ;
+
+  gettimeofday(&(glob_app_cfg->start_time), NULL);
+
   if (send_task_to_node_agent() == 0) 
     glob_app_cfg->status = AST_FAILURE;
 
@@ -960,6 +970,8 @@ main(int argc, char* argv[])
     zlog_err("listen() failed");
     exit(EXIT_FAILURE);
   }
+
+  signal(SIGALRM, handle_alarm);
 
   thread_add_read(master, master_accept, NULL, servSock);
   while (thread_fetch (master, &thread))
@@ -1296,6 +1308,11 @@ integrate_result()
 
   /* send the result back to user */
   if (glob_app_cfg->clnt_sock) {
+    if (glob_app_cfg->action == SETUP_RESP) 
+      glob_app_cfg->flags |= FLAG_SETUP_RESP;
+    else 
+      glob_app_cfg->flags |= FLAG_RELEASE_RESP;
+
     if (send_file_over_sock(glob_app_cfg->clnt_sock, newpath) == 0)
       zlog_err("Failed to send the result back to client");
     close(glob_app_cfg->clnt_sock);
@@ -1411,6 +1428,7 @@ master_accept(struct thread *thread)
   char buffer[4001];
   FILE* fp;
 
+  alarm(0);
   zlog_info("master_accept(): START");
   servSock = THREAD_FD(thread);
 
@@ -1498,10 +1516,12 @@ master_accept(struct thread *thread)
     send_file_over_sock(clntSock, AST_XML_RESULT);
     close(clntSock);
   }
-  
+
   zlog_info("master_accept(): DONE");
 
   thread_add_read(master, master_accept, NULL, servSock);
+
+  master_check_app_list();
   return 1;
 }
 
@@ -1515,6 +1535,7 @@ noded_callback(struct thread *thread)
   int bytesRcvd, ret_value = 1;
   FILE* ret_file = NULL;
 
+  alarm(0);
   servSock = THREAD_FD(thread);
   unlink(AST_XML_RECV);
 
@@ -1577,7 +1598,9 @@ noded_callback(struct thread *thread)
   }
 
   close(servSock);
+  master_check_app_list();
   zlog_info("noded_callback(): DONE");
+
   return ret_value;
 }
 
@@ -1590,6 +1613,7 @@ dragon_callback(struct thread *thread)
   int bytesRcvd, ret_value = 1;
   FILE* ret_file = NULL;
 
+  alarm(0);
   servSock = THREAD_FD(thread);
 
   unlink(AST_XML_RECV);
@@ -1653,7 +1677,9 @@ dragon_callback(struct thread *thread)
   }
 
   close(servSock);
+  master_check_app_list();
   zlog_info("dragon_callback(): END");
+
   return ret_value;
 }
 
@@ -1867,4 +1893,87 @@ master_setup_req_to_node()
 
   glob_app_cfg->action = SETUP_RESP;
   return ret_value;
+}
+
+static void
+master_check_app_list()
+{
+  struct adtlistnode *curnode;
+  struct application_cfg *app_cfg;
+  char newpath[105];
+  struct timeval curr_time;
+  unsigned int next_alarm = 0;
+  long time_escape;
+
+  gettimeofday(&curr_time, NULL);
+
+  if (adtlist_getcount(&app_list) == 0)
+    return;
+
+  for (curnode = app_list.head;
+	curnode;
+	curnode = curnode->next) {
+    app_cfg = (struct application_cfg*) curnode->data;
+
+    if (IS_SET_RELEASE_REQ(app_cfg) && !IS_SET_RELEASE_RESP(app_cfg)) {
+
+      time_escape = curr_time.tv_sec - app_cfg->start_time.tv_sec;
+      if (time_escape < CLIENT_TIMEOUT) {
+	if ((CLIENT_TIMEOUT - time_escape) > next_alarm)
+	  next_alarm = CLIENT_TIMEOUT - time_escape;
+	continue;
+      }
+
+      zlog_info("master_check_app_list(): sending RELEASE_RESP for %s", app_cfg->ast_id);
+      app_cfg->flags |= FLAG_RELEASE_RESP;
+      app_cfg->action = RELEASE_RESP;
+      app_cfg->status = AST_FAILURE;
+      strcpy(app_cfg->details, "didn't receive all RELEASE_RESP");
+
+      sprintf(newpath, "%s/%s/release_final.xml", AST_DIR, app_cfg->ast_id);
+      print_final(newpath);
+      sprintf(newpath, "%s/%s/final.xml", AST_DIR, app_cfg->ast_id);
+      print_final(newpath);
+
+      if (send_file_over_sock(app_cfg->clnt_sock, newpath) == 0)
+	zlog_err("Failed to send the result back to client");
+      close(app_cfg->clnt_sock);
+      app_cfg->clnt_sock = 0;
+
+    } else if (IS_SET_SETUP_REQ(app_cfg) && !IS_SET_SETUP_RESP(app_cfg)) {
+
+      time_escape = curr_time.tv_sec - app_cfg->start_time.tv_sec;
+      if (time_escape < CLIENT_TIMEOUT) {
+	if ((CLIENT_TIMEOUT - time_escape) > next_alarm)
+	  next_alarm = CLIENT_TIMEOUT - time_escape;
+	continue;
+      }
+
+      zlog_info("master_check_app_list(): sending SETUP_REQ for %s", app_cfg->ast_id);
+      app_cfg->flags |= FLAG_SETUP_RESP;
+      app_cfg->action = SETUP_RESP;
+      app_cfg->status = AST_FAILURE;
+      strcpy(app_cfg->details, "didn't receive all SETUP_RESP");
+
+      sprintf(newpath, "%s/%s/setup_final.xml", AST_DIR, app_cfg->ast_id);
+      print_final(newpath);
+      sprintf(newpath, "%s/%s/final.xml", AST_DIR, app_cfg->ast_id);
+      print_final(newpath);
+
+      if (send_file_over_sock(app_cfg->clnt_sock, newpath) == 0)
+	zlog_err("Failed to send the result back to client");
+      close(app_cfg->clnt_sock);
+      app_cfg->clnt_sock = 0;
+    }
+  }
+
+  alarm(next_alarm);
+  return;
+}
+
+static void
+handle_alarm(int sig)
+{
+  zlog_info("Received: SIGALARM");
+  master_check_app_list();
 }
