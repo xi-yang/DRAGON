@@ -746,7 +746,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
 
 void NARB_APIClient::setExtraOption(String opt_str)
 {
-	if (opt_str=="via_movaz")
+	if (opt_str=="via-movaz")
 	{
 		NARB_APIClient::extra_options |= (0x0040<<16);
 	}
