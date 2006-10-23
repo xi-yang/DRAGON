@@ -938,6 +938,8 @@ dragon_release_lsp(struct resource *link)
   strcpy(argv[0], link->res.l.lsp_name);
   if (dragon_delete_lsp (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) 
     link->status = AST_FAILURE;
+  else
+    link->status = AST_SUCCESS;
 }
 
 

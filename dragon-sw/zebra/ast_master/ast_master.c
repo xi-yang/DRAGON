@@ -379,6 +379,7 @@ free_application_cfg(struct application_cfg *app_cfg)
 {
   struct adtlistnode *curnode, *curnode1, *if_node;
   struct resource *mynode, *mylink;
+  struct if_ip* ifp;
   
   if (!app_cfg)
     return;
@@ -412,7 +413,14 @@ free_application_cfg(struct application_cfg *app_cfg)
 	for (if_node = mynode->res.n.if_list->head;
 	     if_node;
 	     if_node = if_node->next) 
-	  if_node->data = NULL;
+	  if (!app_cfg->link_list) {
+	    ifp = (struct if_ip*) if_node->data;
+	    
+	    free(ifp->iface);
+	    free(ifp->assign_ip);
+	    free(ifp);
+          }	
+	  if_node->data = NULL;      
       }
       adtlist_free(mynode->res.n.if_list);
       free(mynode);
@@ -815,6 +823,60 @@ print_final(char *path)
 	  print_link(file, mylink);
 	}
       }
+    }
+  }
+
+  if (glob_app_cfg->link_list) {
+    for (curnode = glob_app_cfg->link_list->head;
+	curnode;
+	curnode = curnode->next) {
+      mylink = (struct resource*)curnode->data;
+      print_link(file, mylink); 
+    }
+  }
+
+  fprintf(file, "</topology>");
+  fflush(file);
+  fclose(file);
+}
+
+void
+print_final_client(char *path)
+{
+  struct adtlistnode *curnode, *curnode1;
+  struct resource *mynode, *mylink;
+  int i;
+  FILE *file;
+  
+  if (!path)
+    return;
+
+  file = fopen(path, "w+");
+  if (!file)
+    return;
+
+  fprintf(file, "<topology ast_id=\"%s\" action=\"%s\">\n",  glob_app_cfg->ast_id, action_type_details[glob_app_cfg->action]);
+
+  fprintf(file, "<status>%s</status>\n", status_type_details[glob_app_cfg->status]);
+
+  if (glob_app_cfg->details[0] != '\0') 
+    fprintf(file, "<details>%s</details>\n", glob_app_cfg->details);
+ 
+  if (glob_app_cfg->node_list) { 
+    for ( i = 1, curnode = glob_app_cfg->node_list->head;
+	  curnode;  
+	  i++, curnode = curnode->next) {
+      mynode = (struct resource*)(curnode->data);
+
+      fprintf(file, "<resource type=\"%s\" name=\"%s\">\n",
+		node_stype_name[mynode->res.n.stype], mynode->name); 
+      fprintf(file, "\t<status>%s</status>\n", status_type_details[mynode->status]);
+      if (mynode->agent_message) 
+	fprintf(file, "\t<agent_message>%s</agent_message>\n", mynode->agent_message);
+      if (mynode->res.n.ip[0] != '\0') 
+	fprintf(file, "\t<ip>%s</ip>\n", mynode->res.n.ip); 
+      if (mynode->res.n.command) 
+	fprintf(file, "\t<command>%s</command>\n", mynode->res.n.command);
     }
   }
 

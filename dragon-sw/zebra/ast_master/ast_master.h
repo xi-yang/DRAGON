@@ -240,6 +240,7 @@ void print_endpoint(FILE*, struct endpoint*);
 struct adtlist* dragon_query_result_parser(char*, struct node_cfg*);
 int dragon_result_parser(char*, struct node_cfg *);
 void print_final(char*);
+void print_final_client(char*);
 void print_error_response(char*);
 struct application_cfg* agent_final_parser(char*);
 void add_cfg_to_list();
