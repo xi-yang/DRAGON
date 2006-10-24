@@ -194,24 +194,21 @@ struct adtlist app_list;
 /* structures defined for link
  */
 struct network_link {
-  char *service_name;
-  char *version;
-  char *xmlns;
-  char *frame_type;
-  char **bandwidth_minmax;
-  char **vlan_transport;
-  int vlan_transport_num;
-  char **spt_transpot;
-  int spt_transport_num;
-      
-  struct link_cfg default_cfg;
+  char service_name[REG_TXT_FIELD_LEN+1];
+  char bandwidth[REG_TXT_FIELD_LEN+1];
+  char swcap[REG_TXT_FIELD_LEN+1];
+  char encoding[REG_TXT_FIELD_LEN+1];
+  char gpid[REG_TXT_FIELD_LEN+1];
 };
 
-struct network_link *linkprofile[3];
+struct linkprofile {
+  int count;
+  struct network_link **elem;
+} service;
 
 enum link_type { EtherPipeBasic = 1, EtherPipeUltra, TDMBasic };
 
-#define XML_SERVICE_DEF_FILE "/usr/local/ast_file/resource_broker.xml"
+#define XML_SERVICE_DEF_FILE    "/usr/local/ast_file/service_template.xml"
 #define XML_ETHERBASIC_FILE "/usr/local/ast_file/service_template/EtherPipeBasic.xml"
 #define XML_ETHERULTRA_FILE "/usr/local/ast_file/service_template/EtherPipeUltra.xml"
 #define XML_TDMBASIC_FILE "/usr/local/ast_file/service_template/TDMBasic.xml"
@@ -232,6 +229,7 @@ struct application_cfg* topo_xml_parser(char*, int);
 struct application_cfg* retrieve_app_cfg(char*, int);
 int topo_validate_graph(int, struct application_cfg*);
 int xml_parser(char*);
+int template_xml_parser();
 void print_xml_response(char*, int);
 void free_application_cfg(struct application_cfg*);
 void print_node(FILE*, struct resource*);
@@ -245,6 +243,7 @@ void print_error_response(char*);
 struct application_cfg* agent_final_parser(char*);
 void add_cfg_to_list();
 void del_cfg_from_list(struct application_cfg*);
+struct application_cfg* search_cfg_in_list(char*);
 struct resource * search_node_by_name(struct application_cfg*, char*);
 void set_allres_fail(char*);
 void set_res_fail(char*, struct resource *);

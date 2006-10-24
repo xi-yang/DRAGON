@@ -675,7 +675,6 @@ master_process_setup_req()
   if (send_task_to_link_agent() == 0)
     glob_app_cfg->status = AST_FAILURE;
 
-
   integrate_result();
   return 1;
 }
@@ -833,7 +832,7 @@ master_process_topo(char* input_file)
   }
 
   if (topo_validate_graph(MASTER, glob_app_cfg) == 0) {
-    sprintf(glob_app_cfg->details, "Failed at topo_validate_graph()");
+    sprintf(glob_app_cfg->details, "Failed at validation");
     return 0;
   }
 
@@ -932,21 +931,13 @@ main(int argc, char* argv[])
   /* print banner */
   zlog_info("AST_MASTER starts: pid = %d", getpid());
 
-#ifdef OLD_CODE
-  /* parse the service_def.xml where indicates where to locate
-   * resource agency 
-   */
-  if (service_xml_parser(XML_SERVICE_DEF_FILE) == 0) 
-    zlog_err("main: service_xml_parser() error");
-#endif
-  
   /* parse all service_template.xml and build the default
    * struct for each service template for later use
-  if (master_template_parser() == 0) {
+   */
+  if (template_xml_parser() == 0) {
     zlog_err("master_template_parser(); exiting ...");
     exit(EXIT_FAILURE);
   }
-  */
 
   glob_app_cfg = NULL;
   memset(&app_list, 0, sizeof(struct adtlist));
@@ -1467,9 +1458,11 @@ master_accept(struct thread *thread)
 
       zlog_info("XML_TYPE: TOPO_XML");
       if (!master_process_topo(AST_XML_RECV)) {
-	print_error_response(AST_XML_RESULT);
-	free_application_cfg(glob_app_cfg);
-	glob_app_cfg = NULL;
+	if (!glob_app_cfg) 
+	  print_error_response(AST_XML_RESULT);
+	else
+	  glob_app_cfg->status = AST_FAILURE;
+	  
 	break;
       } else {
 	/* supposedly at this point, AST_XML_RECV should exist */
@@ -1515,11 +1508,17 @@ master_accept(struct thread *thread)
    * the minions doesn't expect any reply from ast_master
    */
   if (!glob_app_cfg || !glob_app_cfg->clnt_sock) {
-    unlink(AST_XML_RESULT);
-    print_final_client(AST_XML_RESULT);
+    if (glob_app_cfg) { 
+      unlink(AST_XML_RESULT); 
+      print_final_client(AST_XML_RESULT);
+    }
     send_file_over_sock(clntSock, AST_XML_RESULT);
     close(clntSock);
   }
+
+  if (glob_app_cfg && glob_app_cfg != search_cfg_in_list(glob_app_cfg->ast_id)) 
+    free_application_cfg(glob_app_cfg);
+  glob_app_cfg = NULL;
 
   zlog_info("master_accept(): DONE");
 
@@ -1935,11 +1934,14 @@ master_check_app_list()
       strcpy(app_cfg->details, "didn't receive all RELEASE_RESP");
 
       sprintf(newpath, "%s/%s/release_final.xml", AST_DIR, app_cfg->ast_id);
+      glob_app_cfg = app_cfg;
       print_final(newpath);
       sprintf(newpath, "%s/%s/final.xml", AST_DIR, app_cfg->ast_id);
       print_final(newpath);
+      print_final_client(AST_XML_RESULT);
+      glob_app_cfg = NULL;
 
-      if (send_file_over_sock(app_cfg->clnt_sock, newpath) == 0)
+      if (send_file_over_sock(app_cfg->clnt_sock, AST_XML_RESULT) == 0)
 	zlog_err("Failed to send the result back to client");
       close(app_cfg->clnt_sock);
       app_cfg->clnt_sock = -1;
@@ -1959,12 +1961,16 @@ master_check_app_list()
       app_cfg->status = AST_FAILURE;
       strcpy(app_cfg->details, "didn't receive all SETUP_RESP");
 
+      
       sprintf(newpath, "%s/%s/setup_final.xml", AST_DIR, app_cfg->ast_id);
+      glob_app_cfg = app_cfg;
       print_final(newpath);
       sprintf(newpath, "%s/%s/final.xml", AST_DIR, app_cfg->ast_id);
       print_final(newpath);
+      print_final_client(AST_XML_RESULT);
+      glob_app_cfg = NULL;
 
-      if (send_file_over_sock(app_cfg->clnt_sock, newpath) == 0)
+      if (send_file_over_sock(app_cfg->clnt_sock, AST_XML_RESULT) == 0)
 	zlog_err("Failed to send the result back to client");
       close(app_cfg->clnt_sock);
       app_cfg->clnt_sock = -1;

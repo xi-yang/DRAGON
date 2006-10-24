@@ -151,6 +151,9 @@ search_cfg_in_list(char* ast_id)
   struct adtlistnode *curnode;
   struct application_cfg *curcfg;
 
+  if (!ast_id)
+    return NULL;
+
   for (curnode = app_list.head;
         curnode;
         curnode = curnode->next) {
@@ -286,6 +289,18 @@ char* generate_ast_id(int type)
   }
 
   return strdup(id);
+}
+
+int
+get_service_by_str(char* key)
+{
+  int i;
+
+  for (i = 0; key && i < service.count; i++)
+    if (strcasecmp(key, service.elem[i]->service_name) == 0)
+      return i;
+
+  return -1;
 }
 
 int
@@ -698,7 +713,10 @@ print_link(FILE* fp, struct resource* link)
     print_endpoint(fp, link->res.l.dest);
     fprintf(fp, "\t</dest>\n");
   }
-  fprintf(fp, "\t<te_params>\n");
+  if (link->res.l.service_type != -1) 
+    fprintf(fp, "\t<te_params profile=\"%s\">\n", service.elem[link->res.l.service_type]->service_name);
+  else 
+    fprintf(fp, "\t<te_params>\n");
   if (link->res.l.bandwidth[0] != '\0')
     fprintf(fp, "\t\t<bandwidth>%s</bandwidth>\n", link->res.l.bandwidth);
   if (link->res.l.swcap[0] != '\0') 
@@ -877,7 +895,7 @@ print_final_client(char *path)
 	fprintf(file, "\t<ip>%s</ip>\n", mynode->res.n.ip); 
       if (mynode->res.n.command) 
 	fprintf(file, "\t<command>%s</command>\n", mynode->res.n.command);
-      fprintf(file, "</resource>");
+      fprintf(file, "</resource>\n");
     }
   }
 
@@ -977,7 +995,7 @@ xml_parser(char* filename)
   if (!cur) {
     zlog_err("xml_parser: Empty document");
     xmlFreeDoc(doc);
-    return NULL;
+    return 0;
   }
 
   if (findxmlnode(cur, "topology")) {
@@ -997,203 +1015,138 @@ xml_parser(char* filename)
 }
 
 int
-template_xml_parser(char* filename, struct network_link* profile)
+template_xml_parser()
 {
   xmlChar *key;
   xmlDocPtr doc;
-  xmlNodePtr cur, service_ptr;
-  char keyToFound[100];
-  struct link_cfg *newlink;
+  xmlNodePtr cur, service_ptr, i_ptr;
+  struct _xmlAttr* attr;
+  int i, count = 0, field = 0, err;
+  struct network_link* link;
 
-  doc = xmlParseFile(filename);
+  memset(&service, 0, sizeof(struct linkprofile));
+  doc = xmlParseFile(XML_SERVICE_DEF_FILE);
 
   if (doc == NULL) {
-    zlog_err("template_xml_parser: Document %s is not parsed successfully", filename);
+    zlog_err("template_xml_parser: service template file is not parsed successfully");
     return 0;
   }
 
   cur = xmlDocGetRootElement(doc);
 
   if (cur == NULL) {
-    zlog_err("template_xml_parser: Document %s is empty", filename);
+    zlog_err("template_xml_parser: service template file is empty");
     xmlFreeDoc(doc);
     return 0;
   }
-
-  /* first locate "Service_Definition" 
-   */
-  strcpy(keyToFound, "Service_Definition");
-  cur = findxmlnode(cur, keyToFound);
-
+  
+  cur = findxmlnode(cur, "service_template");
   if (!cur) {
-    zlog_err("template_xml_parser: Document %s doesn't have <%s>", 
-	      filename, keyToFound);
+    zlog_err("template_xml_parser: can't locate <service_template>");
+    xmlFreeDoc(doc);
     return 0;
   }
+  service_ptr = cur;
+  
+  /* count how many service type here */
+  for (cur = service_ptr->xmlChildrenNode;
+	cur;
+	cur = cur->next) {
+    
+    if (strcasecmp(cur->name, "service") == 0)
+      service.count++;
+  }
 
-  newlink = &(profile->default_cfg);
+  service.elem = malloc(service.count*sizeof(void*));
+  
+  for (err = 0, cur = service_ptr->xmlChildrenNode;
+	cur;
+	err = 0, cur = cur->next) {
 
-  for ( cur = cur->xmlChildrenNode; 
-	cur; 
-	cur = cur->next ) {
-    key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-    if (!key)
-      continue;
+    if (strcasecmp(cur->name, "service") == 0) {
+      link = (struct network_link*)malloc(sizeof(struct network_link));
+      memset(link, 0, sizeof(struct network_link));
 
-    if (strcasecmp(cur->name, "Service_Name") == 0)
-      profile->service_name = key;
-    else if (strcasecmp(cur->name, "xmlns") == 0) 
-      profile->xmlns = key;
-    else if (strcasecmp(cur->name, "version") == 0) 
-      profile->version = key;
-    else if (strcasecmp(cur->name, "Service_Characteristics") == 0) {
-      service_ptr = cur;
-      service_ptr = service_ptr->xmlChildrenNode;
-
-      while (service_ptr) { 
-	key = xmlNodeListGetString(doc, service_ptr->xmlChildrenNode, 1);
-
-	if (strcasecmp(service_ptr->name, "Bandwidth") == 0) {
-	  profile->bandwidth_minmax = parse_minmax(key);
-	  if (!(profile->bandwidth_minmax)) {
-	    zlog_err("template_xml_parser: Bandwidth should be specified as \"<min>-<max>\", error ...");
-	    xmlFreeDoc(doc);
-	    return 0;
-	  }
-	} else if (strcasecmp(service_ptr->name, "Bandwidth_DEF") == 0) 
-	  strncpy(newlink->bandwidth, key, REG_TXT_FIELD_LEN);
-	else if (strcasecmp(service_ptr->name, "VLAN_Transport") == 0) {
-	  profile->vlan_transport = parse_values(key, &(profile->vlan_transport_num));
-	  if (!(profile->vlan_transport)) {
-	    zlog_err("template_xml_parser: vlan_transport should be specified as \"<value1>|...|<valueN>, error ...");
-	    xmlFreeDoc(doc);
-	    return 0;
-	  }
-	}
-
-	service_ptr = service_ptr->next;
+      for (attr = cur->properties;
+	   attr;
+	   attr = attr->next) {
+	if (strcasecmp(attr->name, "type") == 0) 
+	  strncpy(link->service_name, attr->children->content, REG_TXT_FIELD_LEN);
       }
-    } else if (strcasecmp(cur->name, "Default_Values") == 0) {
-	service_ptr = cur;
-	service_ptr = service_ptr->xmlChildrenNode;
 
-	while (service_ptr) {
-	  key = xmlNodeListGetString(doc, service_ptr->xmlChildrenNode, 1);
-	
-	  if (strcasecmp(service_ptr->name, "Bandwidth") == 0) 
-	    strncpy(newlink->bandwidth, key, REG_TXT_FIELD_LEN);
+      if (link->service_name[0] == '\0')
+	err = 1;
 
-	  service_ptr = service_ptr->next; 
+      for (field = 0, i_ptr = cur->xmlChildrenNode;
+	   !err && i_ptr;
+	   i_ptr = i_ptr->next) {
+	key = xmlNodeListGetString(doc, i_ptr->xmlChildrenNode, 1);
+
+        if (!key)
+	  continue;
+
+	if (strcasecmp(i_ptr->name, "bandwidth") == 0) {
+	  strncpy(link->bandwidth, key, REG_TXT_FIELD_LEN);
+	  if (link->bandwidth[0] != '\0') {
+	    for (i = 0; i < bandwidth_field.number; i++) {
+	      if (strcasecmp(link->bandwidth, bandwidth_field.ss[i].abbre) == 0)
+	        break;
+	    }
+	    if (i == bandwidth_field.number) {
+	      zlog_err("Invalid value for bandwidth: %s", link->bandwidth);
+	      err = 1;
+	    } else
+	      field++;
+	  }
+	} else if (strcasecmp(i_ptr->name, "swcap") == 0) {
+	  strncpy(link->swcap, key, REG_TXT_FIELD_LEN);
+	  for (i = 0; i < swcap_field.number; i++) {
+	    if (strcasecmp(link->swcap, swcap_field.ss[i].abbre) == 0)
+	      break;
+	  }
+	  if (i == swcap_field.number) {
+	    zlog_err("Invalid value for swcap: %s", link->swcap);
+	    err = 1;
+	  } else
+	    field++;
+	} else if (strcasecmp(i_ptr->name, "encoding") == 0) {
+	  strncpy(link->encoding, key, REG_TXT_FIELD_LEN);
+	  for (i = 0; i < encoding_field.number; i++) {
+	    if (strcasecmp(link->encoding, encoding_field.ss[i].abbre) == 0)
+	      break;
+	  }
+	  if (i == encoding_field.number) {
+	    zlog_err("Invalid value for encoding: %s", link->encoding);
+	    err = 1;
+	  } else
+	    field++;
+	} else if (strcasecmp(i_ptr->name, "gpid") == 0) {
+	  strncpy(link->gpid, key, REG_TXT_FIELD_LEN);
+	  for (i = 0; i < gpid_field.number; i++) {
+	    if (strcasecmp(link->gpid, gpid_field.ss[i].abbre) == 0)
+	      break;
+	  }
+	  if (i == gpid_field.number) {
+	    zlog_err("Invalid value for gpid: %s", link->gpid);
+	    err = 1;
+	  } else
+	    field++;
 	}
+      }
+
+      if (!err && field == 4) {
+	service.elem[count] = link; 
+	count++;
+      } else {
+	free(link);
+	service.count--;
+      }
     }
   }
 
   xmlFreeDoc(doc);
   return 1;
 }
-
-int 
-master_template_parser(int profile_id)
-{
-  char filename[100];
-
-  /* if the linkprofile has already been parsed, simply return
-   */
-  if (linkprofile[profile_id])
-    return 1;
-  else
-    linkprofile[profile_id] = malloc(sizeof(struct network_link));
-
-  memset(linkprofile[profile_id], 0, sizeof(struct network_link));
- 
-  switch (profile_id) {
-    case 1:
-      strcpy(filename, XML_ETHERBASIC_FILE);
-      break;
-    case 2:
-      strcpy(filename, XML_ETHERULTRA_FILE);
-      break;
-    case 3:
-      strcpy(filename, XML_TDMBASIC_FILE);
-      break;
-    }   
-
-  if (template_xml_parser(filename, linkprofile[profile_id]) == 0) 
-    return 0;
-
-  return 1;
-}
-
-#ifdef OLD_CODE
-/* parse service xml resource broker location file
- */
-int
-service_xml_parser(char* filename)
-{
-  xmlChar* key;
-  xmlDocPtr doc;
-  xmlNodePtr cur, node_ptr;
-  char keyToFound[100];
-  struct resource_agent *newagent;
-  
-  doc = xmlParseFile(filename);
-
-  if (doc == NULL) {
-    zlog_err("service_xml_parser: Document is not parsed successfully");
-    return (0);
-  }
-
-  cur = xmlDocGetRootElement(doc);
-  
-  if (cur == NULL) {
-    zlog_err("service_xml_parser: service_xml_parser: document is empty");
-    xmlFreeDoc(doc);
-    return (0);
-  }
-
-  /* first locate "brokers_definition"
-   */
-  strcpy(keyToFound, "brokers_definition");
-  cur = findxmlnode(cur, keyToFound);
-
-  if (!cur) {
-    zlog_err("service_xml_parser: can't locate <%s> in the document", keyToFound);
-    xmlFreeDoc(doc);
-    return (0);
-  }
-
-  /* parse all the <resource> node
-   */
-  for (cur = cur->xmlChildrenNode;
-       cur;
-       cur = cur->next) {
-    if (strcasecmp(cur->name, "broker") == 0) {
-      newagent = malloc(sizeof(struct resource_agent));
-      memset(newagent, 0, sizeof(struct resource_agent));
-
-      node_ptr = cur;
-      node_ptr = node_ptr->xmlChildrenNode;
-      while (node_ptr) {
-	key = xmlNodeListGetString(doc, node_ptr->xmlChildrenNode, 1);
-
-	if (strcasecmp(node_ptr->name, "name") == 0) 
-	  newagent->resource_type = key;
-	else if (strcasecmp(node_ptr->name, "ipadd") == 0) 
-	  newagent->add = key;
-	else if (strcasecmp(node_ptr->name, "port") == 0)
-	  newagent->port = atoi(key);
-
-	node_ptr = node_ptr->next;
-      }
-
-      adtlist_add(&glob_agency_list, newagent);
-    }
-  }
-
-  xmlFreeDoc(doc);
-  return (1);
-}
-#endif
 
 static int 
 establish_relationship(struct application_cfg* app_cfg)
@@ -1450,6 +1403,7 @@ topo_xml_parser(char* filename, int agent)
   struct if_ip *myifp;
   struct endpoint *ep;
   struct application_cfg* app_cfg;
+  struct network_link *profile;
 
   node_list = NULL;
   link_list = NULL;
@@ -1786,6 +1740,27 @@ topo_xml_parser(char* filename, int agent)
 	  }
 	} else if (strcasecmp(link_ptr->name, "te_params") == 0) {
 
+	  myres->res.l.service_type = -1;
+	  if (agent == MASTER && app_cfg->action == SETUP_REQ) {
+	    for (attr = link_ptr->properties;
+		 attr;
+		 attr = attr->next) {
+	      if (strcasecmp(attr->name, "profile") == 0) {
+		myres->res.l.service_type = get_service_by_str(attr->children->content);
+		if (myres->res.l.service_type == -1)
+		  zlog_err("link(%s): service type (%s) unknown", 
+				myres->name, attr->children->content);
+		else {
+		  profile = service.elem[myres->res.l.service_type];
+		  strcpy(myres->res.l.bandwidth, profile->bandwidth);
+		  strcpy(myres->res.l.swcap, profile->swcap);
+		  strcpy(myres->res.l.encoding, profile->encoding);
+		  strcpy(myres->res.l.gpid, profile->gpid);
+		}
+	      }
+	    }
+	  }
+	    
 	  for (node_ptr = link_ptr->xmlChildrenNode;
 		node_ptr;
 		node_ptr = node_ptr->next) {
@@ -1902,7 +1877,7 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 	  
 	  if (mynode->res.n.ip[0] == '\0') {
 	    if (agent == MASTER || agent == ASTB) {
-	      zlog_info("node (%s) is undefined; need to contact reousrce broker later", mynode->name);
+	      zlog_info("node (%s) is undefined; need to contact resource broker later", mynode->name);
 	      mynode->res.n.router_id[0] = '\0';
 	      mynode->res.n.tunnel[0] = '\0';
 	      mynode->flags |= FLAG_UNFIXED;
@@ -1922,12 +1897,12 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 	}
       }
 
-      if (agent != NODE_AGENT && agent != ASTB) {
+      if (agent != NODE_AGENT) {
 	if (!app_cfg->link_list) {
 	  zlog_err("No link defined in this topology"); 
 	  return 0;
         } else { 
-	  if (!establish_relationship(glob_app_cfg))
+	  if (agent != ASTB && !establish_relationship(glob_app_cfg))
 	    return 0;
 
 	  for ( curnode = app_cfg->link_list->head; 
@@ -1954,7 +1929,11 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 		}
 		return 0;
 	      }
+	    } else if (agent == MASTER) {
+	      zlog_err("link(%s) should have bandwidth specified", mylink->name);
+	      return 0; 
 	    }
+
 	    if (mylink->res.l.swcap[0] != '\0') {
 	      for (i = 0; i < swcap_field.number; i++) {
 		if (strcasecmp(mylink->res.l.swcap, swcap_field.ss[i].abbre) == 0)
@@ -1969,7 +1948,11 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 		}
 		return 0;
 	      }
-	    } 
+	    } else if (agent == MASTER) { 
+              zlog_err("link(%s) should have swcap specified", mylink->name);
+              return 0; 
+            }
+ 
 	    if (mylink->res.l.gpid[0] != '\0') {
 	      for (i = 0; i < gpid_field.number; i++) {
 		if (strcasecmp(mylink->res.l.gpid, gpid_field.ss[i].abbre) == 0)
@@ -1984,7 +1967,11 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 		}
 		return 0;
 	      }
-	    } 
+	    } else if (agent == MASTER) { 
+              zlog_err("link(%s) should have gpid specified", mylink->name);
+              return 0; 
+            }
+
 	    if (mylink->res.l.encoding[0]  != '\0') {
 	      for (i = 0; i < encoding_field.number; i++) {
 		if (strcasecmp(mylink->res.l.encoding, encoding_field.ss[i].abbre) == 0)
@@ -1999,7 +1986,11 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 		}
 		return 0;
 	      }
-	    }
+	    } else if (agent == MASTER) { 
+              zlog_err("link(%s) should have encoding specified", mylink->name);
+              return 0; 
+            }
+
 	  }
 	}
       }
