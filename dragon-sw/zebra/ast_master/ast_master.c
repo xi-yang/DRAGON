@@ -843,7 +843,7 @@ print_final(char *path)
 void
 print_final_client(char *path)
 {
-  struct adtlistnode *curnode, *curnode1;
+  struct adtlistnode *curnode;
   struct resource *mynode, *mylink;
   int i;
   FILE *file;
@@ -877,6 +877,7 @@ print_final_client(char *path)
 	fprintf(file, "\t<ip>%s</ip>\n", mynode->res.n.ip); 
       if (mynode->res.n.command) 
 	fprintf(file, "\t<command>%s</command>\n", mynode->res.n.command);
+      fprintf(file, "</resource>");
     }
   }
 
@@ -1201,7 +1202,7 @@ establish_relationship(struct application_cfg* app_cfg)
   struct adtlistnode *curnode;
   struct endpoint *src, *dest;
 
-  if (!app_cfg->link_list)
+  if (!app_cfg || !app_cfg->link_list)
     return 1;
 
   for ( curnode = app_cfg->link_list->head;

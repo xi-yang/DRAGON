@@ -146,7 +146,7 @@ static int node_child;
 static struct sigaction node_app_complete_action;
 static pid_t node_child_pid;
 
-int 
+static int 
 node_assign_ip(struct resource* node)
 {
   struct ifreq if_info;
@@ -154,7 +154,6 @@ node_assign_ip(struct resource* node)
   struct sockaddr_in *sock;
   int ioctl_ret;
   struct if_ip *ifp;
-  char command[150];
   struct adtlistnode* curnode;
 #ifndef __FreeBSD__
   static char iface_name[50];
@@ -183,7 +182,7 @@ node_assign_ip(struct resource* node)
     if (interface) {
 #ifndef __FreeBSD__
       if (ifp->vtag != 0) {
-	sprintf(iface_name, "%s:%d", interface, ifp->vtag);
+	sprintf(iface_name, "%s.%d", interface, ifp->vtag);
 	ifp->iface = strdup(iface_name);
 
 	sprintf(iface_name, "vconfig add %s %d", interface, ifp->vtag);
@@ -241,7 +240,7 @@ node_assign_ip(struct resource* node)
       *c = '/';
     }
 
-    zlog_info("iface: %s", ifp->iface);
+    zlog_info("node_assing_ip(): iface: %s", ifp->iface);
     zlog_info("ip: %s", inet_ntoa(ip));
     zlog_info("netmask: %s", inet_ntoa(netmask));
     zlog_info("broadcast: %s", inet_ntoa(broadcast));
@@ -287,14 +286,37 @@ node_assign_ip(struct resource* node)
       close(sockfd);
       return 0;
     }
-
-    sprintf(command, "ifconfig %s %s netmask 255.255.255.0 broadcast %s", 
-			ifp->iface, ifp->assign_ip, bcast);
-    zlog_info("%s", command);
   }
 
   if (sockfd != -1)
     close(sockfd);
+
+  return 1;
+}
+
+static int 
+node_delete_ip(struct resource* node)
+{
+#ifndef __FreeBSD__
+  struct if_ip *ifp;
+  struct adtlistnode* curnode;
+  static char iface_name[50];
+
+  if (!node->res.n.if_list)
+    return 1;
+
+  node->status = AST_SUCCESS; 
+  for (curnode = node->res.n.if_list->head;
+	curnode;
+	curnode = curnode->next) {
+
+    ifp = (struct if_ip*)curnode->data;
+    if (ifp->iface && ifp->vtag) {
+      sprintf(iface_name, "vconfig rem %s", ifp->iface);
+      system(iface_name);
+    }
+  }
+#endif
 
   return 1;
 }
@@ -402,7 +424,7 @@ node_process_ast_complete()
 
   sprintf(path, "%s/%s/setup_response.xml", NODE_AGENT_DIR, glob_app_cfg->ast_id);
   free_application_cfg(glob_app_cfg);
-  if ((glob_app_cfg = topo_xml_parser(path, LINK_AGENT)) == NULL) {
+  if ((glob_app_cfg = topo_xml_parser(path, NODE_AGENT)) == NULL) {
     glob_app_cfg = working_app_cfg;
     set_allres_fail("didn't parse the ast_id file successfully");
     print_xml_response(NODE_AGENT_RET, NODE_AGENT);
@@ -506,7 +528,7 @@ node_process_release_req()
 
   sprintf(path, "%s/%s/setup_response.xml", NODE_AGENT_DIR, glob_app_cfg->ast_id);
   free_application_cfg(glob_app_cfg);
-  if ((glob_app_cfg = topo_xml_parser(path, LINK_AGENT)) == NULL) {
+  if ((glob_app_cfg = topo_xml_parser(path, NODE_AGENT)) == NULL) {
     glob_app_cfg = working_app_cfg;
     set_allres_fail("didn't parse the file for ast_id successfully");
     print_xml_response(NODE_AGENT_RET, NODE_AGENT);
@@ -538,6 +560,7 @@ node_process_release_req()
       free(node->agent_message);
       node->agent_message = NULL;
     }
+    node_delete_ip(node);
   }
   
   glob_app_cfg->status = AST_SUCCESS;

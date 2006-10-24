@@ -1313,6 +1313,7 @@ integrate_result()
     else 
       glob_app_cfg->flags |= FLAG_RELEASE_RESP;
 
+    unlink(AST_XML_RESULT);
     print_final_client(AST_XML_RESULT);
     if (send_file_over_sock(glob_app_cfg->clnt_sock, AST_XML_RESULT) == 0)
       zlog_err("Failed to send the result back to client");
@@ -1514,6 +1515,7 @@ master_accept(struct thread *thread)
    * the minions doesn't expect any reply from ast_master
    */
   if (!glob_app_cfg || !glob_app_cfg->clnt_sock) {
+    unlink(AST_XML_RESULT);
     print_final_client(AST_XML_RESULT);
     send_file_over_sock(clntSock, AST_XML_RESULT);
     close(clntSock);
