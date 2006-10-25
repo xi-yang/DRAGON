@@ -31,7 +31,7 @@
 #define BROKER_RECV     "/tmp/broker_resp.xml"
 #endif
 
-#define CLIENT_TIMEOUT	20
+#define CLIENT_TIMEOUT	60
 
 struct thread_master *master; /* master = dmaster.master */
 extern char *status_type_details[];
