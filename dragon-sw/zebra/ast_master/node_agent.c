@@ -33,7 +33,6 @@
 #define NODE_AGENT_RECV "/usr/local/noded_recv.xml"
 #define BROKER_FILE	"/usr/local/etc/broker.xml"
 #define MAXPENDING      12
-#define TIMEOUT_SECS	3
 
 #ifdef RESOURCE_BROKER
 struct node_tank {

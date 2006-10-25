@@ -866,12 +866,17 @@ print_final_client(char *path)
   int i;
   FILE *file;
   
-  if (!path)
+  if (!path || !glob_app_cfg) {
+    zlog_err("print_final_client: either file path or glob_app_cfg is NULL");
     return;
+  }
 
   file = fopen(path, "w+");
   if (!file)
     return;
+
+  if (glob_app_cfg->action != SETUP_RESP && glob_app_cfg->action != RELEASE_RESP) 
+    zlog_warn("print_final_client: should only be called for SETUP_RESP or RELEASE_RESP");
 
   fprintf(file, "<topology ast_id=\"%s\" action=\"%s\">\n",  glob_app_cfg->ast_id, action_type_details[glob_app_cfg->action]);
 
@@ -986,14 +991,14 @@ xml_parser(char* filename)
   doc = xmlParseFile(filename);
 
   if (doc == NULL) {
-    zlog_err("xml_parser: Empty document");
+    zlog_err("xml_parser: Invalid XML document");
     xmlFreeDoc(doc);
     return 0;
   }
 
   cur = xmlDocGetRootElement(doc);
   if (!cur) {
-    zlog_err("xml_parser: Empty document");
+    zlog_err("xml_parser: Invalid XML document");
     xmlFreeDoc(doc);
     return 0;
   }

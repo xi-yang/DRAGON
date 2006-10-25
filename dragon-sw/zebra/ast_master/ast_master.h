@@ -31,6 +31,7 @@
 /* buffer size */
 #define RCVBUFSIZE              100
 #define SENDBUFSIZE     	5000
+#define TIMEOUT_SECS		3
 
 #define NODENAME_MAXLEN		30
 #define IP_MAXLEN 		15 

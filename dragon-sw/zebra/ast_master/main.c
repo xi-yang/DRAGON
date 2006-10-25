@@ -44,7 +44,7 @@ static int noded_callback(struct thread *);
 static int dragon_callback(struct thread *);
 static int master_setup_req_to_node();
 static void master_check_app_list();
-static void handle_alarm(int);
+static void handle_alarm();
 extern int master_process_id(char*);
 extern struct application_cfg* master_final_parser(char*, int);
 extern int send_file_to_agent(char *, int, char *);
@@ -64,6 +64,7 @@ struct narb_tank {
 
 static struct vtag_tank vtag_pool;
 static struct narb_tank narb_pool;
+static int recv_alarm = 0;
 
 /* structurs defined for the resource agency
  *
@@ -833,6 +834,11 @@ master_process_topo(char* input_file)
 
   if (topo_validate_graph(MASTER, glob_app_cfg) == 0) {
     sprintf(glob_app_cfg->details, "Failed at validation");
+    if (glob_app_cfg->action == SETUP_REQ)
+      glob_app_cfg->action = SETUP_RESP;
+    else if (glob_app_cfg->action == RELEASE_REQ)
+      glob_app_cfg->action = RELEASE_RESP;
+
     return 0;
   }
 
@@ -875,6 +881,7 @@ main(int argc, char* argv[])
   struct sockaddr_in servAddr;
   int servSock;
   char *config_file = NULL;
+  struct sigaction myAlarmAction;
 
   progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
 
@@ -962,7 +969,17 @@ main(int argc, char* argv[])
     exit(EXIT_FAILURE);
   }
 
-  signal(SIGALRM, handle_alarm);
+  myAlarmAction.sa_handler = handle_alarm;
+  if (sigfillset(&myAlarmAction.sa_mask) < 0) {
+    zlog_err("main: sigfillset() failed");
+    return 0;
+  }
+  myAlarmAction.sa_flags = 0;
+  
+  if (sigaction(SIGALRM, &myAlarmAction, 0) < 0) {
+    zlog_err("main: sigaction() failed");
+    return 0;
+  }
 
   thread_add_read(master, master_accept, NULL, servSock);
   while (thread_fetch (master, &thread))
@@ -1420,6 +1437,7 @@ master_accept(struct thread *thread)
   int recvMsgSize;
   char buffer[4001];
   FILE* fp;
+  struct stat sb;
 
   alarm(0);
   zlog_info("master_accept(): START");
@@ -1434,17 +1452,28 @@ master_accept(struct thread *thread)
     exit(EXIT_FAILURE);
   }
 
-  recvMsgSize = recv(clntSock, buffer, 4000, 0);
-  if (recvMsgSize < 0) {
-    zlog_err("master_server_init: recv() failed");
-    exit(EXIT_FAILURE);
-  }
-
   fp = fopen(AST_XML_RECV, "w");
-  buffer[recvMsgSize]='\0';
+  recv_alarm = 1;
+  alarm(TIMEOUT_SECS);
+  while ((recvMsgSize = recv(clntSock, buffer, 4000, 0)) > 0) {
+    if (errno == EINTR) {
+      /* alarm went off
+       */
+      buffer[recvMsgSize]='\0';
+      fprintf(fp, "%s", buffer);
+      break;
+    }
+    buffer[recvMsgSize]='\0';
+    fprintf(fp, "%s", buffer);
+    alarm(TIMEOUT_SECS);
+  }
+  alarm(0);
+  recv_alarm = 0;
+
+  if (recvMsgSize < 0 && errno != EINTR) 
+    zlog_err("master_server_init: recv() failed");
 
   /* dump the file to a well-known location */
-  fprintf(fp, "%s",  buffer);
   fflush(fp);
   fclose(fp);
 
@@ -1458,7 +1487,7 @@ master_accept(struct thread *thread)
 
       zlog_info("XML_TYPE: TOPO_XML");
       if (!master_process_topo(AST_XML_RECV)) {
-	if (!glob_app_cfg) 
+	if (!glob_app_cfg)
 	  print_error_response(AST_XML_RESULT);
 	else
 	  glob_app_cfg->status = AST_FAILURE;
@@ -1511,7 +1540,10 @@ master_accept(struct thread *thread)
     if (glob_app_cfg) { 
       unlink(AST_XML_RESULT); 
       print_final_client(AST_XML_RESULT);
-    }
+    } else {
+      if (stat(AST_XML_RESULT, &sb) == -1)
+	print_error_response(AST_XML_RESULT);
+    }     
     send_file_over_sock(clntSock, AST_XML_RESULT);
     close(clntSock);
   }
@@ -1902,7 +1934,7 @@ static void
 master_check_app_list()
 {
   struct adtlistnode *curnode;
-  struct application_cfg *app_cfg;
+  struct application_cfg *app_cfg, *cur_cfg;
   char newpath[105];
   struct timeval curr_time;
   unsigned int next_alarm = 0;
@@ -1934,12 +1966,13 @@ master_check_app_list()
       strcpy(app_cfg->details, "didn't receive all RELEASE_RESP");
 
       sprintf(newpath, "%s/%s/release_final.xml", AST_DIR, app_cfg->ast_id);
+      cur_cfg = glob_app_cfg;
       glob_app_cfg = app_cfg;
       print_final(newpath);
       sprintf(newpath, "%s/%s/final.xml", AST_DIR, app_cfg->ast_id);
       print_final(newpath);
       print_final_client(AST_XML_RESULT);
-      glob_app_cfg = NULL;
+      glob_app_cfg = cur_cfg;
 
       if (send_file_over_sock(app_cfg->clnt_sock, AST_XML_RESULT) == 0)
 	zlog_err("Failed to send the result back to client");
@@ -1982,8 +2015,9 @@ master_check_app_list()
 }
 
 static void
-handle_alarm(int sig)
+handle_alarm()
 {
   zlog_info("Received: SIGALARM");
-  master_check_app_list();
+  if (!recv_alarm) 
+    master_check_app_list();
 }
