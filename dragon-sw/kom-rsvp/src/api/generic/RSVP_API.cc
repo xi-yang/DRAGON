@@ -237,7 +237,7 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 				zUpcallParam.upstreamLabel = msg.getUPSTREAM_LABEL_Object().getLabel();
 			else
 				zUpcallParam.upstreamLabel = 0;
-			zUpcallParam.bandwidth = realFloatToIEEE32Float(msg.getSENDER_TSPEC_Object().get_p());
+			zUpcallParam.bandwidth = floatMbitsToBytesInNetworkOrder(msg.getSENDER_TSPEC_Object().get_p());
 			zUpcallParam.lspEncodingType = msg.getLABEL_REQUEST_Object().getLspEncodingType();
 			zUpcallParam.switchingType = msg.getLABEL_REQUEST_Object().getSwitchingType();
 			zUpcallParam.gPid = msg.getLABEL_REQUEST_Object().getGPid();
@@ -539,7 +539,7 @@ void zInitRsvpPathRequest(void* thisApi, struct _sessionParameters* para, uint8 
 	
 	if (para->ADSpec_Para){
 	        ao = new ADSPEC_Object( para->ADSpec_Para->ADSpecHopCount, 
-	         					      ieee32FloatToRealFloat(para->ADSpec_Para->ADSpecBandwidth), 
+	         					      bytesInNetworkOrderToFloatMbits(para->ADSpec_Para->ADSpecBandwidth), 
 	        					      para->ADSpec_Para->ADSpecMinPathLatency, 
 	        					      para->ADSpec_Para->ADSpecMTU );
 	        AdSpecCLParameters cl;

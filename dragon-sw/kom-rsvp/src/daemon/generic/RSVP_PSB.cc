@@ -456,6 +456,7 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 	message.setSENDER_TSPEC_Object( senderTSpec );
 	message.setRSVP_HOP_Object(dataOutRsvpHop);
 	//$$$$ Update RSVP_HOP_Object in PATH message. (Important for VLSR--->Movaz interop)
+	//$$$$ Here we suppose the control channel address will be the same as data link HOP address for this particular case...
 	if (dataOutRsvpHop.getAddress() == message.getSENDER_TEMPLATE_Object().getSrcAddress()) {
 		const_cast<RSVP_HOP_Object&>(message.getRSVP_HOP_Object()).setAddress( outLif.getAddress() );
 	}

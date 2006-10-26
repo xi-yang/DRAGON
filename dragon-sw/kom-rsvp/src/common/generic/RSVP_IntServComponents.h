@@ -159,17 +159,17 @@ public:
 	TSpec( uint32 r, uint32 b, uint32 p,
 			sint32 m = sint32Infinite, sint32 M = 0 ){
 		d_r = r;	d_b = b; d_p = p; this->m = m; this->M = M;
-		this->r = ieee32FloatToRealFloat(r);
-		this->b = ieee32FloatToRealFloat(b);
-		this->p = ieee32FloatToRealFloat(p);
+		this->r = bytesInNetworkOrderToFloatMbits(r);
+		this->b = bytesInNetworkOrderToFloatMbits(b);
+		this->p = bytesInNetworkOrderToFloatMbits(p);
 	}
 
 	TSpec( ieee32float r = 0, ieee32float b = 0, ieee32float p = 0,
 			sint32 m = sint32Infinite, sint32 M = 0 ){
 		this->r = r; this->b = b; this->p = p; this->m = m; this->M = M;
-		this->d_r = realFloatToIEEE32Float(r);
-		this->d_b = realFloatToIEEE32Float(b);
-		this->d_p = realFloatToIEEE32Float(p);
+		this->d_r = floatMbitsToBytesInNetworkOrder(r);
+		this->d_b = floatMbitsToBytesInNetworkOrder(b);
+		this->d_p = floatMbitsToBytesInNetworkOrder(p);
 	}
 	TSpec( const TSpec& t ) : d_r(t.d_r), d_b(t.d_b), d_p(t.d_p), r(t.r), b(t.b) , p(t.p), m(t.m), M(t.M) {} 
 	TSpec( INetworkBuffer& buf ) { buf >> *this; }
@@ -190,12 +190,12 @@ public:
 	ieee32float get_p() const { return p; }
 	sint32 get_m() const { return m; }
 	sint32 get_M() const { return M; }
-	void set_r( ieee32float r ) { this->r = r; this->d_r = realFloatToIEEE32Float(r); }
-	void set_r1(uint32 r ) { this->d_r = r; this->r = ieee32FloatToRealFloat(r); }
-	void set_b( ieee32float b ) { this->b = b; this->d_b = realFloatToIEEE32Float(b); }
-	void set_b1( uint32 b ) { this->d_b = b; this->b = ieee32FloatToRealFloat(b); }
-	void set_p( ieee32float p ) { this->p = p; this->d_p = realFloatToIEEE32Float(p); }
-	void set_p1( uint32 p ) { this->d_p = p; this->p = ieee32FloatToRealFloat(p); }
+	void set_r( ieee32float r ) { this->r = r; this->d_r = floatMbitsToBytesInNetworkOrder(r); }
+	void set_r1(uint32 r ) { this->d_r = r; this->r = bytesInNetworkOrderToFloatMbits(r); }
+	void set_b( ieee32float b ) { this->b = b; this->d_b = floatMbitsToBytesInNetworkOrder(b); }
+	void set_b1( uint32 b ) { this->d_b = b; this->b = bytesInNetworkOrderToFloatMbits(b); }
+	void set_p( ieee32float p ) { this->p = p; this->d_p = floatMbitsToBytesInNetworkOrder(p); }
+	void set_p1( uint32 p ) { this->d_p = p; this->p = bytesInNetworkOrderToFloatMbits(p); }
 	void set_m( sint32 m ) { this->m = m; }
 	void set_M( sint32 M ) { this->M = M; }
 };
@@ -209,9 +209,9 @@ extern inline istream& operator>>( istream& is, TSpec& tb ) {
 #else
 	is >> tb.r >> tb.b >> tb.p >> tb.m >> tb.M; 
 #endif
-	tb.d_r = realFloatToIEEE32Float(tb.r);
-	tb.d_b = realFloatToIEEE32Float(tb.b);
-	tb.d_p = realFloatToIEEE32Float(tb.p);
+	tb.d_r = floatMbitsToBytesInNetworkOrder(tb.r);
+	tb.d_b = floatMbitsToBytesInNetworkOrder(tb.b);
+	tb.d_p = floatMbitsToBytesInNetworkOrder(tb.p);
 	return is;
 }
 extern inline ostream& operator<<( ostream& os, const TSpec& tb ) {
@@ -220,9 +220,9 @@ extern inline ostream& operator<<( ostream& os, const TSpec& tb ) {
 }
 extern inline INetworkBuffer& operator>>( INetworkBuffer& buf, TSpec& tb ) {
 	buf >> tb.d_r >> tb.d_b >> tb.d_p >> tb.m >> tb.M; 
-	tb.r = ieee32FloatToRealFloat(tb.d_r);
-	tb.b = ieee32FloatToRealFloat(tb.d_b);
-	tb.p = ieee32FloatToRealFloat(tb.d_p);
+	tb.r = bytesInNetworkOrderToFloatMbits(tb.d_r);
+	tb.b = bytesInNetworkOrderToFloatMbits(tb.d_b);
+	tb.p = bytesInNetworkOrderToFloatMbits(tb.d_p);
 	return buf;
 }
 extern inline ONetworkBuffer& operator<<( ONetworkBuffer& buf, const TSpec& tb ) {
@@ -253,27 +253,27 @@ extern inline bool operator< ( const TSpec& t1, const TSpec& t2 ) {
 }
 extern inline TSpec& TSpec::operator+=( const TSpec& tb ) {
 	p += tb.p; b += tb.b; r += tb.r; M = max(M,tb.M); m = min(m,tb.m);
-	d_p = realFloatToIEEE32Float(p); d_b = realFloatToIEEE32Float(b); d_r = realFloatToIEEE32Float(r);
+	d_p = floatMbitsToBytesInNetworkOrder(p); d_b = floatMbitsToBytesInNetworkOrder(b); d_r = floatMbitsToBytesInNetworkOrder(r);
 	return *this;
 }
 extern inline TSpec& TSpec::operator-=( const TSpec& tb ) {
 	p -= tb.p; b -= tb.b; r -= tb.r; M = max(M,tb.M); m = min(m,tb.m);
-	d_p = realFloatToIEEE32Float(p); d_b = realFloatToIEEE32Float(b); d_r = realFloatToIEEE32Float(r);
+	d_p = floatMbitsToBytesInNetworkOrder(p); d_b = floatMbitsToBytesInNetworkOrder(b); d_r = floatMbitsToBytesInNetworkOrder(r);
 	return *this;
 }
 extern inline TSpec& TSpec::merge ( const TSpec& tb ) {
 	p = max(p,tb.p); b = max(b,tb.b); r = max(r,tb.r); M = min(M,tb.M); m = min(m,tb.m);
-	d_p = realFloatToIEEE32Float(p); d_b = realFloatToIEEE32Float(b); d_r = realFloatToIEEE32Float(r);
+	d_p = floatMbitsToBytesInNetworkOrder(p); d_b = floatMbitsToBytesInNetworkOrder(b); d_r = floatMbitsToBytesInNetworkOrder(r);
 	return *this;
 }
 extern inline TSpec& TSpec::LUB ( const TSpec& tb ) {
 	p = max(p,tb.p); b = max(b,tb.b); r = max(r,tb.r); M = max(M,tb.M); m = min(m,tb.m);
-	d_p = realFloatToIEEE32Float(p); d_b = realFloatToIEEE32Float(b); d_r = realFloatToIEEE32Float(r);
+	d_p = floatMbitsToBytesInNetworkOrder(p); d_b = floatMbitsToBytesInNetworkOrder(b); d_r = floatMbitsToBytesInNetworkOrder(r);
 	return *this;
 }
 extern inline TSpec& TSpec::GLB ( const TSpec& tb ) {
 	p = min(p,tb.p); b = min(b,tb.b); r = min(r,tb.r); M = min(M,tb.M); m = max(m,tb.m);
-	d_p = realFloatToIEEE32Float(p); d_b = realFloatToIEEE32Float(b); d_r = realFloatToIEEE32Float(r);
+	d_p = floatMbitsToBytesInNetworkOrder(p); d_b = floatMbitsToBytesInNetworkOrder(b); d_r = floatMbitsToBytesInNetworkOrder(r);
 	return *this;
 }
 extern inline TSpec operator+ ( const TSpec& tb1, const TSpec& tb2 ) {
@@ -306,11 +306,11 @@ protected:
 public:
 	RSpec( uint32 R, sint32 S = 0 ) {
 		d_R = R; this->S = S;		
-		this->R = ieee32FloatToRealFloat(R); 
+		this->R = bytesInNetworkOrderToFloatMbits(R); 
 	}
 	RSpec( ieee32float R = 0, sint32 S = 0 ){ 
 		this->R = R; this->S = S;
-		d_R = realFloatToIEEE32Float(R); 
+		d_R = floatMbitsToBytesInNetworkOrder(R); 
 	}
 	RSpec( INetworkBuffer& buf ) { buf >> *this; }
 	RSpec( const  RSpec& r ) : d_R(r.d_R), R(r.R), S(r.S){}
@@ -321,8 +321,8 @@ public:
 	inline RSpec& GLB( const RSpec& r );
 	ieee32float get_R() const { return R; }
 	sint32 get_S() const { return S; }
-	void set_R( ieee32float R ) { this->R = R; this->d_R = realFloatToIEEE32Float(R); }
-	void set_R1( uint32 R ) { this->d_R = R; this->R = ieee32FloatToRealFloat(R); }
+	void set_R( ieee32float R ) { this->R = R; this->d_R = floatMbitsToBytesInNetworkOrder(R); }
+	void set_R1( uint32 R ) { this->d_R = R; this->R = bytesInNetworkOrderToFloatMbits(R); }
 	void set_S( sint32 S ) { this->S = S; }
 };
 extern inline istream& operator>>( istream& is, RSpec& rs ) {
@@ -333,14 +333,14 @@ extern inline istream& operator>>( istream& is, RSpec& rs ) {
 #else
 	is >> rs.R >> rs.S; 
 #endif
-	rs.d_R = realFloatToIEEE32Float(rs.R); return is;
+	rs.d_R = floatMbitsToBytesInNetworkOrder(rs.R); return is;
 }
 extern inline ostream& operator<<( ostream& os, const RSpec& rs ) {
 	os << "R:" << rs.R << " S:" << rs.S; return os;
 }
 extern inline INetworkBuffer& operator>>( INetworkBuffer& buf, RSpec& rs ) {
 	buf >> rs.d_R >> rs.S; 
-	rs.R = ieee32FloatToRealFloat(rs.d_R);
+	rs.R = bytesInNetworkOrderToFloatMbits(rs.d_R);
 	return buf;
 }
 extern inline ONetworkBuffer& operator<<( ONetworkBuffer& buf, const RSpec& rs ) {
@@ -366,12 +366,12 @@ extern inline bool operator< ( const RSpec& rs1, const RSpec& rs2 ) {
 }
 extern inline RSpec& RSpec::merge ( const RSpec& rs ) {
 	R = max(R,rs.R); S = min(S,rs.S); 
-	d_R = realFloatToIEEE32Float(rs.R);
+	d_R = floatMbitsToBytesInNetworkOrder(rs.R);
 	return *this;
 }
 extern inline RSpec& RSpec::GLB ( const RSpec& rs ) {
 	R = min(R,rs.R); S = max(S,rs.S); 
-	d_R = realFloatToIEEE32Float(rs.R);
+	d_R = floatMbitsToBytesInNetworkOrder(rs.R);
 	return *this;
 }
 extern inline bool ordered( const RSpec& rs1, const RSpec& rs2 ) {

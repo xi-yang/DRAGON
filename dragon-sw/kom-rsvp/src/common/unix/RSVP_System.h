@@ -162,7 +162,7 @@ extern inline void convertToLocalTime( uint32 seconds, uint32& hours, uint32& mi
 
 // Real floating point (Decimal) <---> IEEE 32 bit floating point (Hex/Dec) conversion
 // Only supports positive floating point value
-extern inline uint32 realFloatToIEEE32Float(ieee32float x)
+extern inline uint32 floatMbitsToBytesInNetworkOrder(ieee32float x)
 {
 	/*			assert(x>0);
 	uint32 result = 0;
@@ -234,7 +234,7 @@ extern inline uint32 realFloatToIEEE32Float(ieee32float x)
 	
 }
 
-extern inline ieee32float ieee32FloatToRealFloat(uint32 x)
+extern inline ieee32float bytesInNetworkOrderToFloatMbits(uint32 x)
 {
 	if (x==0x45FA0000) 			return  0.064;  
 	else if (x==0x483C7A00) 		return  1.544;   
