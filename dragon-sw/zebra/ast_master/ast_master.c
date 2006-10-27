@@ -427,7 +427,7 @@ free_application_cfg(struct application_cfg *app_cfg)
       if (mynode->res.n.if_list) {
 	for (if_node = mynode->res.n.if_list->head;
 	     if_node;
-	     if_node = if_node->next) 
+	     if_node = if_node->next) {
 	  if (!app_cfg->link_list) {
 	    ifp = (struct if_ip*) if_node->data;
 	    
@@ -436,6 +436,7 @@ free_application_cfg(struct application_cfg *app_cfg)
 	    free(ifp);
           }	
 	  if_node->data = NULL;      
+	}
       }
       adtlist_free(mynode->res.n.if_list);
       free(mynode);
@@ -713,7 +714,7 @@ print_link(FILE* fp, struct resource* link)
     print_endpoint(fp, link->res.l.dest);
     fprintf(fp, "\t</dest>\n");
   }
-  if (link->res.l.service_type != -1) 
+  if (link->res.l.service_type != -1 && service.count != 0) 
     fprintf(fp, "\t<te_params profile=\"%s\">\n", service.elem[link->res.l.service_type]->service_name);
   else 
     fprintf(fp, "\t<te_params>\n");
@@ -1341,6 +1342,7 @@ agent_final_parser(char* filename)
 
   app_cfg = (struct application_cfg*)malloc(sizeof(struct application_cfg));
   memset(app_cfg, 0, sizeof(struct application_cfg));
+  app_cfg->xml_type = TOPO_XML;
 
   /* parse the ast_id and action */
   for (attr = cur->properties;
@@ -1441,6 +1443,7 @@ topo_xml_parser(char* filename, int agent)
   topo_ptr = cur;
   app_cfg = (struct application_cfg*)malloc(sizeof(struct application_cfg));
   memset(app_cfg, 0, sizeof(struct application_cfg));
+  app_cfg->xml_type = TOPO_XML;
 
   /* parse the parameter inside topology tab 
    */

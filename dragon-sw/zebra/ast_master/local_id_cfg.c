@@ -281,6 +281,7 @@ id_xml_parser(char* filename, int agent)
 
   app_cfg = (struct application_cfg*) malloc(sizeof(struct application_cfg));
   memset(app_cfg, 0, sizeof(struct application_cfg));
+  app_cfg->xml_type = ID_XML;
 
   for (attr = cur->properties;
 	attr;

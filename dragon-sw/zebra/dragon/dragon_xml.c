@@ -1012,7 +1012,8 @@ dragon_link_provision()
 	    case non_uni:
 	      strcpy(data->link_agent, mylink->res.l.src->es->name);
 	      data->node_stype = mylink->res.l.src->es->res.n.stype;
-	      zlog_info("lsp has been set between ES(%s) and ES(%s)\n", 
+	      zlog_info("lsp (%s) has been set between ES(%s) and ES(%s)\n", 
+			mylink->res.l.lsp_name,
 			mylink->res.l.src->es->name, 
 			mylink->res.l.dest->es->name);
 
@@ -1021,7 +1022,8 @@ dragon_link_provision()
 	    case vlsr_vlsr:
 	      strcpy(data->link_agent, mylink->res.l.src->vlsr->name);
 	      data->node_stype = mylink->res.l.src->vlsr->res.n.stype;
-	      zlog_info("lsp has been set between vlsr(%s) and vlsr(%s)\n",
+	      zlog_info("lsp (%s) has been set between vlsr(%s) and vlsr(%s)\n",
+			mylink->res.l.lsp_name,
 			mylink->res.l.src->vlsr->name, 
 			mylink->res.l.dest->vlsr->name);
 	      break;
@@ -1030,13 +1032,15 @@ dragon_link_provision()
 	      if (mylink->res.l.src->vlsr && mylink->res.l.dest->es) {
 		strcpy(data->link_agent, mylink->res.l.src->vlsr->name);
 		data->node_stype = mylink->res.l.src->vlsr->res.n.stype;
-		zlog_info("lsp has been set between vlsr(%s) and ES(%s)\n",
+		zlog_info("lsp (%s) has been set between vlsr(%s) and ES(%s)\n",
+			mylink->res.l.lsp_name,
 			mylink->res.l.src->vlsr->name,
 			mylink->res.l.dest->es->name);
 	      } else {
 		strcpy(data->link_agent, mylink->res.l.src->es->name);
 		data->node_stype = mylink->res.l.src->es->res.n.stype;
-		zlog_info("lsp has been set between ES(%s) and vlsr(%s)\n",
+		zlog_info("lsp (%s) has been set between ES(%s) and vlsr(%s)\n",
+			mylink->res.l.lsp_name,
 			mylink->res.l.src->es->name,
 			mylink->res.l.dest->vlsr->name);
 	      }

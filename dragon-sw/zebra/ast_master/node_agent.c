@@ -885,6 +885,8 @@ agent_accept(struct thread *thread)
 	if (glob_app_cfg->action == APP_COMPLETE && 
 		node_child && !child_app_complete) {
 	  close(clntSock);
+	  free_application_cfg(glob_app_cfg);
+	  glob_app_cfg = NULL;
 	  thread_add_read(master, agent_accept, NULL, servSock);
 	  return 1;
 	} 
@@ -908,7 +910,8 @@ agent_accept(struct thread *thread)
      if (!send_file_over_sock(clntSock, NODE_AGENT_RET)) 
 	clntSock = send_file_to_agent(glob_app_cfg->ast_ip, MASTER_PORT, NODE_AGENT_RET);
 
-
+      free_application_cfg(glob_app_cfg);
+      glob_app_cfg = NULL;
       close(clntSock);
       if (child_app_complete) 
 	_exit(2);

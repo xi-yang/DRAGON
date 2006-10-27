@@ -1279,9 +1279,8 @@ integrate_result()
 
   switch (glob_app_cfg->action) {
     case SETUP_RESP:
-      if (glob_app_cfg->setup_ready == total_res) 
-	sprintf(path_prefix, "%s/setup_", directory);
-      else if (glob_app_cfg->setup_ready == adtlist_getcount(glob_app_cfg->link_list)) {
+      sprintf(path_prefix, "%s/setup_", directory);
+      if (glob_app_cfg->setup_ready == adtlist_getcount(glob_app_cfg->link_list)) {
 	if (glob_app_cfg->status == AST_SUCCESS) {
   	  if (master_setup_req_to_node() == 0) 
 	    glob_app_cfg->status = AST_FAILURE;
