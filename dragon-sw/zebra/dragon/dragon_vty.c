@@ -988,7 +988,10 @@ DEFUN (dragon_set_lsp_ip,
     lsp->common.Session_Para.srcAddr.s_addr = ip_src.s_addr;
     lsp->common.Session_Para.srcPort = (u_int16_t)port_src;
     lsp->common.Session_Para.destAddr.s_addr = ip_dst.s_addr;
-    lsp->common.Session_Para.destPort = (u_int16_t)port_dest;
+    if (type_dest== LOCAL_ID_TYPE_TAGGED_GROUP && port_dest == ANY_VTAG)
+        lsp->common.Session_Para.destPort = (u_int16_t)random();
+    else
+        lsp->common.Session_Para.destPort = (u_int16_t)port_dest;
     lsp->dragon.srcLocalId = ((u_int32_t)type_src)<<16 |port_src;
     lsp->dragon.destLocalId = ((u_int32_t)type_dest)<<16 |port_dest;
 
