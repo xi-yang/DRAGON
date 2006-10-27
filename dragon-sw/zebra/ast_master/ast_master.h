@@ -27,6 +27,7 @@
 /* types of XML_FILES */
 #define TOPO_XML		1
 #define ID_XML			2
+#define CTRL_XML		3
 
 /* buffer size */
 #define RCVBUFSIZE              100

@@ -1014,6 +1014,11 @@ xml_parser(char* filename)
     return ID_XML;
   }
 
+  if (findxmlnode(cur, "ast_ctrl")) {
+    xmlFreeDoc(doc);
+    return CTRL_XML;
+  }
+
   zlog_err("xml_parser: xml file is neither <topology> nor <local_id_cfg> type")
 ;
   xmlFreeDoc(doc);

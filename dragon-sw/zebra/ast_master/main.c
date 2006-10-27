@@ -869,6 +869,23 @@ master_process_topo(char* input_file)
   return 1;
 }
 
+int 
+master_process_ctrl(char* filename)
+{
+  FILE *fp;
+
+  fp = fopen(AST_XML_RESULT, "w+");
+  
+  fprintf(fp, "<ast_ctrl action=\"HELLO_RESP\">\n");
+  fprintf(fp, "\t<msg>AST_MASTER, Version 1.0</msg>\n");
+  fprintf(fp, "</ast_ctrl>\n");
+ 
+  fflush(fp);
+  fclose(fp);
+
+  return 1;
+}
+
 
 /* ASP Masterd main routine */
 int
@@ -1524,10 +1541,15 @@ master_accept(struct thread *thread)
 
       break;
 
+    case CTRL_XML:
+      zlog_info("XML_TYPE: CTRL_XML");
+      master_process_ctrl(AST_XML_RECV);
+   
+      break;
+   
     default:
 
       zlog_info("XML_TYPE: can't be determined");
-
   }
 
   /* Here, we will send something back no matter unless the 
