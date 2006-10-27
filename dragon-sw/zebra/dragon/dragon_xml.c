@@ -832,6 +832,7 @@ dragon_build_lsp(struct resource *link)
       strcpy(argv[2], "implicit");
     }
 
+    zlog_info("dragon_set_lsp_uni: %s | %s | %s", argv[0], argv[1], argv[2]);
     if (dragon_set_lsp_uni (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
       argc = 1;
       strcpy(argv[0], lsp_name);
@@ -875,10 +876,14 @@ dragon_build_lsp(struct resource *link)
     strcpy(argv[2], "any");
     strcpy(argv[4], "tagged-group");
     strcpy(argv[5], "any");
-  } 
+  } else {
+    strcpy(argv[1], link->res.l.src->local_id_type);
+    sprintf(argv[2], "%d", link->res.l.src->local_id);
+    strcpy(argv[4], link->res.l.dest->local_id_type);
+    sprintf(argv[5], "%d", link->res.l.dest->local_id);
+  }
 
-  zlog_info("parameters to dragon_set_lsp_ip:");
-  zlog_info("%s | %s | %s | %s | %s | %s", argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+  zlog_info("dragon_set_lsp_ip: %s | %s | %s | %s | %s | %s", argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
   if (dragon_set_lsp_ip (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
     
     argc = 1;
@@ -894,6 +899,8 @@ dragon_build_lsp(struct resource *link)
   strcpy(argv[1], link->res.l.swcap);
   strcpy(argv[2], link->res.l.encoding);
   strcpy(argv[3], link->res.l.gpid);  
+  zlog_info("dragon_set_lsp_sw: %s | %s | %s | %s", argv[0], argv[1], argv[2], argv[3]);
+
   if (dragon_set_lsp_sw (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
 
     argc = 1;
@@ -906,6 +913,7 @@ dragon_build_lsp(struct resource *link)
     argc = 1;
     strcpy(argv[0], link->res.l.vtag);
 
+    zlog_info("dragon_set_lsp_vtag: %s", argv[0]);
     if (dragon_set_lsp_vtag(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
       dragon_delete_lsp(NULL, fake_vty, argc, &argv);
       return NULL;

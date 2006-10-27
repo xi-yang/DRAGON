@@ -1197,15 +1197,21 @@ establish_relationship(struct application_cfg* app_cfg)
 
 	if (src->local_id_type[0] == '\0' && dest->local_id_type[0] != '\0')
 	  dest->local_id_type[0] = '\0';
-	else if (src->local_id_type[0] != '\0' || dest->local_id_type[0] == '\0') 
+	else if (src->local_id_type[0] != '\0' && dest->local_id_type[0] == '\0') 
 	  src->local_id_type[0] = '\0';
 
-	if (src->local_id_type[0] == '\0' && dest->local_id_type[0] == '\0' &&
-		mylink->res.l.vtag[0] != '\0') {
-	  sprintf(src->local_id_type, "tagged-group");
-	  sprintf(dest->local_id_type, "tagged-group");
-          src->local_id = atoi(mylink->res.l.vtag);
-	  dest->local_id = atoi(mylink->res.l.vtag);  
+	if (src->local_id_type[0] == '\0' && dest->local_id_type[0] == '\0') {
+	  if (strcmp(mylink->res.l.vtag, "any") == 0) {
+	    sprintf(src->local_id_type, "group");
+	    sprintf(dest->local_id_type, "group");
+	    src->local_id = 1000;
+	    dest->local_id = 1000;
+	  } else if (mylink->res.l.vtag[0] != '\0') {
+	    sprintf(src->local_id_type, "tagged-group"); 
+	    sprintf(dest->local_id_type, "tagged-group"); 
+	    src->local_id = atoi(mylink->res.l.vtag); 
+	    dest->local_id = atoi(mylink->res.l.vtag);
+	  }
 	}
 
 	if (mylink->res.l.src->proxy) 
