@@ -1824,6 +1824,7 @@ topo_xml_parser(char* filename, int agent)
   }
 
   xmlFreeDoc(doc);
+  app_cfg->clnt_sock = -1;
 
   return app_cfg;
 }

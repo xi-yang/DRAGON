@@ -184,10 +184,10 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
   glob_app_cfg = NULL;
   
   /* FIONA */
-  if (data->clnt_sock) {
+  if (data->clnt_sock != -1) {
     thread_remove_read(master, FIN_accept, NULL, data->clnt_sock);
     close(data->clnt_sock); 
-    data->clnt_sock = 0;
+    data->clnt_sock = -1;
   }
   free(data->ast_id);
   free(data);
@@ -1193,7 +1193,7 @@ xml_accept(struct thread *thread)
 
       clnt_sock = xml_sock;
       dragon_process_xml(clientAddr.sin_addr);
-      clnt_sock = 0;
+      clnt_sock = -1;
 
       if (glob_app_cfg->action == SETUP_RESP && 
 		glob_app_cfg->status == AST_PENDING) {

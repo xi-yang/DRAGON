@@ -1304,7 +1304,7 @@ integrate_result()
 	  else
 	    return;
 	}
-      } else  
+      } else if (glob_app_cfg->setup_ready != total_res)
 	return;
       break;
 
@@ -1331,7 +1331,7 @@ integrate_result()
   print_final(newpath);
 
   /* send the result back to user */
-  if (glob_app_cfg->clnt_sock) {
+  if (glob_app_cfg->clnt_sock != -1) {
     if (glob_app_cfg->action == SETUP_RESP) 
       glob_app_cfg->flags |= FLAG_SETUP_RESP;
     else 
@@ -1557,7 +1557,7 @@ master_accept(struct thread *thread)
    * if there is error in sending file out, it's ok because sometimes
    * the minions doesn't expect any reply from ast_master
    */
-  if (!glob_app_cfg || !glob_app_cfg->clnt_sock) {
+  if (!glob_app_cfg || glob_app_cfg->clnt_sock != -1) {
     if (glob_app_cfg) { 
       unlink(AST_XML_RESULT); 
       print_final_client(AST_XML_RESULT);
