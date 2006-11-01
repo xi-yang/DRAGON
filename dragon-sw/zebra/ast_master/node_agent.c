@@ -162,6 +162,7 @@ node_assign_ip(struct resource* node)
   struct in_addr netmask;
   char *c;
   u_int8_t *byte;
+  static char command[200];
 
   if (!node->res.n.if_list)
     return 1;
@@ -174,10 +175,11 @@ node_assign_ip(struct resource* node)
 
     ifp = (struct if_ip*)curnode->data;
 
+#if 0
     bzero(bcast, IP_MAXLEN+1);
     if (sockfd == -1) 
       sockfd = socket(AF_INET, SOCK_DGRAM, 0); 
-
+#endif
     if (interface) {
 #ifndef __FreeBSD__
       if (ifp->vtag != 0) {
@@ -244,6 +246,11 @@ node_assign_ip(struct resource* node)
     zlog_info("netmask: %s", inet_ntoa(netmask));
     zlog_info("broadcast: %s", inet_ntoa(broadcast));
 
+    sprintf(command, "ifconfig %s %s", ifp->iface, inet_ntoa(ip));
+    sprintf(command+strlen(command), " netmask %s", inet_ntoa(netmask));
+
+    system(command); 
+#if 0
     bzero(&if_info, sizeof(struct ifreq));
     strcpy(if_info.ifr_name, ifp->iface);
     bzero(&if_info.ifr_ifru.ifru_addr, sizeof(struct sockaddr));
@@ -285,10 +292,13 @@ node_assign_ip(struct resource* node)
       close(sockfd);
       return 0;
     }
+#endif
   }
 
+#if 0
   if (sockfd != -1)
     close(sockfd);
+#endif
 
   return 1;
 }
