@@ -523,7 +523,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			//explicitRoute->destroy();
 			explicitRoute = NULL;
 		}
-		else 
+		else if (explicitRoute)
 		{
 			LOG(2)(Log::MPLS, "WARNING ! ERO at egress to UNI client should he empty but - ", *explicitRoute);
 		}
