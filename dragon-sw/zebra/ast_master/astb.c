@@ -254,7 +254,6 @@ int main(int argc, char* argv[])
   switch (xml_parser(input_file)) {
 
   case TOPO_XML:
-
   if ( (glob_app_cfg = topo_xml_parser(input_file, ASTB)) == NULL) {
     printf("Validation Failed\n");
     exit(1);
@@ -264,7 +263,6 @@ int main(int argc, char* argv[])
     printf("Validation Failed\n");
     exit(1);
   }
-  
   break;
 
   case ID_XML:

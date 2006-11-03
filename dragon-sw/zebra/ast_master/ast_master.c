@@ -390,6 +390,20 @@ free_id_cfg_res(struct id_cfg_res* ptr)
 }
 
 void
+free_endpoint(struct if_ip* ifp)
+{
+  if (!ifp)
+    return;
+
+  if (ifp->iface)
+    free(ifp->iface);
+  if (ifp->assign_ip)
+    free(ifp->assign_ip);
+  
+  free(ifp);
+}
+
+void
 free_application_cfg(struct application_cfg *app_cfg)
 {
   struct adtlistnode *curnode, *curnode1, *if_node;
@@ -879,6 +893,11 @@ print_final_client(char *path)
   if (glob_app_cfg->action != SETUP_RESP && glob_app_cfg->action != RELEASE_RESP) 
     zlog_warn("print_final_client: should only be called for SETUP_RESP or RELEASE_RESP");
 
+  if (glob_app_cfg->action == SETUP_REQ)
+    glob_app_cfg->action = SETUP_RESP;
+  else if (glob_app_cfg->action == RELEASE_REQ)
+    glob_app_cfg->action = RELEASE_RESP;
+
   fprintf(file, "<topology ast_id=\"%s\" action=\"%s\">\n",  glob_app_cfg->ast_id, action_type_details[glob_app_cfg->action]);
 
   fprintf(file, "<status>%s</status>\n", status_type_details[glob_app_cfg->status]);
@@ -1200,6 +1219,22 @@ establish_relationship(struct application_cfg* app_cfg)
 	else if (src->local_id_type[0] != '\0' && dest->local_id_type[0] == '\0') 
 	  src->local_id_type[0] = '\0';
 
+	if (src->ifp && !dest->ifp) {
+	  free_endpoint(src->ifp);
+	  src->ifp = NULL;
+	} else if (!src->ifp && dest->ifp) {
+	  free_endpoint(dest->ifp);
+	  dest->ifp = NULL;
+	} else if (src->ifp && dest->ifp) {
+	  if (src->ifp->assign_ip && !dest->ifp->assign_ip) { 
+	    free(src->ifp->assign_ip);
+	    src->ifp->assign_ip = NULL;
+	  } else if (!src->ifp->assign_ip && dest->ifp->assign_ip) {
+	    free(dest->ifp->assign_ip);
+	    dest->ifp->assign_ip = NULL;
+	  }
+	}
+	  	
 	if (src->local_id_type[0] == '\0' && dest->local_id_type[0] == '\0') {
 	  if (strcmp(mylink->res.l.vtag, "any") == 0) {
 	    sprintf(src->local_id_type, "group");
@@ -2078,6 +2113,9 @@ autofill_es_info(struct resource* res)
   if (res->type != NODE_RES)
     return 0;
 
+  if (res->res.n.router_id != '\0' && res->res.n.ip != '\0')
+    return 1;
+  
   for (i = 0; i < es_pool.number; i++) {
     if (strcmp(es_pool.es[i].ip, res->res.n.ip) == 0) {
       strncpy(res->res.n.router_id, es_pool.es[i].router_id, IP_MAXLEN);

@@ -879,7 +879,10 @@ dragon_build_lsp(struct resource *link)
   } else {
     strcpy(argv[1], link->res.l.src->local_id_type);
     sprintf(argv[2], "%d", link->res.l.src->local_id);
-    strcpy(argv[4], link->res.l.dest->local_id_type);
+    if (link->res.l.dest->local_id_type[0] == 'l')
+      strcpy(argv[4], "tunnel-id");
+    else 
+      strcpy(argv[4], link->res.l.dest->local_id_type);
     sprintf(argv[5], "%d", link->res.l.dest->local_id);
   }
 
@@ -903,6 +906,21 @@ dragon_build_lsp(struct resource *link)
 
   if (dragon_set_lsp_sw (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
 
+    argc = 1;
+    strcpy(argv[0], lsp_name);
+    dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+    return NULL;
+  }
+
+  /* mirror what dragon_set_lsp_dir does
+   */
+  argc = 2;
+  strcpy(argv[0], "bi");
+  strcpy(argv[1], "161252");
+  zlog_info("dragon_set_lsp_dir: %s | %s", argv[0], argv[1]);
+  
+  if (dragon_set_lsp_dir(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+    
     argc = 1;
     strcpy(argv[0], lsp_name);
     dragon_delete_lsp(NULL, fake_vty, argc, &argv);

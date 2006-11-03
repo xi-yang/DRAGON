@@ -32,6 +32,7 @@
 #endif
 
 #define CLIENT_TIMEOUT	60
+#define SQL_RESULT	"/tmp/mysql.result"
 
 struct thread_master *master; /* master = dmaster.master */
 extern char *status_type_details[];
@@ -45,6 +46,8 @@ static int dragon_callback(struct thread *);
 static int master_setup_req_to_node();
 static void master_check_app_list();
 static void handle_alarm();
+static int master_lookup_assign_ip();
+static int master_cleanup_assign_ip();
 extern int master_process_id(char*);
 extern struct application_cfg* master_final_parser(char*, int);
 extern int send_file_to_agent(char *, int, char *);
@@ -669,6 +672,7 @@ master_process_setup_req()
   if (rename(AST_XML_RECV, newpath) == -1) 
     zlog_err("Can't rename %s to %s; errno = %d(%s)",
 	     AST_XML_RECV, newpath, errno, strerror(errno));
+master_lookup_assign_ip();
 
   app_cfg_pre_req();
   glob_app_cfg->flags |= FLAG_SETUP_REQ;
@@ -1298,6 +1302,7 @@ integrate_result()
     case SETUP_RESP:
       sprintf(path_prefix, "%s/setup_", directory);
       if (glob_app_cfg->setup_ready == adtlist_getcount(glob_app_cfg->link_list)) {
+	master_lookup_assign_ip();
 	if (glob_app_cfg->status == AST_SUCCESS) {
   	  if (master_setup_req_to_node() == 0) 
 	    glob_app_cfg->status = AST_FAILURE;
@@ -1339,6 +1344,8 @@ integrate_result()
 
     unlink(AST_XML_RESULT);
     print_final_client(AST_XML_RESULT);
+    if (glob_app_cfg->action == RELEASE_RESP)
+      master_cleanup_assign_ip();
     if (send_file_over_sock(glob_app_cfg->clnt_sock, AST_XML_RESULT) == 0)
       zlog_err("Failed to send the result back to client");
     close(glob_app_cfg->clnt_sock);
@@ -1561,6 +1568,8 @@ master_accept(struct thread *thread)
     if (glob_app_cfg) { 
       unlink(AST_XML_RESULT); 
       print_final_client(AST_XML_RESULT);
+      if (glob_app_cfg->action == RELEASE_RESP) 
+	master_cleanup_assign_ip();
     } else {
       if (stat(AST_XML_RESULT, &sb) == -1)
 	print_error_response(AST_XML_RESULT);
@@ -1993,6 +2002,8 @@ master_check_app_list()
       sprintf(newpath, "%s/%s/final.xml", AST_DIR, app_cfg->ast_id);
       print_final(newpath);
       print_final_client(AST_XML_RESULT);
+      master_cleanup_assign_ip();
+
       glob_app_cfg = cur_cfg;
 
       if (send_file_over_sock(app_cfg->clnt_sock, AST_XML_RESULT) == 0)
@@ -2041,4 +2052,152 @@ handle_alarm()
   zlog_info("Received: SIGALARM");
   if (!recv_alarm) 
     master_check_app_list();
+}
+
+static int
+master_lookup_assign_ip()
+{
+  struct adtlistnode *curnode;
+  struct resource *res;
+  struct endpoint *src, *dest;
+  FILE *fp;
+  char *f_ret, *token, line[100], addr[200];
+  struct in_addr mask, ip;
+
+  zlog_info("master_lookup_assign_ip() ...");
+  if (!glob_app_cfg || !glob_app_cfg->link_list)
+    return 0;
+
+  for (curnode = glob_app_cfg->link_list->head;
+	curnode;
+	curnode = curnode->next) {
+    res = (struct resource*)curnode->data;
+
+    src = res->res.l.src; 
+    dest = res->res.l.dest;
+
+    if (!src->ifp) {
+      src->ifp = malloc(sizeof(struct if_ip));
+      memset(src->ifp, 0, sizeof(struct if_ip));
+      if (!src->es->res.n.if_list) {
+	src->es->res.n.if_list = malloc(sizeof(struct adtlist));
+	memset(src->es->res.n.if_list, 0, sizeof(struct adtlist));
+      }
+      adtlist_add(src->es->res.n.if_list, src->ifp);
+    }
+    if (!dest->ifp) {
+      dest->ifp = malloc(sizeof(struct if_ip));
+      memset(dest->ifp, 0, sizeof(struct if_ip));
+      if (!dest->es->res.n.if_list) {
+        dest->es->res.n.if_list = malloc(sizeof(struct adtlist));
+        memset(dest->es->res.n.if_list, 0, sizeof(struct adtlist));
+      }
+      adtlist_add(dest->es->res.n.if_list, dest->ifp);
+    }
+
+    if (dest->ifp->assign_ip && src->ifp->assign_ip)
+      continue;
+
+    system("mysql -h leia.east.isi.edu -udragon -pl@mbd@wave -e \"use dragon; select * from data_plane_blocks where in_use='no'limit 1;\" > /tmp/mysql.result");
+
+    /* error if 
+     * SQL_RESULT doesn't start with slash_30
+     * return file format:
+     * slash_30        in_use 
+     * 140.173.96.32   no
+     *
+     */
+    fp = fopen(SQL_RESULT, "r");
+    if (!fp) {
+      continue;
+    }
+
+    f_ret = fgets(line, 100, fp);
+    if (!f_ret) {
+      fclose(fp);
+      zlog_err("master_lookup_assign_ip: sql server returns empty file");
+      return 0;
+    }
+
+    if (strncmp(f_ret, "slash_30", 8) != 0) {
+      fclose(fp);
+      zlog_err("master_lookup_assign_ip: sql server returns error"); 
+      return 0;
+    }
+
+    f_ret = fgets(line, 100, fp);
+    if (!f_ret) {
+      fclose(fp);
+      zlog_err("master_lookup_assign_ip: sql server returns no slash_30");
+      return 0;
+    }
+
+    token = strtok(f_ret, "\t");
+    if (!token) { 
+      fclose(fp);       
+      zlog_err("master_lookup_assign_ip: sql server returns no slash_30");
+      return 0;
+    }
+    zlog_info("for link %s, assign slash_30 %s", res->name, token);
+
+    /* for src */
+    mask.s_addr = inet_addr("0.0.0.1");
+    ip.s_addr = inet_addr(token) | mask.s_addr;
+    zlog_info("for src, assign %s", inet_ntoa(ip));
+    sprintf(addr, "%s/30", inet_ntoa(ip));
+    src->ifp->assign_ip = strdup(addr);
+ 
+    mask.s_addr = inet_addr("0.0.0.2");
+    ip.s_addr = inet_addr(token) | mask.s_addr;
+    zlog_info("for dest, assign %s", inet_ntoa(ip)); 
+    sprintf(addr, "%s/30", inet_ntoa(ip));
+    dest->ifp->assign_ip = strdup(addr);
+
+    sprintf(addr, "mysql -h leia.east.isi.edu -udragon -pl@mbd@wave  -e \"use dragon; update data_plane_blocks set in_use='yes' where slash_30='%s';\"", token);
+
+    system(addr);
+    fclose(fp);
+  }
+
+  return 1;
+}
+
+static int
+master_cleanup_assign_ip()
+{
+  struct adtlistnode *curnode;
+  struct resource *res;
+  struct endpoint *src;
+  char *c, addr[200];
+  struct in_addr mask, ip, slash_30;
+
+  zlog_info("master_cleanup_assign_ip() ...");
+  if (!glob_app_cfg || !glob_app_cfg->link_list)
+    return 0;
+
+  for (curnode = glob_app_cfg->link_list->head;
+        curnode;
+        curnode = curnode->next) {
+    res = (struct resource*)curnode->data;   
+
+    src = res->res.l.src;
+
+    if (!src->ifp && !src->ifp->assign_ip) 
+      continue; 
+    
+    c = strstr(src->ifp->assign_ip, "/");
+    if (!c)
+      continue;
+    *c = '\0';
+    ip.s_addr = inet_addr(src->ifp->assign_ip);
+    mask.s_addr = inet_addr("255.255.255.252");
+    slash_30.s_addr = ip.s_addr & mask.s_addr;
+
+    /* don't care if this addr is from SQL database or not, just remove it
+     */
+    sprintf(addr, "mysql -h leia.east.isi.edu -udragon -pl@mbd@wave  -e \"use dragon; update data_plane_blocks set in_use='no' where slash_30='%s';\"", inet_ntoa(slash_30));
+    system(addr);
+  }
+  
+  return 1;
 }

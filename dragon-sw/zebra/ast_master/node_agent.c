@@ -180,13 +180,14 @@ node_assign_ip(struct resource* node)
     if (sockfd == -1) 
       sockfd = socket(AF_INET, SOCK_DGRAM, 0); 
 #endif
-    if (interface) {
+    if (interface && ifp->iface == NULL) {
 #ifndef __FreeBSD__
       if (ifp->vtag != 0) {
 	sprintf(iface_name, "%s.%d", interface, ifp->vtag);
 	ifp->iface = strdup(iface_name);
 
 	sprintf(iface_name, "vconfig add %s %d", interface, ifp->vtag);
+	zlog_info("system(): %s", iface_name);
 	system(iface_name);
       } else
 #endif
@@ -249,6 +250,7 @@ node_assign_ip(struct resource* node)
     sprintf(command, "ifconfig %s %s", ifp->iface, inet_ntoa(ip));
     sprintf(command+strlen(command), " netmask %s", inet_ntoa(netmask));
 
+    zlog_info("system(): %s", command);
     system(command); 
 #if 0
     bzero(&if_info, sizeof(struct ifreq));
