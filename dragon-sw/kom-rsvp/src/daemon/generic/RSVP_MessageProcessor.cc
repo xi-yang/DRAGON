@@ -124,10 +124,13 @@ void MessageProcessor::processMessage() {
 		}
 	return;
 	} else if ( currentMessage.hasMESSAGE_ID_Object() ) {
+		//@@@@ DRAGON hack! ==> Force processing all PATH/RESV messages even if MESSAGE_ID is present.
+		/*
 		if ( sendingHop && sendingHop->checkMessageID( currentMessage ) ) {
 			LOG(3)( Log::Msg, "ID", currentMessage.getMESSAGE_ID_Object().getID(), "recognized -> ignoring message" );
 	return;
 		}
+		*/
 		if ( currentMessage.getMsgType() != Message::Path && currentMessage.getMsgType() != Message::Resv ) {
 			currentMessage.clearMESSAGE_ID_Object();
 		}
