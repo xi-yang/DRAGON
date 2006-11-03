@@ -1,30 +1,14 @@
-! -*- zebra -*-
-!
-! zebra sample configuration file
-!
-! $Id: zebra.conf.sample,v 1.14 1999/02/19 17:26:38 developer Exp $
-!
-hostname Router
-password zebra
-enable password zebra
-!
-! Interface's description. 
-!
-!interface lo
-! description test of desc.
-!
-!interface sit0
-! multicast
-!
-!interface gre1
-! ipv6 nd suppress-ra
-!
-!interface gre2
-! ipv6 nd suppress-ra
-!
-! Static default route sample.
-!
-!ip route 0.0.0.0/0 203.181.89.241
-!
-!line vty
-!log file /var/log/zebra.log
+# This is for UNI to work, if you're not using UNI, forget about this.
+# Otherwise, put your respected ES information in this file and 
+# copy it to /usr/local/etc/ast_master.conf
+# 
+# syntax:
+# set es <ES ip> <vlsr loopback/router_id> <tunnel>
+# where <tunnel> has to be the same on both sides (ES and VLSR) 
+# any line format other than the above "set es .." will be ignored
+#
+# i.e. if you are setting gre1 on ES as a control plane channel to VLSR;
+# then, you should also use gre1 on VLSR as a control plane channel to ES.
+#
+# example:
+# set es 127.0.0.1 100.10.1.233 gre4 

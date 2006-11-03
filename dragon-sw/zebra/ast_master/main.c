@@ -672,7 +672,6 @@ master_process_setup_req()
   if (rename(AST_XML_RECV, newpath) == -1) 
     zlog_err("Can't rename %s to %s; errno = %d(%s)",
 	     AST_XML_RECV, newpath, errno, strerror(errno));
-master_lookup_assign_ip();
 
   app_cfg_pre_req();
   glob_app_cfg->flags |= FLAG_SETUP_REQ;
@@ -797,6 +796,7 @@ master_process_release_req()
     }
   }
 
+  master_cleanup_assign_ip();
   /* now, save the release_original first */
   sprintf(path, "%s/%s/release_original.xml", AST_DIR, glob_app_cfg->ast_id);
   if (rename(AST_XML_RECV, path) == -1)
@@ -1302,8 +1302,9 @@ integrate_result()
     case SETUP_RESP:
       sprintf(path_prefix, "%s/setup_", directory);
       if (glob_app_cfg->setup_ready == adtlist_getcount(glob_app_cfg->link_list)) {
-	master_lookup_assign_ip();
 	if (glob_app_cfg->status == AST_SUCCESS) {
+	  master_lookup_assign_ip();
+	  print_final(newpath);
   	  if (master_setup_req_to_node() == 0) 
 	    glob_app_cfg->status = AST_FAILURE;
 	  else
@@ -1344,8 +1345,6 @@ integrate_result()
 
     unlink(AST_XML_RESULT);
     print_final_client(AST_XML_RESULT);
-    if (glob_app_cfg->action == RELEASE_RESP)
-      master_cleanup_assign_ip();
     if (send_file_over_sock(glob_app_cfg->clnt_sock, AST_XML_RESULT) == 0)
       zlog_err("Failed to send the result back to client");
     close(glob_app_cfg->clnt_sock);
@@ -1568,8 +1567,6 @@ master_accept(struct thread *thread)
     if (glob_app_cfg) { 
       unlink(AST_XML_RESULT); 
       print_final_client(AST_XML_RESULT);
-      if (glob_app_cfg->action == RELEASE_RESP) 
-	master_cleanup_assign_ip();
     } else {
       if (stat(AST_XML_RESULT, &sb) == -1)
 	print_error_response(AST_XML_RESULT);
@@ -1761,6 +1758,9 @@ master_read_config(char *config_file)
   if (!fp)
     return;
   while ((ret = fgets(line, 100, fp)) != NULL) {
+    if (ret[0] == '#')
+      continue;
+
     token = strtok(ret, " ");
     if (!token || strcmp(token, "set") != 0)
       continue;
@@ -2002,7 +2002,6 @@ master_check_app_list()
       sprintf(newpath, "%s/%s/final.xml", AST_DIR, app_cfg->ast_id);
       print_final(newpath);
       print_final_client(AST_XML_RESULT);
-      master_cleanup_assign_ip();
 
       glob_app_cfg = cur_cfg;
 
@@ -2098,7 +2097,7 @@ master_lookup_assign_ip()
     if (dest->ifp->assign_ip && src->ifp->assign_ip)
       continue;
 
-    system("mysql -h leia.east.isi.edu -udragon -pl@mbd@wave -e \"use dragon; select * from data_plane_blocks where in_use='no'limit 1;\" > /tmp/mysql.result");
+    system("mysql -h leia.east.isi.edu -udragon -pflame -e \"use dragon; select * from data_plane_blocks where in_use='no' limit 1;\" > /tmp/mysql.result");
 
     /* error if 
      * SQL_RESULT doesn't start with slash_30
@@ -2153,7 +2152,7 @@ master_lookup_assign_ip()
     sprintf(addr, "%s/30", inet_ntoa(ip));
     dest->ifp->assign_ip = strdup(addr);
 
-    sprintf(addr, "mysql -h leia.east.isi.edu -udragon -pl@mbd@wave  -e \"use dragon; update data_plane_blocks set in_use='yes' where slash_30='%s';\"", token);
+    sprintf(addr, "mysql -h leia.east.isi.edu -udragon -pflame  -e \"use dragon; update data_plane_blocks set in_use='yes' where slash_30='%s';\"", token);
 
     system(addr);
     fclose(fp);
@@ -2182,8 +2181,10 @@ master_cleanup_assign_ip()
 
     src = res->res.l.src;
 
-    if (!src->ifp && !src->ifp->assign_ip) 
-      continue; 
+    if (!src->ifp)
+      continue;
+    if (!src->ifp->assign_ip)
+      continue;
     
     c = strstr(src->ifp->assign_ip, "/");
     if (!c)
@@ -2195,7 +2196,7 @@ master_cleanup_assign_ip()
 
     /* don't care if this addr is from SQL database or not, just remove it
      */
-    sprintf(addr, "mysql -h leia.east.isi.edu -udragon -pl@mbd@wave  -e \"use dragon; update data_plane_blocks set in_use='no' where slash_30='%s';\"", inet_ntoa(slash_30));
+    sprintf(addr, "mysql -h leia.east.isi.edu -udragon -pflame  -e \"use dragon; update data_plane_blocks set in_use='no' where slash_30='%s';\"", inet_ntoa(slash_30));
     system(addr);
   }
   

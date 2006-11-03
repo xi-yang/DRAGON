@@ -2113,7 +2113,7 @@ autofill_es_info(struct resource* res)
   if (res->type != NODE_RES)
     return 0;
 
-  if (res->res.n.router_id != '\0' && res->res.n.ip != '\0')
+  if (res->res.n.router_id[0] != '\0' && res->res.n.ip[0] != '\0')
     return 1;
   
   for (i = 0; i < es_pool.number; i++) {
