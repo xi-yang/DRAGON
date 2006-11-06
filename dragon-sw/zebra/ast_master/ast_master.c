@@ -1627,7 +1627,7 @@ topo_xml_parser(char* filename, int agent)
 	  myres->agent_message = strdup(key);
 	else if (strcasecmp(node_ptr->name, "command") == 0)
 	  myres->res.n.command = strdup(key);
-	else if (strcasecmp(node_ptr->name, "ifaces") == 0)  {
+	else if (strcasecmp(node_ptr->name, "ifaces") == 0 && agent == NODE_AGENT)  {
 	  myifp = (struct if_ip*) malloc(sizeof(struct if_ip));
 	  memset(myifp, 0, sizeof(struct if_ip));
 

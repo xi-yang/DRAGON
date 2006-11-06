@@ -797,7 +797,7 @@ static struct lsp*
 dragon_build_lsp(struct resource *link)
 {
   struct lsp* lsp;
-  char lsp_name[LSP_NAME_LEN];
+  char lsp_name[LSP_NAME_LEN+1];
   int argc;
 
   bzero(link->res.l.lsp_name, LSP_NAME_LEN+1);
@@ -961,6 +961,7 @@ dragon_release_lsp(struct resource *link)
   /* mirror what dragon_set_lsp_ip does 
    */
   argc = 1;
+  zlog_info("dragon_delete_lsp(): %s", link->res.l.lsp_name);
   strcpy(argv[0], link->res.l.lsp_name);
   if (dragon_delete_lsp (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) 
     link->status = AST_FAILURE;
