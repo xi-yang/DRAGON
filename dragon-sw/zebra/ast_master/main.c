@@ -48,6 +48,7 @@ static void master_check_app_list();
 static void handle_alarm();
 static int master_lookup_assign_ip();
 static int master_cleanup_assign_ip();
+static void master_check_command();
 extern int master_process_id(char*);
 extern struct application_cfg* master_final_parser(char*, int);
 extern int send_file_to_agent(char *, int, char *);
@@ -229,10 +230,11 @@ master_process_setup_resp()
 	    continue;
 	  }
   
-	  zlog_info("Link: %s, %s, LSP: %s", 
+	  zlog_info("Link: %s, %s, LSP: %s vtag: %s", 
 	  	work_res_cfg->name, 
 	  	status_type_details[work_res_cfg->status],
-	  	work_res_cfg->res.l.lsp_name);
+	  	work_res_cfg->res.l.lsp_name,
+		work_res_cfg->res.l.vtag);
   
 	  /* counter update */
 	  if (glob_res_cfg->status != AST_PENDING) {
@@ -275,10 +277,11 @@ master_process_setup_resp()
 	    continue;
 	  }
   
-	  zlog_info("Link: %s, %s, LSP: %s", 
+	  zlog_info("Link: %s, %s, LSP: %s vtag: %s", 
 	  	work_res_cfg->name, 
 	  	status_type_details[work_res_cfg->status],
-	  	work_res_cfg->res.l.lsp_name);
+	  	work_res_cfg->res.l.lsp_name,
+		work_res_cfg->res.l.vtag);
   
 	  /* counter update */
 	  if (glob_res_cfg->status != AST_PENDING) {
@@ -602,6 +605,7 @@ master_process_app_complete()
                 work_res_cfg->name,
                 status_type_details[work_res_cfg->status],
                 work_res_cfg->res.l.lsp_name);
+
         /* counter update */
         if (IS_SET_APP_COMPLETE(glob_res_cfg))
           zlog_warn("APP_COMPLETE has been recieved, so this is an update");
@@ -1188,7 +1192,7 @@ int
 send_task_to_link_agent()
 {
   struct adtlistnode *curnode;
-  struct resource *srcnode;
+  struct resource *srcnode, *link;
   int sock, ready = 0;
   u_int16_t flags;
   static char buffer[RCVBUFSIZE];
@@ -1235,6 +1239,12 @@ send_task_to_link_agent()
       continue;
     }
 
+    if (glob_app_cfg->action == SETUP_REQ) {
+      link = srcnode->res.n.link_list->head->data;
+      if (IS_SET_SETUP_REQ(link))
+	continue;
+    }
+
     if (glob_app_cfg->action != AST_COMPLETE) {
       sprintf(newpath, "%srequest_%s.xml", path_prefix, srcnode->name);
       if (master_compose_link_request(glob_app_cfg, newpath, srcnode) == 0) {
@@ -1255,7 +1265,7 @@ send_task_to_link_agent()
 
       if (glob_app_cfg->action == QUERY_REQ)
 	continue;
-
+ 
       continue;
     }
 
@@ -1266,6 +1276,11 @@ send_task_to_link_agent()
     }
     else
       close(sock);
+
+    if (glob_app_cfg->action == SETUP_REQ) {
+      glob_app_cfg->setup_sent += adtlist_getcount(srcnode->res.n.link_list);
+      break;
+    }
   }
 
   if (glob_app_cfg->action == SETUP_REQ)  
@@ -1301,17 +1316,31 @@ integrate_result()
   switch (glob_app_cfg->action) {
     case SETUP_RESP:
       sprintf(path_prefix, "%s/setup_", directory);
+      if (glob_app_cfg->status != AST_SUCCESS)
+	break;
+
       if (glob_app_cfg->setup_ready == adtlist_getcount(glob_app_cfg->link_list)) {
-	if (glob_app_cfg->status == AST_SUCCESS) {
-	  master_lookup_assign_ip();
-	  print_final(newpath);
-  	  if (master_setup_req_to_node() == 0) 
+	master_lookup_assign_ip(); 
+	master_check_command(); 
+	print_final(newpath); 
+	if (master_setup_req_to_node() == 0) 
+	  glob_app_cfg->status = AST_FAILURE; 
+	else 
+	  return;
+      } else if (glob_app_cfg->setup_ready != total_res ) {
+	if (glob_app_cfg->setup_sent < adtlist_getcount(glob_app_cfg->link_list)
+		&& glob_app_cfg->setup_ready == glob_app_cfg->setup_sent) {
+	  glob_app_cfg->action = SETUP_REQ;
+          if (send_task_to_link_agent() == 0) 
 	    glob_app_cfg->status = AST_FAILURE;
-	  else
+	  glob_app_cfg->action = SETUP_RESP;
+
+	  if (glob_app_cfg->status == AST_SUCCESS)
 	    return;
-	}
-      } else if (glob_app_cfg->setup_ready != total_res)
-	return;
+	  
+        } else 
+	  return;
+      }
       break;
 
     case RELEASE_RESP:
@@ -1428,12 +1457,16 @@ send_task_to_node_agent()
       ready++;
       continue;
     }
-   
+
     srcnode->flags |= flags;
+
+    if (glob_app_cfg->action == SETUP_REQ)
+      glob_app_cfg->setup_sent++;
+
     if (glob_app_cfg->action != AST_COMPLETE) {
       thread_add_read(master, noded_callback, NULL, sock);
       srcnode->noded_sock = sock;
-    }
+    } 
     else 
       shutdown(sock, SHUT_RDWR);
   }
@@ -1563,16 +1596,20 @@ master_accept(struct thread *thread)
    * if there is error in sending file out, it's ok because sometimes
    * the minions doesn't expect any reply from ast_master
    */
-  if (!glob_app_cfg || glob_app_cfg->clnt_sock == -1) {
-    if (glob_app_cfg) { 
-      unlink(AST_XML_RESULT); 
-      print_final_client(AST_XML_RESULT);
-    } else {
-      if (stat(AST_XML_RESULT, &sb) == -1)
-	print_error_response(AST_XML_RESULT);
-    }     
+  if (!glob_app_cfg) {
+    if (stat(AST_XML_RESULT, &sb) == -1)
+      print_error_response(AST_XML_RESULT);
+
     send_file_over_sock(clntSock, AST_XML_RESULT);
     close(clntSock);
+  } else if (glob_app_cfg->clnt_sock == -1 || 
+		glob_app_cfg->status == AST_FAILURE) {
+    unlink(AST_XML_RESULT); 
+    print_final_client(AST_XML_RESULT);
+
+    send_file_over_sock(clntSock, AST_XML_RESULT);
+    close(clntSock);
+    glob_app_cfg->clnt_sock = -1;
   }
 
   if (glob_app_cfg && glob_app_cfg != search_cfg_in_list(glob_app_cfg->ast_id)) 
@@ -2171,7 +2208,9 @@ master_cleanup_assign_ip()
   struct in_addr mask, ip, slash_30;
 
   zlog_info("master_cleanup_assign_ip() ...");
-  if (!glob_app_cfg || !glob_app_cfg->link_list)
+  if (!glob_app_cfg) 
+    return 0;
+  if (!glob_app_cfg->link_list)
     return 0;
 
   for (curnode = glob_app_cfg->link_list->head;
@@ -2201,4 +2240,33 @@ master_cleanup_assign_ip()
   }
   
   return 1;
+}
+
+static void
+master_check_command()
+{
+  struct adtlistnode *curnode;
+  struct resource *res;
+
+  zlog_info("master_check_command() ...");
+
+  if (!glob_app_cfg)
+    return;
+
+  if (!glob_app_cfg->node_list)
+    return;
+
+  for (curnode = glob_app_cfg->node_list->head;
+	curnode;
+	curnode = curnode->next) {
+    res = (struct resource*) curnode->data;
+
+    if (!res->res.n.command)
+      continue;
+
+    /* look for any "$<link_name>.src" "$<link_name>.dest"
+     */
+    
+   
+  } 
 }

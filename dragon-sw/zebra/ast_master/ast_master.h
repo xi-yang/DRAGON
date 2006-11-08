@@ -99,6 +99,7 @@ struct application_cfg {
   
   /* counters */
   u_int8_t setup_ready;
+  u_int8_t setup_sent;
   u_int8_t release_ready;
   u_int8_t complete_ready;
  
@@ -251,6 +252,7 @@ void set_allres_fail(char*);
 void set_res_fail(char*, struct resource *);
 void app_cfg_pre_req();
 int get_node_stype_by_str(char*);
+struct resource * search_link_by_name(struct application_cfg*, char*);
 
 int send_file_over_sock(int, char*);
 int send_file_to_agent(char*, int, char*);

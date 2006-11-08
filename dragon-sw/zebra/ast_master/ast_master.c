@@ -359,6 +359,26 @@ search_node_by_name(struct application_cfg* app_cfg, char* str)
   return NULL;
 }
 
+struct resource *
+search_link_by_name(struct application_cfg* app_cfg, char* str)
+{
+  struct adtlistnode *curnode;
+  struct resource *res;
+
+  if (app_cfg && app_cfg->link_list) {
+    for (curnode = app_cfg->link_list->head;
+	 curnode;
+	 curnode = curnode->next) {
+      res = (struct resource*) curnode->data;
+
+      if (strcasecmp(res->name, str) == 0) 
+	return res;
+    }
+  }
+
+  return NULL;
+}
+
 void
 free_id_cfg_res(struct id_cfg_res* ptr)
 {
