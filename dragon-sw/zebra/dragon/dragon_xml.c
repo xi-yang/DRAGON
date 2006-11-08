@@ -93,7 +93,7 @@ dragon_establish_relationship()
 void
 dragon_upcall_callback(int msg_type, struct lsp* lsp)
 {
-  struct adtlistnode *prev, *curr, *next;
+  struct adtlistnode *prev, *curr;
   struct dragon_callback *data;
   int status = AST_UNKNOWN;
   FILE *fp;
@@ -102,7 +102,6 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
     return;
 
   prev = NULL;
-  next = NULL;
   for (curr = pending_list.head;
 	curr;
 	prev = curr, curr = curr->next) {
@@ -119,7 +118,12 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
   else 
     prev->next = curr->next;
   pending_list.count--;
-
+  if (!pending_list.count)
+    pending_list.tail = NULL;
+  else if (curr == pending_list.tail)
+    pending_list.tail = prev;
+  free(curr);
+    
   free_application_cfg(glob_app_cfg);
   glob_app_cfg = NULL;
 
