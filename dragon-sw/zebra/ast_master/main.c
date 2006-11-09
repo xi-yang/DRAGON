@@ -2012,6 +2012,7 @@ master_check_app_list()
   if (adtlist_getcount(&app_list) == 0)
     return;
 
+  zlog_info("master_check_app_list()");
   for (curnode = app_list.head;
 	curnode;
 	curnode = curnode->next) {
@@ -2246,7 +2247,11 @@ static void
 master_check_command()
 {
   struct adtlistnode *curnode;
-  struct resource *res;
+  struct resource *res, *link;
+  char *command, *s, *d, *token;
+  static char newcomm[300];
+  struct endpoint *ep;
+  int stop, change, nospace;
 
   zlog_info("master_check_command() ...");
 
@@ -2256,6 +2261,7 @@ master_check_command()
   if (!glob_app_cfg->node_list)
     return;
 
+  memset(newcomm, 0, 300);
   for (curnode = glob_app_cfg->node_list->head;
 	curnode;
 	curnode = curnode->next) {
@@ -2266,7 +2272,64 @@ master_check_command()
 
     /* look for any "$<link_name>.src" "$<link_name>.dest"
      */
-    
-   
+    command = res->res.n.command;
+    change = stop = nospace = 0;
+    token = strtok(command, " ");
+    if (!token) {
+      nospace = 1;
+      token = command;
+    } else 
+      nospace = 0;
+    do {
+      if (token[0] != '$' || (d = strstr(token, ".")) == NULL) {
+	sprintf(newcomm+strlen(newcomm), "%s ", token);
+	continue;
+      }
+      *d = '\0';
+
+      /* now, d+1 should be either "src" or "dest" and 
+       * token+1 should be the name of a link in this AST
+       */
+      if (strcmp(d+1, "src") != 0 && strcmp(d+1, "dest") != 0) 
+	stop = 1;
+      else if ((link = search_link_by_name(glob_app_cfg, token+1)) == NULL) 
+	stop = 1;
+      else { 
+	if (strcmp(d+1, "src") == 0) 
+	  ep = link->res.l.src; 
+	else if (strcmp(d+1, "dest") == 0) 
+	  ep = link->res.l.dest;
+
+	if (!ep) 
+	  stop = 1; 
+	else if (!ep->ifp) 
+	  stop = 1; 
+	else if (!ep->ifp->assign_ip) 
+	  stop = 1; 
+      }
+	
+      if (stop) {
+	*d = '.';
+	sprintf(newcomm+strlen(newcomm), "%s ", token);
+	continue;
+      }
+
+      s = strstr(ep->ifp->assign_ip, "/30");
+      if (s)
+	*s = '\0';
+      change++;
+      sprintf(newcomm+strlen(newcomm), "%s ", ep->ifp->assign_ip);
+      if (s)
+        *s = '/';
+      *d = '.';
+      stop = 0;
+    } while (!nospace && (token = strtok(NULL, " ")) != NULL);
+
+    newcomm[strlen(newcomm)-1] = '\0';
+    if (change) 
+      zlog_info("new command for %s: %s", res->name, newcomm);
+    free(res->res.n.command);
+    res->res.n.command = strdup(newcomm);
+    memset(newcomm, 0, 300);
   } 
 }
