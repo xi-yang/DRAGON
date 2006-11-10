@@ -1489,7 +1489,7 @@ master_accept(struct thread *thread)
   int servSock, clntSock, fd;
   struct sockaddr_in clntAddr;
   unsigned int clntLen;
-  int recvMsgSize;
+  int recvMsgSize, total = 0;
   char buffer[4001];
   FILE* fp;
   struct stat sb;
@@ -1510,6 +1510,7 @@ master_accept(struct thread *thread)
   fp = fopen(AST_XML_RECV, "w");
   recv_alarm = 1;
   alarm(TIMEOUT_SECS);
+  total = 0;
   while ((recvMsgSize = recv(clntSock, buffer, 4000, 0)) > 0) {
     if (errno == EINTR) {
       /* alarm went off
@@ -1518,6 +1519,7 @@ master_accept(struct thread *thread)
       fprintf(fp, "%s", buffer);
       break;
     }
+    total+=recvMsgSize;
     buffer[recvMsgSize]='\0';
     fprintf(fp, "%s", buffer);
     alarm(TIMEOUT_SECS);
@@ -1532,6 +1534,13 @@ master_accept(struct thread *thread)
   fflush(fp);
   fclose(fp);
 
+  if (total == 0) {
+    zlog_info("master_accept(): empty document recv");
+    close(clntSock);
+    thread_add_read(master, master_accept, NULL, servSock);
+  }
+
+    
   glob_app_cfg = NULL;
 
   zlog_info("Handling client %s ...", inet_ntoa(clntAddr.sin_addr));
