@@ -133,7 +133,8 @@ LIBRARIES = $(noinst_LIBRARIES)
 
 libastb_a_AR = $(AR) cru
 libastb_a_LIBADD =
-am_libastb_a_OBJECTS = adt.$(OBJEXT) ast_master.$(OBJEXT) local_id_cfg.$(OBJEXT)
+am_libastb_a_OBJECTS = adt.$(OBJEXT) ast_master.$(OBJEXT) \
+	local_id_cfg.$(OBJEXT)
 libastb_a_OBJECTS = $(am_libastb_a_OBJECTS)
 bin_PROGRAMS = ast_master$(EXEEXT) node_agent$(EXEEXT) astb$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
@@ -143,7 +144,7 @@ am_ast_master_OBJECTS = adt.$(OBJEXT) ast_master.$(OBJEXT) \
 ast_master_OBJECTS = $(am_ast_master_OBJECTS)
 ast_master_DEPENDENCIES = ../lib/libzebra.a
 ast_master_LDFLAGS =
-am_astb_OBJECTS = astb.$(OBJEXT) 
+am_astb_OBJECTS = astb.$(OBJEXT)
 astb_OBJECTS = $(am_astb_OBJECTS)
 astb_DEPENDENCIES = libastb.a ../lib/libzebra.a
 astb_LDFLAGS =
@@ -158,8 +159,8 @@ LDFLAGS = @LDFLAGS@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/adt.Po ./$(DEPDIR)/ast_master.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/astb.Po ./$(DEPDIR)/main.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/node_agent.Po
+@AMDEP_TRUE@	./$(DEPDIR)/astb.Po ./$(DEPDIR)/local_id_cfg.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/main.Po ./$(DEPDIR)/node_agent.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -233,6 +234,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/adt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ast_master.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/astb.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/local_id_cfg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/node_agent.Po@am__quote@
 

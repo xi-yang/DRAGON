@@ -137,7 +137,7 @@ struct string_value_conversion conv_gpid =
 
 struct string_value_conversion conv_bandwidth = 
 {
-	40,
+	41,
 	{{ "ds0", 	LSP_BW_DS0, 			3}, 
 	{ "ds1", 		LSP_BW_DS1, 			3}, 
 	{ "e1", 		LSP_BW_E1, 				2}, 
@@ -177,7 +177,8 @@ struct string_value_conversion conv_bandwidth =
 	{ "oc192",	LSP_BW_OC192,			4}, 
 	{ "oc768",	LSP_BW_OC768,			4}, 
 	{ "gige_f", 	LSP_BW_Gig_E_OverFiber,	5},
-	{ "hdtv", 		LSP_BW_HDTV,			4}} 
+	{ "hdtv", 		LSP_BW_HDTV,			4}, 
+	{ "zero", 		0,			4}} 
 };
 
 struct string_value_conversion conv_rsvp_event = 
@@ -1151,7 +1152,7 @@ ALIAS (dragon_set_lsp_vtag_default,
 
 DEFUN (dragon_set_lsp_sw,
        dragon_set_lsp_sw_cmd,
-       "set bandwidth (gige|gige_f|hdtv|oc48|10g|eth100M|eth200M|eth300M|eth400M|eth500M|eth600M|eth700M|eth800M|eth900M|2gige|3gige|4gige|5gige|6gige|7gige|8gige|9gige) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
+       "set bandwidth (gige|gige_f|hdtv|oc48|10g|eth100M|eth200M|eth300M|eth400M|eth500M|eth600M|eth700M|eth800M|eth900M|2gige|3gige|4gige|5gige|6gige|7gige|8gige|9gige|zero) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
        "Set LSP parameters\n"
        "Bandwidth\n"
        "1000.00 Mbps\n"
@@ -1191,11 +1192,13 @@ DEFUN (dragon_set_lsp_sw,
 
   
   bandwidth = string_to_value(&conv_bandwidth, argv[0]);
+/*
   if (bandwidth==0)
   {
       vty_out (vty, "unsupported bandwidth: %s %s", argv[0], VTY_NEWLINE);
       return CMD_WARNING;
   }
+*/
   swcap = string_to_value(&conv_swcap, argv[1]);
   if (swcap==0)
   {
