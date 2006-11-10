@@ -1538,6 +1538,7 @@ master_accept(struct thread *thread)
     zlog_info("master_accept(): empty document recv");
     close(clntSock);
     thread_add_read(master, master_accept, NULL, servSock);
+    return 1;
   }
 
     
