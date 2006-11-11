@@ -1,0 +1,14 @@
+<service_template>
+	<service type="EtherBasic">
+		<swcap>l2sc</swcap>
+		<encoding>ethernet</encoding>
+		<bandwidth>eth100M</bandwidth>
+		<gpid>ethernet</gpid>
+	</service>
+	<service type="EtherUltra">
+		<swcap>l2sc</swcap>
+		<encoding>ethernet</encoding>
+		<bandwidth>gige</bandwidth>
+		<gpid>ethernet</gpid>
+	</service>
+</service_template>
