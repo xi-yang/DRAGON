@@ -784,13 +784,20 @@ xml_module_reset()
 }
   
 static void
-generate_lsp_name(char* name)
+generate_lsp_name(char* bandwidth, char* name)
 {
-  int i;
+  int i, s;
 
-  strcpy(name, "AST-");
+  if (strcasecmp(bandwidth, "gige") == 0 ||
+	strcasecmp(bandwidth, "gige_f") == 0) {
+    strcpy(name, "GIGE-");
+    s = 5;
+  } else {
+    strcpy(name, "AST-");
+    s = 4;
+  }
   
-  for (i = 4; i < LSP_NAME_LEN; i++) {
+  for (i = s; i < LSP_NAME_LEN; i++) {
     name[i] = (random() % 10) + 48;
   }
   
@@ -806,7 +813,7 @@ dragon_build_lsp(struct resource *link)
 
   bzero(link->res.l.lsp_name, LSP_NAME_LEN+1);
   link->status = AST_FAILURE;
-  generate_lsp_name(lsp_name);
+  generate_lsp_name(link->res.l.bandwidth, lsp_name);
   
   /* mirror what dragon_edit_lsp_cmd does
    */
