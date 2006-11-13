@@ -33,6 +33,7 @@
 #define NODE_AGENT_RECV "/usr/local/noded_recv.xml"
 #define BROKER_FILE	"/usr/local/etc/broker.xml"
 #define MAXPENDING      12
+#define NODED_TEMP_FILE "/tmp/noded_temp_file"
 
 #ifdef RESOURCE_BROKER
 struct node_tank {
@@ -57,6 +58,8 @@ extern char *status_type_details[];
 extern char * node_stype_name[];
 struct thread_master *master; /* master = dmaster.master */
 static int agent_accept(struct thread *);
+static void noded_kill_process();
+
 static char* interface;
 static char* loopback;
 
@@ -144,6 +147,7 @@ static int child_app_complete;
 static int node_child;
 static struct sigaction node_app_complete_action;
 static pid_t node_child_pid;
+static pid_t old_pid;
 
 static int 
 node_assign_ip(struct resource* node)
@@ -188,7 +192,10 @@ node_assign_ip(struct resource* node)
 
 	sprintf(iface_name, "vconfig add %s %d", interface, ifp->vtag);
 	zlog_info("system(): %s", iface_name);
+	old_pid = node_child_pid;
+        node_child_pid = 0;
 	system(iface_name);
+	node_child_pid = old_pid;
       } else
 #endif
 	ifp->iface = strdup(interface);
@@ -251,7 +258,10 @@ node_assign_ip(struct resource* node)
     sprintf(command+strlen(command), " netmask %s", inet_ntoa(netmask));
 
     zlog_info("system(): %s", command);
+    old_pid = node_child_pid;
+    node_child_pid = 0;
     system(command); 
+    node_child_pid = old_pid;
 #if 0
     bzero(&if_info, sizeof(struct ifreq));
     strcpy(if_info.ifr_name, ifp->iface);
@@ -324,7 +334,10 @@ node_delete_ip(struct resource* node)
     ifp = (struct if_ip*)curnode->data;
     if (ifp->iface && ifp->vtag) {
       sprintf(iface_name, "vconfig rem %s", ifp->iface);
+      old_pid = node_child_pid;
+      node_child_pid = 0;
       system(iface_name);
+      node_child_pid = old_pid;
     }
   }
 #endif
@@ -396,7 +409,9 @@ static void
 handle_app_complete_child()
 {
   /* call waitpid to collect the child; otherwise, it will become a zombie */
-  waitpid(node_child_pid, NULL, 0); 
+  if (node_child_pid != 0)
+    waitpid(node_child_pid, NULL, 0);
+  node_child_pid = 0;
   zlog_info("handle_app_complete_child: APP_COMPLETE child has exited");
 }
 
@@ -509,6 +524,7 @@ node_process_release_req()
   struct resource *node;
   char path[105];
   struct application_cfg *working_app_cfg;
+  int kill_p = 0;
 
   glob_app_cfg->action = RELEASE_RESP;
   zlog_info("Processing ast_id: %s, RELEASE_REQ", glob_app_cfg->ast_id);
@@ -533,6 +549,9 @@ node_process_release_req()
     return 0;
   }
 
+  if (glob_app_cfg->action == APP_COMPLETE || glob_app_cfg->action == AST_COMPLETE) 
+    kill_p = 1;
+
   if (strcmp(glob_app_cfg->ast_ip, working_app_cfg->ast_ip) != 0) 
     zlog_warn("NEW ast_ip: %s in this RELEASE_REQ, OLD ast_ip: %s",
 		working_app_cfg->ast_ip, glob_app_cfg->ast_ip);
@@ -545,6 +564,9 @@ node_process_release_req()
     print_xml_response(NODE_AGENT_RET, NODE_AGENT);
     return 0;
   }
+
+  if (kill_p)
+    noded_kill_process();
 
   glob_app_cfg->action = RELEASE_RESP;
   glob_app_cfg->ast_ip = working_app_cfg->ast_ip;
@@ -1178,4 +1200,39 @@ broker_process()
 
   print_broker_response(NODE_AGENT_RET);
   return 1;
+}
+
+static void
+noded_kill_process()
+{
+  struct resource * res;
+  char command[500], line[10];
+  FILE *fp;
+  char* ret;
+
+  if (!glob_app_cfg)
+    return;
+  else if (!glob_app_cfg->node_list)
+    return;
+
+  unlink(NODED_TEMP_FILE);
+  /* Kill the command that the forked node_agent runs
+   */
+  res = (struct resource*)glob_app_cfg->node_list->head->data;
+  sprintf(command, "ps -ax | grep \"%s\" | cut -c1-5 > %s", res->res.n.command, NODED_TEMP_FILE );
+  old_pid = node_child_pid;
+  node_child_pid = 0;
+  system(command);
+  node_child_pid = old_pid;
+
+  fp = fopen(NODED_TEMP_FILE, "r");
+  if (!fp)
+    return;
+
+  while ((ret = fgets(line, 10, fp)) != NULL) {
+    ret[strlen(ret)-1] = '\0';
+    kill(atoi(ret), SIGTERM);
+  }
+
+  fclose(fp);
 }
