@@ -1718,9 +1718,6 @@ topo_xml_parser(char* filename, int agent)
 	   link_ptr = link_ptr->next) { 
 	key = xmlNodeListGetString(doc, link_ptr->xmlChildrenNode, 1); 
 
-	if (!key)
-	  continue;
-
 	if (strcasecmp(link_ptr->name, "src") == 0 ||
 	    strcasecmp(link_ptr->name, "dest") == 0) { 
      
