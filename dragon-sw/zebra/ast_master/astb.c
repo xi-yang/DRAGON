@@ -24,6 +24,7 @@ struct option astb_opts[] =
   { "ast_id", 	required_argument, NULL, 'g'},
   { "type",		required_argument, NULL, 't'},
   { "signal",		required_argument, NULL, 's'},
+  { "release", 		required_argument, NULL, 'r'},
   { 0 }
 };
 
@@ -41,6 +42,7 @@ NSF AST Builder.\n\n\
 -t, --resource_type	Resourse type, node or link\n\
 -s, --signal	   	Signal sent to ast_master\n\
 -v, --validate	   	File to be validated\n\
+-r, --release		ast_id to be released\n\
 \n", progname);
     printf("To send file to ast_master, \"astb -f <file>\"\n");
     printf("To validate file to send to ast_master, \"astb -v <file>\"\n");
@@ -166,7 +168,8 @@ send_app_complete(int type)
   exit(1);
 }
 
-int main(int argc, char* argv[])
+int 
+main(int argc, char* argv[])
 {
   int sock;
   struct sockaddr_in astServ;
@@ -178,13 +181,14 @@ int main(int argc, char* argv[])
   FILE *ret_file;
   int type = 0; /* 1 - node, 2 - link */
   int signal_mode = 0, validate = 0;
+  char *ast_id = NULL;
 
   progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
 
   while (1) {
     int opt;
   
-    opt = getopt_long (argc, argv, "f:t:g:s:v:h", astb_opts, 0);
+    opt = getopt_long (argc, argv, "r:f:t:g:s:v:h", astb_opts, 0);
     if (argc != 3 && argc != 7) {
       usage(progname, 0);
       exit(EXIT_FAILURE);
@@ -228,6 +232,10 @@ int main(int argc, char* argv[])
       case 'g':
 	glob_app_cfg->ast_id = optarg;
 	break;
+      case 'r':
+	ast_id = optarg;
+	input_file = strdup(ASTB_SEND_FILE);
+	break;
       default:
 	usage (progname, 0);
     }
@@ -241,6 +249,14 @@ int main(int argc, char* argv[])
       usage (progname, 0);
 
     send_app_complete(type);
+  }
+
+  if (ast_id) {
+    FILE *fp = fopen(input_file, "w+");
+    fprintf(fp, "<topology ast_id=\"%s\" action=\"RELEASE_REQ\"></topology>",
+		ast_id);
+    fflush(fp);
+    fclose(fp);
   }
 
   if (!input_file) 
