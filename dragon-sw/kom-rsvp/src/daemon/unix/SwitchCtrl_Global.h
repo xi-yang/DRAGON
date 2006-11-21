@@ -128,8 +128,10 @@ public:
 	String& getSessionName() {return sessionName;}
 	NetAddress& getSwitchInetAddr() {return switchInetAddr;}
 	bool isValidSession() const {return active;}
+	bool hasVLSRouteConflictonSwitch(VLSR_Route& vlsr);
 
-	bool resetVtagBitMask(uint8* bitmask); //reset bits corresponding to existing vlans
+	//VTAG mutral-exclusion feature --> Review
+	//bool resetVtagBitMask(uint8* bitmask); //reset bits corresponding to existing vlans
 
 	virtual bool connectSwitch();
 	virtual void disconnectSwitch();
@@ -259,14 +261,15 @@ public:
         static void processLocalIdMessage(uint8 msgType, LocalId& lid);
         static void getPortsByLocalId(SimpleList<uint32>&portList, uint32 port);
 
-	/*RSVPD.cof*/
+	/*RSVPD.conf*/
 	void addSlotEntry(slot_entry &se) { slotList.push_back(se); }
 	uint16 getSlotType(uint16 slot_num);
 	void addExclEntry(sw_layer_excl_name_entry &ee) { exclList.push_back(ee); }
 	uint32 getExclEntry(String session_name);
 
 	/*services for narbClient*/
-	bool getVtagBitMask(uint8* bitmask);
+	//VTAG mutral-exclusion feature --> Review
+	//bool getVtagBitMask(uint8* bitmask);
 
 protected:
 	SwitchCtrl_Global();

@@ -67,6 +67,8 @@ bool SwitchCtrl_Session::getSwitchVendorInfo()
     return ret;
 }
 
+//VTAG mutral-exclusion feature --> Review
+/*
 bool SwitchCtrl_Session::resetVtagBitMask(uint8* bitmask)
 {
     bool ret = false;
@@ -79,7 +81,8 @@ bool SwitchCtrl_Session::resetVtagBitMask(uint8* bitmask)
 
     return ret;
 }
-    
+*/
+
 bool SwitchCtrl_Session::createVLAN(uint32 &vlanID)
 {
     vlanPortMapList::ConstIterator iter;
@@ -299,6 +302,7 @@ bool SwitchCtrl_Session::verifyVLAN(uint32 vlanID)
 }
 
 
+
 bool SwitchCtrl_Session::VLANHasTaggedPort(uint32 vlanID)
 {
     struct snmp_pdu *pdu;
@@ -473,6 +477,42 @@ bool SwitchCtrl_Session::adjustVLANbyLocalId(uint32 vlanID, uint32 lclID, uint32
     }
 
     return true;
+}
+
+
+bool SwitchCtrl_Session::hasVLSRouteConflictonSwitch(VLSR_Route& vlsr)
+{
+    PortList portList;
+    PortList::Iterator itPort;
+    vlanPortMapList::Iterator iter = vlanPortMapListAll.begin();
+    for (; iter != vlanPortMapListAll.end(); ++iter) {
+        if ((*iter).vid == vlsr.vlanTag && !hook_isVLANEmpty(*iter))
+            return true;
+    }
+
+    if (vlsr.vlanTag == 0 || vlsr.vlanTag > MAX_VLAN)
+        return false;
+
+    uint32 vlan;
+    if (vlsr.inPort >> 16 != LOCAL_ID_TYPE_TAGGED_GROUP && vlsr.inPort >> 16 != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
+        SwitchCtrl_Global::getPortsByLocalId(portList, vlsr.inPort);
+        for (itPort = portList.begin(); itPort != portList.end(); ++itPort) {
+            vlan = getVLANbyUntaggedPort(*itPort);
+            if (vlan > 0 && vlsr.vlanTag <= MAX_VLAN && vlan != vlsr.vlanTag)
+                return true;
+        }
+    }
+    
+    if (vlsr.outPort >> 16 != LOCAL_ID_TYPE_TAGGED_GROUP && vlsr.outPort >> 16 != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
+        SwitchCtrl_Global::getPortsByLocalId(portList, vlsr.outPort);
+        for (itPort = portList.begin(); itPort != portList.end(); ++itPort) {
+            vlan = getVLANbyUntaggedPort(*itPort);
+            if (vlan > 0 && vlsr.vlanTag <= MAX_VLAN && vlan != vlsr.vlanTag)
+                return true;
+        }
+    }
+	
+    return false;
 }
 
 /////////////////////////////////////////////////////////////
@@ -823,7 +863,7 @@ void SwitchCtrl_Global::getPortsByLocalId(SimpleList<uint32>&portList, uint32 po
     uint16 value =(uint16)(port & 0xffff) ;
     if (!hasLocalId(type, value))
         return;
-    if (type == LOCAL_ID_TYPE_PORT)
+    if (type == LOCAL_ID_TYPE_PORT || type == LOCAL_ID_TYPE_NONE)
     {
         portList.push_back(value);
         return;
@@ -890,7 +930,8 @@ uint32 SwitchCtrl_Global::getExclEntry(String session_name)
     return excl_options;
 }
 
-
+//VTAG mutral-exclusion feature --> Review
+/*
 bool SwitchCtrl_Global::getVtagBitMask(uint8* bitmask)
 {
     assert(bitmask!=NULL);
@@ -901,6 +942,7 @@ bool SwitchCtrl_Global::getVtagBitMask(uint8* bitmask)
     }
     return ret;
 }
+*/
 
 //End of file : SwitchCtrl_Global.cc
 

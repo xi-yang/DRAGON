@@ -206,7 +206,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				break;
 		}
 		
-                //E2E tagged VLAN processing (inbound) @@@@ DRAGON
+                //E2E tagged VLAN processing (inbound) @DRAGON
 		if (explicitRoute->getAbstractNodeList().size() > 1 
 		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 		&& explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
@@ -251,11 +251,11 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				if (!outLif)  break;
 			}
 		} else if (explicitRoute->getAbstractNodeList().size() == 1 && explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::UNumIfID) {
-	             //egress localID processing @@@@ DRAGON
+	             //egress localID processing @ DRAGON
                     outUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
               }
 		explicitRoute->popFront();
-		// E2E tagged VLAN processing (outbound) @@@@ DRAGON
+		// E2E tagged VLAN processing (outbound) @ DRAGON
 		if (explicitRoute->getAbstractNodeList().size() > 1 
 		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 		&& explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
@@ -330,7 +330,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	{	
 		SwitchCtrlSessionList::Iterator sessionIter;
 		bool foundSession;
-		SwitchCtrl_Session* ssNew;
+		SwitchCtrl_Session* ssNew = NULL;
 		VLSR_Route vlsr;
 		memset(&vlsr, 0, sizeof(VLSR_Route));
 		RSVP_Global::rsvp->getRoutingService().getVLSRRoutebyOSPF(inRtId, outRtId, inUnumIfID, outUnumIfID, vlsr);
@@ -370,6 +370,14 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				LOG(2)( Log::MPLS, "VLSR: Cannot read from Ethernet switch : ", vlsr.switchID);
 				return false;
 			}
+
+			//Check for VLAN/ports availability based on vlsr (vlsr_route)...
+			if (!ssNew)
+				ssNew = (*sessionIter);
+			//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
+			if (!ssNew->hasVLSRouteConflictonSwitch(vlsr))
+				memset(&vlsr, 0, sizeof(VLSR_Route)); 
+
 			vLSRoute.push_back(vlsr);                    
 		}
 	}
@@ -516,6 +524,16 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					   : const_cast<EXPLICIT_ROUTE_Object*>(msg.getEXPLICIT_ROUTE_Object());
 		if (explicitRoute && (!processERO(msg, hop, explicitRoute, fromLocalAPI, dataInRsvpHop, dataOutRsvpHop, vLSRoute)))
 		{
+			if (vLSRoute.size() > 0) {
+				VLSR_Route& vlsr = vLSRoute.back();
+				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID == 0) {
+					RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
+					vLSRoute.pop_back();
+					LOG(1)(Log::MPLS, "MPLS: VLSR route conflicts with existing VLAN or edge port PVID");
+					return;
+				}				
+			}
+
 			LOG(2)(Log::MPLS, "MPLS: Internal error in the ERO :", explicitRoute->getAbstractNodeList().front().getAddress());
 			explicitRoute = NULL;
 		}
@@ -607,6 +625,16 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 		if (explicitRoute && (!processERO(msg, hop, explicitRoute, fromLocalAPI, dataInRsvpHop, dataOutRsvpHop, vLSRoute)))
 		{
+			
+			if (vLSRoute.size() > 0) {
+				VLSR_Route& vlsr = vLSRoute.back();
+				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID == 0) {
+					RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
+					vLSRoute.pop_back();
+					LOG(1)(Log::MPLS, "MPLS: VLSR route conflicts with existing VLAN or edge port PVID");
+					return;
+				}				
+			}
 			LOG(2)(Log::MPLS, "MPLS: Internal error in the ERO :", explicitRoute->getAbstractNodeList().front().getAddress());
 			explicitRoute = NULL;
 		}
