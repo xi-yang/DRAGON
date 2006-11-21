@@ -334,11 +334,17 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
         msgbody2->type = htons(TLV_TYPE_NARB_VTAG_MASK);
         msgbody2->length = htons(sizeof(struct msg_app2narb_vtag_mask) - 4);
         memset(msgbody2->bitmask, 0xff, MAX_VLAN_NUM/8);
+        //@@@@
+        //Get congifured vtags mask ...
+
+        //VTAG mutral-exclusion feature --> Review
+        /*
         if (RSVP_Global::switchController->getVtagBitMask(msgbody2->bitmask)) // Always adding (reset) vlan bits without removals (set)
         {
             bodylen += sizeof(struct msg_app2narb_vtag_mask);
             msgheader->options = htonl(ntohl(msgheader->options) | (0x80<<16)); //OPT_VTAG_MASK
         }
+        */
         NARB_APIClient::resetCurrentVtags(msgbody2->bitmask);
     }
 
@@ -755,39 +761,36 @@ void NARB_APIClient::setExtraOption(String opt_str)
 	        LOG(2)(Log::Routing, "NARB_APIClient::setExtraOption: Unrecognized option name: ", opt_str);
 	}
 }
-	
-void NARB_APIClient::addVtagInUse(const Message& msg)
+
+//VTAG mutral-exclusion feature --> Review
+void NARB_APIClient::addVtagInUse(int vtag)
 {
-    DRAGON_UNI_Object* uni = const_cast<Message&>(msg).getDRAGON_UNI_Object();
-    if (uni)
+
+    if (!vtagsInUse)
+         vtagsInUse = new UsedVtagList;
+
+    UsedVtagList::Iterator it = vtagsInUse->begin();
+    for (; it != vtagsInUse->end(); ++it)
     {
-        uint32 vtag = uni->getVlanTag().vtag;
-        if (vtag == 0 || vtag == ANY_VTAG)
+        if (*it == vtag)
             return;
-        UsedVtagList::Iterator it = vtagsInUse->begin();
-        for (; it != vtagsInUse->end(); ++it)
-        {
-            if (*it == vtag)
-                return;
-        }
-        vtagsInUse->push_back(uni->getVlanTag().vtag);
     }
+    vtagsInUse->push_back(vtag);
 }
 
-void NARB_APIClient::removeVtagInUse(const Message& msg)
+
+void NARB_APIClient::removeVtagInUse(int vtag)
 {
-    DRAGON_UNI_Object* uni = const_cast<Message&>(msg).getDRAGON_UNI_Object();
-    if (uni)
+    if (!vtagsInUse)
+        return;
+
+    UsedVtagList::Iterator it = vtagsInUse->begin();
+    for (; it != vtagsInUse->end(); ++it)
     {
-        uint32 vtag = uni->getVlanTag().vtag;
-        UsedVtagList::Iterator it = vtagsInUse->begin();
-        for (; it != vtagsInUse->end(); ++it)
+        if (*it == vtag)
         {
-            if (*it == vtag)
-            {
-                vtagsInUse->erase(it);
-                return;
-            }
+            vtagsInUse->erase(it);
+            return;
         }
     }
 }
@@ -800,6 +803,7 @@ void NARB_APIClient::resetCurrentVtags(uint8* bitmask)
         RESET_VLAN(bitmask, *it);
     }
 }
+//
 
 bool NARB_APIClient::handleRsvpMessage(const Message& msg)
 {
@@ -809,7 +813,8 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
     switch (currentState) {
     case (uint32)Message::Path:
 
-        addVtagInUse(msg);
+        //VTAG mutral-exclusion feature --> Review
+        //addVtagInUse(msg);
 
         switch(lastState) {
         case 0:
@@ -825,7 +830,8 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
 
     case (uint32)Message::Resv:
 
-        addVtagInUse(msg);
+        //VTAG mutral-exclusion feature --> Review
+        //addVtagInUse(msg);
 
         switch(lastState) {
         case (uint32)Message::Path:
@@ -839,7 +845,9 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
         break;
 
     case (uint32)Message::PathResv:
-        addVtagInUse(msg);
+
+        //VTAG mutral-exclusion feature --> Review
+        //addVtagInUse(msg);
 
         switch(lastState) {
         case 0:
@@ -853,7 +861,8 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
     case (uint32)Message::PathTear:
     case (uint32)Message::ResvTear:
 
-        removeVtagInUse(msg);
+        //VTAG mutral-exclusion feature --> Review
+        //removeVtagInUse(msg);
 
         switch(lastState) {
         case (uint32)Message::Resv:
@@ -872,8 +881,9 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
     case Message::PathErr:
     case Message::ResvErr:
 
-        //clear all VtagsInUse 
-        vtagsInUse->clear();
+	//VTAG mutral-exclusion feature --> Review
+       //clear all VtagsInUse 
+       //vtagsInUse->clear();
 
         switch(lastState) {
         case (uint32)Message::Path: 

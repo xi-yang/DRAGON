@@ -135,8 +135,7 @@ public:
 	NARB_APIClient(const char *host, int port) { _host = host; _port = port; Init(); }
 	~NARB_APIClient();
 	void Init() {
-	  fd = -1; lastState = 0;
-	  if (!vtagsInUse) vtagsInUse = new UsedVtagList;
+		fd = -1; lastState = 0;
 	}
 	int doConnect(char *host, int port);
 	int doConnect();
@@ -158,9 +157,10 @@ public:
 	static uint32 extra_options;
 	static void setExtraOption(String opt_str);
 
+       //VTAG mutral-exclusion feature --> Review
 	static UsedVtagList* vtagsInUse;
-	static void addVtagInUse(const Message& msg);
-	static void removeVtagInUse(const Message& msg);
+	static void addVtagInUse(int vtag);
+	static void removeVtagInUse(int vtag);
 	static void resetCurrentVtags(uint8* bitmask);
 
 	static void setHostPort(const char *host, int port);

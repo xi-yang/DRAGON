@@ -142,6 +142,7 @@ void Hop::processSrefresh( const Message& msg ) {
 					static NetAddress gw(0);
 					const LogicalInterface* lif;
 
+					//@@@@ DRAGON UNI related hacks
 					DRAGON_UNI_Object* uni = (DRAGON_UNI_Object*)(*stateIter).sb.psb->getDRAGON_UNI_Object();
 #if defined(WITH_API)
 					if ((*stateIter).sb.psb->getSession().getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()) {
@@ -176,8 +177,9 @@ void Hop::processSrefresh( const Message& msg ) {
 							lif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( (*stateIter).sb.psb->getSession().getDestAddress(), gw );
 						else 
 							lif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getEgressCtrlChannel().name));
-
 					}
+					//@@@@ DRAGON UNI related hacks END
+
 #if defined(WITH_API)
 					if ( !lif
 						&& ( RSVP_Global::rsvp->findInterfaceByAddress( (*stateIter).sb.psb->getSession().getDestAddress() )
@@ -199,10 +201,6 @@ void Hop::processSrefresh( const Message& msg ) {
 					foundRSB = true;
 					LOG(4)( Log::Reduct, "found RSB for ID", *msgIter, "from", *this );
 					(*stateIter).sb.rsb->restartTimeout();
-
-                                   //@@@@ To keep the telnet session alive; once every 5 minutes.
-                                   //if (CLI_SESSION_TYPE != CLI_NONE && (switch_refresh_counter++)%10 == 0)
-                                   //    RSVP_Global::switchController->refreshSessions();
 				}
 			} // found matching ID
 		}

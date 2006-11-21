@@ -223,6 +223,25 @@ void ConfigFileReader::addLayerExclusion(String sw_layer, String excl_name)
         RSVP_Global::switchController->addExclEntry(ee);
 }
 
+void ConfigFileReader::setAllowedVtag(int vtag)
+{
+    NARB_APIClient::addVtagInUse(vtag);
+}
+
+void ConfigFileReader::setAllowedVtagRange(String vtag_range)
+{
+	char* cstr_range = vtag_range.chars();
+	int vtag, max;
+	if (sscanf(cstr_range, "%d:%d", &vtag, &max) == 2) {
+		for (max += vtag; vtag < max; vtag++) {
+			setAllowedVtag(vtag);
+		}
+	}
+	else {
+		ERROR(2)( Log::Error, "ERROR: wrong vlan tag range definition: ", vtag_range);
+	}
+}
+
 void ConfigFileReader::cleanup() {
 	interfaceName = "";
 	localId = "";
