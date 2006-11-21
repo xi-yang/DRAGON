@@ -53,9 +53,8 @@ static String yy_swLayer;
 %token INTERFACE API_C ROUTE REFRESH ENCAP VIRT DISABLE RAPID LOSS
 %token TC_C NONE CBQ_C HFSC_C RATE PEER
 %token TIMER SESSION_HASH API_HASH ID_HASH_SEND ID_HASH_RECV LIST_ALLOC SB_ALLOC
-%token EXPLICIT_ROUTE MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH LOCAL_ID UPSTREAM_LABEL
-%token NARB SLOTS EXCLUDE NARB_EXTRA_OPTIONS
-
+%token EXPLICIT_ROUTE MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH LOCAL_ID UPSTREAM_LABEL INTEGER_RANGE
+%token NARB SLOTS EXCLUDE NARB_EXTRA_OPTIONS NARB_VTAGS_ALLOWED
 %%
 
 program:
@@ -85,6 +84,7 @@ command:
 	| SLOTS if_type slot			{ }
 	| EXCLUDE sw_layer excl_name		{ }
 	| NARB_EXTRA_OPTIONS option_name	{ }
+	| NARB_VTAGS_ALLOWED vtags		{ }
 	;
 
 /*** Addtions by Xi Yang ***/
@@ -112,6 +112,12 @@ excl_name:
 option_name:
 	option_name STRING { cfr->setNarbExtraOption(yy_string); }
 	| STRING	 { cfr->setNarbExtraOption(yy_string); }
+	;
+vtags:
+	vtags INTEGER { cfr->setAllowedVtag(yy_int); }
+	| vtags INTEGER_RANGE { cfr->setAllowedVtagRange(yy_string); }
+	| INTEGER { cfr->setAllowedVtag(yy_int); }
+	| INTEGER_RANGE { cfr->setAllowedVtagRange(yy_string); }
 	;
 /*** END: Addtions by Xi Yang ***/
 

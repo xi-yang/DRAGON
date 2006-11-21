@@ -73,6 +73,7 @@ ieee32float_p yy_float;
 "narb"			return NARB;
 "exclude"		return EXCLUDE;
 "narb_extra_options"	return NARB_EXTRA_OPTIONS;
+"narb_vtags_allowed"	return NARB_VTAGS_ALLOWED;
 
 [0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?	{ yy_string = yytext; return IP_ADDRESS; }
 
@@ -80,6 +81,8 @@ ieee32float_p yy_float;
 [0-9]+  		{ yy_int = convertStringToInt(yytext); return INTEGER; }
 
 [PpGgTt]\/[0-9]+	{ yy_string = yytext; return LOCAL_ID; }
+
+[0-9]+\:[0-9]+		{ yy_string = yytext; return INTEGER_RANGE; }
 
 upstream\-label\=[0-9]+	{ yy_string = yytext; return UPSTREAM_LABEL; }
 

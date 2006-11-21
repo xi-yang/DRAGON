@@ -230,7 +230,7 @@ void ConfigFileReader::setAllowedVtag(int vtag)
 
 void ConfigFileReader::setAllowedVtagRange(String vtag_range)
 {
-	char* cstr_range = vtag_range.chars();
+	const char* cstr_range = vtag_range.chars();
 	int vtag, max;
 	if (sscanf(cstr_range, "%d:%d", &vtag, &max) == 2) {
 		for (max += vtag; vtag < max; vtag++) {
