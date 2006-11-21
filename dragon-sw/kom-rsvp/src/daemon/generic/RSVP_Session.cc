@@ -375,8 +375,11 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			if (!ssNew)
 				ssNew = (*sessionIter);
 			//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
-			if (!ssNew->hasVLSRouteConflictonSwitch(vlsr))
+			if (ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
+				vLSRoute.push_back(vlsr);                    
+				return false;
+			}
 
 			vLSRoute.push_back(vlsr);                    
 		}
@@ -526,7 +529,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		{
 			if (vLSRoute.size() > 0) {
 				VLSR_Route& vlsr = vLSRoute.back();
-				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID == 0) {
+				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID.rawAddress() == 0) {
 					RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
 					vLSRoute.pop_back();
 					LOG(1)(Log::MPLS, "MPLS: VLSR route conflicts with existing VLAN or edge port PVID");
@@ -628,7 +631,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			
 			if (vLSRoute.size() > 0) {
 				VLSR_Route& vlsr = vLSRoute.back();
-				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID == 0) {
+				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID.rawAddress() == 0) {
 					RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
 					vLSRoute.pop_back();
 					LOG(1)(Log::MPLS, "MPLS: VLSR route conflicts with existing VLAN or edge port PVID");

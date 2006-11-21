@@ -128,7 +128,7 @@ public:
 	String& getSessionName() {return sessionName;}
 	NetAddress& getSwitchInetAddr() {return switchInetAddr;}
 	bool isValidSession() const {return active;}
-	bool hasVLSRouteConflictonSwitch(VLSR_Route& vlsr);
+	bool hasVLSRouteConflictonSwitch(struct _vlsr_route_& vlsr);
 
 	//VTAG mutral-exclusion feature --> Review
 	//bool resetVtagBitMask(uint8* bitmask); //reset bits corresponding to existing vlans

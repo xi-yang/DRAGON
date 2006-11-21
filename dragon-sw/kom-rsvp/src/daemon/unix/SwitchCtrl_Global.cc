@@ -14,6 +14,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "CLI_Session.h"
 #include "SwitchCtrl_Session_Force10E600.h"
 #include "SwitchCtrl_Session_RaptorER1010.h"
+#include "RSVP_RoutingService.h"
 
 #include <signal.h>
 
