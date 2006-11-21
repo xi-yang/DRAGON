@@ -346,7 +346,11 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
         }
         */
 
-        NARB_APIClient::setAllowedVtags(msgbody2->bitmask);
+        if (NARB_APIClient::vtagsAllowedforUse != NULL)
+        {
+            msgheader->options = htonl(ntohl(msgheader->options) | (0x80<<16)); //OPT_VTAG_MASK
+            NARB_APIClient::setAllowedVtags(msgbody2->bitmask);
+        }
     }
 
     if (ero)
