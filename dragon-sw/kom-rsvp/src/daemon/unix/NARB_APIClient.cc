@@ -333,7 +333,7 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
     {
         msgbody2->type = htons(TLV_TYPE_NARB_VTAG_MASK);
         msgbody2->length = htons(sizeof(struct msg_app2narb_vtag_mask) - 4);
-        memset(msgbody2->bitmask, 0xff, MAX_VLAN_NUM/8);
+        memset(msgbody2->bitmask, 0, MAX_VLAN_NUM/8);
         //@@@@
         //Get congifured vtags mask ...
 
