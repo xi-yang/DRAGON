@@ -18,7 +18,7 @@ To be incorporated into KOM-RSVP-TE package
 String NARB_APIClient::_host = "";
 int NARB_APIClient::_port = 0;
 uint32 NARB_APIClient::extra_options = 0;
-UsedVtagList* NARB_APIClient::vtagsInUse;
+UsedVtagList* NARB_APIClient::vtagsAllowedforUse;
 
 
 int readn (int fd, char *ptr, int nbytes)
@@ -345,7 +345,8 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
             msgheader->options = htonl(ntohl(msgheader->options) | (0x80<<16)); //OPT_VTAG_MASK
         }
         */
-        NARB_APIClient::resetCurrentVtags(msgbody2->bitmask);
+
+        NARB_APIClient::setAllowedVtags(msgbody2->bitmask);
     }
 
     if (ero)
@@ -766,41 +767,44 @@ void NARB_APIClient::setExtraOption(String opt_str)
 void NARB_APIClient::addVtagInUse(int vtag)
 {
 
-    if (!vtagsInUse)
-         vtagsInUse = new UsedVtagList;
+    if (!vtagsAllowedforUse)
+         vtagsAllowedforUse = new UsedVtagList;
 
-    UsedVtagList::Iterator it = vtagsInUse->begin();
-    for (; it != vtagsInUse->end(); ++it)
+    UsedVtagList::Iterator it = vtagsAllowedforUse->begin();
+    for (; it != vtagsAllowedforUse->end(); ++it)
     {
         if (*it == vtag)
             return;
     }
-    vtagsInUse->push_back(vtag);
+    vtagsAllowedforUse->push_back(vtag);
 }
 
 
 void NARB_APIClient::removeVtagInUse(int vtag)
 {
-    if (!vtagsInUse)
+    if (!vtagsAllowedforUse)
         return;
 
-    UsedVtagList::Iterator it = vtagsInUse->begin();
-    for (; it != vtagsInUse->end(); ++it)
+    UsedVtagList::Iterator it = vtagsAllowedforUse->begin();
+    for (; it != vtagsAllowedforUse->end(); ++it)
     {
         if (*it == vtag)
         {
-            vtagsInUse->erase(it);
+            vtagsAllowedforUse->erase(it);
             return;
         }
     }
 }
 
-void NARB_APIClient::resetCurrentVtags(uint8* bitmask)
+void NARB_APIClient::setAllowedVtags(uint8* bitmask)
 {
-    UsedVtagList::Iterator it = vtagsInUse->begin();
-    for (; it != vtagsInUse->end(); ++it)
+    if (!vtagsAllowedforUse)
+	return;
+
+    UsedVtagList::Iterator it = vtagsAllowedforUse->begin();
+    for (; it != vtagsAllowedforUse->end(); ++it)
     {
-        RESET_VLAN(bitmask, *it);
+        SET_VLAN(bitmask, *it);
     }
 }
 //
@@ -883,7 +887,7 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
 
 	//VTAG mutral-exclusion feature --> Review
        //clear all VtagsInUse 
-       //vtagsInUse->clear();
+       //vtagsAllowedforUse->clear();
 
         switch(lastState) {
         case (uint32)Message::Path: 

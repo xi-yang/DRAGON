@@ -158,10 +158,10 @@ public:
 	static void setExtraOption(String opt_str);
 
        //VTAG mutral-exclusion feature --> Review
-	static UsedVtagList* vtagsInUse;
+	static UsedVtagList* vtagsAllowedforUse;
 	static void addVtagInUse(int vtag);
 	static void removeVtagInUse(int vtag);
-	static void resetCurrentVtags(uint8* bitmask);
+	static void setAllowedVtags(uint8* bitmask);
 
 	static void setHostPort(const char *host, int port);
 	static bool operational();
