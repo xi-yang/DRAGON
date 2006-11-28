@@ -372,10 +372,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			}
 
 			//Check for VLAN/ports availability based on vlsr (vlsr_route)...
-			if (!ssNew)
-				ssNew = (*sessionIter);
 			//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
-			if (ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
+			if (ssNew && ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vLSRoute.push_back(vlsr);                    
 				return false;
