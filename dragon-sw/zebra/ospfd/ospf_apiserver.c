@@ -313,7 +313,7 @@ ospf_apiserver_new (int fd_sync, int fd_async)
   new->t_sync_write = NULL;
   new->t_async_write = NULL;
 
-  new->filter->typemask = Power2[OSPF_OPAQUE_AREA_LSA];	/* filter all LSAs other than opaque-LSA (10)*/
+  new->filter->typemask = htons(Power2[OSPF_OPAQUE_AREA_LSA]);	/* filter all LSAs other than opaque-LSA (10)*/
   new->filter->origin = ANY_ORIGIN;
   new->filter->num_areas = 0;
 
