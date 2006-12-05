@@ -2145,7 +2145,7 @@ master_lookup_assign_ip()
     if (dest->ifp->assign_ip && src->ifp->assign_ip)
       continue;
 
-    system("mysql -h leia.east.isi.edu -udragon -pflame -e \"use dragon; select * from data_plane_blocks where in_use='no' limit 1;\" > /tmp/mysql.result");
+    system("mysql -hlocalhost -udragon -pflame -e \"use dragon; select * from data_plane_blocks where in_use='no' limit 1;\" > /tmp/mysql.result");
 
     /* error if 
      * SQL_RESULT doesn't start with slash_30
@@ -2200,7 +2200,7 @@ master_lookup_assign_ip()
     sprintf(addr, "%s/30", inet_ntoa(ip));
     dest->ifp->assign_ip = strdup(addr);
 
-    sprintf(addr, "mysql -h leia.east.isi.edu -udragon -pflame  -e \"use dragon; update data_plane_blocks set in_use='yes' where slash_30='%s';\"", token);
+    sprintf(addr, "mysql -hlocalhost -udragon -pflame  -e \"use dragon; update data_plane_blocks set in_use='yes' where slash_30='%s';\"", token);
 
     system(addr);
     fclose(fp);
@@ -2246,7 +2246,7 @@ master_cleanup_assign_ip()
 
     /* don't care if this addr is from SQL database or not, just remove it
      */
-    sprintf(addr, "mysql -h leia.east.isi.edu -udragon -pflame  -e \"use dragon; update data_plane_blocks set in_use='no' where slash_30='%s';\"", inet_ntoa(slash_30));
+    sprintf(addr, "mysql -hlocalhost -udragon -pflame  -e \"use dragon; update data_plane_blocks set in_use='no' where slash_30='%s';\"", inet_ntoa(slash_30));
     system(addr);
   }
   
