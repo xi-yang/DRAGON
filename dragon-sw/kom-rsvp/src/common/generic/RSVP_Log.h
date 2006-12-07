@@ -66,6 +66,7 @@ public:
 		MPLS =				(1 << 24),           // 0x02000000
 		NS =					(1 << 25),           // 0x04000000
 		Short =				(1 << 26),           // 0x08000000
+		Append =			(1 << 31);	//0x80000000
 		All = 				~0                   // 0xffffffff
 	};
 private:

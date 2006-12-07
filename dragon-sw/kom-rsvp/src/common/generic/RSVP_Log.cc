@@ -76,6 +76,7 @@ Log::debugOption Log::options[] = {
 	{ "mpls", Log::MPLS, 2 },
 	{ "ns2", Log::NS, 1 },
 	{ "short", Log::Short, 2 },
+	{ "append", Log::Append, 2 },
 	{ "all", Log::All, 2 }
 };
 
@@ -148,7 +149,7 @@ void Log::internalInit( const String& filename, bool logErrorsInStdLog ) {
 	if ( filename.empty() ) {
 		stdlog = &cout;
 	} else {
-		stdlog = new ofstream( filename.chars() );
+		stdlog = new ofstream( filename.chars(), ios_base::out |((options & Log::Append) ? ios_base::app : ios_base::trunc) );
 		if ( !stdlog || stdlog->bad() ) {
 			cerr << "couldn't use stdlog " << filename << endl;
 			cerr << "logging to stdout..." << endl;
