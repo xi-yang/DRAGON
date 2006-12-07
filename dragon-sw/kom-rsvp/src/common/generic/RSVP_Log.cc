@@ -149,7 +149,7 @@ void Log::internalInit( const String& filename, bool logErrorsInStdLog ) {
 	if ( filename.empty() ) {
 		stdlog = &cout;
 	} else {
-		stdlog = new ofstream( filename.chars(), ios_base::out |((options & Log::Append) ? ios_base::app : ios_base::trunc) );
+		stdlog = new ofstream( filename.chars(), ios::out |((loglevel & Log::Append) ? ios::app : ios::trunc) );
 		if ( !stdlog || stdlog->bad() ) {
 			cerr << "couldn't use stdlog " << filename << endl;
 			cerr << "logging to stdout..." << endl;
