@@ -1269,7 +1269,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
   }
   else if (top->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
   {
-  	  if (vty != NULL && (top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION)
+  	  if (vty != NULL && (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC)
 	  	&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) == MAX_VLAN_NUM/8+3)) 
 	  {
 	    vty_out (vty, "  -- L2SC specific information-- : Available VLAN tag set:");
@@ -1365,8 +1365,8 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   }
   else if (strncmp(swcap, "l2sc", 4) == 0)
   {
-	  if (vty != NULL && (*(u_int16_t*)v == ntohs(MAX_VLAN_NUM/8+3) && *(v+2) ==IFSWCAP_SPECIFIC_VLAN_VERSION)) {
-	    v += 3;
+	  if (vty != NULL && (*(u_int16_t*)v == ntohs(MAX_VLAN_NUM/8+3) && (*(u_int32_t*)(v+2) & IFSWCAP_SPECIFIC_VLAN_BASIC))) {
+	    v += 4;
 	    vty_out (vty, "  -- L2SC specific information-- : Available VLAN tag set:");
 	    for (i = 0; i < MAX_VLAN_NUM; i++)
 		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
@@ -2433,8 +2433,8 @@ DEFUN (ospf_te_interface_ifsw_cap4,
       return CMD_WARNING;
     }
 
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(MAX_VLAN_NUM/8 + 3);
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version = IFSWCAP_SPECIFIC_VLAN_VERSION;
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(sizeof(struct link_ifswcap_specific_vlan));
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version = htons(IFSWCAP_SPECIFIC_VLAN_BASIC | IFSWCAP_SPECIFIC_VLAN_ALLOC);
 
   if (argc == 1) 
     {
@@ -2531,17 +2531,28 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 							  data_ip_address, switch_ip_address, oi->vlsr_if.switch_port);
                   }
 		  else
-			  vty_out(vty, "Data interface is numbered, IP = %s,  ",  inet_ntoa (oi->vlsr_if.data_ip));
+			vty_out(vty, "Data interface is numbered, IP = %s,  ",  inet_ntoa (oi->vlsr_if.data_ip));
+			if (oi->te_para.link_ifswcap.link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC) {
+			  	if (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) {
+				  vty_out(vty, "Assigned VLAN tags:");
+				  for (i = 1; i <= MAX_VLAN_NUM; i++)
+				  	if (HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, i))
+					    vty_out(vty, " %d", i);
+				  vty_out(vty, "%s", VTY_NEWLINE);
+			  	}
+				else
+				  vty_out(vty, "No VLAN tag assigned %s", VTY_NEWLINE);
 
-		  if (oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version == IFSWCAP_SPECIFIC_VLAN_VERSION) {
-			  vty_out(vty, "Assigned VLAN tags:");
-			  for (i = 1; i <= MAX_VLAN_NUM; i++)
-			  	if (HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, i))
-				    vty_out(vty, " %d", i);
-			  vty_out(vty, "%s", VTY_NEWLINE);
-		  	}
-		  else
-			  vty_out(vty, "No VLAN tag assigned %s", VTY_NEWLINE);
+			  	if (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC) {
+				  vty_out(vty, "VLAN tags in use (allocated):");
+				  for (i = 1; i <= MAX_VLAN_NUM; i++)
+				  	if (HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc, i))
+					    vty_out(vty, " %d", i);
+				  vty_out(vty, "%s", VTY_NEWLINE);
+			  	}
+				else
+				  vty_out(vty, "No VLAN tag in use (allocated) %s", VTY_NEWLINE);
+			}
 	}
 	  else
 	  {
