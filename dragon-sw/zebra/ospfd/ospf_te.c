@@ -1371,6 +1371,12 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	    for (i = 0; i < MAX_VLAN_NUM; i++)
 		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
 	    vty_out (vty, "%s", VTY_NEWLINE);
+
+	    v += MAX_VLAN_NUM/8;
+	    vty_out (vty, "  -- L2SC specific information-- : Allocated VLAN tag set:");
+	    for (i = 0; i < MAX_VLAN_NUM; i++)
+		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
+	    vty_out (vty, "%s", VTY_NEWLINE);
 	  }
   }
 
