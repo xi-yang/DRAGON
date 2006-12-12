@@ -1270,7 +1270,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
   else if (top->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
   {
   	  if (vty != NULL && (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC)
-	  	&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) = sizeof(struct link_ifswcap_specific_vlan))) 
+	  	&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) == sizeof(struct link_ifswcap_specific_vlan))) 
 	  {
 	    vty_out (vty, "  -- L2SC specific information-- : Available VLAN tag set:");
 	    for (i = 0; i < MAX_VLAN_NUM; i++)
