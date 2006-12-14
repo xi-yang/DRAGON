@@ -372,7 +372,7 @@ static void deleteNarbApiMessage(narb_api_msg_header* apiMsg)
    delete []((char*)apiMsg);
 }
 
-EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLocalId, uint32& destLocalId, uint32 excl_options, , void* ss_ptr)
+EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLocalId, uint32& destLocalId, uint32 excl_options, void* ss_ptr)
 {
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
@@ -544,7 +544,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void
         ero = getExplicitRoute(srcAddr, destAddr, msg.getLABEL_REQUEST_Object().getSwitchingType(), 
                 msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                 msg.getSENDER_TSPEC_Object().get_r(),
-                vtag, srcLocalId, destLocalId, excl_options);
+                vtag, srcLocalId, destLocalId, excl_options, ss_ptr);
 	 if (ero) {
             if (uni && uni->getVlanTag().vtag == ANY_VTAG)
             {
@@ -717,7 +717,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
 
     //send release msg
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_DELETE
-            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, entry->session_ptr, ero);
+            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, (uint32)entry->session_ptr, ero);
 
     //send api message
     int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
