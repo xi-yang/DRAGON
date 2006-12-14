@@ -301,7 +301,7 @@ static int buildNarbEroTlv (char *buf, EXPLICIT_ROUTE_Object* ero)
     return length;
 }
 
-static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 srcLocalId, uint32 destLocalId, EXPLICIT_ROUTE_Object* ero = NULL)
+static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 seqnum, EXPLICIT_ROUTE_Object* ero = NULL)
 {
     char buf[1024];
     memset(buf, 0, sizeof(buf));
@@ -311,7 +311,7 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
 
     //construct NARB API message
     msgheader->type = htons(NARB_MSG_LSPQ);
-    msgheader->seqnum = htonl (dest+(destLocalId&0xffff));
+    msgheader->seqnum = htonl (seqnum);
     msgheader->ucid = htonl(src);
     msgheader->tag = htonl(vtag);
     msgheader->options = htonl(0x07<<16); //OPT_STRICT | OPT_PREFERED |OPT_MRN
@@ -372,7 +372,7 @@ static void deleteNarbApiMessage(narb_api_msg_header* apiMsg)
    delete []((char*)apiMsg);
 }
 
-EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLocalId, uint32& destLocalId, uint32 excl_options)
+EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLocalId, uint32& destLocalId, uint32 excl_options, , void* ss_ptr)
 {
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
@@ -381,7 +381,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     ipv4_prefix_subobj* subobj_ipv4;
     unum_if_subobj* subobj_unum;
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CREATE
-            , src, dest, swtype, encoding, bandwidth, vtag, srcLocalId, destLocalId);
+            , src, dest, swtype, encoding, bandwidth, vtag, (uint32)ss_ptr);
     msgheader->options = htonl(ntohl(msgheader->options) | excl_options | NARB_APIClient::extra_options); //@@@@
 
     if (!active())
@@ -681,7 +681,7 @@ void NARB_APIClient::confirmReservation(const Message& msg)
 
     //send confirmation msg
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CONFIRM
-            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, 0, tunnel_id, ero);
+            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, (uint32)entry->session_ptr, ero);
 
     //send api message
     int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
@@ -717,7 +717,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
 
     //send release msg
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_DELETE
-            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, 0, tunnel_id, ero);
+            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, entry->session_ptr, ero);
 
     //send api message
     int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));

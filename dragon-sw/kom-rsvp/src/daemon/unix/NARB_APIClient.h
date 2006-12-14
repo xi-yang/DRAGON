@@ -141,7 +141,7 @@ public:
 	int doConnect();
 	void disconnect();
 	bool active();
-	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLclId, uint32& destLclId, uint32 excl_options = 0);
+	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLclId, uint32& destLclId, uint32 excl_options = 0, void* ss_ptr = NULL);
 	EXPLICIT_ROUTE_Object* getExplicitRoute(const Message& msg, void* ss_ptr = NULL);
 	//EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 src_addr, uint32 dest_addr, uint32 lsp_id, uint32 tunnel_id, uint32 ext_tunnel_id);
 	EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id, void* session_ptr = NULL);
