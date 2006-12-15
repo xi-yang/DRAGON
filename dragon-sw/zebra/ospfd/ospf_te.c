@@ -1371,7 +1371,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   }
   else if (strncmp(swcap, "l2sc", 4) == 0)
   {
-	  if (vty != NULL && (*(u_int16_t*)v == ntohs(sizeof(struct link_ifswcap_specific_vlan)) && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_VLAN_BASIC))) {
+	  if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_VLAN_BASIC)) {
 	    if (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z) {
 		uncompress(z_buffer, (uLongf*)&n, v+4, ZBUFSIZE);
 		v = z_buffer;
