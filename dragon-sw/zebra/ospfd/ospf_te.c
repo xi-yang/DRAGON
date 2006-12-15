@@ -28,6 +28,8 @@
 #error "Wrong configure option"
 #endif /* HAVE_OPAQUE_LSA */
 
+#include <zlib.h>
+
 #include "linklist.h"
 #include "prefix.h"
 #include "if.h"
