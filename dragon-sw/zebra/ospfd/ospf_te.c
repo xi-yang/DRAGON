@@ -167,6 +167,10 @@ struct str_val_conv str_val_conv_wavelength =
 /* Flag to indicate whether the parameters are changed ever since last configuration */ 
 struct ospf_te_config_para te_config;
 
+/*------------------------------------------------------------------------*/
+#define ZBUFSIZE 1024
+u_char z_buffer[ZBUFSIZE+1];
+
 /*------------------------------------------------------------------------*
  * Followings are initialize/terminate functions for OSPF-TE handling.
  *------------------------------------------------------------------------*/
@@ -1366,7 +1370,13 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   else if (strncmp(swcap, "l2sc", 4) == 0)
   {
 	  if (vty != NULL && (*(u_int16_t*)v == ntohs(sizeof(struct link_ifswcap_specific_vlan)) && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_VLAN_BASIC))) {
-	    v += 4;
+	    if (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z) {
+		uncompress(z_buffer, (uLongf*)&n, v+4, ZBUFSIZE);
+		v = z_buffer;
+    	    }
+	    else 
+		v += 4;
+
 	    vty_out (vty, "  -- L2SC specific information--%s    --> Available VLAN tag set:", VTY_NEWLINE);
 	    for (i = 0; i < MAX_VLAN_NUM; i++)
 		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
