@@ -215,6 +215,7 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 				memcpy(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_buffer, z_len);
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version |= htons(IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z);
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(z_len + 4);
+				lp->header.length = htons(ntohs(lp->header.length) - sizeof(struct link_ifswcap_specific_vlan) + z_len + 4);
 			}
 			stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, z_len+4);
 		}
@@ -437,6 +438,7 @@ ospf_te_lsa_parse (struct ospf_lsa *new)
 					if (!new->tepara_ptr->p_link_ifswcap_list)
 						new->tepara_ptr->p_link_ifswcap_list = list_new();
 					/*uncompress VLAN tag bitmask*/
+					/*
 					swcap = (struct te_link_subtlv_link_ifswcap *)sub_tlvh;
 					if ((ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) &&
 					  (ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC) &&
@@ -447,6 +449,7 @@ ospf_te_lsa_parse (struct ospf_lsa *new)
 						memcpy(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_buffer, z_len);
 						swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version &= ~(htons(IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z));
 					}
+					*/
 					listnode_add(new->tepara_ptr->p_link_ifswcap_list, sub_tlvh);
 					break;
 				case TE_LINK_SUBTLV_LINK_SRLG:
