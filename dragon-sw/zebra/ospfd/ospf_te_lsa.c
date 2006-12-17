@@ -442,7 +442,7 @@ ospf_te_lsa_parse (struct ospf_lsa *new)
 					  (ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC) &&
 					  (ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z)) {
 					  	z_len = sizeof(struct link_ifswcap_specific_vlan) - 4;
-						uncompress(z_buffer, &z_len, swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, htohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) - 4);
+						uncompress(z_buffer, &z_len, swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) - 4);
 						assert(z_len == sizeof(struct link_ifswcap_specific_vlan) - 4);
 						memcpy(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_buffer, z_len);
 						swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version &= ~(htons(IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z));
