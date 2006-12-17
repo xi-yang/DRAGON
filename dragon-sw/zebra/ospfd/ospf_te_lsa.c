@@ -22,6 +22,8 @@
 
 #include <zebra.h>
 
+#include <zlib.h> /*for compress*/
+
 #include "linklist.h"
 #include "prefix.h"
 #include "if.h"
@@ -180,7 +182,8 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 {
 	int i;
 	struct te_tlv_header *tlvh = &lp->header; 
-	
+	uLongf z_len;
+
 	if (ntohs(tlvh->type) != 0) 
 	{ 
 		build_tlv_header(s, tlvh); 
@@ -202,8 +205,18 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 		}
 		else if (lp->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
 		{
-			/*if (ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC)*/
-			stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, sizeof(struct link_ifswcap_specific_vlan));
+			/*compress VLAN tag bitmask*/
+		  	z_len = sizeof(struct link_ifswcap_specific_vlan) - 4;
+			if ((ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
+			  && (ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC)
+			  && !(ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z)) {
+				compress(z_buffer, &z_len, lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_len);
+				assert(z_len <= sizeof(struct link_ifswcap_specific_vlan) - 4);
+				memcpy(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_buffer, z_len);
+				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version |= htons(IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z);
+				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(z_len + 4);
+			}
+			stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, z_len+4);
 		}
 	} 
 	return; 
@@ -333,7 +346,9 @@ ospf_te_lsa_parse (struct ospf_lsa *new)
 	struct te_tlv_header *tlvh = NULL;
 	struct te_tlv_header *sub_tlvh = NULL;
 	u_int32_t read_len;
-	
+	struct te_link_subtlv_link_ifswcap* swcap;
+	uLongf z_len;
+
 	if (new == NULL)
 		goto out;
 	
@@ -421,6 +436,17 @@ ospf_te_lsa_parse (struct ospf_lsa *new)
 				case TE_LINK_SUBTLV_LINK_IFSWCAP:
 					if (!new->tepara_ptr->p_link_ifswcap_list)
 						new->tepara_ptr->p_link_ifswcap_list = list_new();
+					/*uncompress VLAN tag bitmask*/
+					swcap = (struct te_link_subtlv_link_ifswcap *)sub_tlvh;
+					if ((ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) &&
+					  (ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC) &&
+					  (ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z)) {
+					  	z_len = sizeof(struct link_ifswcap_specific_vlan) - 4;
+						uncompress(z_buffer, &z_len, swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, htohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) - 4);
+						assert(z_len == sizeof(struct link_ifswcap_specific_vlan) - 4);
+						memcpy(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_buffer, z_len);
+						swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version &= ~(htons(IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z));
+					}
 					listnode_add(new->tepara_ptr->p_link_ifswcap_list, sub_tlvh);
 					break;
 				case TE_LINK_SUBTLV_LINK_SRLG:

@@ -359,6 +359,10 @@ extern const char* frequency2wavelength(u_int32_t frequency);
 #define IS_VALID_LCL_IFID(X)	 \
 	(X >= VLSR_INITIAL_LCL_IFID && X <= VLSR_MAX_LCL_IFID)
 
+
+#define ZBUFSIZE 1024
+extern u_char z_buffer[ZBUFSIZE+1];
+
 /* te_area_lsa_para is present for each ospf interface 
   * te_area_lsa_para is present for each type-10 ospf_te_lsa
 */

@@ -170,7 +170,6 @@ struct str_val_conv str_val_conv_wavelength =
 struct ospf_te_config_para te_config;
 
 /*------------------------------------------------------------------------*/
-#define ZBUFSIZE 1024
 u_char z_buffer[ZBUFSIZE+1];
 
 /*------------------------------------------------------------------------*
@@ -1373,7 +1372,8 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   {
 	  if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_VLAN_BASIC)) {
 	    if (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z) {
-		uncompress(z_buffer, (uLongf*)&n, v+4, ZBUFSIZE);
+		n = ZBUFSIZE;
+		uncompress(z_buffer, (uLongf*)&n, v+4, ntohs(*(u_int16_t*)(v)));
 		v = z_buffer;
     	    }
 	    else 
