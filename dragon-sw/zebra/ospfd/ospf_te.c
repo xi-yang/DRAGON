@@ -1216,7 +1216,8 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
   const char* enc  = "Unknown";
   int i;
   float fval;
-  
+  uLongf z_len;
+
   top = (struct te_link_subtlv_link_ifswcap *) tlvh;
   swcap = val2str(&str_val_conv_swcap, top->link_ifswcap_data.switching_cap);
   enc = val2str(&str_val_conv_encoding, top->link_ifswcap_data.encoding);
@@ -1274,15 +1275,27 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
   }
   else if (top->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
   {
-  	  if (vty != NULL && (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC)
-	  	&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) == sizeof(struct link_ifswcap_specific_vlan))) 
-	  {
-	    vty_out (vty, "  -- L2SC specific information-- : Available VLAN tag set:");
+	if (vty != NULL && (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC)
+		&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) == sizeof(struct link_ifswcap_specific_vlan))) 
+	{
+	    u_char* v = top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask;
+	    if (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version)  & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z) {
+		  z_len = ZBUFSIZE;
+		  uncompress(z_buffer, z_len, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) - 4);
+		  v = z_buffer;
+    	    }
+
+	    vty_out (vty, "  -- L2SC specific information--%s    --> Available VLAN tag set:", VTY_NEWLINE);
 	    for (i = 0; i < MAX_VLAN_NUM; i++)
-		if (HAS_VLAN(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, i))
-		vty_out (vty, " %d", i);
+		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
 	    vty_out (vty, "%s", VTY_NEWLINE);
-	  }
+
+	    v += MAX_VLAN_NUM/8;
+	    vty_out (vty, "    --> Allocated VLAN tag set:");
+	    for (i = 0; i < MAX_VLAN_NUM; i++)
+		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
+	    vty_out (vty, "%s", VTY_NEWLINE);
+	}
   }
   return TLV_SIZE (tlvh);
 }

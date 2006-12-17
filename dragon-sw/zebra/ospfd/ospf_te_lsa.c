@@ -208,18 +208,24 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 		else if (lp->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
 		{
 			/*compress VLAN tag bitmask*/
-		  	z_len = sizeof(struct link_ifswcap_specific_vlan) - 4;
 			if ((ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
 			  && (ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC)
 			  && !(ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z)) {
+			  	z_len = sizeof(struct link_ifswcap_specific_vlan) - 4;
 				compress(z_buffer, &z_len, lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_len);
 				assert(z_len <= sizeof(struct link_ifswcap_specific_vlan) - 4);
+				/* Do not copy back to the oi->te_para, where the vlan tag mask remain uncompressed !!!
 				memcpy(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_buffer, z_len);
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version |= htons(IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z);
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(z_len + 4);
-				tlvh_s->length = htons(ntohs(lp->header.length) - sizeof(struct link_ifswcap_specific_vlan) + z_len + 4);  //Adjust the TLV length
+				*/
+				tlvh_s->length = htons(ntohs(lp->header.length) - sizeof(struct link_ifswcap_specific_vlan) + z_len + 4);  /*adjust the TLV length*/
+				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan,  4); /* ifswcap_specific_vlan.length & version.*/
+				stream_put(s, z_buffer, z_len); // ifswcap_specific_vlan.length & version.
 			}
-			stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, z_len+4);
+			else { /* uncompressed */
+				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, sizeof(struct link_ifswcap_specific_vlan));
+			}
 		}
 	} 
 	return; 
