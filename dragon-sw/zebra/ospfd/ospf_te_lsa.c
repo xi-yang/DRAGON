@@ -186,7 +186,9 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 
 	if (ntohs(tlvh->type) != 0) 
 	{ 
+		struct te_tlv_header *tlvh_s = (struct te_tlv_header *)(s->data + s->putp); // pointing to the TLV header in stream
 		build_tlv_header(s, tlvh); 
+
 		stream_put(s, &lp->link_ifswcap_data.switching_cap, sizeof(u_char));
 		stream_put(s, &lp->link_ifswcap_data.encoding, sizeof(u_char));
 		/* Make sure reserved field is always zero */
@@ -215,7 +217,7 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 				memcpy(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_buffer, z_len);
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version |= htons(IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z);
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(z_len + 4);
-				lp->header.length = htons(ntohs(lp->header.length) - sizeof(struct link_ifswcap_specific_vlan) + z_len + 4);
+				tlvh_s->length = htons(ntohs(lp->header.length) - sizeof(struct link_ifswcap_specific_vlan) + z_len + 4);  //Adjust the TLV length
 			}
 			stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, z_len+4);
 		}
