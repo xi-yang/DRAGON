@@ -1741,7 +1741,22 @@ ospf_apiserver_handle_update_request (struct ospf_apiserver *apiserv,
   int rc;
 
   ospf = ospf_lookup();
-  area = oi->area;
+  area = ospf_area_lookup_by_area_id (ospf, umsg->area_id);
+  if (!area)
+  {
+    zlog_warn ("apiserver_update: unknown area %s",
+    	     inet_ntoa (umsg->area_id));
+    rc = OSPF_API_NOSUCHAREA;
+    goto out;
+  }
+  oi = ospf_apiserver_if_lookup_by_addr (umsg->ifaddr);
+  if (!oi)
+  {
+    zlog_warn ("apiserver_update: unknown interface %s",
+    	     inet_ntoa (umsg->ifaddr));
+    rc = OSPF_API_NOSUCHINTERFACE;
+    goto out;
+  }
   data = &umsg->data;
   if (data->type != OSPF_OPAQUE_AREA_LSA)
     {
