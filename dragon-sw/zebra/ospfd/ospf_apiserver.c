@@ -1736,8 +1736,10 @@ ospf_apiserver_handle_update_request (struct ospf_apiserver *apiserv,
   struct ospf *ospf = NULL;
   struct ospf_area *area = NULL;
   struct ospf_interface *oi = NULL;
+  struct ospf_lsdb *lsdb = NULL;
   struct lsa_header *data;
   struct ospf_lsa *lsa;
+  struct ospf_lsa *old;
   struct msg_update_request *umsg = (struct msg_update_request *) STREAM_DATA (msg->s);
 
   ospf = ospf_lookup();
@@ -1749,6 +1751,8 @@ ospf_apiserver_handle_update_request (struct ospf_apiserver *apiserv,
     rc = OSPF_API_NOSUCHAREA;
     goto out;
   }
+  lsdb = area->lsdb;
+
   oi = ospf_apiserver_if_lookup_by_addr (umsg->ifaddr);
   if (!oi)
   {
@@ -1757,6 +1761,7 @@ ospf_apiserver_handle_update_request (struct ospf_apiserver *apiserv,
     rc = OSPF_API_NOSUCHINTERFACE;
     goto out;
   }
+
   data = &umsg->data;
   if (data->type != OSPF_OPAQUE_AREA_LSA)
     {
@@ -1768,13 +1773,36 @@ ospf_apiserver_handle_update_request (struct ospf_apiserver *apiserv,
     }
 
   lsa = ospf_apiserver_opaque_lsa_new (area, oi, data);
-  if (!lsa)
+  old = ospf_lsdb_lookup(lsdb, lsa);
+  if (!old)
     {
-      rc = OSPF_API_NOMEMORY;
+      rc = OSPF_API_NOSUCHLSA;
       goto out;
     }
- 
-  ospf_apiserver_lsa_refresher(lsa);
+
+  lsa->data->ls_seqnum = lsa_seqnum_increment (old);
+  ospf_ls_retransmit_delete_nbr_area (area, old);
+
+  /* Install this LSA into TE-LSDB. */
+  /* Given "lsa" will be freed in the next function. */
+  if (ospf_lsa_install (area->ospf, oi, lsa ) == NULL)
+    {
+      zlog_warn ("ospf_te_area_lsa_link_refresh: ospf_lsa_install() ?");
+      ospf_lsa_free (lsa);
+      goto out;
+    }
+
+  /* Flood updated LSA through area. */
+  ospf_flood_through_area (area, NULL/*nbr*/, lsa);
+
+  /* Debug logging. */
+  if (IS_DEBUG_OSPF (lsa, LSA_GENERATE))
+    {
+      zlog_info ("LSA[Type%d:%d]: Refresh Opaque-LSA/MPLS-TE",
+		 lsa->data->type, GET_OPAQUE_ID(ntohl(lsa->data->id.s_addr)));
+      ospf_lsa_header_dump (lsa->data);
+    }
+
   rc = OSPF_API_OK;
 
 out:
