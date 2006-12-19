@@ -197,7 +197,7 @@ struct msg_originate_request
   struct lsa_header data;
 };
 
-typedef (struct msg_update_request) (struct msg_originate_request);
+#define msg_update_request msg_originate_request
 
 struct msg_delete_request
 {

@@ -1733,6 +1733,7 @@ ospf_apiserver_handle_update_request (struct ospf_apiserver *apiserv,
 					 struct msg *msg)
 {
   struct msg_update_request *umsg;
+  struct ospf *ospf = NULL;
   struct ospf_area *area = NULL;
   struct ospf_interface *oi = NULL;
   struct lsa_header *data;
@@ -1751,14 +1752,15 @@ ospf_apiserver_handle_update_request (struct ospf_apiserver *apiserv,
       goto out;
     }
 
-  new = ospf_apiserver_opaque_lsa_new (area, oi, data);
-  if (!new)
+  lsa = ospf_apiserver_opaque_lsa_new (area, oi, data);
+  if (!lsa)
     {
       rc = OSPF_API_NOMEMORY;
       goto out;
     }
  
-  return ospf_apiserver_lsa_refresher(lsa);
+  ospf_apiserver_lsa_refresher(lsa);
+  rc = OSPF_API_OK;
 
 out:
   rc = ospf_apiserver_send_reply (apiserv, ntohl (msg->hdr.msgseq), rc);
