@@ -116,6 +116,8 @@ void msg_fifo_free (struct msg_fifo *fifo);
 #define MSG_ORIGINATE_REQUEST     5
 #define MSG_DELETE_REQUEST        6
 #define MSG_NEIGHBOR_COUNT_REQUEST     7
+#define MSG_UPDATE_REQUEST     8
+
 
 /* Messages from OSPF daemon. */
 #define MSG_REPLY                10
@@ -194,6 +196,8 @@ struct msg_originate_request
   /* LSA header and LSA-specific part */
   struct lsa_header data;
 };
+
+typedef (struct msg_update_request) (struct msg_originate_request);
 
 struct msg_delete_request
 {
@@ -325,6 +329,10 @@ struct msg *new_msg_register_event (u_int32_t seqnum,
 struct msg *new_msg_sync_lsdb (u_int32_t seqnum,
 			       struct lsa_filter_type *filter);
 struct msg *new_msg_originate_request (u_int32_t seqnum,
+				       struct in_addr ifaddr,
+				       struct in_addr area_id,
+				       struct lsa_header *data);
+struct msg *new_msg_update_request (u_int32_t seqnum,
 				       struct in_addr ifaddr,
 				       struct in_addr area_id,
 				       struct lsa_header *data);

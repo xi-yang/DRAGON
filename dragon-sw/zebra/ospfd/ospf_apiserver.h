@@ -144,6 +144,8 @@ int ospf_apiserver_handle_delete_request (struct ospf_apiserver *apiserv,
 					  struct msg *msg);
 int ospf_apiserver_handle_sync_lsdb (struct ospf_apiserver *apiserv,
 				     struct msg *msg);
+int ospf_apiserver_handle_update_request (struct ospf_apiserver *apiserv,
+					     struct msg *msg);
 
 
 /* -----------------------------------------------------------

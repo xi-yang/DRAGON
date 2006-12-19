@@ -523,7 +523,28 @@ new_msg_originate_request (u_int32_t seqnum,
   return msg_new (MSG_ORIGINATE_REQUEST, omsg, seqnum, omsglen);
 }
 
-/* $$$$ hacked */
+/* $$$$ DRAGON */
+struct msg *
+new_msg_update_request (u_int32_t seqnum,
+			   struct in_addr ifaddr,
+			   struct in_addr area_id, struct lsa_header *data)
+{
+  struct msg_update_request *umsg;
+  int umsglen;
+  char buf[OSPF_API_MAX_MSG_SIZE];
+
+  umsglen = sizeof (struct msg_update_request) - sizeof (struct lsa_header)
+    + ntohs (data->length);
+
+  umsg = (struct msg_update_request *) buf;
+  umsg->ifaddr = ifaddr;
+  umsg->area_id = area_id;
+  memcpy (&umsg->data, data, ntohs (data->length));
+
+  return msg_new (MSG_UPDATE_REQUEST, umsg, seqnum, umsglen);
+}
+
+/* $$$$ DRAGON */
 struct msg *
 new_msg_delete_request (u_int32_t seqnum,
           struct in_addr adv_router,

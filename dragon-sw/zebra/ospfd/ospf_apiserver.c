@@ -927,14 +927,17 @@ ospf_apiserver_handle_msg (struct ospf_apiserver *apiserv, struct msg *msg)
     case MSG_DELETE_REQUEST:
       rc = ospf_apiserver_handle_delete_request (apiserv, msg);
       break;
-    /* hacked $$$$*/
+    /* DRAGON $$$$*/
     case MSG_NEIGHBOR_COUNT_REQUEST:
       rc = ospf_apiserver_handle_neighbor_count_request (apiserv, msg);
       break;
     case MSG_NARB_CSPF_REQUEST:
       rc = ospf_apiserver_handle_cspf_request (apiserv, msg);
       break;
-    /* end hacked $$$$*/
+    case MSG_UPDATE_REQUEST:
+      rc = ospf_apiserver_handle_update_request (apiserv, msg);
+      break;
+    /* end DRAGON $$$$*/
     default:
       zlog_warn ("ospf_apiserver_handle_msg: Unknown message type: %d",
 		 msg->hdr.msgtype);
@@ -1725,6 +1728,42 @@ ospf_apiserver_is_ready_type11 (struct ospf *ospf)
   return 0;
 }
 
+int
+ospf_apiserver_handle_update_request (struct ospf_apiserver *apiserv,
+					 struct msg *msg)
+{
+  struct msg_update_request *umsg;
+  struct ospf_area *area = NULL;
+  struct ospf_interface *oi = NULL;
+  struct lsa_header *data;
+  struct ospf_lsa *lsa;
+  int rc;
+
+  ospf = ospf_lookup();
+  area = oi->area;
+  data = &umsg->data;
+  if (data->type != OSPF_OPAQUE_AREA_LSA)
+    {
+      /* We can only handle opaque-area types here */
+      zlog_warn ("apiserver_update: Cannot update non-opaque-area LSA type %d",
+      data->type);
+      rc = OSPF_API_ILLEGALLSATYPE;
+      goto out;
+    }
+
+  new = ospf_apiserver_opaque_lsa_new (area, oi, data);
+  if (!new)
+    {
+      rc = OSPF_API_NOMEMORY;
+      goto out;
+    }
+ 
+  return ospf_apiserver_lsa_refresher(lsa);
+
+out:
+  rc = ospf_apiserver_send_reply (apiserv, ntohl (msg->hdr.msgseq), rc);
+  return rc;  
+}
 
 int
 ospf_apiserver_handle_originate_request (struct ospf_apiserver *apiserv,
