@@ -1732,13 +1732,13 @@ int
 ospf_apiserver_handle_update_request (struct ospf_apiserver *apiserv,
 					 struct msg *msg)
 {
-  struct msg_update_request *umsg;
+  int rc;
   struct ospf *ospf = NULL;
   struct ospf_area *area = NULL;
   struct ospf_interface *oi = NULL;
   struct lsa_header *data;
   struct ospf_lsa *lsa;
-  int rc;
+  struct msg_update_request *umsg = (struct msg_update_request *) STREAM_DATA (msg->s);
 
   ospf = ospf_lookup();
   area = ospf_area_lookup_by_area_id (ospf, umsg->area_id);
