@@ -249,23 +249,38 @@ struct link_ifswcap_specific_tdm {
 	u_char		padding[3];
 };
 
-/* Maximum number of available vlan's that a port/IP is assigned to */
-#define MAX_VLAN_NUM 4096
 
 /* Link Sub-TLV / Switching Capability-specific information: VLAN/Ethernet*/
+#define MAX_VLAN_NUM 4096 /* Maximum number of available vlan's that a port/IP is assigned to */
 #define IFSWCAP_SPECIFIC_VLAN_BASIC 0x0002
 #define IFSWCAP_SPECIFIC_VLAN_ALLOC 0x0004
 #define IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z 0x8000
 struct link_ifswcap_specific_vlan {
-	u_int16_t		length;		/*up to 512 byes in vlan_bitmask. So 515 will be the default length.*/
-	u_int16_t	 	version;       /*version id and options mask*/
+	u_int16_t		length;
+	u_int16_t	 	version;  /*version id and options mask*/
 	u_char           bitmask[MAX_VLAN_NUM/8];
 	u_char           bitmask_alloc[MAX_VLAN_NUM/8];
 };
-
 #define HAS_VLAN(P, VID) ((P[VID/8] & (0x80 >> (VID-1)%8)) != 0)
 #define SET_VLAN(P, VID) P[VID/8] = (P[VID/8] | (0x80 >> (VID-1)%8))
 #define RESET_VLAN(P, VID) P[VID/8] = (P[VID/8] & ~(0x80 >> (VID-1)%8))
+
+
+/* Link Sub-TLV / Switching Capability-specific information: VLAN/Ethernet via Subnet-UNI */
+#define IFSWCAP_SPECIFIC_SUBNET_UNI 0x4000
+struct link_ifswcap_specific_subnet_uni {
+	u_int16_t		length;
+	u_int16_t	 	version;       /*version id and options mask | IFSWCAP_SPECIFIC_VLAN_SUBNET_UNI*/
+	u_int16_t		subnet_uni_id;
+	u_char		reserved[2];
+
+	/*u_int32_t	tna_ipv4;*/   /* made equal to  control channel IP address */
+	u_int32_t		control_channel_ipv4;
+	u_int32_t		logical_port_number;
+	u_int32_t		egress_label_downstream; /*egress label on the UNI interface*/
+	u_int32_t		egress_label_upstream; /*egress label on the UNI interface for bidirectional traffic*/
+};
+
 
 /* Link Sub-TLV: Interface Switching Capability Descriptor */
 /* GMPLS draft-ietf-ccamp-ospf-gmpls-extensions-12.txt*/
@@ -303,6 +318,7 @@ struct te_link_subtlv_link_ifswcap
 		struct link_ifswcap_specific_psc  ifswcap_specific_psc;
 		struct link_ifswcap_specific_tdm ifswcap_specific_tdm; 
        	struct link_ifswcap_specific_vlan ifswcap_specific_vlan; 
+       	struct link_ifswcap_specific_subnet_uni ifswcap_specific_subnet_uni;
        } ifswcap_specific_info;
   } link_ifswcap_data;
   /* More Switching Capability-specific information, defined below */

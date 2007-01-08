@@ -2502,6 +2502,73 @@ ALIAS (ospf_te_interface_ifsw_cap4,
        "Tagged VLAN ID2 in the range [2, 4095]\n");
 
 
+DEFUN (ospf_te_interface_ifsw_cap5,
+       ospf_te_interface_ifsw_cap5_cmd,
+       "subnet uni <1-65535> control-via A.B.C.D data-port <0-4294967295> egress-label <0-4294967295> upstream-label <0-4294967295>",
+       "Assign Subnet UNI parameters\n"
+       "Assign Subnet UNI parameters\n"
+       "Subnet UNI ID (16 bits)\n"
+       "Control channel for the UNI\n"
+       "Control IPv4 address\n"
+       "Logical data port\n"
+       "Port number\n"
+       "Egress label, downstream\n"
+       "Egress label (32 bits)\n"
+       "Egress label, upstream\n"
+       "Egress label (32 bits)\n")
+{
+  u_int16_t uni_id;
+  u_int32_t control_ip, data_port, egress_label, egress_label_upstream;
+
+  if  (te_config.te_para.link_ifswcap.link_ifswcap_data.switching_cap != LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: no 'subnet uni' command on non-L2SC link.%s", VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  	
+  if (argc != 5) 
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: only %d parameters present%s (needing five)", argc, VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.length = htons(sizeof(struct link_ifswcap_specific_subnet_uni));
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version = htons(IFSWCAP_SPECIFIC_SUBNET_UNI);
+
+  if (sscanf (argv[0], "%d", &uni_id) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: fscanf uni_id: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+
+  if (inet_aton (argv[1], (struct in_addr*)&control_ip) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: inet_aton control_ip: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+
+  if (sscanf (argv[2], "%d", &data_port) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: fscanf data_port: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  
+  if (sscanf (argv[3], "%d", &egress_label) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: fscanf egress_label: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  
+  if (sscanf (argv[4], "%d", &egress_label_upstream) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: fscanf egress_label_upstream: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  
+  return CMD_SUCCESS;
+}
+
+
 DEFUN (show_ospf_te_router,
        show_ospf_te_router_cmd,
        "show ip ospf-te router",
@@ -2828,6 +2895,7 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap3b_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4a_cmd);
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap5_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_te_lambda_cmd);
   /*@@@@ UNI hacks ==> Obsolete*/
   install_node (&ospf_te_uni_node, NULL);
