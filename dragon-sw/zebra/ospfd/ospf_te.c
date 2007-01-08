@@ -2526,8 +2526,7 @@ DEFUN (ospf_te_interface_ifsw_cap5,
        "Egress label, upstream\n"
        "Egress label (32 bits)\n")
 {
-  u_int16_t uni_id;
-  u_int32_t control_ip, data_port, egress_label, egress_label_upstream;
+  u_int32_t uni_id, control_ip, data_port, egress_label, egress_label_upstream;
 
   if  (te_config.te_para.link_ifswcap.link_ifswcap_data.switching_cap != LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
     {
