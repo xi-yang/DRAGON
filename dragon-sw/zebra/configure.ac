@@ -1,4 +1,4 @@
-##
+ZLIB)##
 ## Configure template file for Zebra.
 ## autoconf will generate configure script.
 ##
@@ -601,6 +601,12 @@ AC_CHECK_LIB(c, inet_ntop, [AC_DEFINE(HAVE_INET_NTOP,,inet_ntop)])
 AC_CHECK_LIB(c, inet_pton, [AC_DEFINE(HAVE_INET_PTON,,inet_pton)])
 AC_CHECK_LIB(crypt, crypt)
 AC_CHECK_LIB(resolv, res_init)
+
+AC_CHECK_LIB(z, compress, HAVE_ZLIB=yes)
+if test $HAVE_ZLIB = ""; then
+  AC_MSG_ERROR([zlib is required by DRAGON. Please install zlib....])
+fi
+
 AC_CHECK_LIB(m, main)
 
 dnl ---------------------------------------------------
