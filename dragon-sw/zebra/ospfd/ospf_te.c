@@ -2514,8 +2514,7 @@ ALIAS (ospf_te_interface_ifsw_cap4,
 
 DEFUN (ospf_te_interface_ifsw_cap5,
        ospf_te_interface_ifsw_cap5_cmd,
-       "subnet uni <1-65535> control-via A.B.C.D data-port <0-4294967295> egress-label <0-4294967295> upstream-label <0-4294967295>",
-       "Assign Subnet UNI parameters\n"
+       "subnet-uni <1-65535> control-via A.B.C.D data-port <0-4294967295> egress-label <0-4294967295> upstream-label <0-4294967295>",
        "Assign Subnet UNI parameters\n"
        "Subnet UNI ID (16 bits)\n"
        "Control channel for the UNI\n"
@@ -2532,7 +2531,7 @@ DEFUN (ospf_te_interface_ifsw_cap5,
 
   if  (te_config.te_para.link_ifswcap.link_ifswcap_data.switching_cap != LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
     {
-      vty_out (vty, "ospf_te_interface_ifsw_cap5: no 'subnet uni' command on non-L2SC link.%s", VTY_NEWLINE);
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: no 'subnet-uni' command on non-L2SC link.%s", VTY_NEWLINE);
       return CMD_WARNING;
     }
   	
