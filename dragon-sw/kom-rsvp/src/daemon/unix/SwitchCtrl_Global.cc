@@ -954,14 +954,14 @@ void SwitchCtrl_Global::addEosMapEntry(float bandwidth, String& spe, int ncc)
         if ((*it).bandwidth == bandwidth) {
             return;
         }
-        if (((*it).bandwidth > bandwidth)
+        if ((*it).bandwidth > bandwidth)
             break;
     }
 
     SONET_TSpec* stp = new SONET_TSpec(spe_int, 1, (uint8)ncc, 0, 1, 0, 0);
     eos_map_entry eos_map;
-    eos_map->bandwidth = bandwidth;
-    eos_map->sonet_tspec = stp;
+    eos_map.bandwidth = bandwidth;
+    eos_map.sonet_tspec = stp;
     if (it == eosMapList.end()) {
         eosMapList.push_back(eos_map);
     }
@@ -969,7 +969,7 @@ void SwitchCtrl_Global::addEosMapEntry(float bandwidth, String& spe, int ncc)
         eosMapList.push_front(eos_map);
     }
     else {
-        eosMapList.insert_elem(it, eos_map);
+        eosMapList.insert(it, eos_map);
     }
 }
 
