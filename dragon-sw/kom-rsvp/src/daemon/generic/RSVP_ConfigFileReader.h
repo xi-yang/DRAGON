@@ -99,6 +99,7 @@ public:
 	void setNarbExtraOption(String option_name) { NARB_APIClient::setExtraOption(option_name); }
 	void setAllowedVtag(int vtag);
 	void setAllowedVtagRange(String vtag_range);
+	void addEoSMap(String spe, int ncc);
 };
 
 #endif /* _RSVP_ConfigFileReader_h_ */

@@ -242,6 +242,11 @@ void ConfigFileReader::setAllowedVtagRange(String vtag_range)
 	}
 }
 
+void ConfigFileReader::addEoSMap(String spe, int ncc)
+{
+	RSVP_Global::switchController->addEosMapEntry(this->bandwidth, spe, ncc);    
+}
+    
 void ConfigFileReader::cleanup() {
 	interfaceName = "";
 	localId = "";

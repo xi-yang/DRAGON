@@ -931,19 +931,44 @@ uint32 SwitchCtrl_Global::getExclEntry(String session_name)
     return excl_options;
 }
 
-//VTAG mutral-exclusion feature --> Review
-/*
-bool SwitchCtrl_Global::getVtagBitMask(uint8* bitmask)
+void SwitchCtrl_Global::addEosMapEntry(float bandwidth, String spe, int ncc)
 {
-    assert(bitmask!=NULL);
-    bool ret = false;
-    SwitchCtrlSessionList::Iterator it =  sessionList.begin();
-    for (; it != sessionList.end(); ++it) {
-        ret = (ret || (*it)->resetVtagBitMask(bitmask));
+    SimpleList<eos_map_entry>::Iterator it = eosMapList.begin();
+    for (; it != eosMapList.end(); ++it) {
+        if ((*it).bandwidth == bandwidth) {
+            return;
+        }
+        if (((*it).bandwidth > bandwidth)
+            break;
     }
-    return ret;
+    SONET_TSpec* stp = new SONET_TSpec(spe, 1, ncc, 0, 1, 0, 0);
+    eos_map_entry eos_map;
+    eos_map->bandwidth = bandwidth;
+    eos_map->sonet_tspec = stp;
+    if (it == eosMapList.end()) {
+        eosMapList.push_back(eos_map);
+    }
+    else if (it == eosMapList.begin()) {
+        eosMapList.push_front(eos_map);
+    }
+    else {
+        eosMapList.insert_elem(it, eos_map);
+    }
 }
-*/
+
+SONET_TSpec* SwitchCtrl_Global::getEosMapEntry(float bandwidth)
+{
+    SimpleList<eos_map_entry>::Iterator it = eosMapList.begin();
+    for (; it != eosMapList.end(); ++it) {
+        if ((*it).bandwidth >= bandwidth) {
+            return (*it).sonet_tspec;
+        }
+    }
+
+    return NULL;
+}
+
+
 
 //End of file : SwitchCtrl_Global.cc
 

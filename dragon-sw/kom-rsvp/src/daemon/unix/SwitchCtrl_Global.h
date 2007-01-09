@@ -13,6 +13,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_Lists.h"
 #include "RSVP_TimeValue.h"
 #include "RSVP_BaseTimer.h"
+#include "RSVP_IntServComponents.h"
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/session_api.h>
@@ -230,6 +231,11 @@ struct sw_layer_excl_name_entry {
 	char excl_name[16]; 
 };
 
+struct eos_map_entry {
+	float bandwidth;
+	SONET_TSpec* sonet_tspec; 
+};
+
 class sessionsRefreshTimer;
 class SwitchCtrl_Global{
 public:
@@ -261,15 +267,14 @@ public:
         static void processLocalIdMessage(uint8 msgType, LocalId& lid);
         static void getPortsByLocalId(SimpleList<uint32>&portList, uint32 port);
 
+
 	/*RSVPD.conf*/
 	void addSlotEntry(slot_entry &se) { slotList.push_back(se); }
 	uint16 getSlotType(uint16 slot_num);
 	void addExclEntry(sw_layer_excl_name_entry &ee) { exclList.push_back(ee); }
 	uint32 getExclEntry(String session_name);
-
-	/*services for narbClient*/
-	//VTAG mutral-exclusion feature --> Review
-	//bool getVtagBitMask(uint8* bitmask);
+	void addEosMapEntry(float bandwidth, String spe, int ncc);
+	SONET_TSpec* getEosMapEntry(float bandwidth);
 
 protected:
 	SwitchCtrl_Global();
@@ -280,6 +285,7 @@ private:
 	SwitchCtrlSessionList sessionList;
 	SimpleList<slot_entry> slotList;
 	SimpleList<sw_layer_excl_name_entry> exclList;
+	SimpleList<eos_map_entry> eosMapList;
 };
 
 class sessionsRefreshTimer: public BaseTimer {
