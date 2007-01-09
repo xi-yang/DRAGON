@@ -931,8 +931,24 @@ uint32 SwitchCtrl_Global::getExclEntry(String session_name)
     return excl_options;
 }
 
-void SwitchCtrl_Global::addEosMapEntry(float bandwidth, String spe, int ncc)
+static uint8 spe_string2int(String& spe)
 {
+    if (spe == "sts-1")
+        return 5;
+    else if (spe == "sts-3c")
+        return 6;
+
+    // No other signals are supported at this monment!
+    return 0;
+}
+
+
+void SwitchCtrl_Global::addEosMapEntry(float bandwidth, String& spe, int ncc)
+{
+    uint8 spe_int = spe_string2int(spe);
+    if (spe_int == 0)     
+        return;
+
     SimpleList<eos_map_entry>::Iterator it = eosMapList.begin();
     for (; it != eosMapList.end(); ++it) {
         if ((*it).bandwidth == bandwidth) {
@@ -941,7 +957,8 @@ void SwitchCtrl_Global::addEosMapEntry(float bandwidth, String spe, int ncc)
         if (((*it).bandwidth > bandwidth)
             break;
     }
-    SONET_TSpec* stp = new SONET_TSpec(spe, 1, ncc, 0, 1, 0, 0);
+
+    SONET_TSpec* stp = new SONET_TSpec(spe_int, 1, (uint8)ncc, 0, 1, 0, 0);
     eos_map_entry eos_map;
     eos_map->bandwidth = bandwidth;
     eos_map->sonet_tspec = stp;
