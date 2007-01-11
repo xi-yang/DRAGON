@@ -641,7 +641,7 @@ void DRAGON_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 }
 
 ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_UNI_Object& o ) {
-	buffer << RSVP_ObjectHeader( o.size(), o.getClassNumber(), 1);
+	buffer << RSVP_ObjectHeader( o.size(), (uint8)o.getClassNumber(), 1);
 	buffer <<o.srcTNA.length << o.srcTNA.type << o.srcTNA.sub_type << o.srcTNA.addr.s_addr << o.srcTNA.local_id;
 	buffer << o.destTNA.length << o.destTNA.type << o.destTNA.sub_type << o.destTNA.addr.s_addr << o.destTNA.local_id;
 	buffer << o.vlanTag.length << o.vlanTag.type << o.vlanTag.sub_type << o.vlanTag.vtag;
@@ -679,7 +679,7 @@ void GENERALIZED_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 }
 
 ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const GENERALIZED_UNI_Object& o ) {
-	buffer << RSVP_ObjectHeader( o.size(), o.getClassNumber(), 1);
+	buffer << RSVP_ObjectHeader( o.size(), (uint8)o.getClassNumber(), 1);
 	buffer <<o.srcTNA.length << o.srcTNA.type << o.srcTNA.sub_type << o.srcTNA.addr.s_addr;
 	buffer << o.destTNA.length << o.destTNA.type << o.destTNA.sub_type << o.destTNA.addr.s_addr;
 	buffer << o.egressLabel.length << o.egressLabel.type << o.egressLabel.sub_type << o.egressLabel.logical_port<< o.egressLabel.label;
