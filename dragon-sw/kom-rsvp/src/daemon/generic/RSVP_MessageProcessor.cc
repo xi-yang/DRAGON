@@ -83,8 +83,8 @@ void MessageProcessor::processMessage() {
 	}
 //Xi2007 >>
 	if ( currentLif == RSVP_Global::rsvp->getApiUniClientLif() ) {
-            SwitchCtrl_Session_SubnetUNI_List::Iterator it = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList.begin();
-            for (; it != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList.end; ++it) {
+            SwitchCtrl_Session_SubnetUNI_List::Iterator it = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->begin();
+            for (; it != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end; ++it) {
                 (*it)->receiveAndProcessMessage(currentMessage); //Only one of them should own the message...Polling and checking inside
             }
             return;
