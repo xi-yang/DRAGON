@@ -40,20 +40,6 @@
 #include "RSVP_NetworkService.h"
 #include "RSVP_PacketHeader.h"
 
-#if 0
-
-#if !defined(NS2)
-// trick linker
-void LogicalInterface::init( uint32 ) { assert(0); }
-const LogicalInterface* LogicalInterface::receiveBuffer( INetworkBuffer&, PacketHeader& ) const { assert(0); return NULL; }
-void LogicalInterface::sendBuffer( const ONetworkBuffer&, const NetAddress&, const NetAddress& ) const { assert(0); }
-class TrafficControl { public: ~TrafficControl(); };
-TrafficControl::~TrafficControl() {}
-ostream& operator<< ( ostream& os, const TrafficControl& tc ) { return os; }
-#endif
-
-#endif
-
 LogicalInterfaceUDP* RSVP_API::apiLif = NULL;
 
 inline ApiStateBlockList& RSVP_API::getStateList( const SESSION_Object& s ) {
