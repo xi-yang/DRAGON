@@ -337,7 +337,7 @@ void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port
 	const SENDER_TSPEC_Object& tspec, 
 	const LABEL_REQUEST_Object&  labelReqObj, 
 	EXPLICIT_ROUTE_Object* ero, 
-	DRAGON_UNI_Object* uni,
+	UNI_Object* uni,
 	LABEL_SET_Object* labelSet, 
 	SESSION_ATTRIBUTE_Object* ssAttrib, 
 	UPSTREAM_LABEL_Object* upstreamLabel,
@@ -356,7 +356,7 @@ void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port
 	message.setTIME_VALUES_Object( TimeValue(0,0) );
 	message.setLABEL_REQUEST_Object(labelReqObj);
 	if (ero) message.setEXPLICIT_ROUTE_Object(*ero);
-	if (uni) message.setDRAGON_UNI_Object(*uni);
+	if (uni) message.setDRAGON_UNI_Object(*uni); //$$$$
 	if (labelSet) message.setLABEL_SET_Object(*labelSet);
 	if (ssAttrib) message.setSESSION_ATTRIBUTE_Object(*ssAttrib);
 	if (upstreamLabel) message.setUPSTREAM_LABEL_Object(*upstreamLabel);
@@ -373,7 +373,7 @@ void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port
 
 void RSVP_API::createReservation( SessionId iter, bool confRequest,
 	FilterStyle style, const FlowDescriptorList& fdList,
-	const POLICY_DATA_Object* policyData, DRAGON_UNI_Object* dragonUni) {
+	const POLICY_DATA_Object* policyData, UNI_Object* uni) {
 	Message message( Message::Resv, 127, **iter );
 
 	message.setRSVP_HOP_Object( *apiLif );
@@ -389,8 +389,8 @@ void RSVP_API::createReservation( SessionId iter, bool confRequest,
 		message.addFILTER_SPEC_Objects( (*flowdescIter).filterSpecList );
 	}
 
-       if (dragonUni)
-            message.setDRAGON_UNI_Object(*dragonUni);
+       if (uni)
+            message.setDRAGON_UNI_Object(*uni);
 	apiLif->sendMessage( message, NetAddress(0), apiLif->getLocalAddress() );
 }
 

@@ -208,14 +208,14 @@ public:
 	SessionId createSession( const NetAddress&, uint16, uint32, UpcallProcedure = NULL, void* clientData = NULL );
 	void createSender( SessionId, const NetAddress&, uint16 port, const SENDER_TSPEC_Object&,
 		const LABEL_REQUEST_Object&  labelReqObj, EXPLICIT_ROUTE_Object* ero, 
-		DRAGON_UNI_Object* uni,
+		UNI_Object* uni,
 		LABEL_SET_Object* labelSet, SESSION_ATTRIBUTE_Object* ssAttrib,
 		UPSTREAM_LABEL_Object* upstreamLabel,
 		uint8 TTL, const ADSPEC_Object* = NULL, const POLICY_DATA_Object* = NULL,
 		bool reserve = false, uint16 senderRecvPort = 0, uint16 recvSendPort = 0);
 	void createSender( SessionId session, uint16 port, const SENDER_TSPEC_Object& tspec,
 		const LABEL_REQUEST_Object&  labelReqObj, EXPLICIT_ROUTE_Object* ero, 
-		DRAGON_UNI_Object* uni,
+		UNI_Object* uni,
 		LABEL_SET_Object* labelSet, 
 		SESSION_ATTRIBUTE_Object* ssAttrib,
 		UPSTREAM_LABEL_Object* upstreamLabel,
@@ -227,7 +227,7 @@ public:
 	}
 	void createReservation( SessionId, bool confRequest, FilterStyle,
 		const FlowDescriptorList&, const POLICY_DATA_Object* policyData = NULL, 
-		DRAGON_UNI_Object* dragonUni = NULL);
+		UNI_Object* uni = NULL);
 	void releaseSession( SessionId );
 	void releaseSession( SESSION_Object& session ) ;
 	void releaseSender( SessionId, const NetAddress&, uint16 port, uint8 TTL );
