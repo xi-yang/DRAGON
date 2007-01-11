@@ -44,6 +44,7 @@
 #include "RSVP_Session.h"
 #include "RSVP_OutISB.h"
 #include "SwitchCtrl_Global.h"
+#include "SwitchCtrl_Session_SubnetUNI.h"
 //#include "SNMP_Session.h"
 //#include "CLI_Session.h"
 
@@ -84,7 +85,7 @@ void MessageProcessor::processMessage() {
 //Xi2007 >>
 	if ( currentLif == RSVP_Global::rsvp->getApiUniClientLif() ) {
             SwitchCtrl_Session_SubnetUNI_List::Iterator it = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->begin();
-            for (; it != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end; ++it) {
+            for (; it != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end(); ++it) {
                 (*it)->receiveAndProcessMessage(currentMessage); //Only one of them should own the message...Polling and checking inside
             }
             return;

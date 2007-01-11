@@ -133,7 +133,7 @@ public:
 #if defined(WITH_API)
 	static API_Server& getApiServer() { assert(apiServer); return *apiServer; }
 	static const LogicalInterface* getApiLif() { assert(apiServer); return RSVP_Global::rsvp->lifArray[0]; }
-	static const LogicalInterface* getApiUniClientLif() { return findInterfaceByName(RSVP_Global::apiUniClientName); }
+	const LogicalInterface* getApiUniClientLif() { return findInterfaceByName(RSVP_Global::apiUniClientName); }
 #endif
 
 	// stats only

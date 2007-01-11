@@ -17,6 +17,14 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_API_Upcall.h"
 #include "RSVP_ProtocolObjects.h"
 
+#define UNI_IPv4_SESSION_Object SESSION_Object 
+#define LSP_TUNNEL_IPv4_SENDER_TEMPLATE_Object SENDER_TEMPLATE_Object
+#define LSP_TUNNEL_IPv4_FILTER_SPEC_Object SENDER_TEMPLATE_Object 
+#define SONET_SDH_SENDER_TSPEC_Object SENDER_TSPEC_Object
+#define SONET_SDH_FLOWSPEC_Object FLOWSPEC_Object 
+#define GENERALIZED_LABEL_REQUEST_Object LABEL_REQUEST_Object
+
+typedef struct IPv4TNA IPv4TNA_Subobject;
 #define CTRL_CHAN_NAME_LEN 12
 typedef struct SubnetUNI_Data_struct {
 	uint16 subnet_id;
@@ -31,8 +39,10 @@ typedef struct SubnetUNI_Data_struct {
 	char control_channel_name[CTRL_CHAN_NAME_LEN]; //consistent with TNA_IPv4 //redundant@@@@
 } SubnetUNI_Data;
 
+class SwitchCtrl_Session_SubnetUNI;
 typedef SimpleList<SwitchCtrl_Session_SubnetUNI*> SwitchCtrl_Session_SubnetUNI_List;
-
+class SONET_SDH_SENDER_TSPEC_Object;
+class LSP_TUNNEL_IPv4_FILTER_SPEC_Object;
 class SwitchCtrl_Session_SubnetUNI: public SwitchCtrl_Session, public RSVP_API
 {
 public:
@@ -62,17 +72,18 @@ public:
 
 	void createRsvpUniPath(); //by source
 	void receiveAndProcessPath(Message& msg); //by destination
-	void createRsvpUniResv(); //by destination
+	void createRsvpUniResv(const SONET_SDH_SENDER_TSPEC_Object& sendTSpec, const LSP_TUNNEL_IPv4_FILTER_SPEC_Object& senderTemplate); //by destination
 	void receiveAndProcessResv(Message& msg); //by source
 	void releaseRsvpPath(); //PTEAR by source and RTEAR by destination
 	void refreshUniRsvpSession(); //SRefresh by source
 
 	//Upcall for source/destination client
-	static UpcallProcedure uniRsvpSrcUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession
-	static UpcallProcedure uniRsvpDestUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession
+	static void uniRsvpSrcUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession
+	static void uniRsvpDestUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession
+
+	static SwitchCtrl_Session_SubnetUNI_List* subnetUniApiClientList ;
 
 protected:
-	static SwitchCtrl_Session_SubnetUNI_List* subnetUniApiClientList ;
 
 	bool isSource; //true --> isSender == 1
 	RSVP_API::SessionId* uniSessionId;
@@ -84,18 +95,9 @@ protected:
 	//UNI signaling states (along with PATH/RESV/ERR/TEAR messages); To be handled by uniRsvpSrcUpcall/uniRsvpDestUpcall.
 	
 private:	
-	void internalInit ();
-	void setSubnetUniData(SubnetUNI_Data& data, uint16 id, float bw, uint32 tna, uint32 port, 
-		uint32 egress_label, uint32 upstream_label, char* cc_name)	{ 
-		data.subnet_id = id; data.ethernet_bw = bw; data.tna_ipv4 = tna; 
-		data.egress_label = egress_label; data.upstream_label = upstream_label;
-		strncpy(data.control_channel_name, cc_name, CTRL_CHAN_NAME_LEN-1); 
-		//temp solution; to be tested with Ciena CD...
-		NetAddress peer_addr, tna_addr(tna);
-		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(tna_addr, peer_addr); 
-		data.uni_cid_ipv4 = tna;
-		data.uni_nid_ipv4 = peer_addr.rawAddress(); 
-	}
+	inline void internalInit ();
+	inline void setSubnetUniData(SubnetUNI_Data& data, uint16 id, float bw, uint32 tna, uint32 port, 
+		uint32 egress_label, uint32 upstream_label, char* cc_name=NULL);
 };
 
 
@@ -103,14 +105,6 @@ private:
 //UNI RSVP Protocol Objects//
 //////////////////////////
 
-#define UNI_IPv4_SESSION_Object SESSION_Object 
-#define LSP_TUNNEL_IPv4_SENDER_TEMPLATE_Object SENDER_TEMPLATE_Object
-#define LSP_TUNNEL_IPv4_FILTER_SPEC_Object SENDER_TEMPLATE_Object 
-#define SONET_SDH_SENDER_TSPEC_Object SENDER_TSPEC_Object
-#define SONET_SDH_FLOWSPEC_Object FLOWSPEC_Object 
-#define GENERALIZED_LABEL_REQUEST_Object LABEL_REQUEST_Object
-
-typedef struct IPv4TNA IPv4TNA_Subobject;
 typedef struct  {
 	uint16 length;
 	uint8 type;
@@ -144,7 +138,7 @@ public:
 		destTNA.type = UNI_SUBOBJ_DESTTNA;
 
 		memset(&egressLabel, 0, sizeof(EgressLabel_Subobject));
-		egressLabel.legnth = sizeof(EgressLabel_Subobject);
+		egressLabel.length = sizeof(EgressLabel_Subobject);
 		egressLabel.type = UNI_SUBOBJ_EGRESSLABEL;
 		egressLabel.sub_type = 1;
 		egressLabel.u_b0 = 0;
@@ -152,8 +146,7 @@ public:
 		egressLabelUp = egressLabel;		
 		egressLabelUp.u_b0 = 1; //0x80 ?
 	}
-	GENERALIZED_UNI_Object( uint32 src_addr, uint32 dest_addr, 
-	uint32 egress_port, uint32 egress_label, uint32 uint32 egress_port_up, uint32 egress_label_up) {
+	GENERALIZED_UNI_Object( uint32 src_addr, uint32 dest_addr, uint32 egress_port, uint32 egress_label, uint32 egress_port_up, uint32 egress_label_up) {
 		srcTNA.length = sizeof(IPv4TNA_Subobject);
 		srcTNA.type = UNI_SUBOBJ_SRCTNA;
 		srcTNA.sub_type = UNI_TNA_SUBTYPE_IPV4;
@@ -164,7 +157,7 @@ public:
 		destTNA.addr.s_addr = dest_addr;
 
 		memset(&egressLabel, 0, sizeof(EgressLabel_Subobject));
-		egressLabel.legnth = sizeof(EgressLabel_Subobject);
+		egressLabel.length = sizeof(EgressLabel_Subobject);
 		egressLabel.type = UNI_SUBOBJ_EGRESSLABEL;
 		egressLabel.sub_type = 1;
 		egressLabel.u_b0 = 0;
