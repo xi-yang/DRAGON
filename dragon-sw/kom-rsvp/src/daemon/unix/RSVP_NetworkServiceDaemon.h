@@ -68,9 +68,6 @@ class NetworkServiceDaemon {
 		bool retval = routingReady; routingReady = false; return retval;
 	}
 
-	static void registerApiClient_Handle( InterfaceHandle);
-	static void deregisterApiClient_Handle( InterfaceHandle);
-
 	friend class RSVP;                                  // access: buildInterfaceList,queryAndClearAsyncRouting,queryInterfaces,cleanup
 	friend class RSRR;                                  // access: registerRSRR_Handle, deregisterRSRR_Handle
 	friend class RoutingService;                        // access: registerRouting_Handle, deregisterRouting_Handle, getInterfaceBySystemIndex
@@ -82,6 +79,11 @@ public:
 	// packet handling
 	static const LogicalInterface* receiveRawPacketIP4( InterfaceHandle, INetworkBuffer& );
 	static void sendRawPacketIP4( InterfaceHandle, const ONetworkBuffer&, const NetAddress&, const NetAddress& );
+
+	//Xi2007>>
+	static void registerApiClient_Handle( InterfaceHandle);
+	static void deregisterApiClient_Handle( InterfaceHandle);
+	//Xi2007<<
 };
 
 #endif /* _RSVP_NetworkServiceDaemon_h_*/
