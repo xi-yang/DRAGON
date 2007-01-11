@@ -183,7 +183,7 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
                                                         LABEL_REQUEST_Object::G_SONET_SDH);
 
     //SESSION is implied by uniSessionId and SENDER_TEMPLATE by (addr=0, port=subnetUniSrc.tunnel_id)
-    createSender( *uniSessionId, subnetUniSrc.tunnel_id, *stb, *lr, NULL, (DRAGON_UNI_Object*)uni, labelSet, ssAttrib, upLabel, 50);
+    createSender( *uniSessionId, subnetUniSrc.tunnel_id, *stb, *lr, NULL, uni, labelSet, ssAttrib, upLabel, 50);
 
     if (uni) uni->destroy();
     if (labelSet) labelSet->destroy();
@@ -279,38 +279,6 @@ void SwitchCtrl_Session_SubnetUNI::refreshUniRsvpSession()
         return;
     
     //do nothing?
-}
-
-
-//////////////////////////////////////////////////////////////////////////
-/////                             UNI Object implementation                                              ////
-/////////////////////////////////////////////////////////////////////////
-
-void GENERALIZED_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
-{
-	buffer >>srcTNA.length >> srcTNA.type >> srcTNA.sub_type >> srcTNA.addr.s_addr;
-	buffer >>destTNA.length >> destTNA.type >> destTNA.sub_type >> destTNA.addr.s_addr;
-	buffer >>egressLabel.length >> egressLabel.type >> egressLabel.sub_type >> egressLabel.logical_port >> egressLabel.label;
-	buffer >>egressLabelUp.length >> egressLabelUp.type >> egressLabelUp.sub_type >> egressLabelUp.logical_port >> egressLabelUp.label;
-}
-
-ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const GENERALIZED_UNI_Object& o ) {
-	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::GENERALIZED_UNI, 1);
-	buffer <<o.srcTNA.length << o.srcTNA.type << o.srcTNA.sub_type << o.srcTNA.addr.s_addr;
-	buffer << o.destTNA.length << o.destTNA.type << o.destTNA.sub_type << o.destTNA.addr.s_addr;
-	buffer << o.egressLabel.length << o.egressLabel.type << o.egressLabel.sub_type << o.egressLabel.logical_port<< o.egressLabel.label;
-	buffer << o.egressLabelUp.length << o.egressLabelUp.type << o.egressLabelUp.sub_type << o.egressLabelUp.logical_port << o.egressLabelUp.label;
-	return buffer;
-}
-
-ostream& operator<< ( ostream& os, const GENERALIZED_UNI_Object& o ) {
-	char addr_str[20];
-	os <<"[G_UNI Source: " << String( inet_ntoa(o.srcTNA.addr) );
-	os <<" <=> Sestination: " << String( inet_ntoa(o.destTNA.addr) );
-	os <<" (Downstream port:"<< o.egressLabel.logical_port << " /Label:" << o.egressLabel.label;
-	os <<" (Upstream port:"<< o.egressLabelUp.logical_port << " /Label:" << o.egressLabelUp.label;
-	os <<") ]";
-	return os;
 }
 
 
