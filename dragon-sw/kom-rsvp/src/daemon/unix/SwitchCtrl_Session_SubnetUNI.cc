@@ -55,12 +55,12 @@ SwitchCtrl_Session_SubnetUNI::~SwitchCtrl_Session_SubnetUNI()
 }
 
 
-void uniRsvpSrcUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData)
+void SwitchCtrl_Session_SubnetUNI::uniRsvpSrcUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData)
 {
     //should never be called
 }
 
-void uniRsvpDestUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData)
+void SwitchCtrl_Session_SubnetUNI::uniRsvpDestUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData)
 {
     //should never be called
 }
