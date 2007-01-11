@@ -793,7 +793,7 @@ public:
 #endif
 
 //////////////////////////////////////////////////////////////////////////
-/////                             UNI Object definitions                                                   /////
+/////              DRAGON private  UNI Object definitions                                        /////
 /////////////////////////////////////////////////////////////////////////
 
 #define UNI_SUBOBJ_SRCTNA 1
@@ -844,7 +844,15 @@ struct CtrlChannel {
 	uint8 name[12];
 };
 
-class DRAGON_UNI_Object: public RefObject<DRAGON_UNI_Object> {
+class UNI_Object {
+protected:
+	RSVP_ObjectHeader::ClassNum cNum;
+public:
+	UNI_Object(RSVP_ObjectHeader::ClassNum cn): cNum(cn) {}
+	RSVP_ObjectHeader::ClassNum getClassNumber() { return cNum; }
+};
+
+class DRAGON_UNI_Object: public UNI_Object, public RefObject<DRAGON_UNI_Object> {
 	LocalIdTNA srcTNA;
 	LocalIdTNA destTNA;
 	struct VlanTag vlanTag;
@@ -858,7 +866,7 @@ class DRAGON_UNI_Object: public RefObject<DRAGON_UNI_Object> {
 	REF_OBJECT_METHODS(DRAGON_UNI_Object)
 
 public:
-	DRAGON_UNI_Object() {
+	DRAGON_UNI_Object(): UNI_Object(RSVP_ObjectHeader::DRAGON_UNI) {
 		srcTNA.length = sizeof(struct LocalIdTNA);
 		srcTNA.type = UNI_SUBOBJ_SRCTNA;
 		srcTNA.sub_type = UNI_TNA_SUBTYPE_LCLID;
@@ -872,7 +880,7 @@ public:
 		memset (&egressChannelName, 0, sizeof(struct CtrlChannel));
 	}
 	DRAGON_UNI_Object( struct in_addr src_addr, uint32 src_lclid, struct in_addr dest_addr, 
-	uint32 dest_lclid, uint32 vtag, char* ing_chan_name, char* eg_chan_name ) {
+	uint32 dest_lclid, uint32 vtag, char* ing_chan_name, char* eg_chan_name ): UNI_Object(RSVP_ObjectHeader::DRAGON_UNI)  {
 		srcTNA.length = sizeof(struct LocalIdTNA);
 		srcTNA.type = UNI_SUBOBJ_SRCTNA;
 		srcTNA.sub_type = UNI_TNA_SUBTYPE_LCLID;
@@ -896,7 +904,7 @@ public:
 		egressChannelName.type = UNI_SUBOBJ_CTRLCHAN_EGRESS;
 		egressChannelName.sub_type = UNI_SUBTYPE_NONE;
 	}
-	DRAGON_UNI_Object(INetworkBuffer& buffer, uint16 len) {
+	DRAGON_UNI_Object(INetworkBuffer& buffer, uint16 len): UNI_Object(RSVP_ObjectHeader::DRAGON_UNI)  {
 		readFromBuffer(buffer, len );
 	}
 	void readFromBuffer( INetworkBuffer& buffer, uint16 len);
@@ -917,4 +925,93 @@ public:
 };
 extern inline DRAGON_UNI_Object::~DRAGON_UNI_Object() { }
 
+//////////////////////////////////////////////////////////////////////////
+/////                 Generalized  UNI Object definitions                                            /////
+/////////////////////////////////////////////////////////////////////////
+
+typedef struct  {
+	uint16 length;
+	uint8 type;
+	uint8 sub_type;
+	uint8 u_b0;
+	uint8 reserved[3];
+	uint32 logical_port;
+	uint32 label;
+} EgressLabel_Subobject;
+
+class GENERALIZED_UNI_Object:public UNI_Object, public RefObject<GENERALIZED_UNI_Object> {
+	IPv4TNA_Subobject srcTNA;
+	IPv4TNA_Subobject destTNA;
+	EgressLabel_Subobject egressLabel;
+	EgressLabel_Subobject egressLabelUp;
+
+	friend ostream& operator<< ( ostream&, const GENERALIZED_UNI_Object& );
+	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const GENERALIZED_UNI_Object& );
+	uint16 size() const{ return (sizeof(IPv4TNA_Subobject)*2 + sizeof(EgressLabel_Subobject)); }
+
+	REF_OBJECT_METHODS(GENERALIZED_UNI_Object)
+
+public:
+	GENERALIZED_UNI_Object(): UNI_Object(RSVP_ObjectHeader::GENERALIZED_UNI)  {
+		srcTNA.length = sizeof(IPv4TNA_Subobject);
+		srcTNA.type = UNI_SUBOBJ_SRCTNA;
+		srcTNA.sub_type = UNI_TNA_SUBTYPE_IPV4;
+		srcTNA.addr.s_addr = 0;
+
+		destTNA = srcTNA; 
+		destTNA.type = UNI_SUBOBJ_DESTTNA;
+
+		memset(&egressLabel, 0, sizeof(EgressLabel_Subobject));
+		egressLabel.length = sizeof(EgressLabel_Subobject);
+		egressLabel.type = UNI_SUBOBJ_EGRESSLABEL;
+		egressLabel.sub_type = 1;
+		egressLabel.u_b0 = 0;
+
+		egressLabelUp = egressLabel;		
+		egressLabelUp.u_b0 = 1; //0x80 ?
+	}
+	GENERALIZED_UNI_Object( uint32 src_addr, uint32 dest_addr, uint32 egress_port, uint32 egress_label, 
+		uint32 egress_port_up, uint32 egress_label_up): UNI_Object(RSVP_ObjectHeader::GENERALIZED_UNI) {
+		srcTNA.length = sizeof(IPv4TNA_Subobject);
+		srcTNA.type = UNI_SUBOBJ_SRCTNA;
+		srcTNA.sub_type = UNI_TNA_SUBTYPE_IPV4;
+		srcTNA.addr.s_addr = src_addr;
+
+		destTNA = srcTNA; 
+		destTNA.type = UNI_SUBOBJ_DESTTNA;
+		destTNA.addr.s_addr = dest_addr;
+
+		memset(&egressLabel, 0, sizeof(EgressLabel_Subobject));
+		egressLabel.length = sizeof(EgressLabel_Subobject);
+		egressLabel.type = UNI_SUBOBJ_EGRESSLABEL;
+		egressLabel.sub_type = 1;
+		egressLabel.u_b0 = 0;
+		egressLabel.logical_port = egress_port;
+		egressLabel.label = egress_label;
+			
+		egressLabelUp = egressLabel;		
+		egressLabelUp.u_b0 = 1; //0x80 ?		
+		egressLabel.logical_port= egress_port_up;
+		egressLabel.label = egress_label_up;
+	}
+
+	GENERALIZED_UNI_Object(INetworkBuffer& buffer, uint16 len): UNI_Object(RSVP_ObjectHeader::GENERALIZED_UNI) {
+		readFromBuffer(buffer, len );
+	}
+	void readFromBuffer( INetworkBuffer& buffer, uint16 len);
+	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
+	IPv4TNA_Subobject& getSrcTNA() { return srcTNA; }
+	IPv4TNA_Subobject& getDestTNA(){ return destTNA; }
+	EgressLabel_Subobject& getEgressLabel(){ return egressLabel; }
+	EgressLabel_Subobject& getEgressLabelUpstream(){ return egressLabelUp; }
+	bool operator==(const GENERALIZED_UNI_Object& s){
+		return (memcmp(&srcTNA, &s.srcTNA, sizeof(IPv4TNA_Subobject)) == 0 
+			&& memcmp(&destTNA, &s.destTNA, sizeof(IPv4TNA_Subobject)) == 0
+			&& memcmp(&egressLabel, &s.egressLabel, sizeof(EgressLabel_Subobject)) == 0
+			&& memcmp(&egressLabelUp, &s.egressLabelUp, sizeof(EgressLabel_Subobject)) == 0);
+	}
+};
+extern inline GENERALIZED_UNI_Object::~GENERALIZED_UNI_Object() { }
+
 #endif /* _RSVP_ProtocolObjects_h_ */
+
