@@ -175,7 +175,7 @@ struct _sessionParameters {
 class RSVP_API {
 public:
 	typedef ApiStateBlockList::ConstIterator SessionId;
-private:
+protected:
 	uint32 sessionHash;
 	TimeValue apiRefresh;
 	uint16 apiPort;
@@ -192,7 +192,6 @@ private:
 	friend class LogicalInterface;
 #endif
 #if defined(WITH_JAVA_API)
-protected:
 	virtual void preUpcall() {}
 	virtual void postUpcall() {}
 #endif
