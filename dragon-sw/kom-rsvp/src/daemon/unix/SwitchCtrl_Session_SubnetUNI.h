@@ -24,7 +24,6 @@ To be incorporated into KOM-RSVP-TE package
 #define SONET_SDH_FLOWSPEC_Object FLOWSPEC_Object 
 #define GENERALIZED_LABEL_REQUEST_Object LABEL_REQUEST_Object
 
-typedef struct IPv4TNA IPv4TNA_Subobject;
 #define CTRL_CHAN_NAME_LEN 12
 typedef struct SubnetUNI_Data_struct {
 	uint16 subnet_id;

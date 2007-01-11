@@ -928,6 +928,7 @@ extern inline DRAGON_UNI_Object::~DRAGON_UNI_Object() { }
 //////////////////////////////////////////////////////////////////////////
 /////                 Generalized  UNI Object definitions                                            /////
 /////////////////////////////////////////////////////////////////////////
+typedef struct IPv4TNA IPv4TNA_Subobject;
 
 typedef struct  {
 	uint16 length;
