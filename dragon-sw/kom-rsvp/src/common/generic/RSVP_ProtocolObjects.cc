@@ -624,7 +624,7 @@ void MESSAGE_ID_LIST_Object::readFromBuffer( INetworkBuffer& buffer, uint16 len 
 
 
 //////////////////////////////////////////////////////////////////////////
-/////                             UNI Object implementation                                              ////
+/////                 DRAGON UNI Object implementation                                            ////
 /////////////////////////////////////////////////////////////////////////
 
 void DRAGON_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
@@ -641,7 +641,7 @@ void DRAGON_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 }
 
 ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_UNI_Object& o ) {
-	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::DRAGON_UNI, 1);
+	buffer << RSVP_ObjectHeader( o.size(), o.getClassNumber(), 1);
 	buffer <<o.srcTNA.length << o.srcTNA.type << o.srcTNA.sub_type << o.srcTNA.addr.s_addr << o.srcTNA.local_id;
 	buffer << o.destTNA.length << o.destTNA.type << o.destTNA.sub_type << o.destTNA.addr.s_addr << o.destTNA.local_id;
 	buffer << o.vlanTag.length << o.vlanTag.type << o.vlanTag.sub_type << o.vlanTag.vtag;
@@ -661,6 +661,39 @@ ostream& operator<< ( ostream& os, const DRAGON_UNI_Object& o ) {
 	os << String( inet_ntoa(o.destTNA.addr)) << "/" << o.destTNA.local_id;
 	os << " (via ingressChannel: " << o.ingressChannelName.name << " /egressChannel: " << o.egressChannelName.name;
 	os << ") ]";
+	return os;
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////
+/////                         Generalized UNI Object implementation                               ////
+/////////////////////////////////////////////////////////////////////////
+
+void GENERALIZED_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
+{
+	buffer >>srcTNA.length >> srcTNA.type >> srcTNA.sub_type >> srcTNA.addr.s_addr;
+	buffer >>destTNA.length >> destTNA.type >> destTNA.sub_type >> destTNA.addr.s_addr;
+	buffer >>egressLabel.length >> egressLabel.type >> egressLabel.sub_type >> egressLabel.logical_port >> egressLabel.label;
+	buffer >>egressLabelUp.length >> egressLabelUp.type >> egressLabelUp.sub_type >> egressLabelUp.logical_port >> egressLabelUp.label;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const GENERALIZED_UNI_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), o.getClassNumber(), 1);
+	buffer <<o.srcTNA.length << o.srcTNA.type << o.srcTNA.sub_type << o.srcTNA.addr.s_addr;
+	buffer << o.destTNA.length << o.destTNA.type << o.destTNA.sub_type << o.destTNA.addr.s_addr;
+	buffer << o.egressLabel.length << o.egressLabel.type << o.egressLabel.sub_type << o.egressLabel.logical_port<< o.egressLabel.label;
+	buffer << o.egressLabelUp.length << o.egressLabelUp.type << o.egressLabelUp.sub_type << o.egressLabelUp.logical_port << o.egressLabelUp.label;
+	return buffer;
+}
+
+ostream& operator<< ( ostream& os, const GENERALIZED_UNI_Object& o ) {
+	char addr_str[20];
+	os <<"[G_UNI Source: " << String( inet_ntoa(o.srcTNA.addr) );
+	os <<" <=> Sestination: " << String( inet_ntoa(o.destTNA.addr) );
+	os <<" (Downstream port:"<< o.egressLabel.logical_port << " /Label:" << o.egressLabel.label;
+	os <<" (Upstream port:"<< o.egressLabelUp.logical_port << " /Label:" << o.egressLabelUp.label;
+	os <<") ]";
 	return os;
 }
 
