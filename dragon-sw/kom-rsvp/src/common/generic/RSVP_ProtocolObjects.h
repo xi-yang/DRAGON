@@ -849,7 +849,7 @@ protected:
 	RSVP_ObjectHeader::ClassNum cNum;
 public:
 	UNI_Object(RSVP_ObjectHeader::ClassNum cn): cNum(cn) {}
-	RSVP_ObjectHeader::ClassNum getClassNumber() { return cNum; }
+	RSVP_ObjectHeader::ClassNum getClassNumber()const { return cNum; }
 };
 
 class DRAGON_UNI_Object: public UNI_Object, public RefObject<DRAGON_UNI_Object> {
