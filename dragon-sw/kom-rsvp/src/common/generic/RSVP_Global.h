@@ -66,6 +66,7 @@ struct RSVP_Global {
 	// API related global constants
 	static const uint16 apiPort = 4000;
 	static const char* const apiName;
+	static const char* const apiUniClientName;
 	static const uint16 apiMTU = 8191;
 	static const TimeValue defaultApiRefresh;
 	// needed for class LogicalInterfaceSet

@@ -74,7 +74,6 @@ void MessageProcessor::processMessage() {
 		RSVP::getApiServer().processMessage( currentMessage, *this );
 		return;
 	}
-
 	if ( currentMessage.getMsgType() == Message::AddLocalId || currentMessage.getMsgType() == Message::DeleteLocalId
             || currentMessage.getMsgType() == Message::RefreshLocalId) {
 		LocalId *lid = currentMessage.getLocalIdObject();
@@ -82,7 +81,15 @@ void MessageProcessor::processMessage() {
 		delete lid;
 		return;
 	}
-
+//Xi2007 >>
+	if ( currentLif == RSVP_Global::rsvp->getApiUniClientLif() ) {
+            SwitchCtrl_Session_SubnetUNI_List::Iterator it = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList.begin();
+            for (; it != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList.end; ++it) {
+                (*it)->receiveAndProcessMessage(currentMessage); //Only one of them should own the message...Polling and checking inside
+            }
+            return;
+	}
+//Xi2007 <<
 #endif
 
 	if ( currentMessage.getMsgType() == Message::ResvConf ) {

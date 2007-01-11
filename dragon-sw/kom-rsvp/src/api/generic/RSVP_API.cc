@@ -94,7 +94,7 @@ void RSVP_API::constructor( uint16 apiPort, NetAddress apiHost ) {
 	apiRefresh = RSVP_Global::defaultApiRefresh;
 
 	stateList = new ApiStateBlockList[sessionHash];
-	apiLif = new LogicalInterfaceUDP( RSVP_Global::apiName, 0, RSVP_Global::apiMTU );
+	apiLif = new LogicalInterfaceUDP( RSVP_Global::apiUniClientName, 0, RSVP_Global::apiMTU );
 	PortList portList; portList.push_back( apiPort );
 	apiLif->configureUDP( 0, apiHost, portList );
 	apiLif->configureRefresh( 0 );

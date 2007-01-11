@@ -68,6 +68,9 @@ class NetworkServiceDaemon {
 		bool retval = routingReady; routingReady = false; return retval;
 	}
 
+	static void registerApiClient_Handle( InterfaceHandle);
+	static void deregisterApiClient_Handle( InterfaceHandle);
+
 	friend class RSVP;                                  // access: buildInterfaceList,queryAndClearAsyncRouting,queryInterfaces,cleanup
 	friend class RSRR;                                  // access: registerRSRR_Handle, deregisterRSRR_Handle
 	friend class RoutingService;                        // access: registerRouting_Handle, deregisterRouting_Handle, getInterfaceBySystemIndex

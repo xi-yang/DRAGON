@@ -389,6 +389,16 @@ void NetworkServiceDaemon::deregisterRouting_Handle( InterfaceHandle fd ) {
 	FD_CLR( fd, &NetworkService::fdmask );
 }
 
+void NetworkServiceDaemon::registerApiClient_Handle( InterfaceHandle fd ) {
+       if (FD_ISSET(fd, &NetworkService::fdmask))    return;
+	FD_SET( fd, &NetworkService::fdmask );
+	if ( fd >= NetworkService::maxSelectFDs ) NetworkService::maxSelectFDs = fd + 1;
+}
+
+void NetworkServiceDaemon::deregisterApiClient_Handle( InterfaceHandle fd ) {
+	FD_CLR( fd, &NetworkService::fdmask );
+}
+
 InterfaceHandle NetworkServiceDaemon::initRawInterfaceIP4( const NetAddress& addr ) {
 #if defined(REAL_NETWORK)
 	InterfaceHandle fd = CHECK( socket( AF_INET, SOCK_RAW, IPPROTO_RSVP ));

@@ -46,6 +46,7 @@ const NetAddress LogicalInterface::loopbackAddress("127.0.0.1");
 const NetAddress LogicalInterface::noGatewayAddress("0.0.0.0");
 const TimeValue RSVP_Global::defaultApiRefresh(120,0);
 const char* const RSVP_Global::apiName = "rsvp-api";
+const char* const RSVP_Global::apiUniClientName = "rsvp-api-client";
 
 // configuration of hashed fuzzy timer system
 sint32 TimerSystem::slotCount = 0;

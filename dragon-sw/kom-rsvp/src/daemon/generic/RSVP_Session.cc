@@ -496,6 +496,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	EXPLICIT_ROUTE_Object* explicitRoute = NULL;
 
 	if (isUniIngressClient) {
+              //Xi007 >> Need to change RSVP_HOP object here using SrcTNA and its peer in the same /30? <<
+              
 		const String ingressChanName = (const char*)uni->getIngressCtrlChannel().name;
 		if (ingressChanName == "implicit")
 			defaultOutLif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)uni->getSrcTNA().local_id);	

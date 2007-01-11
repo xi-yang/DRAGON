@@ -115,6 +115,13 @@ public:
 
 	uint32 getLocalIdByIfName(char* name) const;
 
+//Xi2007 >>
+	uint32 addApiClientInterface(LogicalInterface* lifApiClient) { 
+		lifArray[interfaceCount++] = lifApiClient; 
+		return interfaceCount; 
+	}
+//Xi2007 <<
+
 #if defined(NS2)
 	const LogicalInterface* findInterfaceByOif( const String& ) const;
 #endif
@@ -126,6 +133,7 @@ public:
 #if defined(WITH_API)
 	static API_Server& getApiServer() { assert(apiServer); return *apiServer; }
 	static const LogicalInterface* getApiLif() { assert(apiServer); return RSVP_Global::rsvp->lifArray[0]; }
+	static const LogicalInterface* getApiUniClientLif() { return findInterfaceByName(RSVP_Global::apiUniClientName); }
 #endif
 
 	// stats only
