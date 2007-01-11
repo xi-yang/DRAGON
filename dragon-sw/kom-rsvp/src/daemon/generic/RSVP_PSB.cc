@@ -85,7 +85,7 @@ PSB::PSB( const SENDER_Object& senderTemplate )
 	inLabelRequested = false;
 	inLabel = NULL;
 	explicitRoute = NULL;
-	dragonUni = NULL;
+	uni = NULL;
 	labelSet = NULL;
 	hasSuggestedLabel = false;
 	hasUpstreamInLabel = hasUpstreamOutLabel = false;
@@ -439,7 +439,16 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 	}
 	//We shall apply filtering rules to the labelSet object later. But for now, let's just simply copy it to outgoing PATH messages
 	if (labelSet) message.setLABEL_SET_Object(*labelSet);
-	if (dragonUni) message.setDRAGON_UNI_Object(*dragonUni); //hacks @@@@
+
+	if (uni) { //DRAGON addtion
+           if (uni->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
+           	message.setUNI_Object(*(DRAGON_UNI_Object*)uni);
+           }
+           else {
+           	message.setUNI_Object(*(GENERALIZED_UNI_Object*)uni);
+           }
+	}
+
 	if (hasSessionAttributeObject) message.setSESSION_ATTRIBUTE_Object(sessionAttributeObject);
 
 	if (outLif == *(RSVP_Global::rsvp->getApiLif())){
@@ -480,7 +489,7 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 		outLif.sendMessage( message, gateway);
            else
 		outLif.sendMessage( message, explicitRoute->getAbstractNodeList().front().getAddress(), getSrcAddress(), gateway );
-       else if (message.getDRAGON_UNI_Object() != NULL) //@@@@ hacked
+       else if (message.getUNI_Object() != NULL) //DRAGON addition
 	   	outLif.sendMessage( message, gateway );
 	else
 		outLif.sendMessage( message, getSession().getDestAddress(), getSrcAddress(), gateway );
@@ -491,7 +500,14 @@ void PSB::sendTearMessage() {
 	Message msg( Message::PathTear, TTL, getSession() );
 	msg.setSENDER_TEMPLATE_Object( *this );
 	msg.setSENDER_TSPEC_Object(senderTSpec);
-	if (dragonUni) msg.setDRAGON_UNI_Object(*dragonUni); //hacks @@@@
+	if (uni) { //DRAGON addition
+           if (uni->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
+           	msg.setUNI_Object(*(DRAGON_UNI_Object*)uni);
+           }
+           else {
+           	msg.setUNI_Object(*(GENERALIZED_UNI_Object*)uni);
+           }
+	}
 	LogicalInterfaceSet::ConstIterator lifIter = outLifSet.begin();
 	for ( ;lifIter != outLifSet.end(); ++lifIter ) {
 		msg.setRSVP_HOP_Object(dataOutRsvpHop);
@@ -502,7 +518,7 @@ void PSB::sendTearMessage() {
 		    else
 			(*lifIter)->sendMessage( msg, explicitRoute->getAbstractNodeList().front().getAddress(), getSrcAddress(), gateway );
 		} 
-	       else if (msg.getDRAGON_UNI_Object() != NULL) //@@@@ hacked
+	       else if (msg.getUNI_Object() != NULL) //DRAGON addition
 		   	(*lifIter)->sendMessage( msg, gateway );
 		else
 			(*lifIter)->sendMessage( msg, getSession().getDestAddress(), getSrcAddress(), gateway );
@@ -727,20 +743,49 @@ bool PSB::updateSESSION_ATTRIBUTE_Object( SESSION_ATTRIBUTE_Object sa ) {
 	return true;
 }
 
-bool PSB::updateDRAGON_UNI_Object( DRAGON_UNI_Object* uni ) {
-	if (dragonUni) {
-		if (!uni|| !(*uni == *dragonUni)) {
-			dragonUni->destroy();
+bool PSB::updateUNI_Object( UNI_Object* uni_new ) {
+       if (uni_new->getClassNumber() != uni->getClassNumber())
+           return false;
+	if (uni_new->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
+		updateDRAGON_UNI_Object((DRAGON_UNI_Object*)uni_new)
+	}
+	else {
+		updateGENERALIZED_UNI_Object((GENERALIZED_UNI_Object*)uni_new)
+	}
+       return true;
+}
+
+bool PSB::updateDRAGON_UNI_Object( DRAGON_UNI_Object* uni_new ) {
+	if (uni) {
+		if (!uni_new|| !(*uni_new == *(DRAGON_UNI_Object*)uni)) {
+			(DRAGON_UNI_Object*)uni->destroy();
 		} else {
 			return false;
 		}
-	} else if (!uni) {
+	} else if (!uni_new) {
 		return false;
 	}
-	if (uni)
-		dragonUni = uni->borrow();	
+	if (uni_new)
+		uni = uni_new->borrow();	
 	else
-		dragonUni = NULL;
+		uni = NULL;
+	return true;
+}
+
+bool PSB::updateGENERALIZED_UNI_Object( GENERALIZED_UNI_Object* uni_new ) {
+	if (uni) {
+		if (!uni_new|| !(*uni_new == *(GENERALIZED_UNI_Object*)uni)) {
+			(GENERALIZED_UNI_Object*)uni->destroy();
+		} else {
+			return false;
+		}
+	} else if (!uni_new) {
+		return false;
+	}
+	if (uni_new)
+		uni = uni_new->borrow();	
+	else
+		uni = NULL;
 	return true;
 }
 

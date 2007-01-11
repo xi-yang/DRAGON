@@ -113,7 +113,7 @@ protected:
 	MESSAGE_ID_NACK_List         nackList;
 #endif
 
-	DRAGON_UNI_Object*		DRAGON_UNI_Object_P;
+	UNI_Object*		UNI_Object_P;
 
 	bool checkFlowdescList() const;
 
@@ -133,7 +133,7 @@ protected:
 	void checkEXPLICIT_ROUTE_Object( const EXPLICIT_ROUTE_Object* );
 	void checkLABEL_SET_Object(const LABEL_SET_Object*);
 
-	void checkDRAGON_UNI_Object(DRAGON_UNI_Object*);
+	void checkUNI_Object(UNI_Object*);
 
 	bool checkForFilter();
 	void checkStatus() const;
@@ -143,7 +143,7 @@ public:
 	status(Correct), objectFlags(0),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL), EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
-	, DRAGON_UNI_Object_P(NULL)
+	, UNI_Object_P(NULL)
 	{}
 
 	Message( uint8 msgType, uint8 ttl, const SESSION_Object& session, bool clearE_Police = false )
@@ -151,7 +151,7 @@ public:
 	status(Correct), objectFlags(SESSION), SESSION_Object_O(session),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL) , EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
-	, DRAGON_UNI_Object_P(NULL)
+	, UNI_Object_P(NULL)
 	{
 		length += SESSION_Object::total_size();
 	}
@@ -161,7 +161,7 @@ public:
 	length(headerSize()), status(Correct), objectFlags(MESSAGE_ID_LIST),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL), EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
-	, MESSAGE_ID_LIST_Object_O( 0, epoch ), DRAGON_UNI_Object_P(NULL)
+	, MESSAGE_ID_LIST_Object_O( 0, epoch ), UNI_Object_P(NULL)
 	{
 		length += MESSAGE_ID_LIST_Object_O.total_size();
 	}
@@ -169,7 +169,7 @@ public:
 	status(Correct), objectFlags(0),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL), EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
-	, DRAGON_UNI_Object_P(NULL)
+	, UNI_Object_P(NULL)
 	{}
 #endif
 
@@ -353,17 +353,33 @@ public:
 	}
 #endif
 
+	UNI_Object* getUNI_Object() {
+		return UNI_Object_P;
+	}
 	DRAGON_UNI_Object* getDRAGON_UNI_Object() {
-		return DRAGON_UNI_Object_P;
+		return (DRAGON_UNI_Object*)UNI_Object_P;
 	}
-	void setDRAGON_UNI_Object( DRAGON_UNI_Object& o ) {
-		checkDRAGON_UNI_Object( o.borrow() );
+	GENERALIZED_UNI_Object* getGENERALIZED_UNI_Object() {
+		return (GENERALIZED_UNI_Object*)UNI_Object_P;
 	}
-	void clearDRAGON_UNI_Object() {
-		if (DRAGON_UNI_Object_P){
-			DRAGON_UNI_Object_P->destroy();
-			length -=  DRAGON_UNI_Object_P->total_size();
-			DRAGON_UNI_Object_P = NULL;
+	void setUNI_Object( DRAGON_UNI_Object& o ) {
+		checkUNI_Object( o.borrow() );
+	}
+	void setUNI_Object( GENERALIZED_UNI_Object& o ) {
+		checkUNI_Object( o.borrow() );
+	}
+
+	void clearUNI_Object() {
+		if (UNI_Object_P){
+			if (UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
+				((DRAGON_UNI_Object*)UNI_Object_P)->destroy();
+				length -=  ((DRAGON_UNI_Object*)UNI_Object_P)->total_size();
+			}
+			else {
+				((GENERALIZED_UNI_Object*)UNI_Object_P)->destroy();
+				length -=  ((GENERALIZED_UNI_Object*)UNI_Object_P)->total_size();
+			}
+			UNI_Object_P = NULL;
 		}
 	}
 

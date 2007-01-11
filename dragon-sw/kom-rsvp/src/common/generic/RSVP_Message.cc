@@ -67,9 +67,14 @@ void Message::init() {
 		LABEL_SET_Object_P->destroy();
 		LABEL_SET_Object_P = NULL;
 	}
-	if ( DRAGON_UNI_Object_P) {
-		DRAGON_UNI_Object_P->destroy();
-		DRAGON_UNI_Object_P = NULL;
+	if ( UNI_Object_P) {
+		if (UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
+			((DRAGON_UNI_Object*)UNI_Object_P)->destroy();
+		}
+		else {
+			((GENERALIZED_UNI_Object*)UNI_Object_P)->destroy();
+		}
+		UNI_Object_P = NULL;
 	}
 	RSVP_HOP_Object_O = RSVP_HOP_Object();
 	
@@ -225,7 +230,10 @@ INetworkBuffer& operator>> ( INetworkBuffer& buffer, Message& m ) {
 			m.checkEXPLICIT_ROUTE_Object( new EXPLICIT_ROUTE_Object( buffer, object.getLength() ) );
 			break;
 		case RSVP_ObjectHeader::DRAGON_UNI:
-			m.checkDRAGON_UNI_Object(new DRAGON_UNI_Object(buffer, object.getLength() ) );
+			m.checkUNI_Object(new DRAGON_UNI_Object(buffer, object.getLength() ) );
+			break;
+		case RSVP_ObjectHeader::GENERALIZED_UNI:
+			m.checkUNI_Object(new GENERALIZED_UNI_Object(buffer, object.getLength() ) );
 			break;
 		case RSVP_ObjectHeader::LABEL_SET:
 			m.checkLABEL_SET_Object( new LABEL_SET_Object( buffer, object.getLength() ) );
@@ -325,7 +333,15 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const Message& m ) {
 	if (m.objectFlags & Message::SUGGESTED_LABEL) buffer << m.SUGGESTED_LABEL_Object_O;
 	if (m.objectFlags & Message::UPSTREAM_LABEL) buffer << m.UPSTREAM_LABEL_Object_O;
 	if (m.EXPLICIT_ROUTE_Object_P) buffer << *m.EXPLICIT_ROUTE_Object_P;
-	if (m.DRAGON_UNI_Object_P) buffer << *m.DRAGON_UNI_Object_P;
+    
+	if (m.UNI_Object_P) {
+	    if (m.UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
+               buffer  << *((DRAGON_UNI_Object*)m.UNI_Object_P);
+	    }
+	    else {
+               buffer  << *((GENERALIZED_UNI_Object*)m.UNI_Object_P);
+	    }
+	}
 	if (m.LABEL_SET_Object_P) buffer << *m.LABEL_SET_Object_P;
 	if (m.objectFlags & Message::SESSION_ATTRIBUTE) buffer << m.SESSION_ATTRIBUTE_Object_O;
 	if (m.objectFlags & Message::ERROR_SPEC) buffer << m.ERROR_SPEC_Object_O;
@@ -398,8 +414,8 @@ void Message::checkLABEL_SET_Object( const LABEL_SET_Object* o ) {
 	CHECK_OBJECT_REF(LABEL_SET)
 }
 
-void Message::checkDRAGON_UNI_Object( DRAGON_UNI_Object* o ) {
-	CHECK_OBJECT_REF(DRAGON_UNI)
+void Message::checkUNI_Object( UNI_Object* o ) {
+      CHECK_OBJECT_REF(UNI)
 }
 
 
@@ -593,7 +609,15 @@ ostream& operator<< ( ostream& os, const Message& m ) {
 	}
 	if (m.objectFlags & Message::LABEL_REQUEST) os << endl << " LABEL_REQUEST:" << m.LABEL_REQUEST_Object_O;
 	if (m.EXPLICIT_ROUTE_Object_P) os << endl << " EXPLICIT_ROUTE:" << *m.EXPLICIT_ROUTE_Object_P;
-	if (m.DRAGON_UNI_Object_P) os << endl << " DRAGON_UNI:" << *m.DRAGON_UNI_Object_P;
+
+	if (m.UNI_Object_P) {
+	    if (m.UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
+               os << endl << " DRAGON_UNI:"  << *((DRAGON_UNI_Object*)m.UNI_Object_P);
+	    }
+	    else {
+               os << endl << " GENERALIZED_UNI:"  << *((GENERALIZED_UNI_Object*)m.UNI_Object_P);
+	    }
+	}
 	if (m.LABEL_SET_Object_P) os << endl << "LABEL_SET: " << *m.LABEL_SET_Object_P;
 	if (m.objectFlags & Message::SUGGESTED_LABEL) os << endl << "SUGGESTED_LABEL: " << m.SUGGESTED_LABEL_Object_O;
 	if (m.objectFlags & Message::UPSTREAM_LABEL) os << endl << "UPSTREAM_LABEL: " << m.UPSTREAM_LABEL_Object_O;
