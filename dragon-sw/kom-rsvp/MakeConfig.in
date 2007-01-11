@@ -100,7 +100,7 @@ EXAMPLES_DIR = $(RSVP_BUILD_DIR)/examples
 VPATH_DIR = $(wildcard $(RSVP_BUILD_DIR)/objects/*) $(BIN_DIR) $(LIB_DIR) $(LIBJAVA_DIR)
 
 LIB_OBJECTS = $(RSVP_BUILD_DIR)/objects/common/*.o $(RSVP_BUILD_DIR)/objects/api/*.o
-DAEMON_OBJECTS = $(RSVP_BUILD_DIR)/objects/common/*.o $(RSVP_BUILD_DIR)/objects/daemon/*.o
+DAEMON_OBJECTS = $(RSVP_BUILD_DIR)/objects/common/*.o $(RSVP_BUILD_DIR)/objects/daemon/*.o  $(RSVP_BUILD_DIR)/objects/api/RSVP_API.o
 JAVA_OBJECTS = $(RSVP_BUILD_DIR)/objects/java/*.o
 NS2_OBJECTS = $(RSVP_BUILD_DIR)/objects/ns2/*.o $(RSVP_BUILD_DIR)/objects/clients/*.o
 
