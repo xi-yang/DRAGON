@@ -915,7 +915,7 @@ public:
 	CtrlChannel& getIngressCtrlChannel(){ return ingressChannelName; }
 	CtrlChannel& getEgressCtrlChannel(){ return egressChannelName; }
 	DRAGON_UNI_Object* borrow() { RefObject<DRAGON_UNI_Object>::borrow(); return this; }	
-	const DRAGON_UNI_Object* borrow()const { RefObject<DRAGON_UNI_Object>::borrow(); return (const DRAGON_UNI_Object)this; }
+	const DRAGON_UNI_Object* borrow()const { RefObject<DRAGON_UNI_Object>::borrow(); return (const DRAGON_UNI_Object*)this; }
 
 	bool operator==(const DRAGON_UNI_Object& s){
 		return (memcmp(&srcTNA, &s.srcTNA, sizeof(struct LocalIdTNA)) == 0 
@@ -1009,7 +1009,7 @@ public:
 	EgressLabel_Subobject& getEgressLabel(){ return egressLabel; }
 	EgressLabel_Subobject& getEgressLabelUpstream(){ return egressLabelUp; }
 	GENERALIZED_UNI_Object* borrow() { RefObject<GENERALIZED_UNI_Object>::borrow(); return this; }	
-	const GENERALIZED_UNI_Object* borrow()const { RefObject<GENERALIZED_UNI_Object>::borrow(); return (const GENERALIZED_UNI_Object)this; }
+	const GENERALIZED_UNI_Object* borrow()const { RefObject<GENERALIZED_UNI_Object>::borrow(); return (const GENERALIZED_UNI_Object*)this; }
 	bool operator==(const GENERALIZED_UNI_Object& s){
 		return (memcmp(&srcTNA, &s.srcTNA, sizeof(IPv4TNA_Subobject)) == 0 
 			&& memcmp(&destTNA, &s.destTNA, sizeof(IPv4TNA_Subobject)) == 0
