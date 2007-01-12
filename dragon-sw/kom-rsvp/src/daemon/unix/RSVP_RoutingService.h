@@ -95,6 +95,8 @@ public:
 		GetLoopbackAddress = 133, 		// Get its loopback address
 		HoldVtagbyOSPF = 134, 		// Hold or release a VLAN Tag
 		HoldBandwidthbyOSPF = 135, 		// Hold or release a portion of bandwidth
+		GetSubnetUNIDataByOSPF = 136,	// Get Subnet UNI data associated with a OSPF interface
+
 	};
 	RoutingService();
 	~RoutingService();
@@ -115,6 +117,7 @@ public:
 	const void holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold = true);
 	const void holdVtagbyOSPF(u_int32_t port, u_int32_t vtag, bool hold = true);
 	NetAddress getLoopbackAddress();
+	bool getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint16 uniID, NetAddress& ctrlIP, uint32& logicalPort, uint32& egressLabel, uint32& upstreamLabel);
 	const LogicalInterface* getUnicastRoute( const NetAddress&, NetAddress& );
 	const LogicalInterface* getMulticastRoute( const NetAddress&, const NetAddress&, LogicalInterfaceSet& );
 	bool getAsyncMulticastRoutingEvent( NetAddress&, NetAddress&, const LogicalInterface*&, LogicalInterfaceSet& );

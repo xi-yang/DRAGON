@@ -83,6 +83,9 @@ typedef SimpleList<LocalId> LocalIdList;
 #define LOCAL_ID_TYPE_TAGGED_GROUP (uint16)0x3
 #define LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL (uint16)0x4
 
+#define LOCAL_ID_TYPE_SUBNET_UNI_SRC (uint16)0x10 	//Source (sender)
+#define LOCAL_ID_TYPE_SUBNET_UNI_DEST (uint16)0x11	//Destination (Recv)
+
 #define SET_LOCALID_REFRESH(X) X.type |= 0x80
 #define RESET_LOCALID_REFRESH(X) X.type &= (~0x80)
 #define IS_LOCALID_REFRESHED(X) ((X.type & 0x80) != 0)
