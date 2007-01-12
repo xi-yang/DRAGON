@@ -486,8 +486,7 @@ const void RoutingService::holdVtagbyOSPF(u_int32_t port, u_int32_t vtag, bool h
 	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 }
 
-bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint16 uniID, 
-	NetAddress& ctrlIP, uint32& logicalPort, uint32& egressLabel, uint32& upstreamLabel) {
+bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint16 uniID, SubnetUNI_Data& uniData) {
 	uint8 message = GetSubnetUNIDataByOSPF;
 	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32) + sizeof(uint16);
 	ONetworkBuffer obuffer(msgLength);
@@ -498,15 +497,12 @@ bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint
 	read(ospf_socket, (void *)&msgLength, sizeof(uint8));
 	read(ospf_socket, (void *)&message, sizeof(uint8));
 	if (msgLength <= sizeof(uint8)*2)
-	{
-		return false
-	}
-	
+		return false;
 	INetworkBuffer ibuffer(msgLength-sizeof(uint8));
 	msgLength = read(ospf_socket, ibuffer.getWriteBuffer(), ibuffer.getSize());
 	ibuffer.setWriteLength(msgLength);
 	//Process response messages
-	ibuffer >> message >> ctrlIP >> logicalPort  >> egressLabel >>upstreamLabel;	
+	ibuffer >> message >> uniData.tna_ipv4 >> uniData.logical_port >> uniData.egress_label >>uniData.upstream_label;	
 	return true;
 }
 
