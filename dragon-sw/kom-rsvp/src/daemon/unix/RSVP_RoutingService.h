@@ -34,7 +34,7 @@
 #include "RSVP_BasicTypes.h"
 #include "RSVP_Lists.h"
 #include "RSVP_LogicalInterfaceSet.h"
-#include "SwtichCtrl_Session_SubnetUNI.h"
+#include "SwitchCtrl_Session_SubnetUNI.h"
 
 class RoutingEntry {
 	NetAddress	dest;
