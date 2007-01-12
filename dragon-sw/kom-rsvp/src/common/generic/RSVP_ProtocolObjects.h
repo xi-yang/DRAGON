@@ -846,13 +846,15 @@ struct CtrlChannel {
 
 class UNI_Object {
 protected:
+	int refCounter;
 	RSVP_ObjectHeader::ClassNum cNum;
 public:
-	UNI_Object(RSVP_ObjectHeader::ClassNum cn): cNum(cn) {}
+	UNI_Object(RSVP_ObjectHeader::ClassNum cn): refCounter(1), cNum(cn) { }
 	RSVP_ObjectHeader::ClassNum getClassNumber()const { return cNum; }
+	virtual ~UNI_Object() {  assert(refCounter == 1); }
 };
 
-class DRAGON_UNI_Object: public UNI_Object, public RefObject<DRAGON_UNI_Object> {
+class DRAGON_UNI_Object: public UNI_Object {
 	LocalIdTNA srcTNA;
 	LocalIdTNA destTNA;
 	struct VlanTag vlanTag;
@@ -863,7 +865,11 @@ class DRAGON_UNI_Object: public UNI_Object, public RefObject<DRAGON_UNI_Object> 
 	uint16 size() const{ 
 		return (sizeof(struct LocalIdTNA)*2 + sizeof(struct VlanTag) + sizeof(struct CtrlChannel)*2);
 	}
-	REF_OBJECT_METHODS(DRAGON_UNI_Object)
+
+protected:
+	virtual ~DRAGON_UNI_Object () {} 
+	DRAGON_UNI_Object ( const DRAGON_UNI_Object& ); 
+	DRAGON_UNI_Object & operator= ( const DRAGON_UNI_Object & );
 
 public:
 	DRAGON_UNI_Object(): UNI_Object(RSVP_ObjectHeader::DRAGON_UNI) {
@@ -907,6 +913,17 @@ public:
 	DRAGON_UNI_Object(INetworkBuffer& buffer, uint16 len): UNI_Object(RSVP_ObjectHeader::DRAGON_UNI)  {
 		readFromBuffer(buffer, len );
 	}
+
+	DRAGON_UNI_Object* borrow() { refCounter++; return this; }	
+	const DRAGON_UNI_Object* borrow()const { refCounter++; return (const DRAGON_UNI_Object*)this; }
+	void destroy()const { 
+		if (refCounter == 1) {
+			delete this;
+		} else {
+			refCounter -= 1;
+		}
+	}
+
 	void readFromBuffer( INetworkBuffer& buffer, uint16 len);
 	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
 	LocalIdTNA& getSrcTNA() { return srcTNA; }
@@ -914,19 +931,14 @@ public:
 	VlanTag& getVlanTag(){ return vlanTag; }
 	CtrlChannel& getIngressCtrlChannel(){ return ingressChannelName; }
 	CtrlChannel& getEgressCtrlChannel(){ return egressChannelName; }
-	DRAGON_UNI_Object* borrow() { RefObject<DRAGON_UNI_Object>::borrow(); return this; }	
-	const DRAGON_UNI_Object* borrow()const { RefObject<DRAGON_UNI_Object>::borrow(); return (const DRAGON_UNI_Object*)this; }
-
 	bool operator==(const DRAGON_UNI_Object& s){
 		return (memcmp(&srcTNA, &s.srcTNA, sizeof(struct LocalIdTNA)) == 0 
 			&& memcmp(&destTNA, &s.destTNA, sizeof(struct LocalIdTNA)) == 0
 			&& memcmp(&vlanTag, &s.vlanTag, sizeof(struct VlanTag)) == 0
 			&& memcmp(&ingressChannelName, &s.ingressChannelName, sizeof(struct CtrlChannel)) == 0
 			&& memcmp(&egressChannelName, &s.egressChannelName, sizeof(struct CtrlChannel)) == 0	);
-
 	}
 };
-extern inline DRAGON_UNI_Object::~DRAGON_UNI_Object() { }
 
 //////////////////////////////////////////////////////////////////////////
 /////                 Generalized  UNI Object definitions                                            /////
@@ -953,7 +965,10 @@ class GENERALIZED_UNI_Object:public UNI_Object, public RefObject<GENERALIZED_UNI
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const GENERALIZED_UNI_Object& );
 	uint16 size() const{ return (sizeof(IPv4TNA_Subobject)*2 + sizeof(EgressLabel_Subobject)); }
 
-	REF_OBJECT_METHODS(GENERALIZED_UNI_Object)
+protected:
+	virtual ~GENERALIZED_UNI_Object () {} 
+	GENERALIZED_UNI_Object ( const GENERALIZED_UNI_Object& ); 
+	GENERALIZED_UNI_Object & operator= ( const GENERALIZED_UNI_Object & );
 
 public:
 	GENERALIZED_UNI_Object(): UNI_Object(RSVP_ObjectHeader::GENERALIZED_UNI)  {
@@ -1002,14 +1017,23 @@ public:
 	GENERALIZED_UNI_Object(INetworkBuffer& buffer, uint16 len): UNI_Object(RSVP_ObjectHeader::GENERALIZED_UNI) {
 		readFromBuffer(buffer, len );
 	}
+
+	GENERALIZED_UNI_Object* borrow() { refCounter++; return this; }	
+	const GENERALIZED_UNI_Object* borrow()const { refCounter++; return (const GENERALIZED_UNI_Object*)this; }
+	void destroy()const { 
+		if (refCounter == 1) {
+			delete this;
+		} else {
+			refCounter -= 1;
+		}
+	}
+
 	void readFromBuffer( INetworkBuffer& buffer, uint16 len);
 	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
 	IPv4TNA_Subobject& getSrcTNA() { return srcTNA; }
 	IPv4TNA_Subobject& getDestTNA(){ return destTNA; }
 	EgressLabel_Subobject& getEgressLabel(){ return egressLabel; }
 	EgressLabel_Subobject& getEgressLabelUpstream(){ return egressLabelUp; }
-	GENERALIZED_UNI_Object* borrow() { RefObject<GENERALIZED_UNI_Object>::borrow(); return this; }	
-	const GENERALIZED_UNI_Object* borrow()const { RefObject<GENERALIZED_UNI_Object>::borrow(); return (const GENERALIZED_UNI_Object*)this; }
 	bool operator==(const GENERALIZED_UNI_Object& s){
 		return (memcmp(&srcTNA, &s.srcTNA, sizeof(IPv4TNA_Subobject)) == 0 
 			&& memcmp(&destTNA, &s.destTNA, sizeof(IPv4TNA_Subobject)) == 0
