@@ -747,10 +747,10 @@ bool PSB::updateUNI_Object( UNI_Object* uni_new ) {
        if (uni_new->getClassNumber() != uni->getClassNumber())
            return false;
 	if (uni_new->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
-		updateDRAGON_UNI_Object((DRAGON_UNI_Object*)uni_new)
+		updateDRAGON_UNI_Object((DRAGON_UNI_Object*)uni_new);
 	}
 	else {
-		updateGENERALIZED_UNI_Object((GENERALIZED_UNI_Object*)uni_new)
+		updateGENERALIZED_UNI_Object((GENERALIZED_UNI_Object*)uni_new);
 	}
        return true;
 }
@@ -758,7 +758,7 @@ bool PSB::updateUNI_Object( UNI_Object* uni_new ) {
 bool PSB::updateDRAGON_UNI_Object( DRAGON_UNI_Object* uni_new ) {
 	if (uni) {
 		if (!uni_new|| !(*uni_new == *(DRAGON_UNI_Object*)uni)) {
-			(DRAGON_UNI_Object*)uni->destroy();
+			((DRAGON_UNI_Object*)uni)->destroy();
 		} else {
 			return false;
 		}
@@ -775,7 +775,7 @@ bool PSB::updateDRAGON_UNI_Object( DRAGON_UNI_Object* uni_new ) {
 bool PSB::updateGENERALIZED_UNI_Object( GENERALIZED_UNI_Object* uni_new ) {
 	if (uni) {
 		if (!uni_new|| !(*uni_new == *(GENERALIZED_UNI_Object*)uni)) {
-			(GENERALIZED_UNI_Object*)uni->destroy();
+			((GENERALIZED_UNI_Object*)uni)->destroy();
 		} else {
 			return false;
 		}

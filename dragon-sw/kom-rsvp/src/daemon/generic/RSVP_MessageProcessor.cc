@@ -318,7 +318,7 @@ void MessageProcessor::refreshReservations() {
 			resvMsg->setRSVP_HOP_Object( (*psbIter)->getDataInRsvpHop() );
 			resvMsg->setTIME_VALUES_Object( inLif.getRefreshInterval() );
 			if (currentMessage.getDRAGON_UNI_Object())
-				resvMsg->setDRAGON_UNI_Object(*currentMessage.getDRAGON_UNI_Object());
+				resvMsg->setUNI_Object(*currentMessage.getDRAGON_UNI_Object());
 			//$$$$ Always return the suggested LABEL_Object in RESV messaage (important for VLSR--Movaz interop)
 			if ( (*psbIter)->hasSUGGESTED_LABEL_Object() ) {
                             const SUGGESTED_LABEL_Object & suggestedLabelObject = (*psbIter)->getSUGGESTED_LABEL_Object();

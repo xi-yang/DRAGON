@@ -415,7 +415,23 @@ void Message::checkLABEL_SET_Object( const LABEL_SET_Object* o ) {
 }
 
 void Message::checkUNI_Object( UNI_Object* o ) {
-      CHECK_OBJECT_REF(UNI)
+	if (UNI_Object_P ) {
+	    if (UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
+		((DRAGON_UNI_Object*)o)->destroy();
+	    }
+	    else {
+		((GENERALIZED_UNI_Object*)o)->destroy();
+	    }
+    	    status = Drop;
+            ERROR(1)( Log::Error, "ERROR in Message: duplicate UNI_object" );
+	}
+	UNI_Object_P = o;
+	if (UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
+		length += ((DRAGON_UNI_Object*)o)->total_size();
+	}
+	else {
+		length += ((GENERALIZED_UNI_Object*)o)->total_size();
+	}
 }
 
 
