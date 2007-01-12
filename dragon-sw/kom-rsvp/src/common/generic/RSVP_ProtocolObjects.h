@@ -915,8 +915,8 @@ public:
 	}
 
 	DRAGON_UNI_Object* borrow() { refCounter++; return this; }	
-	const DRAGON_UNI_Object* borrow()const { refCounter++; return (const DRAGON_UNI_Object*)this; }
-	void destroy()const { 
+	//const DRAGON_UNI_Object* borrow(){ refCounter++; return (const DRAGON_UNI_Object*)this; }
+	void destroy() { 
 		if (refCounter == 1) {
 			delete this;
 		} else {
@@ -955,7 +955,7 @@ typedef struct  {
 	uint32 label;
 } EgressLabel_Subobject;
 
-class GENERALIZED_UNI_Object:public UNI_Object, public RefObject<GENERALIZED_UNI_Object> {
+class GENERALIZED_UNI_Object:public UNI_Object {
 	IPv4TNA_Subobject srcTNA;
 	IPv4TNA_Subobject destTNA;
 	EgressLabel_Subobject egressLabel;
@@ -1019,8 +1019,8 @@ public:
 	}
 
 	GENERALIZED_UNI_Object* borrow() { refCounter++; return this; }	
-	const GENERALIZED_UNI_Object* borrow()const { refCounter++; return (const GENERALIZED_UNI_Object*)this; }
-	void destroy()const { 
+	//const GENERALIZED_UNI_Object* borrow() { refCounter++; return (const GENERALIZED_UNI_Object*)this; }
+	void destroy() { 
 		if (refCounter == 1) {
 			delete this;
 		} else {
@@ -1041,7 +1041,6 @@ public:
 			&& memcmp(&egressLabelUp, &s.egressLabelUp, sizeof(EgressLabel_Subobject)) == 0);
 	}
 };
-extern inline GENERALIZED_UNI_Object::~GENERALIZED_UNI_Object() { }
 
 #endif /* _RSVP_ProtocolObjects_h_ */
 
