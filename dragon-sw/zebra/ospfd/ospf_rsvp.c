@@ -204,8 +204,10 @@ out:
 		stream_putc(s, length);
 		stream_putc(s, FindDataByInterface);
 		stream_put_ipv4(s, data_addr.s_addr);
+		/*
 		if (data_local_id == 0 && (fd >> 16) != 0)
 			data_local_id = fd;
+		*/
 		stream_putl(s, data_local_id);
 	}
 	else{
