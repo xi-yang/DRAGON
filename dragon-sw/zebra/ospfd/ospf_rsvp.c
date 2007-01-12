@@ -73,6 +73,7 @@ enum OspfRsvpMessage {
 	GetLoopbackAddress = 133,		// Get its loopback address
 	HoldVtagbyOSPF = 134,		// Hold or release a VLAN Tag
 	HoldBandwidthbyOSPF = 135, 		// Hold or release a portion of bandwidth
+	GetSubnetUNIDataByOSPF = 136,	// Get Subnet UNI data associated with a OSPF interface
 };
 
 
@@ -812,6 +813,66 @@ ospf_rsvp_get_loopback_addr(int fd)
 }
 
 
+void
+ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int16_t uni_id, int fd)
+{
+	struct ospf_interface *oi;
+	struct ospf *ospf;
+	struct ospf_area *area;
+	listnode node;
+	struct route_node *rn;
+	struct ospf_lsa *lsa;
+	struct in_addr area_id;
+	struct te_link_subtlv_link_ifswcap* ifswcap;
+	struct link_ifswcap_specific_subnet_uni* uni_data = NULL;
+	struct stream *s = NULL;
+	u_int8_t length;
+		
+	area = NULL;
+	if (om->ospf){
+		area_id.s_addr = OSPF_AREA_BACKBONE;
+		area = ospf_area_lookup_by_area_id(getdata(listhead(om->ospf)), area_id);
+	}
+	if (area)
+	  {
+		LSDB_LOOP (area->te_lsdb->db, rn, lsa)
+		{
+		  /* If dest is the *router ID * of the remote node */
+		  if (lsa->tepara_ptr && lsa->tepara_ptr->p_lclif_ipaddr.value.s_addr == data_if->s_addr)
+		   {
+		   	LIST_LOOP(&lsa->tepara_ptr->p_link_ifswcap_list, ifswcap, node)
+	   		{
+	   			if (ifswcap && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC && 
+				    ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version == IFSWCAP_SPECIFIC_SUBNET_UNI )
+   				{
+					uni_data = &ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni;
+					break;
+   				}
+			
+	   		}
+			if (uni_data != NULL)
+				break;
+		   }
+		}
+	}
+
+	length = sizeof(u_int8_t)*2;
+	s = stream_new(length);
+	if (uni_data)
+	{
+		stream_putl(s, uni_data->control_channel_ipv4);
+		stream_putl(s, uni_data->logical_port_number);
+		stream_putl(s, uni_data->egress_label_downstream);
+		stream_putl(s, uni_data->egress_label_upstream);
+		length += sizeof(u_int32_t)*4;
+	}
+	stream_putc(s, length);
+	stream_putc(s, GetSubnetUNIDataByOSPF);
+	write (fd, STREAM_DATA(s), length);
+	stream_free(s);
+	return;
+}
+
 /* Handler of RSVP request. */
 int
 ospf_rsvp_read (struct thread *thread)
@@ -827,6 +888,7 @@ ospf_rsvp_read (struct thread *thread)
   u_int32_t port, bw_uint32;
   u_int32_t vtag;
   u_int8_t hold_flag;
+  u_int16_t uni_id;
   float bandwidth, tmpbw;
   
   /* Get thread data.  Reset reading thread because I'm running. */
@@ -916,7 +978,13 @@ ospf_rsvp_read (struct thread *thread)
    case GetLoopbackAddress:
    	ospf_rsvp_get_loopback_addr(sock);
 	break;
-	
+
+   case GetSubnetUNIDataByOSPF:
+	addr.s_addr = stream_get_ipv4(s);
+	uni_id = stream_getw (s);
+	ospf_rsvp_get_subnet_uni_data(&addr, uni_id, sock);
+	break;
+
     default:
       zlog_info ("Zebra received unknown command %d", command);
       write (sock, STREAM_DATA(s), length);

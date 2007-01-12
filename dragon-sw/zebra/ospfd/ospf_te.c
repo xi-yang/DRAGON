@@ -1301,7 +1301,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
 	{
 	    vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
 	    vty_out (vty, "       --> Subnet-UNI ID: %d%s", ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id), VTY_NEWLINE);
-	    vty_out (vty, "       --> Control channel IP: %s; Data port: %d%s", inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.control_channel_ipv4), 
+	    vty_out (vty, "       --> Control IP: %s; Data port: %d%s", inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.control_channel_ipv4), 
 			ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.logical_port_number), VTY_NEWLINE);
 	    vty_out (vty, "       --> Egress label: %d; Upstream label: %d%s", ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_downstream), 
 			ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_upstream), VTY_NEWLINE);
@@ -1418,7 +1418,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	    subnet_uni = (struct link_ifswcap_specific_subnet_uni *)v;
 	    vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
 	    vty_out (vty, "       --> Subnet-UNI ID: %d%s", ntohs(subnet_uni->subnet_uni_id), VTY_NEWLINE);
-	    vty_out (vty, "       --> Control channel IP: %s; Data port: %d%s", inet_ntoa (*(struct in_addr*)&subnet_uni->control_channel_ipv4), 
+	    vty_out (vty, "       --> Control IP: %s; Data port: %d%s", inet_ntoa (*(struct in_addr*)&subnet_uni->control_channel_ipv4), 
 			ntohl(subnet_uni->logical_port_number), VTY_NEWLINE);
 	    vty_out (vty, "       --> Egress label: %d; Upstream label: %d%s", ntohl(subnet_uni->egress_label_downstream), 
 			ntohl(subnet_uni->egress_label_upstream), VTY_NEWLINE);
