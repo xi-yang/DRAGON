@@ -384,8 +384,10 @@ bool RoutingService::findDataByInterface(const LogicalInterface& lif, NetAddress
 	msgLength = read(ospf_socket, ibuffer.getWriteBuffer(), ibuffer.getSize());
 	ibuffer.setWriteLength(msgLength);
 	uint32 aid;
-	ibuffer >> ip >> aid;	
-	if ((ifID >> 16) == 0)
+	ibuffer >> ip >> aid;
+
+	//if ((ifID >> 16) == 0)
+	if (ifID != 0)
 		ifID = aid;
 	return true;
 }
