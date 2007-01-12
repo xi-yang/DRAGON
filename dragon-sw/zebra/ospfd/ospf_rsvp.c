@@ -838,9 +838,9 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int16_t uni_id, int fd)
 		LSDB_LOOP (area->te_lsdb->db, rn, lsa)
 		{
 		  /* If dest is the *router ID * of the remote node */
-		  if (lsa->tepara_ptr && lsa->tepara_ptr->p_lclif_ipaddr.value.s_addr == data_if->s_addr)
+		  if (lsa->tepara_ptr && lsa->tepara_ptr->p_lclif_ipaddr && lsa->tepara_ptr->p_lclif_ipaddr->value.s_addr == data_if->s_addr)
 		   {
-		   	LIST_LOOP(&lsa->tepara_ptr->p_link_ifswcap_list, ifswcap, node)
+		   	LIST_LOOP(lsa->tepara_ptr->p_link_ifswcap_list, ifswcap, node)
 	   		{
 	   			if (ifswcap && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC && 
 				    ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version == IFSWCAP_SPECIFIC_SUBNET_UNI )
