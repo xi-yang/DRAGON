@@ -852,6 +852,9 @@ public:
 	UNI_Object(RSVP_ObjectHeader::ClassNum cn): refCounter(1), cNum(cn) { }
 	RSVP_ObjectHeader::ClassNum getClassNumber()const { return cNum; }
 	virtual ~UNI_Object() {  assert(refCounter == 1); }
+
+//	virtual uint32 getSrcRawAddress() = 0;
+//	virtual uint32 getDestRawAddress() = 0;
 };
 
 class DRAGON_UNI_Object: public UNI_Object {
@@ -927,7 +930,7 @@ public:
 	void readFromBuffer( INetworkBuffer& buffer, uint16 len);
 	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
 	LocalIdTNA& getSrcTNA() { return srcTNA; }
-	LocalIdTNA& getDestTNA(){ return destTNA; }
+	LocalIdTNA& getDestTNA(){ return destTNA; }	
 	VlanTag& getVlanTag(){ return vlanTag; }
 	CtrlChannel& getIngressCtrlChannel(){ return ingressChannelName; }
 	CtrlChannel& getEgressCtrlChannel(){ return egressChannelName; }

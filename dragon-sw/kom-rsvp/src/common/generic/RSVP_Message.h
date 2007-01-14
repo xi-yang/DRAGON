@@ -357,10 +357,16 @@ public:
 		return UNI_Object_P;
 	}
 	DRAGON_UNI_Object* getDRAGON_UNI_Object() {
-		return (DRAGON_UNI_Object*)UNI_Object_P;
+		if (UNI_Object_P && UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI)
+			return (DRAGON_UNI_Object*)UNI_Object_P;
+		else
+			return NULL;
 	}
 	GENERALIZED_UNI_Object* getGENERALIZED_UNI_Object() {
-		return (GENERALIZED_UNI_Object*)UNI_Object_P;
+		if (UNI_Object_P && UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::GENERALIZED_UNI)
+			return (GENERALIZED_UNI_Object*)UNI_Object_P;
+		else
+			return NULL;
 	}
 	void setUNI_Object( DRAGON_UNI_Object& o ) {
 		checkUNI_Object( o.borrow() );

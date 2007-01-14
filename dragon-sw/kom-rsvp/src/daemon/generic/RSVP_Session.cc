@@ -470,18 +470,27 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress())));
 #endif
 
-	DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
-	bool isUniIngressClient = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
-					&& uni != NULL);
-	bool isUniIngress = (&hop.getLogicalInterface() != RSVP_Global::rsvp->getApiLif()
-					&& uni != NULL && uni->getSrcTNA().addr.s_addr == loopback.rawAddress());
-	bool isUniEgress = (&hop.getLogicalInterface() != RSVP_Global::rsvp->getApiLif()
-					&& uni != NULL && uni->getDestTNA().addr.s_addr == loopback.rawAddress());
-	bool isUniEgressClient = (!isUniIngressClient && !isUniIngress && !isUniEgress && uni != NULL
-		&& RSVP_Global::rsvp->getApiLif() != NULL && msg.getEXPLICIT_ROUTE_Object() == NULL);
-		
-	if (isUniIngress) fromLocalAPI  = true;
+	DRAGON_UNI_Object* dragonUni = ((Message*)&msg)->getDRAGON_UNI_Object();
+	GENERALIZED_UNI_Object* generalizedUni = ((Message*)&msg)->getGENERALIZED_UNI_Object();
+	assert (dragonUni == NULL || generalizedUni == NULL); // cannot have two types of UNI at the same time
 
+	//DRAGON UNI
+	bool isDragonUniIngressClient = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
+					&& dragonUni != NULL);
+	bool isDragonUniIngress = (&hop.getLogicalInterface() != RSVP_Global::rsvp->getApiLif()
+					&& dragonUni != NULL && dragonUni->getSrcTNA().addr.s_addr == loopback.rawAddress());
+	bool isDragonUniEgress = (&hop.getLogicalInterface() != RSVP_Global::rsvp->getApiLif()
+					&& dragonUni != NULL && dragonUni->getDestTNA().addr.s_addr == loopback.rawAddress());
+	bool isDragonUniEgressClient = (!isDragonUniIngressClient && !isDragonUniIngress && !isDragonUniEgress && dragonUni != NULL
+		&& RSVP_Global::rsvp->getApiLif() != NULL && msg.getEXPLICIT_ROUTE_Object() == NULL);
+	if (isDragonUniIngress) fromLocalAPI  = true;
+
+	//GENERALIZED UNI (clients only)
+	bool isGeneralizedUniIngressClient = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif() && generalizedUni != NULL
+		&& msg.getRSVP_HOP_Object().getAddress() == NetAddress(0x100007f)); //0x100007f == "127.0.0.1"
+	//???? More criteria to determine egress client (destination)?
+	bool isGeneralizedUniEgressClient = (RSVP_Global::rsvp->getApiLif() != NULL && generalizedUni != NULL	&& !isGeneralizedUniIngressClient); 
+	
 	LogicalInterfaceSet RtOutL;
 	const LogicalInterface* RtInIf = &hop.getLogicalInterface();
 	const LogicalInterface* defaultOutLif = NULL;
@@ -492,15 +501,13 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	RSVP_HOP_Object dataInRsvpHop;
 	RSVP_HOP_Object dataOutRsvpHop;
 	VLSRRoute vLSRoute;
-
 	EXPLICIT_ROUTE_Object* explicitRoute = NULL;
 
-	if (isUniIngressClient) {
-              //Xi007 >> Need to change RSVP_HOP object here using SrcTNA and its peer in the same /30? <<
-              
-		const String ingressChanName = (const char*)uni->getIngressCtrlChannel().name;
+	// DRAGON && GENERALIZED UNI processing here could be combined !! @@@@
+	if (isDragonUniIngressClient) {              
+		const String ingressChanName = (const char*)dragonUni->getIngressCtrlChannel().name;
 		if (ingressChanName == "implicit")
-			defaultOutLif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)uni->getSrcTNA().local_id);	
+			defaultOutLif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)dragonUni->getSrcTNA().local_id);	
 		else
 			defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(ingressChanName);
 		if (!defaultOutLif) {
@@ -510,13 +517,19 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		RtOutL.insert_unique( defaultOutLif );
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 		RSVP_HOP_TLV_SUB_Object tlv (NetAddress(0));
-		dataOutRsvpHop = RSVP_HOP_Object(NetAddress(uni->getSrcTNA().addr.s_addr), defaultOutLif->getLIH(), tlv);
-		senderTemplate.setSrcAddress(NetAddress(uni->getSrcTNA().addr.s_addr));
+		dataOutRsvpHop = RSVP_HOP_Object(NetAddress(dragonUni->getSrcTNA().addr.s_addr), defaultOutLif->getLIH(), tlv);
+		senderTemplate.setSrcAddress(NetAddress(dragonUni->getSrcTNA().addr.s_addr));
 	} 
-	else if (isUniEgress) {
-		const String egressChanName = (const char*)uni->getEgressCtrlChannel().name;
+	else if (isDragonUniEgress) {
+		// DRAGON_UNI only at VLSR ingress UNI-N
+		if (dragonUni && dragonUni->getClassNumber() != RSVP_ObjectHeader::DRAGON_UNI){
+			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
+			return;
+		}
+
+		const String egressChanName = (const char*)dragonUni->getEgressCtrlChannel().name;
 		if (egressChanName == "implicit")
-			defaultOutLif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)uni->getDestTNA().local_id);	
+			defaultOutLif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)dragonUni->getDestTNA().local_id);	
 		else
 			defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(egressChanName);
 		if (!defaultOutLif) {
@@ -551,12 +564,33 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		RtOutL.insert_unique( defaultOutLif );
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 	}
-	else if (isUniEgressClient) {
+	else if (isDragonUniEgressClient ) {
 		defaultOutLif = RSVP_Global::rsvp->getApiLif();
 		RtOutL.insert_unique( defaultOutLif );
 		gateway = LogicalInterface::noGatewayAddress;
 	}
+	else if (isGeneralizedUniEgressClient ) {
+		defaultOutLif = RSVP_Global::rsvp->getApiLif();
+		RtOutL.insert_unique( defaultOutLif );
+		gateway = LogicalInterface::noGatewayAddress;
+
+		//@@@@ Converting RSVP_HOP address ???
+	}
+	else if (isGeneralizedUniIngressClient) {
+		RtOutL.insert_unique( defaultOutLif );
+		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
+
+		//@@@@ Converting RSVP_HOP address ???
+		RSVP_HOP_TLV_SUB_Object tlv (NetAddress(0)); //$$$$ SrcTNA also?
+		dataOutRsvpHop = RSVP_HOP_Object(NetAddress(generalizedUni->getSrcTNA().addr.s_addr), defaultOutLif->getLIH(), tlv);
+		senderTemplate.setSrcAddress(NetAddress(generalizedUni->getSrcTNA().addr.s_addr));
+	}
 	else { //regular RSVP (network) Path message
+
+		//No GENEALIZED UNI supported at VLSR UNI-N side
+		if (generalizedUni){
+			LOG(1)(Log::Routing, "Warning: GENEALIZED UNI Object at VLSR UNI-N is not supported!");
+		}
 
 		if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
@@ -624,7 +658,9 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					explicitRoute = NULL;
 				}
 			}
-		}
+		}// End of if(isGeneralizedUniClient) ...
+
+		//Deal with G_UNI ??? @@@@
 
 		if (explicitRoute && (!processERO(msg, hop, explicitRoute, fromLocalAPI, dataInRsvpHop, dataOutRsvpHop, vLSRoute)))
 		{
@@ -914,8 +950,11 @@ search_psb:
 	if (labelSetObj) cPSB->updateLABEL_SET_Object(labelSetObj->borrow());
 
 	//$$$$ DRAGON UNI
-	cPSB->updateDRAGON_UNI_Object(uni);
-	//$$$$ DRAGON UNI End
+	if (dragonUni)
+		cPSB->updateDRAGON_UNI_Object(dragonUni);
+	//$$$$ GENERALIZED UNI
+	if (generalizedUni)
+		cPSB->updateGENERALIZED_UNI_Object(generalizedUni);
 
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {
