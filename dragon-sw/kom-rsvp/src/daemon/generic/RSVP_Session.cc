@@ -209,7 +209,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
                 //E2E tagged VLAN processing (inbound) @DRAGON
 		if (explicitRoute->getAbstractNodeList().size() > 1 
 		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
-		&& explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+		&& ( (explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
+			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
+			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) )
 		{
 			inUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
                      //   RSVP_HOP_TLV_SUB_Object t(inRtId);
@@ -240,8 +242,12 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	while (explicitRoute->getAbstractNodeList().size() )
 	{
 		ifId = explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::IPv4?0:explicitRoute->getAbstractNodeList().front().getInterfaceID();
-		if ((ifId >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+		if ( (ifId >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
+			|| (ifId >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
+			|| (ifId >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST )
+		{
 			ifId = 0;
+		}
 		NetAddress hopAddr = explicitRoute->getAbstractNodeList().front().getAddress();
 		if (hopAddr != RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()) {
 			outLif = RSVP_Global::rsvp->getRoutingService().findInterfaceByData(hopAddr, ifId); 
@@ -258,8 +264,12 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		// E2E tagged VLAN processing (outbound) @ DRAGON
 		if (explicitRoute->getAbstractNodeList().size() > 1 
 		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
-		&& explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16 == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+		&& ( (explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
+			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
+			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) )
+		{
 			outUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
+		}
 	}
 
 	if (!explicitRoute->getAbstractNodeList().empty()){
@@ -296,8 +306,12 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		}
 		
 		ifId = explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::IPv4?0:explicitRoute->getAbstractNodeList().front().getInterfaceID();
-		if ((ifId >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+		if ( (ifId >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
+			|| (ifId >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
+			|| (ifId >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST )
+		{
 			ifId = 0;
+		}
 		outLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
 			     explicitRoute->getAbstractNodeList().front().getAddress(), ifId, gw);
 		if (!outLif)
@@ -323,6 +337,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		if (dataOutRsvpHop.getAddress() ==NetAddress(0) || ((!fromLocalAPI) && dataOutRsvpHop.getAddress()==NetAddress(0)))
 			return false;		
 	}
+
 	//check if this represents a VLSR route
 	if ((fromLocalAPI && inUnumIfID!= 0 && outRtId != NetAddress(0)) ||
           (!fromLocalAPI && inRtId != NetAddress(0) && outUnumIfID != 0) ||
@@ -333,10 +348,37 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		SwitchCtrl_Session* ssNew = NULL;
 		VLSR_Route vlsr;
 		memset(&vlsr, 0, sizeof(VLSR_Route));
+
+		//$$$$ should have error check here. Note that when no VLAN configured on interfaces, 
+		//         there might be unreported error from OSPFD
+
+		//>>Xi2007<< @@@@ getVLSRRoutebyOSPF may need speical handling on LOCAL_ID_TYPE_SUBNET_UNI_SRC/DEST
 		RSVP_Global::rsvp->getRoutingService().getVLSRRoutebyOSPF(inRtId, outRtId, inUnumIfID, outUnumIfID, vlsr);
-		//$$$$ should have error check here. Note that when no VLAN configured on interfaces, there might be unreported error from OSPFD
 		vlsr.bandwidth = msg.getSENDER_TSPEC_Object().get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
-		if (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0))
+
+		//creating source G_UNI client session
+		assert((inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST));
+		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)) {
+			//Fetch SubnetUNI data @@@@
+			//Create SubnetUNI Session (as Source)
+			//Pass SubnetUNI data
+			//Store SubnetUNI Session handle ...
+				//----> To be called at end of processPATH message (and before UpdateRoutingInfo)
+		} 
+
+		//creating destination G_UNI client session
+		assert((outUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_SRC));
+		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)) {
+			//Fetch SubnetUNI data @@@@
+			//Create SubnetUNI Session (as Destination)
+			//Pass SubnetUNI data
+			//Store SubnetUNI Session handle ...
+				//----> To be called at end of processPATH message (and before UpdateRoutingInfo)
+		}
+
+		if ( (inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_SRC) 
+			&& (outUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST)
+			&& (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0) )
 		{
 			//prepare SwitchCtrl session connection
 			sessionIter = RSVP_Global::switchController->getSessionList().begin();
@@ -704,8 +746,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			// message is from local API -> set sender address if not set
 			if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
 			|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
-			&& (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL))
+			&& ( (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
+				|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
+				|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST))
+			{
 				defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, 0, gateway);
+			}
 			else if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID)
 			{
 				uint32 uNumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
@@ -771,8 +817,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				RtInIf = &hop.getLogicalInterface();
 				if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
 				|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
-				&& (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL))
+				&& ( (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
+					|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
+					|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST))
+				{
 					defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, 0, gateway);
+				}
 				else if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID)
 				{
 					uint32 uNumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
@@ -953,9 +1003,10 @@ search_psb:
 	if (dragonUni)
 		cPSB->updateDRAGON_UNI_Object(dragonUni);
 	//$$$$ GENERALIZED UNI
-	if (generalizedUni)
+	if (generalizedUni) {
 		cPSB->updateGENERALIZED_UNI_Object(generalizedUni);
-
+		//@@@@@@@@ Kicking off SubnetUNI PATH message here!!!!
+	}
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {
 		Path_Refresh_Needed = true;
