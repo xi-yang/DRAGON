@@ -357,8 +357,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		vlsr.bandwidth = msg.getSENDER_TSPEC_Object().get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
 
 		//creating source G_UNI client session
-		assert((inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST));
-		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)) {
+		assert((inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST);
+		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
 			//Fetch SubnetUNI data @@@@
 			//Create SubnetUNI Session (as Source)
 			//Pass SubnetUNI data
@@ -367,8 +367,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		} 
 
 		//creating destination G_UNI client session
-		assert((outUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_SRC));
-		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)) {
+		assert((outUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_SRC);
+		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
 			//Fetch SubnetUNI data @@@@
 			//Create SubnetUNI Session (as Destination)
 			//Pass SubnetUNI data
@@ -376,9 +376,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				//----> To be called at end of processPATH message (and before UpdateRoutingInfo)
 		}
 
-		if ( (inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_SRC) 
-			&& (outUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST)
-			&& (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0) )
+		if ( (inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_SRC
+			&& (outUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST
+			&& (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0) ) )
 		{
 			//prepare SwitchCtrl session connection
 			sessionIter = RSVP_Global::switchController->getSessionList().begin();
@@ -748,7 +748,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 			&& ( (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
 				|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
-				|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST))
+				|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)) )
 			{
 				defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, 0, gateway);
 			}
@@ -819,7 +819,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 				&& ( (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
 					|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
-					|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST))
+					|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)) )
 				{
 					defaultOutLif = RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(destAddress, 0, gateway);
 				}
