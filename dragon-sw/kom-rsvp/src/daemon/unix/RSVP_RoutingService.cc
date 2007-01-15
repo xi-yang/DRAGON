@@ -386,8 +386,7 @@ bool RoutingService::findDataByInterface(const LogicalInterface& lif, NetAddress
 	uint32 aid;
 	ibuffer >> ip >> aid;
 
-	//if ((ifID >> 16) == 0)
-	if (ifID != 0)
+	if ((ifID >> 16) == 0)
 		ifID = aid;
 	return true;
 }
