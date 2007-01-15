@@ -106,8 +106,8 @@ protected:
 	//UNI signaling states (along with PATH/RESV/ERR/TEAR messages); To be handled by uniRsvpSrcUpcall/uniRsvpDestUpcall.
 	
 private:	
-	inline void internalInit ();
-	inline void setSubnetUniData(SubnetUNI_Data& data, uint16 id, float bw, uint32 tna, uint32 port, 
+	void internalInit ();
+	void setSubnetUniData(SubnetUNI_Data& data, uint16 id, float bw, uint32 tna, uint32 port, 
 		uint32 egress_label, uint32 upstream_label, char* cc_name=NULL);
 };
 
