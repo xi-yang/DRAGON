@@ -367,11 +367,28 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
 			//Fetch SubnetUNI data @@@@
 			memset(&subnetUniData, 0, sizeof(subnetUniData));
-			RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(inRtId, (uint16)inUnumIfID, subnetUniData);
-			//Create SubnetUNI Session (as Source)
-			//Pass SubnetUNI data
-			//Store SubnetUNI Session handle ...
-				//----> To be called at end of processPATH message (and before UpdateRoutingInfo)
+			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(inRtId, (uint16)inUnumIfID, subnetUniData) ) {
+				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
+				memset(&vlsr, 0, sizeof(VLSR_Route)); 
+				vLSRoute.push_back(vlsr);                    
+				return false;				
+			}
+				
+			if (!pSubnetUniSrc){
+				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Ingress) for ", vlsr.switchID);
+				//Create SubnetUNI Session (as Source)
+				ssNew = new SwitchCtrl_Session_SubnetUNI(String("Subnet-UNI-Ingress"), vlsr.switchID, true);
+				RSVP_Global::switchController->addSession(ssNew);
+				//Store SubnetUNI Session handle ...
+				pSubnetUniSrc = (SwitchCtrl_Session_SubnetUNI*)ssNew;
+				//Pass SubnetUNI data
+				pSubnetUniSrc->setSubnetUniSrc(subnetUniData.subnet_id, subnetUniData.ethernet_bw, 
+					subnetUniData.tna_ipv4, subnetUniData.logical_port, subnetUniData.egress_label, subnetUniData.upstream_label);
+				//kickoff UNI session
+				pSubnetUniSrc->deregisterRsvpApiClient();
+				pSubnetUniSrc->initUniRsvpApiSession();
+			}
+
 		} 
 
 		//creating destination G_UNI client session
@@ -379,17 +396,34 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {			
 			//Fetch SubnetUNI data @@@@
 			memset(&subnetUniData, 0, sizeof(subnetUniData));
-			RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(onRtId, (uint16)outUnumIfID, subnetUniData);
-			//Create SubnetUNI Session (as Destination)
-			//Pass SubnetUNI data
-			//Store SubnetUNI Session handle ...
-				//----> To be called at end of processPATH message (and before UpdateRoutingInfo)
+			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(onRtId, (uint16)outUnumIfID, subnetUniData) ) {
+				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
+				memset(&vlsr, 0, sizeof(VLSR_Route)); 
+				vLSRoute.push_back(vlsr);                    
+				return false;				
+			}
+				
+			if (!pSubnetUniDest){
+				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Egress) for ", vlsr.switchID);
+				//Create SubnetUNI Session (as Destination)
+				ssNew = new SwitchCtrl_Session_SubnetUNI(String("Subnet-UNI-Egress"), vlsr.switchID, false);
+				RSVP_Global::switchController->addSession(ssNew);
+				//Store SubnetUNI Session handle ...
+				pSubnetUniDest = (SwitchCtrl_Session_SubnetUNI*)ssNew;
+				//Pass SubnetUNI data
+				pSubnetUniDest->setSubnetUniDest(subnetUniData.subnet_id, subnetUniData.ethernet_bw, 
+					subnetUniData.tna_ipv4, subnetUniData.logical_port, subnetUniData.egress_label, subnetUniData.upstream_label);
+				//kickoff UNI session
+				pSubnetUniDest->deregisterRsvpApiClient();
+				pSubnetUniDest->initUniRsvpApiSession();
+			}
+
 		}
 
-		if ( (inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_SRC
-			&& (outUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST
-			&& (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0) ) )
-		{
+		if ( (inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC || (outUnumIfID >> 16)  == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
+			vLSRoute.push_back(vlsr);
+		}
+		else if (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0)) {
 			//prepare SwitchCtrl session connection
 			sessionIter = RSVP_Global::switchController->getSessionList().begin();
 			foundSession = false;
@@ -1012,10 +1046,14 @@ search_psb:
 	//$$$$ DRAGON UNI
 	if (dragonUni)
 		cPSB->updateDRAGON_UNI_Object(dragonUni);
-	//$$$$ GENERALIZED UNI
+	//@@@@>>Xi2007<<
+	//$$$$ GENERALIZED UNI 
 	if (generalizedUni) {
 		cPSB->updateGENERALIZED_UNI_Object(generalizedUni);
-		//@@@@@@@@ Kicking off SubnetUNI PATH message here!!!!
+		//Kicking off SubnetUNI PATH message here!!!!
+		if (pSubnetUniSrc){
+			pSubnetUniSrc->createRsvpUniPath();
+		}
 	}
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {

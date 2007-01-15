@@ -56,9 +56,9 @@ public:
 	virtual void disconnectSwitch() { return; } //NOP
 
 	//Preparing UNI parameters
-	void setSubnetUniSrc(uint16 id, float bw, uint32 tna, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
+	void setSubnetUniSrc(uint16 id, float bw, uint32 tna, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL)
 		{ setSubnetUniData(subnetUniSrc, id, bw, tna, port, egress_label, upstream_label, cc_name); }
-	void setSubnetUniDest(uint16 id, float bw, uint32 tna, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
+	void setSubnetUniDest(uint16 id, float bw, uint32 tna, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL)
 		{ setSubnetUniData(subnetUniDest, id, bw, tna, port, egress_label, upstream_label, cc_name); }
 
 	void registerRsvpApiClient(); // by both source and destination
