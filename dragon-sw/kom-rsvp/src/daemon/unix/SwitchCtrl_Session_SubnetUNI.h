@@ -82,6 +82,18 @@ public:
 
 	static SwitchCtrl_Session_SubnetUNI_List* subnetUniApiClientList ;
 
+
+	//////// ---- To be overriden for edge control ---- ////////
+	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID)  { return false; }
+	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID) { return false; }
+	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID) { return false; }
+	virtual bool hook_createVLAN(const uint32 vlanID) { return false; }
+	virtual bool hook_removeVLAN(const uint32 vlanID) { return false; }
+	virtual bool hook_isVLANEmpty(const vlanPortMap &vpm) { return false; }
+	virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars) { return false; }
+	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port) { return false; }
+	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID) { return false; }
+
 protected:
 
 	bool isSource; //true --> isSender == 1

@@ -179,11 +179,11 @@ public:
 	virtual bool hook_removeVLAN(const uint32 vlanID) = 0;
 	virtual bool hook_isVLANEmpty(const vlanPortMap &vpm) = 0;
 	virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars) = 0;
-	virtual bool hook_createVlanInterfaceToIDRefTable(vlanRefIDList &convList) { return true; }
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port) = 0;
 	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID) = 0;
 	virtual uint32 hook_convertVLANInterfaceToID(uint32 id) { return id; }
 	virtual uint32 hook_convertVLANIDToInterface(uint32 id) { return id; }
+	virtual bool hook_createVlanInterfaceToIDRefTable(vlanRefIDList &convList) { return true; }
 
 protected:
 	String sessionName;
