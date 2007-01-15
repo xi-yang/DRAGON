@@ -872,18 +872,17 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int16_t uni_id, int fd)
 		}
 	}
 
-	length = sizeof(u_int8_t)*2;
+	length = sizeof(u_int8_t)*2 + (uni_data == NULL ? 0 : sizeof(u_int32_t)*4);
 	s = stream_new(length);
+	stream_putc(s, length);
+	stream_putc(s, GetSubnetUNIDataByOSPF);
 	if (uni_data)
 	{
 		stream_putl(s, uni_data->control_channel_ipv4);
 		stream_putl(s, uni_data->logical_port_number);
 		stream_putl(s, uni_data->egress_label_downstream);
 		stream_putl(s, uni_data->egress_label_upstream);
-		length += sizeof(u_int32_t)*4;
 	}
-	stream_putc(s, length);
-	stream_putc(s, GetSubnetUNIDataByOSPF);
 	write (fd, STREAM_DATA(s), length);
 	stream_free(s);
 	return;
