@@ -375,7 +375,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				vLSRoute.push_back(vlsr);                    
 				return false;				
 			}
-				
+			subnetUniData.ethernet_bw = vlsr.bandwidth;
+
 			if (!pSubnetUniSrc){
 				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Ingress) for ", vlsr.switchID);
 				//Create SubnetUNI Session (as Source)
@@ -404,6 +405,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				vLSRoute.push_back(vlsr);                    
 				return false;				
 			}
+			subnetUniData.ethernet_bw = vlsr.bandwidth;
 				
 			if (!pSubnetUniDest){
 				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Egress) for ", vlsr.switchID);
