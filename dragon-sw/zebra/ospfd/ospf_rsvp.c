@@ -712,6 +712,19 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		/* Send message.  */
 		write (fd, STREAM_DATA(s), length);             
        }
+       else if ( (inPort >> 16) == 0x10 || (outPort >> 16) == 0x11) //>>Xi2007<< hack
+        {
+		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
+		s = stream_new(length);
+		stream_putc(s, length);
+		stream_putc(s, GetVLSRRoutebyOSPF);
+		stream_put_ipv4(s, 0);
+		stream_putl(s, inPort);
+		stream_putl(s, outPort);
+		stream_putl(s, 0);
+		/* Send message.  */
+		write (fd, STREAM_DATA(s), length);
+        }
        else
 	{
 		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
@@ -844,8 +857,9 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int16_t uni_id, int fd)
 		   {
 		   	LIST_LOOP(lsa->tepara_ptr->p_link_ifswcap_list, ifswcap, node)
 	   		{
-	   			if (ifswcap && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC && 
-				    ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version == IFSWCAP_SPECIFIC_SUBNET_UNI )
+	   			if (ifswcap && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC
+				    && ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) == IFSWCAP_SPECIFIC_SUBNET_UNI 
+				    && ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id) == uni_id)
    				{
 					uni_data = &ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni;
 					break;
