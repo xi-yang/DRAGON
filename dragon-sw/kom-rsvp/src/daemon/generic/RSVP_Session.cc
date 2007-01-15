@@ -46,6 +46,7 @@
 #include "RSVP_TrafficControl.h"
 #include "NARB_APIClient.h"
 #include "SwitchCtrl_Global.h"
+#include "SwitchCtrl_Session_SubnetUNI.h"
 
 // #define BETWEEN_APIS 1
 
@@ -377,7 +378,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			if (!pSubnetUniSrc){
 				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Ingress) for ", vlsr.switchID);
 				//Create SubnetUNI Session (as Source)
-				ssNew = new SwitchCtrl_Session_SubnetUNI(String("Subnet-UNI-Ingress"), vlsr.switchID, true);
+				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(String("Subnet-UNI-Ingress"), vlsr.switchID, true));
 				RSVP_Global::switchController->addSession(ssNew);
 				//Store SubnetUNI Session handle ...
 				pSubnetUniSrc = (SwitchCtrl_Session_SubnetUNI*)ssNew;
@@ -396,7 +397,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {			
 			//Fetch SubnetUNI data @@@@
 			memset(&subnetUniData, 0, sizeof(subnetUniData));
-			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(onRtId, (uint16)outUnumIfID, subnetUniData) ) {
+			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(outRtId, (uint16)outUnumIfID, subnetUniData) ) {
 				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vLSRoute.push_back(vlsr);                    
@@ -406,7 +407,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			if (!pSubnetUniDest){
 				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Egress) for ", vlsr.switchID);
 				//Create SubnetUNI Session (as Destination)
-				ssNew = new SwitchCtrl_Session_SubnetUNI(String("Subnet-UNI-Egress"), vlsr.switchID, false);
+				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(String("Subnet-UNI-Egress"), vlsr.switchID, false));
 				RSVP_Global::switchController->addSession(ssNew);
 				//Store SubnetUNI Session handle ...
 				pSubnetUniDest = (SwitchCtrl_Session_SubnetUNI*)ssNew;
