@@ -275,7 +275,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
 			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) )
 		{
-			outUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
+			if (outUnumIfID == 0) //>>Xi2007<<
+				outUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
 		}
 	}
 
