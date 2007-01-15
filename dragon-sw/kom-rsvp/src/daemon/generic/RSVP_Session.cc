@@ -387,7 +387,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				pSubnetUniSrc->setSubnetUniSrc(subnetUniData.subnet_id, subnetUniData.ethernet_bw, 
 					subnetUniData.tna_ipv4, subnetUniData.logical_port, subnetUniData.egress_label, subnetUniData.upstream_label);
 				//kickoff UNI session
-				pSubnetUniSrc->deregisterRsvpApiClient();
+				pSubnetUniSrc->registerRsvpApiClient();
 				pSubnetUniSrc->initUniRsvpApiSession();
 			}
 
@@ -416,7 +416,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				pSubnetUniDest->setSubnetUniDest(subnetUniData.subnet_id, subnetUniData.ethernet_bw, 
 					subnetUniData.tna_ipv4, subnetUniData.logical_port, subnetUniData.egress_label, subnetUniData.upstream_label);
 				//kickoff UNI session
-				pSubnetUniDest->deregisterRsvpApiClient();
+				pSubnetUniDest->registerRsvpApiClient();
 				pSubnetUniDest->initUniRsvpApiSession();
 			}
 
@@ -1052,11 +1052,8 @@ search_psb:
 	//$$$$ GENERALIZED UNI 
 	if (generalizedUni) {
 		cPSB->updateGENERALIZED_UNI_Object(generalizedUni);
-		//Kicking off SubnetUNI PATH message here!!!!
-		if (pSubnetUniSrc){
-			pSubnetUniSrc->createRsvpUniPath();
-		}
 	}
+
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {
 		Path_Refresh_Needed = true;
@@ -1112,6 +1109,12 @@ update_basic_psb:
 #endif
 
 	cPSB->setTimeoutTime( msg.getTIME_VALUES_Object().getRefreshPeriod() );
+
+	//@@@@ >>Xi2007<<
+	//Kicking off SubnetUNI PATH message here!!!!
+	if (pSubnetUniSrc){
+		pSubnetUniSrc->createRsvpUniPath();
+	}
 
 	// update outgoing interfaces of PSB and maintain relations
 	// between PSBs, RSBs, and OutISBs; update TC, if necessary
