@@ -42,6 +42,7 @@ class LogicalInterfaceSet;
 class LogicalInterface;
 class OutISB;
 class NARB_APIClient;
+class SwitchCtrl_Session_SubnetUNI;
 
 typedef Relationship1toMANY<Session,PSB,PSB_List,DoOnEmptyDelete1> RelationshipSession_PSB;
 typedef Relationship1toMANY<Session,PHopSB,PHOP_List> RelationshipSession_PHopSB;
@@ -69,6 +70,10 @@ class Session :	public RelationshipSession_PSB,
 
 	//NARB client
 	NARB_APIClient* narbClient;
+
+    //Subnet UNI Session handles
+    SwitchCtrl_Session_SubnetUNI* pSubnetUniSrc;
+    SwitchCtrl_Session_SubnetUNI* pSubnetUniDest;
 
 	PHopSB* findOrCreatePHopSB( Hop&, uint32 );
 

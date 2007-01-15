@@ -57,6 +57,7 @@ Session::Session( const SESSION_Object &session) : SESSION_Object(session),
 	gw = LogicalInterface::noGatewayAddress;
 	biDir = false;
 	narbClient = NULL;
+	pSubnetUniSrc = pSubnetUniDest = NULL;
 }
 
 Session::~Session() {
@@ -65,6 +66,10 @@ Session::~Session() {
 	RSVP_Global::rsvp->getMPLS().deleteExplicitRouteBySession((uint32)this); //@@@@ use pointer address as unique ID (DRAGON)
 	if (narbClient)
 		delete narbClient;
+	if (pSubnetUniSrc)
+		delete pSubnetUniSrc;
+	if (pSubnetUniDest)
+		delete pSubnetUniDest;
 }
 
 void Session::deleteAll() {
@@ -186,7 +191,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	uint32 outUnumIfID = 0;
 	NetAddress inRtId = NetAddress(0);
 	NetAddress outRtId = NetAddress(0);
-       NetAddress gw;
+    NetAddress gw;
+    SubnetUNI_Data subnetUniData;
 
 	if (!fromLocalAPI){
 		if (!RSVP_Global::rsvp->getRoutingService().findDataByInterface(hop.getLogicalInterface(), inRtId, inUnumIfID))
@@ -360,6 +366,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		assert((inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST);
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
 			//Fetch SubnetUNI data @@@@
+			memset(&subnetUniData, 0, sizeof(subnetUniData));
+			RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(inRtId, (uint16)inUnumIfID, subnetUniData);
 			//Create SubnetUNI Session (as Source)
 			//Pass SubnetUNI data
 			//Store SubnetUNI Session handle ...
@@ -368,8 +376,10 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
 		//creating destination G_UNI client session
 		assert((outUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_SRC);
-		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
+		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {			
 			//Fetch SubnetUNI data @@@@
+			memset(&subnetUniData, 0, sizeof(subnetUniData));
+			RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(onRtId, (uint16)outUnumIfID, subnetUniData);
 			//Create SubnetUNI Session (as Destination)
 			//Pass SubnetUNI data
 			//Store SubnetUNI Session handle ...
