@@ -180,7 +180,9 @@ protected:
 	TimeValue apiRefresh;
 	uint16 apiPort;
 	ApiStateBlockList* stateList;
+
 	static LogicalInterfaceUDP* apiLif;
+	static int apiRefCounter;
 
 	void process( Message& , zUpcall upcall = NULL);
 	static void refreshSession( const SESSION_Object& session, const TimeValue& = 0 );

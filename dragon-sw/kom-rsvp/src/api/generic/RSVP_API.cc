@@ -41,7 +41,8 @@
 #include "RSVP_PacketHeader.h"
 
 LogicalInterfaceUDP* RSVP_API::apiLif = NULL;
-
+int RSVP_API::apiRefCounter = 0;
+	
 inline ApiStateBlockList& RSVP_API::getStateList( const SESSION_Object& s ) {
 	uint32 hash = s.getDestAddress().getHashValue(sessionHash);
 	return stateList[hash];
@@ -68,13 +69,15 @@ RSVP_API::RSVP_API( const String& confFile, uint32 sessionHash )
 
 void RSVP_API::constructor( uint16 apiPort, NetAddress apiHost ) {
 
-	if (apiLif) {
-		FATAL(1)( Log::Fatal, "FATAL INTERNAL ERROR: only one instance of RSVP_API may be created" );
-		abortProcess();
-	}
+	//@@@@ hack! >>Xi2007<<
+	//if (apiLif) {
+	//	FATAL(1)( Log::Fatal, "FATAL INTERNAL ERROR: only one instance of RSVP_API may be created" );
+	//	abortProcess();
+	//}
 
-	// do global initializations
-	RSVP_Global::init();
+	//@@@@ hack! >>Xi2007<<
+	if (!apiLif) // do global initializations
+		RSVP_Global::init();
 
 #if !defined(NS2)
 	if ( apiPort == 0 ) apiPort = RSVP_Global::apiPort;
@@ -84,12 +87,22 @@ void RSVP_API::constructor( uint16 apiPort, NetAddress apiHost ) {
 	apiRefresh = RSVP_Global::defaultApiRefresh;
 
 	stateList = new ApiStateBlockList[sessionHash];
-	apiLif = new LogicalInterfaceUDP( RSVP_Global::apiUniClientName, 0, RSVP_Global::apiMTU );
-	PortList portList; portList.push_back( apiPort );
-	apiLif->configureUDP( 0, apiHost, portList );
-	apiLif->configureRefresh( 0 );
-	apiLif->initWithPort();
-	LOG(2)( Log::API, "API: ", *apiLif );
+
+	//@@@@ hack! >>Xi2007<<
+	if (!apiLif) {
+		apiLif = new LogicalInterfaceUDP( RSVP_Global::apiUniClientName, 0, RSVP_Global::apiMTU );
+		PortList portList; portList.push_back( apiPort );
+		apiLif->configureUDP( 0, apiHost, portList );
+		apiLif->configureRefresh( 0 );
+		apiLif->initWithPort();	
+		LOG(2)( Log::API, "new API: ", *apiLif );
+	}
+	else {
+		LOG(2)( Log::API, "use existing API: ", *apiLif );
+	}
+
+	//@@@@ hack! >>Xi2007<<
+	apiRefCounter++;
 }
 
 RSVP_API::~RSVP_API() {
@@ -104,7 +117,12 @@ RSVP_API::~RSVP_API() {
 		}
 	}
 	delete [] stateList;
-	delete apiLif; apiLif = NULL;
+
+	//@@@@ hack! >>Xi2007<<
+	apiRefCounter--;
+	if (apiRefCounter <= 0) {
+		delete apiLif; apiLif = NULL;
+	}
 }
 
 void RSVP_API::run( const bool& endFlag ) {
