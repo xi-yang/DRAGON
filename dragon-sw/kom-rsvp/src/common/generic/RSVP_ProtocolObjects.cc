@@ -690,7 +690,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const GENERALIZED_UNI_Objec
 ostream& operator<< ( ostream& os, const GENERALIZED_UNI_Object& o ) {
 	char addr_str[20];
 	os <<"[G_UNI Source: " << String( inet_ntoa(o.srcTNA.addr) );
-	os <<" <=> Sestination: " << String( inet_ntoa(o.destTNA.addr) );
+	os <<" <=> Destination: " << String( inet_ntoa(o.destTNA.addr) );
 	os <<" (Downstream port:"<< o.egressLabel.logical_port << " /Label:" << o.egressLabel.label;
 	os <<" (Upstream port:"<< o.egressLabelUp.logical_port << " /Label:" << o.egressLabelUp.label;
 	os <<") ]";
