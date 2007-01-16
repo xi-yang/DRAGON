@@ -76,6 +76,7 @@ public:
 	void releaseRsvpPath(); //PTEAR by source and RTEAR by destination
 	void refreshUniRsvpSession(); //SRefresh by source
 
+	uint8 getUniState() { return uniState; }
 	//Upcall for source/destination client
 	static void uniRsvpSrcUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession
 	static void uniRsvpDestUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession
@@ -104,7 +105,8 @@ protected:
 	SubnetUNI_Data subnetUniDest; //needed for source UNI client
 
 	//UNI signaling states (along with PATH/RESV/ERR/TEAR messages); To be handled by uniRsvpSrcUpcall/uniRsvpDestUpcall.
-	
+	uint8 uniState; //Message::Type 
+
 private:	
 	void internalInit ();
 	void setSubnetUniData(SubnetUNI_Data& data, uint16 id, float bw, uint32 tna, uint32 port, 

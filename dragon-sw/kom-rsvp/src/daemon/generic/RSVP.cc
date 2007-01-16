@@ -272,7 +272,7 @@ int RSVP::main() {
 	while (!endFlag) {
 		const LogicalInterface* currentLif = NetworkServiceDaemon::queryInterfaces();
 		if ( currentLif ) {
-                                           assert( !currentLif->isDisabled() );
+			assert( !currentLif->isDisabled() );
 			RSVP_Global::messageProcessor->readCurrentMessage( *currentLif );
 		} else if ( NetworkServiceDaemon::queryAndClearAsyncUnicastRouting() ) {
 			NetAddress dest, gateway;

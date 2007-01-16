@@ -48,6 +48,10 @@
 //#include "SNMP_Session.h"
 //#include "CLI_Session.h"
 
+//@@@@ Xi2007 >>
+ONetworkBuffer MessageEntry::obuffer;
+//@@@@ Xi2007 <<
+
 MessageProcessor::MessageProcessor() : ibuffer(LogicalInterface::maxPayloadLength),
 	sendingHop(NULL), currentLif(NULL), incomingLif(NULL),
 	currentSession(NULL), confirmOutISB(NULL), confirmMsg(NULL), resvMsg(NULL),
@@ -58,10 +62,17 @@ MessageProcessor::MessageProcessor() : ibuffer(LogicalInterface::maxPayloadLengt
 #if defined(ONEPASS_RESERVATION)
 	onepassPSB = NULL;
 #endif
+
+	msgQueue = new MessageQueue;
 }
 
 MessageProcessor::~MessageProcessor() {
 	// needed later, why though? ;-)
+
+	if (msgQueue) {
+		delete msgQueue;
+		msgQueue = NULL;
+	}
 }
 
 void MessageProcessor::processMessage() {
@@ -591,6 +602,8 @@ inline void MessageProcessor::finishAndSendConfirmMsg() {
 }
 
 void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
+	MessageEntry *msgEntry = NULL;
+
 	ibuffer.init();
 	currentLif = cLif.receiveBuffer( ibuffer, currentHeader );
 	if ( currentLif ) {
@@ -609,7 +622,35 @@ void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
 				else
 					currentLif->sendMessage( currentMessage, currentHeader.getSrcAddress() );
 			} else if ( checkCurrentLif() ) {
-				processMessage();
+				//@@@@ Xi2007 >>
+				bool processNow = true;
+				currentSession = RSVP_Global::rsvp->findSession( currentMessage.getSESSION_Object(), false );
+				if (currentSession && currentSession->pSubnetUniSrc) {
+					switch (currentSession->pSubnetUniSrc->getUniState()) {
+					case Message::Resv:
+					case Message::ResvConf:
+					case Message::PathErr:
+					case Message::PathTear:
+					case Message::ResvTear:
+						//Message OK for processing since UNI session has gone thru a whole cycle
+						break;
+					default:
+						processNow = false;
+
+						// search for currentSession in msgQueue $$$$
+						// if existing, break; --> no duplicate !!
+
+						//otherwise enqueue current Message while UNI session is pending for return
+						msgEntry = new MessageEntry;
+						msgEntry->PreserveMessage(currentLif, currentSession, currentMessage);
+						msgQueue.push_front(msgEntry);
+						break;
+					}
+				}
+				//@@@@ Xi2007 <<
+				if (processNow) {
+					processMessage();
+				}
 			} else if ( currentLif ) {
 				if ( currentMessage.getMsgType() == Message::Resv ) {
 					// LIH does not match interface -> no such PATH state available
@@ -748,4 +789,6 @@ void MessageProcessor::registerAPI( const SESSION_Object& session ) {
 	currentSession = RSVP_Global::rsvp->findSession( session );
 	if ( currentSession ) currentSession->registerAPI();
 }
+
+
 #endif

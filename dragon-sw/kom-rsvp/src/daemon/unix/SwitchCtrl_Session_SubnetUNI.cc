@@ -24,6 +24,7 @@ void SwitchCtrl_Session_SubnetUNI::internalInit ()
     rfc2674_compatible = false; 
     snmpSessionHandle = NULL; 
     uniSessionId = NULL; 
+    uniState = 0;
 }
 
 void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint16 id,
@@ -141,6 +142,8 @@ void SwitchCtrl_Session_SubnetUNI::initUniRsvpApiSession()
     else
         *uniSessionId = createSession( NetAddress(subnetUniDest.uni_cid_ipv4), subnetUniDest.tunnel_id, subnetUniDest.uni_nid_ipv4, SwitchCtrl_Session_SubnetUNI::uniRsvpDestUpcall);
     active = true;
+
+    uniState = Message::InitAPI;
 }
 
 void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
@@ -191,6 +194,9 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
     if (ssAttrib) delete ssAttrib;
     if (upLabel) delete upLabel;
 
+    if (uniState == Message::InitAPI)
+        uniState = Message::Path;
+
     return;
 }
 
@@ -207,6 +213,9 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniResv(const SONET_SDH_SENDER_TSPE
 
     createReservation( *uniSessionId, false, FF, fdList, NULL);
 
+    if (uniState == Message::InitAPI)
+        uniState = Message::Resv;
+
     return;
 }
 
@@ -214,6 +223,8 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessPath(Message & msg)
 {
     if (!active)
         return;
+
+    uniState = msg.getMsgType();
 
     switch (msg.getMsgType())
     {
@@ -240,11 +251,25 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessResv(Message & msg)
 {
     if (!active)
         return;
+
+    uniState = msg.getMsgType();
     
     switch (msg.getMsgType())
     {
     case Message::Resv:
     case Message::ResvConf:
+
+        //change session states ...
+        //notify main session ...
+
+        break;
+    case Message::PathErr:
+
+        //change session states ...
+        //notify main session ...
+
+        break;
+    case Message::ResvTear:
 
         //change session states ...
         //notify main session ...
@@ -268,6 +293,11 @@ void SwitchCtrl_Session_SubnetUNI::releaseRsvpPath()
 
     assert( *(*uniSessionId) );
     releaseSession(**(*uniSessionId));
+
+    if (isSource)
+        uniState = Message::PathTear;
+    else
+        uniState = Message::ResvTear; 
 
     return;
 }

@@ -50,6 +50,41 @@ class LogicalInterfaceSet;
 
 typedef SortableList<PHopSB_Refresh,RSVP_HOP_Object> PHOP_RefreshList;
 
+//@@@@hack: Xi2007>>
+class MessageEntry {
+
+	static INetworkBuffer obuffer;
+	INetworkBuffer ibuffer;
+	LogicalInterface* currentLif;
+	Session* currentSession;
+
+public:
+	MessageEntry():currentLif(NULL), currentSession(NULL) {}
+	void PreserveMessage(LogicalInterface *lif,  Session *session, Message& msg) {
+		currentLif = lif;
+		currentLif = session;
+		MessageEntry::obuffer.init();
+		MessageEntry::obuffer << msg;
+		ibuffer.init();
+		ibuffer.cloneFrom(MessageEntry::obuffer.getContents(), MessageEntry::obuffer.getSize());
+	}
+	void RestoreMessage(LogicalInterface& *lif, Session& *session, Message& msg) {
+		assert(lif);
+		lif = currentLif;
+		assert(session);
+		session = currentSession;
+		assert(ibuffer.getSize() > 0);
+		msg.init();
+		ibuffer >> msg;
+	}
+};
+
+typedef SimpleList<MessageEntry*> MessageQueue;
+
+//@@@@hack: Xi2007<<
+
+
+
 class MessageProcessor {
 
 	// "status info" for currently processed message
@@ -80,6 +115,10 @@ class MessageProcessor {
 
 	bool B_Merge;
 	bool fullRefresh;
+
+//@@@@hack: Xi2007>>
+	MessageQueue* msgQueue;
+//@@@@hack: Xi2007<<
 
 public:
 #if defined(ONEPASS_RESERVATION)
