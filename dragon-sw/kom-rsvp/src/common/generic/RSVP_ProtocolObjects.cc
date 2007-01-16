@@ -674,16 +674,20 @@ void GENERALIZED_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 {
 	buffer >>srcTNA.length >> srcTNA.type >> srcTNA.sub_type >> srcTNA.addr.s_addr;
 	buffer >>destTNA.length >> destTNA.type >> destTNA.sub_type >> destTNA.addr.s_addr;
-	buffer >>egressLabel.length >> egressLabel.type >> egressLabel.sub_type >> egressLabel.logical_port >> egressLabel.label;
-	buffer >>egressLabelUp.length >> egressLabelUp.type >> egressLabelUp.sub_type >> egressLabelUp.logical_port >> egressLabelUp.label;
+	buffer >>egressLabel.length >> egressLabel.type >> egressLabel.sub_type 
+		>> *(uint32*)&(egressLabel.u_b0) >> egressLabel.logical_port >> egressLabel.label;
+	buffer >>egressLabelUp.length >> egressLabelUp.type >> egressLabelUp.sub_type 
+		>> *(uint32*)&(egressLabelUp.u_b0) >> egressLabelUp.logical_port >> egressLabelUp.label;
 }
 
 ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const GENERALIZED_UNI_Object& o ) {
 	buffer << RSVP_ObjectHeader( o.size(), o.getClassNumber(), 1);
 	buffer <<o.srcTNA.length << o.srcTNA.type << o.srcTNA.sub_type << o.srcTNA.addr.s_addr;
 	buffer << o.destTNA.length << o.destTNA.type << o.destTNA.sub_type << o.destTNA.addr.s_addr;
-	buffer << o.egressLabel.length << o.egressLabel.type << o.egressLabel.sub_type << o.egressLabel.logical_port<< o.egressLabel.label;
-	buffer << o.egressLabelUp.length << o.egressLabelUp.type << o.egressLabelUp.sub_type << o.egressLabelUp.logical_port << o.egressLabelUp.label;
+	buffer << o.egressLabel.length << o.egressLabel.type << o.egressLabel.sub_type 
+		<< *(uint32*)&(o.egressLabel.u_b0) << o.egressLabel.logical_port<< o.egressLabel.label;
+	buffer << o.egressLabelUp.length << o.egressLabelUp.type << o.egressLabelUp.sub_type 
+		<< *(uint32*)&(o.egressLabelUp.u_b0) << o.egressLabelUp.logical_port << o.egressLabelUp.label;
 	return buffer;
 }
 
