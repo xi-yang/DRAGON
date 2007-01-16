@@ -24,7 +24,6 @@ void SwitchCtrl_Session_SubnetUNI::internalInit ()
     rfc2674_compatible = false; 
     snmpSessionHandle = NULL; 
     uniSessionId = NULL; 
-    SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList = new SwitchCtrl_Session_SubnetUNI_List;
 }
 
 void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint16 id,
