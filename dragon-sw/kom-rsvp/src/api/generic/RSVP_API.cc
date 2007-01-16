@@ -374,7 +374,12 @@ void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port
 	message.setTIME_VALUES_Object( TimeValue(0,0) );
 	message.setLABEL_REQUEST_Object(labelReqObj);
 	if (ero) message.setEXPLICIT_ROUTE_Object(*ero);
-	if (uni) message.setUNI_Object(*(DRAGON_UNI_Object*)uni); //$$$$
+	if (uni) {
+		if (uni->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI)
+			message.setUNI_Object(*(DRAGON_UNI_Object*)uni);
+		else
+			message.setUNI_Object(*(GENERALIZED_UNI_Object*)uni);
+	}
 	if (labelSet) message.setLABEL_SET_Object(*labelSet);
 	if (ssAttrib) message.setSESSION_ATTRIBUTE_Object(*ssAttrib);
 	if (upstreamLabel) message.setUPSTREAM_LABEL_Object(*upstreamLabel);
@@ -406,9 +411,12 @@ void RSVP_API::createReservation( SessionId iter, bool confRequest,
 		}
 		message.addFILTER_SPEC_Objects( (*flowdescIter).filterSpecList );
 	}
-
-       if (uni)
-            message.setUNI_Object(*(DRAGON_UNI_Object*)uni);
+	if (uni) {
+		if (uni->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI)
+			message.setUNI_Object(*(DRAGON_UNI_Object*)uni);
+		else
+			message.setUNI_Object(*(GENERALIZED_UNI_Object*)uni);
+	}
 	apiLif->sendMessage( message, NetAddress(0), apiLif->getLocalAddress() );
 }
 
