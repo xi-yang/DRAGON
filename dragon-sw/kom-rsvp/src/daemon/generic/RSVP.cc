@@ -295,7 +295,10 @@ int RSVP::main() {
 					RSVP_Global::messageProcessor->processAsyncRoutingEvent( *sessionIter, src, *inLif, lifList );
 				}
 			}
-		} else if ( !endFlag ) {
+		} else if ( RSVP_Global::messageProcessor->queryEnqueuedMessages() ) { //@@@@ >>Xi2007<<
+			RSVP_Global::messageProcessor->processMessage(); // processMessage based on restored scene
+		}
+		else if ( !endFlag ) {
 			FATAL(1)( Log::Fatal, "returned from queryInterfaces but without result" );
 			abortProcess();
 		}

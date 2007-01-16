@@ -60,6 +60,8 @@ class MessageEntry {
 
 public:
 	MessageEntry():currentLif(NULL), currentSession(NULL) {}
+	LogicalInterface* getCurrentLif() { return currentLif; }
+	Session* getCurrentSession() { return currentSession; }
 	void PreserveMessage(LogicalInterface *lif,  Session *session, Message& msg) {
 		currentLif = lif;
 		currentLif = session;
@@ -186,6 +188,11 @@ public:
 	void sendResvErrMessage( uint8 errorFlags, uint8 errorCode, uint16 errorValue, const FlowDescriptor& );
 	void sendResvErrMessage( uint8 errorFlags, uint8 errorCode, uint16 errorValue );
 	void sendPathErrMessage( uint8 errorCode, uint16 errorValue );
+
+//@@@@hack: Xi2007>>
+	bool queryEnqueuedMessages();
+//@@@@hack: Xi2007<<
+
 };
 
 #endif /* _RSVP_MessageProcessor_h_ */

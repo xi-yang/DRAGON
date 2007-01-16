@@ -70,6 +70,11 @@ MessageProcessor::~MessageProcessor() {
 	// needed later, why though? ;-)
 
 	if (msgQueue) {
+		MessageQueue::Iterator msgIter = msgQueue->begin();
+		for ( ; msgIter != msgQueue->end(); ++msgIter ) {
+			if (*msgIter)
+				delete (*msgIter);
+		}
 		delete msgQueue;
 		msgQueue = NULL;
 	}
@@ -603,6 +608,7 @@ inline void MessageProcessor::finishAndSendConfirmMsg() {
 
 void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
 	MessageEntry *msgEntry = NULL;
+	MessageQueue::Iterator msgIter;
 
 	ibuffer.init();
 	currentLif = cLif.receiveBuffer( ibuffer, currentHeader );
@@ -625,8 +631,8 @@ void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
 				//@@@@ Xi2007 >>
 				bool processNow = true;
 				currentSession = RSVP_Global::rsvp->findSession( currentMessage.getSESSION_Object(), false );
-				if (currentSession && currentSession->pSubnetUniSrc) {
-					switch (currentSession->pSubnetUniSrc->getUniState()) {
+				if (currentSession && currentSession->getSubnetUniSrc()) {
+					switch (currentSession->getSubnetUniSrc()->getUniState()) {
 					case Message::Resv:
 					case Message::ResvConf:
 					case Message::PathErr:
@@ -636,9 +642,14 @@ void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
 						break;
 					default:
 						processNow = false;
-
-						// search for currentSession in msgQueue $$$$
-						// if existing, break; --> no duplicate !!
+						// search for currentSession in msgQueue to avoid enqueuing duplicate entries
+						msgIter = msgQueue->begin();
+						for (; msgIter != msgQueue->end(); ++msgIter) {
+							if ((*msgIter)->getCurrentLif() == currentLif && (*msgIter)->getCurrentSession() == currentSession)
+								break;
+						}
+						if ( msgIter != msgQueue->end() ) // The entry has already existed. --> same message received ...
+							break;
 
 						//otherwise enqueue current Message while UNI session is pending for return
 						msgEntry = new MessageEntry;
@@ -790,5 +801,45 @@ void MessageProcessor::registerAPI( const SESSION_Object& session ) {
 	if ( currentSession ) currentSession->registerAPI();
 }
 
+//@@@@ Xi2007 >>
+bool MessageProcessor::queryEnqueuedMessages( ) {
+	if ( !msgQueue)
+		return false;
+
+	MessageEntry* msgEntry;
+	MessageQueue::Iterator msgIter = msgQueue->begin();
+	for ( ; msgIter != msgQueue->end(); ++msgIter ) {
+		msgEntry = *msgIter;
+		if (msgEntry->currentSession && msgEntry->currentSession->getSubnetUniSrc() ) {
+			switch (currentSession->getSubnetUniSrc()->getUniState()) {
+			case Message::Resv:
+			case Message::ResvConf:
+			case Message::PathErr:
+			case Message::PathTear:
+			case Message::ResvTear:
+				
+				//Restore current message and MessageProcessor scene
+				msgEntry->RestoreMessage(currentLif, currentSession, currentMessage);
+				//Dequeue messageEntry
+				msgQueue->erase(msgIter);
+				//MessageProcessor restored and ready for processing --> return true;
+				return true;
+
+				break;
+			default:
+
+				// do nothing
+
+				break;
+			}
+
+		}
+	}
+
+	// no message restored, no processing after return
+	return false;
+}
+
+//@@@@ Xi2007 <<
 
 #endif
