@@ -667,6 +667,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		//@@@@ Converting RSVP_HOP address ???
 	}
 	else if (isGeneralizedUniIngressClient) {
+		defaultOutLif = RSVP_Global::rsvp->getApiLif();
 		RtOutL.insert_unique( defaultOutLif );
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 
