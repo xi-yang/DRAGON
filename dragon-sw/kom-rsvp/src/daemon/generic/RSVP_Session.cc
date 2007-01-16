@@ -659,23 +659,29 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		RtOutL.insert_unique( defaultOutLif );
 		gateway = LogicalInterface::noGatewayAddress;
 	}
+	// >>Xi2007
 	else if (isGeneralizedUniEgressClient ) {
 		defaultOutLif = RSVP_Global::rsvp->getApiLif();
 		RtOutL.insert_unique( defaultOutLif );
 		gateway = LogicalInterface::noGatewayAddress;
-
-		//@@@@ Converting RSVP_HOP address ???
 	}
 	else if (isGeneralizedUniIngressClient) {
-		defaultOutLif = RSVP_Global::rsvp->getApiLif();
+		defaultOutLif = RSVP_Global::rsvp->findInterfaceByAddress( NetAddress(generalizedUni->getSrcTNA().addr.s_addr) );
+		if (!defaultOutLif) {
+			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
+			return;
+		}
 		RtOutL.insert_unique( defaultOutLif );
+
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 
-		//@@@@ Converting RSVP_HOP address ???
 		RSVP_HOP_TLV_SUB_Object tlv (NetAddress(0)); //$$$$ SrcTNA also?
 		dataOutRsvpHop = RSVP_HOP_Object(NetAddress(generalizedUni->getSrcTNA().addr.s_addr), defaultOutLif->getLIH(), tlv);
 		senderTemplate.setSrcAddress(NetAddress(generalizedUni->getSrcTNA().addr.s_addr));
+
+		//@@@@ Converting RSVP_HOP address ???
 	}
+	// Xi2007<<
 	else { //regular RSVP (network) Path message
 
 		//No GENEALIZED UNI supported at VLSR UNI-N side
