@@ -966,7 +966,7 @@ class GENERALIZED_UNI_Object:public UNI_Object {
 
 	friend ostream& operator<< ( ostream&, const GENERALIZED_UNI_Object& );
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const GENERALIZED_UNI_Object& );
-	uint16 size() const{ return (sizeof(IPv4TNA_Subobject)*2 + sizeof(EgressLabel_Subobject)); }
+	uint16 size() const{ return (sizeof(IPv4TNA_Subobject)*2 + sizeof(EgressLabel_Subobject)*2); }
 
 protected:
 	virtual ~GENERALIZED_UNI_Object () {} 
