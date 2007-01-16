@@ -115,19 +115,19 @@ bool SwitchCtrl_Session_SubnetUNI::isSessionOwner(Message& msg)
     
     if (isSource && session_obj->getDestAddress().rawAddress() == subnetUniSrc.uni_nid_ipv4 && session_obj->getTunnelId() == subnetUniSrc.tunnel_id)
     {
-        const LSP_TUNNEL_IPv4_SENDER_TEMPLATE_Object* sender_obj = &msg.getSENDER_TEMPLATE_Object();
-        if (sender_obj->getSrcAddress().rawAddress() == subnetUniSrc.uni_cid_ipv4)
-            return true;
-    }
-    else if (session_obj->getDestAddress().rawAddress() == subnetUniDest.uni_cid_ipv4 && session_obj->getTunnelId() == subnetUniDest.tunnel_id)
-    {
         const FlowDescriptorList* fdList = &msg.getFlowDescriptorList();
         FlowDescriptorList::ConstIterator it = fdList->begin();
         for (; it != fdList->end(); ++it)
         {
-             if ((*it).filterSpecList.size()>0 && (*(*it).filterSpecList.begin()).getSrcAddress().rawAddress()  == subnetUniDest.uni_nid_ipv4)
+             if ((*it).filterSpecList.size()>0 && (*(*it).filterSpecList.begin()).getSrcAddress().rawAddress()  == subnetUniSrc.uni_cid_ipv4)
                 return true;
         }
+    }
+    else if (session_obj->getDestAddress().rawAddress() == subnetUniDest.uni_cid_ipv4 && session_obj->getTunnelId() == subnetUniDest.tunnel_id)
+    {
+        const LSP_TUNNEL_IPv4_SENDER_TEMPLATE_Object* sender_obj = &msg.getSENDER_TEMPLATE_Object();
+        if (sender_obj->getSrcAddress().rawAddress() == subnetUniDest.uni_cid_ipv4)
+            return true;
     }
 
     return false;
