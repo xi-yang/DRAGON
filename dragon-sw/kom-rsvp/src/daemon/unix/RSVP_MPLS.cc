@@ -261,10 +261,14 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			bool noError = false;
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
 
-				if ((*sessionIter)->getSessionName().leftequal("subnet-uni")) { //@@@@ >>Xi2007<<
+				 //@@@@ >>Xi2007<<
+				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
 					noError = true;
 					continue;
-				}				
+ 				} else if ( (*sessionIter)->getSubnetUniSrc() || (*sessionIter)->getSubnetUniDest() ) {
+					noError = true;
+					continue;
+				}
 
 				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()){
 					noError = true;
@@ -520,9 +524,13 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 			SwitchCtrlSessionList::Iterator sessionIter = RSVP_Global::switchController->getSessionList().begin();
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
 
-				if ((*sessionIter)->getSessionName().leftequal("subnet-uni")) {//@@@@ >>Xi2007<<
-					//$$$$ OR subnet-uni-src ONLY ??
-					(SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
+				 //@@@@ >>Xi2007<<
+				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
+					continue;
+				} else if ((*sessionIter)->getSubnetUniSrc()) {//@@@@ >>Xi2007<<
+					(*sessionIter)->getSubnetUniSrc()->releaseRsvpPath();
+					continue;
+				} else if ((*sessionIter)->getSubnetUniDest()) {//@@@@ >>Xi2007<<
 					continue;
 				}
 				
