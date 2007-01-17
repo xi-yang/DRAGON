@@ -270,6 +270,11 @@ int RSVP::main() {
 	FATAL(2)( Log::Fatal, "RSVPD running -", VersionString() );
 
 	while (!endFlag) {
+		 //@@@@ Xi2007 >>
+		if ( RSVP_Global::messageProcessor->queryEnqueuedMessages() ) {
+			RSVP_Global::messageProcessor->processMessage(); // processMessage based on restored scene
+		}
+		 //@@@@ Xi2007 <<		
 		const LogicalInterface* currentLif = NetworkServiceDaemon::queryInterfaces();
 		if ( currentLif ) {
 			assert( !currentLif->isDisabled() );
@@ -295,10 +300,7 @@ int RSVP::main() {
 					RSVP_Global::messageProcessor->processAsyncRoutingEvent( *sessionIter, src, *inLif, lifList );
 				}
 			}
-		} else if ( RSVP_Global::messageProcessor->queryEnqueuedMessages() ) { //@@@@ >>Xi2007<<
-			RSVP_Global::messageProcessor->processMessage(); // processMessage based on restored scene
-		}
-		else if ( !endFlag ) {
+		} else if ( !endFlag ) {
 			FATAL(1)( Log::Fatal, "returned from queryInterfaces but without result" );
 			abortProcess();
 		}
