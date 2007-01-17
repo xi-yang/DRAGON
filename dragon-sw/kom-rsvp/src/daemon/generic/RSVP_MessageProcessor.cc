@@ -648,7 +648,7 @@ void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
 						// search for currentSession in msgQueue to avoid enqueuing duplicate entries
 						msgIter = msgQueue->begin();
 						for (; msgIter != msgQueue->end(); ++msgIter) {
-							if ((*msgIter)->getCurrentLif() == currentLif && (*msgIter)->getCurrentSession() == currentSession)
+							if ((*msgIter)->getCurrentSession() == currentSession)
 								break;
 						}
 						if ( msgIter != msgQueue->end() ) // The entry has already existed. --> same message received ...
