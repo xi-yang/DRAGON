@@ -260,6 +260,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			SwitchCtrlSessionList::Iterator sessionIter = RSVP_Global::switchController->getSessionList().begin();
 			bool noError = false;
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
+
+				if ((*sessionIter)->getSessionName().leftequal("subnet-uni")) { //@@@@ >>Xi2007<<
+					noError = true;
+					continue;
+				}				
+
 				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()){
 					noError = true;
 					uint32 vlan;
@@ -513,6 +519,11 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 			NetAddress ethSw = (*iter).switchID;
 			SwitchCtrlSessionList::Iterator sessionIter = RSVP_Global::switchController->getSessionList().begin();
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
+
+				if ((*sessionIter)->getSessionName().leftequal("subnet-uni")) {//@@@@ >>Xi2007<<
+					continue;
+				}
+				
 				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()){
                                       PortList portList;
                                       uint32 vlanID;

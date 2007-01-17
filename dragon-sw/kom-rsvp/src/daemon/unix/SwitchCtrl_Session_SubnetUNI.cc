@@ -224,6 +224,8 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessPath(Message & msg)
     if (!active)
         return;
 
+    //change session states ...
+    //notify main session indirectly
     uniState = msg.getMsgType();
 
     switch (msg.getMsgType())
@@ -231,13 +233,14 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessPath(Message & msg)
     case Message::Path:
     case Message::PathResv:
 
-        //update local uniSessionId based on the incoming PATH msg?
-
         createRsvpUniResv(msg.getSENDER_TSPEC_Object(), msg.getSENDER_TEMPLATE_Object());
+
         break;
     case Message::InitAPI:
+
         assert( *(*uniSessionId) );
         refreshSession( **(*uniSessionId) );
+
         break;
     default:
         //unprocessed RSVP messages
@@ -252,6 +255,8 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessResv(Message & msg)
     if (!active)
         return;
 
+    //change session states ...
+    //notify main session indirectly
     uniState = msg.getMsgType();
     
     switch (msg.getMsgType())
@@ -259,20 +264,11 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessResv(Message & msg)
     case Message::Resv:
     case Message::ResvConf:
 
-        //change session states ...
-        //notify main session ...
-
         break;
     case Message::PathErr:
 
-        //change session states ...
-        //notify main session ...
-
         break;
     case Message::ResvTear:
-
-        //change session states ...
-        //notify main session ...
 
         break;
     case Message::InitAPI:
