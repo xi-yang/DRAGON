@@ -182,6 +182,7 @@ public:
 	static uint16 headerSize() { return 8; }
 
 	const SESSION_Object& getSESSION_Object() const { assert(objectFlags & SESSION); return SESSION_Object_O; }
+	bool hasSESSION_Object() const { return (objectFlags & SESSION); }
 	const RSVP_HOP_Object& getRSVP_HOP_Object() const { assert(objectFlags & RSVP_HOP); return RSVP_HOP_Object_O; }
 	const INTEGRITY_Object* getINTEGRITY_Object() const { return INTEGRITY_Object_P; }
 	const TIME_VALUES_Object& getTIME_VALUES_Object() const { assert(objectFlags & TIME_VALUES); return TIME_VALUES_Object_O; }

@@ -630,7 +630,10 @@ void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
 			} else if ( checkCurrentLif() ) {
 				//@@@@ Xi2007 >>
 				bool processNow = true;
-				currentSession = RSVP_Global::rsvp->findSession( currentMessage.getSESSION_Object(), false );
+				if ( currentMessage.hasSESSION_Object() )
+					currentSession = RSVP_Global::rsvp->findSession( currentMessage.getSESSION_Object(), false );
+				else
+					currentSession = NULL;
 				if (currentSession && currentSession->getSubnetUniSrc()) {
 					switch (currentSession->getSubnetUniSrc()->getUniState()) {
 					case Message::Resv:
