@@ -192,8 +192,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	uint32 outUnumIfID = 0;
 	NetAddress inRtId = NetAddress(0);
 	NetAddress outRtId = NetAddress(0);
-    NetAddress gw;
-    SubnetUNI_Data subnetUniData;
+	NetAddress gw;
+	SubnetUNI_Data subnetUniData;
+	String sName;
 
 	if (!fromLocalAPI){
 		if (!RSVP_Global::rsvp->getRoutingService().findDataByInterface(hop.getLogicalInterface(), inRtId, inUnumIfID))
@@ -380,7 +381,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			if (!pSubnetUniSrc){
 				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Ingress) for ", vlsr.switchID);
 				//Create SubnetUNI Session (as Source)
-				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(String("Subnet-UNI-Ingress"), vlsr.switchID, true));
+				SwitchCtrl_Session_SubnetUNI::getSessionNameString(sName, subnetUniData.tna_ipv4, getDestAddress().rawAddress(), true);
+				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(const_cast<String&>sName, vlsr.switchID, true));
 				RSVP_Global::switchController->addSession(ssNew);
 				//Store SubnetUNI Session handle ...
 				pSubnetUniSrc = (SwitchCtrl_Session_SubnetUNI*)ssNew;
@@ -410,7 +412,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			if (!pSubnetUniDest){
 				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Egress) for ", vlsr.switchID);
 				//Create SubnetUNI Session (as Destination)
-				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(String("Subnet-UNI-Egress"), vlsr.switchID, false));
+				SwitchCtrl_Session_SubnetUNI::getSessionNameString(sName, subnetUniData.tna_ipv4, getDestAddress().rawAddress(), false);
+				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(const_cast<String&>sName, vlsr.switchID, false));
 				RSVP_Global::switchController->addSession(ssNew);
 				//Store SubnetUNI Session handle ...
 				pSubnetUniDest = (SwitchCtrl_Session_SubnetUNI*)ssNew;

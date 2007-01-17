@@ -75,7 +75,7 @@ public:
 		lif = currentLif;
 		assert(currentSession);
 		session = currentSession;
-		assert(ibuffer.getSize() > 0);
+		assert(ibuffer.getRemainingSize() > 0);
 		msg.init();
 		ibuffer >> msg;
 	}
