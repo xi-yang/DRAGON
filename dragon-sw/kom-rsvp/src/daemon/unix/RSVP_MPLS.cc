@@ -521,6 +521,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
 
 				if ((*sessionIter)->getSessionName().leftequal("subnet-uni")) {//@@@@ >>Xi2007<<
+					//$$$$ OR subnet-uni-src ONLY ??
+					(SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
 					continue;
 				}
 				
