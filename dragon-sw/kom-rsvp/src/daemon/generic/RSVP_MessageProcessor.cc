@@ -656,7 +656,7 @@ void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
 
 						//otherwise enqueue current Message while UNI session is pending for return
 						msgEntry = new MessageEntry;
-						msgEntry->PreserveMessage((LogicalInterface*)currentLif, currentSession, currentMessage);
+						msgEntry->preserveMessage((LogicalInterface*)currentLif, currentSession, currentMessage);
 						msgQueue->push_front(msgEntry);
 						break;
 					}
@@ -822,7 +822,7 @@ bool MessageProcessor::queryEnqueuedMessages( ) {
 			case Message::ResvTear:
 				
 				//Restore current message and MessageProcessor scene
-				msgEntry->RestoreMessage((LogicalInterface* &)currentLif, currentSession, currentMessage);
+				msgEntry->restoreMessage((LogicalInterface* &)currentLif, currentSession, currentMessage);
 				//Dequeue messageEntry
 				msgQueue->erase(msgIter);
 				//MessageProcessor restored and ready for processing --> return true;

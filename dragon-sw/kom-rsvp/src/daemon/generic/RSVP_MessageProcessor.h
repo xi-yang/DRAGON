@@ -62,15 +62,15 @@ public:
 	MessageEntry():ibuffer(65000), currentLif(NULL), currentSession(NULL) {}
 	LogicalInterface* getCurrentLif() { return currentLif; }
 	Session* getCurrentSession() { return currentSession; }
-	void PreserveMessage(LogicalInterface *lif,  Session *session, Message& msg) {
+	void preserveMessage(LogicalInterface *lif,  Session *session, Message& msg) {
 		currentLif = lif;
 		currentSession = session;
 		MessageEntry::obuffer.init();
 		MessageEntry::obuffer << msg;
 		ibuffer.init();
-		ibuffer.cloneFrom(MessageEntry::obuffer.getContents(), MessageEntry::obuffer.getSize());
+		ibuffer.cloneFrom(MessageEntry::obuffer.getContents(), MessageEntry::obuffer.getUsedSize());
 	}
-	void RestoreMessage(LogicalInterface* &lif, Session* &session, Message& msg) {
+	void restoreMessage(LogicalInterface* &lif, Session* &session, Message& msg) {
 		assert(currentLif);
 		lif = currentLif;
 		assert(currentSession);
