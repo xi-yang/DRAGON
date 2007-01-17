@@ -121,6 +121,8 @@ public:
 	bool deregisterAPI( const NetAddress&, uint16 port );
 	void registerAPI();
 #endif
+	SwitchCtrl_Session_SubnetUNI* getSubnetUniSrc() { return pSubnetUniSrc; }
+	SwitchCtrl_Session_SubnetUNI* getSubnetUniDest() { return pSubnetUniDest; }
 
 	DECLARE_MEMORY_MACHINE_IN_CLASS(Session)
 };

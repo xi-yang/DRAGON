@@ -49,7 +49,7 @@
 //#include "CLI_Session.h"
 
 //@@@@ Xi2007 >>
-ONetworkBuffer MessageEntry::obuffer;
+ONetworkBuffer MessageEntry::obuffer(LogicalInterface::maxPayloadLength);
 //@@@@ Xi2007 <<
 
 MessageProcessor::MessageProcessor() : ibuffer(LogicalInterface::maxPayloadLength),
@@ -653,8 +653,8 @@ void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
 
 						//otherwise enqueue current Message while UNI session is pending for return
 						msgEntry = new MessageEntry;
-						msgEntry->PreserveMessage(currentLif, currentSession, currentMessage);
-						msgQueue.push_front(msgEntry);
+						msgEntry->PreserveMessage((LogicalInterface*)currentLif, currentSession, currentMessage);
+						msgQueue->push_front(msgEntry);
 						break;
 					}
 				}
@@ -810,8 +810,8 @@ bool MessageProcessor::queryEnqueuedMessages( ) {
 	MessageQueue::Iterator msgIter = msgQueue->begin();
 	for ( ; msgIter != msgQueue->end(); ++msgIter ) {
 		msgEntry = *msgIter;
-		if (msgEntry->currentSession && msgEntry->currentSession->getSubnetUniSrc() ) {
-			switch (currentSession->getSubnetUniSrc()->getUniState()) {
+		if (msgEntry->getCurrentSession() && msgEntry->getCurrentSession()->getSubnetUniSrc() ) {
+			switch (msgEntry->getCurrentSession()->getSubnetUniSrc()->getUniState()) {
 			case Message::Resv:
 			case Message::ResvConf:
 			case Message::PathErr:
@@ -819,7 +819,7 @@ bool MessageProcessor::queryEnqueuedMessages( ) {
 			case Message::ResvTear:
 				
 				//Restore current message and MessageProcessor scene
-				msgEntry->RestoreMessage(currentLif, currentSession, currentMessage);
+				msgEntry->RestoreMessage((LogicalInterface* &)currentLif, currentSession, currentMessage);
 				//Dequeue messageEntry
 				msgQueue->erase(msgIter);
 				//MessageProcessor restored and ready for processing --> return true;

@@ -53,24 +53,24 @@ typedef SortableList<PHopSB_Refresh,RSVP_HOP_Object> PHOP_RefreshList;
 //@@@@hack: Xi2007>>
 class MessageEntry {
 
-	static INetworkBuffer obuffer;
+	static ONetworkBuffer obuffer;
 	INetworkBuffer ibuffer;
 	LogicalInterface* currentLif;
 	Session* currentSession;
 
 public:
-	MessageEntry():currentLif(NULL), currentSession(NULL) {}
+	MessageEntry():ibuffer(65000), currentLif(NULL), currentSession(NULL) {}
 	LogicalInterface* getCurrentLif() { return currentLif; }
 	Session* getCurrentSession() { return currentSession; }
 	void PreserveMessage(LogicalInterface *lif,  Session *session, Message& msg) {
 		currentLif = lif;
-		currentLif = session;
+		currentSession = session;
 		MessageEntry::obuffer.init();
 		MessageEntry::obuffer << msg;
 		ibuffer.init();
 		ibuffer.cloneFrom(MessageEntry::obuffer.getContents(), MessageEntry::obuffer.getSize());
 	}
-	void RestoreMessage(LogicalInterface& *lif, Session& *session, Message& msg) {
+	void RestoreMessage(LogicalInterface* &lif, Session* &session, Message& msg) {
 		assert(lif);
 		lif = currentLif;
 		assert(session);
@@ -128,7 +128,6 @@ public:
 #endif
 private:
 
-	void processMessage();
 	void refreshReservations();
 	void forwardCurrentMessage();
 
@@ -152,6 +151,7 @@ public:
 	~MessageProcessor();
 
 	void readCurrentMessage( const LogicalInterface& );
+	void processMessage();
 	// for multicast sessions
 	void processAsyncRoutingEvent( Session*, const NetAddress&, const LogicalInterface&, LogicalInterfaceSet );
 	// for unicast sessions
