@@ -71,9 +71,9 @@ public:
 		ibuffer.cloneFrom(MessageEntry::obuffer.getContents(), MessageEntry::obuffer.getSize());
 	}
 	void RestoreMessage(LogicalInterface* &lif, Session* &session, Message& msg) {
-		assert(lif);
+		assert(currentLif);
 		lif = currentLif;
-		assert(session);
+		assert(currentSession);
 		session = currentSession;
 		assert(ibuffer.getSize() > 0);
 		msg.init();
