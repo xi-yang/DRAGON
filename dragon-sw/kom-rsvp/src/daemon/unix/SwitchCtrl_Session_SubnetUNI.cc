@@ -239,7 +239,7 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessPath(Message & msg)
     case Message::InitAPI:
 
         assert( *(*uniSessionId) );
-        //refreshSession( **(*uniSessionId) );
+        refreshSession( **(*uniSessionId) );
 
         break;
     default:
@@ -272,9 +272,11 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessResv(Message & msg)
 
         break;
     case Message::InitAPI:
+
         assert( *(*uniSessionId) );
-        //refreshSession( **(*uniSessionId) );
-        break;
+        refreshSession( **(*uniSessionId) );
+
+	break;
     default:
         break;
     }
