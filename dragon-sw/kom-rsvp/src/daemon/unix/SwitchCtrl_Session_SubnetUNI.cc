@@ -239,7 +239,7 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessPath(Message & msg)
     case Message::InitAPI:
 
         assert( *(*uniSessionId) );
-        refreshSession( **(*uniSessionId) );
+        refreshSession( **(*uniSessionId), RSVP_Global::defaultApiRefresh );
 
         break;
     default:
@@ -290,7 +290,7 @@ void SwitchCtrl_Session_SubnetUNI::releaseRsvpPath()
         return;
 
     assert( *(*uniSessionId) );
-    releaseSession( **(*uniSessionId), RSVP_Global::defaultApiRefresh );
+    releaseSession(**(*uniSessionId));
 
     if (isSource)
         uniState = Message::PathTear;
