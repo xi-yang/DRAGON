@@ -142,18 +142,20 @@ void Hop::processSrefresh( const Message& msg ) {
 					static NetAddress gw(0);
 					const LogicalInterface* lif;
 
-					//@@@@ DRAGON UNI related hacks
-					DRAGON_UNI_Object* uni = (DRAGON_UNI_Object*)(*stateIter).sb.psb->getDRAGON_UNI_Object();
+					//@@@@ UNI related hacks
+					DRAGON_UNI_Object* dragonUni = (DRAGON_UNI_Object*)(*stateIter).sb.psb->getDRAGON_UNI_Object();
+					GENERALIZED_UNI_Object* generalizedUni = (GENERALIZED_UNI_Object*)(*stateIter).sb.psb->getGENERALIZED_UNI_Object();
 #if defined(WITH_API)
 					if ((*stateIter).sb.psb->getSession().getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()) {
-						if (uni == NULL)
-							lif = RSVP_Global::rsvp->getApiLif();
-						else {
-							const String egressChanName = (const char*)uni->getEgressCtrlChannel().name;
+						if (dragonUni != NULL) {
+							const String egressChanName = (const char*)dragonUni->getEgressCtrlChannel().name;
 							if (egressChanName == "implicit")
-								lif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)uni->getDestTNA().local_id);	
+								lif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)dragonUni->getDestTNA().local_id);	
 							else
 								lif = RSVP_Global::rsvp->findInterfaceByName(egressChanName);
+						}
+						else { //non-UNI or Generalized UNI
+							lif = RSVP_Global::rsvp->getApiLif();
 						}
 					}
 					else
@@ -171,14 +173,18 @@ void Hop::processSrefresh( const Message& msg ) {
 						else
 							lif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( (*stateIter).sb.psb->getSession().getDestAddress(), gw );
 					}
-					else 
-					{
-						if (uni == NULL)
-							lif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( (*stateIter).sb.psb->getSession().getDestAddress(), gw );
-						else 
-							lif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)uni->getEgressCtrlChannel().name));
+					else if (generalizedUni) {
+						lif = RSVP_Global::rsvp->findInterfaceByAddress(NetAddress(generalizedUni->getSrcTNA().addr.s_addr));
+ 						if (!lif && RSVP_Global::rsvp->findInterfaceByAddress(NetAddress(generalizedUni->getDestTNA().addr.s_addr)) )
+							lif = RSVP_Global::rsvp->getApiLif();
 					}
-					//@@@@ DRAGON UNI related hacks END
+					else if (dragonUni) {
+						lif = RSVP_Global::rsvp->findInterfaceByName(String((const char*)dragonUni->getEgressCtrlChannel().name));
+					}
+					else {
+						lif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( (*stateIter).sb.psb->getSession().getDestAddress(), gw );
+					}
+					//@@@@ UNI related hacks END
 
 #if defined(WITH_API)
 					if ( !lif
