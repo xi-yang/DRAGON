@@ -251,6 +251,7 @@ public:
 
 	void readPreservedLocalIds();
 	bool addSession(SwitchCtrl_Session* addSS);
+	void removeSession(SwitchCtrl_Session* addSS);
 	SwitchCtrlSessionList& getSessionList() { return sessionList; }
 	bool refreshSessions();
 	void startRefreshTimer();

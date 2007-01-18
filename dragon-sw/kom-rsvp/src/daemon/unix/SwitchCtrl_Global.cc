@@ -49,6 +49,7 @@ void SwitchCtrl_Session::disconnectSwitch()
 { 
     if (snmp_enabled)
         SwitchCtrl_Global::static_disconnectSwitch(snmpSessionHandle); 
+    RSVP_Global::switchController->removeSession(this);
 }
 
 bool SwitchCtrl_Session::getSwitchVendorInfo()
@@ -825,6 +826,18 @@ bool SwitchCtrl_Global::addSession(SwitchCtrl_Session* addSS)
 	//adding new session
 	sessionList.push_back(addSS);
 	return  true;
+}
+
+void SwitchCtrl_Global::removeSession(SwitchCtrl_Session* addSS)
+{
+	SwitchCtrlSessionList::Iterator iter = sessionList.begin();
+	for (; iter != sessionList.end(); ++iter ) {
+		if ((*(*iter))==(*addSS)) {
+			sessionList.erase(iter);
+			return;
+		}
+	}
+	return;
 }
 
 void SwitchCtrl_Global::processLocalIdMessage(uint8 msgType, LocalId& lid)
