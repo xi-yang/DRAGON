@@ -147,6 +147,7 @@ void API_Server::processMessage( const Message& msg, MessageProcessor& mp) {
 			iter1 = nextIter;
 		}
 	}
+
 	API_EntryKey key(session,address,port);
   	ApiEntryList::ConstIterator iter = getApiList( session ).find( &key );
 	if ( msg.getMsgType() == Message::InitAPI ) {
