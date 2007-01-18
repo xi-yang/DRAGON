@@ -88,7 +88,8 @@ void MessageProcessor::processMessage() {
 		const_cast<RSVP_HOP_Object&>(currentMessage.getRSVP_HOP_Object()).setAddress( currentHeader.getSrcAddress() );
 	}
 	else if ( currentLif == RSVP_Global::rsvp->getApiUniClientLif() ) {
-		const_cast<RSVP_HOP_Object&>(currentMessage.getRSVP_HOP_Object()).setAddress( currentHeader.getSrcAddress() );
+		const_cast<RSVP_HOP_Object&>(currentMessage.getRSVP_HOP_Object()).setAddress( RSVP_Global::rsvp->getApiUniClientLif().getLocalAddress() );
+		const_cast<RSVP_HOP_Object&>(currentMessage.getRSVP_HOP_Object()).setLIH( RSVP_Global::rsvp->getApiUniClientLif().getLIH() );
 	}
 	if ( currentMessage.getMsgType() == Message::InitAPI || currentMessage.getMsgType() == Message::RemoveAPI ) {
 		RSVP::getApiServer().processMessage( currentMessage, *this );
