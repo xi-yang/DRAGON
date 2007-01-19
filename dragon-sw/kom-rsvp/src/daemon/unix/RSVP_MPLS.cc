@@ -272,7 +272,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 					case Message::PathTear:
 					case Message::ResvErr:
 					case Message::ResvTear:
-						RSVP_Global::messageProcessor->sendResvErrMessage( ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed ); //UNI ERROR ??
+						RSVP_Global::messageProcessor->sendResvErrMessage( 0, ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed ); //UNI ERROR ??
 						LOG(2)( Log::MPLS, "VLSR: SubnetUNI session failed with message state : ", ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() );
 						return false;
 						break;
