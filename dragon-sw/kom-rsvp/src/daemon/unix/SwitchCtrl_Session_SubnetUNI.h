@@ -54,7 +54,10 @@ public:
 
 	//Backward compatibility with general SwitchCtrl_Session operations
 	virtual bool connectSwitch() { return true; } //NOP
-	virtual void disconnectSwitch() { return; } //NOP
+	virtual void disconnectSwitch() {     
+		RSVP_Global::switchController->removeSession(this);
+		return; 
+	}
 
 	//Preparing UNI parameters
 	void setSubnetUniSrc(uint16 id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name);
