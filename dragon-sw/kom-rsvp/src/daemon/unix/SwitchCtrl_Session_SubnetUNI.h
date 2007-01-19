@@ -36,7 +36,7 @@ typedef struct SubnetUNI_Data_struct {
 	uint32 logical_port; //$$$$Assuming downstrem and upstream use the same port number
 	uint32 egress_label;
 	uint32 upstream_label;
-	char control_channel_name[CTRL_CHAN_NAME_LEN]; //consistent with TNA_IPv4 //redundant@@@@
+	uint8 control_channel_name[CTRL_CHAN_NAME_LEN]; //consistent with TNA_IPv4 //redundant@@@@
 } SubnetUNI_Data;
 
 class SwitchCtrl_Session_SubnetUNI;
