@@ -149,22 +149,33 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessMessage(const Message& msg)
 bool SwitchCtrl_Session_SubnetUNI::isSessionOwner(const Message& msg)
 {
     const SESSION_Object* session_obj = &msg.getSESSION_Object();
-    
-    if (isSource && session_obj->getDestAddress().rawAddress() == subnetUniSrc.uni_nid_ipv4 && session_obj->getTunnelId() == subnetUniSrc.tunnel_id)
+    const LSP_TUNNEL_IPv4_SENDER_TEMPLATE_Object* sender_obj;
+    const FlowDescriptorList* fdList;
+
+    if (isSource) {
+        if ( !(session_obj->getDestAddress().rawAddress() == subnetUniSrc.uni_nid_ipv4 && session_obj->getTunnelId() == subnetUniSrc.tunnel_id) )
+            return false;
+    }
+    else if ( !(session_obj->getDestAddress().rawAddress() == subnetUniDest.uni_cid_ipv4 && session_obj->getTunnelId() == subnetUniDest.tunnel_id) )
     {
-        const FlowDescriptorList* fdList = &msg.getFlowDescriptorList();
+        return false;
+    }
+
+    if (msg.getMsgType() == Message::Path)
+    {
+        sender_obj = &msg.getSENDER_TEMPLATE_Object();
+        if (sender_obj->getSrcAddress().rawAddress() == subnetUniDest.uni_cid_ipv4)
+            return true;
+    }
+    else if  (msg.getMsgType() == Message::Resv)
+    {
+        fdList = &msg.getFlowDescriptorList();
         FlowDescriptorList::ConstIterator it = fdList->begin();
         for (; it != fdList->end(); ++it)
         {
              if ((*it).filterSpecList.size()>0 && (*(*it).filterSpecList.begin()).getSrcAddress().rawAddress()  == subnetUniSrc.uni_cid_ipv4)
                 return true;
         }
-    }
-    else if (session_obj->getDestAddress().rawAddress() == subnetUniDest.uni_cid_ipv4 && session_obj->getTunnelId() == subnetUniDest.tunnel_id)
-    {
-        const LSP_TUNNEL_IPv4_SENDER_TEMPLATE_Object* sender_obj = &msg.getSENDER_TEMPLATE_Object();
-        if (sender_obj->getSrcAddress().rawAddress() == subnetUniDest.uni_cid_ipv4)
-            return true;
     }
 
     return false;
@@ -220,8 +231,8 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
     							       LABEL_REQUEST_Object::S_TDM,
                                                         LABEL_REQUEST_Object::G_SONET_SDH);
 
-    //SESSION is implied by uniSessionId and SENDER_TEMPLATE by (addr=0, port=subnetUniSrc.tunnel_id)
-    createSender( *uniSessionId, subnetUniSrc.tunnel_id, *stb, *lr, NULL, uni, labelSet, ssAttrib, upLabel, 50);
+    NetAddress srcAddress(subnetUniSrc.uni_cid_ipv4);
+    createSender( *uniSessionId, srcAddress, subnetUniSrc.tunnel_id, *stb, *lr, NULL, uni, labelSet, ssAttrib, upLabel, 50);
 
     if (uni) uni->destroy();
     if (labelSet) labelSet->destroy();
