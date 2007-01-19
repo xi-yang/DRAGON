@@ -278,7 +278,8 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 						break;
 					}
 					continue;
- 				} else if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
+ 				} 
+                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 					noError = true;
 					continue;
 				}
@@ -539,11 +540,12 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 				 //@@@@ >>Xi2007<<
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
-					continue;
-				} else if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
+				    if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
 					((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
-					continue;
-				} else if ( ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
+				    }
+                                continue;
+				}
+                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 					continue;
 				}
 				
