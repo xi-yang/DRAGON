@@ -606,7 +606,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		else
 			defaultOutLif = RSVP_Global::rsvp->findInterfaceByName(ingressChanName);
 		if (!defaultOutLif) {
-			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
+			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed ); //UNI ERROR ??
 			return;
 		}
 		RtOutL.insert_unique( defaultOutLif );

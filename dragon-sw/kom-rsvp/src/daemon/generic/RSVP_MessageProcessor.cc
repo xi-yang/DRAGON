@@ -169,6 +169,29 @@ void MessageProcessor::processMessage() {
 
 	currentSession = RSVP_Global::rsvp->findSession( currentMessage.getSESSION_Object(),
 		currentMessage.getMsgType() == Message::Path || currentMessage.getMsgType() == Message::PathResv );
+	
+#if defined(REFRESH_REDUCTION)
+	if ( currentMessage.getMsgType() == Message::Srefresh ) {
+		if (currentSession->getSubnetUniSrc()) {
+			switch (currentSession->getSubnetUniSrc()->getUniState()) {
+			case Message::PathErr:
+			case Message::ResvErr:
+				sendPathErrMessage( ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed); //UNI ERROR 
+				return;
+				break;
+			}
+		}
+		if (currentSession->getSubnetUniDest()) {
+			switch (currentSession->getSubnetUniDest()->getUniState()) {
+			case Message::PathErr:
+			case Message::ResvErr:
+				sendPathErrMessage( ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed); //UNI ERROR 
+				return;
+				break;
+			}
+		}		
+	}
+#endif
 
 	if ( currentSession == NULL ) {
 		switch( currentMessage.getMsgType() ) {

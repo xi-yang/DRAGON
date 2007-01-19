@@ -573,7 +573,8 @@ public:
 	enum NotifyError {
 		RROtooLargeForMTU = 1,
 		RRONotification = 2,
-		TunnelLocallyRepaired = 3
+		TunnelLocallyRepaired = 3,
+		SubnetUNISessionFailed = 10
 	};
 private:
 	NetAddress nodeAddress;

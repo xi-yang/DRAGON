@@ -39,6 +39,7 @@
 #include "RSVP_RSB.h"
 #include "RSVP_Session.h"
 #include "CLI_Session.h"
+#include "SwitchCtrl_Session_SubnetUNI.h"
 
 #define CHECK_UNICAST_ROUTING_FOR_PATH_REFRESH
 #if defined(CHECK_UNICAST_ROUTING_FOR_PATH_REFRESH)
@@ -174,8 +175,14 @@ void Hop::processSrefresh( const Message& msg ) {
 							lif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( (*stateIter).sb.psb->getSession().getDestAddress(), gw );
 					}
 					else if (generalizedUni) {
-						lif = RSVP_Global::rsvp->findInterfaceByAddress(NetAddress(generalizedUni->getSrcTNA().addr.s_addr));
- 						if (!lif && RSVP_Global::rsvp->findInterfaceByAddress(NetAddress(generalizedUni->getDestTNA().addr.s_addr)) )
+                                		lif = NULL;
+                                		SwitchCtrl_Session_SubnetUNI_List::Iterator uniSessionIter = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->begin();
+                                		for ( ; uniSessionIter != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end(); ++uniSessionIter) {
+                                			if ((*uniSessionIter)->isSessionOwner(msg)) {
+                                				lif = (*uniSessionIter)->getControlInterface();
+                                			}
+                                		}
+ 						if (!lif )
 							lif = RSVP_Global::rsvp->getApiLif();
 					}
 					else if (dragonUni) {
