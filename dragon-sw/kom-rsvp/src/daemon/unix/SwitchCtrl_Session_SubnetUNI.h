@@ -70,13 +70,13 @@ public:
 
 	//Performing UNI signaling
 	void initUniRsvpApiSession(); // by both source and destination
-	bool isSessionOwner(Message& msg); // by both source and destination
-	void receiveAndProcessMessage(Message& msg);  // by both source and destination
+	bool isSessionOwner(const Message& msg); // by both source and destination
+	void receiveAndProcessMessage(const Message& msg);  // by both source and destination
 
 	void createRsvpUniPath(); //by source
-	void receiveAndProcessPath(Message& msg); //by destination
+	void receiveAndProcessPath(const Message& msg); //by destination
 	void createRsvpUniResv(const SONET_SDH_SENDER_TSPEC_Object& sendTSpec, const LSP_TUNNEL_IPv4_FILTER_SPEC_Object& senderTemplate); //by destination
-	void receiveAndProcessResv(Message& msg); //by source
+	void receiveAndProcessResv(const Message& msg); //by source
 	void releaseRsvpPath(); //PTEAR by source and RTEAR by destination
 	void refreshUniRsvpSession(); //SRefresh by source
 

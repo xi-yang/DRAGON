@@ -134,7 +134,7 @@ void SwitchCtrl_Session_SubnetUNI::deregisterRsvpApiClient()
     }
 }
 
-void SwitchCtrl_Session_SubnetUNI::receiveAndProcessMessage(Message& msg)
+void SwitchCtrl_Session_SubnetUNI::receiveAndProcessMessage(const Message& msg)
 {
     //checking msg owner
     if (!isSessionOwner(msg))
@@ -146,7 +146,7 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessMessage(Message& msg)
         receiveAndProcessPath(msg);
 }
 
-bool SwitchCtrl_Session_SubnetUNI::isSessionOwner(Message& msg)
+bool SwitchCtrl_Session_SubnetUNI::isSessionOwner(const Message& msg)
 {
     const SESSION_Object* session_obj = &msg.getSESSION_Object();
     
@@ -255,7 +255,7 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniResv(const SONET_SDH_SENDER_TSPE
     return;
 }
 
-void SwitchCtrl_Session_SubnetUNI::receiveAndProcessPath(Message & msg)
+void SwitchCtrl_Session_SubnetUNI::receiveAndProcessPath(const Message & msg)
 {
     if (!active)
         return;
@@ -286,7 +286,7 @@ void SwitchCtrl_Session_SubnetUNI::receiveAndProcessPath(Message & msg)
     return;
 }
 
-void SwitchCtrl_Session_SubnetUNI::receiveAndProcessResv(Message & msg)
+void SwitchCtrl_Session_SubnetUNI::receiveAndProcessResv(const Message & msg)
 {
     if (!active)
         return;
