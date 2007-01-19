@@ -582,7 +582,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 	//GENERALIZED UNI (clients only)
 	bool isGeneralizedUniIngressClient = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif() && generalizedUni != NULL
-		&& msg.getRSVP_HOP_Object().getAddress() == NetAddress(0x100007f)); //0x100007f == "127.0.0.1"
+		&& RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress()) ); //including :"127.0.0.1"
 	//???? More criteria to determine egress client (destination)?
 	bool isGeneralizedUniEgressClient = (RSVP_Global::rsvp->getApiLif() != NULL && generalizedUni != NULL	&& !isGeneralizedUniIngressClient); 
 	
