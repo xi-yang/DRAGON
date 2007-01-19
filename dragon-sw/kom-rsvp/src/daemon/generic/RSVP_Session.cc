@@ -677,7 +677,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		SwitchCtrl_Session_SubnetUNI_List::Iterator uniSessionIter = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->begin();
 		for ( ; uniSessionIter != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end(); ++uniSessionIter) {
 			if ((*uniSessionIter)->isSessionOwner(msg)) {
-				defaultOutLif = (*uniSessionIter)->getSubnetUniSrc()->getControlInterface();
+				defaultOutLif = (*uniSessionIter)->getControlInterface();
 			}
 		}
 		if (!defaultOutLif) {
