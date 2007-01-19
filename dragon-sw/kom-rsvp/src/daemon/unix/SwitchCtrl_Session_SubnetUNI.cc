@@ -151,20 +151,23 @@ bool SwitchCtrl_Session_SubnetUNI::isSessionOwner(const Message& msg)
     const SESSION_Object* session_obj = &msg.getSESSION_Object();
     const LSP_TUNNEL_IPv4_SENDER_TEMPLATE_Object* sender_obj;
     const FlowDescriptorList* fdList;
+    SubnetUNI_Data* uniData;
 
     if (isSource) {
         if ( !(session_obj->getDestAddress().rawAddress() == subnetUniSrc.uni_nid_ipv4 && session_obj->getTunnelId() == subnetUniSrc.tunnel_id) )
             return false;
+        uniData = &subnetUniSrc;
     }
     else if ( !(session_obj->getDestAddress().rawAddress() == subnetUniDest.uni_cid_ipv4 && session_obj->getTunnelId() == subnetUniDest.tunnel_id) )
     {
         return false;
+        uniData = &subnetUniDest;
     }
 
     if (msg.getMsgType() == Message::Path)
     {
         sender_obj = &msg.getSENDER_TEMPLATE_Object();
-        if (sender_obj->getSrcAddress().rawAddress() == subnetUniDest.uni_cid_ipv4)
+        if (sender_obj->getSrcAddress().rawAddress() == uniData->uni_cid_ipv4)
             return true;
     }
     else if  (msg.getMsgType() == Message::Resv)
@@ -173,7 +176,7 @@ bool SwitchCtrl_Session_SubnetUNI::isSessionOwner(const Message& msg)
         FlowDescriptorList::ConstIterator it = fdList->begin();
         for (; it != fdList->end(); ++it)
         {
-             if ((*it).filterSpecList.size()>0 && (*(*it).filterSpecList.begin()).getSrcAddress().rawAddress()  == subnetUniSrc.uni_cid_ipv4)
+             if ((*it).filterSpecList.size()>0 && (*(*it).filterSpecList.begin()).getSrcAddress().rawAddress()  == uniData->uni_cid_ipv4)
                 return true;
         }
     }
