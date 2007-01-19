@@ -873,7 +873,7 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int16_t uni_id, int fd)
 		}
 	}
 
-	length = sizeof(u_int8_t)*2 + (uni_data == NULL ? 0 : sizeof(u_int32_t)*4);
+	length = sizeof(u_int8_t)*2 + (uni_data == NULL ? 0 : sizeof(u_int32_t)*6+12);
 	s = stream_new(length);
 	stream_putc(s, length);
 	stream_putc(s, GetSubnetUNIDataByOSPF);
