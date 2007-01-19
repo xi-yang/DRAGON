@@ -32,7 +32,7 @@ typedef struct SubnetUNI_Data_struct {
 	uint32 tna_ipv4; // also used for SenderTemplate IPv4; Session Ipv4 is implied by the peer Ipv4 in the same /30
 	uint32 uni_cid_ipv4; //reserved ! == tna_ipv4 ...
 	uint32 uni_nid_ipv4; //reserved ! (might be redundant) //might also need to configure in ospf _subnet_uni_speicific_info
-	uint32 logical_port;
+	uint32 logical_port; //$$$$Assuming downstrem and upstream use the same port number
 	uint32 egress_label;
 	uint32 upstream_label;
 	char control_channel_name[CTRL_CHAN_NAME_LEN]; //consistent with TNA_IPv4 //redundant@@@@
@@ -56,10 +56,10 @@ public:
 	virtual void disconnectSwitch() { return; } //NOP
 
 	//Preparing UNI parameters
-	void setSubnetUniSrc(uint16 id, float bw, uint32 tna, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL)
-		{ setSubnetUniData(subnetUniSrc, id, bw, tna, port, egress_label, upstream_label, cc_name); }
-	void setSubnetUniDest(uint16 id, float bw, uint32 tna, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL)
-		{ setSubnetUniData(subnetUniDest, id, bw, tna, port, egress_label, upstream_label, cc_name); }
+	void setSubnetUniSrc(uint16 id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL);
+	void setSubnetUniDest(uint16 id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL);
+	const LogicalInterface* getControlInterface();
+
 
 	void registerRsvpApiClient(); // by both source and destination
 	void deregisterRsvpApiClient(); // by both source and destination

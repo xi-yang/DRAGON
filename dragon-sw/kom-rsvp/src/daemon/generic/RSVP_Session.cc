@@ -368,7 +368,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		//creating source G_UNI client session
 		assert((inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST);
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
-			//Fetch SubnetUNI data @@@@
+			//Fetch SubnetUNI data 
 			memset(&subnetUniData, 0, sizeof(subnetUniData));
 			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(inRtId, (uint16)inUnumIfID, subnetUniData) ) {
 				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
@@ -388,7 +388,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				pSubnetUniSrc = (SwitchCtrl_Session_SubnetUNI*)ssNew;
 				//Pass SubnetUNI data
 				pSubnetUniSrc->setSubnetUniSrc(subnetUniData.subnet_id, subnetUniData.ethernet_bw, 
-					subnetUniData.tna_ipv4, subnetUniData.logical_port, subnetUniData.egress_label, subnetUniData.upstream_label);
+					subnetUniData.tna_ipv4, subnetUniData.uni_nid_ipv4, subnetUniData.logical_port, 
+					subnetUniData.egress_label, subnetUniData.upstream_label);
 				//kickoff UNI session
 				pSubnetUniSrc->registerRsvpApiClient();
 				pSubnetUniSrc->initUniRsvpApiSession();
@@ -399,13 +400,13 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		//creating destination G_UNI client session
 		assert((outUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_SRC);
 		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {			
-			//Fetch SubnetUNI data @@@@
+			//Fetch SubnetUNI data 
 			memset(&subnetUniData, 0, sizeof(subnetUniData));
 			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(outRtId, (uint16)outUnumIfID, subnetUniData) ) {
 				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vLSRoute.push_back(vlsr);                    
-				return false;				
+				return false;
 			}
 			subnetUniData.ethernet_bw = vlsr.bandwidth;
 				
@@ -419,7 +420,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				pSubnetUniDest = (SwitchCtrl_Session_SubnetUNI*)ssNew;
 				//Pass SubnetUNI data
 				pSubnetUniDest->setSubnetUniDest(subnetUniData.subnet_id, subnetUniData.ethernet_bw, 
-					subnetUniData.tna_ipv4, subnetUniData.logical_port, subnetUniData.egress_label, subnetUniData.upstream_label);
+					subnetUniData.tna_ipv4, subnetUniData.uni_nid_ipv4, subnetUniData.logical_port,
+					subnetUniData.egress_label, subnetUniData.upstream_label);
 				//kickoff UNI session
 				pSubnetUniDest->registerRsvpApiClient();
 				pSubnetUniDest->initUniRsvpApiSession();
@@ -669,7 +671,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		gateway = LogicalInterface::noGatewayAddress;
 	}
 	else if (isGeneralizedUniIngressClient) {
-		defaultOutLif = RSVP_Global::rsvp->findInterfaceByAddress( NetAddress(generalizedUni->getSrcTNA().addr.s_addr) );
+		assert (pSubnetUniSrc);
+		defaultOutLif = pSubnetUniSrc->getControlInterface();
 		if (!defaultOutLif) {
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
 			return;
@@ -678,11 +681,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 
-		RSVP_HOP_TLV_SUB_Object tlv (NetAddress(0)); //$$$$ SrcTNA also?
-		dataOutRsvpHop = RSVP_HOP_Object(NetAddress(generalizedUni->getSrcTNA().addr.s_addr), defaultOutLif->getLIH(), tlv);
+		//@@@@ Using the peer of SRC_TNA for RSVP_HOP --> Temp, to be changed!
+		NetAddress tnaAddress (generalizedUni->getSrcTNA().addr.s_addr), tnaPeerAddress;
+		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(tnaAddress, tnaPeerAddress);
+		RSVP_HOP_TLV_SUB_Object tlv (tnaPeerAddress);
+		dataOutRsvpHop = RSVP_HOP_Object(tnaPeerAddress, defaultOutLif->getLIH(), tlv);
 		senderTemplate.setSrcAddress(NetAddress(generalizedUni->getSrcTNA().addr.s_addr));
-
-		//@@@@ Converting RSVP_HOP address ???
 	}
 	// Xi2007<<
 	else { //regular RSVP (network) Path message
