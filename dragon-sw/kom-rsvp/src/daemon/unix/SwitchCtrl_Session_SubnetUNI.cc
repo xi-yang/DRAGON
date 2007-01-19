@@ -43,7 +43,7 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint16
     data.data_if_ipv4 = data_if;
 
     if (cc_name)
-        strncpy(data.control_channel_name, cc_name, CTRL_CHAN_NAME_LEN-1);
+        strncpy((char*)data.control_channel_name, cc_name, CTRL_CHAN_NAME_LEN-1);
 }       
 
 void SwitchCtrl_Session_SubnetUNI::setSubnetUniSrc(uint16 id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
@@ -78,7 +78,7 @@ const LogicalInterface* SwitchCtrl_Session_SubnetUNI::getControlInterface()
 	const NetAddress nidAddress(uniData->uni_nid_ipv4);
 	NetAddress gwAddress(0);
 	if (uniData->control_channel_name[0] != 0)
-		return RSVP_Global::rsvp->findInterfaceByName(String(uniData->control_channel_name));
+		return RSVP_Global::rsvp->findInterfaceByName(String((char*)uniData->control_channel_name));
 	else
 		return RSVP_Global::rsvp->getRoutingService().getUnicastRoute( nidAddress, gwAddress );
 }
