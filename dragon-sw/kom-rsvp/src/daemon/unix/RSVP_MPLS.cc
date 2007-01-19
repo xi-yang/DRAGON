@@ -7,6 +7,8 @@
 #include "RSVP_PHopSB.h"
 #include "RSVP_Session.h"
 #include "RSVP_Message.h"
+#include "RSVP_MessageProcessor.h"
+#include "RSVP_Global.h"
 #include "SwitchCtrl_Global.h"
 //#include "SNMP_Session.h"
 //#include "CLI_Session.h"
