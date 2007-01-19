@@ -28,7 +28,7 @@ void SwitchCtrl_Session_SubnetUNI::internalInit ()
 }
 
 void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint16 subuni_id, 
- uint16 tunnel_id, float bw, uint32 tna_ipv4, uint32 uni_cid_ipv4, uint32 uni_nid_ipv4, 
+ uint16 tunnel_id, float bw, uint32 tna_ipv4, uint32 uni_cid_ipv4, uint32 uni_nid_ipv4, uint32 data_if,
  uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
 {
     memset(&data, 0, sizeof(SubnetUNI_Data));
@@ -40,6 +40,7 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint16
 
     data.uni_cid_ipv4 = uni_cid_ipv4;
     data.uni_nid_ipv4 = uni_nid_ipv4;
+    data.data_if_ipv4 = data_if;
 
     if (cc_name)
         strncpy(data.control_channel_name, cc_name, CTRL_CHAN_NAME_LEN-1);
@@ -53,8 +54,9 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniSrc(uint16 id, float bw,  uint32 
 	uint16 tunnel_id = id; //temp
 	uint32 uni_c_id = lif ? lif->getLocalAddress().rawAddress() : tna; //?
 	uint32 uni_n_id = nid;
+	uint32 data_if = 0; //temp
 
-	setSubnetUniData(subnetUniSrc, id, tunnel_id, bw, tna, uni_c_id, uni_n_id, port, egress_label, upstream_label, cc_name);
+	setSubnetUniData(subnetUniSrc, id, tunnel_id, bw, tna, uni_c_id, uni_n_id, data_if, port, egress_label, upstream_label, cc_name);
 }
 
 void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(uint16 id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
@@ -65,8 +67,9 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(uint16 id, float bw,  uint32
 	uint16 tunnel_id = id; //temp
 	uint32 uni_c_id = lif ? lif->getLocalAddress().rawAddress() : tna; //?
 	uint32 uni_n_id = nid;
+	uint32 data_if = 0; //temp
 
-	setSubnetUniData(subnetUniSrc, id, tunnel_id, bw, tna, uni_c_id, uni_n_id, port, egress_label, upstream_label, cc_name);
+	setSubnetUniData(subnetUniSrc, id, tunnel_id, bw, tna, uni_c_id, uni_n_id, data_if, port, egress_label, upstream_label, cc_name);
 }
 
 const LogicalInterface* SwitchCtrl_Session_SubnetUNI::getControlInterface()

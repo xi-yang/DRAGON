@@ -30,8 +30,9 @@ typedef struct SubnetUNI_Data_struct {
 	uint16 tunnel_id;
 	float ethernet_bw; // in mbps
 	uint32 tna_ipv4; // also used for SenderTemplate IPv4; Session Ipv4 is implied by the peer Ipv4 in the same /30
-	uint32 uni_cid_ipv4; //reserved ! == tna_ipv4 ...
-	uint32 uni_nid_ipv4; //reserved ! (might be redundant) //might also need to configure in ospf _subnet_uni_speicific_info
+	uint32 uni_cid_ipv4; //
+	uint32 uni_nid_ipv4; //
+	uint32 data_if_ipv4; //Data infterface
 	uint32 logical_port; //$$$$Assuming downstrem and upstream use the same port number
 	uint32 egress_label;
 	uint32 upstream_label;
@@ -117,7 +118,7 @@ protected:
 private:	
 	void internalInit ();
 	void setSubnetUniData(SubnetUNI_Data& data, uint16 id, uint16 tunnel_id, float bw, uint32 tna, uint32 uni_c_id, 
-		uint32 uni_n_id, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL);
+		uint32 uni_n_id, uint32 data_if, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name);
 };
 
 
