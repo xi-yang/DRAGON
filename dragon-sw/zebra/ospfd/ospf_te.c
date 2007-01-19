@@ -1300,10 +1300,10 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
 	else if (vty != NULL && (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_SUBNET_UNI))
 	{
 	    vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
-	    vty_out (vty, "       --> Subnet-UNI ID: %d%s", ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id), VTY_NEWLINE);
-	    vty_out (vty, "       --> Control IP: %s; Data port: %d%s", inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.control_channel_ipv4), 
+	    vty_out (vty, "      -> Subnet-UNI ID: %d%s", ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id), VTY_NEWLINE);
+	    vty_out (vty, "      -> Control IP: %s; Data port: %d%s", inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.control_channel_ipv4), 
 			ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.logical_port_number), VTY_NEWLINE);
-	    vty_out (vty, "       --> Egress label: %d; Upstream label: %d%s", ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_downstream), 
+	    vty_out (vty, "      -> Egress label: %d; Upstream label: %d%s", ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_downstream), 
 			ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_upstream), VTY_NEWLINE);
 	}
   }
@@ -1417,10 +1417,10 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	else if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_SUBNET_UNI)) {
 	    subnet_uni = (struct link_ifswcap_specific_subnet_uni *)v;
 	    vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
-	    vty_out (vty, "       --> Subnet-UNI ID: %d%s", ntohs(subnet_uni->subnet_uni_id), VTY_NEWLINE);
-	    vty_out (vty, "       --> Control IP: %s; Data port: %d%s", inet_ntoa (*(struct in_addr*)&subnet_uni->control_channel_ipv4), 
+	    vty_out (vty, "      -> Subnet-UNI ID: %d%s", ntohs(subnet_uni->subnet_uni_id), VTY_NEWLINE);
+	    vty_out (vty, "      -> Control IP: %s; Data port: %d%s", inet_ntoa (*(struct in_addr*)&subnet_uni->control_channel_ipv4), 
 			ntohl(subnet_uni->logical_port_number), VTY_NEWLINE);
-	    vty_out (vty, "       --> Egress label: %d; Upstream label: %d%s", ntohl(subnet_uni->egress_label_downstream), 
+	    vty_out (vty, "      -> Egress label: %d; Upstream label: %d%s", ntohl(subnet_uni->egress_label_downstream), 
 			ntohl(subnet_uni->egress_label_upstream), VTY_NEWLINE);
 	}
   }
@@ -2524,11 +2524,15 @@ ALIAS (ospf_te_interface_ifsw_cap4,
 
 DEFUN (ospf_te_interface_ifsw_cap5,
        ospf_te_interface_ifsw_cap5_cmd,
-       "subnet-uni <1-65535> control-via A.B.C.D data-port <0-4294967295> egress-label <0-4294967295> upstream-label <0-4294967295>",
+       "subnet-uni <1-65535> tna-ipv4 A.B.C.D uni-n-ipv4  A.B.C.D control-channel NAME data-interface  A.B.C.D port <0-4294967295> egress-label <0-4294967295> upstream-label <0-4294967295>",
        "Assign Subnet UNI parameters\n"
        "Subnet UNI ID (16 bits)\n"
+       "UNI TNA IP\n"
+       "IPv4 address\n"
+       "UNI-Nework node ID\n"
+       "IPv4 address\n"
        "Control channel for the UNI\n"
-       "Control IPv4 address\n"
+       "Control channel name string\n"
        "Logical data port\n"
        "Port number\n"
        "Egress label, downstream\n"
@@ -2536,7 +2540,8 @@ DEFUN (ospf_te_interface_ifsw_cap5,
        "Egress label, upstream\n"
        "Egress label (32 bits)\n")
 {
-  u_int32_t uni_id, control_ip, data_port, egress_label, egress_label_upstream;
+  u_int32_t uni_id, tna_ip, uni_n_ip, data_if, data_port, egress_label, egress_label_upstream;
+  char contol_channel[12];
 
   if  (te_config.te_para.link_ifswcap.link_ifswcap_data.switching_cap != LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
     {
@@ -2544,9 +2549,9 @@ DEFUN (ospf_te_interface_ifsw_cap5,
       return CMD_WARNING;
     }
   	
-  if (argc != 5) 
+  if (argc != 8) 
     {
-      vty_out (vty, "ospf_te_interface_ifsw_cap5: only %d parameters present%s (needing five)", argc, VTY_NEWLINE);
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: only %d parameters present%s (needing eight)", argc, VTY_NEWLINE);
       return CMD_WARNING;
     }
 
@@ -2559,28 +2564,45 @@ DEFUN (ospf_te_interface_ifsw_cap5,
       return CMD_WARNING;
     }
   te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id = htons(uni_id);
-  if (inet_aton (argv[1], (struct in_addr*)&control_ip) != 1)
+
+  if (inet_aton (argv[1], (struct in_addr*)&tna_ip) != 1)
     {
-      vty_out (vty, "ospf_te_interface_ifsw_cap5: inet_aton control_ip: %s%s", strerror (errno), VTY_NEWLINE);
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: inet_aton tna_ip: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.control_channel_ipv4 = control_ip;
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.tna_ipv4 = tna_ip;
 
-  if (sscanf (argv[2], "%d", &data_port) != 1)
+  if (inet_aton (argv[2], (struct in_addr*)&uni_n_ip) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: inet_aton uni_n_ip: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.nid_ipv4 = uni_n_ip;
+
+  strncpy(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.control_channel, argv[3], 11);
+
+  if (inet_aton (argv[4], (struct in_addr*)&data_if) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: inet_aton data_if: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.data_ipv4 = data_if;
+
+  if (sscanf (argv[5], "%d", &data_port) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap5: fscanf data_port: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
   te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.logical_port_number = htonl(data_port);
   
-  if (sscanf (argv[3], "%d", &egress_label) != 1)
+  if (sscanf (argv[6], "%d", &egress_label) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap5: fscanf egress_label: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
   te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_downstream = htonl(egress_label);
   
-  if (sscanf (argv[4], "%d", &egress_label_upstream) != 1)
+  if (sscanf (argv[7], "%d", &egress_label_upstream) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap5: fscanf egress_label_upstream: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;

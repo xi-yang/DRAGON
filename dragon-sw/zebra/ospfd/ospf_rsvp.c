@@ -842,6 +842,7 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int16_t uni_id, int fd)
 	struct link_ifswcap_specific_subnet_uni* uni_data = NULL;
 	struct stream *s = NULL;
 	u_int8_t length;
+	int i;
 		
 	area = NULL;
 	if (om->ospf){
@@ -878,10 +879,14 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int16_t uni_id, int fd)
 	stream_putc(s, GetSubnetUNIDataByOSPF);
 	if (uni_data)
 	{
-		stream_putl(s, uni_data->control_channel_ipv4);
+		stream_putl(s, uni_data->tna_ipv4);
+		stream_putl(s, uni_data->nid_ipv4);
+		stream_putl(s, uni_data->data_ipv4);
 		stream_putl(s, uni_data->logical_port_number);
 		stream_putl(s, uni_data->egress_label_downstream);
 		stream_putl(s, uni_data->egress_label_upstream);
+		for (i = 0; i < 12; i++)
+			stream_putc(s, uni_data->control_channel[i]);
 	}
 	write (fd, STREAM_DATA(s), length);
 	stream_free(s);

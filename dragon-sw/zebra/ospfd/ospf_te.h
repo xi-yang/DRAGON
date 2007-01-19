@@ -274,11 +274,13 @@ struct link_ifswcap_specific_subnet_uni {
 	u_int16_t		subnet_uni_id;
 	u_char		reserved[2];
 
-	/*u_int32_t	tna_ipv4;*/   /* made equal to  control channel IP address */
-	u_int32_t		control_channel_ipv4;
+	u_int32_t		tna_ipv4;
+	u_int32_t		nid_ipv4;
+	u_int32_t		data_ipv4;
 	u_int32_t		logical_port_number;
 	u_int32_t		egress_label_downstream; /*egress label on the UNI interface*/
 	u_int32_t		egress_label_upstream; /*egress label on the UNI interface for bidirectional traffic*/
+	char			control_channel[12];
 };
 
 
