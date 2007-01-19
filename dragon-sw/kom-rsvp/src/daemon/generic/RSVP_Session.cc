@@ -582,7 +582,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 	//GENERALIZED UNI (clients only)
 	bool isGeneralizedUniIngressClient = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif() && generalizedUni != NULL
-		&& RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress()) ); //including :"127.0.0.1"
+		&& ( msg.getRSVP_HOP_Object().getAddress() == NetAddress(0x100007f) || RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress())) );
 	//???? More criteria to determine egress client (destination)?
 	bool isGeneralizedUniEgressClient = (RSVP_Global::rsvp->getApiLif() != NULL && generalizedUni != NULL	&& !isGeneralizedUniIngressClient); 
 	
@@ -686,6 +686,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		RtOutL.insert_unique( defaultOutLif );
 
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
+
+             //Update SenderTemplate too!
 
 		//@@@@ Using the peer of SRC_TNA for RSVP_HOP --> Temp, to be changed!
 		NetAddress tnaAddress (generalizedUni->getSrcTNA().addr.s_addr), tnaPeerAddress;
