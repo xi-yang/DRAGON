@@ -638,11 +638,13 @@ void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
 					currentSession = RSVP_Global::rsvp->findSession( currentMessage.getSESSION_Object(), false );
 				else
 					currentSession = NULL;
-				if (currentSession && currentSession->getSubnetUniSrc()) {
+				//Only do this for Resv messages in main session
+				if (currentMessage.getMsgType() == Message::Resv && currentSession && currentSession->getSubnetUniSrc()) {
 					switch (currentSession->getSubnetUniSrc()->getUniState()) {
 					case Message::Resv:
 					case Message::ResvConf:
 					case Message::PathErr:
+					case Message::ResvErr:
 					case Message::PathTear:
 					case Message::ResvTear:
 						//Message OK for processing since UNI session has gone thru a whole cycle
@@ -658,7 +660,7 @@ void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
 						if ( msgIter != msgQueue->end() ) // The entry has already existed. --> same message received ...
 							break;
 
-						//otherwise enqueue current Message while UNI session is pending for return
+						//otherwise enqueue current main-session Resv Message while UNI session is pending for return
 						msgEntry = new MessageEntry;
 						msgEntry->preserveMessage((LogicalInterface*)currentLif, currentSession, currentMessage);
 						msgQueue->push_front(msgEntry);

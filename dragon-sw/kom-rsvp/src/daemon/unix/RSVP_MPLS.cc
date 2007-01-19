@@ -263,7 +263,19 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
 				 //@@@@ >>Xi2007<<
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
-					noError = true;
+					//UNI session error will fail the RSVP session
+					switch (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState()) {
+					case Message::PathErr:
+					case Message::PathTear:
+					case Message::ResvErr:
+					case Message::ResvTear:
+						LOG(2)( Log::MPLS, "VLSR: SubnetUNI session failed with message state : ", ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() );
+						return false;
+						break;
+					default:
+						noError = true;
+						break;
+					}
 					continue;
  				} else if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 					noError = true;
