@@ -69,7 +69,7 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(uint16 id, float bw,  uint32
 	uint32 uni_n_id = nid;
 	uint32 data_if = 0; //temp
 
-	setSubnetUniData(subnetUniSrc, id, tunnel_id, bw, tna, uni_c_id, uni_n_id, data_if, port, egress_label, upstream_label, cc_name);
+	setSubnetUniData(subnetUniDest, id, tunnel_id, bw, tna, uni_c_id, uni_n_id, data_if, port, egress_label, upstream_label, cc_name);
 }
 
 const LogicalInterface* SwitchCtrl_Session_SubnetUNI::getControlInterface()
