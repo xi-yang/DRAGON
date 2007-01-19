@@ -56,8 +56,8 @@ public:
 	virtual void disconnectSwitch() { return; } //NOP
 
 	//Preparing UNI parameters
-	void setSubnetUniSrc(uint16 id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL);
-	void setSubnetUniDest(uint16 id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL);
+	void setSubnetUniSrc(uint16 id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name);
+	void setSubnetUniDest(uint16 id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name);
 	const LogicalInterface* getControlInterface();
 
 
@@ -116,8 +116,8 @@ protected:
 
 private:	
 	void internalInit ();
-	void setSubnetUniData(SubnetUNI_Data& data, uint16 id, float bw, uint32 tna, uint32 port, 
-		uint32 egress_label, uint32 upstream_label, char* cc_name=NULL);
+	void setSubnetUniData(SubnetUNI_Data& data, uint16 id, uint16 tunnel_id, float bw, uint32 tna, uint32 uni_c_id, 
+		uint32 uni_n_id, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL);
 };
 
 

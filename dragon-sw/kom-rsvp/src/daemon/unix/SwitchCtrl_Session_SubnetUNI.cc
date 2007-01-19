@@ -45,11 +45,10 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint16
         strncpy(data.control_channel_name, cc_name, CTRL_CHAN_NAME_LEN-1);
 }       
 
-void SwitchCtrl_Session_SubnetUNI::setSubnetUniSrc(uint16 id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL)
+void SwitchCtrl_Session_SubnetUNI::setSubnetUniSrc(uint16 id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
 {
-	LogicalInterface* lif = NULL;
-	if (cc_name) 
-		lif = RSVP_Global::rsvp->findInterfaceByName(String(cc_name));
+	assert (cc_name);
+	const LogicalInterface* lif = RSVP_Global::rsvp->findInterfaceByName(String(cc_name));
 
 	uint16 tunnel_id = id; //temp
 	uint32 uni_c_id = lif ? lif->getLocalAddress().rawAddress() : tna; //?
@@ -58,11 +57,10 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniSrc(uint16 id, float bw,  uint32 
 	setSubnetUniData(subnetUniSrc, id, tunnel_id, bw, tna, uni_c_id, uni_n_id, port, egress_label, upstream_label, cc_name);
 }
 
-void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(uint16 id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name=NULL)
+void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(uint16 id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
 {
-	LogicalInterface* lif = NULL;
-	if (cc_name) 
-		lif = RSVP_Global::rsvp->findInterfaceByName(String(cc_name));
+	assert (cc_name);
+	const LogicalInterface* lif = RSVP_Global::rsvp->findInterfaceByName(String(cc_name));
 
 	uint16 tunnel_id = id; //temp
 	uint32 uni_c_id = lif ? lif->getLocalAddress().rawAddress() : tna; //?
@@ -74,11 +72,12 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(uint16 id, float bw,  uint32
 const LogicalInterface* SwitchCtrl_Session_SubnetUNI::getControlInterface()
 {
 	SubnetUNI_Data* uniData = (isSource ? &subnetUniSrc : &subnetUniDest);
-	uint32 nid = (isSource ? subnetUniSrc.control_channel_name :  subnetUniDest.control_channel_name);
+	const NetAddress nidAddress(uniData->uni_nid_ipv4);
+	NetAddress gwAddress(0);
 	if (uniData->control_channel_name[0] != 0)
 		return RSVP_Global::rsvp->findInterfaceByName(String(uniData->control_channel_name));
 	else
-		return RSVP_Global::rsvp->getRoutingService().getUnicastRoute( NetAddress(uniData->uni_nid_ipv4), NetAddress(0));
+		return RSVP_Global::rsvp->getRoutingService().getUnicastRoute( nidAddress, gwAddress );
 }
 
 SwitchCtrl_Session_SubnetUNI::~SwitchCtrl_Session_SubnetUNI() 

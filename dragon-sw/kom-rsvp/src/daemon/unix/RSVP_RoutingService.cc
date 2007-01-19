@@ -503,7 +503,8 @@ bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint
 	msgLength = read(ospf_socket, ibuffer.getWriteBuffer(), ibuffer.getSize());
 	ibuffer.setWriteLength(msgLength);
 	//Process response messages
-	ibuffer >> uniData.tna_ipv4 >> uniData.uni_nid_ipv4 >> uniData.logical_port >> uniData.egress_label >>uniData.upstream_label >> uniData.control_channel_name;
+	ibuffer >> uniData.tna_ipv4 >> uniData.uni_nid_ipv4 >> uniData.logical_port >> uniData.egress_label >>uniData.upstream_label;
+	for (int i = 0; i < 12; i++) ibuffer >> uniData.control_channel_name[i];
 	return true;
 }
 
