@@ -71,10 +71,13 @@ class Session :	public RelationshipSession_PSB,
 	//NARB client
 	NARB_APIClient* narbClient;
 
-    //Subnet UNI Session handles
-    SwitchCtrl_Session_SubnetUNI* pSubnetUniSrc;
-    SwitchCtrl_Session_SubnetUNI* pSubnetUniDest;
+	//Subnet UNI Session handles
+	SwitchCtrl_Session_SubnetUNI* pSubnetUniSrc;
+	SwitchCtrl_Session_SubnetUNI* pSubnetUniDest;
 
+	//Parenet Session
+	Session* pParentSession;
+	
 	PHopSB* findOrCreatePHopSB( Hop&, uint32 );
 
 	void matchPSBsAndFiltersAndOutInterface( const FilterSpecList&, const LogicalInterface&, PSB_List& result, OutISB*& );
@@ -123,6 +126,8 @@ public:
 #endif
 	SwitchCtrl_Session_SubnetUNI* getSubnetUniSrc() { return pSubnetUniSrc; }
 	SwitchCtrl_Session_SubnetUNI* getSubnetUniDest() { return pSubnetUniDest; }
+	Session*  getParentSession() { return pParentSession; }
+	void setParentSession(Session* parent) { pParentSession= parent; }
 
 	DECLARE_MEMORY_MACHINE_IN_CLASS(Session)
 };

@@ -59,6 +59,7 @@ Session::Session( const SESSION_Object &session) : SESSION_Object(session),
 	biDir = false;
 	narbClient = NULL;
 	pSubnetUniSrc = pSubnetUniDest = NULL;
+	pParentSession = NULL;
 }
 
 Session::~Session() {
@@ -671,8 +672,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		gateway = LogicalInterface::noGatewayAddress;
 	}
 	else if (isGeneralizedUniIngressClient) {
-		assert (pSubnetUniSrc);
-		defaultOutLif = pSubnetUniSrc->getControlInterface();
+		assert (pParentSession && pParentSession->getSubnetUniSrc());
+		defaultOutLif = pParentSession->getSubnetUniSrc()->getControlInterface();
 		if (!defaultOutLif) {
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
 			return;
