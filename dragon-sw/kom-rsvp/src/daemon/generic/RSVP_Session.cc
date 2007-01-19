@@ -59,7 +59,6 @@ Session::Session( const SESSION_Object &session) : SESSION_Object(session),
 	biDir = false;
 	narbClient = NULL;
 	pSubnetUniSrc = pSubnetUniDest = NULL;
-	pParentSession = NULL;
 }
 
 Session::~Session() {
