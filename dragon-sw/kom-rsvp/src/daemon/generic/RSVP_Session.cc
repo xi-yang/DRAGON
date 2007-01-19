@@ -672,8 +672,14 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		gateway = LogicalInterface::noGatewayAddress;
 	}
 	else if (isGeneralizedUniIngressClient) {
-		assert (pParentSession && pParentSession->getSubnetUniSrc());
-		defaultOutLif = pParentSession->getSubnetUniSrc()->getControlInterface();
+		assert(SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList);
+		defaultOutLif = NULL;
+		SwitchCtrl_Session_SubnetUNI_List::Iterator uniSessionIter = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->begin();
+		for ( ; uniSessionIter != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end(); ++uniSessionIter) {
+			if ((*uniSessionIter)->isSessionOwner(msg)) {
+				defaultOutLif = (*uniSessionIter)->getSubnetUniSrc()->getControlInterface();
+			}
+		}
 		if (!defaultOutLif) {
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
 			return;
