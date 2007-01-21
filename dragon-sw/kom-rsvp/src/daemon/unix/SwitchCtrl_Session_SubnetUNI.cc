@@ -167,7 +167,12 @@ bool SwitchCtrl_Session_SubnetUNI::isSessionOwner(const Message& msg)
     if (msg.getMsgType() == Message::Path)
     {
         sender_obj = &msg.getSENDER_TEMPLATE_Object();
-        if (sender_obj->getSrcAddress().rawAddress() == uniData->uni_cid_ipv4 
+
+        NetAddress uni_c_data_if;
+        NetAddress uni_n_data_if ((*uniSessionIter)->getSubnetUniSrc()->data_if_ipv4);
+        RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(uni_n_data_if, uni_c_data_if);
+
+        if (sender_obj->getSrcAddress() == uni_c_data_if
             || sender_obj->getSrcAddress().rawAddress() == 0 || sender_obj->getSrcAddress().rawAddress() == 0x100007f)
             return true;
     }
