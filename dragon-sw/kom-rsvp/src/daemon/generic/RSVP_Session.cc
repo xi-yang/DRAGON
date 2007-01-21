@@ -691,7 +691,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		//       $$$$ Option 1 Using the peer of SRC_TNA for RSVP_HOP 
 		//NetAddress tna_ip (generalizedUni->getSrcTNA().addr.s_addr);
 		//        $$$$ Option 2 Using the peer of dataInterface stored in subnetUniDataSource
-		NetAddress uni_n_data_if ((*uniSessionIter)->getSubnetUniSrc().data_if_ipv4);
+		NetAddress uni_n_data_if ((*uniSessionIter)->getSubnetUniSrc()->data_if_ipv4);
 		NetAddress uni_c_data_if;
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(uni_n_data_if, uni_c_data_if);
 		RSVP_HOP_TLV_SUB_Object tlv (uni_c_data_if);
