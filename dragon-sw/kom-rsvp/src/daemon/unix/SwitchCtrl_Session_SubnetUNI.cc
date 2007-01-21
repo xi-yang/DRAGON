@@ -217,9 +217,9 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
     if (sonet_tb1)
         stb = new SENDER_TSPEC_Object(*sonet_tb1);
 
-    uni = new GENERALIZED_UNI_Object (subnetUniSrc.uni_cid_ipv4, subnetUniSrc.uni_nid_ipv4, 
-                    subnetUniSrc.logical_port, subnetUniSrc.egress_label, 
-                    subnetUniSrc.logical_port, subnetUniSrc.upstream_label);
+    uni = new GENERALIZED_UNI_Object (subnetUniSrc.tna_ipv4, subnetUniDest.tna_ipv4, 
+                    subnetUniDest.logical_port, subnetUniDest.egress_label, 
+                    subnetUniDest.logical_port, subnetUniDest.upstream_label);
 
     /* $$$$ we may need this later on ...
     labelSet = new LABEL_SET_Object();
