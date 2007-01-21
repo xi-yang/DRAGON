@@ -169,7 +169,7 @@ bool SwitchCtrl_Session_SubnetUNI::isSessionOwner(const Message& msg)
         sender_obj = &msg.getSENDER_TEMPLATE_Object();
 
         NetAddress uni_c_data_if;
-        NetAddress uni_n_data_if ((*uniSessionIter)->getSubnetUniSrc()->data_if_ipv4);
+        NetAddress uni_n_data_if (uniData->data_if_ipv4);
         RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(uni_n_data_if, uni_c_data_if);
 
         if (sender_obj->getSrcAddress() == uni_c_data_if
