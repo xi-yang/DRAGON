@@ -700,7 +700,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
              //Update SenderTemplate too!
 		//$$$$ Using loopback (OSPF RouterID, virtual), which works only if the route to routerID configured on source UNI-N
 		//$$$$$  via the control channel. This may be changed to the control channe (gre tunnel) address on this UNI.
-		senderTemplate.setSrcAddress(loopback);  
+		senderTemplate.setSrcAddress(loopback);
+		(*uniSessionIter)->getSubnetUniSrc()->uni_cid_ipv4 = loopback.rawAddress();
 	}
 	// Xi2007<<
 	else { //regular RSVP (network) Path message

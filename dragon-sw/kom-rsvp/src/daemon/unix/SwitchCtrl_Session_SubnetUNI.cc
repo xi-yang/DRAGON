@@ -167,7 +167,7 @@ bool SwitchCtrl_Session_SubnetUNI::isSessionOwner(const Message& msg)
     if (msg.getMsgType() == Message::Path)
     {
         sender_obj = &msg.getSENDER_TEMPLATE_Object();
-        if (sender_obj->getSrcAddress().rawAddress() == uniData->uni_cid_ipv4 || 
+        if (sender_obj->getSrcAddress().rawAddress() == uniData->uni_cid_ipv4
             || sender_obj->getSrcAddress().rawAddress() == 0 || sender_obj->getSrcAddress().rawAddress() == 0x100007f)
             return true;
     }
