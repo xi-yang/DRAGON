@@ -687,14 +687,20 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 
-             //Update SenderTemplate too!
+		//Update RSVP_HOP
+		//       $$$$ Option 1 Using the peer of SRC_TNA for RSVP_HOP 
+		//NetAddress tna_ip (generalizedUni->getSrcTNA().addr.s_addr);
+		//        $$$$ Option 2 Using the peer of dataInterface stored in subnetUniDataSource
+		NetAddress uni_n_data_if ((*uniSessionIter)->getSubnetUniSrc().data_if_ipv4);
+		NetAddress uni_c_data_if;
+		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(uni_n_data_if, uni_c_data_if);
+		RSVP_HOP_TLV_SUB_Object tlv (uni_c_data_if);
+		dataOutRsvpHop = RSVP_HOP_Object(uni_c_data_if, defaultOutLif->getLIH(), tlv);
 
-		//@@@@ Using the peer of SRC_TNA for RSVP_HOP --> Temp, to be changed!
-		NetAddress tnaAddress (generalizedUni->getSrcTNA().addr.s_addr), tnaPeerAddress;
-		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(tnaAddress, tnaPeerAddress);
-		RSVP_HOP_TLV_SUB_Object tlv (tnaPeerAddress);
-		dataOutRsvpHop = RSVP_HOP_Object(tnaPeerAddress, defaultOutLif->getLIH(), tlv);
-		senderTemplate.setSrcAddress(NetAddress(generalizedUni->getSrcTNA().addr.s_addr));
+             //Update SenderTemplate too!
+		//$$$$ Using loopback (OSPF RouterID, virtual), which works only if the route to routerID configured on source UNI-N
+		//$$$$$  via the control channel. This may be changed to the control channe (gre tunnel) address on this UNI.
+		senderTemplate.setSrcAddress(loopback);  
 	}
 	// Xi2007<<
 	else { //regular RSVP (network) Path message
