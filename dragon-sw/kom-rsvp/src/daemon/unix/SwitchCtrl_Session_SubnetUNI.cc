@@ -164,13 +164,13 @@ bool SwitchCtrl_Session_SubnetUNI::isSessionOwner(const Message& msg)
         uniData = &subnetUniDest;
     }
 
+    NetAddress uni_c_data_if;
+    NetAddress uni_n_data_if (uniData->data_if_ipv4);
+    RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(uni_n_data_if, uni_c_data_if);
+
     if (msg.getMsgType() == Message::Path)
     {
         sender_obj = &msg.getSENDER_TEMPLATE_Object();
-
-        NetAddress uni_c_data_if;
-        NetAddress uni_n_data_if (uniData->data_if_ipv4);
-        RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(uni_n_data_if, uni_c_data_if);
 
         if (sender_obj->getSrcAddress() == uni_c_data_if
             || sender_obj->getSrcAddress().rawAddress() == 0 || sender_obj->getSrcAddress().rawAddress() == 0x100007f)
@@ -182,7 +182,7 @@ bool SwitchCtrl_Session_SubnetUNI::isSessionOwner(const Message& msg)
         FlowDescriptorList::ConstIterator it = fdList->begin();
         for (; it != fdList->end(); ++it)
         {
-             if ((*it).filterSpecList.size()>0 && (*(*it).filterSpecList.begin()).getSrcAddress().rawAddress()  == uniData->uni_cid_ipv4)
+             if ((*it).filterSpecList.size()>0 && (*(*it).filterSpecList.begin()).getSrcAddress() == uni_c_data_if)
                 return true;
         }
     }
