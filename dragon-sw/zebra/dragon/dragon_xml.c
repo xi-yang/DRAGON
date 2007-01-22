@@ -152,7 +152,7 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
 
   /* if Path, Resv, ResvConf, return AST_SUCCESS to user
    * if PathErr, ResvErr, return AST_FAILURE to user
-   */
+   *
   switch (msg_type) {
     case Path:
     case Resv:
@@ -164,6 +164,8 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
       status = AST_FAILURE;
       break;
   }
+  */
+  status = AST_SUCCESS;
   fprintf(fp, "<status>%s</status>\n", 
 		status == AST_SUCCESS? "AST_SUCCESS":"AST_FAILURE");
   fprintf(fp, "<resource name=\"%s\" type=\"%s\">\n", data->link_agent, node_stype_name[data->node_stype]);
@@ -835,7 +837,9 @@ dragon_build_lsp(struct resource *link)
 
     argc = 3;
     strcpy(argv[0], "client");
-    if (IS_RES_UNFIXED(link)) {
+    if (IS_RES_UNFIXED(link) || 
+	(link->res.l.src->es->res.n.tunnel[0] !='\0' &&
+	 link->res.l.dest->es->res.n.tunnel[0] != '\0')) {
       strcpy(argv[1], link->res.l.src->es->res.n.tunnel);
       strcpy(argv[2], link->res.l.dest->es->res.n.tunnel);
     } else {
