@@ -42,7 +42,7 @@
 #define NUM_FUNCTION_TYPE	8
 #define NUM_STATUS_TYPE		5
 #define NUM_NODE_STYPE		3
-#define LSP_NAME_LEN            13
+#define LSP_NAME_LEN            13 
 #define NODE_AGENT_PORT 	2623
 
 #define AST_UNKNOWN		0 

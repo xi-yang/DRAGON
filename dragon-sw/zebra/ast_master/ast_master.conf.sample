@@ -12,3 +12,8 @@
 #
 # example:
 # set es 127.0.0.1 100.10.1.233 gre4 
+#
+# set broker <resource_type> <broker ip> <port>
+#
+# example:
+# set PC 127.0.0.1 2624

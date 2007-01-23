@@ -842,10 +842,11 @@ dragon_build_lsp(struct resource *link)
 	 link->res.l.dest->es->res.n.tunnel[0] != '\0')) {
       strcpy(argv[1], link->res.l.src->es->res.n.tunnel);
       strcpy(argv[2], link->res.l.dest->es->res.n.tunnel);
-    } else {
+    } 
+    if (argv[1][0] == '\0')
       strcpy(argv[1], "implicit");
+    if (argv[2][0] == '\0')
       strcpy(argv[2], "implicit");
-    }
 
     zlog_info("dragon_set_lsp_uni: %s | %s | %s", argv[0], argv[1], argv[2]);
     if (dragon_set_lsp_uni (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {

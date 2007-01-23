@@ -683,6 +683,8 @@ master_process_setup_req()
   if (send_task_to_link_agent() == 0)
     glob_app_cfg->status = AST_FAILURE;
 
+  master_check_command();
+
   integrate_result();
   return 1;
 }
@@ -1883,6 +1885,9 @@ master_read_config(char *config_file)
       }
     }	
   }
+  
+  if (es_pool.number != 0)
+    es_pool.number--;
 }
 
 #ifdef RESOURCE_BROKER
@@ -2258,7 +2263,7 @@ master_check_command()
 {
   struct adtlistnode *curnode;
   struct resource *res, *link;
-  char *command, *s, *d, *token;
+  char *command, *s, *d, *e, *f, *token;
   static char newcomm[300];
   struct endpoint *ep;
   int stop, change, nospace;
@@ -2291,7 +2296,11 @@ master_check_command()
     } else 
       nospace = 0;
     do {
-      if (token[0] != '$' || (d = strstr(token, ".")) == NULL) {
+      if ((e = strstr(token, "$")) == NULL) {
+	sprintf(newcomm+strlen(newcomm), "%s ", token);
+	continue;
+      } 
+      if ((d = strstr(e, ".")) == NULL) {
 	sprintf(newcomm+strlen(newcomm), "%s ", token);
 	continue;
       }
@@ -2302,14 +2311,16 @@ master_check_command()
        */
       if (strcmp(d+1, "src") != 0 && strcmp(d+1, "dest") != 0) 
 	stop = 1;
-      else if ((link = search_link_by_name(glob_app_cfg, token+1)) == NULL) 
+      else if ((link = search_link_by_name(glob_app_cfg, e+1)) == NULL) 
 	stop = 1;
       else { 
-	if (strcmp(d+1, "src") == 0) 
+	if (strcmp(d+1, "src") == 0) {
 	  ep = link->res.l.src; 
-	else if (strcmp(d+1, "dest") == 0) 
+	  f = d+4;
+	} else if (strcmp(d+1, "dest") == 0) {
 	  ep = link->res.l.dest;
-
+	  f = d+5;
+        }
 	if (!ep) 
 	  stop = 1; 
 	else if (!ep->ifp) 
@@ -2328,7 +2339,22 @@ master_check_command()
       if (s)
 	*s = '\0';
       change++;
-      sprintf(newcomm+strlen(newcomm), "%s ", ep->ifp->assign_ip);
+      if (e == token) { 
+        sprintf(newcomm+strlen(newcomm), "%s", ep->ifp->assign_ip);
+	if (*f != '\0')
+	  sprintf(newcomm+strlen(newcomm), "%s ", f);
+	else
+	  sprintf(newcomm+strlen(newcomm), " ");
+      }
+      else {
+	*e = '\0';
+	sprintf(newcomm+strlen(newcomm), "%s%s", token, ep->ifp->assign_ip);
+	if (*f != '\0')
+	  sprintf(newcomm+strlen(newcomm), "%s ", f);
+	else
+	  sprintf(newcomm+strlen(newcomm), " ");
+      }
+
       if (s)
         *s = '/';
       *d = '.';
