@@ -500,7 +500,7 @@ bool SwitchCtrl_Session::hasVLSRouteConflictonSwitch(VLSR_Route& vlsr)
         SwitchCtrl_Global::getPortsByLocalId(portList, vlsr.inPort);
         for (itPort = portList.begin(); itPort != portList.end(); ++itPort) {
             vlan = getVLANbyUntaggedPort(*itPort);
-            if (vlan > 0 && vlsr.vlanTag <= MAX_VLAN && vlan != vlsr.vlanTag)
+            if (vlan > 1 && vlan <= MAX_VLAN && vlan != vlsr.vlanTag)
                 return true;
         }
     }
@@ -509,7 +509,7 @@ bool SwitchCtrl_Session::hasVLSRouteConflictonSwitch(VLSR_Route& vlsr)
         SwitchCtrl_Global::getPortsByLocalId(portList, vlsr.outPort);
         for (itPort = portList.begin(); itPort != portList.end(); ++itPort) {
             vlan = getVLANbyUntaggedPort(*itPort);
-            if (vlan > 0 && vlsr.vlanTag <= MAX_VLAN && vlan != vlsr.vlanTag)
+            if (vlan > 1 && vlan <= MAX_VLAN && vlan != vlsr.vlanTag)
                 return true;
         }
     }

@@ -460,15 +460,18 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					RSVP_Global::switchController->addSession(ssNew);
 				}
 			}
-			else if (!(*sessionIter)->readVLANFromSwitch()) { //Read/Synchronize to Ethernet switch
+			else {
+				ssNew = (*sessionIter);
+			}
+			if (!ssNew || !ssNew->readVLANFromSwitch()) { //Read/Synchronize to Ethernet switch
 			       //syncWithSwitch ... !
 				LOG(2)( Log::MPLS, "VLSR: Cannot read from Ethernet switch : ", vlsr.switchID);
 				return false;
 			}
 
-			//Check for VLAN/ports availability based on vlsr (vlsr_route)...
+			//Check for VLAN/ports availability based on vlsr (vlsr_route)... (First PATH message only)
 			//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
-			if (ssNew && ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
+			if (!foundSession && ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vLSRoute.push_back(vlsr);                    
 				return false;
