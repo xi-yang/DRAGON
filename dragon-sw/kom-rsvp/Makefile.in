@@ -27,7 +27,7 @@ common :
 
 daemon : common $(BIN_DIR)
 
-rsvpd : daemon
+rsvpd : api daemon
 	${MAKE} -C $(SRC_DIR)/main all
 
 lib : common api $(LIB_DIR)
