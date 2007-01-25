@@ -272,8 +272,8 @@ struct link_ifswcap_specific_subnet_uni {
 	u_int16_t		length;
 	u_int16_t	 	version;       /*version id and options mask | IFSWCAP_SPECIFIC_VLAN_SUBNET_UNI*/
 	u_int16_t		subnet_uni_id;
-	u_char		reserved[2];
-
+	u_char		swcap_ext;
+	u_char		encoding_ext;
 	u_int32_t		tna_ipv4;
 	u_int32_t		nid_ipv4;
 	u_int32_t		data_ipv4;

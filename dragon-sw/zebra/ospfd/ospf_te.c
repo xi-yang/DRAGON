@@ -2614,6 +2614,50 @@ DEFUN (ospf_te_interface_ifsw_cap5,
   return CMD_SUCCESS;
 }
 
+DEFUN (ospf_te_interface_ifsw_cap6,
+       ospf_te_interface_ifsw_cap6_cmd,
+       "subnet-uni swcap-ext (l2sc|tdm|lsc|fsc) encoding-ext (packet|ethernet|pdh|sdh|dwrapper|lambda|fiber|fchannel)",
+       "Subnet-UNI\n"
+       "switching type\n"
+       "Layer-2 Switch Capable\n"
+       "Time-Division-Multiplex Capable\n"
+       "Lambda-Switch Capable\n"
+       "Fiber-Switch Capable\n"
+       "Encoding type\n"
+       "Packet\n"
+       "Ethernet\n"
+       "ANSI/ETSI PDH\n"
+       "SDH ITU-T G.707 / SONET ANSI T1.105\n"
+       "Digital Wrapper\n"
+       "Lambda (photonic)\n"
+       "Fiber\n")
+{
+  u_char swcap = 0, encoding = 0;
+
+  if ( te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version != htons(IFSWCAP_SPECIFIC_SUBNET_UNI) )
+  {
+      vty_out (vty, "subnet-uni <1-65535> tna-ipv4 ... must be defined first ... %s", VTY_NEWLINE);
+      return CMD_ERR_INCOMPLETE;
+  }
+  
+  swcap = str2val(&str_val_conv_swcap, argv[0]);
+  if (swcap == 0)
+  {
+      vty_out (vty, "Invalid extended switching capability %s %s", argv[0], VTY_NEWLINE);
+      return CMD_WARNING;
+  }
+  encoding = str2val(&str_val_conv_encoding, argv[1]);
+  if (encoding==0)
+  {
+      vty_out (vty, "Invalid extended encoding type %s %s", argv[1], VTY_NEWLINE);
+      return CMD_WARNING;
+  }
+
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.swcap_ext = swcap;
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.encoding_ext = encoding;
+
+  return CMD_SUCCESS;
+}
 
 DEFUN (show_ospf_te_router,
        show_ospf_te_router_cmd,
@@ -2942,6 +2986,7 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4a_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap5_cmd);
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap6_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_te_lambda_cmd);
   /*@@@@ UNI hacks ==> Obsolete*/
   install_node (&ospf_te_uni_node, NULL);
