@@ -1311,7 +1311,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
 			ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_downstream), 
 			ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_upstream), VTY_NEWLINE);
 
-            swcap = val2str(&str_val_conv_swcap, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.swtype_ext);
+            swcap = val2str(&str_val_conv_swcap, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.swcap_ext);
             enc = val2str(&str_val_conv_encoding, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.encoding_ext);
             vty_out (vty, "      ->  Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
 
@@ -1434,8 +1434,8 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             vty_out (vty, "      ->  LogicalPort: %d, EgressLabel: %d; UpstreamLabel: %d%s",  ntohl(subnet_uni->logical_port_number),
 				ntohl(subnet_uni->egress_label_downstream), ntohl(subnet_uni->egress_label_upstream), VTY_NEWLINE);
 
-            swcap = val2str(&str_val_conv_swcap, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.swtype_ext);
-            enc = val2str(&str_val_conv_encoding, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.encoding_ext);
+            swcap = val2str(&str_val_conv_swcap, subnet_uni->swcap_ext);
+            enc = val2str(&str_val_conv_encoding, subnet_uni->encoding_ext);
             vty_out (vty, "      ->  Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
 	}
   }
