@@ -1261,6 +1261,11 @@ establish_relationship(struct application_cfg* app_cfg)
 	    sprintf(dest->local_id_type, "group");
 	    src->local_id = 1000;
 	    dest->local_id = 1000;
+	  } else if (mylink->res.l.stype != uni) {
+	    sprintf(src->local_id_type, "lsp-id");
+	    sprintf(dest->local_id_type, "lsp-id");
+	    src->local_id = random()%3000;
+	    dest->local_id = random()%3000;
 	  } else if (mylink->res.l.vtag[0] != '\0') {
 	    sprintf(src->local_id_type, "tagged-group"); 
 	    sprintf(dest->local_id_type, "tagged-group"); 
@@ -1889,6 +1894,7 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 {
   struct adtlistnode *curnode;
   struct resource *mynode, *mylink;
+  struct resource *src, *dest;
   int i;
 
   /* first check the validity of funciton and ast_id
@@ -1985,6 +1991,21 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 	    if (!mylink->res.l.src || !mylink->res.l.dest) {
 	      zlog_err("link (%s) should have src and dest defined", mylink->name);
 	      return 0;
+	    }
+
+	    if (mylink->res.l.stype == uni && agent == MASTER) {
+	      src = mylink->res.l.src->es;
+	      dest = mylink->res.l.dest->es;
+
+	      if (!src || !dest) {
+		zlog_err("link (%s) should have es in both src and dest", mylink->name);
+	        return 0;
+	      }
+
+	      if (src->res.n.tunnel[0] == '\0' || dest->res.n.tunnel[0] == '\0') {
+		zlog_err("link (%s) should have tunnel in both src and dest es", mylink->name);
+		return 0;
+	      }
 	    }
 
 	    if (mylink->res.l.bandwidth[0] != '\0') { 
@@ -2130,9 +2151,6 @@ autofill_es_info(struct resource* res)
   if (res->type != NODE_RES)
     return 0;
 
-  if (res->res.n.router_id[0] != '\0' && res->res.n.ip[0] != '\0')
-    return 1;
-  
   for (i = 0; i < es_pool.number; i++) {
     if (strcmp(es_pool.es[i].ip, res->res.n.ip) == 0) {
       strncpy(res->res.n.router_id, es_pool.es[i].router_id, IP_MAXLEN);
@@ -2140,5 +2158,9 @@ autofill_es_info(struct resource* res)
       return 1;
     }
   }
+
+  if (res->res.n.router_id[0] != '\0' && res->res.n.ip[0] != '\0')
+    return 1;
+
   return 0;
 }

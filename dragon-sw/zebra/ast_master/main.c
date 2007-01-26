@@ -1806,6 +1806,7 @@ master_read_config(char *config_file)
   fp = fopen(config_file, "r");
   if (!fp)
     return;
+
   while ((ret = fgets(line, 100, fp)) != NULL) {
     if (ret[0] == '#')
       continue;
