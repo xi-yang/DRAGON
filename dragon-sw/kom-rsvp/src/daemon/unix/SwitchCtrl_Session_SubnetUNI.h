@@ -91,12 +91,14 @@ public:
 	static SwitchCtrl_Session_SubnetUNI_List* subnetUniApiClientList ;
 
 
-	static void getSessionNameString(String& ssName, uint32 uni_tna_ip, uint32 main_ss_ip, bool isSource = true) {
+	static void getSessionNameString(String& ssName, uint32 uni_tna_ip, String& mainSessionName, uint32 main_ss_ip, bool isSource = true) {
 		ssName = "subnet-uni-";
 		ssName += (isSource? "src" : "dest");
 		char ssTail[20];
-		sprintf(ssTail, "-tna-%x-main-session-%x",  uni_tna_ip, main_ss_ip);
+		//sprintf(ssTail, "-tna-%x-main-session-%x",  uni_tna_ip, main_ss_ip);
+		sprintf(ssTail, "-tna-%x-by-",  uni_tna_ip);
 		ssName += (const char*)ssTail;
+		ssName += mainSessionName;
 	}
 	//////// ---- To be overriden for edge control ---- ////////
 	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID)  { return false; }
