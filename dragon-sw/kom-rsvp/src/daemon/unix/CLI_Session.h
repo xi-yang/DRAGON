@@ -38,11 +38,12 @@ extern int    got_alarm;
 class CLI_Session: public SwitchCtrl_Session
 {
 public:
-	CLI_Session(): SwitchCtrl_Session() {  fdin = fdout = -1; }
-	CLI_Session(const String& sName, const NetAddress& swAddr): SwitchCtrl_Session(sName, swAddr) 
+	CLI_Session(int port = 0): cli_port(port), SwitchCtrl_Session() { fdin = fdout = -1; }
+	CLI_Session(const String& sName, const NetAddress& swAddr, int port = 0): cli_port(port), SwitchCtrl_Session(sName, swAddr) 
 		{ fdin = fdout = -1;  }
 	virtual ~CLI_Session() { disconnectSwitch(); }
 
+	void setPort(int port) { cli_port = port; }
 	virtual bool connectSwitch();
 	virtual void disconnectSwitch();
 	virtual bool refresh(); //to be called by RSVP_SREFRESH !!!
@@ -56,6 +57,7 @@ public:
 	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0) { return false; }
 
 protected:
+	int cli_port;
 	int fdin;
 	int fdout;
 

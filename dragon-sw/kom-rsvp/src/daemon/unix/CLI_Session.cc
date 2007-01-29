@@ -99,6 +99,7 @@ void CLI_Session::disconnectSwitch()
 bool CLI_Session::engage()
 {
     int fdpipe[2][2], fderr, err, n;
+    char port_str[8];
 
     got_alarm = 0;
     strcpy(progname, "vlsr-ctrl-cli-session"); 
@@ -165,10 +166,13 @@ bool CLI_Session::engage()
         close(fdpipe[1][0]);
         close(fdpipe[1][1]);
 
-        // exec CLI session application 
+        // exec CLI session application
         if (CLI_SESSION_TYPE == CLI_TELNET) {
-           execl(TELNET_EXEC, "telnet", hostname, TELNET_PORT, (char*)NULL);
-         
+           if (cli_port > 0)
+             sprintf(port_str, "%d", cli_port);
+           else
+             strcpy(port_str,  TELNET_PORT);
+           execl(TELNET_EXEC, "telnet", hostname, port_str, (char*)NULL);
            // if we're still here the TELNET_EXEC could not be exec'd 
            err = errno;
            close(2);
@@ -176,7 +180,11 @@ bool CLI_Session::engage()
            err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);
         } if (CLI_SESSION_TYPE == CLI_SSH) {
            char spawn_cmd[128];
-           sprintf(spawn_cmd, "spawn ssh %s -l %s -p %s", hostname, CLI_USERNAME, SSH_PORT);
+           if (cli_port > 0)
+             sprintf(port_str, "%d", cli_port);
+           else
+             strcpy(port_str,  SSH_PORT);
+           sprintf(spawn_cmd, "spawn ssh %s -l %s -p %s", hostname, CLI_USERNAME, port_str);
            execl("/usr/local/bin/expect", "expect", "-c", spawn_cmd, "-c", "interact", (char*)NULL);
          
            // if we're still here the SSH_EXEC could not be exec'd 
