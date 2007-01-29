@@ -235,6 +235,8 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
     							       LABEL_REQUEST_Object::S_TDM,
                                                         LABEL_REQUEST_Object::G_SONET_SDH);
 
+    //$$$$ subnetUniSrc.tunnel_id = subnetUniSrc.subnet_id;
+
     //NetAddress srcAddress(subnetUniSrc.uni_cid_ipv4);
     //createSender( *uniSessionId, srcAddress, subnetUniSrc.tunnel_id, *stb, *lr, NULL, uni, labelSet, ssAttrib, upLabel, 50);
     createSender( *uniSessionId, subnetUniSrc.tunnel_id, *stb, *lr, NULL, uni, labelSet, ssAttrib, upLabel, 50);

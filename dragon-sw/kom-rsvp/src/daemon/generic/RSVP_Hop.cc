@@ -176,12 +176,14 @@ void Hop::processSrefresh( const Message& msg ) {
 					}
 					else if (generalizedUni) {
                                 		lif = NULL;
-                                		SwitchCtrl_Session_SubnetUNI_List::Iterator uniSessionIter = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->begin();
-                                		for ( ; uniSessionIter != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end(); ++uniSessionIter) {
-                                			if ((*uniSessionIter)->isSessionOwner(msg)) {
-                                				lif = (*uniSessionIter)->getControlInterface();
-                                			}
-                                		}
+						if (SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList) {
+	                                		SwitchCtrl_Session_SubnetUNI_List::Iterator uniSessionIter = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->begin();
+	                                		for ( ; uniSessionIter != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end(); ++uniSessionIter) {
+	                                			if ((*uniSessionIter)->isSessionOwner(msg)) {
+	                                				lif = (*uniSessionIter)->getControlInterface();
+	                                			}
+	                                		}
+						}
  						if (!lif )
 							lif = RSVP_Global::rsvp->getApiLif();
 					}
