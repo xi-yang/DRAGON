@@ -38,8 +38,8 @@ extern int    got_alarm;
 class CLI_Session: public SwitchCtrl_Session
 {
 public:
-	CLI_Session(int port = 0): cli_port(port), SwitchCtrl_Session() { fdin = fdout = -1; }
-	CLI_Session(const String& sName, const NetAddress& swAddr, int port = 0): cli_port(port), SwitchCtrl_Session(sName, swAddr) 
+	CLI_Session(int port = 0): SwitchCtrl_Session(), cli_port(port) { fdin = fdout = -1; }
+	CLI_Session(const String& sName, const NetAddress& swAddr, int port = 0): SwitchCtrl_Session(sName, swAddr), cli_port(port)
 		{ fdin = fdout = -1;  }
 	virtual ~CLI_Session() { disconnectSwitch(); }
 
