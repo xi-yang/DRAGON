@@ -91,7 +91,7 @@ public:
 	static SwitchCtrl_Session_SubnetUNI_List* subnetUniApiClientList ;
 
 
-	static void getSessionNameString(String& ssName, uint32 uni_tna_ip, String& mainSessionName, uint32 main_ss_ip, bool isSource = true) {
+	static void getSessionNameString(String& ssName, uint32 uni_tna_ip, const String& mainSessionName, uint32 main_ss_ip, bool isSource = true) {
 		ssName = "subnet-uni-";
 		ssName += (isSource? "src" : "dest");
 		char ssTail[20];
