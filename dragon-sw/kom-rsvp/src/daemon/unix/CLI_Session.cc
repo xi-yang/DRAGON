@@ -247,6 +247,44 @@ bool CLI_Session::engage()
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
     }
 
+/* TL1 TELNET for Ciena CoreDirector
+
+# telnet 10.2.203.43 10201
+Trying 10.2.203.43...
+Connected to 10.2.203.43.
+Escape character is '^]'.
+
+TXN TL1 Agent Copyright Ciena Corporation
+
+;
+
+;act-user::administrator:123::admin1!;
+IP 123
+<
+
+   txn101 06-05-22 15:17:40
+M  123 COMPLD
+;
+
+   txn101 06-05-22 15:17:40
+A  1 REPT EVT SESSION
+   "COM:NO"
+
+... SUCCESS ...
+
+","
+;
+
+-------- OR  --------
+
+IP 123
+<
+
+   txn101 06-05-22 17:59:38
+M  123 DENY
+   SAAS
+
+*/
     return true;
 
  _telnet_dead:
