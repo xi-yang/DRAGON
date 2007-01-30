@@ -33,6 +33,7 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint16
 {
     memset(&data, 0, sizeof(SubnetUNI_Data));
     data.subnet_id = subuni_id; 
+    data.tunnel_id = tunnel_id; 
     data.ethernet_bw = bw; 
     data.tna_ipv4 = tna_ipv4;
     data.egress_label = egress_label; 
