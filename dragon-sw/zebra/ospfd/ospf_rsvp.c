@@ -515,7 +515,10 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag)
 	{
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
-			if (oi && INTERFACE_MPLS_ENABLED(oi) && oi->vlsr_if.switch_port == port) {
+			if (oi && INTERFACE_MPLS_ENABLED(oi) && (oi->vlsr_if.switch_port == port
+				|| ( ( (port>>16) == 0x10 || (port>>16) == 0x11 ) 
+					&& ( oi->te_para->link_ifswcap->ifswcap_specific_subnet_uni.version & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0
+					&& oi->te_para->link_ifswcap->ifswcap_specific_subnet_uni.subnet_uni_id == (u_int16_t)port ) {
 				if (hold_flag == 1)
 				{
 					updated = hold_bandwidth(oi, bw);
@@ -603,7 +606,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		}       
        }
        else if (inRtId->s_addr!=0 && outRtId->s_addr == 0 && outPort != 0){
-              /* local-id configured at ingress */
+              /* local-id configured at egress */
 		if ( om->ospf)
 		LIST_LOOP(om->ospf, ospf, node1)
 		{
