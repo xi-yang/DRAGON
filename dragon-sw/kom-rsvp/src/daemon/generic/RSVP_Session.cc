@@ -388,7 +388,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				//Store SubnetUNI Session handle ...
 				pSubnetUniSrc = (SwitchCtrl_Session_SubnetUNI*)ssNew;
 				//Pass SubnetUNI data
-				pSubnetUniSrc->setSubnetUniSrc(subnetUniData.subnet_id, subnetUniData.ethernet_bw, 
+				pSubnetUniSrc->setSubnetUniSrc(subnetUniData.subnet_id, subnetUniData.tunnel_id, subnetUniData.ethernet_bw, 
 					subnetUniData.tna_ipv4, subnetUniData.uni_nid_ipv4, subnetUniData.logical_port, 
 					subnetUniData.egress_label, subnetUniData.upstream_label, (char*)subnetUniData.control_channel_name);
 				//kickoff UNI session
@@ -421,7 +421,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				//Store SubnetUNI Session handle ...
 				pSubnetUniDest = (SwitchCtrl_Session_SubnetUNI*)ssNew;
 				//Pass SubnetUNI data
-				pSubnetUniDest->setSubnetUniDest(subnetUniData.subnet_id, subnetUniData.ethernet_bw, 
+				pSubnetUniDest->setSubnetUniDest(subnetUniData.subnet_id, subnetUniData.tunnel_id, subnetUniData.ethernet_bw, 
 					subnetUniData.tna_ipv4, subnetUniData.uni_nid_ipv4, subnetUniData.logical_port,
 					subnetUniData.egress_label, subnetUniData.upstream_label, (char*)subnetUniData.control_channel_name);
 				//kickoff UNI session

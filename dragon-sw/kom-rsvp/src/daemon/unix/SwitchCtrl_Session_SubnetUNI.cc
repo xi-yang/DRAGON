@@ -46,12 +46,11 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint16
         strncpy((char*)data.control_channel_name, cc_name, CTRL_CHAN_NAME_LEN-1);
 }       
 
-void SwitchCtrl_Session_SubnetUNI::setSubnetUniSrc(uint16 id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
+void SwitchCtrl_Session_SubnetUNI::setSubnetUniSrc(uint16 id, uint16 tunnel_id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
 {
 	assert (cc_name);
 	const LogicalInterface* lif = RSVP_Global::rsvp->findInterfaceByName(String(cc_name));
 
-	uint16 tunnel_id = id; //temp
 	uint32 uni_c_id = lif ? lif->getLocalAddress().rawAddress() : tna; //?
 	uint32 uni_n_id = nid;
 	uint32 data_if = 0; //temp
@@ -59,12 +58,11 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniSrc(uint16 id, float bw,  uint32 
 	setSubnetUniData(subnetUniSrc, id, tunnel_id, bw, tna, uni_c_id, uni_n_id, data_if, port, egress_label, upstream_label, cc_name);
 }
 
-void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(uint16 id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
+void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(uint16 id, uint16 tunnel_id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
 {
 	assert (cc_name);
 	const LogicalInterface* lif = RSVP_Global::rsvp->findInterfaceByName(String(cc_name));
 
-	uint16 tunnel_id = id; //temp
 	uint32 uni_c_id = lif ? lif->getLocalAddress().rawAddress() : tna; //?
 	uint32 uni_n_id = nid;
 	uint32 data_if = 0; //temp

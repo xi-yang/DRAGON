@@ -60,8 +60,8 @@ public:
 	}
 
 	//Preparing UNI parameters
-	void setSubnetUniSrc(uint16 id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name);
-	void setSubnetUniDest(uint16 id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name);
+	void setSubnetUniSrc(uint16 id, uint16 tunnel_id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name);
+	void setSubnetUniDest(uint16 id, uint16 tunnel_id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name);
 	SubnetUNI_Data* getSubnetUniSrc() { return &subnetUniSrc; }
 	SubnetUNI_Data* getSubnetUniDest() { return &subnetUniDest; }
 
