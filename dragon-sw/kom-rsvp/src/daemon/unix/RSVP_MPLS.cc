@@ -265,7 +265,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
 
 				 //@@@@ >>Xi2007<<
-				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni")) {
+				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
                                 if ((*iter).switchID.rawAddress() == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
 					//UNI session error will fail the RSVP session
 					switch (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState()) {
@@ -279,7 +279,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 						break;
 					case Message::Resv:
 					case Message::ResvConf:
-		                                if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
+		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
 							// Update ingress link bandwidth
 		                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, true); //true == decrease
 						}
@@ -553,7 +553,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
 
 				 //@@@@ >>Xi2007<<
-				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni")) {
+				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ){
                                 if( (*iter).switchID.rawAddress() == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
 	   				     if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
 	   					((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
@@ -567,15 +567,12 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 	                                   	// Update egress link bandwidth
 	                                      RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, false); //false == increase
 	                                 }
+					     iter = psb.getVLSR_Route().erase(iter);
                                 }
 
                                 continue;
 				}
-				/* Redundant : the Main session uses the subnetUNI ssSession and the vlsrRouteList has source and/or destination VLSRRoutes
-                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
-					continue;
-				}
-				*/
+
 				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()){
                                       PortList portList;
                                       uint32 vlanID;
