@@ -2126,6 +2126,11 @@ master_lookup_assign_ip()
 	curnode = curnode->next) {
     res = (struct resource*)curnode->data;
 
+    if (res->res.l.stype != uni && res->res.l.stype!= non_uni) {
+      zlog_info(" ********* no need to look for ip for link %s", res->name);
+      continue;
+    }
+
     src = res->res.l.src; 
     dest = res->res.l.dest;
 

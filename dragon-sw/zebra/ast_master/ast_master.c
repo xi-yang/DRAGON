@@ -1221,6 +1221,7 @@ establish_relationship(struct application_cfg* app_cfg)
       case non_uni:
 	src = mylink->res.l.src;
 	dest = mylink->res.l.dest;
+
 	if (!src->es || !dest->es) {
 	  zlog_err("link (%s) should have both src and dest es defined", mylink->name);
 	  return 0;
@@ -1289,13 +1290,16 @@ establish_relationship(struct application_cfg* app_cfg)
 	break;
 
       case vlsr_vlsr:
-	if (!mylink->res.l.src->vlsr || !mylink->res.l.dest->vlsr) {
+	src = mylink->res.l.src;
+	dest = mylink->res.l.dest;
+
+	if (!src->vlsr || !dest->vlsr) {
 	  zlog_err("link (%s) should have both src and dest vlsr defined", mylink->name);
 	  return 0;
 	}
 
-	if (mylink->res.l.src->vlsr->res.n.router_id[0] == '\0' ||
-	    mylink->res.l.dest->vlsr->res.n.router_id[0] == '\0') {
+	if (src->vlsr->res.n.router_id[0] == '\0' ||
+	    dest->vlsr->res.n.router_id[0] == '\0') {
 	  zlog_err("link (%s) should have <router_id> defined in vlsr", mylink->name);
 	  return 0;
 	}
@@ -1313,51 +1317,60 @@ establish_relationship(struct application_cfg* app_cfg)
 	} 
 	adtlist_add(dragon->res.n.link_list, mylink);
 
-	if (mylink->res.l.src->ifp) {
-	  free(mylink->res.l.src->ifp->iface);
-	  free(mylink->res.l.src->ifp->assign_ip);
-	  free(mylink->res.l.src->ifp);
-	  mylink->res.l.src->ifp = NULL;
+	if (src->ifp) {
+	  free(src->ifp->iface);
+	  free(src->ifp->assign_ip);
+	  free(src->ifp);
+	  src->ifp = NULL;
 	}
 
-	if (mylink->res.l.dest->ifp) {
-	  free(mylink->res.l.dest->ifp->iface);
-	  free(mylink->res.l.dest->ifp->assign_ip);
-	  free(mylink->res.l.dest->ifp);
-	  mylink->res.l.dest->ifp = NULL;
+	if (dest->ifp) {
+	  free(dest->ifp->iface);
+	  free(dest->ifp->assign_ip);
+	  free(dest->ifp);
+	  dest->ifp = NULL;
+	}
+
+	if (src->local_id_type[0] == '\0' && dest->local_id_type[0] == '\0') {
+	  sprintf(src->local_id_type, "lsp-id");
+	  sprintf(dest->local_id_type, "lsp-id");
+	  src->local_id = random()%3000;
+	  dest->local_id = random()%3000;
 	}
 
 	break;
 	
       case vlsr_es:
+	src = mylink->res.l.src;
+	dest = mylink->res.l.dest;
 
 	/* first, let's see if src:vlsr and dest:es will work
 	 */
-	if (mylink->res.l.src->vlsr && mylink->res.l.dest->es) {
-	  if (mylink->res.l.src->vlsr->res.n.router_id[0] == '\0' ||
-	      mylink->res.l.dest->es->res.n.router_id[0] == '\0') {
+	if (src->vlsr && dest->es) {
+	  if (src->vlsr->res.n.router_id[0] == '\0' ||
+	      dest->es->res.n.router_id[0] == '\0') {
 	    zlog_err("link (%s) should have both src vlsr router_id and dest es router_id defined", mylink->name);
 	    return 0;
 	  }
 
-	  mylink->res.l.src->es = NULL;
-	  mylink->res.l.src->proxy = NULL;
-	  mylink->res.l.dest->vlsr = NULL;
-	  mylink->res.l.dragon = mylink->res.l.src->vlsr;
-	} else if (mylink->res.l.src->es && mylink->res.l.dest->vlsr) {
-	  if (mylink->res.l.src->es->res.n.router_id[0] == '\0' ||
-	      mylink->res.l.dest->vlsr->res.n.router_id[0] == '\0') {
+	  src->es = NULL;
+	  src->proxy = NULL;
+	  dest->vlsr = NULL;
+	  mylink->res.l.dragon = src->vlsr;
+	} else if (src->es && dest->vlsr) {
+	  if (src->es->res.n.router_id[0] == '\0' ||
+	      dest->vlsr->res.n.router_id[0] == '\0') {
 	    zlog_err("link (%s) should have both src ES router_id and dest vlsr router_id defined", mylink->name);
 	    return 0;
 	  }
 
-	  mylink->res.l.dest->es = NULL;
-	  mylink->res.l.dest->proxy = NULL;
-	  mylink->res.l.src->vlsr = NULL;
-	  if (mylink->res.l.src->proxy)
-	    mylink->res.l.dragon = mylink->res.l.src->proxy;
+	  dest->es = NULL;
+	  dest->proxy = NULL;
+	  src->vlsr = NULL;
+	  if (src->proxy)
+	    mylink->res.l.dragon = src->proxy;
 	  else
-	    mylink->res.l.dragon = mylink->res.l.src->es;
+	    mylink->res.l.dragon = src->es;
 	} else {
 	  zlog_err("link (%s) should have (src:vlsr and dest:es) or (src:es and dest:vlsr) defined", mylink->name);
 	  return 0;
@@ -1369,6 +1382,13 @@ establish_relationship(struct application_cfg* app_cfg)
 	  memset(dragon->res.n.link_list, 0, sizeof(struct adtlist)); 
 	} 
 	adtlist_add(dragon->res.n.link_list, mylink);
+
+	if (src->local_id_type[0] == '\0' && dest->local_id_type[0] == '\0') {
+	  sprintf(src->local_id_type, "lsp-id");
+	  sprintf(dest->local_id_type, "lsp-id");
+	  src->local_id = random()%3000;
+	  dest->local_id = random()%3000;
+	}
 
 	break;
     }
@@ -1780,7 +1800,7 @@ topo_xml_parser(char* filename, int agent)
 	    }
 	  }
 
-	  if (!ep->es) {
+	  if (!ep->es && !ep->vlsr) {
 	    if (ep->ifp) {
 	      if (ep->ifp->iface)
 		free(ep->ifp->iface);
@@ -1797,9 +1817,9 @@ topo_xml_parser(char* filename, int agent)
 	    if (ep->ifp && agent != LINK_AGENT) {
 	      /* put this if_ip into if_list in es
 	       */
-	      if (!myres->res.l.src->es->res.n.if_list) {
-		myres->res.l.src->es->res.n.if_list = malloc(sizeof(struct adtlist));
-		memset(myres->res.l.src->es->res.n.if_list, 0, sizeof(struct adtlist));
+	      if (ep->es && !ep->es->res.n.if_list) {
+		ep->es->res.n.if_list = malloc(sizeof(struct adtlist));
+		memset(ep->es->res.n.if_list, 0, sizeof(struct adtlist));
 	      }
 	      adtlist_add(myres->res.l.src->es->res.n.if_list, ep->ifp);
 	    }
@@ -1807,9 +1827,9 @@ topo_xml_parser(char* filename, int agent)
 	    myres->res.l.dest = ep;
 
 	    if (ep->ifp && agent != LINK_AGENT) {
-	      if (!myres->res.l.dest->es->res.n.if_list) {
-	        myres->res.l.dest->es->res.n.if_list = malloc(sizeof(struct adtlist));
-	        memset(myres->res.l.dest->es->res.n.if_list, 0, sizeof(struct adtlist));
+	      if (ep->es && !ep->es->res.n.if_list) {
+	        ep->es->res.n.if_list = malloc(sizeof(struct adtlist));
+	        memset(ep->es->res.n.if_list, 0, sizeof(struct adtlist));
 	      }
 	      adtlist_add(myres->res.l.dest->es->res.n.if_list, ep->ifp);
 	    }
