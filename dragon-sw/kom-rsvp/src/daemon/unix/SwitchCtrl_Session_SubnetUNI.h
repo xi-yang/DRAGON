@@ -84,6 +84,7 @@ public:
 	void refreshUniRsvpSession(); //SRefresh by source
 
 	uint8 getUniState() { return uniState; }
+	uint32 getPseudoSwitchID();
 	//Upcall for source/destination client
 	static void uniRsvpSrcUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession
 	static void uniRsvpDestUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession

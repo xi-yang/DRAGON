@@ -550,7 +550,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
 
 				 //@@@@ >>Xi2007<<
-				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
+				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") 
+                              && (*iter).switchID == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
 				    if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
 					((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
 

@@ -432,6 +432,11 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		}
 
 		if ( (inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC || (outUnumIfID >> 16)  == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
+			if (pSubnetUniSrc)
+	              	vlsr.switchID = pSubnetUniSrc->getPseudoSwitchID();
+			else if (pSubnetUniDest)
+	              	vlsr.switchID = pSubnetUniDest->getPseudoSwitchID();
+
 			vLSRoute.push_back(vlsr);
 		}
 		else if (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0)) {

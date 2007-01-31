@@ -82,6 +82,13 @@ const LogicalInterface* SwitchCtrl_Session_SubnetUNI::getControlInterface()
 		return RSVP_Global::rsvp->getRoutingService().getUnicastRoute( nidAddress, gwAddress );
 }
 
+uint32 SwitchCtrl_Session_SubnetUNI::getPseudoSwitchID()
+{
+	SubnetUNI_Data* uniData = (isSource ? &subnetUniSrc : &subnetUniDest);
+	//return (((uint32)uniData->subnet_id) << 16) | ((uint32)uniData->tunnel_id);
+	return ((uint32)uniData->tunnel_id);
+}
+
 SwitchCtrl_Session_SubnetUNI::~SwitchCtrl_Session_SubnetUNI() 
 {
     deregisterRsvpApiClient();
