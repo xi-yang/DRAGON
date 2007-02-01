@@ -152,7 +152,7 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
 
   /* if Path, Resv, ResvConf, return AST_SUCCESS to user
    * if PathErr, ResvErr, return AST_FAILURE to user
-   *
+   */
   switch (msg_type) {
     case Path:
     case Resv:
@@ -164,8 +164,7 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
       status = AST_FAILURE;
       break;
   }
-  */
-  status = AST_SUCCESS;
+
   fprintf(fp, "<status>%s</status>\n", 
 		status == AST_SUCCESS? "AST_SUCCESS":"AST_FAILURE");
   fprintf(fp, "<resource name=\"%s\" type=\"%s\">\n", data->link_agent, node_stype_name[data->node_stype]);
