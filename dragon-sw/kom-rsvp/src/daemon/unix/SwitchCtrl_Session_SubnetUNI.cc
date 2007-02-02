@@ -71,15 +71,21 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(uint16 id, uint16 tunnel_id,
 	setSubnetUniData(subnetUniDest, id, tunnel_id, bw, tna, uni_c_id, uni_n_id, data_if, port, egress_label, upstream_label, cc_name);
 }
 
-const LogicalInterface* SwitchCtrl_Session_SubnetUNI::getControlInterface()
+const LogicalInterface* SwitchCtrl_Session_SubnetUNI::getControlInterface(NetAddress& gwAddress)
 {
 	SubnetUNI_Data* uniData = (isSource ? &subnetUniSrc : &subnetUniDest);
 	const NetAddress nidAddress(uniData->uni_nid_ipv4);
-	NetAddress gwAddress(0);
-	if (uniData->control_channel_name[0] != 0)
-		return RSVP_Global::rsvp->findInterfaceByName(String((char*)uniData->control_channel_name));
-	else
+	if ( uniData->control_channel_name[0] == 0 || strcmp(uniData->control_channel_name, "implicit") == 0 )
+	{
 		return RSVP_Global::rsvp->getRoutingService().getUnicastRoute( nidAddress, gwAddress );
+	}
+	else
+	{
+		LogicalInterface lif = RSVP_Global::rsvp->findInterfaceByName(String((char*)uniData->control_channel_name));
+		if (lif)
+			RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(lif->getLocalAddress(), gwAddress);
+		return lif;
+	}
 }
 
 uint32 SwitchCtrl_Session_SubnetUNI::getPseudoSwitchID()

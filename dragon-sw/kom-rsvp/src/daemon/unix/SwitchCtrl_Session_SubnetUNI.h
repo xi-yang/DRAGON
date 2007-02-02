@@ -65,7 +65,7 @@ public:
 	SubnetUNI_Data* getSubnetUniSrc() { return &subnetUniSrc; }
 	SubnetUNI_Data* getSubnetUniDest() { return &subnetUniDest; }
 
-	const LogicalInterface* getControlInterface();
+	const LogicalInterface* getControlInterface(NetAddress& gwAddress);
 
 
 	void registerRsvpApiClient(); // by both source and destination

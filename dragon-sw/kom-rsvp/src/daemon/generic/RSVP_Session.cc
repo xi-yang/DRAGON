@@ -686,7 +686,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		SwitchCtrl_Session_SubnetUNI_List::Iterator uniSessionIter = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->begin();
 		for ( ; uniSessionIter != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end(); ++uniSessionIter) {
 			if ((*uniSessionIter)->isSessionOwner(msg)) {
-				defaultOutLif = (*uniSessionIter)->getControlInterface();
+				defaultOutLif = (*uniSessionIter)->getControlInterface(gateway);
                             break;
 			}
 		}
@@ -695,8 +695,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			return;
 		}
 		RtOutL.insert_unique( defaultOutLif );
-
-		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
 
 		//Update RSVP_HOP
 		//       $$$$ Option 1 Using the peer of SRC_TNA for RSVP_HOP 
