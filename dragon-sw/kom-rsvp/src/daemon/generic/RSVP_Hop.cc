@@ -180,7 +180,7 @@ void Hop::processSrefresh( const Message& msg ) {
 	                                		SwitchCtrl_Session_SubnetUNI_List::Iterator uniSessionIter = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->begin();
 	                                		for ( ; uniSessionIter != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end(); ++uniSessionIter) {
 	                                			if ((*uniSessionIter)->isSessionOwner(msg)) {
-	                                				lif = (*uniSessionIter)->getControlInterface();
+	                                				lif = (*uniSessionIter)->getControlInterface(gw);
 	                                			}
 	                                		}
 						}
