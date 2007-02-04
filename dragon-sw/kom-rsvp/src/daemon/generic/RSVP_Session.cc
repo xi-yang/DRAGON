@@ -398,8 +398,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			}
 
 			
-			AbstractNodeList::ConstIterator iter = explicitRoute.getAbstractNodeList().begin();
-			for ( ; iter != explicitRoute.getAbstractNodeList().end(); ++iter) {
+			AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
+			for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
 				if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 					destUniId = (uint16)((*iter).getInterfaceID());
 					break;
