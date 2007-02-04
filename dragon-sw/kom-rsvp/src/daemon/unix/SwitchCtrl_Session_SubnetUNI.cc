@@ -36,6 +36,7 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint16
     data.tunnel_id = tunnel_id; 
     data.ethernet_bw = bw; 
     data.tna_ipv4 = tna_ipv4;
+    data.logical_port = port;
     data.egress_label = egress_label; 
     data.upstream_label = upstream_label;
 
