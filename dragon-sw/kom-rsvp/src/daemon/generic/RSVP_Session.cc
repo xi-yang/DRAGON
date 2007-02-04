@@ -366,6 +366,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		vlsr.bandwidth = msg.getSENDER_TSPEC_Object().get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
 
 		//creating source G_UNI client session
+		NetAddress destUniDataIf(0);
 		uint16 destUniId = 0;
 		assert((inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST);
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
@@ -397,19 +398,25 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				pSubnetUniSrc->initUniRsvpApiSession();
 			}
 
-			
-			AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
-			for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
-				if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
-					destUniId = (uint16)((*iter).getInterfaceID());
-					break;
+			if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
+				destUniId = (uint16)outUnumIfID;
+				destUniDataIf = outRtId;
+			}
+			else {
+				AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
+				for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
+					if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
+						destUniId = (uint16)((*iter).getInterfaceID());
+						destUniDataIf = (*iter).getAddress();
+						break;
+					}
 				}
 			}
 
 			// searching for paring destSubnetUniData and setting destSubnetUniData into the source client session
 			if (destUniId != 0) {
 				memset(&subnetUniDataDest, 0, sizeof(subnetUniDataDest));
-				if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(outRtId, (uint16)outUnumIfID, subnetUniDataDest) ) {
+				if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(destUniDataIf, destUniId, subnetUniDataDest) ) {
 					//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
 					vLSRoute.push_back(vlsr);                    
