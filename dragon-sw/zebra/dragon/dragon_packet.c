@@ -652,7 +652,10 @@ dragon_narb_socket_init()
 	/* Prepare address structure for connect */
 	  addr.sin_addr.s_addr = dmaster.module[MODULE_NARB_INTRA].ip_addr.s_addr;
 	  addr.sin_family = AF_INET;
-	  addr.sin_port = htons(NARB_TCP_PORT);
+	  if (	dmaster.module[MODULE_NARB_INTRA].port == 0)
+		addr.sin_port = htons(NARB_TCP_PORT);
+	  else
+	  	addr.sin_port = htons(dmaster.module[MODULE_NARB_INTRA].port);
 #ifdef HAVE_SIN_LEN
 	  addr.sin_len = sizeof (struct sockaddr_in);
 #endif /* HAVE_SIN_LEN */
