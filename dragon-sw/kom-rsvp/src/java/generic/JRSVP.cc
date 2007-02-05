@@ -112,7 +112,7 @@ JNIEXPORT void Java_de_tud_kom_rsvp_JRSVP_createSenderInternal
 	sint32 M = (sint32)jEnv->GetIntField( tspec, fM );
 
 	const char* addr = jEnv->GetStringUTFChars( sender_addr, 0 );
-	((RSVP_API*)api)->createSender( *(RSVP_API::SessionId*)session, NetAddress(addr), port, TSpec(r,p,b,m,M), TTL );
+	((RSVP_API*)api)->createSender( *(RSVP_API::SessionId*)session, NetAddress(addr), port, TSpec(r,p,b,m,M), LABEL_REQUEST_Object(), NULL, NULL, NULL, NULL, NULL, TTL );
 	jEnv->ReleaseStringUTFChars( sender_addr, addr );
 }
      
