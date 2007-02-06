@@ -182,6 +182,7 @@ master_process_setup_resp()
       free(glob_res_cfg->agent_message); 
       glob_res_cfg->agent_message = NULL; 
     }
+
     if (work_res_cfg->agent_message) {
       glob_res_cfg->agent_message = work_res_cfg->agent_message;
       work_res_cfg->agent_message = NULL;
@@ -248,6 +249,8 @@ master_process_setup_resp()
 	
 	  /* status update */ 
 	  glob_res_cfg->status = work_res_cfg->status; 
+	  glob_res_cfg->res.l.l_status = work_res_cfg->res.l.l_status;
+
 	  if (glob_res_cfg->agent_message) { 
 	    free(glob_res_cfg->agent_message); 
 	    glob_res_cfg->agent_message = NULL; 
@@ -682,8 +685,6 @@ master_process_setup_req()
   gettimeofday(&(glob_app_cfg->start_time), NULL);
   if (send_task_to_link_agent() == 0)
     glob_app_cfg->status = AST_FAILURE;
-
-  master_check_command();
 
   integrate_result();
   return 1;
@@ -1298,7 +1299,6 @@ send_task_to_link_agent()
 void 
 integrate_result()
 {
-  int total_res;
   char directory[80];
   char newpath[105];
   char path_prefix[100];
@@ -1312,9 +1312,6 @@ integrate_result()
   add_cfg_to_list();
   symlink(newpath, AST_XML_RESULT);
 
-  total_res = adtlist_getcount(glob_app_cfg->node_list) +
-		adtlist_getcount(glob_app_cfg->link_list);
-
   switch (glob_app_cfg->action) {
     case SETUP_RESP:
       sprintf(path_prefix, "%s/setup_", directory);
@@ -1322,6 +1319,13 @@ integrate_result()
 	break;
 
       if (glob_app_cfg->setup_ready == adtlist_getcount(glob_app_cfg->link_list)) {
+
+	if (glob_app_cfg->setup_ready == glob_app_cfg->total) {
+	  /* all node resources are vlsr */
+	  print_final(newpath);
+	  break;
+	}
+
 	master_lookup_assign_ip(); 
 	master_check_command(); 
 	print_final(newpath); 
@@ -1329,7 +1333,7 @@ integrate_result()
 	  glob_app_cfg->status = AST_FAILURE; 
 	else 
 	  return;
-      } else if (glob_app_cfg->setup_ready != total_res ) {
+      } else if (glob_app_cfg->setup_ready != glob_app_cfg->total ) {
 	if (glob_app_cfg->setup_sent < adtlist_getcount(glob_app_cfg->link_list)
 		&& glob_app_cfg->setup_ready == glob_app_cfg->setup_sent) {
 	  glob_app_cfg->action = SETUP_REQ;
@@ -1346,7 +1350,7 @@ integrate_result()
       break;
 
     case RELEASE_RESP:
-      if (glob_app_cfg->release_ready == total_res) 
+      if (glob_app_cfg->release_ready == glob_app_cfg->total) 
 	sprintf(path_prefix, "%s/release_", directory);
       else
 	return;
@@ -1357,7 +1361,7 @@ integrate_result()
       break;
 
     case APP_COMPLETE:
-      if (total_res == glob_app_cfg->complete_ready) {
+      if (glob_app_cfg->total == glob_app_cfg->complete_ready) {
         zlog_info("All minions are done with this AST, resources are ready to be released");
         return;
       }
@@ -1437,6 +1441,12 @@ send_task_to_node_agent()
 	curnode;
 	curnode = curnode->next) {
     srcnode = (struct resource*)(curnode->data);
+
+    if (srcnode->res.n.stype == vlsr) {
+      ready++;
+      zlog_info("no need to send task to node_agent on vlsr (%s)", srcnode->name);
+      continue;
+    }
 
     if (glob_app_cfg->action != AST_COMPLETE) {
       sprintf(newpath, "%srequest_%s.xml", path_prefix, srcnode->name);
@@ -1832,7 +1842,8 @@ master_read_config(char *config_file)
 	continue;
       token = strtok(NULL, " ");
       if (token) {
-	token[strlen(token)-1]='\0';
+	if (token[strlen(token)-1]=='\n')
+	  token[strlen(token)-1]='\0';
 	narb_pool.narbs[narb_pool.number].narb_ip = strdup(token);
 	narb_pool.number++;
       } else 
@@ -1854,7 +1865,8 @@ master_read_config(char *config_file)
 
       token = strtok(NULL, " ");
       if (token) { 
-        token[strlen(token)-1]='\0';
+        if (token[strlen(token)-1]=='\n') 
+	  token[strlen(token)-1]='\0';
 	es_pool.es[es_pool.number].tunnel = strdup(token);
       } else {
 	free(es_pool.es[es_pool.number].ip);

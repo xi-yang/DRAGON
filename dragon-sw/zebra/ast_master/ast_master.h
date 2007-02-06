@@ -38,10 +38,11 @@
 #define IP_MAXLEN 		15 
 #define NUM_LINK_TYPE		3
 #define NUM_NODE_TYPE		3
+#define NUM_LINK_STATUS_TYPE	3
 #define NUM_LINK_STYPE		4	
 #define NUM_FUNCTION_TYPE	8
 #define NUM_STATUS_TYPE		5
-#define NUM_NODE_STYPE		3
+#define NUM_NODE_STYPE		4
 #define LSP_NAME_LEN            13 
 #define NODE_AGENT_PORT 	2623
 
@@ -102,6 +103,7 @@ struct application_cfg {
   u_int8_t setup_sent;
   u_int8_t release_ready;
   u_int8_t complete_ready;
+  u_int8_t total;
  
   char* ast_id;
   char* ast_ip;
@@ -110,8 +112,9 @@ struct application_cfg {
   struct adtlist *link_list;
 };
 
-enum node_stype { PC = 1, correlator, computation_array };
+enum node_stype { PC = 1, correlator, computation_array, vlsr};
 enum link_stype { uni = 1, non_uni, vlsr_vlsr, vlsr_es };
+enum link_status { commit = 1, error, in_service };
 
 struct if_ip {
   char *iface;
@@ -145,6 +148,7 @@ struct link_cfg {
   struct endpoint *src;
   struct endpoint *dest;
   struct resource *dragon;
+  enum link_status l_status;
 
   /* te_params */
   char vtag[REG_TXT_FIELD_LEN+1];

@@ -172,6 +172,8 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
   fprintf(fp, "<resource name=\"%s\" type=\"%s\">\n", data->link_name, link_stype_name[data->stype]);
   fprintf(fp, "\t<status>%s</status>\n", 
 		status == AST_SUCCESS? "AST_SUCCESS":"AST_FAILURE");
+  fprintf(fp, "\t<link_status>%s</link_status>\n",
+		status == AST_SUCCESS? "IN-SERVICE":"ERROR"); 
   fprintf(fp, "\t<lsp_name>%s</lsp_name>\n", data->lsp_name);
   fprintf(fp, "\t<dragon>%s</dragon>\n", data->link_agent);
   fprintf(fp, "\t<te_params>\n");
@@ -852,6 +854,7 @@ dragon_build_lsp(struct resource *link)
       argc = 1;
       strcpy(argv[0], lsp_name);
       dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+      link->res.l.l_status = error;
       return NULL;
     }
   }
@@ -907,6 +910,7 @@ dragon_build_lsp(struct resource *link)
     argc = 1;
     strcpy(argv[0], lsp_name);
     dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+    link->res.l.l_status = error;
     return NULL;
   }
 
@@ -924,6 +928,7 @@ dragon_build_lsp(struct resource *link)
     argc = 1;
     strcpy(argv[0], lsp_name);
     dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+    link->res.l.l_status = error;
     return NULL;
   }
 
@@ -939,6 +944,7 @@ dragon_build_lsp(struct resource *link)
     argc = 1;
     strcpy(argv[0], lsp_name);
     dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+    link->res.l.l_status = error;
     return NULL;
   }
 
@@ -949,6 +955,7 @@ dragon_build_lsp(struct resource *link)
     zlog_info("dragon_set_lsp_vtag: %s", argv[0]);
     if (dragon_set_lsp_vtag(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
       dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+      link->res.l.l_status = error;
       return NULL;
     }
   }
@@ -959,11 +966,13 @@ dragon_build_lsp(struct resource *link)
   strcpy(argv[0], lsp_name);
   if (dragon_commit_lsp_sender(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
     dragon_delete_lsp(NULL, fake_vty, argc, &argv); 
+    link->res.l.l_status = error;
     return NULL;
   }
  
   strcpy(link->res.l.lsp_name, lsp_name);
   link->status = AST_SUCCESS;
+  link->res.l.l_status = commit;
 
   return lsp;
 }

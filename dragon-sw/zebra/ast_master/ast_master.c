@@ -15,7 +15,8 @@ char *node_stype_name[] =
   { "None",
     "PC",
     "correlator",
-    "computation_array" };
+    "computation_array",
+    "vlsr" };
 
 char *link_type_name[] =
   { "None",
@@ -39,6 +40,12 @@ char *link_stype_name[] =
     "vlsr_vlsr",
     "vlsr_es" };
 
+char *link_status_name[] =
+  { "DID NOT COMMIT",
+    "COMMIT",
+    "ERROR",
+    "IN-SERVICE" };
+ 
 struct string_syntex_check local_field =
 {
 	4,
@@ -310,6 +317,18 @@ get_status_by_str(char* key)
 
   for (i = 0; key && i <= AST_APP_COMPLETE ; i++) 
     if (strcasecmp(key, status_type_details[i]) == 0) 
+      return i;
+
+  return 0;
+}
+
+int
+get_link_status_by_str(char* key)
+{
+  int i;
+  
+  for (i = 1; key && i <= NUM_LINK_STATUS_TYPE; i++)
+    if (strcasecmp(key, link_status_name[i]) == 0)
       return i;
 
   return 0;
@@ -671,7 +690,8 @@ print_node(FILE* fp, struct resource* node)
 
   fprintf(fp, "<resource type=\"%s\" name=\"%s\">\n",
 		node_stype_name[node->res.n.stype], node->name);
-  fprintf(fp, "\t<status>%s</status>\n", status_type_details[node->status]);
+  if (node->res.n.stype != vlsr) 
+    fprintf(fp, "\t<status>%s</status>\n", status_type_details[node->status]);
   if (node->agent_message) 
     fprintf(fp, "\t<agent_message>%s</agent_message>\n", node->agent_message);
   if (node->res.n.ip[0] != '\0')
@@ -734,6 +754,7 @@ print_link(FILE* fp, struct resource* link)
   fprintf(fp, "<resource type=\"%s\" name=\"%s\">\n",
 		link_stype_name[link->res.l.stype], link->name);
   fprintf(fp, "\t<status>%s</status>\n", status_type_details[link->status]);
+  fprintf(fp, "\t<link_status>%s</link_status>\n", link_status_name[link->res.l.l_status]);
   if (link->agent_message) 
     fprintf(fp, "\t<agent_message>%s</agent_message>\n", link->agent_message);
   if (link->res.l.lsp_name[0] != '\0')
@@ -1713,6 +1734,9 @@ topo_xml_parser(char* filename, int agent)
 	app_cfg->node_list = node_list;
       } 
       adtlist_add(node_list, myres); 
+	
+      if (myres->res.n.stype != vlsr)
+	app_cfg->total++;
     } else {
 
       /* first make sure that there is no conflict in the names 
@@ -1834,6 +1858,7 @@ topo_xml_parser(char* filename, int agent)
 	      adtlist_add(myres->res.l.dest->es->res.n.if_list, ep->ifp);
 	    }
 	  }
+
 	} else if (strcasecmp(link_ptr->name, "te_params") == 0) {
 
 	  myres->res.l.service_type = -1;
@@ -1888,6 +1913,8 @@ topo_xml_parser(char* filename, int agent)
 	  myres->agent_message = strdup(key);
 	else if (strcasecmp(link_ptr->name, "dragon") == 0)
 	  myres->res.l.dragon = search_node_by_name(app_cfg, key);
+	else if (strcasecmp(link_ptr->name, "link_status") == 0) 
+	  myres->res.l.l_status = get_link_status_by_str(key);
       }
 
       if (link_list == NULL) { 
@@ -1896,7 +1923,8 @@ topo_xml_parser(char* filename, int agent)
 	app_cfg->link_list = link_list;
       } 
 
-      adtlist_add(link_list, myres);    
+      adtlist_add(link_list, myres);
+      app_cfg->total++;
     } 
   }
 
