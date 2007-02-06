@@ -100,18 +100,18 @@ noded_read_config(char* config_file)
 
     if (strcmp(token, "interface") == 0) {
       token = strtok(NULL, " ");
-      token[strlen(token)-1] = '\0';
-      if (token)
-        interface = strdup(token);
-      else
+      if (!token)
 	continue;
+      if (token[strlen(token)-1] == '\n') 
+	token[strlen(token)-1] = '\0';
+      interface = strdup(token);
     } else if (strcmp(token, "router_id") == 0) {
       token = strtok (NULL, " ");
-      token[strlen(token)-1] = '\0';
-      if (token)
-	loopback = strdup(token);
-      else
+      if (!token)
 	continue;
+      if (token[strlen(token)-1] == '\n')
+	token[strlen(token)-1] = '\0';
+      loopback = strdup(token);
     }
   } 
 }
