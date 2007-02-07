@@ -276,7 +276,7 @@ struct link_ifswcap_specific_subnet_uni {
 	u_int16_t		length;
 	u_int16_t	 	version;       /*version id and options mask | IFSWCAP_SPECIFIC_VLAN_SUBNET_UNI*/
 	u_int8_t		subnet_uni_id;
-	u_int8_t		first_timeslot; /*not used in ospfd*/
+	u_int8_t		first_timeslot;
 	u_char		swcap_ext;
 	u_char		encoding_ext;
 	u_int32_t		tna_ipv4;
