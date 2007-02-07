@@ -29,7 +29,7 @@ void SwitchCtrl_Session_SubnetUNI::internalInit ()
 
 void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint8 subuni_id, uint8 first_ts,
  uint16 tunnel_id, float bw, uint32 tna_ipv4, uint32 uni_cid_ipv4, uint32 uni_nid_ipv4, uint32 data_if,
- uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name, uint8* bitmask)
+ uint32 port, uint32 egress_label, uint32 upstream_label, uint8* cc_name, uint8* bitmask)
 {
     memset(&data, 0, sizeof(SubnetUNI_Data));
     data.subnet_id = subuni_id;
@@ -45,8 +45,7 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint8 
     data.uni_nid_ipv4 = uni_nid_ipv4;
     data.data_if_ipv4 = data_if;
 
-    if (cc_name)
-        strncpy((char*)data.control_channel_name, cc_name, CTRL_CHAN_NAME_LEN-1);
+    memcpy(data.control_channel_name, cc_name, CTRL_CHAN_NAME_LEN);
     memcpy(data.timeslot_bitmask, bitmask, MAX_TIMESLOTS_NUM/8);
 }       
 

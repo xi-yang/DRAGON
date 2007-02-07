@@ -130,7 +130,7 @@ protected:
 private:	
 	void internalInit ();
 	void setSubnetUniData(SubnetUNI_Data& data, uint8 id, uint8 first_ts, uint16 tunnel_id, float bw, uint32 tna, uint32 uni_c_id, 
-		uint32 uni_n_id, uint32 data_if, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name, uint8* bitmask);
+		uint32 uni_n_id, uint32 data_if, uint32 port, uint32 egress_label, uint32 upstream_label, uint8* cc_name, uint8* bitmask);
 };
 
 
