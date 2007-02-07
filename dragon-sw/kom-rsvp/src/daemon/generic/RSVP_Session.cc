@@ -367,12 +367,12 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
 		//creating source G_UNI client session
 		NetAddress destUniDataIf(0);
-		uint16 destUniId = 0;
+		uint8 destUniId = 0;
 		assert((inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST);
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
 			//Fetch SubnetUNI data 
 			memset(&subnetUniDataSrc, 0, sizeof(subnetUniDataSrc));
-			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(inRtId, (uint16)inUnumIfID, subnetUniDataSrc) ) {
+			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(inRtId, (uint8)(inUnumIfID >> 8), subnetUniDataSrc) ) {
 				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vLSRoute.push_back(vlsr);                    
@@ -390,23 +390,21 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				//Store SubnetUNI Session handle ...
 				pSubnetUniSrc = (SwitchCtrl_Session_SubnetUNI*)ssNew;
 				//Pass SubnetUNI data
-				pSubnetUniSrc->setSubnetUniSrc(subnetUniDataSrc.subnet_id, subnetUniDataSrc.tunnel_id, subnetUniDataSrc.ethernet_bw, 
-					subnetUniDataSrc.tna_ipv4, subnetUniDataSrc.uni_nid_ipv4, subnetUniDataSrc.logical_port, 
-					subnetUniDataSrc.egress_label, subnetUniDataSrc.upstream_label, (char*)subnetUniDataSrc.control_channel_name);
+				pSubnetUniSrc->setSubnetUniSrc(subnetUniDataSrc);
 				//kickoff UNI session
 				pSubnetUniSrc->registerRsvpApiClient();
 				pSubnetUniSrc->initUniRsvpApiSession();
 			}
 
 			if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
-				destUniId = (uint16)outUnumIfID;
+				destUniId = (uint8)(outUnumIfID >> 8);
 				destUniDataIf = outRtId;
 			}
 			else {
 				AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
 				for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
 					if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
-						destUniId = (uint16)((*iter).getInterfaceID());
+						destUniId = (uint8)((*iter).getInterfaceID() >> 8);
 						destUniDataIf = (*iter).getAddress();
 						break;
 					}
@@ -424,9 +422,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				}
 				subnetUniDataDest.ethernet_bw = vlsr.bandwidth;
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
-				pSubnetUniSrc->setSubnetUniDest(subnetUniDataDest.subnet_id, subnetUniDataDest.tunnel_id, subnetUniDataDest.ethernet_bw, 
-					subnetUniDataDest.tna_ipv4, subnetUniDataDest.uni_nid_ipv4, subnetUniDataDest.logical_port,
-					subnetUniDataDest.egress_label, subnetUniDataDest.upstream_label, (char*)subnetUniDataDest.control_channel_name);
+				pSubnetUniSrc->setSubnetUniDest(subnetUniDataDest);
 			}
 		} 
 
@@ -454,9 +450,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				//Store SubnetUNI Session handle ...
 				pSubnetUniDest = (SwitchCtrl_Session_SubnetUNI*)ssNew;
 				//Pass SubnetUNI data
-				pSubnetUniDest->setSubnetUniDest(subnetUniDataDest.subnet_id, subnetUniDataDest.tunnel_id, subnetUniDataDest.ethernet_bw, 
-					subnetUniDataDest.tna_ipv4, subnetUniDataDest.uni_nid_ipv4, subnetUniDataDest.logical_port,
-					subnetUniDataDest.egress_label, subnetUniDataDest.upstream_label, (char*)subnetUniDataDest.control_channel_name);
+				pSubnetUniDest->setSubnetUniDest(subnetUniDataDest);
 				//kickoff UNI session
 				pSubnetUniDest->registerRsvpApiClient();
 				pSubnetUniDest->initUniRsvpApiSession();

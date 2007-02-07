@@ -487,9 +487,9 @@ const void RoutingService::holdVtagbyOSPF(u_int32_t port, u_int32_t vtag, bool h
 	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 }
 
-bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint16 uniID, SubnetUNI_Data& uniData) {
+bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint8 uniID, SubnetUNI_Data& uniData) {
 	uint8 message = GetSubnetUNIDataByOSPF;
-	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32) + sizeof(uint16);
+	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32) + sizeof(uint8);
 	ONetworkBuffer obuffer(msgLength);
 	obuffer << msgLength << message <<dataIf << uniID;
 	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
@@ -505,7 +505,11 @@ bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint
 	//Process response messages
 	uniData.subnet_id = uniID;
 	ibuffer >> uniData.tna_ipv4 >> uniData.uni_nid_ipv4 >> uniData.data_if_ipv4 >> uniData.logical_port >> uniData.egress_label >>uniData.upstream_label;
-	for (int i = 0; i < 12; i++) ibuffer >> uniData.control_channel_name[i];
+
+	int i = 0;
+	for ( ; i < 12; i++) ibuffer >> uniData.control_channel_name[i];
+	for (i = 0; i < MAX_TIMESLOTS_NUM/8; i++) ibuffer >> uniData.timeslot_bitmask[i];
+
 	return true;
 }
 

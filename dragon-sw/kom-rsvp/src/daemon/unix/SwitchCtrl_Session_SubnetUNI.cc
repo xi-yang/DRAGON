@@ -27,12 +27,13 @@ void SwitchCtrl_Session_SubnetUNI::internalInit ()
     uniState = 0;
 }
 
-void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint16 subuni_id, 
+void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint8 subuni_id, uint8 first_ts,
  uint16 tunnel_id, float bw, uint32 tna_ipv4, uint32 uni_cid_ipv4, uint32 uni_nid_ipv4, uint32 data_if,
- uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
+ uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name, uint8* bitmask)
 {
     memset(&data, 0, sizeof(SubnetUNI_Data));
-    data.subnet_id = subuni_id; 
+    data.subnet_id = subuni_id;
+    data.first_timeslot = first_ts;
     data.tunnel_id = tunnel_id; 
     data.ethernet_bw = bw; 
     data.tna_ipv4 = tna_ipv4;
@@ -46,30 +47,29 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint16
 
     if (cc_name)
         strncpy((char*)data.control_channel_name, cc_name, CTRL_CHAN_NAME_LEN-1);
+    memcpy(data.timeslot_bitmask, bitmask, MAX_TIMESLOTS_NUM/8);
 }       
 
-void SwitchCtrl_Session_SubnetUNI::setSubnetUniSrc(uint16 id, uint16 tunnel_id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
+void SwitchCtrl_Session_SubnetUNI::setSubnetUniSrc(SubnetUNI_Data& data)
 {
-	assert (cc_name);
-	const LogicalInterface* lif = RSVP_Global::rsvp->findInterfaceByName(String(cc_name));
+	const LogicalInterface* lif = RSVP_Global::rsvp->findInterfaceByName(String((char*)data.control_channel_name));
+	data.uni_cid_ipv4 = lif ? lif->getLocalAddress().rawAddress() : data.tna_ipv4; //?
+	//uint32 data_if = 0;
 
-	uint32 uni_c_id = lif ? lif->getLocalAddress().rawAddress() : tna; //?
-	uint32 uni_n_id = nid;
-	uint32 data_if = 0; //temp
-
-	setSubnetUniData(subnetUniSrc, id, tunnel_id, bw, tna, uni_c_id, uni_n_id, data_if, port, egress_label, upstream_label, cc_name);
+	setSubnetUniData(subnetUniSrc, data.subnet_id, data.first_timeslot, data.tunnel_id, data.ethernet_bw, data.tna_ipv4, 
+		data.uni_cid_ipv4, data.uni_nid_ipv4, data.data_if_ipv4, data.logical_port, data.egress_label, data.upstream_label, 
+		data.control_channel_name, data.timeslot_bitmask);
 }
 
-void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(uint16 id, uint16 tunnel_id, float bw,  uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name)
+void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(SubnetUNI_Data& data)
 {
-	assert (cc_name);
-	const LogicalInterface* lif = RSVP_Global::rsvp->findInterfaceByName(String(cc_name));
+	const LogicalInterface* lif = RSVP_Global::rsvp->findInterfaceByName(String((char*)data.control_channel_name));
+	data.uni_cid_ipv4 = lif ? lif->getLocalAddress().rawAddress() : data.tna_ipv4; //?
+	//uint32 data_if = 0;
 
-	uint32 uni_c_id = lif ? lif->getLocalAddress().rawAddress() : tna; //?
-	uint32 uni_n_id = nid;
-	uint32 data_if = 0; //temp
-
-	setSubnetUniData(subnetUniDest, id, tunnel_id, bw, tna, uni_c_id, uni_n_id, data_if, port, egress_label, upstream_label, cc_name);
+	setSubnetUniData(subnetUniDest, data.subnet_id, data.first_timeslot, data.tunnel_id, data.ethernet_bw, data.tna_ipv4, 
+		data.uni_cid_ipv4, data.uni_nid_ipv4, data.data_if_ipv4, data.logical_port, data.egress_label, data.upstream_label, 
+		data.control_channel_name, data.timeslot_bitmask);
 }
 
 const LogicalInterface* SwitchCtrl_Session_SubnetUNI::getControlInterface(NetAddress& gwAddress)

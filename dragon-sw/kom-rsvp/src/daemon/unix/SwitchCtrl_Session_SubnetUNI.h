@@ -25,8 +25,10 @@ To be incorporated into KOM-RSVP-TE package
 #define GENERALIZED_LABEL_REQUEST_Object LABEL_REQUEST_Object
 
 #define CTRL_CHAN_NAME_LEN 12
+#define MAX_TIMESLOTS_NUM 192  //STS-1 x 192 = 10 G
 typedef struct SubnetUNI_Data_struct {
-	uint16 subnet_id;
+	uint8 subnet_id;
+	uint8 first_timeslot;
 	uint16 tunnel_id;
 	float ethernet_bw; // in mbps
 	uint32 tna_ipv4; // also used for SenderTemplate IPv4; Session Ipv4 is implied by the peer Ipv4 in the same /30
@@ -36,7 +38,8 @@ typedef struct SubnetUNI_Data_struct {
 	uint32 logical_port; //$$$$Assuming downstrem and upstream use the same port number
 	uint32 egress_label;
 	uint32 upstream_label;
-	uint8 control_channel_name[CTRL_CHAN_NAME_LEN]; //consistent with TNA_IPv4 //redundant@@@@
+	uint8 control_channel_name[CTRL_CHAN_NAME_LEN];
+	uint8 timeslot_bitmask[MAX_TIMESLOTS_NUM/8]; //bitmask
 } SubnetUNI_Data;
 
 class SwitchCtrl_Session_SubnetUNI;
@@ -60,8 +63,8 @@ public:
 	}
 
 	//Preparing UNI parameters
-	void setSubnetUniSrc(uint16 id, uint16 tunnel_id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name);
-	void setSubnetUniDest(uint16 id, uint16 tunnel_id, float bw, uint32 tna, uint32 nid, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name);
+	void setSubnetUniSrc(SubnetUNI_Data& data);
+	void setSubnetUniDest(SubnetUNI_Data& data);
 	SubnetUNI_Data* getSubnetUniSrc() { return &subnetUniSrc; }
 	SubnetUNI_Data* getSubnetUniDest() { return &subnetUniDest; }
 
@@ -126,8 +129,8 @@ protected:
 
 private:	
 	void internalInit ();
-	void setSubnetUniData(SubnetUNI_Data& data, uint16 id, uint16 tunnel_id, float bw, uint32 tna, uint32 uni_c_id, 
-		uint32 uni_n_id, uint32 data_if, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name);
+	void setSubnetUniData(SubnetUNI_Data& data, uint8 id, uint8 first_ts, uint16 tunnel_id, float bw, uint32 tna, uint32 uni_c_id, 
+		uint32 uni_n_id, uint32 data_if, uint32 port, uint32 egress_label, uint32 upstream_label, char* cc_name, uint8* bitmask);
 };
 
 

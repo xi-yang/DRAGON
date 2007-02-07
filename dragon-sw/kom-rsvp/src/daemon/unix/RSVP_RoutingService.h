@@ -118,7 +118,7 @@ public:
 	const void holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold = true);
 	const void holdVtagbyOSPF(u_int32_t port, u_int32_t vtag, bool hold = true);
 	NetAddress getLoopbackAddress();
-	bool getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint16 uniID, SubnetUNI_Data& uniData);
+	bool getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint8 uniID, SubnetUNI_Data& uniData);
 	const LogicalInterface* getUnicastRoute( const NetAddress&, NetAddress& );
 	const LogicalInterface* getMulticastRoute( const NetAddress&, const NetAddress&, LogicalInterfaceSet& );
 	bool getAsyncMulticastRoutingEvent( NetAddress&, NetAddress&, const LogicalInterface*&, LogicalInterfaceSet& );

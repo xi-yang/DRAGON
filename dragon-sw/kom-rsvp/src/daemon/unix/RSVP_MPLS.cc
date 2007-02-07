@@ -282,10 +282,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
 							// Update ingress link bandwidth
 		                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, true); //true == decrease
+		                                   //RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF   @@@@
 						}
 						if ( ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 							// Update egress link bandwidth
 		                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, true); //true == decrease
+		                                   //RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF   @@@@
 						}
 						noError = true;
 						break;
@@ -558,14 +560,16 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 	   				     if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
 	   					((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
 	   
-	                                   	// Update ingress link bandwidth
+	                                      // Update ingress link bandwidth
 	                                      RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false); //false == increase
+		                               //RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF   @@@@
 	   				     }
 	                                 if ( ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 	   					// ??? release path from destination client ???
 	   
-	                                   	// Update egress link bandwidth
+	                                      // Update egress link bandwidth
 	                                      RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, false); //false == increase
+	                                      //RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF   @@@@
 	                                 }
 					     iter = psb.getVLSR_Route().erase(iter);
                                 }
