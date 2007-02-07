@@ -2692,7 +2692,7 @@ DEFUN (ospf_te_interface_ifsw_cap7,
   if ( te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version != htons(IFSWCAP_SPECIFIC_SUBNET_UNI) )
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap7: 'timeslot' command must follow 'subnet-uni' command.%s", VTY_NEWLINE);
-      return CMD_WARNING;
+      return CMD_ERR_INCOMPLETE;
     }
   	
   if (sscanf (argv[0], "%d", &ts1) != 1)
@@ -3064,7 +3064,6 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4a_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap5_cmd);
-  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap6_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap6_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7a_cmd);
