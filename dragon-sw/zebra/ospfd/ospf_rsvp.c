@@ -518,7 +518,7 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag)
 			if (oi && INTERFACE_MPLS_ENABLED(oi) && (oi->vlsr_if.switch_port == port
 				|| ( ( (port>>16) == 0x10 || (port>>16) == 0x11 ) 
 					&& ( ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0
-					&& ( ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id) == (u_int16_t)port ) ) ) ) {
+					&& ( oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) ) ) ) {
 				if (hold_flag == 1)
 				{
 					updated = hold_bandwidth(oi, bw);
@@ -863,7 +863,7 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int8_t uni_id, int fd)
 	   		{
 	   			if (ifswcap && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC
 				    && ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) == IFSWCAP_SPECIFIC_SUBNET_UNI 
-				    && ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id) == uni_id)
+				    && ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == uni_id)
    				{
 					uni_data = &ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni;
 					break;

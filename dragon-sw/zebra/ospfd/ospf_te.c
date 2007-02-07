@@ -1301,7 +1301,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
 	{
 	    vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
 	    vty_out (vty, "      -> Subnet-UNI ID: %d via ControlChannel %s%s", 
-			ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id), 
+			top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id, 
 			top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.control_channel, VTY_NEWLINE);
 	    strcpy (ipv4_a, inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.nid_ipv4));
 	    strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.data_ipv4));
@@ -1431,7 +1431,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	else if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_SUBNET_UNI)) {
 	    subnet_uni = (struct link_ifswcap_specific_subnet_uni *)v;
             vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
-            vty_out (vty, "      -> Subnet-UNI ID: %d via ControlChannel %s%s", ntohs(subnet_uni->subnet_uni_id), 
+            vty_out (vty, "      -> Subnet-UNI ID: %d via ControlChannel %s%s", subnet_uni->subnet_uni_id, 
 				subnet_uni->control_channel, VTY_NEWLINE);
 
             strcpy (ipv4_a, inet_ntoa (*(struct in_addr*)&subnet_uni->nid_ipv4));
@@ -2587,7 +2587,7 @@ DEFUN (ospf_te_interface_ifsw_cap5,
       vty_out (vty, "ospf_te_interface_ifsw_cap5: fscanf uni_id: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id = htons(uni_id);
+  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id = (u_int8_t)uni_id;
 
   if (inet_aton (argv[1], (struct in_addr*)&tna_ip) != 1)
     {
