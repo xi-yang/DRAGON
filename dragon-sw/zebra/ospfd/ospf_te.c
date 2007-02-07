@@ -1443,7 +1443,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             swcap = val2str(&str_val_conv_swcap, subnet_uni->swcap_ext);
             enc = val2str(&str_val_conv_encoding, subnet_uni->encoding_ext);
             vty_out (vty, "      -> Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
-            vty_out (vty, "     -> Available TimeSlots:");
+            vty_out (vty, "      -> Available TimeSlots:");
             for (i = 1; i <= MAX_TIMESLOTS_NUM; i++)
                 if (HAS_TIMESLOT(subnet_uni->timeslot_bitmask, i)) vty_out (vty, " %d", i);
             vty_out (vty, "%s", VTY_NEWLINE);
@@ -2683,7 +2683,7 @@ DEFUN (ospf_te_interface_ifsw_cap6,
 
 DEFUN (ospf_te_interface_ifsw_cap7,
        ospf_te_interface_ifsw_cap7_cmd,
-       "timeslot <1-4094>",
+       "timeslot <1-192>",
        "Assign timeslots\n"
        "TimeSlot ID in the range [1, 192]\n")
 {
