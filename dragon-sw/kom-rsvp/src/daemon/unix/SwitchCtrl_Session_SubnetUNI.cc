@@ -222,22 +222,22 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
     SESSION_ATTRIBUTE_Object* ssAttrib = NULL;
     UPSTREAM_LABEL_Object* upLabel = NULL;
     GENERALIZED_LABEL_REQUEST_Object *lr = NULL;
-    //IPv4_IF_ID_RSVP_HOP_Object  $$$$ based on control_channel_name ???
-    //==> revise RSVP_AP::createSender
 
     SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(subnetUniSrc.ethernet_bw);
     if (sonet_tb1)
         stb = new SENDER_TSPEC_Object(*sonet_tb1);
 
+    // $$$$
+    // pick time slots, convert into SONET label and add to Label_SET
+    // try the non-zero subnetUniData::first_timeslot first ...
+    // keep record in first_timeslot!
+
+    // $$$$
+   // Update egress_label ... (using the same upstream label) ==> always do symetric provisioning!
+
     uni = new GENERALIZED_UNI_Object (subnetUniSrc.tna_ipv4, subnetUniDest.tna_ipv4, 
                     subnetUniDest.logical_port, subnetUniDest.egress_label, 
                     subnetUniDest.logical_port, subnetUniDest.upstream_label);
-
-    /* $$$$ we may need this later on ...
-    labelSet = new LABEL_SET_Object();
-    for (int i=0;i<para->labelSetSize;i++)
-     	labelSet->addSubChannel(para->labelSet[i]);
-    */
 
     ssAttrib = new SESSION_ATTRIBUTE_Object(sessionName); //$$$$
 
@@ -246,8 +246,6 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
     lr = new LABEL_REQUEST_Object ( LABEL_REQUEST_Object::L_ANSI_SDH, 
     							       LABEL_REQUEST_Object::S_TDM,
                                                         LABEL_REQUEST_Object::G_SONET_SDH);
-
-    //$$$$ subnetUniSrc.tunnel_id = subnetUniSrc.subnet_id;
 
     //NetAddress srcAddress(subnetUniSrc.uni_cid_ipv4);
     //createSender( *uniSessionId, srcAddress, subnetUniSrc.tunnel_id, *stb, *lr, NULL, uni, labelSet, ssAttrib, upLabel, 50);

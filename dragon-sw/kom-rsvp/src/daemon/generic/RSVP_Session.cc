@@ -367,7 +367,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
 		//creating source G_UNI client session
 		NetAddress destUniDataIf(0);
-		uint8 destUniId = 0;
+		uint8 destUniId = 0; // valid: > 0
+		uint8 destTimeSlot = 0; //valid: > 0; one-based
 		assert((inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST);
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
 			//Fetch SubnetUNI data 
@@ -379,6 +380,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				return false;				
 			}
 			subnetUniDataSrc.ethernet_bw = vlsr.bandwidth;
+			subnetUniDataSrc.first_timeslot = (uint8)inUnumIfID;
 			subnetUniDataSrc.tunnel_id = msg.getSESSION_Object().getTunnelId();
 
 			if (!pSubnetUniSrc){
@@ -399,6 +401,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
 				destUniId = (uint8)(outUnumIfID >> 8);
 				destUniDataIf = outRtId;
+				destTimeSlot = (uint8)outUnumIfID;
 			}
 			else {
 				AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
@@ -421,6 +424,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					return false;
 				}
 				subnetUniDataDest.ethernet_bw = vlsr.bandwidth;
+				subnetUniDataDest.first_timeslot = destTimeSlot;
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
 				pSubnetUniSrc->setSubnetUniDest(subnetUniDataDest);
 			}
@@ -439,6 +443,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					return false;
 				}
 				subnetUniDataDest.ethernet_bw = vlsr.bandwidth;
+				subnetUniDataDest.first_timeslot = (uint8)outUnumIfID;
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
 			}
 			if (!pSubnetUniDest){
