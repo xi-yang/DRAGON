@@ -913,7 +913,7 @@ ospf_rsvp_read (struct thread *thread)
   u_int32_t port, bw_uint32;
   u_int32_t vtag;
   u_int8_t hold_flag;
-  u_int16_t uni_id;
+  u_int8_t uni_id;
   float bandwidth, tmpbw;
   
   /* Get thread data.  Reset reading thread because I'm running. */
@@ -1006,7 +1006,7 @@ ospf_rsvp_read (struct thread *thread)
 
    case GetSubnetUNIDataByOSPF:
 	addr.s_addr = stream_get_ipv4(s);
-	uni_id = stream_getw (s);
+	uni_id = stream_getc (s);
 	ospf_rsvp_get_subnet_uni_data(&addr, uni_id, sock);
 	break;
 
