@@ -344,5 +344,9 @@ inline void RevertWordBytes(uint32& x)
 #define SET_VLAN(P, VID) P[VID/8] = (P[VID/8] | (0x80 >> (VID-1)%8))
 #define RESET_VLAN(P, VID) P[VID/8] = (P[VID/8] & ~(0x80 >> (VID-1)%8))
 
+#define HAS_TIMESLOT HAS_VLAN
+#define SET_TIMESLOT SET_VLAN
+#define RESET_TIMESLOT RESET_VLAN
+
 #endif //#ifndef _SWITCHCTRL_GLOBAL_H_
 

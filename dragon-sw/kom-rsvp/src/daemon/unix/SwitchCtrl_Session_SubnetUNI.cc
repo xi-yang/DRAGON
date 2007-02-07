@@ -209,6 +209,25 @@ void SwitchCtrl_Session_SubnetUNI::initUniRsvpApiSession()
     uniState = Message::InitAPI;
 }
 
+static uint32 getSONETLabel(uint8 timeslot, SONET_TSpec* tspec)
+{
+    assert(tspec);
+    switch (tspec->getSignalType())
+    {
+    case SONET_TSpec::S_STS1SPE_VC3:
+    case SONET_TSpec::S_STS1_STM0:
+        return (((uint32)(timeslot/3) << 16) | ((uint32)(timeslot%3) << 12) );
+        break;
+
+    case SONET_TSpec::S_STS3CSPE_VC4:
+    case SONET_TSpec::S_STS3_STM1:
+        return ((uint32)(timeslot/3) << 16);
+        break;
+    }
+
+    return 0;
+}
+
 void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
 {
     if (!active || !uniSessionId)
@@ -227,19 +246,46 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
     if (sonet_tb1)
         stb = new SENDER_TSPEC_Object(*sonet_tb1);
 
-    // $$$$
-    // pick time slots, convert into SONET label and add to Label_SET
-    // try the non-zero subnetUniData::first_timeslot first ...
-    // keep record in first_timeslot!
+    // Pick the first available timeslot, convert it into SONET label and add to LABEL_SET
+    uint8 ts;
+    if (subnetUniSrc.first_timeslot == 0)
+    {
+        for (ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
+        {
+            if ( HAS_TIMESLOT(subnetUniSrc.timeslot_bitmask, ts) )
+            {
+                subnetUniSrc.first_timeslot = ts;
+                break;
+            }
+        }
+    }
+    assert (subnetUniSrc.first_timeslot != 0);
+    labelSet = new LABEL_SET_Object(); //LABEL_GENERALIZED
+    uint32 label = getSONETLabel(subnetUniSrc.first_timeslot, sonet_tb1);
+    labelSet->addSubChannel(label);
+    subnetUniSrc.upstream_label = label;
 
-    // $$$$
-   // Update egress_label ... (using the same upstream label) ==> always do symetric provisioning!
+    // Update egress_label ... (using the same upstream label) ==> always do symetric provisioning!
+    if (subnetUniDest.first_timeslot == 0)
+    {
+        for (ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
+        {
+            if ( HAS_TIMESLOT(subnetUniDest.timeslot_bitmask, ts) )
+            {
+                subnetUniDest.first_timeslot = ts;
+                break;
+            }
+        }
+    }
+    assert (subnetUniDest.first_timeslot != 0);
+    label = getSONETLabel(subnetUniDest.first_timeslot, sonet_tb1);
+    subnetUniDest.egress_label = subnetUniDest.upstream_label = label;
 
     uni = new GENERALIZED_UNI_Object (subnetUniSrc.tna_ipv4, subnetUniDest.tna_ipv4, 
                     subnetUniDest.logical_port, subnetUniDest.egress_label, 
                     subnetUniDest.logical_port, subnetUniDest.upstream_label);
 
-    ssAttrib = new SESSION_ATTRIBUTE_Object(sessionName); //$$$$
+    ssAttrib = new SESSION_ATTRIBUTE_Object(sessionName);
 
     upLabel = new UPSTREAM_LABEL_Object(subnetUniSrc.upstream_label);
 
