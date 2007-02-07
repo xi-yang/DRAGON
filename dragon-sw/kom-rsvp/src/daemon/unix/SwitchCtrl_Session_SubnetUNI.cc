@@ -261,7 +261,7 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
     }
     assert (subnetUniSrc.first_timeslot != 0);
     labelSet = new LABEL_SET_Object(); //LABEL_GENERALIZED
-    uint32 label = getSONETLabel(subnetUniSrc.first_timeslot, sonet_tb1);
+    uint32 label = getSONETLabel(subnetUniSrc.first_timeslot, sonet_tb1); 
     labelSet->addSubChannel(label);
     subnetUniSrc.upstream_label = label;
 
@@ -282,7 +282,7 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
     subnetUniDest.egress_label = subnetUniDest.upstream_label = label;
 
     uni = new GENERALIZED_UNI_Object (subnetUniSrc.tna_ipv4, subnetUniDest.tna_ipv4, 
-                    subnetUniDest.logical_port, subnetUniDest.egress_label, 
+                    subnetUniDest.logical_port, subnetUniDest.egress_label,
                     subnetUniDest.logical_port, subnetUniDest.upstream_label);
 
     ssAttrib = new SESSION_ATTRIBUTE_Object(sessionName);
