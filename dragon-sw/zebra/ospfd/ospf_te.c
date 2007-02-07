@@ -2689,7 +2689,7 @@ DEFUN (ospf_te_interface_ifsw_cap7,
 {
   u_int32_t ts, ts1, ts2;
 
-  if  (te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version != htons(IFSWCAP_SPECIFIC_SUBNET_UNI);)
+  if ( te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version != htons(IFSWCAP_SPECIFIC_SUBNET_UNI) )
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap7: 'timeslot' command must follow 'subnet-uni' command.%s", VTY_NEWLINE);
       return CMD_WARNING;
@@ -2729,7 +2729,7 @@ DEFUN (ospf_te_interface_ifsw_cap7,
   return CMD_SUCCESS;
 }
 
-ALIAS (ospf_te_interface_ifsw_cap7a,
+ALIAS (ospf_te_interface_ifsw_cap7,
        ospf_te_interface_ifsw_cap7a_cmd,
        "timeslot <1-192> to <2-192>",
        "Assign timeslots\n"
