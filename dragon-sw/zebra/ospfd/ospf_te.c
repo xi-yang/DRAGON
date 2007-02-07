@@ -1287,13 +1287,13 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
     	    }
 
 	    vty_out (vty, "  -- L2SC specific information--%s    --> Available VLAN tag set:", VTY_NEWLINE);
-	    for (i = 0; i < MAX_VLAN_NUM; i++)
+	    for (i = 1; i <= MAX_VLAN_NUM; i++)
 		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
 	    vty_out (vty, "%s", VTY_NEWLINE);
 
 	    v += MAX_VLAN_NUM/8;
 	    vty_out (vty, "    --> Allocated VLAN tag set:");
-	    for (i = 0; i < MAX_VLAN_NUM; i++)
+	    for (i = 1; i <= MAX_VLAN_NUM; i++)
 		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
 	    vty_out (vty, "%s", VTY_NEWLINE);
 	}
@@ -1418,13 +1418,13 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 		v += 4;
 
 	    vty_out (vty, "  -- L2SC specific information--%s    --> Available VLAN tag set:", VTY_NEWLINE);
-	    for (i = 0; i < MAX_VLAN_NUM; i++)
+	    for (i = 1; i <= MAX_VLAN_NUM; i++)
 		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
 	    vty_out (vty, "%s", VTY_NEWLINE);
 
 	    v += MAX_VLAN_NUM/8;
 	    vty_out (vty, "    --> Allocated VLAN tag set:");
-	    for (i = 0; i < MAX_VLAN_NUM; i++)
+	    for (i = 1; i <= MAX_VLAN_NUM; i++)
 		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
 	    vty_out (vty, "%s", VTY_NEWLINE);
 	}

@@ -261,9 +261,9 @@ struct link_ifswcap_specific_vlan {
 	u_char           bitmask[MAX_VLAN_NUM/8];
 	u_char           bitmask_alloc[MAX_VLAN_NUM/8];
 };
-#define HAS_VLAN(P, VID) ((P[VID/8] & (0x80 >> (VID-1)%8)) != 0)
-#define SET_VLAN(P, VID) P[VID/8] = (P[VID/8] | (0x80 >> (VID-1)%8))
-#define RESET_VLAN(P, VID) P[VID/8] = (P[VID/8] & ~(0x80 >> (VID-1)%8))
+#define HAS_VLAN(P, VID) ((P[(VID-1)/8] & (0x80 >> (VID-1)%8)) != 0)
+#define SET_VLAN(P, VID) P[(VID-1)/8] = (P[(VID-1)/8] | (0x80 >> (VID-1)%8))
+#define RESET_VLAN(P, VID) P[(VID-1)/8] = (P[(VID-1)/8] & ~(0x80 >> (VID-1)%8))
 
 #define HAS_TIMESLOT HAS_VLAN
 #define SET_TIMESLOT SET_VLAN
