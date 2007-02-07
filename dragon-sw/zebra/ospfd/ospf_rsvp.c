@@ -832,7 +832,7 @@ ospf_rsvp_get_loopback_addr(int fd)
 
 
 void
-ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int16_t uni_id, int fd)
+ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int8_t uni_id, int fd)
 {
 	struct ospf_interface *oi;
 	struct ospf *ospf;
@@ -876,7 +876,7 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int16_t uni_id, int fd)
 		}
 	}
 
-	length = sizeof(u_int8_t)*2 + (uni_data == NULL ? 0 : sizeof(u_int32_t)*6+12);
+	length = sizeof(u_int8_t)*2 + (uni_data == NULL ? 0 : sizeof(u_int32_t)*6+12+MAX_TIMESLOTS_NUM/8);
 	s = stream_new(length);
 	stream_putc(s, length);
 	stream_putc(s, GetSubnetUNIDataByOSPF);
@@ -886,10 +886,12 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int16_t uni_id, int fd)
 		stream_putl(s, uni_data->nid_ipv4);
 		stream_putl(s, uni_data->data_ipv4);
 		stream_putl(s, uni_data->logical_port_number);
-		stream_putl(s, uni_data->egress_label_downstream);
-		stream_putl(s, uni_data->egress_label_upstream);
+		stream_putl(s, uni_data->egress_label_downstream); /*to be removed*/
+		stream_putl(s, uni_data->egress_label_upstream); /*to be removed*/
 		for (i = 0; i < 12; i++)
 			stream_putc(s, uni_data->control_channel[i]);
+		for (i = 0; i < MAX_TIMESLOTS_NUM/8; i++)
+			stream_putc(s, uni_data->timeslot_bitmask[i]);
 	}
 	write (fd, STREAM_DATA(s), length);
 	stream_free(s);

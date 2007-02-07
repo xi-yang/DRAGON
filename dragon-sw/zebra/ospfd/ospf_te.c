@@ -1314,7 +1314,10 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
             swcap = val2str(&str_val_conv_swcap, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.swcap_ext);
             enc = val2str(&str_val_conv_encoding, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.encoding_ext);
             vty_out (vty, "      -> Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
-
+            vty_out (vty, "      -> Available TimeSlots:");
+            for (i = 0; i < MAX_TIMESLOTS_NUM; i++)
+                if (HAS_TIMESLOT(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, i)) vty_out (vty, " %d", i);
+            vty_out (vty, "%s", VTY_NEWLINE);
 	}
   }
   return TLV_SIZE (tlvh);
@@ -1440,6 +1443,10 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             swcap = val2str(&str_val_conv_swcap, subnet_uni->swcap_ext);
             enc = val2str(&str_val_conv_encoding, subnet_uni->encoding_ext);
             vty_out (vty, "      -> Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
+            vty_out (vty, "     -> Available TimeSlots:");
+            for (i = 0; i < MAX_TIMESLOTS_NUM; i++)
+                if (HAS_TIMESLOT(subnet_uni->timeslot_bitmask, i)) vty_out (vty, " %d", i);
+            vty_out (vty, "%s", VTY_NEWLINE);
 	}
   }
 
@@ -2674,6 +2681,62 @@ DEFUN (ospf_te_interface_ifsw_cap6,
   return CMD_SUCCESS;
 }
 
+DEFUN (ospf_te_interface_ifsw_cap7,
+       ospf_te_interface_ifsw_cap7_cmd,
+       "timeslot <1-4094>",
+       "Assign timeslots\n"
+       "TimeSlot ID in the range [1, 192]\n")
+{
+  u_int32_t ts, ts1, ts2;
+
+  if  (te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version != htons(IFSWCAP_SPECIFIC_SUBNET_UNI);)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap7: 'timeslot' command must follow 'subnet-uni' command.%s", VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  	
+  if (sscanf (argv[0], "%d", &ts1) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap7: fscanf ts1: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+
+  if (argc == 1) 
+    {
+	SET_TIMESLOT(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, ts1);
+    }
+  else if (argc == 2 ) 
+    {
+	  if (sscanf (argv[1], "%d", &ts2) != 1)
+	    {
+	      vty_out (vty, "ospf_te_interface_ifsw_cap7: fscanf ts2: %s%s", strerror (errno), VTY_NEWLINE);
+	      return CMD_WARNING;
+	    }
+	  else if (ts2 < ts1)
+	    {
+	      vty_out (vty, "ospf_te_interface_ifsw_cap7: TimeSlot ID2 < ID1%s", VTY_NEWLINE);
+	      return CMD_WARNING;
+	    }
+	  for(ts = ts1; ts <= ts2; ts++)
+	      SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, ts);
+    }
+  else
+    {
+        vty_out (vty, "ospf_te_interface_ifsw_cap7: invalid command%s", VTY_NEWLINE);
+	 return CMD_WARNING;
+    }
+
+  return CMD_SUCCESS;
+}
+
+ALIAS (ospf_te_interface_ifsw_cap7a,
+       ospf_te_interface_ifsw_cap7a_cmd,
+       "timeslot <1-192> to <2-192>",
+       "Assign timeslots\n"
+       "TimeSlot ID1 in the range [1, 192]\n"
+       "TimeSlot ID2 in the range [2, 192]\n");
+
+
 DEFUN (show_ospf_te_router,
        show_ospf_te_router_cmd,
        "show ip ospf-te router",
@@ -3002,8 +3065,13 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap4a_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap5_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap6_cmd);
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap6_cmd);
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7_cmd);
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7a_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_te_lambda_cmd);
+  
   /*@@@@ UNI hacks ==> Obsolete*/
+  /*
   install_node (&ospf_te_uni_node, NULL);
   install_default(OSPF_TE_UNI_NODE);
   install_element (OSPF_TE_UNI_NODE, &ospf_te_data_interface_noproto_cmd);
@@ -3023,6 +3091,7 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap4_cmd);
   install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap4a_cmd);
   install_element (OSPF_TE_UNI_NODE, &ospf_te_uni_loopback_cmd);
+  */
 
   set_config_end_call_back_func(ospf_te_interface_config_update);
   
