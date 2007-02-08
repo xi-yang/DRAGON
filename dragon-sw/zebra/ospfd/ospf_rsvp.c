@@ -74,6 +74,7 @@ enum OspfRsvpMessage {
 	HoldVtagbyOSPF = 134,		// Hold or release a VLAN Tag
 	HoldBandwidthbyOSPF = 135, 		// Hold or release a portion of bandwidth
 	GetSubnetUNIDataByOSPF = 136,	// Get Subnet UNI data associated with a OSPF interface
+	HoldTimeslotsbyOSPF = 137,		// Hold or release timeslots
 };
 
 
@@ -538,6 +539,46 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag)
 }
 
 void
+ospf_hold_timeslots(u_int32_t port, list ts_list, u_int8_t hold_flag)
+{
+	struct ospf_interface *oi;
+	struct listnode *node1, *node2, *node3;
+	struct ospf *ospf;
+	int updated = 0;
+	u_int8_t* ts;
+
+	if (om->ospf)
+	LIST_LOOP(om->ospf, ospf, node1)
+	{
+		if (ospf->oiflist)
+		LIST_LOOP(ospf->oiflist, oi, node2){
+			if ( ( (port>>16) == 0x10 || (port>>16) == 0x11 ) 
+					&& ( ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0
+					&& ( oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) ) ) ) {
+				if (hold_flag == 1)
+				{
+					LIST_LOOP(ts_list, ts, node3)
+						RESET_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, *ts);						
+					updated = 1;
+				}
+				else 
+				{
+					LIST_LOOP(ts_list, ts, node3)
+						SET_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, *ts);						
+					updated = 1;
+				}
+				if (updated && oi->t_te_area_lsa_link_self)
+				{
+					OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
+					OSPF_INTERFACE_TIMER_ON (oi->t_te_area_lsa_link_self, ospf_te_area_lsa_link_timer, OSPF_MIN_LS_INTERVAL);
+				}
+			}
+		}
+	}
+
+}
+
+void
 ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t inPort, u_int32_t outPort, int fd)
 {
 	struct ospf_interface *oi, *in_oi = NULL, *out_oi = NULL;
@@ -914,6 +955,9 @@ ospf_rsvp_read (struct thread *thread)
   u_int32_t vtag;
   u_int8_t hold_flag;
   u_int8_t uni_id;
+  u_int8_t* ts;
+  list ts_list;
+  int i;
   float bandwidth, tmpbw;
   
   /* Get thread data.  Reset reading thread because I'm running. */
@@ -987,8 +1031,24 @@ ospf_rsvp_read (struct thread *thread)
     case HoldVtagbyOSPF:
 	port = stream_getl(s);	
 	vtag = stream_getl(s);	
-	hold_flag = stream_getc(s);	
+	hold_flag = stream_getc(s);
 	ospf_hold_vtag(port, vtag, hold_flag);
+     break;
+
+    case HoldTimeslotsbyOSPF:
+	port = stream_getl(s);	
+	hold_flag = stream_getc(s);
+	length -= 5;
+	assert (length > 0);
+	ts_list = list_new();
+	for (i = 0; i < length; i++)
+	{
+		ts = (u_int8_t*)malloc(1);
+		*ts = stream_getc(s);
+		listnode_add(ts_list, ts);
+	}
+	ospf_hold_timeslots(port, ts_list, hold_flag);
+	list_delete(list_new);
      break;
 
     case OspfPathTear:
