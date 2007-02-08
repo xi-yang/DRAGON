@@ -1048,7 +1048,7 @@ ospf_rsvp_read (struct thread *thread)
 		listnode_add(ts_list, ts);
 	}
 	ospf_hold_timeslots(port, ts_list, hold_flag);
-	list_delete(list_new);
+	list_delete(ts_list);
      break;
 
     case OspfPathTear:
