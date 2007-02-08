@@ -262,8 +262,8 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
     assert (subnetUniSrc.first_timeslot != 0);
     labelSet = new LABEL_SET_Object(); //LABEL_GENERALIZED
     uint32 label = getSONETLabel(subnetUniSrc.first_timeslot, sonet_tb1); 
-    labelSet->addSubChannel(label);
-    subnetUniSrc.upstream_label = label;
+    labelSet->addSubChannel(htonl(label));
+    subnetUniSrc.upstream_label = htonl(label);
 
     // Update egress_label ... (using the same upstream label) ==> always do symetric provisioning!
     if (subnetUniDest.first_timeslot == 0)
@@ -279,7 +279,7 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
     }
     assert (subnetUniDest.first_timeslot != 0);
     label = getSONETLabel(subnetUniDest.first_timeslot, sonet_tb1);
-    subnetUniDest.egress_label = subnetUniDest.upstream_label = label;
+    subnetUniDest.egress_label = subnetUniDest.upstream_label = htonl(label);
 
     uni = new GENERALIZED_UNI_Object (subnetUniSrc.tna_ipv4, subnetUniDest.tna_ipv4, 
                     subnetUniDest.logical_port, subnetUniDest.egress_label,

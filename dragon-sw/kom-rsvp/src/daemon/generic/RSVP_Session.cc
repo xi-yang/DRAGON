@@ -382,9 +382,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			subnetUniDataSrc.ethernet_bw = vlsr.bandwidth;
 			subnetUniDataSrc.first_timeslot = (uint8)inUnumIfID;
 			subnetUniDataSrc.tunnel_id = msg.getSESSION_Object().getTunnelId();
-			subnetUniDataSrc.logical_port = ntohl(subnetUniDataSrc.logical_port);
-			subnetUniDataSrc.egress_label= ntohl(subnetUniDataSrc.egress_label);
-			subnetUniDataSrc.upstream_label= ntohl(subnetUniDataSrc.upstream_label);
+			//subnetUniDataSrc.logical_port = ntohl(subnetUniDataSrc.logical_port);
+			//subnetUniDataSrc.egress_label= ntohl(subnetUniDataSrc.egress_label);
+			//subnetUniDataSrc.upstream_label= ntohl(subnetUniDataSrc.upstream_label);
 
 			if (!pSubnetUniSrc){
 				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Ingress) for ", vlsr.switchID);
@@ -431,9 +431,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				subnetUniDataDest.ethernet_bw = vlsr.bandwidth;
 				subnetUniDataDest.first_timeslot = destTimeSlot;
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
-				subnetUniDataDest.logical_port = ntohl(subnetUniDataDest.logical_port);
-				subnetUniDataDest.egress_label= ntohl(subnetUniDataDest.egress_label);
-				subnetUniDataDest.upstream_label= ntohl(subnetUniDataDest.upstream_label);
+				//subnetUniDataDest.logical_port = ntohl(subnetUniDataDest.logical_port);
+				//subnetUniDataDest.egress_label= ntohl(subnetUniDataDest.egress_label);
+				//subnetUniDataDest.upstream_label= ntohl(subnetUniDataDest.upstream_label);
 				pSubnetUniSrc->setSubnetUniDest(subnetUniDataDest);
 			}
 		} 
@@ -453,9 +453,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				subnetUniDataDest.ethernet_bw = vlsr.bandwidth;
 				subnetUniDataDest.first_timeslot = (uint8)outUnumIfID;
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
-				subnetUniDataDest.logical_port = ntohl(subnetUniDataDest.logical_port);
-				subnetUniDataDest.egress_label= ntohl(subnetUniDataDest.egress_label);
-				subnetUniDataDest.upstream_label= ntohl(subnetUniDataDest.upstream_label);
+				//subnetUniDataDest.logical_port = ntohl(subnetUniDataDest.logical_port);
+				//subnetUniDataDest.egress_label= ntohl(subnetUniDataDest.egress_label);
+				//subnetUniDataDest.upstream_label= ntohl(subnetUniDataDest.upstream_label);
 			}
 			if (!pSubnetUniDest){
 				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Egress) for ", vlsr.switchID);
