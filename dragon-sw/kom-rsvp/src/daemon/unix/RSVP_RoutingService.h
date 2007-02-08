@@ -117,7 +117,7 @@ public:
 	const void getVLSRRoutebyOSPF(const NetAddress& inRtID, const NetAddress& outRtID, const uint32 inIfId, const uint32 outIfId, VLSR_Route& vlsr);
 	const void holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold = true);
 	const void holdVtagbyOSPF(u_int32_t port, u_int32_t vtag, bool hold = true);
-	const void holdTimeslotsbyOSPF(u_int32_t port, list<uint8>& timeslots, bool hold);
+	const void holdTimeslotsbyOSPF(u_int32_t port, SimpleList<uint8>& timeslots, bool hold);
 	NetAddress getLoopbackAddress();
 	bool getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint8 uniID, SubnetUNI_Data& uniData);
 	const LogicalInterface* getUnicastRoute( const NetAddress&, NetAddress& );

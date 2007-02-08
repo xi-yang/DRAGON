@@ -489,13 +489,13 @@ const void RoutingService::holdVtagbyOSPF(u_int32_t port, u_int32_t vtag, bool h
 
 
 //Hold or release SONET/SDH TimeSlots
-const void RoutingService::holdTimeslotsbyOSPF(u_int32_t port, list<uint8>& timeslots, bool hold) {
+const void RoutingService::holdTimeslotsbyOSPF(u_int32_t port, SimpleList<uint8>& timeslots, bool hold) {
 	uint8 message = HoldTimeslotsbyOSPF;
 	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32)*2 + sizeof(uint8)*timeslots.size()+1;
 	uint8 c_hold = hold ? 1 : 0;
 	ONetworkBuffer obuffer(msgLength);
 	obuffer << msgLength << message <<port << c_hold;
-	list<uint8>::Iterator it = timeslots.begin();
+	SimpleList<uint8>::Iterator it = timeslots.begin();
 	for (; it != timeslots.end(); ++it) {
 		obuffer << *it;
 	}

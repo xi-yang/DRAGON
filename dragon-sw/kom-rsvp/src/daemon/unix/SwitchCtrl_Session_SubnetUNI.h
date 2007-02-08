@@ -88,7 +88,7 @@ public:
 
 	uint8 getUniState() { return uniState; }
 	uint32 getPseudoSwitchID();
-	void getTimeslots(list<uint8>& timeslots);
+	void getTimeslots(SimpleList<uint8>& timeslots);
 	//Upcall for source/destination client
 	static void uniRsvpSrcUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession
 	static void uniRsvpDestUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession

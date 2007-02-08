@@ -418,7 +418,7 @@ void SwitchCtrl_Session_SubnetUNI::refreshUniRsvpSession()
     //do nothing?
 }
 
-void SwitchCtrl_Session_SubnetUNI::getTimeslots(list<uint8>& timeslots)
+void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
 {
     timeslots.clear();
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;

@@ -267,7 +267,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 				 //@@@@ >>Xi2007<<
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
                                 if ((*iter).switchID.rawAddress() == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
-					list<uint8> ts_list;
+					SimpleList<uint8> ts_list;
 					//UNI session error will fail the RSVP session
 					switch (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState()) {
 					case Message::PathErr:
@@ -563,7 +563,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 				 //@@@@ >>Xi2007<<
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ){
-                                list<uint8> ts_list;
+                                SimpleList<uint8> ts_list;
                                 if( (*iter).switchID.rawAddress() == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
 	   				     if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
 	   					((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
