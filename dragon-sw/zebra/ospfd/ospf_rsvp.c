@@ -554,7 +554,7 @@ ospf_hold_timeslots(u_int32_t port, list ts_list, u_int8_t hold_flag)
 		LIST_LOOP(ospf->oiflist, oi, node2){
 			if ( ( (port>>16) == 0x10 || (port>>16) == 0x11 ) 
 					&& ( ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0
-					&& ( oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) ) ) ) {
+					&& ( oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) ) {
 				if (hold_flag == 1)
 				{
 					LIST_LOOP(ts_list, ts, node3)

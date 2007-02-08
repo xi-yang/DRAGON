@@ -2718,7 +2718,7 @@ DEFUN (ospf_te_interface_ifsw_cap7,
 	      return CMD_WARNING;
 	    }
 	  for(ts = ts1; ts <= ts2; ts++)
-	      SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, ts);
+	      SET_TIMESLOT(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, ts);
     }
   else
     {
