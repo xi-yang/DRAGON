@@ -399,6 +399,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				//kickoff UNI session
 				pSubnetUniSrc->registerRsvpApiClient();
 				pSubnetUniSrc->initUniRsvpApiSession();
+
+                            // @@@@ Synchronize time slots map ??
 			}
 
 			if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
@@ -468,6 +470,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				//kickoff UNI session
 				pSubnetUniDest->registerRsvpApiClient();
 				pSubnetUniDest->initUniRsvpApiSession();
+
+                            // @@@@ Synchronize time slots map ??
 			}
 
 		}

@@ -267,6 +267,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 				 //@@@@ >>Xi2007<<
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
                                 if ((*iter).switchID.rawAddress() == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
+					list<uint8> ts_list;
 					//UNI session error will fail the RSVP session
 					switch (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState()) {
 					case Message::PathErr:
@@ -282,12 +283,18 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
 							// Update ingress link bandwidth
 		                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, true); //true == decrease
-		                                   //RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF   @@@@
+		                                   // Update time slots
+							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
+							if (ts_list.size() > 0)
+								RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, true);
 						}
 						if ( ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 							// Update egress link bandwidth
 		                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, true); //true == decrease
-		                                   //RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF   @@@@
+		                                   // Update time slots
+							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
+							if (ts_list.size() > 0)
+								RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, true);
 						}
 						noError = true;
 						break;
@@ -556,20 +563,28 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 				 //@@@@ >>Xi2007<<
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ){
+                                list<uint8> ts_list;
                                 if( (*iter).switchID.rawAddress() == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
 	   				     if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
 	   					((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
 	   
 	                                      // Update ingress link bandwidth
 	                                      RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false); //false == increase
-		                               //RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF   @@@@
+                                            // Update time slots
+                                            ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
+                                            if (ts_list.size() > 0)
+                                            RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
 	   				     }
 	                                 if ( ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
-	   					// ??? release path from destination client ???
+
+	                                      // ??? release path from destination client ???
 	   
 	                                      // Update egress link bandwidth
 	                                      RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, false); //false == increase
-	                                      //RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF   @@@@
+                                            // Update time slots
+                                            ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
+                                            if (ts_list.size() > 0)
+                                            RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
 	                                 }
 					     iter = psb.getVLSR_Route().erase(iter);
                                 }

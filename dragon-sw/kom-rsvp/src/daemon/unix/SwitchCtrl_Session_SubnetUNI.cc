@@ -418,4 +418,33 @@ void SwitchCtrl_Session_SubnetUNI::refreshUniRsvpSession()
     //do nothing?
 }
 
+void SwitchCtrl_Session_SubnetUNI::getTimeslots(list<uint8>& timeslots)
+{
+    timeslots.clear();
+    SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
 
+    uint8 ts = pUniData->first_timeslot;
+    SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
+
+    uint8 ts_num = 0;
+    assert(sonet_tb1);
+    switch (sonet_tb1->getSignalType())
+    {
+    case SONET_TSpec::S_STS1SPE_VC3:
+    case SONET_TSpec::S_STS1_STM0:
+        ts_num = sonet_tb1->getNCC();
+        break;
+
+    case SONET_TSpec::S_STS3CSPE_VC4:
+    case SONET_TSpec::S_STS3_STM1:
+        ts_num = sonet_tb1->getNCC() * 3;
+        break;
+    default:
+        ts_num = 0;
+    }
+
+    for (uint8 x = 0; x < ts_num; x++)
+    {
+        timeslots.push_back(ts + x);
+    }
+}
