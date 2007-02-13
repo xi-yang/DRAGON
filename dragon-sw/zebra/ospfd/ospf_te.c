@@ -1217,7 +1217,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
   int i;
   float fval;
   uLongf z_len;
-  char ipv4_a[20], ipv4_b[20];
+  char ipv4[20], ipv4_a[20], ipv4_b[20];
 
   top = (struct te_link_subtlv_link_ifswcap *) tlvh;
   swcap = val2str(&str_val_conv_swcap, top->link_ifswcap_data.switching_cap);
@@ -1300,11 +1300,13 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
 	else if (vty != NULL && (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_SUBNET_UNI))
 	{
 	    vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
-	    vty_out (vty, "      -> Subnet-UNI ID: %d via ControlChannel %s%s", 
-			top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id, 
-			top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.control_channel, VTY_NEWLINE);
+	    strcpy (ipv4, inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.tna_ipv4));
 	    strcpy (ipv4_a, inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.nid_ipv4));
 	    strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.data_ipv4));
+
+	    vty_out (vty, "      -> Subnet-UNI ID: %d TNA-PIv4 %s via ControlChannel %s%s", 
+			top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id, ipv4,
+			top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.control_channel, VTY_NEWLINE);
 	    vty_out (vty, "      -> UNI-N NodeID: %s, DataInterface IP: %s%s", ipv4_a, ipv4_b, VTY_NEWLINE);
 	    vty_out (vty, "      -> LogicalPort: %d, EgressLabel: %d, UpstreamLabel: %d%s", 
 			ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.logical_port_number),
@@ -1333,7 +1335,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   u_char *v;
   u_int16_t *dc;
   struct link_ifswcap_specific_subnet_uni *subnet_uni;
-  char ipv4_a[20], ipv4_b[20];
+  char ipv4[20], ipv4_a[20], ipv4_b[20];
 
   v = (u_char *)(tlvh+1);
   swcap = val2str(&str_val_conv_swcap, *v);
@@ -1430,12 +1432,12 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	}
 	else if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_SUBNET_UNI)) {
 	    subnet_uni = (struct link_ifswcap_specific_subnet_uni *)v;
-            vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
-            vty_out (vty, "      -> Subnet-UNI ID: %d via ControlChannel %s%s", subnet_uni->subnet_uni_id, 
-				subnet_uni->control_channel, VTY_NEWLINE);
-
+            strcpy (ipv4, inet_ntoa (*(struct in_addr*)&subnet_uni->tna_ipv4));
             strcpy (ipv4_a, inet_ntoa (*(struct in_addr*)&subnet_uni->nid_ipv4));
             strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&subnet_uni->data_ipv4));
+            vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
+            vty_out (vty, "      -> Subnet-UNI ID: %d via ControlChannel %s%s", subnet_uni->subnet_uni_id, ipv4,
+				subnet_uni->control_channel, VTY_NEWLINE);
             vty_out (vty, "      -> UNI-N NodeID: %s, Data IP: %s%s", ipv4_a, ipv4_b, VTY_NEWLINE);
             vty_out (vty, "      -> LogicalPort: %d, EgressLabel: %d, UpstreamLabel: %d%s",  ntohl(subnet_uni->logical_port_number),
 				ntohl(subnet_uni->egress_label_downstream), ntohl(subnet_uni->egress_label_upstream), VTY_NEWLINE);
