@@ -75,13 +75,16 @@ const LogicalInterface* SwitchCtrl_Session_SubnetUNI::getControlInterface(NetAdd
 {
 	SubnetUNI_Data* uniData = (isSource ? &subnetUniSrc : &subnetUniDest);
 	const NetAddress nidAddress(uniData->uni_nid_ipv4);
+	const LogicalInterface* lif = NULL;
 	if ( uniData->control_channel_name[0] == 0 || strcmp((char*)uniData->control_channel_name, "implicit") == 0 )
 	{
-		return RSVP_Global::rsvp->getRoutingService().getUnicastRoute( nidAddress, gwAddress );
+		lif = RSVP_Global::rsvp->getRoutingService().getUnicastRoute( nidAddress, gwAddress );
+		gwAddress = nidAddress;
+		return lif;
 	}
 	else
 	{
-		const LogicalInterface* lif = RSVP_Global::rsvp->findInterfaceByName(String((char*)uniData->control_channel_name));
+		lif = RSVP_Global::rsvp->findInterfaceByName(String((char*)uniData->control_channel_name));
 		if (lif)
 			RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(lif->getLocalAddress(), gwAddress);
 		return lif;
