@@ -178,7 +178,7 @@ bool CLI_Session::engage()
            close(2);
            dup(fderr);
            err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);
-        } if (CLI_SESSION_TYPE == CLI_SSH) {
+        } else if (CLI_SESSION_TYPE == CLI_SSH) {
            char spawn_cmd[128];
            if (cli_port > 0)
              sprintf(port_str, "%d", cli_port);
@@ -192,8 +192,18 @@ bool CLI_Session::engage()
            close(2);
            dup(fderr);
            err_exit("%s: execl(%s) failed: errno=%d\n", progname, SSH_EXEC, err);            
-        }
-        else {
+        } else if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
+           if (cli_port > 0)
+             sprintf(port_str, "%d", cli_port);
+           else
+             strcpy(port_str,  TL1_TELNET_PORT);
+           execl(TELNET_EXEC, "telnet", hostname, port_str, (char*)NULL);
+           // if we're still here the TELNET_EXEC could not be exec'd 
+           err = errno;
+           close(2);
+           dup(fderr);
+           err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);           
+        } else {
            err_exit("invalid cli seesion execl: %s\n", progname);
         }
         break;
@@ -246,45 +256,27 @@ bool CLI_Session::engage()
      if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
     }
+    else if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
+     // wait for login prompt 
+     n = readShell(";", TELNET_PROMPT, 1, 15);
+     if (n != 1) {
+       if (got_alarm == 0)
+         err_msg("%s: TL1 connection to host '%s' failed\n", progname, hostname);
+       goto _telnet_dead;
+     }
+     // send the telnet username and password --> act-user::administrator:123::password;
+     if ((n = writeShell("act-user::", 5)) < 0) goto _telnet_dead;	 
+     if ((n = writeShell(CLI_USERNAME, 5)) < 0) goto _telnet_dead;
+     if ((n = writeShell(":123::", 5)) < 0) goto _telnet_dead;
+     if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
+     if ((n = writeShell(";", 5)) < 0) goto _telnet_dead;
+     if ((n = readShell( "Successful", NULL, 1, 5)) < 0) {
+       err_msg("%s: authentication to host '%s' failed\n", progname, hostname);	 
+	goto _telnet_dead;
+     }
+     if ((n = readShell( ";", NULL, 1, 5)) < 0) goto _telnet_dead;
+    } 
 
-/* TL1 TELNET for Ciena CoreDirector
-
-# telnet 10.2.203.43 10201
-Trying 10.2.203.43...
-Connected to 10.2.203.43.
-Escape character is '^]'.
-
-TXN TL1 Agent Copyright Ciena Corporation
-
-;
-
-;act-user::administrator:123::admin1!;
-IP 123
-<
-
-   txn101 06-05-22 15:17:40
-M  123 COMPLD
-;
-
-   txn101 06-05-22 15:17:40
-A  1 REPT EVT SESSION
-   "COM:NO"
-
-... SUCCESS ...
-
-","
-;
-
--------- OR  --------
-
-IP 123
-<
-
-   txn101 06-05-22 17:59:38
-M  123 DENY
-   SAAS
-
-*/
     return true;
 
  _telnet_dead:

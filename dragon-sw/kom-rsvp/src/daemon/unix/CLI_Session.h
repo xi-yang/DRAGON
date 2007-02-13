@@ -31,6 +31,7 @@ extern int    got_alarm;
 
 #define TELNET_EXEC     "/usr/bin/telnet"
 #define TELNET_PORT     "23"
+#define TL1_TELNET_PORT     "10201"
 #define TELNET_PROMPT   "telnet> "
 
 #define SSH_EXEC     "/usr/bin/ssh"
