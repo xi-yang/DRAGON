@@ -1436,7 +1436,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             strcpy (ipv4_a, inet_ntoa (*(struct in_addr*)&subnet_uni->nid_ipv4));
             strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&subnet_uni->data_ipv4));
             vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
-            vty_out (vty, "      -> Subnet-UNI ID: %d via ControlChannel %s%s", subnet_uni->subnet_uni_id, ipv4,
+            vty_out (vty, "      -> Subnet-UNI ID: %d TNA-IPv4 %s via ControlChannel %s%s", subnet_uni->subnet_uni_id, ipv4,
 				subnet_uni->control_channel, VTY_NEWLINE);
             vty_out (vty, "      -> UNI-N NodeID: %s, Data IP: %s%s", ipv4_a, ipv4_b, VTY_NEWLINE);
             vty_out (vty, "      -> LogicalPort: %d, EgressLabel: %d, UpstreamLabel: %d%s",  ntohl(subnet_uni->logical_port_number),
