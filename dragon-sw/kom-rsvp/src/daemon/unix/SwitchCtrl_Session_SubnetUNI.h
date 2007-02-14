@@ -57,11 +57,8 @@ public:
 	virtual ~SwitchCtrl_Session_SubnetUNI();
 
 	//Backward compatibility with general SwitchCtrl_Session operations
-	virtual bool connectSwitch() { return true; } //NOP
-	virtual void disconnectSwitch() {     
-		RSVP_Global::switchController->removeSession(this);
-		return; 
-	}
+	virtual bool connectSwitch() { return CLI_Session::engage(); }
+	virtual void disconnectSwitch() { CLI_Session::disengage(); return; }
 
 	//Preparing UNI parameters
 	void setSubnetUniSrc(SubnetUNI_Data& data);
