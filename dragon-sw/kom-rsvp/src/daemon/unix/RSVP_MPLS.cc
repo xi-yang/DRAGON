@@ -259,7 +259,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 	if (!psb.getVLSR_Route().empty()){
 		VLSRRoute::ConstIterator iter = psb.getVLSR_Route().begin();
 		for ( ; iter != psb.getVLSR_Route().end(); ++iter ) {
-			NetAddress ethSw = (*iter).switchID;
+			NetAddress ethSw = (*iter).switchID; // ethSw is the physical switch address only for non-subnet sessions
 			SwitchCtrlSessionList::Iterator sessionIter = RSVP_Global::switchController->getSessionList().begin();
 			bool noError = false;
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {

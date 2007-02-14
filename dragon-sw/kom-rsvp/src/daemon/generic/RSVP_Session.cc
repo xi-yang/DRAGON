@@ -397,9 +397,11 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				//Pass SubnetUNI data
 				pSubnetUniSrc->setSubnetUniSrc(subnetUniDataSrc);
 				//kickoff UNI session
-				pSubnetUniSrc->registerRsvpApiClient();
-				pSubnetUniSrc->initUniRsvpApiSession();
-
+				if (CLI_SESSION_TYPE != CLI_TL1_TELNET) {
+					pSubnetUniSrc->registerRsvpApiClient();
+					pSubnetUniSrc->initUniRsvpApiSession();
+				}
+				
                             // @@@@ Synchronize time slots map ??
 			}
 
@@ -468,8 +470,10 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				//Pass SubnetUNI data
 				pSubnetUniDest->setSubnetUniDest(subnetUniDataDest);
 				//kickoff UNI session
-				pSubnetUniDest->registerRsvpApiClient();
-				pSubnetUniDest->initUniRsvpApiSession();
+				if (CLI_SESSION_TYPE != CLI_TL1_TELNET) {
+					pSubnetUniDest->registerRsvpApiClient();
+					pSubnetUniDest->initUniRsvpApiSession();
+				}
 
                             // @@@@ Synchronize time slots map ??
 			}
