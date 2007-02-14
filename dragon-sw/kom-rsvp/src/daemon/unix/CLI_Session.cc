@@ -270,11 +270,11 @@ bool CLI_Session::engage()
      if ((n = writeShell(":123::", 5)) < 0) goto _telnet_dead;
      if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
      if ((n = writeShell(";", 5)) < 0) goto _telnet_dead;
-     if ((n = readShell( "prosecution!!! */", NULL, 1, 5)) < 0) {
+     if ((n = readShell( "   /* Local Authentication Successful.", NULL, 1, 5)) < 0) {
        err_msg("%s: authentication to host '%s' failed\n", progname, hostname);	 
 	goto _telnet_dead;
      }
-     //if ((n = readShell( ";", NULL, 1, 5)) < 0) goto _telnet_dead;
+     if ((n = readShell( ";", NULL, 1, 5)) < 0) goto _telnet_dead;
     } 
 
     return true;
