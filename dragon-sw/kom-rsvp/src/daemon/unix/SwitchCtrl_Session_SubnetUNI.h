@@ -12,6 +12,7 @@ To be incorporated into KOM-RSVP-TE package
 #define _SwitchCtrl_Session_SubnetUNI_H_
 
 #include "SwitchCtrl_Global.h"
+#include "CLI_Session.h"
 #include "RSVP_API.h"
 #include "RSVP_API_StateBlock.h"
 #include "RSVP_API_Upcall.h"
@@ -46,7 +47,7 @@ class SwitchCtrl_Session_SubnetUNI;
 typedef SimpleList<SwitchCtrl_Session_SubnetUNI*> SwitchCtrl_Session_SubnetUNI_List;
 class SONET_SDH_SENDER_TSPEC_Object;
 class LSP_TUNNEL_IPv4_FILTER_SPEC_Object;
-class SwitchCtrl_Session_SubnetUNI: public SwitchCtrl_Session, public RSVP_API
+class SwitchCtrl_Session_SubnetUNI: public CLI_Session, public RSVP_API
 {
 public:
 	//constructors/destuctors

@@ -670,6 +670,7 @@ void MessageProcessor::readCurrentMessage( const LogicalInterface& cLif ) {
 					case Message::ResvErr:
 					case Message::PathTear:
 					case Message::ResvTear:
+					case Message::InitAPI: //Inital state
 						//Message OK for processing since UNI session has gone thru a whole cycle
 						break;
 					default:

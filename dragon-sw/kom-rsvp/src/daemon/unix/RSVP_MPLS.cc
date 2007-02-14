@@ -278,6 +278,28 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 						LOG(2)( Log::MPLS, "VLSR: SubnetUNI session failed with message state : ", ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() );
 						return false;
 						break;
+					case Message::InitAPI: // inital state for TL1_TELNET only
+						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
+							//connect
+							if (!(*sessionIter)->connectSwitch()){
+								LOG(2)( Log::MPLS, "VLSR-Subnet Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
+								return false;
+							}
+
+							//create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC	OR
+							//create VCG for LOCAL_ID_TYPE_SUBNET_UNI_DEST
+
+							//create GTP if needed
+
+							//create SNC (X times?) for LOCAL_ID_TYPE_SUBNET_UNI_SRC
+
+							//disconnect
+							if (!(*sessionIter)->disconnectSwitch()){
+								LOG(2)( Log::MPLS, "VLSR-Subnet Disconnect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
+								return false;
+							}
+						}
+						// no break; continue to next case clauses !
 					case Message::Resv:
 					case Message::ResvConf:
 		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
@@ -565,17 +587,33 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ){
                                 SimpleList<uint8> ts_list;
                                 if( (*iter).switchID.rawAddress() == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
-	   				     if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
-	   					((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
-	   
+
+						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
+							//connect
+
+							//delete SNC for LOCAL_ID_TYPE_SUBNET_UNI_SRC
+
+							//create GTP if needed
+
+							//delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC	OR
+							//delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_DEST
+
+							//disconnect
+						}
+
+	   				       if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
+
+						    if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getState() != Message::InitAPI)
+		   					((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
+
 	                                      // Update ingress link bandwidth
 	                                      RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false); //false == increase
                                             // Update time slots
                                             ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
                                             if (ts_list.size() > 0)
                                             RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
-	   				     }
-	                                 if ( ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
+	   				      }
+	                                  if ( ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 
 	                                      // ??? release path from destination client ???
 	   
@@ -585,8 +623,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                             ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
                                             if (ts_list.size() > 0)
                                             RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
-	                                 }
-					     iter = psb.getVLSR_Route().erase(iter);
+	                                  }
+					      iter = psb.getVLSR_Route().erase(iter);
                                 }
 
                                 continue;

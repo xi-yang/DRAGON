@@ -390,7 +390,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Ingress) for ", vlsr.switchID);
 				//Create SubnetUNI Session (as Source)
 				SwitchCtrl_Session_SubnetUNI::getSessionNameString(sName, subnetUniDataSrc.tna_ipv4, msg.getSESSION_ATTRIBUTE_Object().getSessionName(), getDestAddress().rawAddress(), true);
-				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(const_cast<String&>(sName), vlsr.switchID, true));
+				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(const_cast<String&>(sName), NetAddress(subnetUniDataSrc.uni_nid_ipv4), true));
 				RSVP_Global::switchController->addSession(ssNew);
 				//Store SubnetUNI Session handle ...
 				pSubnetUniSrc = (SwitchCtrl_Session_SubnetUNI*)ssNew;
@@ -461,7 +461,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Egress) for ", vlsr.switchID);
 				//Create SubnetUNI Session (as Destination)
 				SwitchCtrl_Session_SubnetUNI::getSessionNameString(sName, subnetUniDataDest.tna_ipv4, msg.getSESSION_ATTRIBUTE_Object().getSessionName(), getDestAddress().rawAddress(), false);
-				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(const_cast<String&>(sName), vlsr.switchID, false));
+				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(const_cast<String&>(sName), NetAddress(subnetUniDataDest.uni_nid_ipv4), false));
 				RSVP_Global::switchController->addSession(ssNew);
 				//Store SubnetUNI Session handle ...
 				pSubnetUniDest = (SwitchCtrl_Session_SubnetUNI*)ssNew;
@@ -477,6 +477,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		}
 
 		if ( (inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC || (outUnumIfID >> 16)  == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
+			// Note that vlsr.switchID or getPseudoSwitchID() will be different that than ssNew->switchInetAddr.
+			// The former is used to distinguish different sessions on the same physical switch. The later is the physical address needed for TL1 connection.
 			if (pSubnetUniSrc)
 	              	vlsr.switchID = pSubnetUniSrc->getPseudoSwitchID();
 			else if (pSubnetUniDest)
@@ -1196,11 +1198,12 @@ update_basic_psb:
 	cPSB->setTimeoutTime( msg.getTIME_VALUES_Object().getRefreshPeriod() );
 
 	//@@@@ >>Xi2007<<
+    if (CLI_SESSION_TYPE != CLI_TL1_TELNET) { // Do not use UNI for TL1_TELNET session
 	//Kicking off SubnetUNI PATH message here!!!!
 	if (pSubnetUniSrc){
 		pSubnetUniSrc->createRsvpUniPath();
 	}
-
+    }
 	// update outgoing interfaces of PSB and maintain relations
 	// between PSBs, RSBs, and OutISBs; update TC, if necessary
 #if defined(ONEPASS_RESERVATION)
