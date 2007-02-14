@@ -134,7 +134,8 @@ void SwitchCtrl_Session_SubnetUNI::registerRsvpApiClient()
 
 void SwitchCtrl_Session_SubnetUNI::deregisterRsvpApiClient()
 {
-    assert(SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList);
+    if(!SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList)
+	return;
     SwitchCtrl_Session_SubnetUNI_List::Iterator it = subnetUniApiClientList->begin() ;
     for (; it != subnetUniApiClientList->end(); ++it) {
         if ((*it) == this) {
