@@ -290,9 +290,13 @@ bool CLI_Session::engage()
 void CLI_Session::disengage()
 {
     int n;
-    if (pipeAlive()) {
+    if (CLI_SESSION_TYPE == CLI_TL1_TELNET && pipeAlive_TL1()) {
+	;
+    }	else if (pipeAlive()) {
         if ((n = writeShell("end\n", 5)) >= 0)
           n = readShell(SWITCH_PROMPT, NULL, 1, 10);
+    } else {
+    	return;
     }
 
     if (fdin >= 0)
@@ -346,6 +350,23 @@ bool CLI_Session::pipeAlive()
 
   return true;
 }
+
+bool CLI_Session::pipeAlive_TL1()
+{
+  int n;
+  if (fdin < 0 || fdout < 0)
+    return false;
+
+  pipe_broken = false;
+  if ((n = writeShell("\n", 2)) < 0 || pipe_broken) 
+  	return false;
+
+  if ((n = readShell (";", NULL, 0, 3)) < 0  || pipe_broken) 
+  	return false;
+
+  return true;
+}
+
 
 // CLI prompt ends in either > or # (ends in # when enabled) 
 bool CLI_Session::isSwitchPrompt(char *p, int len)

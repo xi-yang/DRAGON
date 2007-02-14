@@ -66,6 +66,8 @@ protected:
 	int fdout;
 
 	inline bool pipeAlive();
+	inline bool pipeAlive_TL1();
+
 	int readShell(char *text1, char *text2, int verbose, int timeout);
 	int writeShell(char *text, int timeout, bool echo_back = false);
 	virtual bool isSwitchPrompt(char *p, int len);
