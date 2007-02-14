@@ -290,9 +290,7 @@ bool CLI_Session::engage()
 void CLI_Session::disengage()
 {
     int n;
-    if (CLI_SESSION_TYPE == CLI_TL1_TELNET && pipeAlive_TL1()) {
-	;
-    }	else if (pipeAlive()) {
+    if (CLI_SESSION_TYPE != CLI_TL1_TELNET && pipeAlive()) {
         if ((n = writeShell("end\n", 5)) >= 0)
           n = readShell(SWITCH_PROMPT, NULL, 1, 10);
     } else {
