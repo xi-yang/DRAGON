@@ -31,13 +31,13 @@ extern int    got_alarm;
 
 #define TELNET_EXEC     "/usr/bin/telnet"
 #define TELNET_PORT     "23"
-#define TL1_TELNET_PORT     "10201"
 #define TELNET_PROMPT   "telnet> "
 
 #define SSH_EXEC     "/usr/bin/ssh"
 #define SSH_PORT     "22"
 
-#define TL1_TELNET_PORT     "3083"
+//#define TL1_TELNET_PORT     "3083"
+#define TL1_TELNET_PORT     "10201"
 
 class CLI_Session: public SwitchCtrl_Session
 {

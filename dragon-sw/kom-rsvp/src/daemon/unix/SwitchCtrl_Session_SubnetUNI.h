@@ -51,9 +51,9 @@ class SwitchCtrl_Session_SubnetUNI: public CLI_Session, public RSVP_API
 {
 public:
 	//constructors/destuctors
-	SwitchCtrl_Session_SubnetUNI(bool isSrc=true): SwitchCtrl_Session(), RSVP_API(), isSource(isSrc) { internalInit(); }
+	SwitchCtrl_Session_SubnetUNI(bool isSrc=true): CLI_Session(), RSVP_API(), isSource(isSrc) { internalInit(); }
 	SwitchCtrl_Session_SubnetUNI(const String& sName, const NetAddress& swAddr, bool isSrc=true): 
-		SwitchCtrl_Session(sName, swAddr), RSVP_API(), isSource(isSrc) { internalInit(); }
+		CLI_Session(sName, swAddr), RSVP_API(), isSource(isSrc) { internalInit(); }
 	virtual ~SwitchCtrl_Session_SubnetUNI();
 
 	//Backward compatibility with general SwitchCtrl_Session operations

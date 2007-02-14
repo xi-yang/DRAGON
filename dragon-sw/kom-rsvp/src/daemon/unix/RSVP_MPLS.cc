@@ -294,10 +294,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							//create SNC (X times?) for LOCAL_ID_TYPE_SUBNET_UNI_SRC
 
 							//disconnect
-							if (!(*sessionIter)->disconnectSwitch()){
-								LOG(2)( Log::MPLS, "VLSR-Subnet Disconnect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
-								return false;
-							}
+							(*sessionIter)->disconnectSwitch();
 						}
 						// no break; continue to next case clauses !
 					case Message::Resv:
@@ -603,7 +600,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 	   				       if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
 
-						    if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getState() != Message::InitAPI)
+						    if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() != Message::InitAPI)
 		   					((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
 
 	                                      // Update ingress link bandwidth
