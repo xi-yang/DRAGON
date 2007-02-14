@@ -6991,6 +6991,8 @@ if test "$with_switch_cli_type" = "telnet"; then
     eval switch_cli_type="CLI_TELNET"
 elif test "$with_switch_cli_type" = "ssh"; then
     eval switch_cli_type="CLI_SSH"
+elif test "$with_switch_cli_type" = "tl1"; then
+    eval switch_cli_type="CLI_TL1_TELNET"
 else
     eval switch_cli_type="CLI_NONE"
 fi
