@@ -270,11 +270,13 @@ bool CLI_Session::engage()
      if ((n = writeShell(":123::", 5)) < 0) goto _telnet_dead;
      if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
      if ((n = writeShell(";", 5)) < 0) goto _telnet_dead;
+     if ((n = writeShell("inh-msg-all:::123;", 5)) < 0) goto _telnet_dead;
      if ((n = readShell( "   /* Local Authentication Successful.", NULL, 1, 5)) < 0) {
        err_msg("%s: authentication to host '%s' failed\n", progname, hostname);	 
 	goto _telnet_dead;
      }
-     if ((n = readShell( ";", NULL, 1, 5)) < 0) goto _telnet_dead;
+     //if ((n = readShell( ";", NULL, 1, 5)) < 0) goto _telnet_dead;
+     if ((n = clearShell()) < 0) goto _telnet_dead;
     } 
 
     return true;
@@ -346,23 +348,6 @@ bool CLI_Session::pipeAlive()
 
   return true;
 }
-
-bool CLI_Session::pipeAlive_TL1()
-{
-  int n;
-  if (fdin < 0 || fdout < 0)
-    return false;
-
-  pipe_broken = false;
-  if ((n = writeShell("\n", 2)) < 0 || pipe_broken) 
-  	return false;
-
-  if ((n = readShell (";", NULL, 0, 3)) < 0  || pipe_broken) 
-  	return false;
-
-  return true;
-}
-
 
 // CLI prompt ends in either > or # (ends in # when enabled) 
 bool CLI_Session::isSwitchPrompt(char *p, int len)
@@ -463,6 +448,35 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
     }
   }
 }
+
+int CLI_Session::clearShell()
+{
+  char c;
+  int n, flags, old_flags;
+  fd_set sset;
+
+  if (fdin < 0)
+    return (-1);
+
+  flags = old_flags = fcntl(sock, F_GETFL, 0);
+
+  flags |= O_NONBLOCK;
+
+  if (fcntl(fdin, F_SETFL, flags) == -1)
+    return -1;
+
+  n = 0;
+  while (read(fdin, &c, 1) != 1) {
+    n++;
+    break;
+  }
+  
+  if (fcntl(fdin, F_SETFL, old_flags) == -1)
+        return -1;
+
+  return n;
+}
+
 
 // write a command to the 'telnet' process 
 int CLI_Session::writeShell(char *text, int timeout, bool echo_back)
