@@ -95,7 +95,9 @@ public:
 	void getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort=0);
 	//bool getReplyShell_TL1( uint32 ctag = 0 );
 	bool createVCG_TL1(String& vcgName);
+	bool createVCG() { return createVCG_TL1(currentVCG); }
 	bool deleteVCG_TL1(String& vcgName);
+	bool deleteVCG() { return createVCG_TL1(currentVCG); }
 	//bool createGTP()_TL1;
 	//bool deleteGTP()_TL1;
 	//bool createSNC()_TL1;
@@ -142,6 +144,10 @@ protected:
 	uint8 uniState; //Message::Type 
 
 	uint32 ctagNum;
+	String currentVCG;
+	String currentGTP;
+	String currentSNC;
+
 private:	
 	void internalInit ();
 	void setSubnetUniData(SubnetUNI_Data& data, uint8 id, uint8 first_ts, uint16 tunnel_id, float bw, uint32 tna, uint32 uni_c_id, 

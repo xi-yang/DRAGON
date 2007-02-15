@@ -460,7 +460,7 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
 
 void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemString)
 {
-    SimpleList<uint8>& timeslots;
+    SimpleList<uint8> timeslots;
     getTimeslots(timeslots);
     char buf[100], ts[5];
 
@@ -530,7 +530,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
     cmdString += groupMem;
     cmdString += ";";
 
-    if ( (ret = writeShell(cmdString.c_str(), 5)) < 0 ) goto _out;
+    if ( (ret = writeShell(cmdString.chars(), 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
@@ -563,7 +563,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
     char bufCmd[100], strCOMPLD[20], strDENY[20];
     uint32 ctag = getNewCtag();
 
-    sprintf(bufCmd, "ed-vcg::name=%s:%d::,pst=OOS;" vcgName.c_str(), ctag);
+    sprintf(bufCmd, "ed-vcg::name=%s:%d::,pst=OOS;", vcgName.chars(), ctag);
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
@@ -584,7 +584,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
         goto _out;
     
     ctag = getNewCtag();
-    sprintf(bufCmd, "dlt-vcg::name=%s:%d;" vcgName.c_str(), ctag);
+    sprintf(bufCmd, "dlt-vcg::name=%s:%d;", vcgName.chars(), ctag);
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());

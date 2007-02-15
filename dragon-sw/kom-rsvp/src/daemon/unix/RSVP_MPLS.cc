@@ -286,8 +286,10 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 								return false;
 							}
 
-							//create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC	OR
-							//create VCG for LOCAL_ID_TYPE_SUBNET_UNI_DEST
+							//create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC OR LOCAL_ID_TYPE_SUBNET_UNI_DEST
+        		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
+                                                        ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG();
+        		                            }
 
 							//create GTP if needed
 
@@ -591,15 +593,22 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
 							//connect
+							if (!(*sessionIter)->connectSwitch()){
+								LOG(2)( Log::MPLS, "VLSR-Subnet Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
+								return;
+							}
 
 							//delete SNC for LOCAL_ID_TYPE_SUBNET_UNI_SRC
 
 							//create GTP if needed
 
-							//delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC	OR
-							//delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_DEST
+							//delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC or LOCAL_ID_TYPE_SUBNET_UNI_DEST
+        		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
+                                                        ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG();
+        		                            }
 
 							//disconnect
+							(*sessionIter)->disconnectSwitch();
 						}
 
 	   				       if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
