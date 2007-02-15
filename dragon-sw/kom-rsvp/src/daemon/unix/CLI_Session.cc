@@ -259,7 +259,7 @@ bool CLI_Session::engage()
     }
     else if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
      // wait for login prompt 
-     n = readShell(";", TELNET_PROMPT, 1, 15);
+     n = readShell(SWITCH_PROMPT, TELNET_PROMPT, 1, 15);
      if (n != 1) {
        if (got_alarm == 0)
          err_msg("%s: TL1 connection to host '%s' failed\n", progname, hostname);
@@ -271,13 +271,13 @@ bool CLI_Session::engage()
      if ((n = writeShell(":123::", 5)) < 0) goto _telnet_dead;
      if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
      if ((n = writeShell(";", 5)) < 0) goto _telnet_dead;
+     // turn off 'A xxx REPT ...' notification messages
      if ((n = writeShell("inh-msg-all:::123;", 5)) < 0) goto _telnet_dead;
      if ((n = readShell( "   /* Local Authentication Successful.", NULL, 1, 5)) < 0) {
        err_msg("%s: authentication to host '%s' failed\n", progname, hostname);	 
 	goto _telnet_dead;
      }
-     //if ((n = readShell( ";", NULL, 1, 5)) < 0) goto _telnet_dead;
-     if ((n = clearShell()) < 0) goto _telnet_dead;
+     if ((n = readShell( SWITCH_PROMPT, NULL, 1, 5)) < 0) goto _telnet_dead;
     } 
 
     return true;
@@ -356,7 +356,7 @@ bool CLI_Session::isSwitchPrompt(char *p, int len)
   int n, found = 0;
 
   for(n = 0; n < len; n++) {
-    if (p[n] == '>' || p[n] =='#') {
+    if ( p[n] == '>' || p[n] =='#' || (CLI_SESSION_TYPE == CLI_TL1_TELNET && p[n] == ';') ) {
       found = 1;
       break;
     }
@@ -450,6 +450,7 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
   }
 }
 
+/*
 int CLI_Session::clearShell()
 {
   char c;
@@ -466,7 +467,7 @@ int CLI_Session::clearShell()
   
   return n;
 }
-
+*/
 
 // write a command to the 'telnet' process 
 int CLI_Session::writeShell(char *text, int timeout, bool echo_back)
