@@ -530,7 +530,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
     cmdString += groupMem;
     cmdString += ";";
 
-    if ( (ret = writeShell(cmdString.chars(), 5)) < 0 ) goto _out;
+    if ( (ret = writeShell((char*)cmdString.chars(), 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
