@@ -97,7 +97,7 @@ public:
 	bool createVCG_TL1(String& vcgName);
 	bool createVCG() { return createVCG_TL1(currentVCG); }
 	bool deleteVCG_TL1(String& vcgName);
-	bool deleteVCG() { return createVCG_TL1(currentVCG); }
+	bool deleteVCG() { return deleteVCG_TL1(currentVCG); }
 	//bool createGTP()_TL1;
 	//bool deleteGTP()_TL1;
 	//bool createSNC()_TL1;

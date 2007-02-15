@@ -465,6 +465,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemStrin
     char buf[100], ts[5];
 
     assert(timeslots.size() > 0);
+    buf[0] = 0;
     SimpleList<uint8>::Iterator iter = timeslots.begin();
     for (; iter != timeslots.end(); ++iter)
     {
@@ -524,11 +525,11 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
     cmdString += (const char*)ctag;
     cmdString += "::,pst=IS,suppttp=";
     cmdString += suppTtp;
-    cmdString += "\n,ncrctype=CRC_32,,,framingmode=GFP,tunnelpeertype=ETTP,\ntunnelpeername=";
+    cmdString += ",crctype=CRC_32,,,framingmode=GFP,tunnelpeertype=ETTP,tunnelpeername=";
     cmdString += tunnelPeerName;
     cmdString += ",,gfpfcsenabled=YES,,,groupmem=";
     cmdString += groupMem;
-    cmdString += ";";
+    cmdString += ",,;";
 
     if ( (ret = writeShell((char*)cmdString.chars(), 5)) < 0 ) goto _out;
 
