@@ -575,7 +575,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
     {
         LOG(2)(Log::MPLS, vcgName, " status has been set to OOS.\n");
         readShell(";", NULL, 1, 5);
-        return true;
+	//continue to next command ...
     }
     else if (ret == 2)
     {
