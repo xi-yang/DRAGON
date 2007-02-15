@@ -87,6 +87,21 @@ public:
 	uint8 getUniState() { return uniState; }
 	uint32 getPseudoSwitchID();
 	void getTimeslots(SimpleList<uint8>& timeslots);
+
+	// TL1 related functions	
+	uint32 getNewCtag() { ++ctagNum; return (getPseudoSwitchID()+ctagNum)%999999+1; }
+	uint32 getCurrentCtag() { return (getPseudoSwitchID()+ctagNum)%999999+1; }
+	void getCienaTimeslotsString(String& groupMemString);
+	void getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort=0);
+	//bool getReplyShell_TL1( uint32 ctag = 0 );
+	bool createVCG_TL1(String& vcgName);
+	bool deleteVCG_TL1(String& vcgName);
+	//bool createGTP()_TL1;
+	//bool deleteGTP()_TL1;
+	//bool createSNC()_TL1;
+	//bool deleteSNC()_TL1;
+
+
 	//Upcall for source/destination client
 	static void uniRsvpSrcUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession
 	static void uniRsvpDestUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession
@@ -126,6 +141,7 @@ protected:
 	//UNI signaling states (along with PATH/RESV/ERR/TEAR messages); To be handled by uniRsvpSrcUpcall/uniRsvpDestUpcall.
 	uint8 uniState; //Message::Type 
 
+	uint32 ctagNum;
 private:	
 	void internalInit ();
 	void setSubnetUniData(SubnetUNI_Data& data, uint8 id, uint8 first_ts, uint16 tunnel_id, float bw, uint32 tna, uint32 uni_c_id, 

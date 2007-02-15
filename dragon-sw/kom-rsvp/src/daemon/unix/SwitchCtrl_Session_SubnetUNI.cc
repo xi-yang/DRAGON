@@ -25,6 +25,7 @@ void SwitchCtrl_Session_SubnetUNI::internalInit ()
     snmpSessionHandle = NULL; 
     uniSessionId = NULL; 
     uniState = 0; //Message::initApi
+    ctagNum = 0;
 }
 
 void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint8 subuni_id, uint8 first_ts,
@@ -452,3 +453,160 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
         timeslots.push_back(ts + x);
     }
 }
+
+//////////////////////////////////
+/////// TL1 related commands  //////
+/////////////////////////////////
+
+void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemString)
+{
+    SimpleList<uint8>& timeslots;
+    getTimeslots(timeslots);
+    char buf[100], ts[5];
+
+    assert(timeslots.size() > 0);
+    SimpleList<uint8>::Iterator iter = timeslots.begin();
+    for (; iter != timeslots.end(); ++iter)
+    {
+        if (iter == timeslots.begin())
+            sprintf(ts, "%d", *iter);
+        else
+            sprintf(ts, "&%d", *iter);
+        strcat(buf, ts);
+    }
+    groupMemString = (const char*)buf;
+}
+
+
+void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort)
+{
+    int chasis, shelf, slot, subslot, port;
+    char buf[20];
+    SubnetUNI_Data* pSubnetUni = (isSource ? &subnetUniSrc : &subnetUniDest);
+
+    if (logicalPort == 0)
+    {
+        logicalPort = pSubnetUni->logical_port;
+    }
+
+    chasis = (logicalPort >> 24) + 1;
+    shelf = ((logicalPort >> 16)&0xff) + 1;
+    slot = ((logicalPort >> 12)&0xf) + 1;
+    subslot = ((logicalPort >> 8)&0xf) + 1;
+    port = (logicalPort&0xff) + 1;
+
+    sprintf(buf, "%d-%c-%d-%d", chasis, 'A'+shelf, slot, subslot);
+    OMPortString = (const char*)buf;
+
+    sprintf(buf, "%d-%c-%d-%d-%d", chasis, 'A'+shelf, slot, subslot, port);
+    ETTPString = (const char*)buf;
+}
+
+//ENT-VCG::NAME=vcg01:456::,PST=is,SUPPTTP=1-A-3-1,CRCTYPE=CRC_32,,,FRAMINGMODE=GFP,
+//TUNNELPEERTYPE=ETTP,TUNNELPEERNAME=1-A-3-1-1,,GFPFCSENABLED=yes,,,GROUPMEM=1&&3,,;
+bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
+{
+    int ret = 0;
+    char ctag[10], strCOMPLD[20], strDENY[20];
+    String suppTtp, tunnelPeerName, groupMem;
+
+    sprintf(ctag, "%d", getNewCtag());
+
+    vcgName = "vcg_";
+    vcgName += (const char*)ctag;
+
+    getCienaLogicalPortString(suppTtp, tunnelPeerName);
+    getCienaTimeslotsString(groupMem);
+
+    String cmdString = "ent-vcg::name=";
+    cmdString += vcgName;
+    cmdString += ":";
+    cmdString += (const char*)ctag;
+    cmdString += "::,pst=IS,suppttp=";
+    cmdString += suppTtp;
+    cmdString += ",crctype=CRC_32,,,framingmode=GFP,tunnelpeertype=ETTP,tunnelpeername=";
+    cmdString += tunnelPeerName;
+    cmdString += ",,gfpfcsenabled=YES,,,groupmem=";
+    cmdString += groupMem;
+    cmdString += ";";
+
+    if ( (ret = writeShell(cmdString.c_str(), 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(2)(Log::MPLS, vcgName, " has been created successfully.\n");
+        readShell(";", NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(2)(Log::MPLS, vcgName, " creation has been denied.\n");
+        readShell(";", NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(2)(Log::MPLS, vcgName, " creation via TL1_TELNET failed...\n");
+        return false;
+}
+
+//ED-VCG::NAME=vcg01:123::,PST=OOS;
+//DLT-VCG::NAME=vcg01:123;
+bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
+{
+    int ret = 0;
+    char bufCmd[100], strCOMPLD[20], strDENY[20];
+    uint32 ctag = getNewCtag();
+
+    sprintf(bufCmd, "ed-vcg::name=%s:%d::,pst=OOS;" vcgName.c_str(), ctag);
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(2)(Log::MPLS, vcgName, " status has been set to OOS.\n");
+        readShell(";", NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(2)(Log::MPLS, vcgName, " status change (to OOS) has been denied.\n");
+        readShell(";", NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+    
+    ctag = getNewCtag();
+    sprintf(bufCmd, "dlt-vcg::name=%s:%d;" vcgName.c_str(), ctag);
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(2)(Log::MPLS, vcgName, " has been deleted successfully.\n");
+        readShell(";", NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(2)(Log::MPLS, vcgName, " deletion has been denied.\n");
+        readShell(";", NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(2)(Log::MPLS, vcgName, " change/deletion via TL1_TELNET failed...\n");
+        return false;
+}
+
+
