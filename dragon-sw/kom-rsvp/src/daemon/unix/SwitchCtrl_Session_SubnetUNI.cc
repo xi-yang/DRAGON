@@ -438,6 +438,8 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
+        if (ts_num%3 > 0)
+            ts_num = (ts_num/3+1)*3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
@@ -487,7 +489,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
 
     if (logicalPort == 0)
     {
-        logicalPort = pSubnetUni->logical_port;
+        logicalPort = ntohl(pSubnetUni->logical_port);
     }
 
     chasis = (logicalPort >> 24) + 1;
