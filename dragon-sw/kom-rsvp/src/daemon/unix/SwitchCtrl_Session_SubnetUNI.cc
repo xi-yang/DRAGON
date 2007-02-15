@@ -491,14 +491,14 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
 
     chasis = (logicalPort >> 24) + 1;
     shelf = ((logicalPort >> 16)&0xff) + 1;
-    slot = ((logicalPort >> 12)&0xf) + 1;
-    subslot = ((logicalPort >> 8)&0xf) + 1;
+    slot = ((logicalPort >> 12)&0x0f) + 1;
+    subslot = ((logicalPort >> 8)&0x0f) + 1;
     port = (logicalPort&0xff) + 1;
 
-    sprintf(buf, "%d-%c-%d-%d", chasis, 'A'+shelf, slot, subslot);
+    sprintf(buf, "%d-%c-%d-%d", chasis, 'A'-3+shelf, slot, subslot);
     OMPortString = (const char*)buf;
 
-    sprintf(buf, "%d-%c-%d-%d-%d", chasis, 'A'+shelf, slot, subslot, port);
+    sprintf(buf, "%d-%c-%d-%d-%d", chasis, 'A'-3+shelf, slot, subslot, port);
     ETTPString = (const char*)buf;
 }
 
@@ -524,7 +524,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
     cmdString += (const char*)ctag;
     cmdString += "::,pst=IS,suppttp=";
     cmdString += suppTtp;
-    cmdString += ",crctype=CRC_32,,,framingmode=GFP,tunnelpeertype=ETTP,tunnelpeername=";
+    cmdString += "\n,ncrctype=CRC_32,,,framingmode=GFP,tunnelpeertype=ETTP,\ntunnelpeername=";
     cmdString += tunnelPeerName;
     cmdString += ",,gfpfcsenabled=YES,,,groupmem=";
     cmdString += groupMem;

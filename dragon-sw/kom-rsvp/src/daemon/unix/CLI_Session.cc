@@ -278,6 +278,8 @@ bool CLI_Session::engage()
 	goto _telnet_dead;
      }
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 5)) < 0) goto _telnet_dead;
+     if ((n = readShell( SWITCH_PROMPT, NULL, 1, 5)) < 0) goto _telnet_dead;
+     if ((n = readShell( SWITCH_PROMPT, NULL, 1, 5)) < 0) goto _telnet_dead;
     } 
 
     return true;
