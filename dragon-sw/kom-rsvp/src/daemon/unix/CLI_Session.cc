@@ -12,6 +12,7 @@ To be incorporated into KOM-RSVP-TE package
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <errno.h>
 #include "CLI_Session.h"
@@ -452,28 +453,17 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
 int CLI_Session::clearShell()
 {
   char c;
-  int n, flags, old_flags;
+  int n = 0;
   fd_set sset;
 
   if (fdin < 0)
     return (-1);
 
-  flags = old_flags = fcntl(sock, F_GETFL, 0);
-
-  flags |= O_NONBLOCK;
-
-  if (fcntl(fdin, F_SETFL, flags) == -1)
-    return -1;
-
-  n = 0;
   while (read(fdin, &c, 1) != 1) {
     n++;
     break;
   }
   
-  if (fcntl(fdin, F_SETFL, old_flags) == -1)
-        return -1;
-
   return n;
 }
 
