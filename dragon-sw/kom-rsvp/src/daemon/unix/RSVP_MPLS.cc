@@ -619,7 +619,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                             //if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC() ) {
 							//	(*sessionIter)->disconnectSwitch();
                                                          //       return;
-							    }
+							 //   }
         						}
 
         							//create GTP if needed
