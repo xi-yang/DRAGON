@@ -301,7 +301,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							}
 
 							        //create SNC (X times?) for LOCAL_ID_TYPE_SUBNET_UNI_SRC
-                                                        if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
+                                                        if ( (SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSource() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
                                                             if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createSNC() ) {
 								(*sessionIter)->disconnectSwitch();
                                                                 return false;
@@ -615,7 +615,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
         		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 
         							//delete SNC for LOCAL_ID_TYPE_SUBNET_UNI_SRC
-                						if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
+                						if ( (SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSource() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
                                                                 if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC() ) {
         								    (*sessionIter)->disconnectSwitch();
                                                                         return;
