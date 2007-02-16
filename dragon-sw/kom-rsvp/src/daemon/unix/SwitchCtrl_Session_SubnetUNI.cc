@@ -602,13 +602,13 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(2)(Log::MPLS, vcgName, " has been created successfully.\n");
+        LOG(3)(Log::MPLS, vcgName, " has been created successfully.\n", cmdString);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(2)(Log::MPLS, vcgName, " creation has been denied.\n");
+        LOG(3)(Log::MPLS, vcgName, " creation has been denied.\n", cmdString);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -616,7 +616,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
         goto _out;
 
 _out:
-        LOG(2)(Log::MPLS, vcgName, " creation via TL1_TELNET failed...\n");
+        LOG(3)(Log::MPLS, vcgName, " creation via TL1_TELNET failed...\n", cmdString);
         return false;
 }
 
@@ -639,13 +639,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(2)(Log::MPLS, vcgName, " status has been set to OOS.\n");
+        LOG(3)(Log::MPLS, vcgName, " status has been set to OOS.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
 	//continue to next command ...
     }
     else if (ret == 2)
     {
-        LOG(2)(Log::MPLS, vcgName, " status change (to OOS) has been denied.\n");
+        LOG(3)(Log::MPLS, vcgName, " status change (to OOS) has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -660,13 +660,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(2)(Log::MPLS, vcgName, " has been deleted successfully.\n");
+        LOG(3)(Log::MPLS, vcgName, " has been deleted successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(2)(Log::MPLS, vcgName, " deletion has been denied.\n");
+        LOG(3)(Log::MPLS, vcgName, " deletion has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -674,7 +674,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
         goto _out;
 
 _out:
-        LOG(2)(Log::MPLS, vcgName, " change/deletion via TL1_TELNET failed...\n");
+        LOG(3)(Log::MPLS, vcgName, " change/deletion via TL1_TELNET failed...\n", bufCmd);
         return false;
 }
 
@@ -700,13 +700,13 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(2)(Log::MPLS, gtpName, " has been created successfully.\n");
+        LOG(3)(Log::MPLS, gtpName, " has been created successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(2)(Log::MPLS, gtpName, " creation has been denied.\n");
+        LOG(3)(Log::MPLS, gtpName, " creation has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -714,7 +714,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
         goto _out;
 
 _out:
-        LOG(2)(Log::MPLS, gtpName, " creation via TL1_TELNET failed...\n");
+        LOG(3)(Log::MPLS, gtpName, " creation via TL1_TELNET failed...\n", bufCmd);
         return false;    
 }
 
@@ -736,13 +736,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteGTP_TL1(String& gtpName)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(2)(Log::MPLS, gtpName, " has been deleted successfully.\n");
+        LOG(3)(Log::MPLS, gtpName, " has been deleted successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(2)(Log::MPLS, gtpName, " deletion has been denied.\n");
+        LOG(3)(Log::MPLS, gtpName, " deletion has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -750,7 +750,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteGTP_TL1(String& gtpName)
         goto _out;
 
 _out:
-        LOG(2)(Log::MPLS, gtpName, " deletion via TL1_TELNET failed...\n");
+        LOG(3)(Log::MPLS, gtpName, " deletion via TL1_TELNET failed...\n", bufCmd);
         return false;    
 }
 
@@ -775,13 +775,13 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(2)(Log::MPLS, gtpName, " has been created successfully.\n");
+        LOG(3)(Log::MPLS, sncName, " has been created successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(2)(Log::MPLS, gtpName, " creation has been denied.\n");
+        LOG(3)(Log::MPLS, sncName, " creation has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -790,7 +790,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
 
     */
 _out:
-        LOG(2)(Log::MPLS, sncName, " creation via TL1_TELNET failed...\n");
+        LOG(3)(Log::MPLS, sncName, " creation via TL1_TELNET failed...\n", bufCmd);
         return false;    
 }
 
@@ -813,13 +813,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(2)(Log::MPLS, sncName, " has been deleted successfully.\n");
+        LOG(3)(Log::MPLS, sncName, " has been deleted successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(2)(Log::MPLS, sncName, " deletion has been denied.\n");
+        LOG(3)(Log::MPLS, sncName, " deletion has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -828,7 +828,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
     */
 
 _out:
-        LOG(2)(Log::MPLS, sncName, " deletion via TL1_TELNET failed...\n");
+        LOG(3)(Log::MPLS, sncName, " deletion via TL1_TELNET failed...\n", bufCmd);
         return false;    
 }
 
