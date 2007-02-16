@@ -254,7 +254,7 @@ u_int32_t logical_port_string2number(const char* port_str)
 	if (shelf > 10)
 		shelf = shelf_alpha - 'a' + 2;
 
-	return ((bay<<24) | (shelf <16) | (slot << 12) | (subslot<<8) | port);
+	return ((bay<<24) | (shelf <<16) | (slot << 12) | (subslot<<8) | (port&0xff) );
 }
 
 static void
@@ -1469,7 +1469,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             vty_out (vty, "      -> Subnet-UNI ID: %d TNA-IPv4 %s via ControlChannel %s%s", 
 				subnet_uni->subnet_uni_id, ipv4, subnet_uni->control_channel, VTY_NEWLINE);
             vty_out (vty, "      -> UNI-N NodeName %s NodeID: %s, Data IP: %s%s", subnet_uni->node_name, ipv4_a, ipv4_b, VTY_NEWLINE);
-            vty_out (vty, "      -> LogicalPort: %d, EgressLabel: %d, UpstreamLabel: %d%s",
+            vty_out (vty, "      -> LogicalPort: %s, EgressLabel: %d, UpstreamLabel: %d%s",
 				logical_port_number2string(ntohl(subnet_uni->logical_port_number)),
 				ntohl(subnet_uni->egress_label_downstream), ntohl(subnet_uni->egress_label_upstream), VTY_NEWLINE);
 
