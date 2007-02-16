@@ -536,7 +536,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupInVCG(String& ctpGroupString,
     ts += 3;
     for ( ; ts < ts_num; ts += 3)
     {
-        sprintf(ctp, "&%s-CTP-%d", ts, ts/3+1);
+        sprintf(ctp, "&%s-CTP-%d", vcgName.chars(), ts/3+1);
         strcat(buf, ctp);
     }
     ctpGroupString = (const char*)buf;
