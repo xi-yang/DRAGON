@@ -615,24 +615,24 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
         		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 
         							//delete SNC for LOCAL_ID_TYPE_SUBNET_UNI_SRC
-        						if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
-                                                            //if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC() ) {
-							//	(*sessionIter)->disconnectSwitch();
-                                                         //       return;
-							 //   }
-        						}
+                						if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
+                                                                if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC() ) {
+        								    (*sessionIter)->disconnectSwitch();
+                                                                        return;
+        							        }
+                						}
 
-        							//create GTP if needed
+                							//create GTP if needed
                                                         if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP() ) {
-							    (*sessionIter)->disconnectSwitch();
-                                                            return;
-							}
+        							    (*sessionIter)->disconnectSwitch();
+                                                                    return;
+        							}
 
-							       //delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC or LOCAL_ID_TYPE_SUBNET_UNI_DEST
+        							       //delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC or LOCAL_ID_TYPE_SUBNET_UNI_DEST
                                                         if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG() ) {
-							    (*sessionIter)->disconnectSwitch();
-                                                            return;
-							}
+        							    (*sessionIter)->disconnectSwitch();
+                                                                    return;
+        							}
         		                            }
 
 						    //disconnect
