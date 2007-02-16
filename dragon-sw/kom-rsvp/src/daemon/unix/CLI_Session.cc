@@ -343,7 +343,7 @@ bool CLI_Session::pipeAlive()
     return false;
 
   pipe_broken = false;
-  if ((n = writeShell("\n", 2)) < 0 || pipe_broken) 
+  if ((n = writeShell(CLI_SESSION_TYPE == CLI_TL1_TELNET? ";" : "\n", 2)) < 0 || pipe_broken) 
   	return false;
 
   if ((n = readShell (SWITCH_PROMPT, NULL, 0, 3)) < 0  || pipe_broken) 

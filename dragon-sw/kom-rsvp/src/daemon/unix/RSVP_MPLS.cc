@@ -283,22 +283,29 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							//connect
 							if (!(*sessionIter)->connectSwitch()){
 								LOG(2)( Log::MPLS, "VLSR-Subnet Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
+								(*sessionIter)->disconnectSwitch();
 								return false;
 							}
 
         		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 							        //create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC OR LOCAL_ID_TYPE_SUBNET_UNI_DEST
-                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG() )
+                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG() ) {
+							    (*sessionIter)->disconnectSwitch();
                                                             return false;
+							}
 
 							        //create GTP
-                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() )
+                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
+							    (*sessionIter)->disconnectSwitch();
                                                             return false;
+							}
 
 							        //create SNC (X times?) for LOCAL_ID_TYPE_SUBNET_UNI_SRC
                                                         if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
-                                                            if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createSNC() )
+                                                            if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createSNC() ) {
+								(*sessionIter)->disconnectSwitch();
                                                                 return false;
+							    }
                                                         }
         		                            }
 
@@ -608,22 +615,28 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
         		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 
         							//delete SNC for LOCAL_ID_TYPE_SUBNET_UNI_SRC
-        							if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
-                                                            if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC() )
-                                                                return;
-        							}
+        						if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
+                                                            //if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC() ) {
+							//	(*sessionIter)->disconnectSwitch();
+                                                         //       return;
+							    }
+        						}
 
         							//create GTP if needed
-                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP() )
+                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP() ) {
+							    (*sessionIter)->disconnectSwitch();
                                                             return;
+							}
 
 							       //delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC or LOCAL_ID_TYPE_SUBNET_UNI_DEST
-                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG() )
+                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG() ) {
+							    (*sessionIter)->disconnectSwitch();
                                                             return;
+							}
         		                            }
 
-							//disconnect
-							(*sessionIter)->disconnectSwitch();
+						    //disconnect
+						    (*sessionIter)->disconnectSwitch();
 						}
 
 	   				       if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
