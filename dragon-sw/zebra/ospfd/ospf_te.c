@@ -228,7 +228,7 @@ const char* frequency2wavelength(u_int32_t frequency)
 	return val2str(&str_val_conv_wavelength, frequency);
 }
 
-const char* logical_port_numbe2string(u_int32_t port_id)
+const char* logical_port_number2string(u_int32_t port_id)
 {
 	static char buf[10];
 	int bay, shelf, slot, subslot, port;
