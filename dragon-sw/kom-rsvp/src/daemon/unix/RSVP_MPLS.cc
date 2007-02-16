@@ -662,7 +662,6 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                             if (ts_list.size() > 0)
                                             RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
 	                                  }
-					      iter = psb.getVLSR_Route().erase(iter);
                                 }
 
                                 continue;
@@ -774,8 +773,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                    }
  					break;
                         }
-                     }
-			psb.getVLSR_Route().erase(iter);
+			}
+			iter = psb.getVLSR_Route().erase(iter);
 		}
 	}
 }
