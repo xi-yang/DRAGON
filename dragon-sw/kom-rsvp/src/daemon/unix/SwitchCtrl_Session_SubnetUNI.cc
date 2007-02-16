@@ -573,7 +573,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
     int bay, shelf, slot, subslot, port;
     char buf[20];
 
-    uint32 logicalPort = subnetUniDest.logical_port;
+    uint32 logicalPort = ntohl(subnetUniDest.logical_port);
     uint8 ts = subnetUniDest.first_timeslot;
     if (ts%3 != 1)
     {
