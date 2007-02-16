@@ -286,6 +286,7 @@ struct link_ifswcap_specific_subnet_uni {
 	u_int32_t		egress_label_downstream; /*egress label on the UNI interface*/ /*to be removed*/
 	u_int32_t		egress_label_upstream; /*egress label on the UNI interface for bidirectional traffic*/ /*to be removed*/
 	char			control_channel[12];
+	char			node_name[16]; /* In Ciena subnet, this is the node name in OSRP. */
 	u_int8_t		timeslot_bitmask[MAX_TIMESLOTS_NUM/8]; /*time slots available = 1*/
 };
 
@@ -371,6 +372,9 @@ extern struct str_val_conv str_val_conv_encoding;
 extern u_int32_t channel2frequency(char* channel);
 extern u_int32_t wavelength2frequency(char* wavelength);
 extern const char* frequency2wavelength(u_int32_t frequency);
+
+extern const char* logical_port_number2string(u_int32_t port_id);
+extern u_int32_t logical_port_string2number(const char* port_str);
 
 #define INTERFACE_MPLS_ENABLED(X) \
 	X->te_enabled >= INTERFACE_TE_MPLS
