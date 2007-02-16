@@ -860,6 +860,7 @@ _out:
         return false;    
 }
 
+//ED-SNC-STSPC::snc001:123::,PST=OOS;
 //dlt-snc-stspc::snc_2:myctag;
 bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
 {
@@ -869,8 +870,29 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
     if (sncName.empty())
         return false;
 
-    sprintf( bufCmd, "dlt-snc-stspc::%s:%d;", sncName.chars(), getNewCtag() );
 
+    sprintf( bufCmd, "ed-snc-stspc::%s:%d::,pst=oos;", sncName.chars(), getNewCtag() );
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, sncName, " state has been changed into OOS.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        //continue to next command ...
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, sncName, " state change to OOS has been denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+    sprintf( bufCmd, "dlt-snc-stspc::%s:%d;", sncName.chars(), getNewCtag() );
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
@@ -892,7 +914,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         goto _out;
 
 _out:
-        LOG(3)(Log::MPLS, sncName, " deletion via TL1_TELNET failed...\n", bufCmd);
+        LOG(3)(Log::MPLS, sncName, " change/deletion via TL1_TELNET failed...\n", bufCmd);
         return false;    
 }
 
