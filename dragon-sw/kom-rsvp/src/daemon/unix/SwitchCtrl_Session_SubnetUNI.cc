@@ -30,7 +30,7 @@ void SwitchCtrl_Session_SubnetUNI::internalInit ()
 
 void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint8 subuni_id, uint8 first_ts,
  uint16 tunnel_id, float bw, uint32 tna_ipv4, uint32 uni_cid_ipv4, uint32 uni_nid_ipv4, uint32 data_if,
- uint32 port, uint32 egress_label, uint32 upstream_label, uint8* cc_name, uint8* bitmask)
+ uint32 port, uint32 egress_label, uint32 upstream_label, uint8* node_name, uint8* cc_name, uint8* bitmask)
 {
     memset(&data, 0, sizeof(SubnetUNI_Data));
     data.subnet_id = subuni_id;
@@ -46,6 +46,7 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint8 
     data.uni_nid_ipv4 = uni_nid_ipv4;
     data.data_if_ipv4 = data_if;
 
+    memcpy(data.node_name, node_name, NODE_NAME_LEN);
     memcpy(data.control_channel_name, cc_name, CTRL_CHAN_NAME_LEN);
     memcpy(data.timeslot_bitmask, bitmask, MAX_TIMESLOTS_NUM/8);
 }       
@@ -58,7 +59,7 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniSrc(SubnetUNI_Data& data)
 
 	setSubnetUniData(subnetUniSrc, data.subnet_id, data.first_timeslot, data.tunnel_id, data.ethernet_bw, data.tna_ipv4, 
 		data.uni_cid_ipv4, data.uni_nid_ipv4, data.data_if_ipv4, data.logical_port, data.egress_label, data.upstream_label, 
-		data.control_channel_name, data.timeslot_bitmask);
+		data.node_name, data.control_channel_name, data.timeslot_bitmask);
 }
 
 void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(SubnetUNI_Data& data)
@@ -69,7 +70,7 @@ void SwitchCtrl_Session_SubnetUNI::setSubnetUniDest(SubnetUNI_Data& data)
 
 	setSubnetUniData(subnetUniDest, data.subnet_id, data.first_timeslot, data.tunnel_id, data.ethernet_bw, data.tna_ipv4, 
 		data.uni_cid_ipv4, data.uni_nid_ipv4, data.data_if_ipv4, data.logical_port, data.egress_label, data.upstream_label, 
-		data.control_channel_name, data.timeslot_bitmask);
+		data.node_name, data.control_channel_name, data.timeslot_bitmask);
 }
 
 const LogicalInterface* SwitchCtrl_Session_SubnetUNI::getControlInterface(NetAddress& gwAddress)
@@ -567,6 +568,53 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
     ETTPString = (const char*)buf;
 }
 
+void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimeslotsString)
+{
+    int bay, shelf, slot, subslot, port;
+    char buf[20];
+
+    uint32 logicalPort = subnetUniDest.logical_port;
+    uint8 ts = subnetUniDest.first_timeslot;
+    if (ts%3 != 1)
+    {
+        destTimeslotsString = "";
+        return;
+    }
+
+    bay = (logicalPort >> 24) + 1;
+    shelf = ((logicalPort >> 16)&0xff) + 1;
+    slot = ((logicalPort >> 12)&0x0f) + 1;
+    subslot = ((logicalPort >> 8)&0x0f) + 1;
+    port = (logicalPort&0xff) + 1;
+    sprintf(buf, "%d-%c-%d-%d-%d", bay, 'A'-3+shelf, slot, subslot, port);
+
+    SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(subnetUniDest.ethernet_bw);
+    uint8 ts_num = 0;
+    assert(sonet_tb1);
+    switch (sonet_tb1->getSignalType())
+    {
+    case SONET_TSpec::S_STS1SPE_VC3:
+    case SONET_TSpec::S_STS1_STM0:
+        ts_num = sonet_tb1->getNCC();
+        ts_num = ((ts_num+2)/3)*3;
+        break;
+
+    case SONET_TSpec::S_STS3CSPE_VC4:
+    case SONET_TSpec::S_STS3_STM1:
+        ts_num = sonet_tb1->getNCC() * 3;
+        break;
+    }
+    if (ts_num == 0)
+    {
+        destTimeslotsString = "";
+        return;
+    }
+
+    destTimeslotsString = (const char*)buf;
+    sprintf(buf, "-%d&&%d", ts, ts+ts_num-1);
+    destTimeslotsString += (const char*)buf;
+}
+
 //ENT-VCG::NAME=vcg01:456::,PST=is,SUPPTTP=1-A-3-1,CRCTYPE=CRC_32,,,FRAMINGMODE=GFP,
 //TUNNELPEERTYPE=ETTP,TUNNELPEERNAME=1-A-3-1-1,,GFPFCSENABLED=yes,,,GROUPMEM=1&&3,,;
 bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
@@ -582,6 +630,11 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
 
     getCienaLogicalPortString(suppTtp, tunnelPeerName);
     getCienaTimeslotsString(groupMem);
+    if ((groupMem).empty())
+    {
+        LOG(1)(Log::MPLS, "getCienaTimeslotsString returned empty string");
+        return false;
+    }
 
     String cmdString = "ent-vcg::name=";
     cmdString += vcgName;
@@ -690,6 +743,11 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
 
     String ctpGroupString;
     getCienaCTPGroupInVCG(ctpGroupString, vcgName);
+    if (ctpGroupString.empty())
+    {
+        LOG(1)(Log::MPLS, "getCienaCTPGroupInVCG returned empty string");
+        return false;
+    }
 
     sprintf( bufCmd, "ent-gtp::%s:%s::lbl=gtp-%s,,ctp=%s;", gtpName.chars(), ctag, vcgName.chars(), ctpGroupString.chars() );
 
@@ -755,7 +813,7 @@ _out:
 }
 
 
-//;ENT-SNC-STSPC
+//;ent-snc-stspc:SEAT:gtp_x,1-a-5-1-1&&21:myctag::name=sncname,type=dynamic,rmnode=GRNOC,lep=gtp_nametype,conndir=bi_direction,prtt=aps_vlsr_unprotected,pst=is;
 bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpName)
 {
     int ret = 0;
@@ -765,8 +823,17 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
     sncName = "snc_";
     sncName += ctag;
 
-    /*
-    sprintf( bufCmd, "ent-snc-stspc::%s:%s::lbl=gtp-%s,,ctp=%s;", gtpName.chars(), ctag, vcgName.chars(), ctpGroupString.chars() );
+    // get destination time slots!
+    String destTimeslotsString;
+    getCienaDestTimeslotsString(destTimeslotsString);
+    if (destTimeslotsString.empty())
+    {
+        LOG(1)(Log::MPLS, "getCienaDestTimeslotsString returned empty string.");
+        return false;
+    }
+
+    sprintf( bufCmd, "ent-snc-stspc::%s:%s,%s:%s::name=%s,type=dynamic,rmnode=%s,lep=gtp_nametype,conndir=bi_direction,prtt=aps_vlsr_unprotected,pst=is;",
+        (const char*)subnetUniSrc.node_name, gtpName.chars(), destTimeslotsString.chars(), ctag, (const char*)subnetUniDest.node_name);
 
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
@@ -788,7 +855,6 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
     else 
         goto _out;
 
-    */
 _out:
         LOG(3)(Log::MPLS, sncName, " creation via TL1_TELNET failed...\n", bufCmd);
         return false;    
@@ -805,7 +871,6 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
 
     sprintf( bufCmd, "dlt-snc-stspc::%s:%d;", sncName.chars(), getNewCtag() );
 
-    /*
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
@@ -825,7 +890,6 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
     }
     else 
         goto _out;
-    */
 
 _out:
         LOG(3)(Log::MPLS, sncName, " deletion via TL1_TELNET failed...\n", bufCmd);

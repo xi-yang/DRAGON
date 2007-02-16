@@ -524,6 +524,7 @@ bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint
 
 	int i = 0;
 	for ( ; i < 12; i++) ibuffer >> uniData.control_channel_name[i];
+	for (i = 0; i < 16; i++) ibuffer >> uniData.node_name[i];
 	for (i = 0; i < MAX_TIMESLOTS_NUM/8; i++) ibuffer >> uniData.timeslot_bitmask[i];
 
 	return true;

@@ -26,6 +26,7 @@ To be incorporated into KOM-RSVP-TE package
 #define GENERALIZED_LABEL_REQUEST_Object LABEL_REQUEST_Object
 
 #define CTRL_CHAN_NAME_LEN 12
+#define NODE_NAME_LEN 16
 #define MAX_TIMESLOTS_NUM 192  //STS-1 x 192 = 10 G
 typedef struct SubnetUNI_Data_struct {
 	uint8 subnet_id;
@@ -40,6 +41,7 @@ typedef struct SubnetUNI_Data_struct {
 	uint32 egress_label;
 	uint32 upstream_label;
 	uint8 control_channel_name[CTRL_CHAN_NAME_LEN];
+	uint8 node_name[NODE_NAME_LEN];
 	uint8 timeslot_bitmask[MAX_TIMESLOTS_NUM/8]; //bitmask
 } SubnetUNI_Data;
 
@@ -97,6 +99,7 @@ public:
 	void getCienaTimeslotsString(String& groupMemString);
 	void getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort=0);
 	void getCienaCTPGroupInVCG(String& ctpGroupString, String& vcgName);
+	void getCienaDestTimeslotsString(String& destTimeslotsString);
 
 	bool createVCG_TL1(String& vcgName);
 	bool deleteVCG_TL1(String& vcgName);
@@ -160,11 +163,8 @@ protected:
 private:	
 	void internalInit ();
 	void setSubnetUniData(SubnetUNI_Data& data, uint8 id, uint8 first_ts, uint16 tunnel_id, float bw, uint32 tna, uint32 uni_c_id, 
-		uint32 uni_n_id, uint32 data_if, uint32 port, uint32 egress_label, uint32 upstream_label, uint8* cc_name, uint8* bitmask);
+		uint32 uni_n_id, uint32 data_if, uint32 port, uint32 egress_label, uint32 upstream_label, uint8* node_name, uint8* cc_name, uint8* bitmask);
 };
-
-
-
 
 
 #endif
