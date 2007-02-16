@@ -294,7 +294,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                         return false;
                                                     }
 
-                                                    if ( (SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
+                                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
                                                         //create GTP (Source node only!)
                                                         if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
                                                             (*sessionIter)->disconnectSwitch();
