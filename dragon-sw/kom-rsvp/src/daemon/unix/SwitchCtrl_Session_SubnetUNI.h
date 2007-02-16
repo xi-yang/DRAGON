@@ -58,6 +58,7 @@ public:
 		CLI_Session(sName, swAddr), RSVP_API(), isSource(isSrc) { internalInit(); }
 	virtual ~SwitchCtrl_Session_SubnetUNI();
 
+	bool isSourceClient() { return isSource; }
 	//Backward compatibility with general SwitchCtrl_Session operations
 	virtual bool connectSwitch() { return CLI_Session::engage(); }
 	virtual void disconnectSwitch() { CLI_Session::disengage(); return; }
