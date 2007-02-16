@@ -251,6 +251,8 @@ u_int32_t logical_port_string2number(const char* port_str)
 	sscanf(port_str, "%d-%c-%d-%d-%d", &bay, &shelf_alpha, &slot, &subslot, &port);
 	bay--; slot--; subslot--; port--;
 	shelf = shelf_alpha - 'A' + 2;
+	if (shelf > 10)
+		shelf = shelf_alpha - 'a' + 2;
 
 	return ((bay<<24) | (shelf <16) | (slot << 12) | (subslot<<8) | port);
 }
@@ -2606,7 +2608,7 @@ DEFUN (ospf_te_interface_ifsw_cap5,
       return CMD_WARNING;
     }
   	
-  if (argc != 8) 
+  if (argc != 9) 
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap5: only %d parameters present%s (needing eight)", argc, VTY_NEWLINE);
       return CMD_WARNING;
@@ -2689,7 +2691,7 @@ DEFUN (ospf_te_interface_ifsw_cap6,
 
   if ( te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version != htons(IFSWCAP_SPECIFIC_SUBNET_UNI) )
   {
-      vty_out (vty, "subnet-uni <1-65535> tna-ipv4 ... must be defined first ... %s", VTY_NEWLINE);
+      vty_out (vty, "subnet-uni <1-65535> node-name NAME tna-ipv4 ... must be defined first ... %s", VTY_NEWLINE);
       return CMD_ERR_INCOMPLETE;
   }
   
