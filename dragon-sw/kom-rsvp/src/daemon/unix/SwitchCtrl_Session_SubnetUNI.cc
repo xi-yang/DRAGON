@@ -570,7 +570,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
 
 void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimeslotsString)
 {
-    int bay, shelf, slot, subslot, port;
+    int bay, shelf, slot, subslot;
     char buf[20];
 
     uint32 logicalPort = ntohl(subnetUniDest.logical_port);
@@ -585,8 +585,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
     shelf = ((logicalPort >> 16)&0xff) + 1;
     slot = ((logicalPort >> 12)&0x0f) + 1;
     subslot = ((logicalPort >> 8)&0x0f) + 1;
-    port = (logicalPort&0xff) + 1;
-    sprintf(buf, "%d-%c-%d-%d-%d", bay, 'A'-3+shelf, slot, subslot, port);
+    sprintf(buf, "%d-%c-%d-%d", bay, 'A'-3+shelf, slot, subslot);
 
     SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(subnetUniDest.ethernet_bw);
     uint8 ts_num = 0;
