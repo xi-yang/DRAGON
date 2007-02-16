@@ -59,7 +59,8 @@ public:
 	//Backward compatibility with general SwitchCtrl_Session operations
 	virtual bool connectSwitch() { return CLI_Session::engage(); }
 	virtual void disconnectSwitch() { CLI_Session::disengage(); return; }
-
+	virtual bool refresh() { return true; } //NOP
+	
 	//Preparing UNI parameters
 	void setSubnetUniSrc(SubnetUNI_Data& data);
 	void setSubnetUniDest(SubnetUNI_Data& data);
