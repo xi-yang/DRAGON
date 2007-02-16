@@ -429,8 +429,10 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
 
     uint8 ts = pUniData->first_timeslot;
-    SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
+    if (ts%3 != 1)
+        return;
 
+    SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
     uint8 ts_num = 0;
     assert(sonet_tb1);
     switch (sonet_tb1->getSignalType())
@@ -438,16 +440,13 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
-        if (ts_num%3 > 0)
-            ts_num = (ts_num/3+1)*3;
+        ts_num = ((ts_num+2)/3)*3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
     case SONET_TSpec::S_STS3_STM1:
         ts_num = sonet_tb1->getNCC() * 3;
         break;
-    default:
-        ts_num = 0;
     }
 
     for (uint8 x = 0; x < ts_num; x++)
@@ -462,28 +461,91 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
 
 void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemString)
 {
-    SimpleList<uint8> timeslots;
-    getTimeslots(timeslots);
-    char buf[100], ts[5];
-
-    assert(timeslots.size() > 0);
-    buf[0] = 0;
-    SimpleList<uint8>::Iterator iter = timeslots.begin();
-    for (; iter != timeslots.end(); ++iter)
+    char buf[10];
+    SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
+    uint8 ts = pUniData->first_timeslot;
+    if (ts%3 != 1)
     {
-        if (iter == timeslots.begin())
-            sprintf(ts, "%d", *iter);
-        else
-            sprintf(ts, "&%d", *iter);
-        strcat(buf, ts);
+        groupMemString = "";
+        return;
     }
+
+    SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
+    uint8 ts_num = 0;
+    assert(sonet_tb1);
+    switch (sonet_tb1->getSignalType())
+    {
+    case SONET_TSpec::S_STS1SPE_VC3:
+    case SONET_TSpec::S_STS1_STM0:
+        ts_num = sonet_tb1->getNCC();
+        ts_num = ((ts_num+2)/3)*3;
+        break;
+
+    case SONET_TSpec::S_STS3CSPE_VC4:
+    case SONET_TSpec::S_STS3_STM1:
+        ts_num = sonet_tb1->getNCC() * 3;
+        break;
+    }
+
+    if (ts_num == 0)
+    {
+        groupMemString = "";
+        return;
+    }
+    
+    sprintf(buf, "%d&&%d", ts, ts+ts_num-1);
     groupMemString = (const char*)buf;
+}
+
+void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupInVCG(String& ctpGroupString, String& vcgName)
+{
+    char buf[500], ctp[20];
+    SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
+    uint8 ts = pUniData->first_timeslot;
+    if (ts%3 != 1)
+    {
+        ctpGroupString = "";
+        return;
+    }
+
+    SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
+    uint8 ts_num = 0;
+    assert(sonet_tb1);
+    switch (sonet_tb1->getSignalType())
+    {
+    case SONET_TSpec::S_STS1SPE_VC3:
+    case SONET_TSpec::S_STS1_STM0:
+        ts_num = sonet_tb1->getNCC();
+        ts_num = (ts_num+2)/3;
+        break;
+
+    case SONET_TSpec::S_STS3CSPE_VC4:
+    case SONET_TSpec::S_STS3_STM1:
+        ts_num = sonet_tb1->getNCC() * 3;
+        break;
+    }
+
+    if (ts_num == 0)
+    {
+        ctpGroupString = "";
+        return;
+    }
+
+    sprintf(buf, "%s-CTP-%d", vcgName.chars(), ts/3+1);
+    ts_num += ts;
+    ts += 3;
+    for ( ; ts < ts_num; ts += 3)
+    {
+        sprintf(ctp, "&%s-CTP-%d", ts, ts/3+1);
+        strcat(buf, ctp);
+    }
+    ctpGroupString = (const char*)buf;
 }
 
 
 void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort)
 {
-    int chasis, shelf, slot, subslot, port;
+    int bay, shelf, slot, subslot, port;
     char buf[20];
     SubnetUNI_Data* pSubnetUni = (isSource ? &subnetUniSrc : &subnetUniDest);
 
@@ -492,16 +554,16 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
         logicalPort = ntohl(pSubnetUni->logical_port);
     }
 
-    chasis = (logicalPort >> 24) + 1;
+    bay = (logicalPort >> 24) + 1;
     shelf = ((logicalPort >> 16)&0xff) + 1;
     slot = ((logicalPort >> 12)&0x0f) + 1;
     subslot = ((logicalPort >> 8)&0x0f) + 1;
     port = (logicalPort&0xff) + 1;
 
-    sprintf(buf, "%d-%c-%d-%d", chasis, 'A'-3+shelf, slot, subslot);
+    sprintf(buf, "%d-%c-%d-%d", bay, 'A'-3+shelf, slot, subslot);
     OMPortString = (const char*)buf;
 
-    sprintf(buf, "%d-%c-%d-%d-%d", chasis, 'A'-3+shelf, slot, subslot, port);
+    sprintf(buf, "%d-%c-%d-%d-%d", bay, 'A'-3+shelf, slot, subslot, port);
     ETTPString = (const char*)buf;
 }
 
@@ -541,13 +603,13 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
     if (ret == 1) 
     {
         LOG(2)(Log::MPLS, vcgName, " has been created successfully.\n");
-        readShell(";", NULL, 1, 5);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
         LOG(2)(Log::MPLS, vcgName, " creation has been denied.\n");
-        readShell(";", NULL, 1, 5);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
     else 
@@ -566,7 +628,11 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
     char bufCmd[100], strCOMPLD[20], strDENY[20];
     uint32 ctag = getNewCtag();
 
+    if (vcgName.empty())
+        return false;
+
     sprintf(bufCmd, "ed-vcg::name=%s:%d::,pst=OOS;", vcgName.chars(), ctag);
+
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
@@ -574,13 +640,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
     if (ret == 1) 
     {
         LOG(2)(Log::MPLS, vcgName, " status has been set to OOS.\n");
-        readShell(";", NULL, 1, 5);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
 	//continue to next command ...
     }
     else if (ret == 2)
     {
         LOG(2)(Log::MPLS, vcgName, " status change (to OOS) has been denied.\n");
-        readShell(";", NULL, 1, 5);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
     else 
@@ -595,13 +661,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
     if (ret == 1) 
     {
         LOG(2)(Log::MPLS, vcgName, " has been deleted successfully.\n");
-        readShell(";", NULL, 1, 5);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
         LOG(2)(Log::MPLS, vcgName, " deletion has been denied.\n");
-        readShell(";", NULL, 1, 5);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
     else 
@@ -612,4 +678,157 @@ _out:
         return false;
 }
 
+//;ENT-GTP::gtp1:123::lbl=label,,ctp=vcg01-CTP-1&vcg01-CTP-2&vcg01-CTP-3&vcg01-CTP-4;
+bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgName)
+{
+    int ret = 0;
+    char bufCmd[500], strCOMPLD[20], strDENY[20];
+    char ctag[10];
+    sprintf(ctag, "%d", getNewCtag());
+    gtpName = "gtp_";
+    gtpName += ctag;
+
+    String ctpGroupString;
+    getCienaCTPGroupInVCG(ctpGroupString, vcgName);
+
+    sprintf( bufCmd, "ent-gtp::%s:%s::lbl=gtp-%s,,ctp=%s;", gtpName.chars(), ctag, vcgName.chars(), ctpGroupString.chars() );
+
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(2)(Log::MPLS, gtpName, " has been created successfully.\n");
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(2)(Log::MPLS, gtpName, " creation has been denied.\n");
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(2)(Log::MPLS, gtpName, " creation via TL1_TELNET failed...\n");
+        return false;    
+}
+
+//;DLT-GTP::gtp1:123;
+bool SwitchCtrl_Session_SubnetUNI::deleteGTP_TL1(String& gtpName)
+{
+    int ret = 0;
+    char bufCmd[500], strCOMPLD[20], strDENY[20];
+
+    if (gtpName.empty())
+        return false;
+
+    sprintf( bufCmd, "dlt-gtp::%s:%d;", gtpName.chars(), getNewCtag() );
+
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(2)(Log::MPLS, gtpName, " has been deleted successfully.\n");
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(2)(Log::MPLS, gtpName, " deletion has been denied.\n");
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(2)(Log::MPLS, gtpName, " deletion via TL1_TELNET failed...\n");
+        return false;    
+}
+
+
+//;ENT-SNC-STSPC
+bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpName)
+{
+    int ret = 0;
+    char bufCmd[500], strCOMPLD[20], strDENY[20];
+    char ctag[10];
+    sprintf(ctag, "%d", getNewCtag());
+    sncName = "snc_";
+    sncName += ctag;
+
+    /*
+    sprintf( bufCmd, "ent-snc-stspc::%s:%s::lbl=gtp-%s,,ctp=%s;", gtpName.chars(), ctag, vcgName.chars(), ctpGroupString.chars() );
+
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(2)(Log::MPLS, gtpName, " has been created successfully.\n");
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(2)(Log::MPLS, gtpName, " creation has been denied.\n");
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+    */
+_out:
+        LOG(2)(Log::MPLS, sncName, " creation via TL1_TELNET failed...\n");
+        return false;    
+}
+
+//dlt-snc-stspc::snc_2:myctag;
+bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
+{
+    int ret = 0;
+    char bufCmd[500], strCOMPLD[20], strDENY[20];
+
+    if (sncName.empty())
+        return false;
+
+    sprintf( bufCmd, "dlt-snc-stspc::%s:%d;", sncName.chars(), getNewCtag() );
+
+    /*
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(2)(Log::MPLS, sncName, " has been deleted successfully.\n");
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(2)(Log::MPLS, sncName, " deletion has been denied.\n");
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+    */
+
+_out:
+        LOG(2)(Log::MPLS, sncName, " deletion via TL1_TELNET failed...\n");
+        return false;    
+}
 

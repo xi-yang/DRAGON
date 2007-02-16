@@ -88,21 +88,29 @@ public:
 	uint32 getPseudoSwitchID();
 	void getTimeslots(SimpleList<uint8>& timeslots);
 
-	// TL1 related functions	
+	//////////////// TL1 related functions >> begin  //////////////
+	//bool getReplyShell_TL1( uint32 ctag = 0 );
+
 	uint32 getNewCtag() { ++ctagNum; return (getPseudoSwitchID()+ctagNum)%999999+1; }
 	uint32 getCurrentCtag() { return (getPseudoSwitchID()+ctagNum)%999999+1; }
 	void getCienaTimeslotsString(String& groupMemString);
 	void getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort=0);
-	//bool getReplyShell_TL1( uint32 ctag = 0 );
-	bool createVCG_TL1(String& vcgName);
-	bool createVCG() { return createVCG_TL1(currentVCG); }
-	bool deleteVCG_TL1(String& vcgName);
-	bool deleteVCG() { return deleteVCG_TL1(currentVCG); }
-	//bool createGTP()_TL1;
-	//bool deleteGTP()_TL1;
-	//bool createSNC()_TL1;
-	//bool deleteSNC()_TL1;
+	void getCienaCTPGroupInVCG(String& ctpGroupString, String& vcgName);
 
+	bool createVCG_TL1(String& vcgName);
+	bool deleteVCG_TL1(String& vcgName);
+	bool createGTP_TL1(String& gtpName, String& vcgName);
+	bool deleteGTP_TL1(String& gtpName);
+	bool createSNC_TL1(String& sncName, String& gtpName);
+	bool deleteSNC_TL1(String& sncName);
+	bool createVCG() { return createVCG_TL1(currentVCG); }
+	bool deleteVCG() { return deleteVCG_TL1(currentVCG); }
+	bool createGTP() { return createGTP_TL1(currentGTP, currentVCG); }
+	bool deleteGTP() { return deleteGTP_TL1(currentGTP); }
+	bool createSNC() { return createSNC_TL1(currentSNC, currentGTP); }
+	bool deleteSNC() { return deleteSNC_TL1(currentSNC); }
+
+	//////////////// TL1 related functions << end //////////////
 
 	//Upcall for source/destination client
 	static void uniRsvpSrcUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData); // to be called by createSession

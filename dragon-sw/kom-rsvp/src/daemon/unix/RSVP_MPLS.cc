@@ -286,14 +286,21 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 								return false;
 							}
 
-							//create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC OR LOCAL_ID_TYPE_SUBNET_UNI_DEST
         		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
-                                                        ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG();
+							        //create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC OR LOCAL_ID_TYPE_SUBNET_UNI_DEST
+                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG() )
+                                                            return false;
+
+							        //create GTP
+                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() )
+                                                            return false;
+
+							        //create SNC (X times?) for LOCAL_ID_TYPE_SUBNET_UNI_SRC
+                                                        if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
+                                                            if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createSNC() )
+                                                                return false;
+                                                        }
         		                            }
-
-							//create GTP if needed
-
-							//create SNC (X times?) for LOCAL_ID_TYPE_SUBNET_UNI_SRC
 
 							//disconnect
 							(*sessionIter)->disconnectSwitch();
@@ -598,13 +605,21 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 								return;
 							}
 
-							//delete SNC for LOCAL_ID_TYPE_SUBNET_UNI_SRC
-
-							//create GTP if needed
-
-							//delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC or LOCAL_ID_TYPE_SUBNET_UNI_DEST
         		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
-                                                        ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG();
+
+        							//delete SNC for LOCAL_ID_TYPE_SUBNET_UNI_SRC
+        							if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
+                                                            if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC() )
+                                                                return;
+        							}
+
+        							//create GTP if needed
+                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP() )
+                                                            return;
+
+							       //delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC or LOCAL_ID_TYPE_SUBNET_UNI_DEST
+                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG() )
+                                                            return;
         		                            }
 
 							//disconnect
