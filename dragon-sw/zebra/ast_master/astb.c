@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "getopt.h"
-#include "ast_master.h"
+#include "ast_master_ext.h"
 #include "local_id_cfg.h"
 
 #define ASTB_RESULT_FILE	"/tmp/astb_result.xml"

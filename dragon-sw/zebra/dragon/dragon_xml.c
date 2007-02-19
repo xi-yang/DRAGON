@@ -9,7 +9,7 @@
 #include "vty.h"
 #include "log.h"
 #include "command.h"
-#include "ast_master/ast_master.h"
+#include "ast_master/ast_master_ext.h"
 #include "ast_master/local_id_cfg.h"
 #include "linklist.h"
 #include "memory.h"

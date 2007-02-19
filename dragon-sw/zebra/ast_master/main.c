@@ -8,6 +8,7 @@
 #include <sys/sendfile.h>
 #endif
 #include "vty.h"
+#include "ast_master_ext.h"
 #include "ast_master.h"
 
 #include "version.h"
@@ -34,12 +35,15 @@
 #define CLIENT_TIMEOUT	60
 #define SQL_RESULT	"/tmp/mysql.result"
 
+/* Configuration filename and directory. */
+char config_current[] = MASTER_DEFAULT_CONFIG;
+char config_default[] = SYSCONFDIR MASTER_DEFAULT_CONFIG;
+
 struct thread_master *master; /* master = dmaster.master */
 extern char *status_type_details[];
 extern char *action_type_details[];
 extern char *node_stype_name[];
 
-static void master_read_config(char *);
 static int master_accept(struct thread *);
 static int noded_callback(struct thread *);
 static int dragon_callback(struct thread *);
@@ -904,6 +908,7 @@ main(int argc, char* argv[])
 {
   char *progname;
   char *p;
+  char *vty_addr = NULL;
   int daemon_mode = 0;
   struct thread thread;
   struct sockaddr_in servAddr;
@@ -950,11 +955,6 @@ main(int argc, char* argv[])
   memset(&narb_pool, 0, sizeof(struct narb_tank));
   memset(&es_pool, 0, sizeof(struct es_tank));
   memset(&agency, 0, 3*sizeof(struct resource_agent));
-
-  if (config_file) 
-    master_read_config(config_file);
-  else 
-    master_read_config("/usr/local/etc/ast_master.conf");
 
   /* Change to the daemon program. */
   if (daemon_mode)
@@ -1008,6 +1008,16 @@ main(int argc, char* argv[])
     zlog_err("main: sigaction() failed");
     return 0;
   }
+
+  cmd_init(1);
+  vty_init();
+  master_supp_vty_init();
+  sort_node();
+
+  /* Get configuration file. */
+  vty_read_config (config_file, config_current, config_default);
+
+  vty_serv_sock(vty_addr, 2612, "/tmp/.master_vty");
 
   thread_add_read(master, master_accept, NULL, servSock);
   while (thread_fetch (master, &thread))
@@ -1802,105 +1812,6 @@ dragon_callback(struct thread *thread)
   zlog_info("dragon_callback(): END");
 
   return ret_value;
-}
-
-static void
-master_read_config(char *config_file)
-{
-  char line[100];
-  FILE *fp;
-  char *ret, *token;
- 
-  if (!config_file)
-    return;
-  fp = fopen(config_file, "r");
-  if (!fp)
-    return;
-
-  while ((ret = fgets(line, 100, fp)) != NULL) {
-    if (ret[0] == '#')
-      continue;
-
-    token = strtok(ret, " ");
-    if (!token || strcmp(token, "set") != 0)
-      continue;
-
-    token = strtok(NULL, " ");
-    if (!token)
-      return;
-    if (strcmp(token, "vtag") == 0) {
-      token = strtok(NULL, " ");
-      if (token) {
-	vtag_pool.vtags[vtag_pool.number] = atoi(token);
-	vtag_pool.number++;
-      }
-    } else if (strcmp(token, "narb") == 0) {
-      token = strtok(NULL, " ");
-      if (token) 
-	narb_pool.narbs[narb_pool.number].prefix = strdup(token);
-      else
-	continue;
-      token = strtok(NULL, " ");
-      if (token) {
-	if (token[strlen(token)-1]=='\n')
-	  token[strlen(token)-1]='\0';
-	narb_pool.narbs[narb_pool.number].narb_ip = strdup(token);
-	narb_pool.number++;
-      } else 
-	free(narb_pool.narbs[narb_pool.number].prefix);
-    } else if (strcmp(token, "es") == 0) {
-      token = strtok(NULL, " ");
-      if (token)
-	es_pool.es[es_pool.number].ip = strdup(token);
-      else 
-	continue;
-
-      token = strtok(NULL, " ");
-      if (token) 
-	es_pool.es[es_pool.number].router_id = strdup(token);
-      else {
-	free(es_pool.es[es_pool.number].ip);
-        continue;
-      }
-
-      token = strtok(NULL, " ");
-      if (token) { 
-        if (token[strlen(token)-1]=='\n') 
-	  token[strlen(token)-1]='\0';
-	es_pool.es[es_pool.number].tunnel = strdup(token);
-      } else {
-	free(es_pool.es[es_pool.number].ip);
-	free(es_pool.es[es_pool.number].router_id);
-      }	
-      es_pool.number++;
-    } else if (strcmp(token, "broker") == 0) {
-      int type = -1;
-
-      token = strtok(NULL, " ");
-      if (!token)
-	continue;
-      type = get_node_stype_by_str(token);
-      if (!type)
-	continue; 
-
-      token = strtok(NULL, " ");
-      if (token) 
- 	agency[type].add = strdup(token);
-      else 
-	continue;
-
-      token = strtok(NULL, " ");
-      if (token) 
-	agency[type].port = atoi(token);
-      else {
-	free(agency[type].add);
-	continue;
-      }
-    }	
-  }
-  
-  if (es_pool.number != 0)
-    es_pool.number--;
 }
 
 #ifdef RESOURCE_BROKER

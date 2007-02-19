@@ -6,7 +6,7 @@
 #include "libxml/xmlmemory.h"
 #include "libxml/parser.h"
 #include "libxml/tree.h"
-#include "ast_master.h"
+#include "ast_master_ext.h"
 #include "buffer.h"
 #include "log.h"
 #include "local_id_cfg.h"
@@ -703,7 +703,6 @@ print_node(FILE* fp, struct resource* node)
   if (node->res.n.command) 
     fprintf(fp, "\t<command>%s</command>\n", node->res.n.command);
 
-  /* FIONA */
   /* if this is sending to NODE_AGENT or MASTER */
   if (node->res.n.if_list) {
     for (curnode = node->res.n.if_list->head;
@@ -2198,6 +2197,9 @@ autofill_es_info(struct resource* res)
   
   if (res->type != NODE_RES)
     return 0;
+
+  if (res->res.n.stype == vlsr)
+    return 1;
 
   for (i = 0; i < es_pool.number; i++) {
     if (strcmp(es_pool.es[i].ip, res->res.n.ip) == 0) {

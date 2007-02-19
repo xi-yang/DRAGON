@@ -37,7 +37,7 @@
 #include "log.h"
 #include "memory.h"
 
-#include "ast_master/ast_master.h"
+#include "ast_master/ast_master_ext.h"
 #include "dragon/dragond.h"
 
 /* Configuration filename and directory. */

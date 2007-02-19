@@ -11,7 +11,7 @@
 #include <sys/sendfile.h>
 #endif
 #include "vty.h"
-#include "ast_master.h"
+#include "ast_master_ext.h"
 
 #include "version.h"
 #include "getopt.h"

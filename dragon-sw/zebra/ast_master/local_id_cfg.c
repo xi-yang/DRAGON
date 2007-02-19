@@ -3,7 +3,7 @@
 #include "libxml/xmlmemory.h"
 #include "libxml/parser.h"
 #include "libxml/tree.h"
-#include "ast_master.h"
+#include "ast_master_ext.h"
 #include "buffer.h"
 #include "log.h"
 #include "local_id_cfg.h"
