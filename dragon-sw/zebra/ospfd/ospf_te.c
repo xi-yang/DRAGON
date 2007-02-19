@@ -232,6 +232,7 @@ const char* logical_port_number2string(u_int32_t port_id)
 {
 	static char buf[10];
 	int bay, shelf, slot, subslot, port;
+	char shelf_alpha;
 
 	bay = ((port_id)>>24)+1;
 	shelf = (((port_id)>>16)&0xff)+1;
@@ -239,7 +240,19 @@ const char* logical_port_number2string(u_int32_t port_id)
 	subslot = (((port_id)>>8)&0x0f)+1;
 	port = ((port_id)&0xff)+1;
 
-	sprintf(buf, "%d-%c-%d-%d-%d", bay, 'A'-3+shelf, slot, subslot, port);
+	switch (shelf)
+	{
+	case 2:
+		shelf_alpha = 'A';
+		break;
+	case 3:
+		shelf_alpha = 'C';
+		break;
+	default:
+		shelf_alpha = 'X';
+		break;
+	}
+	sprintf(buf, "%d-%c-%d-%d-%d", bay, shelf_alpha, slot, subslot, port);
 	return (const char*)buf;
 }
 
@@ -250,10 +263,20 @@ u_int32_t logical_port_string2number(const char* port_str)
 
 	sscanf(port_str, "%d-%c-%d-%d-%d", &bay, &shelf_alpha, &slot, &subslot, &port);
 	bay--; slot--; subslot--; port--;
-	shelf = shelf_alpha - 'A' + 2;
-	if (shelf > 10)
-		shelf = shelf_alpha - 'a' + 2;
-
+	switch (shelf)
+	{
+	case 'a':
+	case 'A':
+		shelf = 2;
+		break;
+	case 'c':
+	case 'C':
+		shelf = 3;
+		break;
+	default:
+		return 0;
+		break;
+	}
 	return ((bay<<24) | (shelf <<16) | (slot << 12) | (subslot<<8) | (port&0xff) );
 }
 
@@ -2650,6 +2673,11 @@ DEFUN (ospf_te_interface_ifsw_cap5,
   te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.data_ipv4 = data_if;
 
   data_port = logical_port_string2number((const char*)argv[6]);
+  if (data_port == 0)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap5: unacceptable data_port: %s%s", argv[6], VTY_NEWLINE);
+      return CMD_WARNING;
+    }
   te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.logical_port_number = htonl(data_port);
   
   if (sscanf (argv[7], "%d", &egress_label) != 1)
