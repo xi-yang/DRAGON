@@ -557,7 +557,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
     }
 
     bay = (logicalPort >> 24) + 1;
-    shelf = ((logicalPort >> 16)&0xff) + 1;
+    shelf = ((logicalPort >> 16)&0xff);
     slot = ((logicalPort >> 12)&0x0f) + 1;
     subslot = ((logicalPort >> 8)&0x0f) + 1;
     port = (logicalPort&0xff) + 1;
@@ -571,7 +571,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
         shelf_alpha = 'C';
         break;
     default:
-        return;
+        shelf_alpha = 'X';
         break;
     }
     sprintf(buf, "%d-%c-%d-%d", bay, shelf_alpha, slot, subslot);
@@ -608,7 +608,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
         shelf_alpha = 'C';
         break;
     default:
-        return;
+        shelf_alpha = 'X';
         break;
     }
     sprintf(buf, "%d-%c-%d-%d", bay, shelf_alpha, slot, subslot);
