@@ -658,6 +658,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
     if ((groupMem).empty())
     {
         LOG(1)(Log::MPLS, "getCienaTimeslotsString returned empty string");
+		vcgName = "";
         return false;
     }
 
@@ -688,6 +689,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
     {
         LOG(3)(Log::MPLS, vcgName, " creation has been denied.\n", cmdString);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
+		vcgName = "";
         return false;
     }
     else 
@@ -695,6 +697,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
 
 _out:
         LOG(3)(Log::MPLS, vcgName, " creation via TL1_TELNET failed...\n", cmdString);
+		vcgName = "";
         return false;
 }
 
@@ -706,8 +709,9 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
     char bufCmd[100], strCOMPLD[20], strDENY[20];
     uint32 ctag = getNewCtag();
 
+	//Do nothing for VCG with empty name, which is still valid and allows next operations
     if (vcgName.empty())
-        return false;
+        return true;
 
     sprintf(bufCmd, "ed-vcg::name=%s:%d::,pst=OOS;", vcgName.chars(), ctag);
 
@@ -771,6 +775,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
     if (ctpGroupString.empty())
     {
         LOG(1)(Log::MPLS, "getCienaCTPGroupInVCG returned empty string");
+		gtpName = "";
         return false;
     }
 
@@ -791,6 +796,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
     {
         LOG(3)(Log::MPLS, gtpName, " creation has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
+		gtpName = "";
         return false;
     }
     else 
@@ -798,6 +804,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
 
 _out:
         LOG(3)(Log::MPLS, gtpName, " creation via TL1_TELNET failed...\n", bufCmd);
+		gtpName = "";
         return false;    
 }
 
@@ -807,8 +814,9 @@ bool SwitchCtrl_Session_SubnetUNI::deleteGTP_TL1(String& gtpName)
     int ret = 0;
     char bufCmd[500], strCOMPLD[20], strDENY[20];
 
+	//Do nothing for GTP with empty name, which is still valid and allows next operations
     if (gtpName.empty())
-        return false;
+        return true;
 
     sprintf( bufCmd, "dlt-gtp::%s:%d;", gtpName.chars(), getNewCtag() );
 
@@ -875,6 +883,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
     {
         LOG(3)(Log::MPLS, sncName, " creation has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
+		sncName = "";
         return false;
     }
     else 
@@ -882,6 +891,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
 
 _out:
         LOG(3)(Log::MPLS, sncName, " creation via TL1_TELNET failed...\n", bufCmd);
+		sncName = "";
         return false;    
 }
 
@@ -892,8 +902,9 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
     int ret = 0;
     char bufCmd[500], strCOMPLD[20], strDENY[20];
 
+	//Do nothing for SNC with empty name, which is still valid and allows next operations
     if (sncName.empty())
-        return false;
+        return true;
 
 
     sprintf( bufCmd, "ed-snc-stspc::%s:%d::,pst=oos;", sncName.chars(), getNewCtag() );
