@@ -235,7 +235,7 @@ const char* logical_port_number2string(u_int32_t port_id)
 	char shelf_alpha;
 
 	bay = ((port_id)>>24)+1;
-	shelf = (((port_id)>>16)&0xff)+1;
+	shelf = (((port_id)>>16)&0xff);
 	slot = (((port_id)>>12)& 0x0f)+1;
 	subslot = (((port_id)>>8)&0x0f)+1;
 	port = ((port_id)&0xff)+1;
