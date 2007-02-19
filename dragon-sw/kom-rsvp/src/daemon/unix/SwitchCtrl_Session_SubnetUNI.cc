@@ -547,6 +547,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupInVCG(String& ctpGroupString,
 void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort)
 {
     int bay, shelf, slot, subslot, port;
+    char shelf_alpha;
     char buf[20];
     SubnetUNI_Data* pSubnetUni = (isSource ? &subnetUniSrc : &subnetUniDest);
 
@@ -561,16 +562,28 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
     subslot = ((logicalPort >> 8)&0x0f) + 1;
     port = (logicalPort&0xff) + 1;
 
-    sprintf(buf, "%d-%c-%d-%d", bay, 'A'-3+shelf, slot, subslot);
+    switch (shelf)
+    {
+    case 2:
+        shelf_alpha = 'A';
+        break;
+    case 3:
+        shelf_alpha = 'C';
+        break;
+    default:
+        return;
+        break;
+    }
+    sprintf(buf, "%d-%c-%d-%d", bay, shelf_alpha, slot, subslot);
     OMPortString = (const char*)buf;
-
-    sprintf(buf, "%d-%c-%d-%d-%d", bay, 'A'-3+shelf, slot, subslot, port);
+    sprintf(buf, "%d-%c-%d-%d-%d", bay, shelf_alpha, slot, subslot, port);
     ETTPString = (const char*)buf;
 }
 
 void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimeslotsString)
 {
     int bay, shelf, slot, subslot;
+    char shelf_alpha;
     char buf[20];
 
     uint32 logicalPort = ntohl(subnetUniDest.logical_port);
@@ -585,7 +598,20 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
     shelf = ((logicalPort >> 16)&0xff) + 1;
     slot = ((logicalPort >> 12)&0x0f) + 1;
     subslot = ((logicalPort >> 8)&0x0f) + 1;
-    sprintf(buf, "%d-%c-%d-%d", bay, 'A'-3+shelf, slot, subslot);
+
+    switch (shelf)
+    {
+    case 2:
+        shelf_alpha = 'A';
+        break;
+    case 3:
+        shelf_alpha = 'C';
+        break;
+    default:
+        return;
+        break;
+    }
+    sprintf(buf, "%d-%c-%d-%d", bay, shelf_alpha, slot, subslot);
 
     SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(subnetUniDest.ethernet_bw);
     uint8 ts_num = 0;
