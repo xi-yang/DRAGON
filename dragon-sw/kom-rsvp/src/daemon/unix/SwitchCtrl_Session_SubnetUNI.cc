@@ -595,7 +595,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
     }
 
     bay = (logicalPort >> 24) + 1;
-    shelf = ((logicalPort >> 16)&0xff) + 1;
+    shelf = ((logicalPort >> 16)&0xff);
     slot = ((logicalPort >> 12)&0x0f) + 1;
     subslot = ((logicalPort >> 8)&0x0f) + 1;
 
