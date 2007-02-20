@@ -330,7 +330,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 		                                   // Update time slots
 							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
 							if (ts_list.size() > 0)
-								RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, true);
+								RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).outPort, ts_list, true);
 						}
 						noError = true;
 						break;
@@ -643,7 +643,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                             // Update time slots
                                             ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
                                             if (ts_list.size() > 0)
-                                            RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
+                                                RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
 	   				      }
 	                                  if ( ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 
@@ -654,7 +654,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                             // Update time slots
                                             ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
                                             if (ts_list.size() > 0)
-                                            RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
+                                                RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).outPort, ts_list, false);
 	                                  }
                                 }
 
