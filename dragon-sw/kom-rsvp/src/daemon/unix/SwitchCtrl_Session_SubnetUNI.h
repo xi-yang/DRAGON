@@ -124,22 +124,22 @@ public:
 	}
 	bool createGTP()
 	{
-		if (hasGTP_TL1(currentVCG)) return true;
+		if (hasGTP_TL1(currentGTP)) return true;
 		else return createGTP_TL1(currentGTP, currentVCG); 
 	}
 	bool deleteGTP()
 	{
-		if (hasGTP_TL1(currentVCG)) return true;
+		if (hasGTP_TL1(currentGTP)) return true;
 		else return deleteGTP_TL1(currentGTP);
 	}
 	bool createSNC() 
 	{
-		if (hasSNC_TL1(currentVCG)) return true;
+		if (hasSNC_TL1(currentSNC)) return true;
 		else return createSNC_TL1(currentSNC, currentGTP); 
 	}
 	bool deleteSNC()
 	{
-		if (hasSNC_TL1(currentVCG)) return true;
+		if (hasSNC_TL1(currentSNC)) return true;
 		else return deleteSNC_TL1(currentVCG);
 	}
 
