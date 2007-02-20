@@ -142,15 +142,15 @@ public:
 
 	bool hasVCG()
 	{
-		return hasVCG(currentVCG);
+		return hasVCG_TL1(currentVCG);
 	}
 	bool hasGTP()
 	{
-		return hasGTP(currentGTP);
+		return hasGTP_TL1(currentGTP);
 	}
 	bool hasSNC()
 	{
-		return hasSNC(currentSNC);
+		return hasSNC_TL1(currentSNC);
 	}
 
 	//////////////// TL1 related functions << end //////////////
