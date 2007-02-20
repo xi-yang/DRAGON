@@ -114,33 +114,43 @@ public:
 
 	bool createVCG()
 	{
-		if (hasVCG_TL1(currentVCG)) return true;
-		else return createVCG_TL1(currentVCG);
+		//if (hasVCG_TL1(currentVCG)) return true;
+		return createVCG_TL1(currentVCG);
 	}
 	bool deleteVCG() 
 	{
-		if (hasVCG_TL1(currentVCG)) return deleteVCG_TL1(currentVCG);
-		else return true;
+		return deleteVCG_TL1(currentVCG);
 	}
 	bool createGTP()
 	{
-		if (hasGTP_TL1(currentGTP)) return true;
-		else return createGTP_TL1(currentGTP, currentVCG); 
+		//if (hasGTP_TL1(currentGTP)) return true;
+		return createGTP_TL1(currentGTP, currentVCG); 
 	}
 	bool deleteGTP()
 	{
-		if (hasGTP_TL1(currentGTP)) return deleteGTP_TL1(currentGTP);
-		else return true;
+		return deleteGTP_TL1(currentGTP);
 	}
 	bool createSNC() 
 	{
-		if (hasSNC_TL1(currentSNC)) return true;
-		else return createSNC_TL1(currentSNC, currentGTP); 
+		//if (hasSNC_TL1(currentSNC)) return true;
+		return createSNC_TL1(currentSNC, currentGTP); 
 	}
 	bool deleteSNC()
 	{
-		if (hasSNC_TL1(currentSNC)) return deleteSNC_TL1(currentVCG);
-		else return true;
+		return deleteSNC_TL1(currentSNC);
+	}
+
+	bool hasVCG()
+	{
+		return hasVCG(currentVCG);
+	}
+	bool hasGTP()
+	{
+		return hasGTP(currentGTP);
+	}
+	bool hasSNC()
+	{
+		return hasSNC(currentSNC);
 	}
 
 	//////////////// TL1 related functions << end //////////////

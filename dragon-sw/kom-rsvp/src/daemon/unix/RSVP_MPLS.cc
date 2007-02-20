@@ -606,6 +606,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                 if( (*iter).switchID.rawAddress() == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
 
 						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
+                                                 bool noErr = true;
+
 							//connect
 							if (!(*sessionIter)->connectSwitch()){
 								LOG(2)( Log::MPLS, "VLSR-Subnet Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
@@ -614,28 +616,24 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
                                                 if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 
-                                                    //delete SNC for LOCAL_ID_TYPE_SUBNET_UNI_SRC
-                                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
-                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC() ) {
-                                                            (*sessionIter)->disconnectSwitch();
-                                                            return;
-                                                        }
-                                                        //create GTP (Source node only)
-                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP() ) {
-                                                            (*sessionIter)->disconnectSwitch();
-                                                            return;
-                                                        }
+                                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {                                                    
+                                                        //delete SNC for LOCAL_ID_TYPE_SUBNET_UNI_SRC
+                                                        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSNC())
+                                                            noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC();
+                                                            
+                                                        //delete GTP (Source node only)
+                                                        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasGTP())
+                                                            noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP();
                                                     }
 
                                                     //delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC or LOCAL_ID_TYPE_SUBNET_UNI_DEST
-                                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG() ) {
-                                                        (*sessionIter)->disconnectSwitch();
-                                                        return;
-                                                    }
+                                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasVCG())
+                                                        noErr == noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG();
                                                 }
 
 						    //disconnect
 						    (*sessionIter)->disconnectSwitch();
+						    if (!noErr) return;
 						}
 
 	   				       if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
