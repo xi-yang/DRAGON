@@ -114,8 +114,8 @@ public:
 
 	bool createVCG()
 	{
-		if (hasVCG_TL1(currentVCG)) return createVCG_TL1(currentVCG);
-		else return true;
+		if (hasVCG_TL1(currentVCG)) return true;
+		else return createVCG_TL1(currentVCG);
 	}
 	bool deleteVCG() 
 	{
@@ -124,8 +124,8 @@ public:
 	}
 	bool createGTP()
 	{
-		if (hasGTP_TL1(currentGTP)) return createGTP_TL1(currentGTP, currentVCG); 
-		else return true;
+		if (hasGTP_TL1(currentGTP)) return true;
+		else return createGTP_TL1(currentGTP, currentVCG); 
 	}
 	bool deleteGTP()
 	{
@@ -134,8 +134,8 @@ public:
 	}
 	bool createSNC() 
 	{
-		if (hasSNC_TL1(currentSNC)) return createSNC_TL1(currentSNC, currentGTP); 
-		else return true;
+		if (hasSNC_TL1(currentSNC)) return true;
+		else return createSNC_TL1(currentSNC, currentGTP); 
 	}
 	bool deleteSNC()
 	{
