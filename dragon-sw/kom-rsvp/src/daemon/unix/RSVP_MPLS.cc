@@ -314,9 +314,6 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 						}
 						// no break; continue to next case clauses !
 
-						noError = true; // temp!
-						break;
-
 					case Message::Resv:
 					case Message::ResvConf:
 		                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
@@ -633,7 +630,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 						    //disconnect
 						    (*sessionIter)->disconnectSwitch();
-						    if (!noErr) return;
+						    if (!noErr) return; // otherwise, continue to update bandwidth and timeslots.
 						}
 
 	   				       if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
