@@ -462,7 +462,6 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
 
 void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemString)
 {
-    char buf[10];
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
     uint8 ts = pUniData->first_timeslot;
     if (ts%3 != 1)
@@ -494,13 +493,13 @@ void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemStrin
         return;
     }
     
-    sprintf(buf, "%d&&%d", ts, ts+ts_num-1);
-    groupMemString = (const char*)buf;
+    sprintf(bufCmd, "%d&&%d", ts, ts+ts_num-1);
+    groupMemString = (const char*)bufCmd;
 }
 
 void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupInVCG(String& ctpGroupString, String& vcgName)
 {
-    char buf[500], ctp[20];
+    char ctp[20];
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
     uint8 ts = pUniData->first_timeslot;
     if (ts%3 != 1)
@@ -532,15 +531,15 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupInVCG(String& ctpGroupString,
         return;
     }
 
-    sprintf(buf, "%s-CTP-%d", vcgName.chars(), ts/3+1);
+    sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts/3+1);
     ts_num += ts;
     ts += 3;
     for ( ; ts < ts_num; ts += 3)
     {
         sprintf(ctp, "&%s-CTP-%d", vcgName.chars(), ts/3+1);
-        strcat(buf, ctp);
+        strcat(bufCmd, ctp);
     }
-    ctpGroupString = (const char*)buf;
+    ctpGroupString = (const char*)bufCmd;
 }
 
 
@@ -548,7 +547,6 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
 {
     int bay, shelf, slot, subslot, port;
     char shelf_alpha;
-    char buf[20];
     SubnetUNI_Data* pSubnetUni = (isSource ? &subnetUniSrc : &subnetUniDest);
 
     if (logicalPort == 0)
@@ -574,17 +572,16 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
         shelf_alpha = 'X';
         break;
     }
-    sprintf(buf, "%d-%c-%d-%d", bay, shelf_alpha, slot, subslot);
-    OMPortString = (const char*)buf;
-    sprintf(buf, "%d-%c-%d-%d-%d", bay, shelf_alpha, slot, subslot, port);
-    ETTPString = (const char*)buf;
+    sprintf(bufCmd, "%d-%c-%d-%d", bay, shelf_alpha, slot, subslot);
+    OMPortString = (const char*)bufCmd;
+    sprintf(bufCmd, "%d-%c-%d-%d-%d", bay, shelf_alpha, slot, subslot, port);
+    ETTPString = (const char*)bufCmd;
 }
 
 void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimeslotsString)
 {
     int bay, shelf, slot, subslot;
     char shelf_alpha;
-    char buf[20];
 
     uint32 logicalPort = ntohl(subnetUniDest.logical_port);
     uint8 ts = subnetUniDest.first_timeslot;
@@ -611,7 +608,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
         shelf_alpha = 'X';
         break;
     }
-    sprintf(buf, "%d-%c-%d-%d", bay, shelf_alpha, slot, subslot);
+    sprintf(bufCmd, "%d-%c-%d-%d", bay, shelf_alpha, slot, subslot);
 
     SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(subnetUniDest.ethernet_bw);
     uint8 ts_num = 0;
@@ -635,9 +632,9 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
         return;
     }
 
-    destTimeslotsString = (const char*)buf;
-    sprintf(buf, "-%d&&%d", ts, ts+ts_num-1);
-    destTimeslotsString += (const char*)buf;
+    destTimeslotsString = (const char*)bufCmd;
+    sprintf(bufCmd, "-%d&&%d", ts, ts+ts_num-1);
+    destTimeslotsString += (const char*)bufCmd;
 }
 
 //ENT-VCG::NAME=vcg01:456::,PST=is,SUPPTTP=1-A-3-1,CRCTYPE=CRC_32,,,FRAMINGMODE=GFP,
@@ -706,16 +703,11 @@ _out:
 bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
 {
     int ret = 0;
-    char bufCmd[100], strCOMPLD[20], strDENY[20];
     uint32 ctag = getNewCtag();
 
-	//Do nothing for VCG with empty name, which is still valid and allows next operations
-    if (vcgName.empty())
-        return true;
-
     sprintf(bufCmd, "ed-vcg::name=%s:%d::,pst=OOS;", vcgName.chars(), ctag);
-
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
     ret = readShell(strCOMPLD, strDENY, 1, 5);
@@ -760,11 +752,40 @@ _out:
         return false;
 }
 
+bool SwitchCtrl_Session_SubnetUNI::hasVCG_TL1(String& vcgName)
+{
+    int ret = 0;
+
+    sprintf( bufCmd, "rtrv-vcg::%s:%d;", vcgName.chars(), getNewCtag() );
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, vcgName, " VCG does exist.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, vcgName, " VCG does not exist.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(3)(Log::MPLS, vcgName, " VCG existence checking via TL1_TELNET failed...\n", bufCmd);
+        return false;    
+}
+
 //;ENT-GTP::gtp1:123::lbl=label,,ctp=vcg01-CTP-1&vcg01-CTP-2&vcg01-CTP-3&vcg01-CTP-4;
 bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgName)
 {
     int ret = 0;
-    char bufCmd[500], strCOMPLD[20], strDENY[20];
     char ctag[10];
     sprintf(ctag, "%d", getNewCtag());
     gtpName = "gtp_";
@@ -812,14 +833,8 @@ _out:
 bool SwitchCtrl_Session_SubnetUNI::deleteGTP_TL1(String& gtpName)
 {
     int ret = 0;
-    char bufCmd[500], strCOMPLD[20], strDENY[20];
-
-	//Do nothing for GTP with empty name, which is still valid and allows next operations
-    if (gtpName.empty())
-        return true;
 
     sprintf( bufCmd, "dlt-gtp::%s:%d;", gtpName.chars(), getNewCtag() );
-
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
@@ -845,13 +860,42 @@ _out:
         return false;    
 }
 
+bool SwitchCtrl_Session_SubnetUNI::hasGTP_TL1(String& gtpName)
+{
+    int ret = 0;
+ 
+    sprintf( bufCmd, "rtrv-gtp::%s:%d;", gtpName.chars(), getNewCtag() );
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, gtpName, " GTP does exist.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, gtpName, " GTP does not exist.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(3)(Log::MPLS, gtpName, " GTP existence checking via TL1_TELNET failed...\n", bufCmd);
+        return false;    
+}
 
 //;ent-snc-stspc:SEAT:gtp_x,1-a-5-1-1&&21:myctag::name=sncname,type=dynamic,rmnode=GRNOC,lep=gtp_nametype,conndir=bi_direction,prtt=aps_vlsr_unprotected,pst=is;
 bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpName)
 {
     int ret = 0;
-    char bufCmd[500], strCOMPLD[20], strDENY[20];
     char ctag[10];
+
     sprintf(ctag, "%d", getNewCtag());
     sncName = "snc_";
     sncName += ctag;
@@ -900,12 +944,6 @@ _out:
 bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
 {
     int ret = 0;
-    char bufCmd[500], strCOMPLD[20], strDENY[20];
-
-	//Do nothing for SNC with empty name, which is still valid and allows next operations
-    if (sncName.empty())
-        return true;
-
 
     sprintf( bufCmd, "ed-snc-stspc::%s:%d::,pst=oos;", sncName.chars(), getNewCtag() );
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
@@ -954,3 +992,32 @@ _out:
         return false;    
 }
 
+bool SwitchCtrl_Session_SubnetUNI::hasSNC_TL1(String& sncName)
+{
+    int ret = 0;
+
+    sprintf( bufCmd, "rtrv-snc-stspc::%s:%d;", sncName.chars(), getNewCtag() );
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, sncName, " SNC does exist.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, sncName, " SNC does not exist.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(3)(Log::MPLS, sncName, " SNC existence checking via TL1_TELNET failed...\n", bufCmd);
+        return false;    
+}

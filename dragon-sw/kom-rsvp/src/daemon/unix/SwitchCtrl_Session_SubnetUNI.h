@@ -102,18 +102,46 @@ public:
 	void getCienaCTPGroupInVCG(String& ctpGroupString, String& vcgName);
 	void getCienaDestTimeslotsString(String& destTimeslotsString);
 
+	bool hasVCG_TL1(String& vcgName);
 	bool createVCG_TL1(String& vcgName);
 	bool deleteVCG_TL1(String& vcgName);
+	bool hasGTP_TL1(String& gtpName);
 	bool createGTP_TL1(String& gtpName, String& vcgName);
 	bool deleteGTP_TL1(String& gtpName);
+	bool hasSNC_TL1(String& sncName);
 	bool createSNC_TL1(String& sncName, String& gtpName);
 	bool deleteSNC_TL1(String& sncName);
-	bool createVCG() { return createVCG_TL1(currentVCG); }
-	bool deleteVCG() { return deleteVCG_TL1(currentVCG); }
-	bool createGTP() { return createGTP_TL1(currentGTP, currentVCG); }
-	bool deleteGTP() { return deleteGTP_TL1(currentGTP); }
-	bool createSNC() { return createSNC_TL1(currentSNC, currentGTP); }
-	bool deleteSNC() { return deleteSNC_TL1(currentSNC); }
+
+	bool createVCG()
+	{
+		if (hasVCG_TL1(currentVCG)) return true;
+		else return createVCG_TL1(currentVCG);
+	}
+	bool deleteVCG() 
+	{
+		if (hasVCG_TL1(currentVCG)) return true;
+		else return deleteVCG_TL1(currentVCG);
+	}
+	bool createGTP()
+	{
+		if (hasGTP_TL1(currentVCG)) return true;
+		else return createGTP_TL1(currentGTP, currentVCG); 
+	}
+	bool deleteGTP()
+	{
+		if (hasGTP_TL1(currentVCG)) return true;
+		else return deleteGTP_TL1(currentGTP);
+	}
+	bool createSNC() 
+	{
+		if (hasSNC_TL1(currentVCG)) return true;
+		else return createSNC_TL1(currentSNC, currentGTP); 
+	}
+	bool deleteSNC()
+	{
+		if (hasSNC_TL1(currentVCG)) return true;
+		else return deleteSNC_TL1(currentVCG);
+	}
 
 	//////////////// TL1 related functions << end //////////////
 
@@ -165,6 +193,10 @@ private:
 	void internalInit ();
 	void setSubnetUniData(SubnetUNI_Data& data, uint8 id, uint8 first_ts, uint16 tunnel_id, float bw, uint32 tna, uint32 uni_c_id, 
 		uint32 uni_n_id, uint32 data_if, uint32 port, uint32 egress_label, uint32 upstream_label, uint8* node_name, uint8* cc_name, uint8* bitmask);
+
+	char bufCmd[500];
+	char strCOMPLD[20];
+	char strDENY[20];
 };
 
 
