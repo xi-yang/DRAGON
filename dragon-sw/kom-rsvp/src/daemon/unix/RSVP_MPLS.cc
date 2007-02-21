@@ -289,7 +289,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
                                                 if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
                                                     //create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC OR LOCAL_ID_TYPE_SUBNET_UNI_DEST
-                                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG() ) {
+                                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG((*iter).vlanTag) ) {
                                                         (*sessionIter)->disconnectSwitch();
                                                         return false;
                                                     }
@@ -613,7 +613,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
                                                 if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 
-                                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {                                                    
+                                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
                                                         //delete SNC for LOCAL_ID_TYPE_SUBNET_UNI_SRC
                                                         if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSNC())
                                                             noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC();

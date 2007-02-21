@@ -102,6 +102,9 @@ public:
 	void getCienaCTPGroupInVCG(String& ctpGroupString, String& vcgName);
 	void getCienaDestTimeslotsString(String& destTimeslotsString);
 
+	bool hasEFLOW_TL1(String& vcgName, bool ingress = true);
+	bool createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh = 0);
+	bool deleteEFLOWs_TL1(String& vcgName);
 	bool hasVCG_TL1(String& vcgName);
 	bool createVCG_TL1(String& vcgName);
 	bool deleteVCG_TL1(String& vcgName);
@@ -117,8 +120,19 @@ public:
 		//if (hasVCG_TL1(currentVCG)) return true;
 		return createVCG_TL1(currentVCG);
 	}
+	bool createVCG(int vlanLow, int vlanHigh = 0)
+	{
+		//if (hasVCG_TL1(currentVCG)) return true;
+		if (!createVCG_TL1(currentVCG))
+			return false;
+		if (!createEFLOWs_TL1(currentVCG, vlanLow, vlanHigh))
+			return false;
+		return true;
+	}
 	bool deleteVCG() 
 	{
+		if (hasEFLOW_TL1(currentVCG))
+			deleteEFLOWs_TL1(currentVCG);
 		return deleteVCG_TL1(currentVCG);
 	}
 	bool createGTP()

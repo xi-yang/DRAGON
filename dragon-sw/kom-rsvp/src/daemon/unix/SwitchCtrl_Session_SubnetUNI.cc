@@ -637,12 +637,175 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
     destTimeslotsString += (const char*)bufCmd;
 }
 
+//ent-eflow::myeflow1:123:::ingressporttype=ettp,ingressportname=1-A-3-1-1, 
+//pkttype=single_vlan_tag,outervlanidrange=1&&5,,priority=1&&8,egressporttype=vcg, 
+//egressportname=vcg02,cosmapping=cos_port_default;
+//
+//                  $$$$ We do not consider inner VLAN tags at this point!
+//
+bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh)
+{
+    int ret = 0;
+    char outerVlanRange[20];
+    String suppTtp, ettpName;
+
+    if (vlanLow == 0 && vlanHigh == 0)
+    {
+        vlanLow = 1; 
+        vlanHigh = 4094;
+    }
+    if (vlanHigh > vlanLow)
+        sprintf(outerVlanRange, "%d&&%d", vlanLow,vlanHigh);
+    else
+        sprintf(outerVlanRange, "%d", vlanLow);
+
+    getCienaLogicalPortString(suppTtp, ettpName);
+
+    sprintf(bufCmd, "ent-eflow::eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,pkttype=single_vlan_tag,outervlanidrange=%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default;",
+        vcgName.chars(), getNewCtag(), ettpName.chars(), outerVlanRange, vcgName.chars());
+
+    if ( (ret = writeShell((char*)bufCmd.chars(), 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW has been created successfully.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        // contine to egress EFLOW creation ...
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW creation has been denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+
+    sprintf(bufCmd, "ent-eflow::eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,pkttype=single_vlan_tag,outervlanidrange=%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default;",
+        vcgName.chars(), getNewCtag(), vcgName.chars(), outerVlanRange, ettpName.chars());
+
+    if ( (ret = writeShell((char*)bufCmd.chars(), 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW has been created successfully.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW creation has been denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        //$$$$ Delete ingress EFLOW
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(3)(Log::MPLS, vcgName, " EFLOWs creation via TL1_TELNET failed...\n", bufCmd);
+        return false;
+}
+
+//dlt-elow::myeflow1:myctag;
+bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName)
+{
+    int ret = 0;
+
+    sprintf(bufCmd, "dlt-eflow::eflow_%s_in:%d;", vcgName.chars(), getNewCtag());
+
+    if ( (ret = writeShell((char*)bufCmd.chars(), 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW has been deleted successfully.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        // contine to egress EFLOW creation ...
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW deletion has been denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+    sprintf(bufCmd, "dlt-eflow::eflow_%s_out:%d;", vcgName.chars(), getNewCtag());
+
+    if ( (ret = writeShell((char*)bufCmd.chars(), 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW has been deleted successfully.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW deletion has been denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(3)(Log::MPLS, vcgName, " EFLOWs deletion via TL1_TELNET failed...\n", bufCmd);
+        return false;
+}
+
+//rtrv-eflow::myeflow1:myctag;
+bool SwitchCtrl_Session_SubnetUNI::hasEFLOW_TL1(String& vcgName, bool ingress)
+{
+    int ret = 0;
+
+    sprintf(bufCmd, "rtrv-eflow::eflow_%s_:%d;", vcgName.chars(), ingress? "in":"out", getNewCtag());
+
+    if ( (ret = writeShell((char*)bufCmd.chars(), 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(4)(Log::MPLS, vcgName, ingress? "_in":"_out", " EFLOW does exist.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(4)(Log::MPLS, vcgName, ingress? "_in":"_out", " EFLOW does not exist.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(4)(Log::MPLS, vcgName, ingress? "_in":"_out", " EFLOW existence checking via TL1_TELNET failed...\n", bufCmd);
+        return false;    
+}
+
 //ENT-VCG::NAME=vcg01:456::,PST=is,SUPPTTP=1-A-3-1,CRCTYPE=CRC_32,,,FRAMINGMODE=GFP,
 //TUNNELPEERTYPE=ETTP,TUNNELPEERNAME=1-A-3-1-1,,GFPFCSENABLED=yes,,,GROUPMEM=1&&3,,;
 bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
 {
     int ret = 0;
-    char ctag[10], strCOMPLD[20], strDENY[20];
+    char ctag[10];
     String suppTtp, tunnelPeerName, groupMem;
 
     sprintf(ctag, "%d", getNewCtag());
@@ -655,7 +818,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
     if ((groupMem).empty())
     {
         LOG(1)(Log::MPLS, "getCienaTimeslotsString returned empty string");
-		vcgName = "";
+        vcgName = "";
         return false;
     }
 
@@ -686,7 +849,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
     {
         LOG(3)(Log::MPLS, vcgName, " creation has been denied.\n", cmdString);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-		vcgName = "";
+        vcgName = "";
         return false;
     }
     else 
@@ -694,7 +857,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
 
 _out:
         LOG(3)(Log::MPLS, vcgName, " creation via TL1_TELNET failed...\n", cmdString);
-		vcgName = "";
+        vcgName = "";
         return false;
 }
 
@@ -796,7 +959,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
     if (ctpGroupString.empty())
     {
         LOG(1)(Log::MPLS, "getCienaCTPGroupInVCG returned empty string");
-		gtpName = "";
+        gtpName = "";
         return false;
     }
 
@@ -817,7 +980,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
     {
         LOG(3)(Log::MPLS, gtpName, " creation has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-		gtpName = "";
+        gtpName = "";
         return false;
     }
     else 
@@ -825,7 +988,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
 
 _out:
         LOG(3)(Log::MPLS, gtpName, " creation via TL1_TELNET failed...\n", bufCmd);
-		gtpName = "";
+        gtpName = "";
         return false;    
 }
 
@@ -927,7 +1090,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
     {
         LOG(3)(Log::MPLS, sncName, " creation has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-		sncName = "";
+        sncName = "";
         return false;
     }
     else 
@@ -935,7 +1098,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
 
 _out:
         LOG(3)(Log::MPLS, sncName, " creation via TL1_TELNET failed...\n", bufCmd);
-		sncName = "";
+        sncName = "";
         return false;    
 }
 
