@@ -802,7 +802,7 @@ _out:
 
 //ENT-VCG::NAME=vcg01:456::,PST=is,SUPPTTP=1-A-3-1,CRCTYPE=CRC_32,,,FRAMINGMODE=GFP,
 //TUNNELPEERTYPE=ETTP,TUNNELPEERNAME=1-A-3-1-1,,GFPFCSENABLED=yes,,,GROUPMEM=1&&3,,;
-bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
+bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName, bool tunnelMode)
 {
     int ret = 0;
     char ctag[10];
@@ -828,8 +828,15 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName)
     cmdString += (const char*)ctag;
     cmdString += "::,pst=IS,suppttp=";
     cmdString += suppTtp;
-    cmdString += ",crctype=CRC_32,,,framingmode=GFP,tunnelpeertype=ETTP,tunnelpeername=";
-    cmdString += tunnelPeerName;
+    if (tunnelMode)
+    {
+        cmdString += ",crctype=CRC_32,,,framingmode=GFP,tunnelpeertype=ETTP,tunnelpeername=";
+        cmdString += tunnelPeerName;
+    }
+    else
+    {
+        cmdString += ",crctype=CRC_32,,,framingmode=GFP,tunnelpeertype=NONE,";
+    }
     cmdString += ",,gfpfcsenabled=YES,,,groupmem=";
     cmdString += groupMem;
     cmdString += ",,;";

@@ -106,7 +106,7 @@ public:
 	bool createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh = 0);
 	bool deleteEFLOWs_TL1(String& vcgName);
 	bool hasVCG_TL1(String& vcgName);
-	bool createVCG_TL1(String& vcgName);
+	bool createVCG_TL1(String& vcgName, bool tunnelMode = true);
 	bool deleteVCG_TL1(String& vcgName);
 	bool hasGTP_TL1(String& gtpName);
 	bool createGTP_TL1(String& gtpName, String& vcgName);
@@ -123,7 +123,7 @@ public:
 	bool createVCG(int vlanLow, int vlanHigh = 0)
 	{
 		//if (hasVCG_TL1(currentVCG)) return true;
-		if (!createVCG_TL1(currentVCG))
+		if (!createVCG_TL1(currentVCG, false))
 			return false;
 		if (!createEFLOWs_TL1(currentVCG, vlanLow, vlanHigh))
 			return false;
