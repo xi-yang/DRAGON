@@ -664,7 +664,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     sprintf(bufCmd, "ent-eflow::eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,pkttype=single_vlan_tag,outervlanidrange=%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default;",
         vcgName.chars(), getNewCtag(), ettpName.chars(), outerVlanRange, vcgName.chars());
 
-    if ( (ret = writeShell((char*)bufCmd.chars(), 5)) < 0 ) goto _out;
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
@@ -688,7 +688,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     sprintf(bufCmd, "ent-eflow::eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,pkttype=single_vlan_tag,outervlanidrange=%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default;",
         vcgName.chars(), getNewCtag(), vcgName.chars(), outerVlanRange, ettpName.chars());
 
-    if ( (ret = writeShell((char*)bufCmd.chars(), 5)) < 0 ) goto _out;
+    if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
@@ -721,7 +721,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName)
 
     sprintf(bufCmd, "dlt-eflow::eflow_%s_in:%d;", vcgName.chars(), getNewCtag());
 
-    if ( (ret = writeShell((char*)bufCmd.chars(), 5)) < 0 ) goto _out;
+    if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
@@ -743,7 +743,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName)
 
     sprintf(bufCmd, "dlt-eflow::eflow_%s_out:%d;", vcgName.chars(), getNewCtag());
 
-    if ( (ret = writeShell((char*)bufCmd.chars(), 5)) < 0 ) goto _out;
+    if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
@@ -773,22 +773,22 @@ bool SwitchCtrl_Session_SubnetUNI::hasEFLOW_TL1(String& vcgName, bool ingress)
 {
     int ret = 0;
 
-    sprintf(bufCmd, "rtrv-eflow::eflow_%s_:%d;", vcgName.chars(), ingress? "in":"out", getNewCtag());
+    sprintf(bufCmd, "rtrv-eflow::eflow_%s_%s:%d;", vcgName.chars(), ingress? "in":"out", getNewCtag());
 
-    if ( (ret = writeShell((char*)bufCmd.chars(), 5)) < 0 ) goto _out;
+    if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(4)(Log::MPLS, vcgName, ingress? "_in":"_out", " EFLOW does exist.\n", bufCmd);
+        LOG(4)(Log::MPLS, vcgName, (ingress? "_in":"_out"), " EFLOW does exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(4)(Log::MPLS, vcgName, ingress? "_in":"_out", " EFLOW does not exist.\n", bufCmd);
+        LOG(4)(Log::MPLS, vcgName, (ingress? "_in":"_out"), " EFLOW does not exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -796,7 +796,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasEFLOW_TL1(String& vcgName, bool ingress)
         goto _out;
 
 _out:
-        LOG(4)(Log::MPLS, vcgName, ingress? "_in":"_out", " EFLOW existence checking via TL1_TELNET failed...\n", bufCmd);
+        LOG(4)(Log::MPLS, vcgName, (ingress? "_in":"_out"), " EFLOW existence checking via TL1_TELNET failed...\n", bufCmd);
         return false;    
 }
 
