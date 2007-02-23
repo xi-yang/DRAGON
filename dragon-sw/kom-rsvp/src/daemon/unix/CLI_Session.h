@@ -26,7 +26,7 @@ extern char  hostname[100];
 extern pid_t pid;
 extern int    got_alarm;
 
-#define LINELEN  1024
+#define LINELEN  4096
 #define SWITCH_PROMPT ((char*)-1) // a pointer == (-1), indicating that a switch prompt is expected.
 
 #define TELNET_EXEC     "/usr/bin/telnet"

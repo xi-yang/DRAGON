@@ -394,7 +394,8 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
       if (n == LINELEN) {
 	alarm(0); // disable alarm
 	stop();
-	err_exit("%s: too long line!\n", progname);
+	LOG(1)(Log::MPLS, "Failed to read from telnet output -- too long line!");
+	return (-1);        
       }
       m = read(fdin, &line[n], 1);
       if (m != 1) {
@@ -452,25 +453,6 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
   }
 }
 
-/*
-int CLI_Session::clearShell()
-{
-  char c;
-  int n = 0;
-  fd_set sset;
-
-  if (fdin < 0)
-    return (-1);
-
-  while (read(fdin, &c, 1) != 1) {
-    n++;
-    break;
-  }
-  
-  return n;
-}
-*/
-
 int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,   int timeout)
 {
     int ret = 0;
@@ -496,7 +478,8 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
       if (n == LINELEN) {
 	alarm(0); // disable alarm
 	stop();
-	err_exit("%s: too long line!\n", progname);
+	LOG(2)(Log::MPLS, "Failed to read from telnet output -- too long line!");
+	return (-1);        
       }
       m = read(fdin, &buf[n], 1);
       if (m != 1) {

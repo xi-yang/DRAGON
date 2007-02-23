@@ -575,7 +575,8 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupInVCG(String& ctpGroupString,
         assert (ptpCatUnit == CATUNIT_50MBPS);
         sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts);
         ts_num += ts;
-        for ( ; ts < ts_num; ts ++)
+        ts += 1;
+        for ( ; ts < ts_num; ts++)
         {
             sprintf(ctp, "&%s-CTP-%d", vcgName.chars(), ts);
             strcat(bufCmd, ctp);
