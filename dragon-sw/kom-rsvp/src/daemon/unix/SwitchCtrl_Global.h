@@ -339,11 +339,12 @@ inline void RevertWordBytes(uint32& x)
 	x = (x<<24) | (x>>24) | ((x&0x00ff0000)>>8) | ((x&0x0000ff00)<<8);
 }
 
-//macros for seeting VLAN bitmask
+//macros for seeting VLAN bitmask (one based)
 #define HAS_VLAN(P, VID) ((P[(VID-1)/8] & (0x80 >> (VID-1)%8)) != 0)
 #define SET_VLAN(P, VID) P[(VID-1)/8] = (P[(VID-1)/8] | (0x80 >> (VID-1)%8))
 #define RESET_VLAN(P, VID) P[(VID-1)/8] = (P[(VID-1)/8] & ~(0x80 >> (VID-1)%8))
 
+//macros for seeting TDM TIMESLOT bitmask (one based)
 #define HAS_TIMESLOT HAS_VLAN
 #define SET_TIMESLOT SET_VLAN
 #define RESET_TIMESLOT RESET_VLAN

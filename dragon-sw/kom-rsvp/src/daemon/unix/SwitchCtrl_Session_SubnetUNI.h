@@ -174,7 +174,8 @@ public:
 	}
 
 	SONET_CATUNIT getConcatenationUnit_TL1(uint32 logicalPort = 0);
-	
+	bool syncTimeslotsMap_TL1(uint8 *ts_bitmask, uint32 logicalPort = 0);
+
 	//////////////// TL1 related functions << end //////////////
 
 	//Upcall for source/destination client

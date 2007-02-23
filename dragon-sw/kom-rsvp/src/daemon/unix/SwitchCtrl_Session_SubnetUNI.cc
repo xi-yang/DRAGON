@@ -1262,7 +1262,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, OMPortString, " concatentation method found.\n", bufCmd);
+        LOG(3)(Log::MPLS, OMPortString, " concatentation type has been found.\n", bufCmd);
         ret = ReadShellPattern(bufCmd, "Virtual 50MBPS", "Virtual 150MBPS", "OSPFCOST", 5);
         if (ret == 1)
             funcRet = CATUNIT_50MBPS;
@@ -1271,11 +1271,71 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
 
         readShell(SWITCH_PROMPT, NULL, 1, 5);
     }
+    else if (ret == 2) 
+    {
+        LOG(3)(Log::MPLS, OMPortString, " concatentation type checking has been denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return funcRet;
+    }
+    else
+        goto _out;
 
 _out:
     if (funcRet == CATUNIT_UNKNOWN)
-        LOG(3)(Log::MPLS, OMPortString, " concatentation method checking via TL1_TELNET failed...\n", bufCmd);
+        LOG(3)(Log::MPLS, OMPortString, " concatentation type checking via TL1_TELNET failed...\n", bufCmd);
     return funcRet;
 }
 
+
+bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap_TL1(uint8 *ts_bitmask, uint32 logicalPort)
+{
+    int ret = 0;
+    String OMPortString, ETTPString;
+    char* pstr;
+    int ts;
+
+    assert(ts_bitmask);
+    memset(ts_bitmask, 0, MAX_TIMESLOTS_NUM/8);
+
+    getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
+
+    sprintf(bufCmd, "rtrv-ocn::%s:%d;", OMPortString.chars(), getCurrentCtag());
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMap_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
+        ret = ReadShellPattern(bufCmd, NULL, NULL, ",NOACT", 5);
+        if (ret == 0) {
+            bufCmd[strlen(bufCmd) - 6] = 0;
+            pstr = strstr(bufCmd, "TIMESLOTMAP=");
+            if (!pstr)
+                goto _out;
+            pstr = strtok(pstr+12, " &");
+            while (pstr)
+            {
+                if (sscanf(pstr, "%d", &ts) == 1)
+                    SET_TIMESLOT(ts_bitmask, ts);
+                pstr = strtok(NULL, " &");
+            }
+        }
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2) 
+    {
+        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMap_TL1 retrieving timeslots has been denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else
+        goto _out;
+
+_out:
+    LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMap_TL1 method via TL1_TELNET failed...\n", bufCmd);
+    return false;
+}
 

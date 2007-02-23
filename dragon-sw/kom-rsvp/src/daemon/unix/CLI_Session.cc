@@ -462,9 +462,8 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
     if (fdin < 0)
       return (-1);
   
-    assert(pattern1);
     assert(readuntil);
-    len1 = strlen(pattern1);
+    len1 = (pattern1 != NULL) ? strlen(pattern1) : 0;
     len2 = (pattern2 != NULL) ? strlen(pattern1) : 0; 
     len3 = strlen(readuntil);
   
@@ -487,7 +486,7 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
 	return(-1);
       }
 
-      if (ret == 0 && n >= len1-1) {
+      if (ret == 0 && len1 > 0 && n >= len1-1) {
 	if (strncmp(buf+n-len1+1, pattern1, len1) == 0) {
 	  // we found the keyword we were searching for 
 	  alarm(0); // disable alarm 
