@@ -37,7 +37,7 @@
 
 #define String RSVP_String
 
-static const unsigned int maxRSVP_StringLength = 4096
+static const unsigned int maxRSVP_StringLength = 4096;
 
 class RSVP_String {
 	char rep[maxRSVP_StringLength];
