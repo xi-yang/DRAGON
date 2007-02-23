@@ -367,7 +367,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		//extract VLAN tag from later ERO subobject for end-to-end tagged VLAN provisioning
 		vlsr.vlanTag = 0; AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
 		for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
-			if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
+			if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
+                            ||((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP) {
 				vlsr.vlanTag = ((*iter).getInterfaceID() & 0x0000ffff);
 				break;
 			}
