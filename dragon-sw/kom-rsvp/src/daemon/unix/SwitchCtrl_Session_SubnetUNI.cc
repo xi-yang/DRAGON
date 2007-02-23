@@ -629,7 +629,15 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
 
     uint32 logicalPort = ntohl(subnetUniDest.logical_port);
     uint8 ts = subnetUniDest.first_timeslot;
-    if (ts%3 != 1)
+    if (ptpCatUnit == CATUNIT_UNKNOWN)
+    {
+    	if ((ptpCatUnit = getConcatenationUnit_TL1()) == CATUNIT_UNKNOWN)
+    	{
+            destTimeslotsString = "";
+            return;
+    	}
+    }
+    if (ptpCatUnit == CATUNIT_150MBPS && ts%3 != 1)
     {
         destTimeslotsString = "";
         return;
@@ -662,7 +670,8 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
-        ts_num = ((ts_num+2)/3)*3;
+        if (ptpCatUnit == CATUNIT_150MBPS)
+            ts_num = ((ts_num+2)/3)*3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
