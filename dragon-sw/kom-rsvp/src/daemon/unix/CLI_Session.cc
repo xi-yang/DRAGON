@@ -478,7 +478,7 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
       if (n == LINELEN) {
 	alarm(0); // disable alarm
 	stop();
-	LOG(2)(Log::MPLS, "Failed to read from telnet output -- too long line!");
+	LOG(1)(Log::MPLS, "Failed to read from telnet output -- too long line!");
 	return (-1);        
       }
       m = read(fdin, &buf[n], 1);
