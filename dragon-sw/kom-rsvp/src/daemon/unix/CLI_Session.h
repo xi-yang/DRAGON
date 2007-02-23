@@ -69,8 +69,8 @@ protected:
 	//int clearShell();
 
 	int readShell(char *text1, char *text2, int verbose, int timeout);
+	int ReadShellPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,   int timeout);
 	int writeShell(char *text, int timeout, bool echo_back = false);
-	int ReadPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,   int timeout);
 	virtual bool isSwitchPrompt(char *p, int len);
 	virtual bool preAction();
 	virtual bool postAction();

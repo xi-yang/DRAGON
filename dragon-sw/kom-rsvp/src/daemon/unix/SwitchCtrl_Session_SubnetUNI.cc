@@ -1253,7 +1253,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
     if (ret == 1) 
     {
         LOG(3)(Log::MPLS, OMPortString, " concatentation method found.\n", bufCmd);
-        ret = ReadPattern(bufCmd, "Virtual 50MBPS", "Virtual 150MBPS", "OSPFCOST", 5);
+        ret = ReadShellPattern(bufCmd, "Virtual 50MBPS", "Virtual 150MBPS", "OSPFCOST", 5);
         if (ret == 1)
             funcRet = CATUNIT_50MBPS;
         else if (ret == 2)

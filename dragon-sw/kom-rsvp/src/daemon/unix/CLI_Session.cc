@@ -471,7 +471,7 @@ int CLI_Session::clearShell()
 }
 */
 
-int CLI_Session::ReadPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,   int timeout)
+int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,   int timeout)
 {
     int ret = 0;
     int n, m, len1, len2, len3;
@@ -491,6 +491,7 @@ int CLI_Session::ReadPattern(char *buf, char *pattern1, char *pattern2, char *re
     alarm(timeout);
   
     // readomg  for start string ...
+    n = 0;
     for(;;) {
       if (n == LINELEN) {
 	alarm(0); // disable alarm
