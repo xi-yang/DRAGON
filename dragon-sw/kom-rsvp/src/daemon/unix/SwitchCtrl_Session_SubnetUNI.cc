@@ -26,6 +26,7 @@ void SwitchCtrl_Session_SubnetUNI::internalInit ()
     uniSessionId = NULL; 
     uniState = 0; //Message::initApi
     ctagNum = 0;
+    ptpCatUnit = CATUNIT_UNKNOWN;
 }
 
 void SwitchCtrl_Session_SubnetUNI::setSubnetUniData(SubnetUNI_Data& data, uint8 subuni_id, uint8 first_ts,
@@ -429,8 +430,13 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
     timeslots.clear();
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
 
+    if (ptpCatUnit == CATUNIT_UNKNOWN)
+    {
+    	if ((ptpCatUnit = getConcatenationUnit_TL1()) == CATUNIT_UNKNOWN)
+            return;
+    }
     uint8 ts = pUniData->first_timeslot;
-    if (ts%3 != 1)
+    if (ptpCatUnit == CATUNIT_150MBPS && ts%3 != 1)
         return;
 
     SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
@@ -441,7 +447,8 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
-        ts_num = ((ts_num+2)/3)*3;
+        if (ptpCatUnit == CATUNIT_150MBPS)
+            ts_num = ((ts_num+2)/3)*3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
@@ -464,11 +471,21 @@ void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemStrin
 {
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
     uint8 ts = pUniData->first_timeslot;
-    if (ts%3 != 1)
+
+    if (ptpCatUnit == CATUNIT_UNKNOWN)
+    {
+        if ((ptpCatUnit = getConcatenationUnit_TL1()) == CATUNIT_UNKNOWN)
+    	{
+            groupMemString = "";
+            return;
+    	}
+    }
+    if (ptpCatUnit == CATUNIT_150MBPS && ts%3 != 1)
     {
         groupMemString = "";
         return;
     }
+
 
     SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
     uint8 ts_num = 0;
@@ -478,7 +495,8 @@ void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemStrin
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
-        ts_num = ((ts_num+2)/3)*3;
+        if (ptpCatUnit == CATUNIT_150MBPS)
+            ts_num = ((ts_num+2)/3)*3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
@@ -502,7 +520,16 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupInVCG(String& ctpGroupString,
     char ctp[20];
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
     uint8 ts = pUniData->first_timeslot;
-    if (ts%3 != 1)
+
+    if (ptpCatUnit == CATUNIT_UNKNOWN)
+    {
+    	if ((ptpCatUnit = getConcatenationUnit_TL1()) == CATUNIT_UNKNOWN)
+    	{
+            ctpGroupString = "";
+            return;
+    	}
+    }
+    if (ptpCatUnit == CATUNIT_150MBPS && ts%3 != 1)
     {
         ctpGroupString = "";
         return;
@@ -516,7 +543,8 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupInVCG(String& ctpGroupString,
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
-        ts_num = (ts_num+2)/3;
+        if (ptpCatUnit == CATUNIT_150MBPS)
+            ts_num = (ts_num+2)/3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
@@ -531,14 +559,29 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupInVCG(String& ctpGroupString,
         return;
     }
 
-    sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts/3+1);
-    ts_num += ts;
-    ts += 3;
-    for ( ; ts < ts_num; ts += 3)
+    if (ptpCatUnit == CATUNIT_150MBPS)
     {
-        sprintf(ctp, "&%s-CTP-%d", vcgName.chars(), ts/3+1);
-        strcat(bufCmd, ctp);
+        sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts/3+1);
+        ts_num += ts;
+        ts += 3;
+        for ( ; ts < ts_num; ts += 3)
+        {
+            sprintf(ctp, "&%s-CTP-%d", vcgName.chars(), ts/3+1);
+            strcat(bufCmd, ctp);
+        }
     }
+    else // must be CATUNIT_50MBPS
+    {
+        assert (ptpCatUnit == CATUNIT_50MBPS);
+        sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts);
+        ts_num += ts;
+        for ( ; ts < ts_num; ts ++)
+        {
+            sprintf(ctp, "&%s-CTP-%d", vcgName.chars(), ts);
+            strcat(bufCmd, ctp);
+        }
+    }
+    
     ctpGroupString = (const char*)bufCmd;
 }
 
@@ -1191,3 +1234,36 @@ _out:
         LOG(3)(Log::MPLS, sncName, " SNC existence checking via TL1_TELNET failed...\n", bufCmd);
         return false;    
 }
+
+//rtrv-ocn::1-A-3-1:mytag;
+SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logicalPort)
+{
+    SONET_CATUNIT funcRet = CATUNIT_UNKNOWN;
+    String OMPortString, ETTPString;
+
+    getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
+
+    sprintf(bufCmd, "rtrv-ocn::%s:%d;" OMPortString.chars(), getCurrentCtag());
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    int ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, OMPortString, " concatentation method found.\n", bufCmd);
+        ret = ReadPattern(bufCmd, "Virtual 50MBPS", "Virtual 150MBPS", "OSPFCOST", 5);
+        if (ret == 1)
+            funcRet = CATUNIT_50MBPS;
+        else if (ret == 2)
+            funcRet = CATUNIT_150MBPS;
+
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+    }
+
+    if (funcRet == CATUNIT_UNKNOWN)
+        LOG(3)(Log::MPLS, OMPortString, " concatentation method checking via TL1_TELNET failed...\n", bufCmd);
+    return funcRet;
+}
+
+

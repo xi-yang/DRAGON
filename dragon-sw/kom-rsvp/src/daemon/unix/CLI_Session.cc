@@ -471,6 +471,65 @@ int CLI_Session::clearShell()
 }
 */
 
+int CLI_Session::ReadPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,   int timeout)
+{
+    int ret = 0;
+    int n, m, len1, len2, len3;
+    bool foundstart = false;
+  
+    if (fdin < 0)
+      return (-1);
+  
+    assert(pattern1);
+    assert(readuntil);
+    len1 = strlen(pattern1);
+    len2 = (pattern2 != NULL) ? strlen(pattern1) : 0; 
+    len3 = strlen(readuntil);
+  
+    // setup alarm (so we won't hang forever upon problems)
+    signal(SIGALRM, sigalrm);
+    alarm(timeout);
+  
+    // readomg  for start string ...
+    for(;;) {
+      if (n == LINELEN) {
+	alarm(0); // disable alarm
+	stop();
+	err_exit("%s: too long line!\n", progname);
+      }
+      m = read(fdin, &buf[n], 1);
+      if (m != 1) {
+	alarm(0); // disable alarm
+	return(-1);
+      }
+
+      if (ret == 0 && n >= len1-1) {
+	if (strncmp(buf+n-len1+1, pattern1, len1) == 0) {
+	  // we found the keyword we were searching for 
+	  alarm(0); // disable alarm 
+	  ret = 1;
+	}
+      }
+
+      if (ret == 0 && len2 > 0 && n >= len2-1) {
+	if (strncmp(buf+n-len2+1, pattern2, len2) == 0) {
+	  // we found the keyword we were searching for 
+	  alarm(0); // disable alarm 
+	  ret = 2;
+	}
+      }
+
+      if (n >= len3-1) {
+	if (strncmp(buf+n-len3+1, readuntil, len3) == 0) {
+	  // we found the keyword we were searching for 
+	  alarm(0); // disable alarm 
+	  return ret;
+	}
+      }
+      n++;
+    }
+}
+
 // write a command to the 'telnet' process 
 int CLI_Session::writeShell(char *text, int timeout, bool echo_back)
 {

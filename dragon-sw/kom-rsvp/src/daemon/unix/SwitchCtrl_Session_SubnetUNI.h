@@ -45,6 +45,12 @@ typedef struct SubnetUNI_Data_struct {
 	uint8 timeslot_bitmask[MAX_TIMESLOTS_NUM/8]; //bitmask
 } SubnetUNI_Data;
 
+typedef enum SONET_ConcatenationUnit {
+	CATUNIT_UNKNOWN,
+	CATUNIT_50MBPS,
+	CATUNIT_150MBPS,
+} SONET_CATUNIT;
+
 class SwitchCtrl_Session_SubnetUNI;
 typedef SimpleList<SwitchCtrl_Session_SubnetUNI*> SwitchCtrl_Session_SubnetUNI_List;
 class SONET_SDH_SENDER_TSPEC_Object;
@@ -167,6 +173,8 @@ public:
 		return hasSNC_TL1(currentSNC);
 	}
 
+	SONET_CATUNIT getConcatenationUnit_TL1(uint32 logicalPort = 0);
+	
 	//////////////// TL1 related functions << end //////////////
 
 	//Upcall for source/destination client
@@ -213,12 +221,13 @@ protected:
 	String currentGTP;
 	String currentSNC;
 
+	SONET_CATUNIT ptpCatUnit;
 private:	
 	void internalInit ();
 	void setSubnetUniData(SubnetUNI_Data& data, uint8 id, uint8 first_ts, uint16 tunnel_id, float bw, uint32 tna, uint32 uni_c_id, 
 		uint32 uni_n_id, uint32 data_if, uint32 port, uint32 egress_label, uint32 upstream_label, uint8* node_name, uint8* cc_name, uint8* bitmask);
 
-	char bufCmd[500];
+	char bufCmd[LINELEN+1];
 	char strCOMPLD[20];
 	char strDENY[20];
 };
