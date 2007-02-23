@@ -1238,17 +1238,18 @@ _out:
 //rtrv-ocn::1-A-3-1:mytag;
 SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logicalPort)
 {
+    int ret = 0;
     SONET_CATUNIT funcRet = CATUNIT_UNKNOWN;
     String OMPortString, ETTPString;
 
     getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
 
-    sprintf(bufCmd, "rtrv-ocn::%s:%d;" OMPortString.chars(), getCurrentCtag());
+    sprintf(bufCmd, "rtrv-ocn::%s:%d;", OMPortString.chars(), getCurrentCtag());
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
-    int ret = readShell(strCOMPLD, strDENY, 1, 5);
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
         LOG(3)(Log::MPLS, OMPortString, " concatentation method found.\n", bufCmd);
@@ -1261,6 +1262,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
         readShell(SWITCH_PROMPT, NULL, 1, 5);
     }
 
+_out:
     if (funcRet == CATUNIT_UNKNOWN)
         LOG(3)(Log::MPLS, OMPortString, " concatentation method checking via TL1_TELNET failed...\n", bufCmd);
     return funcRet;
