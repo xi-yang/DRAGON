@@ -425,6 +425,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 						destUniId = (uint8)((*iter).getInterfaceID() >> 8);
 						destUniDataIf = (*iter).getAddress();
+						destTimeSlot = (uint8)((*iter).getInterfaceID());
 						break;
 					}
 				}
