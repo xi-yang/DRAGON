@@ -263,7 +263,7 @@ u_int32_t logical_port_string2number(const char* port_str)
 
 	sscanf(port_str, "%d-%c-%d-%d-%d", &bay, &shelf_alpha, &slot, &subslot, &port);
 	bay--; slot--; subslot--; port--;
-	switch (shelf)
+	switch (shelf_alpha)
 	{
 	case 'a':
 	case 'A':
