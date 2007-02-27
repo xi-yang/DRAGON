@@ -456,7 +456,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			//Fetch SubnetUNI data 
 			if (destUniId == 0) {
 				memset(&subnetUniDataDest, 0, sizeof(subnetUniDataDest));
-				if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(outRtId, (uint16)outUnumIfID, subnetUniDataDest) ) {
+				if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(outRtId, (uint8)(outUnumIfID>>8), subnetUniDataDest) ) {
 					//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
 					vLSRoute.push_back(vlsr);                    
