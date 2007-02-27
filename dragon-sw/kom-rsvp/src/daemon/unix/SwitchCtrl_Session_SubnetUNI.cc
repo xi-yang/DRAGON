@@ -1281,8 +1281,10 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
         goto _out;
 
 _out:
-    if (funcRet == CATUNIT_UNKNOWN)
+    if (CATUNIT_UNKNOWN == funcRet)
+    {
         LOG(3)(Log::MPLS, OMPortString, " concatentation type checking via TL1_TELNET failed...\n", bufCmd);
+    }
     return funcRet;
 }
 
