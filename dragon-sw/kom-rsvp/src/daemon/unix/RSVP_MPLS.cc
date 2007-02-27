@@ -622,6 +622,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                         if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasGTP())
                                                             noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP();
                                                     }
+                                                    else
+                                                        sleep(1); //$$$$ to be removed and put deleteVCG into a timer queue ?!
 
                                                     //delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC or LOCAL_ID_TYPE_SUBNET_UNI_DEST
                                                     if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasVCG())
