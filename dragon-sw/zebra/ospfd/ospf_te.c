@@ -2637,6 +2637,8 @@ DEFUN (ospf_te_interface_ifsw_cap5,
       return CMD_WARNING;
     }
 
+  te_config.te_para.link_ifswcap.header = htons(36 + sizeof(struct link_ifswcap_specific_subnet_uni)); //reassign length...
+
   te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.length = htons(sizeof(struct link_ifswcap_specific_subnet_uni));
   te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version = htons(IFSWCAP_SPECIFIC_SUBNET_UNI);
 
