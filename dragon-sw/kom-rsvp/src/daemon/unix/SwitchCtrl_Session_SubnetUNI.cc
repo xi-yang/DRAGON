@@ -440,8 +440,10 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
         return;
 
     SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
+    if (!sonet_tb1)
+        return;
+
     uint8 ts_num = 0;
-    assert(sonet_tb1);
     switch (sonet_tb1->getSignalType())
     {
     case SONET_TSpec::S_STS1SPE_VC3:
@@ -488,8 +490,13 @@ void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemStrin
 
 
     SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
+    if (!sonet_tb1)
+    {
+        groupMemString = "";
+        return;
+    }
+
     uint8 ts_num = 0;
-    assert(sonet_tb1);
     switch (sonet_tb1->getSignalType())
     {
     case SONET_TSpec::S_STS1SPE_VC3:
@@ -536,8 +543,13 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupInVCG(String& ctpGroupString,
     }
 
     SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
+    if (!sonet_tb1)
+    {
+        ctpGroupString = "";
+        return;
+    }
+
     uint8 ts_num = 0;
-    assert(sonet_tb1);
     switch (sonet_tb1->getSignalType())
     {
     case SONET_TSpec::S_STS1SPE_VC3:
@@ -663,8 +675,13 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
     sprintf(bufCmd, "%d-%c-%d-%d", bay, shelf_alpha, slot, subslot);
 
     SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(subnetUniDest.ethernet_bw);
+    if (!sonet_tb1)
+    {
+        destTimeslotsString = "";
+        return;
+    }
+
     uint8 ts_num = 0;
-    assert(sonet_tb1);
     switch (sonet_tb1->getSignalType())
     {
     case SONET_TSpec::S_STS1SPE_VC3:
