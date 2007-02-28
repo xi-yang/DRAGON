@@ -224,6 +224,8 @@ bool RoutingService::ospf_socket_init (){
 
   if (!ospf_socket){
 		  ospf_socket = CHECK(socket (AF_INET, SOCK_STREAM, 0));
+        	  if (ospf_socket <= 0) 
+        	  	return false;
 	
 		  /* Make server socket. */
 		  memset (&addr, 0, sizeof (struct sockaddr_in));

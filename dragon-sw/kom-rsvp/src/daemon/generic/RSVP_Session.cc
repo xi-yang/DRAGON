@@ -410,8 +410,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					pSubnetUniSrc->registerRsvpApiClient();
 					pSubnetUniSrc->initUniRsvpApiSession();
 				}
-				
-                            // @@@@ Synchronize time slots map ??
 			}
 
 			if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
@@ -484,8 +482,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					pSubnetUniDest->registerRsvpApiClient();
 					pSubnetUniDest->initUniRsvpApiSession();
 				}
-
-                            // @@@@ Synchronize time slots map ??
 			}
 
 		}
@@ -782,8 +778,13 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		}
 
 		if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
-			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
-			return;
+			if (RSVP_Global::rsvp->getRoutingService().ospfOperational())
+				RSVP_Global::rsvp->getRoutingService().ospf_socket_init();
+			if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()) {
+				RSVP_Global::rsvp->getRoutingService().disableOspfSocket();
+				RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
+				return;
+			}
 		}
 
 		if ( destAddress.isMulticast() ) {
