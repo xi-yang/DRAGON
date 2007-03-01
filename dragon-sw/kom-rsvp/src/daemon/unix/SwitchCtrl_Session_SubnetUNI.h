@@ -182,14 +182,17 @@ public:
 		bool ret = syncTimeslotsMap_TL1(pUniData->timeslot_bitmask);
 		if (ret)
 		{
-			for (uint8 ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
+			uint8 ts = 1;
+			for ( ; ts <= MAX_TIMESLOTS_NUM; ts++)
 			{
-				if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
+				if (!HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
 				{
+					// @@@@ TODO: Also check available timeslots after the first ?
 					pUniData->first_timeslot = ts;
 					break;
 				}
 			}
+			// @@@@ TODO: give error message and return false if not found?
 		}
 		return ret;
 	}
