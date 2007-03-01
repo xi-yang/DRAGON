@@ -365,15 +365,16 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		RSVP_Global::rsvp->getRoutingService().getVLSRRoutebyOSPF(inRtId, outRtId, inUnumIfID, outUnumIfID, vlsr);
 		vlsr.bandwidth = msg.getSENDER_TSPEC_Object().get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
 		//extract VLAN tag from later ERO subobject for end-to-end tagged VLAN provisioning
-		vlsr.vlanTag = 0; AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
-		for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
-			if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
-                            ||((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP) {
-				vlsr.vlanTag = ((*iter).getInterfaceID() & 0x0000ffff);
-				break;
-			}
+		if (vlsr.vlanTag == 0) {
+			AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
+	    		for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
+	    			if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
+	                                ||((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP) {
+	    				vlsr.vlanTag = ((*iter).getInterfaceID() & 0x0000ffff);
+	    				break;
+	    			}
+	    		}
 		}
-
 		//creating source G_UNI client session
 		NetAddress destUniDataIf(0);
 		uint8 destUniId = 0; // valid: > 0
