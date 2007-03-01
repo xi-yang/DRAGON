@@ -184,7 +184,7 @@ public:
 		{
 			for (uint8 ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
 			{
-				if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts)
+				if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
 				{
 					pUniData->first_timeslot = ts;
 					break;
