@@ -177,8 +177,21 @@ public:
 	bool syncTimeslotsMap_TL1(uint8 *ts_bitmask, uint32 logicalPort = 0);
 
 	bool syncTimeslotsMap() 
-	{ 
-		return syncTimeslotsMap_TL1(isSource ? subnetUniSrc.timeslot_bitmask :  subnetUniDest.timeslot_bitmask);
+	{
+		SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
+		bool ret = syncTimeslotsMap_TL1(pUniData->timeslot_bitmask);
+		if (ret)
+		{
+			for (uint8 ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
+			{
+				if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts)
+				{
+					pUniData->first_timeslot = ts;
+					break;
+				}
+			}
+		}
+		return ret;
 	}
 
 	//////////////// TL1 related functions << end //////////////
