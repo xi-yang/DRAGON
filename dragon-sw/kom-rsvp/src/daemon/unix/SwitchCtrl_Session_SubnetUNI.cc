@@ -459,7 +459,7 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
         break;
     }
 
-    for (uint8 x = 0; x < ts_num; x++)
+    for (uint8 x = 0; x < ts_num && ts+x <= MAX_TIMESLOTS_NUM; x++)
     {
         timeslots.push_back(ts + x);
     }
@@ -512,7 +512,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemStrin
         break;
     }
 
-    if (ts_num == 0)
+    if (ts_num == 0 || ts+ts_num-1 > MAX_TIMESLOTS_NUM)
     {
         groupMemString = "";
         return;
@@ -565,7 +565,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupInVCG(String& ctpGroupString,
         break;
     }
 
-    if (ts_num == 0)
+    if (ts_num == 0 || ts+ts_num-1 > MAX_TIMESLOTS_NUM)
     {
         ctpGroupString = "";
         return;
@@ -696,7 +696,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
         ts_num = sonet_tb1->getNCC() * 3;
         break;
     }
-    if (ts_num == 0)
+    if (ts_num == 0 || ts+ts_num-1 > MAX_TIMESLOTS_NUM)
     {
         destTimeslotsString = "";
         return;
@@ -887,7 +887,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName, bool tunnelMod
     getCienaTimeslotsString(groupMem);
     if ((groupMem).empty())
     {
-        LOG(1)(Log::MPLS, "getCienaTimeslotsString returned empty string");
+        LOG(1)(Log::MPLS, "getCienaTimeslotsString failed to find available time slots...");
         vcgName = "";
         return false;
     }
