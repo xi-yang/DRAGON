@@ -218,8 +218,12 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 				
 				/* Do not copy back to the oi->te_para, where the vlan tag mask remain uncompressed !*/
 				/*memcpy(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_buffer, z_len);*/
-				if (ntohs(lp->header.length) > 36+sizeof(struct link_ifswcap_specific_vlan))
-					tlvh_s->length = htons(ntohs(lp->header.length) - sizeof(struct link_ifswcap_specific_vlan) + z_len + 4);  /*adjust the TLV length*/
+				/* change total TE link TLV length to indicate a compress operation*/
+				if (ntohs(lp->header.length) >= 36+sizeof(struct link_ifswcap_specific_vlan))
+				{
+					lp->header.length = htons(ntohs(lp->header.length) - sizeof(struct link_ifswcap_specific_vlan) + z_len + 4);  /*adjust the TLV length*/
+					tlvh_s->length = lp->header.length;
+				}
 				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan,  4); /* ifswcap_specific_vlan.length & version.*/
 				stream_put(s, z_buffer, z_len); // ifswcap_specific_vlan.length & version.
 
@@ -227,9 +231,6 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version &= ~(htons(IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z));
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(sizeof(struct link_ifswcap_specific_vlan));
 
-				/* change total TE link TLV length to indicate a compress operation*/
-				if (ntohs(lp->header.length) > 36+sizeof(struct link_ifswcap_specific_vlan))
-					lp->header.length = tlvh_s->length;
 			    }
 			    else { /* compressed */
 				/*stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, sizeof(struct link_ifswcap_specific_vlan));*/
