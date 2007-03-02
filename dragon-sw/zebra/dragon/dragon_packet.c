@@ -683,7 +683,8 @@ dragon_read (struct thread *thread)
   u_int8_t find = 0;
   listnode node;
   int fd = THREAD_FD(thread);
-
+  int lsp_deleted = 0;
+ 
   /* read packet. */
   ibuf = dragon_recv_packet (fd);
   if (ibuf == NULL)
@@ -749,6 +750,7 @@ dragon_read (struct thread *thread)
 			lsp->narb_fd = 0;
 		}
 		lsp->status = LSP_EDIT;
+		lsp_deleted = 1;
 		break;
 
 	default:
@@ -759,6 +761,12 @@ out:
   /* prepare for next packet. */
   if (lsp->narb_fd)
 	lsp->t_narb_read = thread_add_read (master, dragon_read, lsp, lsp->narb_fd);
+
+  if (lsp_deleted)
+  {
+	listnode_delete(dmaster.dragon_lsp_table, lsp);
+	lsp_del(lsp);
+  }
 
   stream_free (ibuf); /* ??? */
   return 0;
@@ -850,6 +858,7 @@ void  rsvpUpcall(void* para)
 	struct _rsvp_upcall_parameter* p = (struct _rsvp_upcall_parameter*)para;
 	struct dragon_fifo_elt *new;
 	struct lsp *lsp = NULL;
+	int lsp_deleted = 0;
 
 	lsp = dragon_find_lsp_by_rsvpupcallparam(p);
 	if (!lsp)
@@ -938,8 +947,7 @@ void  rsvpUpcall(void* para)
 			else{
 				if (lsp->flag & LSP_FLAG_REG_BY_RSVP)
 					zTearRsvpPathRequest(dmaster.api, &lsp->common); /* Remove API entry off the list in RSVP */
-				listnode_delete(dmaster.dragon_lsp_table, lsp);
-				lsp_del(lsp);
+				lsp_deleted = 1;
 			}
 			break;
 			
@@ -956,6 +964,7 @@ void  rsvpUpcall(void* para)
 					DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
 				}
 				lsp->status = LSP_EDIT; 
+				lsp_deleted = 1;
 			}
 			zTearRsvpPathRequest(dmaster.api, &lsp->common); /* Remove API entry off the list in RSVP */
 			break;
@@ -967,7 +976,14 @@ void  rsvpUpcall(void* para)
 		default:
 			break;
 	}
+	
 	dragon_upcall_callback(p->code, lsp);
+ 
+	if (lsp_deleted) {
+		listnode_delete(dmaster.dragon_lsp_table, lsp);
+		lsp_del(lsp);
+	}
+
 }
 
 int
