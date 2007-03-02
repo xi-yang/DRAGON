@@ -292,7 +292,7 @@ ospf_te_area_lsa_link_body_set (struct stream *s, struct ospf_interface *oi)
 	if ( (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) &&
 		(ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC) &&
 		(ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z) &&
-		htons(ntohs(tlvh_s->length) > 36+sizeof(struct link_ifswcap_specific_vlan))
+		ntohs(tlvh_s->length) > 36+sizeof(struct link_ifswcap_specific_vlan))
 	{
 		tlvh_s->length = htons(ntohs(tlvh_s->length) - 36 - sizeof(struct link_ifswcap_specific_vlan) + ntohs(oi->te_para.link_ifswcap.header.length));
 	}
