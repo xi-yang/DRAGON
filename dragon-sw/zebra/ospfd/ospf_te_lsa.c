@@ -263,9 +263,10 @@ ospf_te_area_lsa_link_body_set (struct stream *s, struct ospf_interface *oi)
    * Only one Link TLV shall be carried in each LSA, allowing for fine
    * granularity changes in topology.
    */
-  set_linkparams_link_header (oi);
+  struct te_tlv_header *tlvh_s;
 
-  struct te_tlv_header *tlvh_s = (struct te_tlv_header *)(s->data + s->putp); // pointing to the TLV header in stream
+  set_linkparams_link_header (oi);
+  tlvh_s = (struct te_tlv_header *)(s->data + s->putp); // pointing to the TLV header in stream
   build_tlv_header (s, &oi->te_para.link.header);
 
   BUILD_LINK_SUBTLV(link_type);
