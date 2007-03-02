@@ -180,11 +180,8 @@ build_link_subtlv_link_srlg (struct stream *s, struct te_link_subtlv_link_srlg *
 static void 
 build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifswcap *lp) 
 {
-	int i;
 	struct te_tlv_header *tlvh = &lp->header; 
 	uLongf z_len;
-
-	tlv_size_reduction  = 0;
 
 	if (ntohs(tlvh->type) != 0) 
 	{ 
@@ -287,10 +284,10 @@ ospf_te_area_lsa_link_body_set (struct stream *s, struct ospf_interface *oi)
 	BUILD_LINK_SUBTLV(link_protype);
 	BUILD_LINK_SUBTLV(link_ifswcap);
 	// adjact header link TLV after compression
-	if ((ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) &&
-		(ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z))
+	if ( (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) &&
+		(ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z) )
 	{
-		tlvh_s->length = htons((ntohs(tlvh_s->length) - 36 - sizeof(struct link_ifswcap_specific_vlan) + ntohs(oi->te_para.link_ifswcap.header.length));
+		tlvh_s->length = htons(ntohs(tlvh_s->length) - 36 - sizeof(struct link_ifswcap_specific_vlan) + ntohs(oi->te_para.link_ifswcap.header.length));
 	}
 	BUILD_LINK_SUBTLV(link_srlg);
 	BUILD_LINK_SUBTLV(link_te_lambda);
