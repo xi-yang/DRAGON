@@ -222,12 +222,15 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 				tlvh_s->length = htons(ntohs(lp->header.length) - sizeof(struct link_ifswcap_specific_vlan) + z_len + 4);  /*adjust the TLV length*/
 				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan,  4); /* ifswcap_specific_vlan.length & version.*/
 				stream_put(s, z_buffer, z_len); // ifswcap_specific_vlan.length & version.
+				/* 
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version &= ~(htons(IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z));
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(sizeof(struct link_ifswcap_specific_vlan));
-				lp->header.length = tlvh_s->length; // ...
+				*/
+				lp->header.length = tlvh_s->length;
 			    }
 			    else { /* uncompressed */
-				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, sizeof(struct link_ifswcap_specific_vlan));
+				/*stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, sizeof(struct link_ifswcap_specific_vlan));*/
+				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length));
 			    }
 			}
 			else if (ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) 
@@ -287,7 +290,8 @@ ospf_te_area_lsa_link_body_set (struct stream *s, struct ospf_interface *oi)
 	BUILD_LINK_SUBTLV(link_ifswcap);
 	// adjact header link TLV after compression
 	if ( (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) &&
-		(ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z) )
+		(ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC) &&
+		ntohs(ntohs(oi->te_para.link_ifswcap.header.length) < 36+sizeof(struct link_ifswcap_specific_vlan))
 	{
 		tlvh_s->length = htons(ntohs(tlvh_s->length) - 36 - sizeof(struct link_ifswcap_specific_vlan) + ntohs(oi->te_para.link_ifswcap.header.length));
 	}
