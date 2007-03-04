@@ -185,7 +185,7 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 	struct te_tlv_header *tlvh = &lp->header; 
 	uLongf z_len;
 
-    swcap_len_adjustment = 0;
+	swcap_len_adjustment = 0;
 
 	if (ntohs(tlvh->type) != 0) 
 	{ 
@@ -225,7 +225,7 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
                 
 				/* change total TE link TLV length to indicate a compress operation*/
                 /* initial length: ntohs(lp->header.length) == 36 + sizeof(struct link_ifswcap_specific_subnet_uni) */
-                swcap_len_adjustment = (z_len + 40) - htons(ntohs(lp->header.length);
+				swcap_len_adjustment = (z_len + 40) - ntohs(lp->header.length);
 				lp->header.length = htons(z_len + 40);  /*adjust the TLV length*/
 				tlvh_s->length = lp->header.length;
 
