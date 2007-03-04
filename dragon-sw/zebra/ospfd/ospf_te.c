@@ -688,7 +688,7 @@ set_linkparams_ifsw_cap1 (struct te_link_subtlv_link_ifswcap *para, u_char swcap
   }
   else if ( swcap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
   {
-  	 para->header.length = htons(base_length); // + sizeof(struct link_ifswcap_specific_vlan));
+  	 para->header.length = htons(base_length); /* + sizeof(struct link_ifswcap_specific_vlan));*/
   }
   else
   	 para->header.length = htons(base_length);
@@ -2639,7 +2639,7 @@ DEFUN (ospf_te_interface_ifsw_cap5,
       return CMD_WARNING;
     }
 
-  te_config.te_para.link_ifswcap.header.length = htons(36 + sizeof(struct link_ifswcap_specific_subnet_uni)); //reassign length...
+  te_config.te_para.link_ifswcap.header.length = htons(36 + sizeof(struct link_ifswcap_specific_subnet_uni)); /*reassign length...*/
 
   te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.length = htons(sizeof(struct link_ifswcap_specific_subnet_uni));
   te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version = htons(IFSWCAP_SPECIFIC_SUBNET_UNI);
