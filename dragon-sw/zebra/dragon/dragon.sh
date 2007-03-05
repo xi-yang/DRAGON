@@ -21,7 +21,7 @@ DRAGON_DAEMON=$PREFIX/bin/dragon
 DRAGON_ARGS="-d -f $ETC_DIR/dragon.conf"
 
 NODE_AGENT=$PREFIX/bin/node_agent
-NODE_AGENT_ARGS="-d -f $ETC_DIR/node_agent.conf"
+NODE_AGENT_ARGS="-d -c $ETC_DIR/node_agent.conf"
 
 # for NARBs we need 2 ospfd instances.  the above
 # OSPF_DAEMON/OSPF_ARGS variables are not used for NARBs:
@@ -153,7 +153,6 @@ case $1 in
             exit 1
         fi
         echo "dragon-sw: started dragon daemon."
-        ;;
 
         if test "$node_agent_pid" != ""; then
             kill $node_agent_pid
