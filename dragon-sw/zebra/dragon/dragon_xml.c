@@ -1331,7 +1331,7 @@ xml_serv_sock (const char *hostname, unsigned short port, char *path)
 	  continue;
 	}
 
-      ret = listen (sock, 3);
+      ret = listen (sock, 10);
       if (ret < 0)
 	{
 	  close (sock); /* Avoid sd leak. */

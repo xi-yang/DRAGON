@@ -20,6 +20,9 @@ RSVP_ARGS="-c $ETC_DIR/RSVPD.conf -d -o /var/log/RSVPD.log -L select"
 DRAGON_DAEMON=$PREFIX/bin/dragon
 DRAGON_ARGS="-d -f $ETC_DIR/dragon.conf"
 
+NODE_AGENT=$PREFIX/bin/node_agent
+NODE_AGENT_ARGS="-d -f $ETC_DIR/node_agent.conf"
+
 # for NARBs we need 2 ospfd instances.  the above
 # OSPF_DAEMON/OSPF_ARGS variables are not used for NARBs:
 
@@ -45,6 +48,7 @@ case "`uname`" in
                 zebra_pid=`ps  axwww | grep -v awk | awk '{if (match($5, ".*/zebra$")       || $5 == "zebra")  print $1}'`
                 rsvp_pid=`ps   axwww | grep -v awk | awk '{if (match($5, ".*/RSVPD$")       || $5 == "RSVPD")  print $1}'`
                 dragon_pid=`ps axwww | grep -v awk | awk '{if (match($5, ".*/dragon$")      || $5 == "dragon") print $1}'`
+                node_agent_pid=`ps axwww | grep -v awk | awk '{if (match($5, ".*/node_agent$")      || $5 == "node_agent") print $1}'`
                 narb_pid=`ps   axwww | grep -v awk | awk '{if (match($5, ".*/narb$")        || $5 == "narb")   print $1}'`
                 rce_pid=`ps   axwww | grep -v awk | awk '{if (match($5, ".*/rce$")        || $5 == "rce")   print $1}'`
                 telnet_pid=`ps   axwww | grep -v awk | awk '{if ($5 == match($5, ".*/telnet$") ||   "telnet")   print $1}'`
@@ -60,6 +64,7 @@ case "`uname`" in
                 ospf_inter_pid=""
                 rsvp_pid=""
                 dragon_pid=""
+                node_agent_pid=""
                 narb_pid=""
                 rce_pid=""
                 telnet_pid=""
@@ -150,6 +155,17 @@ case $1 in
         echo "dragon-sw: started dragon daemon."
         ;;
 
+        if test "$node_agent_pid" != ""; then
+            kill $node_agent_pid
+        fi
+	$NODE_AGENT $NODE_AGENT_ARGS
+	if test $? != 0; then
+	    echo "dragon-sw: unable to start node agent."
+	    exit 1
+	fi
+	echo "dragon-sw: started node agent."
+	;;
+
     start-narb | startnarb | restart-narb)
         if test "$zebra_pid" != ""; then
 	    kill $zebra_pid
@@ -222,6 +238,11 @@ case $1 in
 	    echo "dragon-sw: stopped dragon daemon."
 	fi
 
+        if test "$node_agent_pid" != ""; then
+	    kill $node_agent_pid
+	    echo "dragon-sw: stopped node agent."
+	fi
+
         if test "$narb_pid" != ""; then
 	    kill $narb_pid
 	    echo "dragon-sw: stopped narb daemon."
@@ -258,6 +279,12 @@ case $1 in
 	    echo "dragon-sw: dragon daemon is running, pid=$dragon_pid."
 	else
 	    echo "dragon-sw: dragon daemon is NOT running."
+	fi
+
+        if test "$node_agent_pid" != ""; then
+	    echo "dragon-sw: node agent is running, pid=$node_agent_pid."
+	else
+	    echo "dragon-sw: node agent is NOT running."
 	fi
 
         if test "$narb_pid" != ""; then
