@@ -361,6 +361,7 @@ noLabelChange:
 			} else {
 				if (!RSVP_Global::rsvp->getMPLS().bindInAndOut( *this, *inLabel, *oiatpsb->getOutLabel() ))
 					return false;
+				//TODO @@@@  handle failed bindInAndOut --> report RERR ???
 			}
 		} else if ( inLabel ) {
 			RSVP_Global::rsvp->getMPLS().createEgressBinding( *inLabel, getPHopSB().getHop().getLogicalInterface() );

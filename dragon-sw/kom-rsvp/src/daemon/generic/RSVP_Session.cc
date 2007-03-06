@@ -712,7 +712,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					return;
 				}				
 			}
-
+			// @@@@ handle errors like 'cannot connect to switch' and return PERR
 			LOG(2)(Log::MPLS, "MPLS: Internal error in the ERO :", explicitRoute->getAbstractNodeList().front().getAddress());
 			explicitRoute = NULL;
 		}
