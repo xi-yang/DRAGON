@@ -301,7 +301,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                     }
 
                                                     if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
-							sleep(1);
+							//@@@@ sleep(1);
                                                         //create GTP (Source node only!)
                                                         if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
                                                             (*sessionIter)->disconnectSwitch();
@@ -630,7 +630,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                             noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP();
                                                     }
                                                     //else
-                                                    //    sleep(1); //$$$$ to be removed and put deleteVCG into a timer queue ?!
+                                                    //@@@@    sleep(1); //$$$$ to be removed and put deleteVCG into a timer queue ?!
 
                                                     //delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC or LOCAL_ID_TYPE_SUBNET_UNI_DEST
                                                     if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasVCG())

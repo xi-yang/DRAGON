@@ -824,7 +824,7 @@ bool SwitchCtrl_Global::addSession(SwitchCtrl_Session* addSS)
 			return false;
 	}
 	//adding new session
-	sessionList.push_back(addSS);
+	sessionList.push_front(addSS);
 	return  true;
 }
 
