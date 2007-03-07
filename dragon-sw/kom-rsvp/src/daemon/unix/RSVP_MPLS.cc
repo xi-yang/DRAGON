@@ -601,8 +601,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 		VLSRRoute::ConstIterator iter = psb.getVLSR_Route().begin();
 		for ( ; iter != psb.getVLSR_Route().end(); ++iter ) {
 			NetAddress ethSw = (*iter).switchID;
-			SwitchCtrlSessionList::Iterator sessionIter = RSVP_Global::switchController->getSessionList().begin();
-			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
+			SwitchCtrlSessionList::Iterator sessionIter = (--RSVP_Global::switchController->getSessionList().end());
+			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); --sessionIter ) {
 
 				 //@@@@ >>Xi2007<<
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ){
