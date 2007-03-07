@@ -1267,7 +1267,7 @@ DEFUN (dragon_commit_lsp_sender,
   }
   if (!is_mandated_params_set_for_lsp(lsp))
   {
-  	vty_out (vty, "Mandated parameter not set for lsp %s. %s", argv[0], VTY_NEWLINE);
+  	vty_out (vty, "Mandated parameter not set for lsp (address or port/local-id cannot be zero) %s. %s", argv[0], VTY_NEWLINE);
   	vty_out (vty, "LSP \"%s\" could not be committed... %s", (lsp->common.SessionAttribute_Para)->sessionName,  VTY_NEWLINE);
 	return CMD_WARNING;
   }
