@@ -399,7 +399,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           }
                                           while (portList.size()) {
                                                  uint32 port = portList.front(); //reuse the variable port
-        						LOG(4)(Log::MPLS, "VLSR: Moving ingress port#",  port, " to VLAN #", vlan);
+        						LOG(4)(Log::MPLS, "VLSR: Moving ingress port#",  GetSwitchPortString(port), " to VLAN #", vlan);
                                                  if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
                                                         (*sessionIter)->movePortToVLANAsTagged(port, vlan);
                                                  	//Up to 32 ports supported. Only default RFC2674 switch switch (e.g. Dell, Intel) use this.
@@ -408,7 +408,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                  else
                                                     (*sessionIter)->movePortToVLANAsUntagged(port, vlan);
 
-                                                 LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  port, "for VLAN #", vlan);
+                                                 LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlan);
 							//Perform rate policing and limitation on the port, which is both input and output port
 							//as the VLAN is duplex.
                                                 (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);
@@ -438,7 +438,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           }
                                           while (portList.size()) {
                                                  uint32 port = portList.front();
-        						LOG(4)(Log::MPLS, "VLSR: Moving egress port#",  port, " to VLAN #", vlan);
+        						LOG(4)(Log::MPLS, "VLSR: Moving egress port#",  GetSwitchPortString(port), " to VLAN #", vlan);
                                                  if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
                                                         (*sessionIter)->movePortToVLANAsTagged(port, vlan);
                                                  	//Up to 32 ports supported. Only default RFC2674 switch switch (e.g. Dell, Intel) use this.
@@ -447,7 +447,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                  else
                                                         (*sessionIter)->movePortToVLANAsUntagged(port, vlan);
 
-                                                 LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  port, "for VLAN #", vlan);
+                                                 LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlan);
 							//Perform rate policing and limitation on the port, which is both input and output port
 							//as the VLAN is duplex.
                                                 (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);  //$$$$ To be moved into bindUpstreamInAndOut
@@ -700,7 +700,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                 vlanID = (*sessionIter)->getActiveVlanId(port);
                                             if (vlanID != 0) {
                                                 (*sessionIter)->removePortFromVLAN(port, vlanID);
-       						LOG(4)(Log::MPLS, "VLSR: Removing ingress port#",  port, "from VLAN #", vlanID);
+       						LOG(4)(Log::MPLS, "VLSR: Removing ingress port#",  GetSwitchPortString(port), "from VLAN #", vlanID);
                                             }
                                             else {
     						       LOG(1)(Log::MPLS, "VLSR: Cannot identify the VLAN (for ingress port) to be operated.");
@@ -713,7 +713,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
              					     //Undo rate policing and limitation on the port, which is both input and output port
             					     //as the VLAN is duplex.
-                                                LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
+                                                LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlanID);
                                                 (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth); 
                                                 (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);//$$$$ To be moved into deleteUpstreamInLabel
                                             }
@@ -744,7 +744,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                 vlanID = (*sessionIter)->getActiveVlanId(port);
                                             if (vlanID != 0) {
                                                 (*sessionIter)->removePortFromVLAN(port, vlanID);
-       						LOG(4)(Log::MPLS, "VLSR: Removing egress port#",  port, "from VLAN #", vlanID);
+       						LOG(4)(Log::MPLS, "VLSR: Removing egress port#",  GetSwitchPortString(port), "from VLAN #", vlanID);
                                             }
                                             else {
     						       LOG(1)(Log::MPLS, "VLSR: Cannot identify the VLAN  (for egress port) to be operated.");
@@ -756,7 +756,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
                                                 //Undo rate policing and limitation on the port, which is both input and output port
                                                 //as the VLAN is duplex.
-                                                LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  port, "for VLAN #", vlanID);
+                                                LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlanID);
                                                 (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth);//$$$$ To be moved into deleteUpstreamInLabel
                                                 (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);
                                             }

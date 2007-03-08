@@ -349,5 +349,13 @@ inline void RevertWordBytes(uint32& x)
 #define SET_TIMESLOT SET_VLAN
 #define RESET_TIMESLOT RESET_VLAN
 
+inline char* GetSwitchPortString(u_int32_t switch_port)
+{
+	static char port_string[20];
+
+	sprintf(port_string, "%d/%d/%d", (switch_port>>12)&0xf, (switch_port>>8)&0xf, switch_port&0xff);
+	return port_string;
+}
+
 #endif //#ifndef _SWITCHCTRL_GLOBAL_H_
 
