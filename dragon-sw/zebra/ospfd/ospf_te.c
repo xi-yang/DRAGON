@@ -296,7 +296,7 @@ get_switch_port_by_name(char* port_name, u_int32_t* switch_port)
 	{
 		if (sscanf(port_name, "%d-%d-%d", &shelf, &slot, &port) == 3)
 		{
-			switch_port = ((shelf&0xf) << 12) | ((slot&0xf)<<8) | (port&0xff);
+			*switch_port = ((shelf&0xf) << 12) | ((slot&0xf)<<8) | (port&0xff);
 			return 1;
 		}
 		else
@@ -306,13 +306,13 @@ get_switch_port_by_name(char* port_name, u_int32_t* switch_port)
 	{
 		if (sscanf(port_name, "%d/%d/%d", &shelf, &slot, &port) == 3)
 		{
-			switch_port = ((shelf&0xf) << 12) | ((slot&0xf)<<8) | (port&0xff);
+			*switch_port = ((shelf&0xf) << 12) | ((slot&0xf)<<8) | (port&0xff);
 			return 1;
 		}
 		else
 			return -1;
 	}
-	else if (sscanf(port_name, switch_port) == 1)
+	else if (sscanf(port_name, "%d", switch_port) == 1)
 	{
 		return 1;
 	}
