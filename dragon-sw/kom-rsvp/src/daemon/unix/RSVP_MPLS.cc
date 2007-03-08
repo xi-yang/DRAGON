@@ -395,7 +395,8 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           }
                                           if (portList.size() == 0){
                                                 LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress.");
-                                                return false;
+                                                //return false;
+                                                noError = false;
                                           }
                                           while (portList.size()) {
                                                  uint32 port = portList.front(); //reuse the variable port
@@ -434,7 +435,8 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           }
                                           if (portList.size() == 0){
         					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
-                                                return false;
+                                                //return false;
+                                                noError = false;
                                           }
                                           while (portList.size()) {
                                                  uint32 port = portList.front();
@@ -691,7 +693,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                       }
                                       if (portList.size() == 0){
     					       LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress.");
-                                          continue;
+                                          //continue;
                                       }
                                       while (portList.size()) {
                                             uint32 port = portList.front();
@@ -735,7 +737,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                       }
                                       if (portList.size() == 0){
     					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
-                                            continue;
+                                         //continue;
                                       }
                                       while (portList.size()) {
                                             uint32 port = portList.front();
