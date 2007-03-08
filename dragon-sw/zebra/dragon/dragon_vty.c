@@ -214,6 +214,47 @@ static list registered_local_ids;
 
 char *lid_types[] = {"none id", "single port", "untagged group", "tagged group"};
 
+static int
+get_switch_port_by_name(char* port_name, u_int16_t* switch_port)
+{
+	u_int16_t shelf, slot, port;
+	if (strstr(port_name, "-"))
+	{
+		if (sscanf(port_name, "%d-%d-%d", &shelf, &slot, &port) == 3)
+		{
+			*switch_port = ((shelf&0xf) << 12) | ((slot&0xf)<<8) | (port&0xff);
+			return 1;
+		}
+		else
+			return -1;
+	}
+	else if (strstr(port_name, "/"))
+	{
+		if (sscanf(port_name, "%d/%d/%d", &shelf, &slot, &port) == 3)
+		{
+			*switch_port = ((shelf&0xf) << 12) | ((slot&0xf)<<8) | (port&0xff);
+			return 1;
+		}
+		else
+			return -1;
+	}
+	else if (sscanf(port_name, "%d", switch_port) == 1)
+	{
+		return 1;
+	}
+
+	return -1;
+}
+
+static char* 
+get_switch_port_string(u_int16_t switch_port)
+{
+	static char port_string[20];
+
+	sprintf(port_string, "%d-%d-%d", (switch_port>>12)&0xf, (switch_port>>8)&0xf, switch_port&0xff);
+	return port_string;
+}
+
 struct local_id *
 search_local_id(u_int16_t tag, u_int16_t type)
 {
@@ -309,9 +350,11 @@ void local_id_group_show(struct vty *vty, struct local_id *lid)
     if (lid->type != LOCAL_ID_TYPE_GROUP && lid->type != LOCAL_ID_TYPE_TAGGED_GROUP)
         return;
 
+    vty_out(vty, "%-8s [%-12s]    ", lid->value, lid_types[lid->type]);
+
     LIST_LOOP(lid->group, ptag, node)
     {
-        vty_out(vty, "  %d", *ptag);
+        vty_out(vty, "  %d(%s)", *ptag, get_switch_port_string(*ptag));
     }
     vty_out(vty, "%s", VTY_NEWLINE);
 }
@@ -1784,16 +1827,23 @@ static void preserve_local_ids()
 
 DEFUN (dragon_set_local_id,
        dragon_set_local_id_cmd,
-       "set local-id port <0-65535>",
+       "set local-id port PORT",
        SET_STR
        "A local ingress/egress port identifier\n"
        "Pick a LocalId type\n"
-       "Port number in the range <0-65535>\n")
+       "Port number in the range <0-65535> or in the format shelf/slot/port\n")
 {
     u_int16_t type = LOCAL_ID_TYPE_PORT;
-    u_int16_t  tag = atoi(argv[0]);
+    u_int16_t tag;
     struct local_id * lid = NULL;
     listnode node;
+
+    if (get_switch_port_by_name(argv[0], &tag) == -1)
+    {
+            vty_out (vty, "Wrong localID format: %s%s", argv[0], VTY_NEWLINE);
+            return CMD_WARNING;
+    
+    }
     LIST_LOOP(registered_local_ids, lid, node)
     {
         if (lid->type == type && lid->value == tag)
@@ -1815,19 +1865,25 @@ DEFUN (dragon_set_local_id,
 
 DEFUN (dragon_set_local_id_group,
        dragon_set_local_id_group_cmd,
-       "set local-id (group|tagged-group) <0-65535> (add|delete) <0-65535>",
+       "set local-id (group|tagged-group) <0-65535> (add|delete) PORT",
        SET_STR
        "A local ingress/egress port identifier\n"
        "Is the localId associated with a group of untagged or tagged ports?\n"
-       "Port number in the range <0-65535>\n"
+       "Group number in the range <0-65535>\n"
        "Add or Delete a port from the tagged/untagged group?\n"
-       "Port number in the range <0-65535>\n" )
+       "Port number in the range <0-65535> or in shelf-slot-port format\n" )
 {
     u_int16_t type = strcmp(argv[0], "group") == 0 ? LOCAL_ID_TYPE_GROUP: LOCAL_ID_TYPE_TAGGED_GROUP;
     u_int16_t  tag = atoi(argv[1]);
-    u_int16_t sub_tag = atoi(argv[3]), *iter_tag;
+    u_int16_t sub_tag, *iter_tag;
     struct local_id * lid = NULL;
     listnode node, node_inner;
+
+    if (get_switch_port_by_name(argv[3], &sub_tag) == -1)
+    {
+            vty_out (vty, "Wrong localID format: %s%s", argv[3], VTY_NEWLINE);
+            return CMD_WARNING;
+    }
 
     LIST_LOOP(registered_local_ids, lid, node)
     {
@@ -1890,19 +1946,26 @@ DEFUN (dragon_set_local_id_group,
 
 DEFUN (dragon_delete_local_id,
        dragon_delete_local_id_cmd,
-       "delete local-id (port|group|tagged-group) <0-65535>",
+       "delete local-id (port|group|tagged-group) NAME",
        SET_STR
        "A local ingress/egress port identifier\n"
        "Pick a LocalId type\n"
        "Port number in the range <0-65535>\n" )
 {
     u_int16_t type;
-    u_int16_t  tag = atoi(argv[1]);
+    u_int16_t  tag = 0;
     struct local_id * lid = NULL;
     listnode node;
 
     if (strcmp(argv[0], "port") == 0)
+    {
         type = LOCAL_ID_TYPE_PORT;
+        if (get_switch_port_by_name(argv[1], &tag) == -1)
+        {
+            vty_out (vty, "Wrong port format: %s%s", argv[1], VTY_NEWLINE);
+            return CMD_WARNING;        
+        }
+    }
     else if (strcmp(argv[0], "group") == 0)
         type = LOCAL_ID_TYPE_GROUP;
     else
@@ -1974,8 +2037,9 @@ DEFUN (dragon_show_local_id,
     vty_out(vty, " LocalID  Type         (Tags/Ports in Group)%s", VTY_NEWLINE);
     LIST_LOOP(registered_local_ids, lid, node)
     {
-         vty_out(vty, "%-8d[%-12s]    ", lid->value, lid_types[lid->type]);
-         if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
+         if (lid->type == LOCAL_ID_TYPE_PORT)
+	     vty_out(vty, "%-8d%(%-8s) [%-12s]    ", lid->value, get_switch_port_string(lid->value), lid_types[lid->type]);
+         else if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
             local_id_group_show(vty, lid);
          else
             vty_out(vty, "%s", VTY_NEWLINE);
