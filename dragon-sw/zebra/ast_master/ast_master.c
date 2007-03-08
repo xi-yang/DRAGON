@@ -11,6 +11,8 @@
 #include "log.h"
 #include "local_id_cfg.h"
 
+static struct linkprofile service;
+
 char *node_stype_name[] =
   { "None",
     "PC",
@@ -795,6 +797,7 @@ print_link_brief(FILE* fp, struct resource* link)
   fprintf(fp, "<resource type=\"%s\" name=\"%s\">\n", 
 		link_stype_name[link->res.l.stype], link->name);
   fprintf(fp, "\t<status>%s</status>\n", status_type_details[link->status]);
+  fprintf(fp, "\t<link_status>%s</link_status>\n", link_status_name[link->res.l.l_status]);
   if (link->agent_message) 
     fprintf(fp, "\t<agent_message>%s</agent_message>\n", link->agent_message);
   if (link->res.l.lsp_name[0] != '\0') 
@@ -1127,7 +1130,7 @@ template_xml_parser()
       service.count++;
   }
 
-  service.elem = malloc(service.count*sizeof(void*));
+  service.elem = malloc(service.count*sizeof(struct network_link*));
   
   for (err = 0, cur = service_ptr->xmlChildrenNode;
 	cur;
@@ -1351,11 +1354,9 @@ establish_relationship(struct application_cfg* app_cfg)
 	  dest->ifp = NULL;
 	}
 
-	if (src->local_id_type[0] == '\0' && dest->local_id_type[0] == '\0') {
-	  sprintf(src->local_id_type, "lsp-id");
-	  sprintf(dest->local_id_type, "lsp-id");
-	  src->local_id = random()%3000;
-	  dest->local_id = random()%3000;
+	if (src->local_id_type[0] == '\0' || dest->local_id_type[0] == '\0') {
+	  zlog_err("link (%s) of type vlsr_vlsr should have <local_id> defined for both <src> and <dest>", mylink->name);  
+	  return 0;
 	}
 
 	break;
@@ -1801,7 +1802,9 @@ topo_xml_parser(char* filename, int agent)
 		  zlog_err("invalid local_id type: %s", key);
 	      }
 
-	      ep->local_id = atoi(key+2);
+	      if (strlen(ep->local_id_type) != 0) 
+		ep->local_id = atoi(key+2);
+
 	    } else if (strcasecmp(node_ptr->name, "iface") == 0) {
 	      if (!ep->ifp) {
 		ep->ifp = (struct if_ip*) malloc (sizeof(struct if_ip));
@@ -1990,150 +1993,189 @@ topo_validate_graph(int agent, struct application_cfg *app_cfg)
 
   /* now, validate the cfg according to the action type */
   switch (app_cfg->action) {
+
     case SETUP_REQ:
+
       if (!app_cfg->node_list) {
 	zlog_err("No node defined in this topology");
 	return 0;
-      } else {
-	for ( curnode = app_cfg->node_list->head;
-	      curnode;
-	      curnode = curnode->next) {
-	  mynode = (struct resource*) curnode->data;
-	  
-	  if (mynode->res.n.ip[0] == '\0') {
-	    if (agent == MASTER || agent == ASTB) {
-	      zlog_info("node (%s) is undefined; need to contact resource broker later", mynode->name);
-	      mynode->res.n.router_id[0] = '\0';
-	      mynode->res.n.tunnel[0] = '\0';
-	      mynode->flags |= FLAG_UNFIXED;
-	    } else { 
-	      zlog_err("node (%s) should have <ip> defined", mynode->name); 
-	      return 0;
-	    }
-	  } else {
+      } 
 
-	    /* even the node ip is defined; still need to figure out the tunnel and router_id
-	     */
-	    if ( agent == MASTER && !autofill_es_info(mynode)) {
-	      zlog_err("node (%s:%s) is not in our ES pool\n", mynode->name, mynode->res.n.ip);
-	      return 0;
-	    }
-	  }
-	}
-      }
-
-      if (agent != NODE_AGENT) {
-	if (!app_cfg->link_list) {
-	  zlog_err("No link defined in this topology"); 
-	  return 0;
-        } else { 
-	  if (agent != ASTB && !establish_relationship(glob_app_cfg))
+      for ( curnode = app_cfg->node_list->head;
+	    curnode;
+	    curnode = curnode->next) {
+	mynode = (struct resource*) curnode->data;
+	
+	if (mynode->res.n.ip[0] == '\0') {
+	  if (agent == MASTER || agent == ASTB) {
+	    zlog_info("node (%s) is undefined; need to contact resource broker later", mynode->name);
+	    mynode->res.n.router_id[0] = '\0';
+	    mynode->res.n.tunnel[0] = '\0';
+	    mynode->flags |= FLAG_UNFIXED;
+	  } else { 
+	    zlog_err("node (%s) should have <ip> defined", mynode->name); 
 	    return 0;
+	  }
+	} else {
 
-	  for ( curnode = app_cfg->link_list->head; 
-		curnode; 
-		curnode = curnode->next) { 
-	    mylink = (struct resource*) curnode->data;
-
-	    if (!mylink->res.l.src || !mylink->res.l.dest) {
-	      zlog_err("link (%s) should have src and dest defined", mylink->name);
-	      return 0;
-	    }
-
-	    if (mylink->res.l.stype == uni && agent == MASTER) {
-	      src = mylink->res.l.src->es;
-	      dest = mylink->res.l.dest->es;
-
-	      if (!src || !dest) {
-		zlog_err("link (%s) should have es in both src and dest", mylink->name);
-	        return 0;
-	      }
-
-	      if (src->res.n.tunnel[0] == '\0' || dest->res.n.tunnel[0] == '\0') {
-		zlog_err("link (%s) should have tunnel in both src and dest es", mylink->name);
-		return 0;
-	      }
-	    }
-
-	    if (mylink->res.l.bandwidth[0] != '\0') { 
-	      for (i = 0; i < bandwidth_field.number; i++) {
-		if (strcasecmp(mylink->res.l.bandwidth, bandwidth_field.ss[i].abbre) == 0)
-		  break;
-	      }
-	      if (i == bandwidth_field.number) {
-		zlog_err("Invalid value for bandwidth: %s", mylink->res.l.bandwidth);
-		if (agent==ASTB) {
-		  printf("Valid values for bandwidth:\n"); 
-		  for (i = 0; i < bandwidth_field.number; i++) 
-		    printf("%s\t:%s\n", bandwidth_field.ss[i].abbre, bandwidth_field.ss[i].details);
-		}
-		return 0;
-	      }
-	    } else if (agent == MASTER) {
-	      zlog_err("link(%s) should have bandwidth specified", mylink->name);
-	      return 0; 
-	    }
-
-	    if (mylink->res.l.swcap[0] != '\0') {
-	      for (i = 0; i < swcap_field.number; i++) {
-		if (strcasecmp(mylink->res.l.swcap, swcap_field.ss[i].abbre) == 0)
-		  break;
-	      }
-	      if (i == swcap_field.number) {
-		zlog_err("Invalid value for swcap: %s", mylink->res.l.swcap);
-		if (agent==ASTB) {
-		  printf("Valid values for swcap:\n");
-		  for (i = 0; i < swcap_field.number; i++)
-		    printf("%s\t:%s\n", swcap_field.ss[i].abbre, swcap_field.ss[i].details);
-		}
-		return 0;
-	      }
-	    } else if (agent == MASTER) { 
-              zlog_err("link(%s) should have swcap specified", mylink->name);
-              return 0; 
-            }
- 
-	    if (mylink->res.l.gpid[0] != '\0') {
-	      for (i = 0; i < gpid_field.number; i++) {
-		if (strcasecmp(mylink->res.l.gpid, gpid_field.ss[i].abbre) == 0)
-		  break;
-	      }
-	      if (i == gpid_field.number) {
-		zlog_err("Invalid value for gpid: %s", mylink->res.l.gpid);
-		if (agent==ASTB) {
-		  printf("Valid values for gpid:\n");
-		  for (i = 0; i < gpid_field.number; i++)
-		    printf("%s\t:%s\n", gpid_field.ss[i].abbre, gpid_field.ss[i].details);
-		}
-		return 0;
-	      }
-	    } else if (agent == MASTER) { 
-              zlog_err("link(%s) should have gpid specified", mylink->name);
-              return 0; 
-            }
-
-	    if (mylink->res.l.encoding[0]  != '\0') {
-	      for (i = 0; i < encoding_field.number; i++) {
-		if (strcasecmp(mylink->res.l.encoding, encoding_field.ss[i].abbre) == 0)
-		  break;
-	      }
-	      if (i == encoding_field.number) {
-		zlog_err("Invalid value for encoding: %s", mylink->res.l.encoding);
-		if (agent==ASTB) {
-		  printf("Valid values for encoding:\n");
-		  for (i = 0; i < encoding_field.number; i++)
-		    printf("%s\t:%s\n", encoding_field.ss[i].abbre, encoding_field.ss[i].details);
-		}
-		return 0;
-	      }
-	    } else if (agent == MASTER) { 
-              zlog_err("link(%s) should have encoding specified", mylink->name);
-              return 0; 
-            }
-
+	  /* even the node ip is defined; still need to figure out the tunnel and router_id
+	   */
+	  if ( agent == MASTER && !autofill_es_info(mynode)) {
+	    zlog_err("node (%s:%s) is not in our ES pool\n", mynode->name, mynode->res.n.ip);
+	    return 0;
 	  }
 	}
       }
+
+      if (agent == NODE_AGENT) 
+	break;
+
+      if (!app_cfg->link_list) {
+	zlog_err("No link defined in this topology"); 
+	return 0;
+      }  
+
+      if (agent != ASTB && !establish_relationship(glob_app_cfg))
+        return 0;
+
+      for ( curnode = app_cfg->link_list->head; 
+            curnode; 
+            curnode = curnode->next) { 
+        mylink = (struct resource*) curnode->data;
+
+        if (!mylink->res.l.src || !mylink->res.l.dest) {
+          zlog_err("link (%s) should have src and dest defined", mylink->name);
+          return 0;
+        }
+
+        src = mylink->res.l.src->es;
+        dest = mylink->res.l.dest->es;
+
+        if (mylink->res.l.stype == uni && agent == MASTER) {
+
+          if (!src || !dest) {
+            zlog_err("link (%s) should have es in both src and dest", mylink->name);
+            return 0;
+          }
+
+          if (src->res.n.tunnel[0] == '\0' || dest->res.n.tunnel[0] == '\0') {
+            zlog_err("link (%s) should have tunnel in both src and dest es", mylink->name);
+            return 0;
+          }
+        }
+
+        if (mylink->res.l.bandwidth[0] != '\0') { 
+          for (i = 0; i < bandwidth_field.number; i++) {
+            if (strcasecmp(mylink->res.l.bandwidth, bandwidth_field.ss[i].abbre) == 0)
+              break;
+          }
+          if (i == bandwidth_field.number) {
+            zlog_err("Invalid value for bandwidth: %s", mylink->res.l.bandwidth);
+            if (agent==ASTB) {
+              printf("Valid values for bandwidth:\n"); 
+              for (i = 0; i < bandwidth_field.number; i++) 
+                printf("%s\t:%s\n", bandwidth_field.ss[i].abbre, bandwidth_field.ss[i].details);
+            }
+            return 0;
+          }
+        } else if (agent == MASTER) {
+          zlog_err("link(%s) should have bandwidth specified", mylink->name);
+          return 0; 
+        }
+
+        if (mylink->res.l.swcap[0] != '\0') {
+          for (i = 0; i < swcap_field.number; i++) {
+            if (strcasecmp(mylink->res.l.swcap, swcap_field.ss[i].abbre) == 0)
+              break;
+          }
+          if (i == swcap_field.number) {
+            zlog_err("Invalid value for swcap: %s", mylink->res.l.swcap);
+            if (agent==ASTB) {
+              printf("Valid values for swcap:\n");
+              for (i = 0; i < swcap_field.number; i++)
+                printf("%s\t:%s\n", swcap_field.ss[i].abbre, swcap_field.ss[i].details);
+            }
+            return 0;
+          }
+        } else if (agent == MASTER) { 
+          zlog_err("link(%s) should have swcap specified", mylink->name);
+          return 0; 
+        }
+ 
+        if (mylink->res.l.gpid[0] != '\0') {
+          for (i = 0; i < gpid_field.number; i++) {
+            if (strcasecmp(mylink->res.l.gpid, gpid_field.ss[i].abbre) == 0)
+              break;
+          }
+          if (i == gpid_field.number) {
+            zlog_err("Invalid value for gpid: %s", mylink->res.l.gpid);
+            if (agent==ASTB) {
+              printf("Valid values for gpid:\n");
+              for (i = 0; i < gpid_field.number; i++)
+                printf("%s\t:%s\n", gpid_field.ss[i].abbre, gpid_field.ss[i].details);
+            }
+            return 0;
+          }
+        } else if (agent == MASTER) { 
+          zlog_err("link(%s) should have gpid specified", mylink->name);
+          return 0; 
+        }
+
+        if (mylink->res.l.encoding[0]  != '\0') {
+          for (i = 0; i < encoding_field.number; i++) {
+            if (strcasecmp(mylink->res.l.encoding, encoding_field.ss[i].abbre) == 0)
+              break;
+          }
+          if (i == encoding_field.number) {
+            zlog_err("Invalid value for encoding: %s", mylink->res.l.encoding);
+            if (agent==ASTB) {
+              printf("Valid values for encoding:\n");
+              for (i = 0; i < encoding_field.number; i++)
+                printf("%s\t:%s\n", encoding_field.ss[i].abbre, encoding_field.ss[i].details);
+            }
+            return 0;
+          }
+        } else if (agent == MASTER) { 
+          zlog_err("link(%s) should have encoding specified", mylink->name);
+          return 0; 
+        }
+
+        switch (mylink->res.l.stype) {
+
+	  case uni:
+
+	    if (mylink->res.l.src->local_id_type[0] == 'l' || 
+		mylink->res.l.dest->local_id_type[0] == 'l') {
+
+	      if (agent == ASTB) 
+	        printf("for linke (%s) type uni, <local_id> in <src> or <dest> cannot be \"lsp-id\".\n", 
+			mylink->name);
+
+	      return 0;
+	    }
+
+	    break;
+	  
+	  case non_uni:
+
+	    break;
+
+	  case vlsr_vlsr:
+	    if (mylink->res.l.src->local_id_type[0] == 'l' ||
+		mylink->res.l.dest->local_id_type[0] == 'l' ||
+		mylink->res.l.src->local_id_type[0] == '\0' ||
+		mylink->res.l.dest->local_id_type[0] == '\0') {
+	      if (agent == ASTB)
+		printf("for link (%s) type vlsr_vlsr, <local_id> in <src> or <dest> has to be \"tagged-group\", \"group\", \"port\".\n", mylink->name);
+
+	      return 0;
+	    }
+
+	    break;
+        }
+      }
+
+      break;
 	
     case RELEASE_REQ:
       /* for the case ast_id not set, needed to validate the file

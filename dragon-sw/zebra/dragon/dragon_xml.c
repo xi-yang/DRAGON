@@ -854,7 +854,6 @@ dragon_build_lsp(struct resource *link)
       argc = 1;
       strcpy(argv[0], lsp_name);
       dragon_delete_lsp(NULL, fake_vty, argc, &argv);
-      link->res.l.l_status = error;
       return NULL;
     }
   }
@@ -910,7 +909,6 @@ dragon_build_lsp(struct resource *link)
     argc = 1;
     strcpy(argv[0], lsp_name);
     dragon_delete_lsp(NULL, fake_vty, argc, &argv);
-    link->res.l.l_status = error;
     return NULL;
   }
 
@@ -928,7 +926,6 @@ dragon_build_lsp(struct resource *link)
     argc = 1;
     strcpy(argv[0], lsp_name);
     dragon_delete_lsp(NULL, fake_vty, argc, &argv);
-    link->res.l.l_status = error;
     return NULL;
   }
 
@@ -944,7 +941,6 @@ dragon_build_lsp(struct resource *link)
     argc = 1;
     strcpy(argv[0], lsp_name);
     dragon_delete_lsp(NULL, fake_vty, argc, &argv);
-    link->res.l.l_status = error;
     return NULL;
   }
 
@@ -955,7 +951,6 @@ dragon_build_lsp(struct resource *link)
     zlog_info("dragon_set_lsp_vtag: %s", argv[0]);
     if (dragon_set_lsp_vtag(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
       dragon_delete_lsp(NULL, fake_vty, argc, &argv);
-      link->res.l.l_status = error;
       return NULL;
     }
   }
@@ -966,13 +961,11 @@ dragon_build_lsp(struct resource *link)
   strcpy(argv[0], lsp_name);
   if (dragon_commit_lsp_sender(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
     dragon_delete_lsp(NULL, fake_vty, argc, &argv); 
-    link->res.l.l_status = error;
     return NULL;
   }
  
   strcpy(link->res.l.lsp_name, lsp_name);
   link->status = AST_SUCCESS;
-  link->res.l.l_status = commit;
 
   return lsp;
 }
@@ -1020,7 +1013,8 @@ dragon_link_provision()
 	mylink = (struct resource*)(curnode1->data); 
 	buffer_reset(fake_vty->obuf);
 	lsp = dragon_build_lsp(mylink); 
-	if (!lsp) { 
+	if (!lsp) {
+	  mylink->res.l.l_status = error; 
 	  switch (mylink->res.l.stype) {
 	    case uni:
 	    case non_uni:
@@ -1102,6 +1096,7 @@ dragon_link_provision()
 	  strncpy(data->link_name, mylink->name, NODENAME_MAXLEN);
 	  adtlist_add(&pending_list, data);
 	  mylink->status = AST_PENDING;
+	  mylink->res.l.l_status = commit;
         }
 	   
 	success++;

@@ -39,6 +39,26 @@ int master_config_write(struct vty *vty)
   return 0;
 }
 
+/*
+void print_flags(struct vty *vty, u_int32_t flags)
+{
+  if (IS_SET_SETUP_REQ(flags))
+    vty_out(vty, "SETUP_REQ | ");
+  if (IS_SET_SETUP_RESP(flags))
+    vty_out(vty, "SETUP_RESP | ");
+  if (IS_SET_AST_COMPLETE(flags))
+    vty_out(vty, "AST_COMPLETE | ");
+  if (IS_SET_APP_COMPLETE(flags))
+    vty_out(vty, "APP_COMPLETE | ");
+  if (IS_SET_RELEASE_REQ(flags))
+    vty_out(vty, "RELEASE_REQ | ");
+  if (IS_SET_RELEASE_RESP(flags))
+    vty_out(vty, "RELEASE_RESP | ");
+  if (IS_RES_UNFIXED(flags))
+    vty_out(vty, "RES_UNFIXED"); 
+}
+*/
+
 /* all commands for ast_master */
 DEFUN (master_show_ast,
        master_show_ast_cmd,
@@ -62,6 +82,9 @@ DEFUN (master_show_ast,
     vty_out(vty, "----------------------------------------------%s", VTY_NEWLINE);
     vty_out(vty, "overall status: %s %s", status_type_details[curcfg->status], VTY_NEWLINE);
     vty_out(vty, "action status: %s %s", action_type_details[curcfg->action], VTY_NEWLINE);
+    vty_out(vty, "flags: ");
+    // print_flags(vty, curcfg->flags);
+    vty_out(vty, VTY_NEWLINE);
     vty_out(vty, "%sTotal number of nodes: %d %s", VTY_NEWLINE, curcfg->node_list->count, VTY_NEWLINE);
     
     for (curnode = curcfg->node_list->head;
@@ -89,7 +112,7 @@ DEFUN (master_show_ast,
 		curnode1;
 		curnode1 = curnode1->next) {
 	  ifp = (struct if_ip*) curnode1->data;
-	  vty_out(vty,  "\t    %s with addr %s%s", 
+	  vty_out(vty,  "\t    %s [%s%s]", 
 		  ifp->iface? ifp->iface:"TBA", ifp->assign_ip, VTY_NEWLINE);
 	}
       }
@@ -119,6 +142,7 @@ DEFUN (master_show_ast,
         vty_out(vty, "\t    proxy: %s%s", src->proxy->name, VTY_NEWLINE);
       if (src->local_id_type[0] != '\0')
 	vty_out(vty, "\t    local_id: %s/%d%s", src->local_id_type, src->local_id, VTY_NEWLINE);
+      vty_out(vty, "\tdest:%s", VTY_NEWLINE);
       if (dest->es)
 	vty_out(vty, "\t    es: %s%s", dest->es->name, VTY_NEWLINE);
       if (dest->vlsr)
@@ -131,7 +155,7 @@ DEFUN (master_show_ast,
   } else {
 
     if (app_list.count == 0) {
-      vty_out(vty, "No AST on the list %s", VTY_NEWLINE);
+      vty_out(vty, "No active AST on the list %s", VTY_NEWLINE);
       return (CMD_SUCCESS);
     }
 

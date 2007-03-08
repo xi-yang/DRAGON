@@ -242,7 +242,7 @@ master_process_setup_resp()
 		work_res_cfg->res.l.vtag);
   
 	  /* counter update */
-	  if (glob_res_cfg->status != AST_PENDING) {
+	  if (work_res_cfg->status != AST_PENDING) {
 	    if (IS_SET_SETUP_RESP(glob_res_cfg)) 
 	      zlog_warn("SETUP_RESP has been recieved, so this is an update");
 	    else { 
@@ -291,7 +291,7 @@ master_process_setup_resp()
 		work_res_cfg->res.l.vtag);
   
 	  /* counter update */
-	  if (glob_res_cfg->status != AST_PENDING) {
+	  if (work_res_cfg->status != AST_PENDING) {
 	    if (IS_SET_SETUP_RESP(glob_res_cfg)) 
 	      zlog_warn("SETUP_RESP has been recieved, so this is an update");
 	    else { 
@@ -1026,37 +1026,27 @@ main(int argc, char* argv[])
   return (EXIT_SUCCESS);
 }
 
-void 
-set_alllink_fail(struct adtlist *list, char* err_message)
+void
+set_alllink(struct adtlist *list, int ast_status, enum link_status link_status, u_int8_t flags, char* message)
 {
   struct adtlistnode *curnode;
   struct resource *mylink;
 
-  if (list == NULL) 
+  if (!list) 
     return;
+
   for (curnode = list->head;
 	curnode;
 	curnode = curnode->next) {
     mylink = (struct resource*) curnode->data; 
-    mylink->status = AST_FAILURE;
-    if (err_message != NULL) 
-      mylink->agent_message = strdup(err_message);
-  }
-}
-
-void
-set_alllink_flags(struct adtlist *list, u_int8_t flags)
-{  
-  struct adtlistnode *curnode;
-  struct resource *mylink;
-
-  if (list == NULL)
-    return;
-  for (curnode = list->head;
-	curnode;
-	curnode = curnode->next) {
-    mylink = (struct resource*) curnode->data;
-    mylink->flags |= flags;
+    if (ast_status != -1) 
+      mylink->status = ast_status;
+    if (link_status != -1)
+      mylink->res.l.l_status = link_status;
+    if (message) 
+      mylink->agent_message = strdup(message);
+    if (flags)
+      mylink->flags |= flags;
   }
 }
 
@@ -1261,7 +1251,7 @@ send_task_to_link_agent()
     if (glob_app_cfg->action != AST_COMPLETE) {
       sprintf(newpath, "%srequest_%s.xml", path_prefix, srcnode->name);
       if (master_compose_link_request(glob_app_cfg, newpath, srcnode) == 0) {
-	set_alllink_fail(srcnode->res.n.link_list, "Failed to compose the xml file to dragon");
+	set_alllink(srcnode->res.n.link_list, AST_FAILURE, -1, 0, "Failed to compose the xml file to dragon");
 	ready += adtlist_getcount(srcnode->res.n.link_list);
 	ret_value = 0;
 	continue;
@@ -1272,7 +1262,7 @@ send_task_to_link_agent()
 		srcnode->name, srcnode->res.n.ip, DRAGON_XML_PORT);
     sock = send_file_to_agent(srcnode->res.n.ip, DRAGON_XML_PORT, newpath);
     if (sock == -1)  {
-      set_alllink_fail(srcnode->res.n.link_list, "Failed to connect to dragond");
+      set_alllink(srcnode->res.n.link_list, AST_FAILURE, -1, flags, "Failed to connect to dragond");
       ready += adtlist_getcount(srcnode->res.n.link_list);
       ret_value = 0;
 
@@ -1280,9 +1270,10 @@ send_task_to_link_agent()
 	continue;
  
       continue;
+    } else {
+      set_alllink(srcnode->res.n.link_list, AST_PENDING, commit, flags, NULL);
     }
 
-    set_alllink_flags(srcnode->res.n.link_list, flags);    
     if (glob_app_cfg->action != AST_COMPLETE) {
       thread_add_read(master, dragon_callback, NULL, sock);
       srcnode->dragon_sock = sock;
@@ -1296,7 +1287,7 @@ send_task_to_link_agent()
     }
   }
 
-  if (glob_app_cfg->action == SETUP_REQ)  
+  if (glob_app_cfg->action == SETUP_REQ)   
     glob_app_cfg->setup_ready += ready;
   else if (glob_app_cfg->action == RELEASE_REQ)
     glob_app_cfg->release_ready += ready;
@@ -1373,6 +1364,7 @@ integrate_result()
     case APP_COMPLETE:
       if (glob_app_cfg->total == glob_app_cfg->complete_ready) {
         zlog_info("All minions are done with this AST, resources are ready to be released");
+	glob_app_cfg->status = AST_SUCCESS;
         return;
       }
     default:

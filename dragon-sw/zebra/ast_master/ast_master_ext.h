@@ -78,7 +78,7 @@ struct es_tank {
     char* ip;
     char* router_id;
     char* tunnel;
-  } es[20];
+  } es[50];
 };
 struct es_tank es_pool;
 
@@ -211,7 +211,7 @@ struct network_link {
 struct linkprofile {
   int count;
   struct network_link **elem;
-} service;
+};
 
 enum link_type { EtherPipeBasic = 1, EtherPipeUltra, TDMBasic };
 
