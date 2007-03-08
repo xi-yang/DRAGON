@@ -110,8 +110,8 @@ bool SwitchCtrl_Session_Force10E600::addVLANPort_ShellScript(uint32 portID, uint
     pid = -1;
 
     // add port to VLAN
-    port_part=(portID)&0xf;     
-    slot_part=(portID>>4)&0xf;
+    port_part=(portID)&0xff;     
+    slot_part=(portID>>8)&0xf;
     switch(RSVP_Global::switchController->getSlotType(slot_part)) {
     case SLOT_TYPE_GIGE:
         sprintf(portName, "gi%d/%d",slot_part,port_part);
@@ -183,8 +183,8 @@ bool SwitchCtrl_Session_Force10E600::deleteVLANPort_ShellScript(uint32 portID, u
         return false;
 
     // remove in port from VLAN
-    port_part=(portID)&0xf;
-    slot_part=(portID>>4)&0xf;
+    port_part=(portID)&0xff;
+    slot_part=(portID>>8)&0xf;
     switch(RSVP_Global::switchController->getSlotType(slot_part)) {
     case SLOT_TYPE_GIGE:
         sprintf(portName, "gi%d/%d",slot_part,port_part);
@@ -257,8 +257,8 @@ bool SwitchCtrl_Session_Force10E600::policeInputBandwidth_ShellScript(bool do_un
     if (committed_rate_int < 1 || !preAction())
         return false;
 
-    port_part=(input_port)&0xf;
-    slot_part=(input_port>>4)&0xf;
+    port_part=(input_port)&0xff;
+    slot_part=(input_port>>8)&0xf;
     switch(RSVP_Global::switchController->getSlotType(slot_part)) {
     case SLOT_TYPE_GIGE:
         sprintf(portName, "gi%d/%d",slot_part,port_part);
@@ -322,8 +322,8 @@ bool SwitchCtrl_Session_Force10E600::limitOutputBandwidth_ShellScript(bool do_un
         return false;
 
     // add port to VLAN
-    port_part=(output_port)&0xf;     
-    slot_part=(output_port>>4)&0xf;
+    port_part=(output_port)&0xff;     
+    slot_part=(output_port>>8)&0xf;
     switch(RSVP_Global::switchController->getSlotType(slot_part)) {
     case SLOT_TYPE_GIGE:
         sprintf(portName, "gi%d/%d",slot_part,port_part);

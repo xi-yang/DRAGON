@@ -17,6 +17,8 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsUntagged(uint32 port, uint
     if ((!active) || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
     	return false; //don't touch the control port!
 
+    port = convertUnifiedPort2RaptorInternal(port);
+
     //@@@@ Raptor allows a port to be tagged in two VLANs
     //@@@@ Do we still need to do the following removal?
     //@@@@ Code haven't been changed after copied from SNMP_Session.cc
@@ -63,6 +65,8 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsTagged(uint32 port, uint32
     if ((!active) || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
     	return false; //don't touch the control port!
 
+    port = convertUnifiedPort2RaptorInternal(port);
+
     //there is no need to remove a to-be-tagged-in-new-VLAN port from old VLAN
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
@@ -87,7 +91,7 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsTagged(uint32 port, uint32
     return ret;
 }
 
-
+//NOP!
 bool SwitchCtrl_Session_RaptorER1010::setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID)
 {
     return true;
@@ -97,6 +101,8 @@ bool SwitchCtrl_Session_RaptorER1010::removePortFromVLAN(uint32 port, uint32 vla
 {
     bool ret = true;
     vlanPortMap * vpmAll = NULL, *vpmUntagged = NULL;
+
+    port = convertUnifiedPort2RaptorInternal(port);
 
     if ((!active) || !rfc2674_compatible || port==SWITCH_CTRL_PORT)
     	return false; //don't touch the control port!
@@ -237,6 +243,7 @@ void SwitchCtrl_Session_RaptorER1010::hook_getPortMapFromSnmpVars(vlanPortMap &v
 
 bool SwitchCtrl_Session_RaptorER1010::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 {
+    port = convertUnifiedPort2RaptorInternal(port);
     return HasPortBit(vpm.portbits, port-1);
 }
 
@@ -254,6 +261,7 @@ bool SwitchCtrl_Session_RaptorER1010::hook_getPortListbyVLAN(PortList& portList,
         if (HasPortBit(vpmAll->portbits, bit))
         {
             port = bit+1;
+            port = convertRaptorInternal2UnifiedPort(port);
             portList.push_back(port);
         }
     }
@@ -262,5 +270,4 @@ bool SwitchCtrl_Session_RaptorER1010::hook_getPortListbyVLAN(PortList& portList,
         return false;
     return true;
 }
-
 

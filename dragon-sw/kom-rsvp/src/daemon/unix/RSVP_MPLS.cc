@@ -402,6 +402,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
         						LOG(4)(Log::MPLS, "VLSR: Moving ingress port#",  port, " to VLAN #", vlan);
                                                  if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
                                                         (*sessionIter)->movePortToVLANAsTagged(port, vlan);
+                                                 	//Up to 32 ports supported. Only default RFC2674 switch switch (e.g. Dell, Intel) use this.
                                                         taggedPorts |= (1<<(32-port));
                                                     }
                                                  else
@@ -440,6 +441,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
         						LOG(4)(Log::MPLS, "VLSR: Moving egress port#",  port, " to VLAN #", vlan);
                                                  if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
                                                         (*sessionIter)->movePortToVLANAsTagged(port, vlan);
+                                                 	//Up to 32 ports supported. Only default RFC2674 switch switch (e.g. Dell, Intel) use this.
                                                         taggedPorts |= (1<<(32-port));
                                                     }
                                                  else
@@ -458,7 +460,8 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 										  
                                           if (taggedPorts != 0)
                                             {
-                                                 //Set vlan ports to be "tagged"
+                                                 //Set vlan ports to be "tagged" 
+                                                 //Only default RFC2674 switch switch (e.g. Dell, Intel) does something; Others simply return true.
 	                                  		(*sessionIter)->setVLANPortsTagged(taggedPorts, vlan);
 							//remove the VTAG that is taken by the LSP
 							LOG(4)(Log::MPLS, "VLSR: Set tagged ports:",  taggedPorts, " in VLAN #", vlan);
