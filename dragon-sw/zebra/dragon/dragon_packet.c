@@ -47,8 +47,9 @@ extern void dragon_upcall_callback(int, struct lsp*);
 int 
 is_mandated_params_set_for_lsp(struct lsp *lsp)
 {
-	if (lsp->common.Session_Para.srcAddr.s_addr == 0 || lsp->common.Session_Para.destAddr.s_addr == 0 ||
-	    lsp->common.Session_Para.srcPort == 0 || lsp->common.Session_Para.destPort == 0)
+	if ( lsp->common.Session_Para.srcAddr.s_addr == 0 || lsp->common.Session_Para.destAddr.s_addr == 0
+	    || (lsp->common.Session_Para.srcPort == 0 && lsp->common.DragonUni_Para->srctLocalId == 0)
+	    || (lsp->common.Session_Para.destPort == 0 && lsp->common.DragonUni_Para->destLocalId == 0) )
 	     return 0;
 	
 	return 1;

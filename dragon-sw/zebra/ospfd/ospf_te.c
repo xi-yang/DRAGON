@@ -288,6 +288,48 @@ ospf_te_config_para_del(struct ospf_te_config_para *oc)
      XFREE (MTYPE_OSPF_TMP, oc);
 }
 
+static int
+get_switch_port_by_name(char* port_name, u_int32_t* switch_port)
+{
+	u_int32_t shelf, slot, port;
+	if (strstr(port_name, "-"))
+	{
+		if (sscanf(port_name, "%d-%d-%d", &shelf, &slot, &port) == 3)
+		{
+			switch_port = ((shelf&0xf) << 12) | ((slot&0xf)<<8) | (port&0xff);
+			return 1;
+		}
+		else
+			return -1;
+	}
+	else if (strstr(port_name, "/"))
+	{
+		if (sscanf(port_name, "%d/%d/%d", &shelf, &slot, &port) == 3)
+		{
+			switch_port = ((shelf&0xf) << 12) | ((slot&0xf)<<8) | (port&0xff);
+			return 1;
+		}
+		else
+			return -1;
+	}
+	else if (sscanf(port_name, switch_port) == 1)
+	{
+		return 1;
+	}
+
+	return -1;
+}
+
+static char* 
+get_switch_port_string(u_int32_t switch_port)
+{
+	static char port_string[20];
+	u_int32_t shelf, slot, port;
+
+	sprintf(port_string, "%d-%d-%d", (switch_port>>12)&0xf, (switch_port>>8)&0xf, switch_port&0xff);
+	return port_string;
+}
+
 int
 ospf_te_init (void)
 {
@@ -1765,7 +1807,7 @@ static void ospf_te_config_write (struct vty *vty)
               	vty_out(vty, "       level mpls %s", VTY_NEWLINE);             
               if (oi->vlsr_if.data_ip.s_addr != 0)
               {
-              	if (oi->vlsr_if.protocol!=0 && oi->vlsr_if.switch_ip.s_addr!=0 && oi->vlsr_if.switch_port!=0)
+              	if (oi->vlsr_if.protocol!=0 && oi->vlsr_if.switch_ip.s_addr!=0)
               	{
               		strcpy(temp1, inet_ntoa(oi->vlsr_if.data_ip));
 				strcpy(temp2, inet_ntoa(oi->vlsr_if.switch_ip));
@@ -1781,7 +1823,7 @@ static void ospf_te_config_write (struct vty *vty)
 								inet_ntoa (oi->vlsr_if.data_ip), VTY_NEWLINE);
               }
 		else {
-			if (oi->vlsr_if.protocol!=0 && oi->vlsr_if.switch_ip.s_addr!=0 && oi->vlsr_if.switch_port!=0)
+			if (oi->vlsr_if.protocol!=0 && oi->vlsr_if.switch_ip.s_addr!=0)
 			{
 				strcpy(temp2, inet_ntoa(oi->vlsr_if.switch_ip));
 				if (oi->vlsr_if.protocol == VLSR_PROTO_SNMP)
@@ -2104,9 +2146,11 @@ DEFUN (ospf_te_router_addr,
   return CMD_SUCCESS;
 }
 
+
+/* <0-4294967296>*/
 DEFUN (ospf_te_data_interface,
        ospf_te_data_interface_cmd,
-       "data-interface ip A.B.C.D protocol (snmp|tl1) switch-ip A.B.C.D switch-port <0-4294967296>",
+       "data-interface ip A.B.C.D protocol (snmp|tl1) switch-ip A.B.C.D switch-port PORTNAME",
        "Associate an out-of-band data interface to this interface\n"
        "The IP address of the data interface\n"
        "IPv4 address\n"
@@ -2146,9 +2190,9 @@ DEFUN (ospf_te_data_interface,
       vty_out (vty, "Please specify the address by A.B.C.D%s", VTY_NEWLINE);
       return CMD_WARNING;
   }
-  if (sscanf (argv[3], "%d", &te_config.vlsr_if.switch_port) != 1)
+  if (get_switch_port_by_name(argv[3], &te_config.vlsr_if.switch_port) != 1)
   {
-      vty_out (vty, "fscanf: %s%s", strerror (errno), VTY_NEWLINE);
+      vty_out (vty, "get_switch_port_by_name: %s%s",argv[3], VTY_NEWLINE);
       return CMD_WARNING;
   }
 
@@ -2198,9 +2242,9 @@ DEFUN (ospf_te_data_interface_unnum,
       vty_out (vty, "Please specify the address by A.B.C.D%s", VTY_NEWLINE);
       return CMD_WARNING;
   }
-  if (sscanf (argv[2], "%d", &te_config.vlsr_if.switch_port) != 1)
+  if ( get_switch_port_by_name(argv[2], &te_config.vlsr_if.switch_port) != 1)
   {
-      vty_out (vty, "fscanf: %s%s", strerror (errno), VTY_NEWLINE);
+      vty_out (vty, "get_switch_port_by_name: %s%s",argv[3], VTY_NEWLINE);
       return CMD_WARNING;
   }
 
@@ -2854,12 +2898,12 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 			vty_out(vty, "Protocol type is TL1, ");
 		else
 			vty_out(vty, "Protocol type is UNKNOWN, ");
-		  if (oi->vlsr_if.switch_ip.s_addr!=0 && oi->vlsr_if.switch_port!=0)
+		  if (oi->vlsr_if.switch_ip.s_addr!=0)
                   {
                           strcpy(data_ip_address, inet_ntoa(oi->vlsr_if.data_ip));
                           strcpy(switch_ip_address, inet_ntoa(oi->vlsr_if.switch_ip));
-			  vty_out(vty, "Data interface is numbered , IP = %s , Switch IP = %s, Switch port = %d,  ", 
-							  data_ip_address, switch_ip_address, oi->vlsr_if.switch_port);
+			  vty_out(vty, "Data interface is numbered , IP = %s , Switch IP = %s, Switch port = %d (%s),  ", 
+							  data_ip_address, switch_ip_address, oi->vlsr_if.switch_port, get_switch_port_string(oi->vlsr_if.switch_port));
                   }
 		  else
 			vty_out(vty, "Data interface is numbered, IP = %s,  ",  inet_ntoa (oi->vlsr_if.data_ip));
@@ -2893,9 +2937,9 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 			  vty_out(vty, "Protocol type is TL1, ");
 		  else
 			  vty_out(vty, "Protocol type is UNKNOWN, ");
-		  if (oi->vlsr_if.switch_ip.s_addr!=0 && oi->vlsr_if.switch_port!=0)
+		  if (oi->vlsr_if.switch_ip.s_addr!=0)
 			  vty_out(vty, "Data interface is unnumbered, Switch IP %s, Switch port %d , Interface ID = 0x%x %s", 
-							  inet_ntoa(oi->vlsr_if.switch_ip), oi->vlsr_if.switch_port, oi->vlsr_if.if_id, VTY_NEWLINE);
+							  inet_ntoa(oi->vlsr_if.switch_ip), oi->vlsr_if.switch_port, get_switch_port_string(oi->vlsr_if.switch_port), oi->vlsr_if.if_id, VTY_NEWLINE);
 		  else
 			  vty_out(vty, "Data interface is unnumbered, Interface ID = 0x%x%s", oi->vlsr_if.if_id, VTY_NEWLINE);
 		  	
