@@ -215,9 +215,9 @@ static list registered_local_ids;
 char *lid_types[] = {"none id", "single port", "untagged group", "tagged group"};
 
 static int
-get_switch_port_by_name(char* port_name, u_int16_t* switch_port)
+get_switch_port_by_name(char* port_name, u_int32_t* switch_port)
 {
-	u_int16_t shelf, slot, port;
+	u_int32_t shelf, slot, port;
 	if (strstr(port_name, "-"))
 	{
 		if (sscanf(port_name, "%d-%d-%d", &shelf, &slot, &port) == 3)
@@ -247,11 +247,11 @@ get_switch_port_by_name(char* port_name, u_int16_t* switch_port)
 }
 
 static char* 
-get_switch_port_string(u_int16_t switch_port)
+get_switch_port_string(u_int32_t switch_port)
 {
 	static char port_string[20];
 
-	sprintf(port_string, "%d-%d-%d", (switch_port>>12)&0xf, (switch_port>>8)&0xf, switch_port&0xff);
+	sprintf(port_string, "%d/%d/%d", (switch_port>>12)&0xf, (switch_port>>8)&0xf, switch_port&0xff);
 	return port_string;
 }
 
@@ -350,7 +350,7 @@ void local_id_group_show(struct vty *vty, struct local_id *lid)
     if (lid->type != LOCAL_ID_TYPE_GROUP && lid->type != LOCAL_ID_TYPE_TAGGED_GROUP)
         return;
 
-    vty_out(vty, "%-8s [%-12s]    ", lid->value, lid_types[lid->type]);
+    vty_out(vty, "%-7d [%-12s] ", lid->value, lid_types[lid->type]);
 
     LIST_LOOP(lid->group, ptag, node)
     {
@@ -1834,7 +1834,7 @@ DEFUN (dragon_set_local_id,
        "Port number in the range <0-65535> or in the format shelf/slot/port\n")
 {
     u_int16_t type = LOCAL_ID_TYPE_PORT;
-    u_int16_t tag;
+    u_int32_t tag;
     struct local_id * lid = NULL;
     listnode node;
 
@@ -1846,7 +1846,7 @@ DEFUN (dragon_set_local_id,
     }
     LIST_LOOP(registered_local_ids, lid, node)
     {
-        if (lid->type == type && lid->value == tag)
+        if (lid->type == type && lid->value == (u_int16_t)tag)
         {
             vty_out (vty, "localID %s (port) has already existed... %s", argv[0], VTY_NEWLINE);
             return CMD_WARNING;
@@ -1874,8 +1874,8 @@ DEFUN (dragon_set_local_id_group,
        "Port number in the range <0-65535> or in shelf-slot-port format\n" )
 {
     u_int16_t type = strcmp(argv[0], "group") == 0 ? LOCAL_ID_TYPE_GROUP: LOCAL_ID_TYPE_TAGGED_GROUP;
-    u_int16_t  tag = atoi(argv[1]);
-    u_int16_t sub_tag, *iter_tag;
+    u_int16_t  tag = atoi(argv[1]), *iter_tag;
+    u_int32_t sub_tag;
     struct local_id * lid = NULL;
     listnode node, node_inner;
 
@@ -1893,7 +1893,7 @@ DEFUN (dragon_set_local_id_group,
             {
                 LIST_LOOP(lid->group, iter_tag, node_inner)
                 {
-                    if (*iter_tag == sub_tag)
+                    if (*iter_tag == (u_int16_t)sub_tag)
                     {
                         vty_out (vty, "localID %d (group) has already had a member %d ... %s", tag, sub_tag, VTY_NEWLINE);
                         return CMD_WARNING;
@@ -1953,7 +1953,7 @@ DEFUN (dragon_delete_local_id,
        "Port number in the range <0-65535>\n" )
 {
     u_int16_t type;
-    u_int16_t  tag = 0;
+    u_int32_t  tag = 0;
     struct local_id * lid = NULL;
     listnode node;
 
@@ -1973,7 +1973,7 @@ DEFUN (dragon_delete_local_id,
 
     LIST_LOOP(registered_local_ids, lid, node)
     {
-        if (lid->type == type && lid->value == tag)
+        if (lid->type == type && lid->value == (u_int16_t)tag)
         {
             if (type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)
                 local_id_group_free(lid);
@@ -2038,8 +2038,8 @@ DEFUN (dragon_show_local_id,
     LIST_LOOP(registered_local_ids, lid, node)
     {
          if (lid->type == LOCAL_ID_TYPE_PORT)
-	     vty_out(vty, "%-8d%(%-8s) [%-12s]    ", lid->value, get_switch_port_string(lid->value), lid_types[lid->type]);
-         else if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
+	     vty_out(vty, "%-4d(%s) [%-12s]    ", lid->value, get_switch_port_string(lid->value), lid_types[lid->type]);
+         if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
             local_id_group_show(vty, lid);
          else
             vty_out(vty, "%s", VTY_NEWLINE);
