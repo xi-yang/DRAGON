@@ -50,11 +50,11 @@ private:
 
 inline uint32 convertUnifiedPort2RaptorInternal(uint32 port)
 {
-	return ((port>>8)&0xf * 12 + (port & 0xff));
+	return (((port>>8)&0xf)*12 + (port&0xff));
 }
 inline uint32 convertRaptorInternal2UnifiedPort(uint32 port)
 {
-	return (((((port-1)/12) & 0xf)<<8) | ((port-1)%12 + 1));
+	return (((((port-1)/12)&0xf)<<8) | ((port-1)%12 + 1));
 }
 
 #endif //ifndef _SwitchCtrl_Session_RaptorER1010_H_
