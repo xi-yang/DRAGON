@@ -1967,9 +1967,15 @@ DEFUN (dragon_delete_local_id,
         }
     }
     else if (strcmp(argv[0], "group") == 0)
+    {
         type = LOCAL_ID_TYPE_GROUP;
+        sscanf(argv[0], "%d", &tag);
+    }
     else
+    {
         type = LOCAL_ID_TYPE_TAGGED_GROUP;
+        sscanf(argv[0], "%d", &tag);
+    }
 
     LIST_LOOP(registered_local_ids, lid, node)
     {
