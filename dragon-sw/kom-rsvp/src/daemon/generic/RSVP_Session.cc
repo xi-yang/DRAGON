@@ -796,6 +796,9 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			explicitRoute = ((!fromLocalAPI) && (!hop.getLogicalInterface().hasEnabledMPLS())) ? NULL
 						   : const_cast<EXPLICIT_ROUTE_Object*>(msg.getEXPLICIT_ROUTE_Object());
 
+			//indicator to avoid OSPFd based ERO computation from intermediate VLSR node
+			bool hasReceivedExplicitRoute = (explicitRoute != NULL);
+
 			//preprocess ERO
 			if (explicitRoute && shouldReroute(explicitRoute)) {
 				explicitRoute->destroy();
@@ -829,6 +832,14 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					else {
 						LOG(5)( Log::MPLS, "MPLS: NARB server ", NARB_APIClient::_host, ":", NARB_APIClient::_port, " is down...");
 					}
+
+					if (hasReceivedExplicitRoute) //Should recompute ERO via NARB but failed
+					{
+						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
+						LOG(1)(Log::MPLS, "MPLS: VLSR route conflicts with existing VLAN or edge port PVID");
+						return;
+					}
+
 		                     //explicit routing using OSPFd
 		                     if (!explicitRoute)
 					       explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
