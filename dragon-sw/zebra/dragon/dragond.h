@@ -334,7 +334,7 @@ enum _RSVP_MsgType {
 	Path = 1, 
 	Resv, PathErr, ResvErr, PathTear, ResvTear, 
 	ResvConf, Ack = 13, Srefresh = 15, Load = 126, 
-	PathResv = 127, RemoveAPI = 255 
+	PathResv = 127, RemoveAPI = 255, VtagNotification = 204,
 };
 
 
