@@ -865,6 +865,9 @@ void rsvpupcall_register_lsp(struct _rsvp_upcall_parameter* p)
 		lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
 		lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
 	}
+
+	if (p->vlanTag != 0)
+		lsp->dragon.lspVtag = p->vlanTag;
 }
 
 void  rsvpUpcall(void* para)
