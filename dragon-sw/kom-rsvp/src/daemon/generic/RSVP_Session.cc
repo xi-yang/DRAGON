@@ -875,7 +875,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			}
 			if (vlan_tag != 0 || vlan_tag < MAX_VLAN_NUM) {
 				assert(!msg.hasSUGGESTED_LABEL_Object());
-				const SUGGESTED_LABEL_Object suggestedLabel(vlan_tag, 0); // labelType == 0 is invalid for other purpose
+				const SUGGESTED_LABEL_Object suggestedLabel(vlan_tag); // labelType == 0 is invalid for other purpose
 				const_cast<Message&>(msg).setSUGGESTED_LABEL_Object(suggestedLabel);
 			}
 		}
