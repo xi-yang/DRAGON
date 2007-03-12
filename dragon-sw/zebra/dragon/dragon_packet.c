@@ -988,9 +988,6 @@ void  rsvpUpcall(void* para)
 		case PathErr:
 		case ResvErr:
 			break;
-		case VtagNotification:
-            lsp->dragon.lspVtag = (u_int32_t)p->srcPort;
-            break;
 		default:
 			break;
 	}
