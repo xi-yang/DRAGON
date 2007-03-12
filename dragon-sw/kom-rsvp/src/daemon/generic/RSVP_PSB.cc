@@ -483,6 +483,9 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 		message.setADSPEC_Object( *newAdSpec );
 		newAdSpec->destroy();
 	}
+	if ( hasSuggestedLabel) {
+		message.setSUGGESTED_LABEL_Object(suggestedLabelObject);
+ 	}
 	message.addUnknownObjects( unknownObjectList );
 	if ( explicitRoute ) 
 		//Destination address field of the RSVP raw IP packet header must be the gateway
