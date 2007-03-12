@@ -515,8 +515,9 @@ void PSB::sendVtagNotification() {
 
 	Message msg( Message::VtagNotification, TTL, getSession() );	
 	msg.setSENDER_TEMPLATE_Object( *this );
+	//SENDER_TEMPLATE_Object& sender = const_cast<SENDER_TEMPLATE_Object>(msg.getSENDER_TEMPLATE_Object());
 	const SENDER_TEMPLATE_Object& sender = msg.getSENDER_TEMPLATE_Object();
-	const_cast<SENDER_TEMPLATE_Object>(sender).setLspId(vlan_tag);
+	const_cast<SENDER_TEMPLATE_Object&>(sender).setLspId(vlan_tag);
 	RSVP::getApiLif()->sendMessage( msg, gateway );
 }
 
