@@ -221,6 +221,8 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 			case Message::AddLocalId:
 			case Message::DeleteLocalId:
 				break;
+			case Message::VtagNotification:
+				break;
 			default:
 				FATAL(2)( Log::Fatal, "FATAL INTERNAL ERROR: daemon sent unknown message with type:", msg.getMsgType() );
 				abortProcess();
@@ -234,6 +236,10 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 		zUpcallParam.destAddr.s_addr = key.getDestAddress().rawAddress();
 		zUpcallParam.destPort = key.getTunnelId();
 		zUpcallParam.srcAddr.s_addr = key.getExtendedTunnelId();
+		if (msg.getMsgType()==Message::VtagNotification) //$$$$
+		{
+			zUpcallParam.srcPort = msg.getSENDER_TEMPLATE_Object().getLspId();
+		}
 		if (msg.getMsgType()==Message::Path)
 		{
 			zUpcallParam.srcPort = msg.getSENDER_TEMPLATE_Object().getLspId();
@@ -263,22 +269,23 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 			SENDER_TEMPLATE_Object stm = SENDER_TEMPLATE_Object(msg.getSENDER_TEMPLATE_Object());
 			zUpcallParam.senderTemplate = (void*)&stm;
 		}
-              if(msg.getDRAGON_UNI_Object())
-              {
-                   zUpcallParam.dragonUniPara = new (struct _Dragon_Uni_Para);
-                   zUpcallParam.dragonUniPara->srcLocalId = msg.getDRAGON_UNI_Object()->getSrcTNA().local_id;
-                   zUpcallParam.dragonUniPara->destLocalId = msg.getDRAGON_UNI_Object()->getDestTNA().local_id;
-                   zUpcallParam.dragonUniPara->vlanTag = msg.getDRAGON_UNI_Object()->getVlanTag().vtag;
-                   memcpy(zUpcallParam.dragonUniPara->ingressChannel, msg.getDRAGON_UNI_Object()->getIngressCtrlChannel().name, 12);
-                   memcpy(zUpcallParam.dragonUniPara->egressChannel, msg.getDRAGON_UNI_Object()->getEgressCtrlChannel().name, 12);
-                   zUpcallParam.dragonUni = (void*)msg.getDRAGON_UNI_Object();
-              }
-              else
-              {
-                   zUpcallParam.dragonUniPara = NULL;
-                   zUpcallParam.dragonUni = NULL;
 
-              }
+		if(msg.getDRAGON_UNI_Object())
+		{
+		   zUpcallParam.dragonUniPara = new (struct _Dragon_Uni_Para);
+		   zUpcallParam.dragonUniPara->srcLocalId = msg.getDRAGON_UNI_Object()->getSrcTNA().local_id;
+		   zUpcallParam.dragonUniPara->destLocalId = msg.getDRAGON_UNI_Object()->getDestTNA().local_id;
+		   zUpcallParam.dragonUniPara->vlanTag = msg.getDRAGON_UNI_Object()->getVlanTag().vtag;
+		   memcpy(zUpcallParam.dragonUniPara->ingressChannel, msg.getDRAGON_UNI_Object()->getIngressCtrlChannel().name, 12);
+		   memcpy(zUpcallParam.dragonUniPara->egressChannel, msg.getDRAGON_UNI_Object()->getEgressCtrlChannel().name, 12);
+		   zUpcallParam.dragonUni = (void*)msg.getDRAGON_UNI_Object();
+		}
+		else
+		{
+		   zUpcallParam.dragonUniPara = NULL;
+		   zUpcallParam.dragonUni = NULL;
+
+		}
 
 		upcall(&zUpcallParam); //upcall to Zebra
 	}

@@ -648,6 +648,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		&& RSVP_Global::rsvp->getApiLif() != NULL && msg.getEXPLICIT_ROUTE_Object() == NULL);
 	if (isDragonUniIngress) fromLocalAPI  = true;
 
+	bool hasExplicitRouteFromNarb = false;
+
 	//GENERALIZED UNI (clients only)
 	bool isGeneralizedUniIngressClient = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif() && generalizedUni != NULL
 		&& ( msg.getRSVP_HOP_Object().getAddress() == NetAddress(0x100007f) || RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress())) );
@@ -821,11 +823,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			                            explicitRoute = narbClient->getExplicitRoute(msg, (void*)this);
 							if (explicitRoute) {
                        					if (!narbClient->handleRsvpMessage(msg)) {
-                                                    		LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");
-                                                         }
+                                              	LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");
+                       					}
+										hasExplicitRouteFromNarb = true;
 							}
 							else {
-		                                 		LOG(1)( Log::Routing, "NARB failed to find a path for this request!");
+		                                LOG(1)( Log::Routing, "NARB failed to find a path for this request!");
 							}
 						}
 					}
@@ -1168,6 +1171,12 @@ search_psb:
 		cPSB->updateGENERALIZED_UNI_Object(generalizedUni);
 	}
 
+	//$$$$
+	if (hasExplicitRouteFromNarb && fromLocalAPI)
+	{
+		cPSB->sendVtagNotification();
+	}
+	
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {
 		Path_Refresh_Needed = true;
