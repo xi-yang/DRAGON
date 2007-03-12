@@ -578,9 +578,9 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 					for ( i = 0; i < lsp->common.ERONodeNumber; i++)
 					{
 						if (lsp->common.EROAbstractNode_Para[i].type == UNumIfID
-							&& (lsp->common.EROAbstractNode_Para[i].data.uNumIfID >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+							&& (lsp->common.EROAbstractNode_Para[i].data.uNumIfID.interfaceID >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
 						{
-							lsp->dragon.lspVtag = (lsp->common.EROAbstractNode_Para[i].data.uNumIfID & 0xffff);
+							lsp->dragon.lspVtag = (lsp->common.EROAbstractNode_Para[i].data.uNumIfID.interfaceID & 0xffff);
 						}
 					}
 				}
