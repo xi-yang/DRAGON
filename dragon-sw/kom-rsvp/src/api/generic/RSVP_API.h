@@ -63,6 +63,7 @@ struct _rsvp_upcall_parameter {
 	void* session;	//RSVP_API::SessionId
 	void* senderTemplate;
 	void* dragonUni;
+    uint32 vlanTag;
 	uint8 code;			//error/success code
 };
 typedef void (*zUpcall)(void* para);

@@ -221,8 +221,6 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 			case Message::AddLocalId:
 			case Message::DeleteLocalId:
 				break;
-			case Message::VtagNotification:
-				break;
 			default:
 				FATAL(2)( Log::Fatal, "FATAL INTERNAL ERROR: daemon sent unknown message with type:", msg.getMsgType() );
 				abortProcess();
@@ -236,10 +234,6 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 		zUpcallParam.destAddr.s_addr = key.getDestAddress().rawAddress();
 		zUpcallParam.destPort = key.getTunnelId();
 		zUpcallParam.srcAddr.s_addr = key.getExtendedTunnelId();
-		if (msg.getMsgType()==Message::VtagNotification) //$$$$
-		{
-			zUpcallParam.srcPort = msg.getSENDER_TEMPLATE_Object().getLspId();
-		}
 		if (msg.getMsgType()==Message::Path)
 		{
 			zUpcallParam.srcPort = msg.getSENDER_TEMPLATE_Object().getLspId();
@@ -265,6 +259,11 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 				zUpcallParam.session = (void*)&iter;
 			else
 				zUpcallParam.session = NULL;
+
+			if (msg.hasSUGGESTED_LABEL_Object())
+				zUpcallParam.vlanTag = msg.getSUGGESTED_LABEL_Object().getLabel();
+			else
+				zUpcallParam.vlanTag = 0;
 
 			SENDER_TEMPLATE_Object stm = SENDER_TEMPLATE_Object(msg.getSENDER_TEMPLATE_Object());
 			zUpcallParam.senderTemplate = (void*)&stm;

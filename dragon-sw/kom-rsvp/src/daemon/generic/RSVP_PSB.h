@@ -160,7 +160,6 @@ public:
 
 	void sendRefresh( const LogicalInterface& outLif );
 	void refreshVLSRbyLocalId(); //!!!! DRAGON Addition
-	void sendVtagNotification(); //!!!! DRAGON Addition
 	void sendTearMessage();
 	inline void timeout();
 

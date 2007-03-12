@@ -496,31 +496,6 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 		outLif.sendMessage( message, getSession().getDestAddress(), getSrcAddress(), gateway );
 }
 
-void PSB::sendVtagNotification() {
-	if ( TTL < 1 ) return;
-	// get VLAN tag from ERO
-	if (!explicitRoute)
-		return;
-
-	uint16 vlan_tag = 0;
-	AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
-	for (; iter != explicitRoute->getAbstractNodeList().end(); ++iter){
-		if (((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
-			vlan_tag = ((*iter).getInterfaceID() & 0xffff);
-			break;
-		}
-	}
-	if (vlan_tag == 0 || vlan_tag > MAX_VLAN_NUM)
-		return;
-
-	Message msg( Message::VtagNotification, TTL, getSession() );	
-	msg.setSENDER_TEMPLATE_Object( *this );
-	//SENDER_TEMPLATE_Object& sender = const_cast<SENDER_TEMPLATE_Object>(msg.getSENDER_TEMPLATE_Object());
-	const SENDER_TEMPLATE_Object& sender = msg.getSENDER_TEMPLATE_Object();
-	const_cast<SENDER_TEMPLATE_Object&>(sender).setLspId(vlan_tag);
-	RSVP::getApiLif()->sendMessage( msg, gateway );
-}
-
 void PSB::sendTearMessage() {
 	if ( TTL < 1 ) return;
 	Message msg( Message::PathTear, TTL, getSession() );

@@ -862,7 +862,24 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			}
 		}// End of if(isGeneralizedUniClient) ...
 
-		//Deal with G_UNI ??? 
+		// add vlan Tag into suggestedLabel 
+		if (RSVP_Global::rsvp->getApiLif() != NULL && loopback == getDestAddress() && explicitRoute)
+		{
+			uint32 vlan_tag = 0;
+			AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
+			for (; iter != explicitRoute->getAbstractNodeList().end(); ++iter){
+				if (((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
+					vlan_tag = ((*iter).getInterfaceID() & 0xffff);
+					break;
+				}
+			}
+			if (vlan_tag != 0 || vlan_tag < MAX_VLAN_NUM) {
+				assert(!msg.hasSUGGESTED_LABEL_Object());
+				const SUGGESTED_LABEL_Object suggestedLabel(vlan_tag, 0); // labelType == 0 is invalid for other purpose
+				msg.setSUGGESTED_LABEL_Object(suggestedLabel);
+			}
+		}
+
 		if (explicitRoute && (!processERO(msg, hop, explicitRoute, fromLocalAPI, dataInRsvpHop, dataOutRsvpHop, vLSRoute)))
 		{
 			
@@ -1166,11 +1183,7 @@ search_psb:
 	if (generalizedUni) {
 		cPSB->updateGENERALIZED_UNI_Object(generalizedUni);
 	}
-
-	//@@@@
-	if (RSVP_Global::rsvp->getApiLif() && loopback == getDestAddress())
-		cPSB->sendVtagNotification();
-
+	
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {
 		Path_Refresh_Needed = true;
