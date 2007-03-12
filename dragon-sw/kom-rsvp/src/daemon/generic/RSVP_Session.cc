@@ -648,8 +648,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		&& RSVP_Global::rsvp->getApiLif() != NULL && msg.getEXPLICIT_ROUTE_Object() == NULL);
 	if (isDragonUniIngress) fromLocalAPI  = true;
 
-	bool hasExplicitRouteFromNarb = false;
-
 	//GENERALIZED UNI (clients only)
 	bool isGeneralizedUniIngressClient = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif() && generalizedUni != NULL
 		&& ( msg.getRSVP_HOP_Object().getAddress() == NetAddress(0x100007f) || RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress())) );
@@ -668,7 +666,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	VLSRRoute vLSRoute;
 	EXPLICIT_ROUTE_Object* explicitRoute = NULL;
 
-	// DRAGON && GENERALIZED UNI processing here could be combined !! @@@@
+	// DRAGON && GENERALIZED UNI processing here could be combined !! 
 	if (isDragonUniIngressClient) {              
 		const String ingressChanName = (const char*)dragonUni->getIngressCtrlChannel().name;
 		if (ingressChanName == "implicit")
@@ -825,7 +823,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
                        					if (!narbClient->handleRsvpMessage(msg)) {
                                               	LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");
                        					}
-										hasExplicitRouteFromNarb = true;
 							}
 							else {
 		                                LOG(1)( Log::Routing, "NARB failed to find a path for this request!");
@@ -865,8 +862,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			}
 		}// End of if(isGeneralizedUniClient) ...
 
-		//Deal with G_UNI ??? @@@@
-
+		//Deal with G_UNI ??? 
 		if (explicitRoute && (!processERO(msg, hop, explicitRoute, fromLocalAPI, dataInRsvpHop, dataOutRsvpHop, vLSRoute)))
 		{
 			
@@ -1165,18 +1161,16 @@ search_psb:
 	//$$$$ DRAGON UNI
 	if (dragonUni)
 		cPSB->updateDRAGON_UNI_Object(dragonUni);
-	//@@@@>>Xi2007<<
+
 	//$$$$ GENERALIZED UNI 
 	if (generalizedUni) {
 		cPSB->updateGENERALIZED_UNI_Object(generalizedUni);
 	}
 
-	//$$$$
-	if (hasExplicitRouteFromNarb && fromLocalAPI)
-	{
+	//@@@@
+	if (RSVP_Global::rsvp->getApiLif() && loopback == getDestAddress())
 		cPSB->sendVtagNotification();
-	}
-	
+
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {
 		Path_Refresh_Needed = true;
