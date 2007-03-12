@@ -334,7 +334,7 @@ enum _RSVP_MsgType {
 	Path = 1, 
 	Resv, PathErr, ResvErr, PathTear, ResvTear, 
 	ResvConf, Ack = 13, Srefresh = 15, Load = 126, 
-	PathResv = 127, RemoveAPI = 255, VtagNotification = 204,
+	PathResv = 127, RemoveAPI = 255,
 };
 
 
@@ -500,12 +500,13 @@ struct _rsvp_upcall_parameter {
 	u_int8_t lspEncodingType; //LSP encoding type
 	u_int8_t switchingType; // LSP switching type
 	u_int16_t gPid;		//G-Pid
-       struct _Dragon_Uni_Para* dragonUniPara;
+	struct _Dragon_Uni_Para* dragonUniPara;
 	void* sendTSpec;  //Sender TSpec
 	void* adSpec;
 	void* session;	//RSVP_API::SessionId
 	void* senderTemplate;
 	void* dragonUni;
+	u_int32_t vlanTag;
 	u_int8_t code;			//error/success code
 };
 typedef void (*zUpcall)(void* para);
