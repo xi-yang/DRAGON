@@ -260,8 +260,8 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 			else
 				zUpcallParam.session = NULL;
 
-			if (msg.hasSUGGESTED_LABEL_Object())
-				zUpcallParam.vlanTag = msg.getSUGGESTED_LABEL_Object().getLabel();
+			if (msg.hasSUGGESTED_LABEL_Object() && (msg.getSUGGESTED_LABEL_Object().getLabel()>>16)==LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+				zUpcallParam.vlanTag = (msg.getSUGGESTED_LABEL_Object().getLabel() & 0xffff);
 			else
 				zUpcallParam.vlanTag = 0;
 

@@ -363,7 +363,8 @@ void MessageProcessor::refreshReservations() {
 			if (currentMessage.getDRAGON_UNI_Object())
 				resvMsg->setUNI_Object(*currentMessage.getDRAGON_UNI_Object());
 			//$$$$ Always return the suggested LABEL_Object in RESV messaage (important for VLSR--Movaz interop)
-			if ( (*psbIter)->hasSUGGESTED_LABEL_Object() ) {
+			//$$$$ However, we need to exclude the DRAGON added suggestted label for VLAN notification.
+			if ( (*psbIter)->hasSUGGESTED_LABEL_Object() && ((*psbIter)->getSUGGESTED_LABEL_Object().getLabel() >> 16) != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ) {
                             const SUGGESTED_LABEL_Object & suggestedLabelObject = (*psbIter)->getSUGGESTED_LABEL_Object();
                             const LABEL_Object labelObject(suggestedLabelObject.getLabel(), suggestedLabelObject.getLabelCType());
                             resvMsg->setLABEL_Object(labelObject);

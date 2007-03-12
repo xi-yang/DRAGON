@@ -869,7 +869,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
 			for (; iter != explicitRoute->getAbstractNodeList().end(); ++iter){
 				if (((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
-					vlan_tag = ((*iter).getInterfaceID() & 0xffff);
+					vlan_tag = (*iter).getInterfaceID();
 					break;
 				}
 			}
