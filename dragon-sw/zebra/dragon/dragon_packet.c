@@ -548,7 +548,7 @@ dragon_find_lsp_by_rsvpupcallparam(struct _rsvp_upcall_parameter *p)
 void 
 dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 {
-	int num_newnodes;
+	int i, num_newnodes;
 	struct dragon_tlv_header *tlvh;
 	u_int32_t read_len;
 	struct lsp *lsp = NULL;
@@ -573,50 +573,62 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 					XFREE(MTYPE_OSPF_DRAGON, lsp->common.EROAbstractNode_Para);
 				lsp->common.EROAbstractNode_Para = dragon_narb_topo_rsp_proc_ero(tlvh, &lsp->common.ERONodeNumber);
 
-                            /*Create source localID subobj */
-                            if(lsp->dragon.srcLocalId >> 16 != LOCAL_ID_TYPE_NONE)
-                            {
-                                srcLocalId = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
-                                memset(srcLocalId, 0, sizeof(struct _EROAbstractNode_Para));
-                                srcLocalId->type = UNumIfID;
-                                srcLocalId->isLoose = 1;
-                                memcpy(&srcLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.srcAddr, sizeof(struct in_addr));
-                                srcLocalId->data.uNumIfID.interfaceID = lsp->dragon.srcLocalId;
-                                srcLocalId->isLoose = 0;
-                            }
-                            /*Create destination localID subobj */
-                            if(lsp->dragon.destLocalId >> 16 != LOCAL_ID_TYPE_NONE)
-                            {
-                                destLocalId = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
-                                memset(destLocalId, 0, sizeof(struct _EROAbstractNode_Para));
-                                destLocalId->type = UNumIfID;
-                                destLocalId->isLoose = 1;
-                                memcpy(&destLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.destAddr, sizeof(struct in_addr));
-                                destLocalId->data.uNumIfID.interfaceID = lsp->dragon.destLocalId;
-                                destLocalId->isLoose = 0;
-                            }
-                            num_newnodes = 0;
-                            if (srcLocalId) 
-                                num_newnodes++;
-                            if (destLocalId)
-                                num_newnodes++;                            
-                            if (srcLocalId)
-                            {
-                                if (memmove(lsp->common.EROAbstractNode_Para + 1, lsp->common.EROAbstractNode_Para, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber)) == NULL)
-                                {
-                                    zlog_warn("Error: dragon_narb_topo_rsp_proc: memory memmove failed");
-                                    return;
-                                }
-                                memcpy(lsp->common.EROAbstractNode_Para, srcLocalId, sizeof(struct _EROAbstractNode_Para));
-                                lsp->common.ERONodeNumber++;
-                                XFREE(MTYPE_TMP, srcLocalId);
-                            }
-                            if (destLocalId)
-                            {
-                                memcpy(lsp->common.EROAbstractNode_Para + lsp->common.ERONodeNumber, destLocalId, sizeof(struct _EROAbstractNode_Para));
-                                lsp->common.ERONodeNumber++;
-                                XFREE(MTYPE_TMP, destLocalId);
-                            }
+				if (lsp->dragon.lspVtag == ANY_VTAG)
+				{
+					for ( i = 0; i < lsp->common.ERONodeNumber; i++)
+					{
+						if (lsp->common.EROAbstractNode_Para[i].type == UNumIfID
+							&& (lsp->common.EROAbstractNode_Para[i].data.uNumIfID >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+						{
+							lsp->dragon.lspVtag = (lsp->common.EROAbstractNode_Para[i].data.uNumIfID & 0xffff);
+						}
+					}
+				}
+
+				/*Create source localID subobj */
+				if(lsp->dragon.srcLocalId >> 16 != LOCAL_ID_TYPE_NONE)
+				{
+				    srcLocalId = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
+				    memset(srcLocalId, 0, sizeof(struct _EROAbstractNode_Para));
+				    srcLocalId->type = UNumIfID;
+				    srcLocalId->isLoose = 1;
+				    memcpy(&srcLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.srcAddr, sizeof(struct in_addr));
+				    srcLocalId->data.uNumIfID.interfaceID = lsp->dragon.srcLocalId;
+				    srcLocalId->isLoose = 0;
+				}
+				/*Create destination localID subobj */
+				if(lsp->dragon.destLocalId >> 16 != LOCAL_ID_TYPE_NONE)
+				{
+				    destLocalId = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
+				    memset(destLocalId, 0, sizeof(struct _EROAbstractNode_Para));
+				    destLocalId->type = UNumIfID;
+				    destLocalId->isLoose = 1;
+				    memcpy(&destLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.destAddr, sizeof(struct in_addr));
+				    destLocalId->data.uNumIfID.interfaceID = lsp->dragon.destLocalId;
+				    destLocalId->isLoose = 0;
+				}
+				num_newnodes = 0;
+				if (srcLocalId) 
+				    num_newnodes++;
+				if (destLocalId)
+				    num_newnodes++;                            
+				if (srcLocalId)
+				{
+				    if (memmove(lsp->common.EROAbstractNode_Para + 1, lsp->common.EROAbstractNode_Para, sizeof(struct _EROAbstractNode_Para)*(lsp->common.ERONodeNumber)) == NULL)
+				    {
+				        zlog_warn("Error: dragon_narb_topo_rsp_proc: memory memmove failed");
+				        return;
+				    }
+				    memcpy(lsp->common.EROAbstractNode_Para, srcLocalId, sizeof(struct _EROAbstractNode_Para));
+				    lsp->common.ERONodeNumber++;
+				    XFREE(MTYPE_TMP, srcLocalId);
+				}
+				if (destLocalId)
+				{
+				    memcpy(lsp->common.EROAbstractNode_Para + lsp->common.ERONodeNumber, destLocalId, sizeof(struct _EROAbstractNode_Para));
+				    lsp->common.ERONodeNumber++;
+				    XFREE(MTYPE_TMP, destLocalId);
+				}
 				break;
 
 			default: /* Unrecognized tlv from NARB, just ignore it */
