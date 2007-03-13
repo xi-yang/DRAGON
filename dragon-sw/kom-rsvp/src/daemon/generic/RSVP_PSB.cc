@@ -90,6 +90,7 @@ PSB::PSB( const SENDER_Object& senderTemplate )
 	hasSuggestedLabel = false;
 	hasUpstreamInLabel = hasUpstreamOutLabel = false;
 	E_Police = false;
+	vlanTagAsSuggestedLabel = 0;
 }
 
 PSB::~PSB() {
@@ -483,8 +484,9 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
 		message.setADSPEC_Object( *newAdSpec );
 		newAdSpec->destroy();
 	}
-	if ( hasSuggestedLabel) {
-		message.setSUGGESTED_LABEL_Object(suggestedLabelObject);
+	if ( vlanTagAsSuggestedLabel > 0 && &outLif == RSVP::getApiLif()) {
+		const SUGGESTED_LABEL_Object suggestedLabelVtag(vlanTagAsSuggestedLabel);
+		message.setSUGGESTED_LABEL_Object(suggestedLabelVtag);
  	}
 	message.addUnknownObjects( unknownObjectList );
 	if ( explicitRoute ) 

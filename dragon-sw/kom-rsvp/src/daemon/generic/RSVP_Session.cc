@@ -666,6 +666,9 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	VLSRRoute vLSRoute;
 	EXPLICIT_ROUTE_Object* explicitRoute = NULL;
 
+	uint32 dynamicVlanTag = 0;
+
+
 	// DRAGON && GENERALIZED UNI processing here could be combined !! 
 	if (isDragonUniIngressClient) {              
 		const String ingressChanName = (const char*)dragonUni->getIngressCtrlChannel().name;
@@ -863,21 +866,17 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		}// End of if(isGeneralizedUniClient) ...
 
 		// add vlan Tag into suggestedLabel 
-		if (RSVP_Global::rsvp->getApiLif() != NULL && loopback == getDestAddress() && explicitRoute)
+		if (RSVP_Global::rsvp->getApiLif() != NULL && loopback == getDestAddress() 
+			&& explicitRoute != NULL && dragonUni == NULL)
 		{
-			uint32 vlan_tag = 0;
 			AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
 			for (; iter != explicitRoute->getAbstractNodeList().end(); ++iter){
 				if (((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
-					vlan_tag = (*iter).getInterfaceID();
+					dynamicVlanTag = (*iter).getInterfaceID();
 					break;
 				}
 			}
-			if (vlan_tag != 0 || vlan_tag < MAX_VLAN_NUM) {
-				assert(!msg.hasSUGGESTED_LABEL_Object());
-				const SUGGESTED_LABEL_Object suggestedLabel(vlan_tag); // labelType == 0 is invalid for other purpose
-				const_cast<Message&>(msg).setSUGGESTED_LABEL_Object(suggestedLabel);
-			}
+			assert ((dynamicVlanTag&0xffff) < MAX_VLAN_NUM);
 		}
 
 		if (explicitRoute && (!processERO(msg, hop, explicitRoute, fromLocalAPI, dataInRsvpHop, dataOutRsvpHop, vLSRoute)))
@@ -1164,9 +1163,11 @@ search_psb:
 		//Instead of creating reservation for upstream direction NOW, as per RFC3473, Section 3.1
 		//the reservation is done when upstream RESV is received
 	}
-	if (msg.hasSUGGESTED_LABEL_Object()){
-		cPSB->updateSUGGESTED_LABEL_Object(msg.getSUGGESTED_LABEL_Object());
+
+	if (dynamicVlanTag != 0){
+		cPSB->updateVlanTag(dynamicVlanTag);
 	}
+
 	if (msg.hasSESSION_ATTRIBUTE_Object()){
 		cPSB->updateSESSION_ATTRIBUTE_Object(msg.getSESSION_ATTRIBUTE_Object());
 	}
