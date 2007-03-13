@@ -948,10 +948,15 @@ dragon_build_lsp(struct resource *link)
     argc = 1;
     strcpy(argv[0], link->res.l.vtag);
 
+    if (strcmp(argv[0], "any") == 0) {
+      zlog_info("dragon_set_lsp_vtag_default");
+      dragon_set_lsp_vtag_default(NULL, fake_vty, 0, &argv);
+    } else {
     zlog_info("dragon_set_lsp_vtag: %s", argv[0]);
-    if (dragon_set_lsp_vtag(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
-      dragon_delete_lsp(NULL, fake_vty, argc, &argv);
-      return NULL;
+      if (dragon_set_lsp_vtag(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+        dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+        return NULL;
+      }
     }
   }
 
