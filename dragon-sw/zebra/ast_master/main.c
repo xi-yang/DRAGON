@@ -969,10 +969,8 @@ main(int argc, char* argv[])
   /* parse all service_template.xml and build the default
    * struct for each service template for later use
    */
-  if (template_xml_parser() == 0) {
-    zlog_err("master_template_parser(); exiting ...");
-    exit(EXIT_FAILURE);
-  }
+  if (template_xml_parser() == 0) 
+    zlog_info("didn't have template files for link templates...");
 
   glob_app_cfg = NULL;
   memset(&app_list, 0, sizeof(struct adtlist));
@@ -1445,7 +1443,8 @@ send_task_to_node_agent()
     srcnode = (struct resource*)(curnode->data);
 
     if (srcnode->res.n.stype == vlsr) {
-      ready++;
+      if (glob_app_cfg->action == APP_COMPLETE) 
+	ready++;
       zlog_info("no need to send task to node_agent on vlsr (%s)", srcnode->name);
       continue;
     }
