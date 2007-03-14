@@ -357,12 +357,14 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                     {
                                       vlan = (*iter).vlanTag;
                                     }
-                                   else if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_GROUP || ((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+                                   //else if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_GROUP || ((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+                                   else if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
                                     {
                                       vlan =   (*iter).inPort & 0xffff;
                                     }
-                                   else if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_GROUP || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
-                                    {
+                                   //else if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_GROUP || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+                                   else if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+								   	{
                                       vlan =   (*iter).outPort & 0xffff;
                                     }
                                    else
@@ -434,13 +436,13 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                               SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
                                           }
                                           if (portList.size() == 0){
-        					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
+        					      				LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
                                                 //return false;
                                                 noError = false;
                                           }
                                           while (portList.size()) {
                                                  uint32 port = portList.front();
-        						LOG(4)(Log::MPLS, "VLSR: Moving egress port#",  GetSwitchPortString(port), " to VLAN #", vlan);
+                                                 LOG(4)(Log::MPLS, "VLSR: Moving egress port#",  GetSwitchPortString(port), " to VLAN #", vlan);
                                                  if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
                                                         (*sessionIter)->movePortToVLANAsTagged(port, vlan);
                                                  	//Up to 32 ports supported. Only default RFC2674 switch switch (e.g. Dell, Intel) use this.
