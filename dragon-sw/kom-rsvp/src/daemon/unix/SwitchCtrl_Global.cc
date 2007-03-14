@@ -158,7 +158,7 @@ const uint32 SwitchCtrl_Session::findEmptyVLAN()
     vlanPortMapList::ConstIterator iter;
     uint32 ret =1;
     for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter) {
-        if (hook_isVLANEmpty(*iter))
+        if (hook_isVLANEmpty(*iter) && (*iter).vid != 1)
             return (*iter).vid;
         else if (ret == (*iter).vid)
             ret = (*iter).vid+1;
