@@ -1003,15 +1003,18 @@ DEFUN (dragon_set_lsp_ip,
     }
 
     /*check type_src /port against registered_local_ids*/
-    LIST_LOOP(registered_local_ids, lid, node)
+    if (type_src != LOCAL_ID_TYPE_TAGGED_GROUP || port_src != 0)
     {
-        if (lid->type == type_src && lid->value == port_src)
-            break;
-    }    
-    if (node == NULL && type_src != LOCAL_ID_TYPE_NONE && port_src != ANY_VTAG)
-    {
-        vty_out (vty, "Unregistered source %s: %s.%s",  argv[1], argv[2], VTY_NEWLINE);
-        return CMD_WARNING;
+        LIST_LOOP(registered_local_ids, lid, node)
+        {
+            if (lid->type == type_src && lid->value == port_src)
+                break;
+        }    
+        if (node == NULL && type_src != LOCAL_ID_TYPE_NONE && port_src != ANY_VTAG)
+        {
+            vty_out (vty, "Unregistered source %s: %s.%s",  argv[1], argv[2], VTY_NEWLINE);
+            return CMD_WARNING;
+        }
     }
   
     inet_aton(argv[3], &ip_dst);
@@ -1049,13 +1052,17 @@ DEFUN (dragon_set_lsp_ip,
     lsp->dragon.srcLocalId = ((u_int32_t)type_src)<<16 |port_src;
     lsp->dragon.destLocalId = ((u_int32_t)type_dest)<<16 |port_dest;
 
-    if (type_src  == LOCAL_ID_TYPE_TAGGED_GROUP 
-        && type_dest == LOCAL_ID_TYPE_TAGGED_GROUP
-        && port_src != port_dest)
+    if ( (type_src != LOCAL_ID_TYPE_TAGGED_GROUP || port_src != 0) &&
+		(type_dest != LOCAL_ID_TYPE_TAGGED_GROUP || port_dest != 0) )
     {
-        vty_out(vty, "###Ingress Tag (%d) and Egress Tag (%d) do not match!%s", 
-            port_src, port_dest, VTY_NEWLINE);
-        return CMD_WARNING;
+        if (type_src  == LOCAL_ID_TYPE_TAGGED_GROUP 
+            && type_dest == LOCAL_ID_TYPE_TAGGED_GROUP
+            && port_src != port_dest)
+        {
+            vty_out(vty, "###Ingress Tag (%d) and Egress Tag (%d) do not match!%s", 
+                port_src, port_dest, VTY_NEWLINE);
+            return CMD_WARNING;
+        }
     }
 
     if (type_src == LOCAL_ID_TYPE_TAGGED_GROUP)
