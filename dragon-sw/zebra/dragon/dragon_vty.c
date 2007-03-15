@@ -1154,7 +1154,7 @@ DEFUN (dragon_set_lsp_vtag,
     u_int32_t vtag = atoi(argv[0]);
     
     if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP
-        && vtag != (lsp->dragon.srcLocalId & 0xffff) )
+        && vtag != (lsp->dragon.srcLocalId & 0xffff) && (lsp->dragon.srcLocalId & 0xffff) != 0)
     {
         vty_out(vty, "###Ingress Tag (%d) do not match LSP VLAN Tag!%s", 
             (lsp->dragon.srcLocalId & 0xffff), VTY_NEWLINE);
@@ -1162,17 +1162,12 @@ DEFUN (dragon_set_lsp_vtag,
     }
 
     if ((lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP
-        && vtag != (lsp->dragon.destLocalId & 0xffff) )
+        && vtag != (lsp->dragon.destLocalId & 0xffff) && (lsp->dragon.destLocalId & 0xffff) != 0)
     {
         vty_out(vty, "###Egress Tag (%d) do not match LSP VLAN Tag!%s", 
             (lsp->dragon.destLocalId & 0xffff), VTY_NEWLINE);
         return CMD_WARNING;
     }
-
-    else if ((lsp->dragon.destLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP)
-        lsp->dragon.lspVtag = (lsp->dragon.destLocalId & 0xffff);
-    else
-        lsp->dragon.lspVtag = ANY_VTAG;
 
     lsp->dragon.lspVtag = vtag;
 
@@ -1190,9 +1185,9 @@ DEFUN (dragon_set_lsp_vtag_default,
 {
     struct lsp *lsp = (struct lsp *)(vty->index);
 
-    if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP)
+    if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP && (lsp->dragon.srcLocalId & 0xffff) != 0)
         lsp->dragon.lspVtag = (lsp->dragon.srcLocalId & 0xffff);
-    else if ((lsp->dragon.destLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP)
+    else if ((lsp->dragon.destLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP && (lsp->dragon.destLocalId & 0xffff) != 0)
         lsp->dragon.lspVtag = (lsp->dragon.destLocalId & 0xffff);
     else
         lsp->dragon.lspVtag = ANY_VTAG;
