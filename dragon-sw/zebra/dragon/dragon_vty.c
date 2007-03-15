@@ -1063,12 +1063,12 @@ DEFUN (dragon_set_lsp_ip,
                 port_src, port_dest, VTY_NEWLINE);
             return CMD_WARNING;
         }
-    }
 
-    if (type_src == LOCAL_ID_TYPE_TAGGED_GROUP)
-        lsp->dragon.lspVtag = port_src;
-    else  if (type_dest  == LOCAL_ID_TYPE_TAGGED_GROUP)
-        lsp->dragon.lspVtag = port_dest;
+        if (type_src == LOCAL_ID_TYPE_TAGGED_GROUP)
+            lsp->dragon.lspVtag = port_src;
+        else  if (type_dest  == LOCAL_ID_TYPE_TAGGED_GROUP)
+            lsp->dragon.lspVtag = port_dest;
+    }
     
     /* Check if there is another LSP with the same session parameter */
     find = 0;
