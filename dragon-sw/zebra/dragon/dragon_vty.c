@@ -991,6 +991,11 @@ DEFUN (dragon_set_lsp_ip,
     {
         port_src = ANY_VTAG;
     }
+    else if (type_src != LOCAL_ID_TYPE_NONE && strcasecmp(argv[2], "null") == 0)
+    {
+        type_src = LOCAL_ID_TYPE_TAGGED_GROUP;
+        port_src = 0;
+    }
     else if (sscanf (argv[2], "%d", &port_src) != 1)
     {
         vty_out (vty, "Invalid source port: %s%s", argv[2], VTY_NEWLINE);
@@ -1022,6 +1027,11 @@ DEFUN (dragon_set_lsp_ip,
     if (lsp->common.DragonUni_Para && type_dest== LOCAL_ID_TYPE_TAGGED_GROUP && strcasecmp(argv[5], "any") == 0)
     {
         port_dest = ANY_VTAG;
+    }
+    else if (type_dest != LOCAL_ID_TYPE_NONE && strcasecmp(argv[5], "null") == 0)
+    {
+        type_dest = LOCAL_ID_TYPE_TAGGED_GROUP;
+        port_dest = 0;
     }
     else if (sscanf (argv[5], "%d", &port_dest) != 1)
     {
