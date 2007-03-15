@@ -395,8 +395,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                   inPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getIngressCtrlChannel().name);
                                               SwitchCtrl_Global::getPortsByLocalId(portList, inPort);
                                           }
-                                          if (portList.size() == 0){
-                                                LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress.");
+                                          if (inPort == ((LOCAL_ID_TYPE_TAGGED_GROUP << 16) | 0)) //NULL local-ID
+                                          {
+                                              portList.clear();
+                                          }
+                                          else if (portList.size() == 0){
+                                                LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress: ", inPort);
                                                 //return false;
                                                 noError = false;
                                           }
@@ -435,8 +439,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                   outPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getEgressCtrlChannel().name);
                                               SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
                                           }
-                                          if (portList.size() == 0){
-        					      				LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
+                                          if (outPort == ((LOCAL_ID_TYPE_TAGGED_GROUP << 16) | 0)) //NULL local-ID
+                                          {
+                                              portList.clear();
+                                          }
+                                          else if (portList.size() == 0){
+        					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort);
                                                 //return false;
                                                 noError = false;
                                           }
@@ -693,8 +701,12 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                               inPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getIngressCtrlChannel().name);
                                           SwitchCtrl_Global::getPortsByLocalId(portList, inPort);
                                       }
-                                      if (portList.size() == 0){
-    					       LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress.");
+                                      if (inPort == ((LOCAL_ID_TYPE_TAGGED_GROUP << 16) | 0)) //NULL local-ID
+                                      {
+                                          portList.clear();
+                                      }
+                                      else if (portList.size() == 0){
+    					       LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress: ", inPort);
                                           //continue;
                                       }
                                       while (portList.size()) {
@@ -737,8 +749,12 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                               outPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getEgressCtrlChannel().name);
                                           SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
                                       }
-                                      if (portList.size() == 0){
-    					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress.");
+                                      if (outPort == ((LOCAL_ID_TYPE_TAGGED_GROUP << 16) | 0)) //NULL local-ID
+                                      {
+                                          portList.clear();
+                                      }
+                                      else if (portList.size() == 0){
+    					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort );
                                          //continue;
                                       }
                                       while (portList.size()) {
