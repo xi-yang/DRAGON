@@ -400,7 +400,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                               portList.clear();
                                           }
                                           else if (portList.size() == 0){
-                                                LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress: ", inPort);
+                                                LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress: ", inPort);
                                                 //return false;
                                                 noError = false;
                                           }
@@ -444,7 +444,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                               portList.clear();
                                           }
                                           else if (portList.size() == 0){
-        					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort);
+        					      LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort);
                                                 //return false;
                                                 noError = false;
                                           }
@@ -706,7 +706,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                           portList.clear();
                                       }
                                       else if (portList.size() == 0){
-    					       LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress: ", inPort);
+    					       LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress: ", inPort);
                                           //continue;
                                       }
                                       while (portList.size()) {
@@ -754,7 +754,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                           portList.clear();
                                       }
                                       else if (portList.size() == 0){
-    					      LOG(1)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort );
+    					      LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort );
                                          //continue;
                                       }
                                       while (portList.size()) {
