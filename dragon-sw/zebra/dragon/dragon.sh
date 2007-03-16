@@ -77,6 +77,9 @@ esac
 
 case $1 in
     start-vlsr | startvlsr | restart-vlsr)
+        echo "dragon-sw: turning on coredump with unlimited core size."
+        ulimit -c unlimited
+
         # XXX for CLI based switch control only
         if test "$telnet_pid" != ""; then
 	    killall -9 telnet
@@ -129,6 +132,9 @@ case $1 in
 
     # XXX running software in uni mode w/o zebra & ospfd
     start-uni | startuni | restart-uni)
+        echo "dragon-sw: turning on coredump with unlimited core size."
+        ulimit -c unlimited
+
         echo "dragon-sw: starting under UNI mode."
         echo ""
         if test "$rsvp_pid" != ""; then
@@ -166,6 +172,9 @@ case $1 in
 	;;
 
     start-narb | startnarb | restart-narb)
+        echo "dragon-sw: turning on coredump with unlimited core size."
+        ulimit -c unlimited
+
         if test "$zebra_pid" != ""; then
 	    kill $zebra_pid
 	fi
