@@ -850,7 +850,6 @@ ospf_apiserver_send_msg (struct ospf_apiserver *apiserv, struct msg *msg)
     case MSG_ISM_CHANGE:
     case MSG_NSM_CHANGE:
     case MSG_NEIGHBOR_COUNT:
-    case MSG_ORIGINATE_READY_QUERY:
       fifo = apiserv->out_async_fifo;
       fd = apiserv->fd_async;
       event = OSPF_APISERVER_ASYNC_WRITE;
@@ -3015,9 +3014,10 @@ ospf_apiserver_handle_originate_ready_polling (struct ospf_apiserver *apiserv, s
   rmsg = msg_new(MSG_ORIGINATE_READY_QUERY, originate_ready_reply, seqnum, sizeof(struct msg_originate_ready_query));
   if (!rmsg) return -1;
 
-  rc = ospf_apiserver_send_msg(apiserv, rmsg);
-  msg_free(rmsg);
-  return rc;
+  msg_fifo_push(apiserv->out_sync_fifo, rmsg);
+  ospf_apiserver_event (OSPF_APISERVER_SYNC_WRITE, apiserv->fd_sync, apiserv);
+
+  return 0;
 }
 
 
