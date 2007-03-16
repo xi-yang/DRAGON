@@ -2987,8 +2987,8 @@ out:
 int
 ospf_apiserver_handle_originate_ready_polling (struct ospf_apiserver *apiserv, struct msg *msg)
 {
-  struct msg_originate_ready_query*originate_ready_query;
-  struct msg_originate_ready_reply*originate_ready_reply;
+  struct msg_originate_ready_query* originate_ready_query;
+  struct msg_originate_ready_reply* originate_ready_reply;
   struct msg *rmsg;
   struct ospf *ospf;
   struct ospf_interface *oi;
@@ -3012,7 +3012,7 @@ ospf_apiserver_handle_originate_ready_polling (struct ospf_apiserver *apiserv, s
           }
         }
     }
-  rmsg = msg_new(MSG_ORIGINATE_READY_QUERY, originate_ready_reply, seqnum, sizeof(struct originate_ready_reply));
+  rmsg = msg_new(MSG_ORIGINATE_READY_QUERY, originate_ready_reply, seqnum, sizeof(struct msg_originate_ready_query));
   if (!rmsg) return -1;
 
   rc = ospf_apiserver_send_msg(apiserv, rmsg);

@@ -28,6 +28,7 @@ else
   as_unset=false
 fi
 
+
 # Work around bugs in pre-3.0 UWIN ksh.
 $as_unset ENV MAIL MAILPATH
 PS1='$ '
