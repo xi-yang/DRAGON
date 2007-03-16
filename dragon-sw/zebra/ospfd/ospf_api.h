@@ -129,6 +129,7 @@ void msg_fifo_free (struct msg_fifo *fifo);
 #define MSG_ISM_CHANGE           16
 #define MSG_NSM_CHANGE           17
 #define MSG_NEIGHBOR_COUNT   18
+#define MSG_ORIGINATE_READY   18
 
 struct msg_register_opaque_type
 {
@@ -283,7 +284,17 @@ struct msg_nsm_change
 struct msg_neighbor_count
 {
   int count;	/* number of neighbors */
-  int status;		/* neighbor status code*/
+  int status;	/* neighbor status code*/
+};
+
+struct msg_originate_ready_query
+{
+  struct in_addr ifaddr; /* origiante interface */
+};
+
+struct msg_originate_ready_reply
+{
+  int status;	/* neighbor status code*/
 };
 
 /* We make use of a union to define a structure that covers allo

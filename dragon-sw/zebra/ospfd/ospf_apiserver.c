@@ -850,6 +850,7 @@ ospf_apiserver_send_msg (struct ospf_apiserver *apiserv, struct msg *msg)
     case MSG_ISM_CHANGE:
     case MSG_NSM_CHANGE:
     case MSG_NEIGHBOR_COUNT:
+    case MSG_ORIGINATE_READY:
       fifo = apiserv->out_async_fifo;
       fd = apiserv->fd_async;
       event = OSPF_APISERVER_ASYNC_WRITE;
@@ -930,6 +931,9 @@ ospf_apiserver_handle_msg (struct ospf_apiserver *apiserv, struct msg *msg)
     /* DRAGON $$$$*/
     case MSG_NEIGHBOR_COUNT_REQUEST:
       rc = ospf_apiserver_handle_neighbor_count_request (apiserv, msg);
+      break;
+    case MSG_ORIGINATE_READY:
+      rc = ospf_apiserver_handle_originate_ready_polling (apiserv, msg);
       break;
     case MSG_NARB_CSPF_REQUEST:
       rc = ospf_apiserver_handle_cspf_request (apiserv, msg);
@@ -2936,8 +2940,7 @@ ospf_apiserver_lsa_delete (struct ospf_lsa *lsa)
 
 /* hacked $$$$ handling NARB->OSPFd Neighbor Count Request */
 int
-ospf_apiserver_handle_neighbor_count_request (struct ospf_apiserver *apiserv,
-				      struct msg *msg)
+ospf_apiserver_handle_neighbor_count_request (struct ospf_apiserver *apiserv, struct msg *msg)
 {
   struct msg_neighbor_count *neighbor_count_reply;
   struct msg *rmsg;
@@ -2972,13 +2975,60 @@ ospf_apiserver_handle_neighbor_count_request (struct ospf_apiserver *apiserv,
  
   rc = ospf_apiserver_send_msg(apiserv, rmsg);
   msg_free(rmsg);
+  return rc;
 
 out:
   /* Send a reply back to client with return code */
   rc = ospf_apiserver_send_reply (apiserv, seqnum, rc);
   return rc;
 }
-  
+
+/* hacked $$$$ handling NARB->OSPFd origiante interface ready state polling */
+int
+ospf_apiserver_handle_originate_ready_polling (struct ospf_apiserver *apiserv, struct msg *msg)
+{
+  struct msg_originate_ready_query*originate_ready_query;
+  struct msg_originate_ready_reply*originate_ready_reply;
+  struct msg *rmsg;
+  struct ospf *ospf;
+  struct ospf_interface *oi;
+  listnode node;
+  uint32_t seqnum = ntohl(msg->hdr.msgseq);
+  int rc = 0;
+
+  originate_ready_query = (struct msg_originate_ready_query*)STREAM_DATA(msg->s);
+  originate_ready_reply = XMALLOC(MTYPE_TMP, sizeof(struct msg_originate_ready_reply));
+  originate_ready_reply->status = 0;
+  ospf = ospf_lookup();
+  if (ospf && ospf->oiflist)
+    {
+      for (node = listhead (ospf->oiflist); node; nextnode (node))
+        {
+          oi = getdata(node);
+          if (oi && oi->address->u.prefix4.s_addr == originate_ready_query->ifaddr.s_addr)
+          {
+            originate_ready_reply->status = ospf_nbr_count(oi, NSM_Full);
+            break;
+          }
+        }
+    }
+
+  rmsg = msg_new(MSG_ORIGINATE_READY, originate_ready_reply, seqnum, sizeof(struct msg_neighbor_count));
+  if (!rmsg)
+    {
+      rc = -1;
+      goto out;
+    }
+  rc = ospf_apiserver_send_msg(apiserv, rmsg);
+  msg_free(rmsg);
+  return rc;
+
+out:
+  /* Send a reply back to client with return code */
+  rc = ospf_apiserver_send_reply (apiserv, seqnum, rc);
+  return rc;
+}
+
 
 /* hacked $$$$ handling NARB->OSPFd CSPF Request */
 int
