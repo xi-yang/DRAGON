@@ -3011,7 +3011,7 @@ ospf_apiserver_handle_originate_ready_polling (struct ospf_apiserver *apiserv, s
           }
         }
     }
-  rmsg = msg_new(MSG_ORIGINATE_READY_QUERY, originate_ready_reply, seqnum, sizeof(struct msg_originate_ready_query));
+  rmsg = msg_new(MSG_ORIGINATE_READY, originate_ready_reply, seqnum, sizeof(struct msg_originate_ready_reply));
   if (!rmsg) return -1;
 
   msg_fifo_push(apiserv->out_sync_fifo, rmsg);

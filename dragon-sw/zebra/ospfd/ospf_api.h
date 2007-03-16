@@ -117,7 +117,7 @@ void msg_fifo_free (struct msg_fifo *fifo);
 #define MSG_DELETE_REQUEST        6
 #define MSG_NEIGHBOR_COUNT_REQUEST     7
 #define MSG_UPDATE_REQUEST     8
-
+#define MSG_ORIGINATE_READY_QUERY   9
 
 /* Messages from OSPF daemon. */
 #define MSG_REPLY                10
@@ -129,7 +129,7 @@ void msg_fifo_free (struct msg_fifo *fifo);
 #define MSG_ISM_CHANGE           16
 #define MSG_NSM_CHANGE           17
 #define MSG_NEIGHBOR_COUNT   18
-#define MSG_ORIGINATE_READY_QUERY   19
+#define MSG_ORIGINATE_READY  19
 
 struct msg_register_opaque_type
 {
