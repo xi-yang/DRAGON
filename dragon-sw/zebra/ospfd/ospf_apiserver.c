@@ -850,7 +850,7 @@ ospf_apiserver_send_msg (struct ospf_apiserver *apiserv, struct msg *msg)
     case MSG_ISM_CHANGE:
     case MSG_NSM_CHANGE:
     case MSG_NEIGHBOR_COUNT:
-    case MSG_ORIGINATE_READY:
+    case MSG_ORIGINATE_READY_QUERY:
       fifo = apiserv->out_async_fifo;
       fd = apiserv->fd_async;
       event = OSPF_APISERVER_ASYNC_WRITE;
@@ -932,7 +932,7 @@ ospf_apiserver_handle_msg (struct ospf_apiserver *apiserv, struct msg *msg)
     case MSG_NEIGHBOR_COUNT_REQUEST:
       rc = ospf_apiserver_handle_neighbor_count_request (apiserv, msg);
       break;
-    case MSG_ORIGINATE_READY:
+    case MSG_ORIGINATE_READY_QUERY:
       rc = ospf_apiserver_handle_originate_ready_polling (apiserv, msg);
       break;
     case MSG_NARB_CSPF_REQUEST:
@@ -3013,7 +3013,7 @@ ospf_apiserver_handle_originate_ready_polling (struct ospf_apiserver *apiserv, s
         }
     }
 
-  rmsg = msg_new(MSG_ORIGINATE_READY, originate_ready_reply, seqnum, sizeof(struct msg_neighbor_count));
+  rmsg = msg_new(MSG_ORIGINATE_READY_QUERY, originate_ready_reply, seqnum, sizeof(struct msg_neighbor_count));
   if (!rmsg)
     {
       rc = -1;
