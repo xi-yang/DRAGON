@@ -3012,20 +3012,11 @@ ospf_apiserver_handle_originate_ready_polling (struct ospf_apiserver *apiserv, s
           }
         }
     }
+  rmsg = msg_new(MSG_ORIGINATE_READY_QUERY, originate_ready_reply, seqnum, sizeof(struct originate_ready_reply));
+  if (!rmsg) return -1;
 
-  rmsg = msg_new(MSG_ORIGINATE_READY_QUERY, originate_ready_reply, seqnum, sizeof(struct msg_neighbor_count));
-  if (!rmsg)
-    {
-      rc = -1;
-      goto out;
-    }
   rc = ospf_apiserver_send_msg(apiserv, rmsg);
   msg_free(rmsg);
-  return rc;
-
-out:
-  /* Send a reply back to client with return code */
-  rc = ospf_apiserver_send_reply (apiserv, seqnum, rc);
   return rc;
 }
 
