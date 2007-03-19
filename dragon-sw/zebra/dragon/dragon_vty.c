@@ -803,6 +803,7 @@ DEFUN (dragon_edit_lsp,
   struct listnode *node;
   struct lsp *lsp = NULL;
   int found;
+  narb_extra_options = 0;
 
   if (strlen(argv[0])>=MAX_LSP_NAME_LENGTH)
   {
@@ -909,6 +910,8 @@ DEFUN (dragon_set_lsp_dir,
   else if (strncmp(argv[0], "b", 1)==0)
   {
 	  lsp->flag |= LSP_FLAG_BIDIR;
+	  narb_extra_options |= LSP_OPT_BIDIRECTIONAL;
+
 	  if (sscanf (argv[1], "%d", &up_label) != 1)
 	  {
 		  vty_out (vty, "Invalid upstream label: %s%s", strerror (errno), VTY_NEWLINE);
@@ -1260,6 +1263,12 @@ DEFUN (dragon_set_lsp_sw,
       vty_out (vty, "unsupported switching capability: %s %s", argv[1], VTY_NEWLINE);
       return CMD_WARNING;
   }
+  /* Layer2 LSPs should always be bi-directional */
+  if (swcap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
+  {
+      narb_extra_options |= LSP_OPT_BIDIRECTIONAL;
+  }
+
   encoding = string_to_value(&conv_encoding, argv[2]);
   if (encoding==0)
   {
