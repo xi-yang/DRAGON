@@ -275,7 +275,7 @@ dragon_fifo_free (struct dragon_fifo *fifo)
 u_int32_t
 dragon_assign_seqno (void)
 {
-  static u_int32_t seqnr = DRAGON_INITIAL_SEQUENCE_NUMBER;
+  static u_int32_t seqnr = DRAGON_INITIAL_SEQUENCE_NUMBER; /* + global offset !! */
   u_int32_t tmp;
 
   tmp = seqnr;
@@ -778,9 +778,10 @@ out:
   if (lsp_deleted)
   {
        DRAGON_TIMER_OFF (lsp->t_lsp_refresh);
-  	dragon_fifo_lsp_cleanup(lsp); /**/
+  	//dragon_fifo_lsp_cleanup(lsp); /**/
 	listnode_delete(dmaster.dragon_lsp_table, lsp);
-	lsp_del(lsp);
+	lsp->status = LSP_RECYCLE;
+	//lsp_del(lsp);
   }
 
   stream_free (ibuf); /* ??? */
@@ -1032,9 +1033,10 @@ void  rsvpUpcall(void* para)
  
 	if (lsp_deleted) {
 	       DRAGON_TIMER_OFF (lsp->t_lsp_refresh);
-	  	dragon_fifo_lsp_cleanup(lsp); /**/
+	  	//dragon_fifo_lsp_cleanup(lsp); /**/
 		listnode_delete(dmaster.dragon_lsp_table, lsp);
-		lsp_del(lsp);
+		lsp->status = LSP_RECYCLE;
+		//lsp_del(lsp);
 	}
 
 }

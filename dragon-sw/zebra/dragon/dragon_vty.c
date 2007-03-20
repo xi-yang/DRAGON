@@ -1512,10 +1512,11 @@ DEFUN (dragon_delete_lsp,
   }
   else{
 	DRAGON_TIMER_OFF(lsp->t_lsp_refresh);
-  	dragon_fifo_lsp_cleanup(lsp); /**/
+  	//dragon_fifo_lsp_cleanup(lsp); /**/
 	zTearRsvpPathRequest(dmaster.api, &lsp->common);
 	listnode_delete(dmaster.dragon_lsp_table, lsp);
-	lsp_del(lsp);
+	lsp->status = LSP_RECYCLE;
+	//lsp_del(lsp);
   }
 
   return CMD_SUCCESS;
