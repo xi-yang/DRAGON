@@ -47,10 +47,7 @@ class NetworkServiceDaemon {
 	static const LogicalInterface* queryInterfaces();
 	static void cleanup();
 	static uint32 getLoopbackInterfaceIndex() { return loopbackInterfaceIndex; }
-	static const LogicalInterface* getInterfaceBySystemIndex( uint16 index ) {
-		if (index > numSystemIndices)  return NULL;
-		return indexToInterfaceTable[index];
-	}
+	static const LogicalInterface* getInterfaceBySystemIndex( uint16 index );
 
 	// multicast routing
 	static InterfaceHandle rsrrSocket;
