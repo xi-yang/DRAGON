@@ -120,6 +120,14 @@ inline void NetworkServiceDaemon::set_fdMask( InterfaceHandleMask& fdmask ) {
 	}
 }
 
+const LogicalInterface* NetworkServiceDaemon::getInterfaceBySystemIndex( uint16 index ) {
+	if (index > NetworkServiceDaemon::numSystemIndices)  {
+		LOG(4)( Log::Packet, "#### requested system interface index ", index, " greater than the maximum ",  NetworkServiceDaemon::numSystemIndices);
+		return NULL;
+	}
+	return indexToInterfaceTable[index];
+}
+
 // this code is derived from W.R. Stevens: Unix Network Programming, 2nd Ed.
 void NetworkServiceDaemon::buildInterfaceList( LogicalInterfaceList& lifList ) {
 #if defined(REAL_NETWORK)
