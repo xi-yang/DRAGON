@@ -1511,8 +1511,8 @@ DEFUN (dragon_delete_lsp,
 	lsp->status = LSP_LISTEN;  	
   }
   else{
-  	/*DRAGON_WRITE_CLEAN_UP(lsp)*/
-  	/*DRAGON_TIMER_OFF*/
+	DRAGON_TIMER_OFF(lsp->t_lsp_refresh);
+  	dragon_fifo_lsp_cleanup(lsp); /**/
 	zTearRsvpPathRequest(dmaster.api, &lsp->common);
 	listnode_delete(dmaster.dragon_lsp_table, lsp);
 	lsp_del(lsp);

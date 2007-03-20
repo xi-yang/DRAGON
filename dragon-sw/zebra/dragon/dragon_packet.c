@@ -777,8 +777,8 @@ out:
 
   if (lsp_deleted)
   {
-  	/*DRAGON_WRITE_CLEAN_UP(lsp)*/
        DRAGON_TIMER_OFF (lsp->t_lsp_refresh);
+  	dragon_fifo_lsp_cleanup(lsp); /**/
 	listnode_delete(dmaster.dragon_lsp_table, lsp);
 	lsp_del(lsp);
   }
@@ -816,6 +816,38 @@ dragon_write (struct thread *t)
   return 0;
 }
 
+void dragon_fifo_lsp_cleanup (struct lsp* lsp)
+{
+	struct dragon_fifo_elt* packet, *packet_next;
+	packet = dmaster.dragon_packet_fifo->head;
+	if (!packet) return;
+
+	packet = dmaster.dragon_packet_fifo->head;
+	while (packet)
+	{
+		packet_next = packet->next;
+		if (packet->lsp == lsp && packet == dmaster.dragon_packet_fifo->head)
+		{
+			dmaster.dragon_packet_fifo->head = packet->next;
+			if (dmaster.dragon_packet_fifo->head== NULL)
+				dmaster.dragon_packet_fifo->tail = NULL;
+			dragon_packet_free(packet);
+			dmaster.dragon_packet_fifo->count--;
+			packet = packet_next;
+			continue;
+		}
+		if (packet_next && packet_next->lsp == lsp)
+		{
+			packet->next = packet_next->next;
+			if (dmaster.dragon_packet_fifo->tail == packet_next)
+				dmaster.dragon_packet_fifo->tail = packet;
+			dragon_packet_free(packet_next);
+			dmaster.dragon_packet_fifo->count--;			
+		}
+		packet = packet->next;
+	}
+}
+	
 void rsvpupcall_register_lsp(struct _rsvp_upcall_parameter* p)
 {
 	struct lsp *lsp;
@@ -999,8 +1031,8 @@ void  rsvpUpcall(void* para)
 	dragon_upcall_callback(p->code, lsp);
  
 	if (lsp_deleted) {
-	  	/*DRAGON_WRITE_CLEAN_UP(lsp)*/
 	       DRAGON_TIMER_OFF (lsp->t_lsp_refresh);
+	  	dragon_fifo_lsp_cleanup(lsp); /**/
 		listnode_delete(dmaster.dragon_lsp_table, lsp);
 		lsp_del(lsp);
 	}

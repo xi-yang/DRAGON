@@ -669,6 +669,7 @@ extern struct dragon_fifo_elt * dragon_fifo_head (struct dragon_fifo *fifo);
 extern void dragon_fifo_flush (struct dragon_fifo *fifo);
 extern int  dragon_fifo_count (struct dragon_fifo *fifo);
 extern void dragon_fifo_free (struct dragon_fifo *fifo);
+extern void dragon_fifo_lsp_cleanup (struct lsp* lsp);
 extern int dragon_lsp_refresh_timer(struct thread *t);
 extern int dragon_read (struct thread *thread);
 extern int dragon_write (struct thread *thread);
