@@ -811,7 +811,8 @@ dragon_write (struct thread *t)
 	dragon_packet_free(packet);
 
 	/* Prepare dragon_read thread */
-	lsp->t_narb_read = thread_add_read (master, dragon_read, lsp, lsp->narb_fd);
+	if (lsp->status != LSP_RECYCLE)
+		lsp->t_narb_read = thread_add_read (master, dragon_read, lsp, lsp->narb_fd);
   }
 
   return 0;
