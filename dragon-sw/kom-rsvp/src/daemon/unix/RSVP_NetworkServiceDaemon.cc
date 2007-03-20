@@ -91,6 +91,7 @@ InterfaceHandle NetworkServiceDaemon::routingSocket = -1;
 bool NetworkServiceDaemon::routingReady = false;
 const LogicalInterface* NetworkServiceDaemon::globalVirtualInterface = NULL;
 const LogicalInterface** NetworkServiceDaemon::indexToInterfaceTable = NULL;
+int NetworkServiceDaemon::numSystemIndices = 0;
 uint32 NetworkServiceDaemon::loopbackInterfaceIndex = 0;
 uint32 NetworkServiceDaemon::packetDropsAtStart = 0;
 
@@ -156,8 +157,9 @@ void NetworkServiceDaemon::buildInterfaceList( LogicalInterfaceList& lifList ) {
 	CHECK( ioctl( query_fd, SIOCGIFINDEX, &query_if ) );
 	indexCount = query_if.ifr_ifindex;
 #endif
-	
+
 	indexToInterfaceTable = new const LogicalInterface*[indexCount + 1];
+	NetworkServiceDaemon::numSystemIndices = indexCount;
 	initMemoryWithZero( indexToInterfaceTable, sizeof(LogicalInterface*) * (indexCount + 1) );
 
 	uint32 xxx;
@@ -529,7 +531,7 @@ const LogicalInterface* NetworkServiceDaemon::receiveRawPacketIP4( InterfaceHand
 				LOG(2)( Log::Msg, "interface system index is", index );
                            //hacked @@@@
                             if (!realLif)
-				realLif = indexToInterfaceTable[index];
+				realLif = getInterfaceBySystemIndex(index);
 		break;
 			}
 		}

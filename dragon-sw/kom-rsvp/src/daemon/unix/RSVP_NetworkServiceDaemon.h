@@ -38,6 +38,7 @@ class NetworkServiceDaemon {
 
 	// interface detection and query
 	static uint32	loopbackInterfaceIndex;
+	static int numSystemIndices;
 	static const LogicalInterface* globalVirtualInterface;
 	static const LogicalInterface** indexToInterfaceTable;
 	static uint32 packetDropsAtStart;
@@ -47,6 +48,7 @@ class NetworkServiceDaemon {
 	static void cleanup();
 	static uint32 getLoopbackInterfaceIndex() { return loopbackInterfaceIndex; }
 	static const LogicalInterface* getInterfaceBySystemIndex( uint16 index ) {
+		if (index > numSystemIndices)  return NULL;
 		return indexToInterfaceTable[index];
 	}
 
