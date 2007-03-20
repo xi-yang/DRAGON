@@ -130,6 +130,16 @@
         (T) = thread_add_timer (master, (F), (A), (V)); 	\
     } while (0)
 
+/*
+#define DRAGON_WRITE_OFF(T, L, FD)                                                  \
+      do                                                                      \
+        {                                                                     \
+	  if (!(T))                                           \
+	    (T) =                                                    \
+	      thread_add_write (master, dragon_write, (L), (FD));            \
+        } while (0)
+*/
+
 #define DRAGON_WRITE_ON(T, L, FD)                                                  \
       do                                                                      \
         {                                                                     \
@@ -137,6 +147,7 @@
 	    (T) =                                                    \
 	      thread_add_write (master, dragon_write, (L), (FD));            \
         } while (0)
+
 
 /* The following defines DRAGON message and TLVs */
 

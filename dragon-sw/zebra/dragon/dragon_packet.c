@@ -777,6 +777,7 @@ out:
 
   if (lsp_deleted)
   {
+  	/*DRAGON_WRITE_OFF*/
        DRAGON_TIMER_OFF (lsp->t_lsp_refresh);
 	listnode_delete(dmaster.dragon_lsp_table, lsp);
 	lsp_del(lsp);
@@ -998,6 +999,7 @@ void  rsvpUpcall(void* para)
 	dragon_upcall_callback(p->code, lsp);
  
 	if (lsp_deleted) {
+	  	/*DRAGON_WRITE_OFF*/
 	       DRAGON_TIMER_OFF (lsp->t_lsp_refresh);
 		listnode_delete(dmaster.dragon_lsp_table, lsp);
 		lsp_del(lsp);
