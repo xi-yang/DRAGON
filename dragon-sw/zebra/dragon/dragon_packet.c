@@ -713,6 +713,11 @@ dragon_read (struct thread *thread)
 		   }
 	  }
 
+  if (lsp->status == LSP_RECYCLE)
+  {
+	  zlog_warn("dragon_read: lsp has been deleted (recycled).");
+	  return -1;  
+  }
   if (!find)
   {
 	  zlog_warn("dragon_read: cannot find lsp");
@@ -811,8 +816,7 @@ dragon_write (struct thread *t)
 	dragon_packet_free(packet);
 
 	/* Prepare dragon_read thread */
-	if (lsp->status != LSP_RECYCLE)
-		lsp->t_narb_read = thread_add_read (master, dragon_read, lsp, lsp->narb_fd);
+	lsp->t_narb_read = thread_add_read (master, dragon_read, lsp, lsp->narb_fd);
   }
 
   return 0;
