@@ -1683,7 +1683,7 @@ DEFUN (dragon_set_ucid,
     struct in_addr ip;
     inet_aton(argv[0], &ip);
     if (ip.s_addr != 0)
-        UCID = ip.s_addr;
+        dmaster.UCID = ip.s_addr;
     else if (sscanf(argv[0], "%d", &dmaster.UCID) != 1) {
 	vty_out(vty, "Wrong UCID %s: (format: number or A.B.C.D) %s", argv[0], VTY_NEWLINE);
 	return CMD_WARNING;
@@ -1707,7 +1707,7 @@ dragon_master_init()
 {
   struct _sessionParameters default_session;
 
-  srandom(time());
+  srandom(time(NULL));
   dmaster.UCID = random();
 
   dmaster.master = thread_master_create ();
