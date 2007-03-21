@@ -40,7 +40,6 @@
 #include "buffer.h"
 
 char lsp_prompt[100] = "%s(edit-lsp)# ";
-u_int32_t UCID = 0;
 u_int32_t narb_extra_options = 0;
 
 struct cmd_node lsp_node =
@@ -1685,7 +1684,7 @@ DEFUN (dragon_set_ucid,
     inet_aton(argv[0], &ip);
     if (ip.s_addr != 0)
         UCID = ip.s_addr;
-    else if (sscanf(argv[0], "%d", &UCID) != 1) {
+    else if (sscanf(argv[0], "%d", &dmaster.UCID) != 1) {
 	vty_out(vty, "Wrong UCID %s: (format: number or A.B.C.D) %s", argv[0], VTY_NEWLINE);
 	return CMD_WARNING;
     }
@@ -1699,7 +1698,7 @@ DEFUN (dragon_show_ucid,
        "UCID\n"
 	)
 {
-    vty_out(vty, "\tUniversal Client ID = %d (%s)%s", UCID, inet_ntoa((struct in_addr*)&UCID), VTY_NEWLINE);
+    vty_out(vty, "\tUniversal Client Identifier (UCID) = %d (%s)%s", dmaster.UCID, inet_ntoa(*(struct in_addr*)&dmaster.UCID), VTY_NEWLINE);
     return CMD_SUCCESS;
 }
 
@@ -1707,6 +1706,9 @@ int
 dragon_master_init()
 {
   struct _sessionParameters default_session;
+
+  srandom(time());
+  dmaster.UCID = random();
 
   dmaster.master = thread_master_create ();
   master = dmaster.master;

@@ -593,6 +593,9 @@ struct dragon_fifo
 /* DRAGON master */
 struct dragon_master {
 
+ 	/* Universal Client Identifier */
+	u_int32_t UCID;
+
 	/* A list of current LSPs */
 	list dragon_lsp_table;
 
