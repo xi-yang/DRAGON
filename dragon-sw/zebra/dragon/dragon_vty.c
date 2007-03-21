@@ -1512,10 +1512,9 @@ DEFUN (dragon_delete_lsp,
   }
   else{
 	DRAGON_TIMER_OFF(lsp->t_lsp_refresh);
-  	//dragon_fifo_lsp_cleanup(lsp); /**/
 	zTearRsvpPathRequest(dmaster.api, &lsp->common);
 	listnode_delete(dmaster.dragon_lsp_table, lsp);
-	lsp->status = LSP_RECYCLE;
+	lsp_recycle(lsp);
 	//lsp_del(lsp);
   }
 
@@ -1696,6 +1695,9 @@ dragon_master_init()
   
   dmaster.dragon_lsp_table = list_new();
   dmaster.dragon_lsp_table->del = (void (*) (void *))lsp_del;
+
+  dmaster.recycled_lsp_list = list_new();
+  dmaster.recycled_lsp_list->del = (void (*) (void *))lsp_del;
   
   dmaster.dragon_packet_fifo = dragon_fifo_new();
 

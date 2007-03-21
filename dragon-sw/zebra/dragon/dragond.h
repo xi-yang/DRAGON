@@ -596,6 +596,9 @@ struct dragon_master {
 	/* A list of current LSPs */
 	list dragon_lsp_table;
 
+	/* A list of deleted LSPs */
+	list recycled_lsp_list;
+
 	/* Packet fifo */
 	struct dragon_fifo *dragon_packet_fifo;
 
@@ -672,6 +675,8 @@ extern void dragon_fifo_flush (struct dragon_fifo *fifo);
 extern int  dragon_fifo_count (struct dragon_fifo *fifo);
 extern void dragon_fifo_free (struct dragon_fifo *fifo);
 extern void dragon_fifo_lsp_cleanup (struct lsp* lsp);
+extern struct lsp* lsp_recycle(struct lsp* lsp);
+extern struct lsp* lsp_new();
 extern int dragon_lsp_refresh_timer(struct thread *t);
 extern int dragon_read (struct thread *thread);
 extern int dragon_write (struct thread *thread);

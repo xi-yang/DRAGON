@@ -783,9 +783,8 @@ out:
   if (lsp_deleted)
   {
        DRAGON_TIMER_OFF (lsp->t_lsp_refresh);
-  	//dragon_fifo_lsp_cleanup(lsp); /**/
 	listnode_delete(dmaster.dragon_lsp_table, lsp);
-	lsp->status = LSP_RECYCLE;
+	lsp_recycle(lsp); /*Keep lsp in recycle list for messages that were orginted from this LSP*/
 	//lsp_del(lsp);
   }
 
@@ -853,13 +852,39 @@ void dragon_fifo_lsp_cleanup (struct lsp* lsp)
 		packet = packet->next;
 	}
 }
-	
+
+struct lsp* lsp_recycle(struct lsp* lsp)
+{
+	lsp->status = LSP_RECYCLE;
+	listnode_add(dmaster.recycled_lsp_list, lsp);
+}
+
+struct lsp* lsp_new()
+{
+	struct lsp *l;
+	listnode node;
+
+	if (dmaster.recycled_lsp_list)
+	LIST_LOOP(dmaster.recycled_lsp_list,l,node)
+	{
+		if (l->status == LSP_RECYCLE)
+		{
+			dragon_fifo_lsp_cleanup(l);
+			memset(l, 0, sizeof(struct lsp));
+			listnode_delete(dmaster.recycled_lsp_list, l);
+			return l;
+		}
+	}
+  	l = XMALLOC(MTYPE_OSPF_DRAGON, sizeof(struct lsp));
+	memset(l, 0, sizeof(struct lsp));
+	return l;
+}
+
 void rsvpupcall_register_lsp(struct _rsvp_upcall_parameter* p)
 {
 	struct lsp *lsp;
 	
-  	lsp = XMALLOC(MTYPE_OSPF_DRAGON, sizeof(struct lsp));
-	memset(lsp, 0, sizeof(struct lsp));
+  	lsp = lsp_new();
 	set_lsp_default_para(lsp);
 	lsp->status = LSP_LISTEN;
 	 lsp->flag |= LSP_FLAG_REG_BY_RSVP;
@@ -1040,7 +1065,7 @@ void  rsvpUpcall(void* para)
 	       DRAGON_TIMER_OFF (lsp->t_lsp_refresh);
 	  	//dragon_fifo_lsp_cleanup(lsp); /**/
 		listnode_delete(dmaster.dragon_lsp_table, lsp);
-		lsp->status = LSP_RECYCLE;
+		lsp_recycle(lsp);
 		//lsp_del(lsp);
 	}
 
