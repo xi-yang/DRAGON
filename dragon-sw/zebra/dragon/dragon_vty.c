@@ -1675,13 +1675,31 @@ ALIAS (dragon_show_lsp,
 
 DEFUN (dragon_set_ucid,
        dragon_set_ucid_cmd,
-       "set ucid NUM",
+       "set ucid ID",
        "Set Universal Client ID (UCID)\n"
        "UCID\n"
-       "UCID number\n"
+       "UCID number or IP\n"
 	)
 {
-    sscanf(argv[0], "%d", &UCID);
+    struct in_addr ip;
+    inet_aton(argv[0], &ip);
+    if (ip.s_addr != 0)
+        UCID = ip.s_addr;
+    else if (sscanf(argv[0], "%d", &UCID) != 1) {
+	vty_out(vty, "Wrong UCID %s: (format: number or A.B.C.D) %s", argv[0], VTY_NEWLINE);
+	return CMD_WARNING;
+    }
+    return CMD_SUCCESS;
+}
+
+DEFUN (dragon_show_ucid,
+       dragon_show_ucid_cmd,
+       "show ucid",
+       "Show Universal Client ID (UCID)\n"
+       "UCID\n"
+	)
+{
+    vty_out(vty, "\tUniversal Client ID = %d (%s)%s", UCID, inet_ntoa((struct in_addr*)&UCID), VTY_NEWLINE);
     return CMD_SUCCESS;
 }
 
@@ -2143,6 +2161,7 @@ dragon_supp_vty_init ()
   install_element(CONFIG_NODE, &dragon_set_local_id_group_refresh_cmd);
   install_element(VIEW_NODE, &dragon_set_ucid_cmd);
   install_element(CONFIG_NODE, &dragon_set_ucid_cmd);
+  install_element(CONFIG_NODE, &dragon_show_ucid_cmd);
   install_element(VIEW_NODE, &dragon_set_narb_extra_options_cmd);
   install_element(CONFIG_NODE, &dragon_set_narb_extra_options_cmd);
   
