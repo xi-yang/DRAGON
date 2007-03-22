@@ -211,7 +211,7 @@ int NARB_APIClient::doConnect(char *host, int port)
     addr.sin_port = htons (port);
     //addr.sin_len = sizeof (struct sockaddr_in);
    
-    /* Now establish synchronous channel with OSPF daemon */
+    /* Now establish synchronous channel with NARB daemon */
     ret = connect (fd, (struct sockaddr *) &addr,
                    sizeof (struct sockaddr_in));
     if (ret < 0)

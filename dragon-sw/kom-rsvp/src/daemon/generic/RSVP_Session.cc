@@ -804,7 +804,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 			//preprocess ERO
 			if (explicitRoute && shouldReroute(explicitRoute)) {
-				explicitRoute->destroy();
+				//explicitRoute->destroy();
 				explicitRoute = NULL;
 			}
 			if (!explicitRoute) {
