@@ -319,7 +319,6 @@ node_assign_ip(struct resource* node)
 static int 
 node_delete_ip(struct resource* node)
 {
-#ifndef __FreeBSD__
   struct if_ip *ifp;
   struct adtlistnode* curnode;
   static char iface_name[50];
@@ -328,17 +327,26 @@ node_delete_ip(struct resource* node)
     return 1;
 
   node->status = AST_SUCCESS; 
+
   for (curnode = node->res.n.if_list->head;
 	curnode;
 	curnode = curnode->next) {
 
     ifp = (struct if_ip*)curnode->data;
     if (ifp->iface && ifp->vtag) {
+#ifndef __FreeBSD__
       sprintf(iface_name, "vconfig rem %s", ifp->iface);
+      system(iface_name);
+#endif
+    } else if (ifp->iface) {
+#ifndef __FreeBSD__
+      sprintf(iface_name, "ifconfig %s 0.0.0.0", ifp->iface);
+#else
+      sprintf(iface_name, "ifconfig %s delete", ifp->iface);
+#endif
       system(iface_name);
     }
   }
-#endif
 
   return 1;
 }
@@ -786,7 +794,7 @@ main(int argc, char* argv[])
   if (config_file) 
     noded_read_config(config_file); 
   else
-    noded_read_config("/usr/local/etc/node_agent.conf");
+    noded_read_config("/usr/local/dragon/etc/node_agent.conf");
 
   /* Change to the daemon program. */
   if (daemon_mode)
