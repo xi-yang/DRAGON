@@ -505,10 +505,14 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void
     uint32 srcAddr = 0, destAddr = 0, srcLocalId = 0, destLocalId = 0, vtag = 0;
     DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
 
+	NetAddress srcNetAddr = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+	srcAddr = srcNetAddr.rawAddress();
+	if (srcAddr == 0)
+		return NULL;
     if (uni) 
     {
-        srcAddr = uni->getSrcTNA().addr.s_addr;
-        srcLocalId = uni->getSrcTNA().local_id;
+        if (srcAddr == uni->getSrcTNA().addr.s_addr)
+	        srcLocalId = uni->getSrcTNA().local_id;
         destAddr = uni->getDestTNA().addr.s_addr;
         destLocalId = uni->getDestTNA().local_id;
 	 if (uni->getVlanTag().vtag != 0)
@@ -522,8 +526,17 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void
     }
     else 
     {
-        srcAddr = msg.getSENDER_TEMPLATE_Object().getSrcAddress().rawAddress();
+        //Get destination address (Source address is the OSPF loopback of this VLSR)
         destAddr = msg.getSESSION_Object().getDestAddress().rawAddress();
+        //Get Local Ids if any
+		if (msg.getEXPLICIT_ROUTE_Object())
+		{
+			if (srcAddr == msg.getSENDER_TEMPLATE_Object().getSrcAddress().rawAddress()) &&
+				(msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front().getInterfaceID()>>16 != LOCAL_ID_TYPE_NONE))
+				srcLocalId = msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front().getInterfaceID();
+			if (msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().back().getInterfaceID()>>16 != LOCAL_ID_TYPE_NONE)
+				destLocalId = msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().back().getInterfaceID();
+		}
     }
 
     EXPLICIT_ROUTE_Object* ero = lookupExplicitRoute(destAddr, 
@@ -531,14 +544,6 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void
             (uint32)msg.getSESSION_Object().getExtendedTunnelId(), ss_ptr);
 
     if (!ero) {
-
-        //$$$$$$$$ Mapping SESSION_ATTRIBUTE_Object.sessionName into layer-exclusion options.
-        //      TODO    TODO    TODO
-        // The strstr based mapping could be configured in RSVPD.con
-        // For example: exclude layer-1 (-2, -tdm, -3) str1, str2, str3 ...
-        // Or hard coded within this piece of code.
-        //$$$$$$$$ Then pass the options in narb_api messages...
-
         uint32 excl_options = RSVP_Global::switchController->getExclEntry(msg.getSESSION_ATTRIBUTE_Object().getSessionName());
 
         ero = getExplicitRoute(srcAddr, destAddr, msg.getLABEL_REQUEST_Object().getSwitchingType(), 
