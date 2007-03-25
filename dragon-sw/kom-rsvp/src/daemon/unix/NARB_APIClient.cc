@@ -11,6 +11,9 @@ To be incorporated into KOM-RSVP-TE package
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include "RSVP.h"
+#include "RSVP_Global.h"
+#include "RSVP_RoutingService.h"
 #include "RSVP_ProtocolObjects.h"
 #include "RSVP_Message.h"
 #include "NARB_APIClient.h"
@@ -531,10 +534,10 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void
         //Get Local Ids if any
 		if (msg.getEXPLICIT_ROUTE_Object())
 		{
-			if (srcAddr == msg.getSENDER_TEMPLATE_Object().getSrcAddress().rawAddress()) &&
-				(msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front().getInterfaceID()>>16 != LOCAL_ID_TYPE_NONE))
+			if (srcAddr == msg.getSENDER_TEMPLATE_Object().getSrcAddress().rawAddress() &&
+				(msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front().getInterfaceID()>>16) != LOCAL_ID_TYPE_NONE)
 				srcLocalId = msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front().getInterfaceID();
-			if (msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().back().getInterfaceID()>>16 != LOCAL_ID_TYPE_NONE)
+			if ((msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().back().getInterfaceID()>>16) != LOCAL_ID_TYPE_NONE)
 				destLocalId = msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().back().getInterfaceID();
 		}
     }
