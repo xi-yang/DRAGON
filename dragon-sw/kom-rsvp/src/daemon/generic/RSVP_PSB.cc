@@ -684,7 +684,10 @@ bool PSB::updateEXPLICIT_ROUTE_Object( EXPLICIT_ROUTE_Object* er ) {
 	} else if (!er) {
 		return false;
 	}
-	explicitRoute = er;
+	if (er)
+		explicitRoute = er->borrow();
+	else   
+		explicitRoute = NULL;
 	return true;
 }
 
