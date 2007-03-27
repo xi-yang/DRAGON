@@ -47,6 +47,8 @@ extern char *node_stype_name[];
 static int master_accept(struct thread *);
 static int noded_callback(struct thread *);
 static int dragon_callback(struct thread *);
+static void clean_socket(struct application_cfg *);
+static void init_socket(struct application_cfg *);
 static int master_setup_req_to_node();
 static void master_check_app_list();
 static void handle_alarm();
@@ -92,8 +94,6 @@ int send_task_to_link_agent();
 int send_task_to_node_agent();
 void integrate_result();
 
-struct thread_master *master; /* master = dmaster.master */
-
 struct option ast_master_opts[] =
 {
   { "daemon",     no_argument,       NULL, 'd'},
@@ -117,6 +117,54 @@ NSF AST Master.\n\n\
 \n", progname); 
     
   exit (status);
+}
+
+static 
+void clean_socket(struct application_cfg *app_cfg)
+{
+  struct adtlistnode *curnode;
+  struct resource *node;
+
+  zlog_info("clean_socket(): start");
+  if (!app_cfg || !app_cfg->node_list)
+    return;
+
+  for (curnode = app_cfg->node_list->head;
+	curnode;
+	curnode = curnode->next) {
+    node = (struct resource*)curnode->data;
+
+    if (node->dragon_sock != -1) {
+      thread_remove_read(master, dragon_callback, NULL, node->dragon_sock);
+      close(node->dragon_sock);
+      zlog_info("SOCK: closing dragon_sock %d", node->dragon_sock);
+    }
+    if (node->noded_sock != -1) {
+      thread_remove_read(master, noded_callback, NULL, node->noded_sock);
+      close(node->noded_sock);
+      zlog_info("SOCK: closing dnoded_sock %d", node->noded_sock);
+    }
+  }
+  zlog_info("clean_socket(): end");
+}
+
+static 
+void init_socket(struct application_cfg *app_cfg)
+{
+  struct adtlistnode *curnode;
+  struct resource *node;
+
+  if (!app_cfg || !app_cfg->node_list)
+    return;
+
+  for (curnode = app_cfg->node_list->head;
+	curnode;
+	curnode = curnode->next) {
+    node = (struct resource*)curnode->data;
+
+    node->dragon_sock = -1;
+    node->noded_sock = -1;
+  }
 }
 
 int
@@ -212,6 +260,7 @@ master_process_setup_resp()
    
     sprintf(newpath, "%s/%s/setup_node_response_%s.xml",
 	AST_DIR, glob_app_cfg->ast_id, glob_res_cfg->name);
+    glob_res_cfg->noded_sock = -1;
 
   } else {
     srcnode = (struct resource*)working_app_cfg->node_list->head->data;
@@ -221,6 +270,8 @@ master_process_setup_resp()
     if (!glob_res_cfg) 
       zlog_err("Can't find this link_agent %s in %s", srcnode->name, glob_app_cfg->ast_id);
     else {
+
+      srcnode = glob_res_cfg;
       if (adtlist_getcount(glob_res_cfg->res.n.link_list) == 
 	  adtlist_getcount(working_app_cfg->link_list)) {
 	for (curnode1 = glob_res_cfg->res.n.link_list->head,
@@ -323,6 +374,8 @@ master_process_setup_resp()
     
       sprintf(newpath, "%s/%s/setup_response_%s.xml", 
 		AST_DIR, glob_app_cfg->ast_id, srcnode->name); 
+      srcnode->dragon_sock = -1;
+
     }
   }
 
@@ -439,6 +492,7 @@ master_process_release_resp()
    
     sprintf(newpath, "%s/%s/release_node_response_%s.xml",
 	AST_DIR, glob_app_cfg->ast_id, glob_res_cfg->name);
+    glob_res_cfg->noded_sock = -1;
 
   } else {
     srcnode = (struct resource*)working_app_cfg->node_list->head->data;
@@ -492,6 +546,7 @@ master_process_release_resp()
       sprintf(newpath, "%s/%s/release_response_%s.xml", 
 		AST_DIR, glob_app_cfg->ast_id, srcnode->name); 
     }
+    glob_res_cfg->dragon_sock = -1;
   }
 
   /* working_app_cfg is the coming in app_cfg xml, the above code
@@ -685,6 +740,7 @@ master_process_setup_req()
 	     AST_XML_RECV, newpath, errno, strerror(errno));
 
   app_cfg_pre_req();
+  init_socket(glob_app_cfg);
   glob_app_cfg->flags |= FLAG_SETUP_REQ;
   gettimeofday(&(glob_app_cfg->start_time), NULL);
   if (send_task_to_link_agent() == 0)
@@ -1232,7 +1288,7 @@ send_task_to_link_agent()
        curnode = curnode->next) {
     srcnode = (struct resource*)(curnode->data); 
 
-   if (!srcnode->res.n.link_list &&
+    if (!srcnode->res.n.link_list &&
 	glob_app_cfg->action != QUERY_REQ) {
 	
       /* No task need to be sent to this link_agent (dragond); skip 
@@ -1273,11 +1329,18 @@ send_task_to_link_agent()
     }
 
     if (glob_app_cfg->action != AST_COMPLETE) {
+      zlog_info("SOCK: %d added for dragon_callback", sock);
       thread_add_read(master, dragon_callback, NULL, sock);
+      if (srcnode->dragon_sock != -1) {
+	thread_remove_read(master, dragon_callback, NULL, srcnode->dragon_sock);
+	close(srcnode->dragon_sock);
+	zlog_info("SOCK: closing dragon_sock %d", srcnode->dragon_sock);
+      }
       srcnode->dragon_sock = sock;
-    }
-    else
+    } else {
       close(sock);
+      srcnode->dragon_sock = -1;
+    }
 
     if (glob_app_cfg->action == SETUP_REQ) {
       glob_app_cfg->setup_sent += adtlist_getcount(srcnode->res.n.link_list);
@@ -1383,6 +1446,7 @@ integrate_result()
     if (send_file_over_sock(glob_app_cfg->clnt_sock, AST_XML_RESULT) == 0)
       zlog_err("Failed to send the result back to client");
     close(glob_app_cfg->clnt_sock);
+    zlog_info("SOCK: closing fd %d", glob_app_cfg->clnt_sock);
     glob_app_cfg->clnt_sock = -1;
   }
 
@@ -1395,6 +1459,12 @@ integrate_result()
 
     send_task_to_node_agent();
     send_task_to_link_agent();
+  }
+
+  if (glob_app_cfg->action == RELEASE_RESP) {
+    clean_socket(glob_app_cfg);
+    del_cfg_from_list(glob_app_cfg);
+    glob_app_cfg = NULL;
   }
 }
 
@@ -1477,11 +1547,17 @@ send_task_to_node_agent()
       glob_app_cfg->setup_sent++;
 
     if (glob_app_cfg->action != AST_COMPLETE) {
+      zlog_info("SOCK: %d added for noded_callback", sock);
       thread_add_read(master, noded_callback, NULL, sock);
+      if (srcnode->noded_sock != -1) {
+        close(srcnode->noded_sock);
+	zlog_info("SOCK: closing noded_sock %d", srcnode->noded_sock);
+      }
       srcnode->noded_sock = sock;
-    } 
-    else 
+    } else {
       shutdown(sock, SHUT_RDWR);
+      srcnode->noded_sock = -1;
+    }
   }
 
   if (glob_app_cfg->action == SETUP_REQ) 
@@ -1579,17 +1655,19 @@ master_accept(struct thread *thread)
 	close(fd);
       }
 
-      if (glob_app_cfg->details[0] != '\0')
+      if (glob_app_cfg && glob_app_cfg->details[0] != '\0')
 	zlog_err(glob_app_cfg->details);
 
       /* if at this point, there is already error(s) in 
        * processing, no need to wait for ALL result back before
        * sending updates to user
        */
-      if ((glob_app_cfg->action == SETUP_REQ ||
+      if (glob_app_cfg) {
+	if ((glob_app_cfg->action == SETUP_REQ ||
 	  glob_app_cfg->action == RELEASE_REQ) &&
 	  glob_app_cfg->status == AST_SUCCESS) {
-	glob_app_cfg->clnt_sock = clntSock;
+	  glob_app_cfg->clnt_sock = clntSock;
+        }
       }
 
       break;
@@ -1624,6 +1702,7 @@ master_accept(struct thread *thread)
       print_error_response(AST_XML_RESULT);
 
     send_file_over_sock(clntSock, AST_XML_RESULT);
+    zlog_info("SOCK: closing fd %d", clntSock);
     close(clntSock);
   } else if (glob_app_cfg->clnt_sock == -1 || 
 		glob_app_cfg->status == AST_FAILURE) {
@@ -1632,6 +1711,7 @@ master_accept(struct thread *thread)
 
     send_file_over_sock(clntSock, AST_XML_RESULT);
     close(clntSock);
+    zlog_info("SOCK: closing fd %d", clntSock);
     glob_app_cfg->clnt_sock = -1;
   }
 
@@ -1720,6 +1800,7 @@ noded_callback(struct thread *thread)
   }
 
   close(servSock);
+  zlog_info("SOCK: closing fd %d", servSock);
   master_check_app_list();
   zlog_info("noded_callback(): DONE");
 
@@ -1798,6 +1879,7 @@ dragon_callback(struct thread *thread)
     }
   }
 
+  zlog_info("SOCK: closing fd %d", servSock);
   close(servSock);
   master_check_app_list();
   zlog_info("dragon_callback(): END");
@@ -1958,6 +2040,7 @@ master_check_app_list()
       }
 
       zlog_info("master_check_app_list(): sending RELEASE_RESP for %s", app_cfg->ast_id);
+      del_cfg_from_list(app_cfg);
       app_cfg->flags |= FLAG_RELEASE_RESP;
       app_cfg->action = RELEASE_RESP;
       app_cfg->status = AST_FAILURE;
@@ -1976,6 +2059,7 @@ master_check_app_list()
       if (send_file_over_sock(app_cfg->clnt_sock, AST_XML_RESULT) == 0)
 	zlog_err("Failed to send the result back to client");
       close(app_cfg->clnt_sock);
+      zlog_info("SOCK: closing fd %d", app_cfg->clnt_sock);
       app_cfg->clnt_sock = -1;
 
     } else if (IS_SET_SETUP_REQ(app_cfg) && !IS_SET_SETUP_RESP(app_cfg)) {
@@ -2005,6 +2089,7 @@ master_check_app_list()
       if (send_file_over_sock(app_cfg->clnt_sock, AST_XML_RESULT) == 0)
 	zlog_err("Failed to send the result back to client");
       close(app_cfg->clnt_sock);
+      zlog_info("SOCK: closing fd %d", app_cfg->clnt_sock);
       app_cfg->clnt_sock = -1;
     }
   }

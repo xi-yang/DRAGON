@@ -104,6 +104,8 @@ DEFUN (master_show_ast,
 	vty_out(vty, "\tTunnel: %s%s", res->res.n.tunnel, VTY_NEWLINE);
       else
 	vty_out(vty, "\tTunnel None%s", VTY_NEWLINE);
+      vty_out(vty, "\tnoded_sock: %d",  res->noded_sock);
+      vty_out(vty, "\tdragon_sock: %d%s", res->dragon_sock, VTY_NEWLINE);
       if (res->res.n.command)
  	vty_out(vty, "\tCommand: %s%s", res->res.n.command, VTY_NEWLINE);
       if (res->res.n.if_list) {
@@ -112,7 +114,7 @@ DEFUN (master_show_ast,
 		curnode1;
 		curnode1 = curnode1->next) {
 	  ifp = (struct if_ip*) curnode1->data;
-	  vty_out(vty,  "\t    %s [%s%s]", 
+	  vty_out(vty,  "\t    %s [%s]%s", 
 		  ifp->iface? ifp->iface:"TBA", ifp->assign_ip, VTY_NEWLINE);
 	}
       }

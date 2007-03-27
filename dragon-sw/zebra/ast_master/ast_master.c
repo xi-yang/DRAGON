@@ -46,7 +46,8 @@ char *link_status_name[] =
   { "DID NOT COMMIT",
     "COMMIT",
     "ERROR",
-    "IN-SERVICE" };
+    "IN-SERVICE",
+    "RELEASE"};
  
 struct string_syntex_check local_field =
 {

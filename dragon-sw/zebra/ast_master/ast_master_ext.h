@@ -114,7 +114,7 @@ struct application_cfg {
 
 enum node_stype { PC = 1, correlator, computation_array, vlsr};
 enum link_stype { uni = 1, non_uni, vlsr_vlsr, vlsr_es };
-enum link_status { commit = 1, error, in_service };
+enum link_status { commit = 1, error, in_service, delete };
 
 struct if_ip {
   char *iface;
