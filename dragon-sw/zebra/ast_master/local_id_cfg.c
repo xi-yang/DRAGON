@@ -154,7 +154,7 @@ process_id_result(struct application_cfg *working_app_cfg, struct id_cfg_res* re
     zlog_err("process_id_result: can't find the resource from the resturn file");
     res->status = AST_UNKNOWN;
     return 0;
-  } else if (!newres->cfg_list) {
+  } else if (working_app_cfg->xml_type == ID_XML && !newres->cfg_list) {
     zlog_err("process_id_result: resource found with no local_id in it");
     res->status = AST_UNKNOWN;
     return 0;
