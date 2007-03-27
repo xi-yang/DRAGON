@@ -40,6 +40,7 @@ extern char* link_stype_name[];
 extern char* node_stype_name[];
 extern char *local_id_name[];
 extern char *id_action_name[];
+extern list registered_local_ids;
 static struct vty* fake_vty = NULL;
 static char* argv[7];
 static int clnt_sock;
@@ -206,6 +207,7 @@ dragon_process_id_cfg()
 {
   struct adtlistnode *cur;
   struct id_cfg_res *res;
+  listnode node, node1;
   struct local_id_cfg *id;
   int i, argc, ret_val = 1;
   char path[105];
@@ -217,6 +219,7 @@ dragon_process_id_cfg()
   struct local_id *lid = NULL;
   listnode node_inner;
   int found;
+  u_int16_t * ptag = NULL;
 
   zlog_info("dragon_process_id_cfg: start ...");
 
@@ -228,174 +231,226 @@ dragon_process_id_cfg()
   res = (struct id_cfg_res*) glob_app_cfg->node_list->head->data;
 
   /* loop through all the local_id_cfg in it */
-  if (!res->cfg_list) {
+  if (glob_app_cfg->xml_type == ID_XML && !res->cfg_list) {
     zlog_warn("dragon_process_id_cfg: no local_id to configure under resource %s", res->name);
     res->status = AST_SUCCESS;
     return 1;
   }
 
-  for (cur = res->cfg_list->head;
-	cur;
-	cur = cur->next) {
-    id = (struct local_id_cfg*) cur->data;
+  switch (glob_app_cfg->xml_type) {
+    case ID_XML:
 
-    zlog_info("working on id: %d, type: %s, action: %s",
-	id->id, local_id_name[id->type], id_action_name[id->action]);
-    id->status = AST_SUCCESS;
-
-    /* depending on the types of the action, process the task accordingly 
-     */
-    switch (id->action) {
-
-      case ID_CREATE:
-
-	if (id->type == 3) {
-	  sprintf(argv[0], "%d", id->id);
-	  strcpy(argv[1], local_id_name[id->type]);
-	  if (dragon_set_local_id(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+    for (cur = res->cfg_list->head;
+	  cur;
+	  cur = cur->next) {
+      id = (struct local_id_cfg*) cur->data;
+  
+      zlog_info("working on id: %d, type: %s, action: %s",
+	  id->id, local_id_name[id->type], id_action_name[id->action]);
+      id->status = AST_SUCCESS;
+  
+      /* depending on the types of the action, process the task accordingly 
+       */
+      switch (id->action) {
+  
+	case ID_CREATE:
+  
+	  if (id->type == 3) {
+	    sprintf(argv[0], "%d", id->id);
+	    strcpy(argv[1], local_id_name[id->type]);
+	    if (dragon_set_local_id(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+	      id->status = AST_FAILURE;
+	      buffer_putc(fake_vty->obuf, '\0');
+	      id->msg = buffer_getstr(fake_vty->obuf);
+	      buffer_reset(fake_vty->obuf);
+	      ret_val = 0;
+	      break;
+	    }
+	   } else { 
+  
+	    argc = 4;
+	    strcpy(argv[0], local_id_name[id->type]);
+	    sprintf(argv[1], "%d", id->id);
+	    strcpy(argv[2], "add");
+  
+	    for (i = 0; i < id->num_mem; i++) {
+	      sprintf(argv[3], "%d", id->mems[i]);
+	      if (dragon_set_local_id_group(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+		id->status = AST_FAILURE;
+		buffer_putc(fake_vty->obuf, '\0');
+		id->msg = buffer_getstr(fake_vty->obuf);
+		buffer_reset(fake_vty->obuf);
+		ret_val = 0;
+		break;
+	      }
+	    }
+	  }
+	    
+	  break;
+  
+	case ID_DELETE:
+  
+	  argc = 2;
+	  strcpy(argv[0], local_id_name[id->type]);
+	  sprintf(argv[1], "%d", id->id);
+  
+	  if (dragon_delete_local_id(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
 	    id->status = AST_FAILURE;
 	    buffer_putc(fake_vty->obuf, '\0');
 	    id->msg = buffer_getstr(fake_vty->obuf);
 	    buffer_reset(fake_vty->obuf);
 	    ret_val = 0;
+	  }
+  
+	  break;
+  
+	case ID_MODIFY:
+  
+	  if (id->type == 3) {
+  
+	    ret_val = 0;
 	    break;
 	  }
- 	} else { 
-
+  
+	  type = id->type == 1? LOCAL_ID_TYPE_GROUP:LOCAL_ID_TYPE_TAGGED_GROUP;
+	  tag = id->id;
+  
+	  /* first make sure that this local_id exists in that type */
+	  lid = search_local_id(tag, type);
+  
+	  if (!lid) {
+	    id->status = AST_FAILURE;
+	    id->msg = strdup("requested local_id doesn't exist");
+	    ret_val = 0;
+	    break;
+	  }
+  
 	  argc = 4;
 	  strcpy(argv[0], local_id_name[id->type]);
 	  sprintf(argv[1], "%d", id->id);
 	  strcpy(argv[2], "add");
-
+  
+	  /* loop through the new list
+	   * compare with the old, if not there, add */
 	  for (i = 0; i < id->num_mem; i++) {
-	    sprintf(argv[3], "%d", id->mems[i]);
-	    if (dragon_set_local_id_group(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
-	      id->status = AST_FAILURE;
-	      buffer_putc(fake_vty->obuf, '\0');
-	      id->msg = buffer_getstr(fake_vty->obuf);
-	      buffer_reset(fake_vty->obuf);
-	      ret_val = 0;
-	      break;
+	    found = 0;
+	    LIST_LOOP(lid->group, iter_tag, node_inner) {
+	      if (*iter_tag == id->mems[i]) {
+		found = 1;
+		break;
+	      }
+	    }
+  
+	    if (!found) {
+	      /* this member doesn't exist in the list yet, so add */
+	      sprintf(argv[3], "%d", id->mems[i]);
+	      if (dragon_set_local_id_group(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+		id->status = AST_FAILURE;
+		buffer_putc(fake_vty->obuf, '\0');
+		id->msg = buffer_getstr(fake_vty->obuf);
+		buffer_reset(fake_vty->obuf);
+		ret_val = 0;
+	      }
+	      found = 0;
 	    }
 	  }
-	}
-	  
-	break;
-
-      case ID_DELETE:
-
-	argc = 2;
-	strcpy(argv[0], local_id_name[id->type]);
-	sprintf(argv[1], "%d", id->id);
-
-	if (dragon_delete_local_id(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
-	  id->status = AST_FAILURE;
-	  buffer_putc(fake_vty->obuf, '\0');
-	  id->msg = buffer_getstr(fake_vty->obuf);
-	  buffer_reset(fake_vty->obuf);
-	  ret_val = 0;
-	}
-
-	break;
-
-      case ID_MODIFY:
-
-	if (id->type == 3) {
-
-	  ret_val = 0;
-	  break;
-	}
-
-	type = id->type == 1? LOCAL_ID_TYPE_GROUP:LOCAL_ID_TYPE_TAGGED_GROUP;
-	tag = id->id;
-
-	/* first make sure that this local_id exists in that type */
-	lid = search_local_id(tag, type);
-
-	if (!lid) {
-	  id->status = AST_FAILURE;
-	  id->msg = strdup("requested local_id doesn't exist");
-	  ret_val = 0;
-	  break;
-	}
-
-	argc = 4;
-	strcpy(argv[0], local_id_name[id->type]);
-	sprintf(argv[1], "%d", id->id);
-	strcpy(argv[2], "add");
-
-	/* loop through the new list
-	 * compare with the old, if not there, add */
-	for (i = 0; i < id->num_mem; i++) {
-	  found = 0;
+  
+	  strcpy(argv[2], "delete");
+  
+	  /* loop through the old list
+	   * compare with the new, if not there, delete */
 	  LIST_LOOP(lid->group, iter_tag, node_inner) {
-	    if (*iter_tag == id->mems[i]) {
-	      found = 1;
-	      break;
+	    for (i = 0, found = 0; i < id->num_mem; i++) {
+	      if (*iter_tag == id->mems[i]) {
+		found = 1;
+		break;
+	      }
+	    }
+	    
+	    if (!found) {
+	      /* this member doesn't exist in the new list, so need to delete */
+	      sprintf(argv[3], "%d", *iter_tag);
+	      if (dragon_set_local_id_group(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+		id->status = AST_FAILURE;
+		buffer_putc(fake_vty->obuf, '\0');
+		id->msg = buffer_getstr(fake_vty->obuf);
+		buffer_reset(fake_vty->obuf);
+		ret_val = 0;
+	      }
+	      found = 0;
 	    }
 	  }
-
-	  if (!found) {
-	    /* this member doesn't exist in the list yet, so add */
-	    sprintf(argv[3], "%d", id->mems[i]);
-	    if (dragon_set_local_id_group(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
-              id->status = AST_FAILURE;
-	      buffer_putc(fake_vty->obuf, '\0');
-              id->msg = buffer_getstr(fake_vty->obuf);
-	      buffer_reset(fake_vty->obuf);
-              ret_val = 0;
-	    }
-	    found = 0;
+  
+	  /* after updating the local_id, need to do refresh 
+	   */
+	   argc = 2;
+	  if (dragon_set_local_id_group_refresh(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+	    id->status = AST_FAILURE;
+	    buffer_putc(fake_vty->obuf, '\0'); 
+	    id->msg = buffer_getstr(fake_vty->obuf); 
+	    buffer_reset(fake_vty->obuf);
+	    ret_val = 0;
 	  }
-	}
-
-	strcpy(argv[2], "delete");
-
-	/* loop through the old list
-	 * compare with the new, if not there, delete */
-	LIST_LOOP(lid->group, iter_tag, node_inner) {
-	  for (i = 0, found = 0; i < id->num_mem; i++) {
-	    if (*iter_tag == id->mems[i]) {
-	      found = 1;
-	      break;
-	    }
-	  }
-	  
-	  if (!found) {
-	    /* this member doesn't exist in the new list, so need to delete */
-	    sprintf(argv[3], "%d", *iter_tag);
-	    if (dragon_set_local_id_group(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
-	      id->status = AST_FAILURE;
-	      buffer_putc(fake_vty->obuf, '\0');
-	      id->msg = buffer_getstr(fake_vty->obuf);
-	      buffer_reset(fake_vty->obuf);
-	      ret_val = 0;
-	    }
-	    found = 0;
-	  }
-	}
-
-	/* after updating the local_id, need to do refresh 
-	 */
- 	argc = 2;
-	if (dragon_set_local_id_group_refresh(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
-	  id->status = AST_FAILURE;
-	  buffer_putc(fake_vty->obuf, '\0'); 
-	  id->msg = buffer_getstr(fake_vty->obuf); 
-	  buffer_reset(fake_vty->obuf);
-	  ret_val = 0;
-	}
-
-	break;
+  
+	  break;
+      }
     }
-  }
+  
+    if (ret_val) {
+      res->status = AST_SUCCESS;
+      glob_app_cfg->status = AST_SUCCESS;
+    } else {
+      res->status = AST_FAILURE;
+      glob_app_cfg->status = AST_FAILURE;
+    }
+  
+    break;
+  
+    case ID_QUERY_XML:
 
-  if (ret_val) {
-    res->status = AST_SUCCESS;
     glob_app_cfg->status = AST_SUCCESS;
-  } else {
-    res->status = AST_FAILURE;
-    glob_app_cfg->status = AST_FAILURE;
+    res->status = AST_SUCCESS;
+
+    if (registered_local_ids->count == 0)
+      break;
+
+    LIST_LOOP(registered_local_ids, lid, node) {
+      id = (struct local_id_cfg*) malloc (sizeof(struct local_id_cfg));
+      memset(id, 0, sizeof(struct local_id_cfg));
+      
+      id->id = lid->value;
+      if (lid->type == LOCAL_ID_TYPE_GROUP)
+	id->type = 1;
+      else if (lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
+	id->type = 2;
+      else if (lid->type == LOCAL_ID_TYPE_PORT)
+	id->type = 3;
+      else {
+	zlog_err("type error");
+	free(id);
+	continue;
+      }
+
+      if (lid->type == LOCAL_ID_TYPE_GROUP || 
+	  lid->type == LOCAL_ID_TYPE_TAGGED_GROUP) {
+
+	id->num_mem = lid->group->count;
+	id->mems = (int*) malloc(sizeof(int)*id->num_mem);
+	i = 0;
+	LIST_LOOP(lid->group, ptag, node1) {
+	  id->mems[i] = *ptag;
+	  i++;
+	}   
+      }
+
+      if (!res->cfg_list) {
+	res->cfg_list = (struct adtlist*)malloc(sizeof(struct adtlist));
+	memset(res->cfg_list, 0, sizeof(struct adtlist));
+      }
+      adtlist_add(res->cfg_list, id);
+    }
+    
+    break;
   }
 
   if (mkdir(LINK_AGENT_DIR, 0755) == -1 && errno != EEXIST) {
@@ -735,6 +790,7 @@ dragon_process_xml(struct in_addr clntAddr)
   break;
 
   case ID_XML:
+  case ID_QUERY_XML:
 
   if ((glob_app_cfg = id_xml_parser(DRAGON_XML_RECV, LINK_AGENT)) == NULL) {
     zlog_err("dragon_process_xml: recieved xml file with error");

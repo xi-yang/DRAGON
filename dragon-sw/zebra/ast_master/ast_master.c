@@ -539,7 +539,8 @@ free_application_cfg(struct application_cfg *app_cfg)
   break;
 
   case ID_XML:
-  
+  case ID_QUERY_XML:
+ 
   if (app_cfg->node_list) {
     for (curnode = app_cfg->node_list->head;
 	 curnode;
@@ -1075,6 +1076,11 @@ xml_parser(char* filename)
   if (findxmlnode(cur, "local_id_cfg")) {
     xmlFreeDoc(doc);
     return ID_XML;
+  }
+
+  if (findxmlnode(cur, "local_id_query")) {
+    xmlFreeDoc(doc);
+    return ID_QUERY_XML;
   }
 
   if (findxmlnode(cur, "ast_ctrl")) {

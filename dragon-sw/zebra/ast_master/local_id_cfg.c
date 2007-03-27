@@ -60,7 +60,7 @@ get_id_action_by_name(char* action)
     return ID_DELETE;
   else if (strcasecmp(action, "MODIFY") == 0)
     return ID_MODIFY;
-  
+
   return 0;
 }
 
@@ -72,7 +72,7 @@ compose_id_req(struct application_cfg *app_cfg, char* path, struct id_cfg_res *r
   FILE *send_file;
   int i;
 
-  if (!path || strlen(path) == 0 || !res ) 
+  if (!app_cfg || !path || strlen(path) == 0 || !res ) 
     return 0;
 
   send_file = fopen(path, "w+");
@@ -81,28 +81,37 @@ compose_id_req(struct application_cfg *app_cfg, char* path, struct id_cfg_res *r
     return 0;
   }
 
-  fprintf(send_file, "<local_id_cfg ast_id=\"%s\">\n", app_cfg->ast_id);
+  if (app_cfg->xml_type == ID_XML) 
+    fprintf(send_file, "<local_id_cfg ast_id=\"%s\">\n", app_cfg->ast_id);
+  else 
+    fprintf(send_file, "<local_id_query ast_id=\"%s\">\n", app_cfg->ast_id);
+
   fprintf(send_file, "<resource type=\"%s\" name=\"%s\">\n", node_stype_name[res->stype], res->name);
   fprintf(send_file, "\t<ip>%s</ip>\n", res->ip);
+ 
+  if (app_cfg->xml_type == ID_XML) {
+    for (cur = res->cfg_list->head;
+  	cur;
+  	cur = cur->next) {
+      id_cfg = (struct local_id_cfg*) cur->data;
   
-  for (cur = res->cfg_list->head;
-	cur;
-	cur = cur->next) {
-    id_cfg = (struct local_id_cfg*) cur->data;
-
-    fprintf(send_file,
-	"\t<local_id id=\"%d\" action=\"%s\" type=\"%s\">\n", id_cfg->id, 
-	id_action_name[id_cfg->action], local_id_name[id_cfg->type]);
-
-    for (i = 0;
-	 i < id_cfg->num_mem;
-	 i++)
-      fprintf(send_file, "\t\t<member>%d</member>\n", id_cfg->mems[i]);
-    fprintf(send_file, "\t</local_id>\n");
+      fprintf(send_file,
+  	"\t<local_id id=\"%d\" action=\"%s\" type=\"%s\">\n", id_cfg->id, 
+  	id_action_name[id_cfg->action], local_id_name[id_cfg->type]);
+  
+      for (i = 0;
+  	 i < id_cfg->num_mem;
+  	 i++)
+	fprintf(send_file, "\t\t<member>%d</member>\n", id_cfg->mems[i]);
+      fprintf(send_file, "\t</local_id>\n");
+    }
   }
 
   fprintf(send_file, "</resource>\n"); 
-  fprintf(send_file, "</local_id_cfg>\n");
+  if (app_cfg->xml_type == ID_XML)
+    fprintf(send_file, "</local_id_cfg>\n");
+  else 
+    fprintf(send_file, "</local_id_query>\n");
   
   fflush(send_file);
   fclose(send_file);
@@ -117,6 +126,9 @@ process_id_result(struct application_cfg *working_app_cfg, struct id_cfg_res* re
   struct id_cfg_res *newres;
   struct local_id_cfg *old_cfg, *new_cfg;
   int found, ret_val = 1;
+
+  if (!working_app_cfg || !res)
+    return 0;
 
   if (!working_app_cfg->node_list) {
     zlog_err("process_id_result: no resource in the file");
@@ -149,32 +161,37 @@ process_id_result(struct application_cfg *working_app_cfg, struct id_cfg_res* re
   }
 
   res->status = newres->status;
-  if (newres->msg) {
-    res->msg = newres->msg;
-    newres->msg = NULL;
-  }
-
-  for (cur = newres->cfg_list->head, cur1 = res->cfg_list->head;
-	cur && cur1;
-	cur = cur->next, cur1 = cur1->next) {
-    new_cfg = (struct local_id_cfg*) cur->data;
-    old_cfg = (struct local_id_cfg*) cur1->data;
-
-    if (new_cfg->id == old_cfg->id &&
-	new_cfg->type == old_cfg->type) {
-      old_cfg->status = new_cfg->status;
-      if (old_cfg->status != AST_SUCCESS)
-	ret_val = 0;
-      if (new_cfg->msg) {
-	old_cfg->msg = new_cfg->msg;
-	new_cfg->msg = NULL;
-      }
-    } else {
-      zlog_err("process_id_result: The order of id and type should be the same in both master and returned result");
-      ret_val = 0;
+  if (working_app_cfg->xml_type == ID_XML) {
+    if (newres->msg) {
+      res->msg = newres->msg;
+      newres->msg = NULL;
     }
+  
+    for (cur = newres->cfg_list->head, cur1 = res->cfg_list->head;
+	  cur && cur1;
+	  cur = cur->next, cur1 = cur1->next) {
+      new_cfg = (struct local_id_cfg*) cur->data;
+      old_cfg = (struct local_id_cfg*) cur1->data;
+  
+      if (new_cfg->id == old_cfg->id &&
+	  new_cfg->type == old_cfg->type) {
+	old_cfg->status = new_cfg->status;
+	if (old_cfg->status != AST_SUCCESS)
+	  ret_val = 0;
+	if (new_cfg->msg) {
+	  old_cfg->msg = new_cfg->msg;
+	  new_cfg->msg = NULL;
+	}
+      } else {
+	zlog_err("process_id_result: The order of id and type should be the same in both master and returned result");
+	ret_val = 0;
+      }
+    }
+  } else {
+    res->cfg_list = newres->cfg_list;
+    newres->cfg_list = NULL;
   }
- 
+  
   return ret_val; 
 }
  
@@ -203,7 +220,11 @@ print_id_response(char * path, int agent)
     return;
   }
 
-  fprintf(fp, "<local_id_cfg ast_id=\"%s\">\n", glob_app_cfg->ast_id);
+  if (glob_app_cfg->xml_type == ID_XML) 
+    fprintf(fp, "<local_id_cfg ast_id=\"%s\">\n", glob_app_cfg->ast_id);
+  else 
+    fprintf(fp, "<local_id_query ast_id=\"%s\">\n", glob_app_cfg->ast_id);
+
   fprintf(fp, "<status>%s</status>\n", status_type_details[glob_app_cfg->status]);
 
   if (glob_app_cfg->node_list) {
@@ -224,9 +245,14 @@ print_id_response(char * path, int agent)
 	     cur1 = cur1->next) {
 	  myid = (struct local_id_cfg*) cur1->data;
 
-	  fprintf(fp, "\t<local_id id=\"%d\" action=\"%s\" type=\"%s\">\n",
+	  if (glob_app_cfg->xml_type == ID_XML) {
+	    fprintf(fp, "\t<local_id id=\"%d\" action=\"%s\" type=\"%s\">\n",
 		myid->id, id_action_name[myid->action], local_id_name[myid->type]);
-	  fprintf(fp, "\t\t<status>%s</status>\n", status_type_details[myid->status]);
+	    fprintf(fp, "\t\t<status>%s</status>\n", status_type_details[myid->status]);
+	  } else
+	    fprintf(fp, "\t<local_id id=\"%d\" type=\"%s\">\n",
+		myid->id, local_id_name[myid->type]);
+
 	  if (myid->msg) 
 	    fprintf(fp, "\t\t<agent_message>%s</agent_message>\n", myid->msg);
 
@@ -238,7 +264,10 @@ print_id_response(char * path, int agent)
       fprintf(fp, "</resource>\n");
     }
   }
-  fprintf(fp, "</local_id_cfg>\n");
+  if (glob_app_cfg->xml_type == ID_XML) 
+    fprintf(fp, "</local_id_cfg>\n");
+  else 
+    fprintf(fp, "</local_id_query>\n");
   fflush(fp);
   fclose(fp);
 }
@@ -249,7 +278,7 @@ id_xml_parser(char* filename, int agent)
   xmlChar *key;
   xmlDocPtr doc;
   xmlNodePtr cur, cur1, cur2, resource_ptr;
-  int i, err;
+  int i, err, type;
   struct _xmlAttr* attr;
   struct id_cfg_res *myres;
   struct local_id_cfg* myIDcfg;
@@ -274,14 +303,20 @@ id_xml_parser(char* filename, int agent)
    */
   cur = findxmlnode(cur, "local_id_cfg");
   if (!cur) {
-    zlog_err("id_xml_parser: Can't locate <local_id_cfg>");
-    xmlFreeDoc(doc);
-    return NULL;
-  }
+    cur = xmlDocGetRootElement(doc);
+    cur = findxmlnode(cur, "local_id_query");
+    if (!cur) {
+      zlog_err("id_xml_parser: Can't locate <local_id_cfg>"); 
+      xmlFreeDoc(doc); 
+      return NULL;
+    }
+    type = ID_QUERY_XML;
+  } else 
+    type = ID_XML;
 
   app_cfg = (struct application_cfg*) malloc(sizeof(struct application_cfg));
   memset(app_cfg, 0, sizeof(struct application_cfg));
-  app_cfg->xml_type = ID_XML;
+  app_cfg->xml_type = type;
 
   for (attr = cur->properties;
 	attr;
@@ -339,6 +374,9 @@ id_xml_parser(char* filename, int agent)
       else if (strcasecmp(cur1->name, "agent_message") == 0) 
 	myres->msg = strdup(key);
       else if (strcasecmp(cur1->name, "local_id") == 0) {
+	if (type == ID_QUERY_XML && !app_cfg->ast_id) 
+	  continue;
+
 	myIDcfg = (struct local_id_cfg*) malloc (sizeof(struct local_id_cfg));
 	memset(myIDcfg, 0, sizeof(struct local_id_cfg));
 	myIDcfg->id = -1;
@@ -367,19 +405,21 @@ id_xml_parser(char* filename, int agent)
 	  }
 	}
 
-        if (!myIDcfg->action) {
-	  zlog_err("id_xml_parser: No action defined for a <local_id>; ignored ...");
-	  err = 1;
-        } else if (!myIDcfg->type) {
-	  zlog_err("id_xml_parser: No type defined for a <local_id>; ignored ...");
-	  err = 1;
- 	} else if (myIDcfg->id == -1) {
-	  zlog_err("id_xml_parser: No id defined for a <local_id>; ignored ...");
-	  err = 1;
-	}
-	if (err) {
-	  free(myIDcfg);
-	  continue;
+	if (type == ID_XML) {
+	  if (!myIDcfg->action) {
+  	    zlog_err("id_xml_parser: No action defined for a <local_id>; ignored ..."); 
+  	    err = 1;
+	  } else if (!myIDcfg->type) {
+  	    zlog_err("id_xml_parser: No type defined for a <local_id>; ignored ...");
+  	    err = 1;
+   	  } else if (myIDcfg->id == -1) {
+  	    zlog_err("id_xml_parser: No id defined for a <local_id>; ignored ...");
+  	    err = 1;
+  	  }
+  	  if (err) {
+  	    free(myIDcfg);
+  	    continue;
+  	  }
 	}
 
 	for (cur2 = cur1->xmlChildrenNode;
@@ -401,7 +441,6 @@ id_xml_parser(char* filename, int agent)
 	  case ID_CREATE:
 	  case ID_MODIFY:
 	   
-	  
 	    if (myIDcfg->action == ID_MODIFY && myIDcfg->type == 3) { 
 	      zlog_err("id_xml_parser: For type port, it can't be modified"); 
 	      err = 1; 
@@ -468,7 +507,7 @@ id_xml_parser(char* filename, int agent)
     /* ok, after parsing all attributes in this res. 
      * if there is no id cfg needed to be done, free this res
      */
-    if (!myres->cfg_list) {
+    if (type == ID_XML && !myres->cfg_list) {
       free_id_cfg_res(myres);
     } else {
       if (!app_cfg->node_list) {

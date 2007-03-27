@@ -1681,6 +1681,14 @@ master_accept(struct thread *thread)
 
       break;
 
+    case ID_QUERY_XML:
+
+      zlog_info("XML_TYPE: ID_QUERY_XML");
+      master_process_id(AST_XML_RECV);
+      free_application_cfg(glob_app_cfg);
+      glob_app_cfg = NULL;
+     
+      break;
     case CTRL_XML:
       zlog_info("XML_TYPE: CTRL_XML");
       master_process_ctrl(AST_XML_RECV);

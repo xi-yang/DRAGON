@@ -209,7 +209,7 @@ struct string_value_conversion conv_lsp_status =
 };
 
 /* registerred local_id's */
-static list registered_local_ids;
+list registered_local_ids;
 
 char *lid_types[] = {"none id", "single port", "untagged group", "tagged group"};
 
