@@ -39,25 +39,23 @@ int master_config_write(struct vty *vty)
   return 0;
 }
 
-/*
 void print_flags(struct vty *vty, u_int32_t flags)
 {
-  if (IS_SET_SETUP_REQ(flags))
+  if (flags & FLAG_SETUP_REQ)
     vty_out(vty, "SETUP_REQ | ");
-  if (IS_SET_SETUP_RESP(flags))
+  if (flags & FLAG_SETUP_RESP)
     vty_out(vty, "SETUP_RESP | ");
-  if (IS_SET_AST_COMPLETE(flags))
+  if (flags & FLAG_AST_COMPLETE)
     vty_out(vty, "AST_COMPLETE | ");
-  if (IS_SET_APP_COMPLETE(flags))
+  if (flags & FLAG_APP_COMPLETE)
     vty_out(vty, "APP_COMPLETE | ");
-  if (IS_SET_RELEASE_REQ(flags))
+  if (flags & FLAG_RELEASE_REQ)
     vty_out(vty, "RELEASE_REQ | ");
-  if (IS_SET_RELEASE_RESP(flags))
+  if (flags & FLAG_RELEASE_RESP)
     vty_out(vty, "RELEASE_RESP | ");
-  if (IS_RES_UNFIXED(flags))
+  if (flags & FLAG_UNFIXED)
     vty_out(vty, "RES_UNFIXED"); 
 }
-*/
 
 /* all commands for ast_master */
 DEFUN (master_show_ast,
@@ -83,7 +81,7 @@ DEFUN (master_show_ast,
     vty_out(vty, "overall status: %s %s", status_type_details[curcfg->status], VTY_NEWLINE);
     vty_out(vty, "action status: %s %s", action_type_details[curcfg->action], VTY_NEWLINE);
     vty_out(vty, "flags: ");
-    // print_flags(vty, curcfg->flags);
+    print_flags(vty, curcfg->flags);
     vty_out(vty, VTY_NEWLINE);
     vty_out(vty, "%sTotal number of nodes: %d %s", VTY_NEWLINE, curcfg->node_list->count, VTY_NEWLINE);
     
@@ -94,7 +92,11 @@ DEFUN (master_show_ast,
 
       vty_out(vty, "    NODE (%s):%s", res->name, VTY_NEWLINE);
       vty_out(vty, "\ttype: %s%s", node_stype_name[res->res.n.stype], VTY_NEWLINE);
-      vty_out(vty, "\tstatus: %s%s", status_type_details[res->status], VTY_NEWLINE);
+      if (res->status) 
+	vty_out(vty, "\tstatus: %s%s", status_type_details[res->status], VTY_NEWLINE);
+      vty_out(vty, "\tflags: ");
+      print_flags(vty, res->flags);
+      vty_out(vty, VTY_NEWLINE);
       vty_out(vty, "\tIP: %s%s", res->res.n.ip, VTY_NEWLINE);
       if (res->res.n.router_id[0] != '\0') 
         vty_out(vty, "\trouter_id: %s%s", res->res.n.router_id, VTY_NEWLINE);
@@ -103,7 +105,7 @@ DEFUN (master_show_ast,
       if (res->res.n.tunnel[0] != '\0') 
 	vty_out(vty, "\tTunnel: %s%s", res->res.n.tunnel, VTY_NEWLINE);
       else
-	vty_out(vty, "\tTunnel None%s", VTY_NEWLINE);
+	vty_out(vty, "\tTunnel: None%s", VTY_NEWLINE);
       vty_out(vty, "\tnoded_sock: %d",  res->noded_sock);
       vty_out(vty, "\tdragon_sock: %d%s", res->dragon_sock, VTY_NEWLINE);
       if (res->res.n.command)
@@ -131,6 +133,9 @@ DEFUN (master_show_ast,
       vty_out(vty, "\tstatus: %s%s", status_type_details[res->status], VTY_NEWLINE);
       if (res->status == AST_FAILURE && res->agent_message)
 	vty_out(vty, "\t    details: %s%s", res->agent_message, VTY_NEWLINE);
+      vty_out(vty, "\tflags: ");
+      print_flags(vty, res->flags);
+      vty_out(vty, VTY_NEWLINE);
       if (res->res.l.lsp_name[0] != '\0')
 	vty_out(vty, "\tlsp_name: %s%s", res->res.l.lsp_name, VTY_NEWLINE);
       vty_out(vty, "\tsrc:%s", VTY_NEWLINE);

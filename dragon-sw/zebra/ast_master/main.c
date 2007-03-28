@@ -1519,6 +1519,24 @@ send_task_to_node_agent()
       continue;
     }
 
+    if (glob_app_cfg->action == RELEASE_REQ) {
+      if (!IS_SET_SETUP_REQ(srcnode)) {
+	ready++;
+	zlog_info("Skip node_agent (%s) for RELEASE_REQ, without sending SETUP_REQ to it", srcnode->name);
+	if (srcnode->agent_message) 
+	  free(srcnode->agent_message);
+	srcnode->agent_message = strdup("Skip; as haven't sent SETUP_REQ to it");
+	continue;
+      } else if (!IS_SET_SETUP_RESP(srcnode)) {
+	ready++;
+	zlog_info("Skip node_agent (%s) for RELEASE_REQ, without receiving SETUP_RESP from it", srcnode->name);
+	if (srcnode->agent_message) 
+	  free(srcnode->agent_message);
+	srcnode->agent_message = strdup("Skip; as received SETUP_RESP from it");
+	continue;
+      }
+    }
+
     if (glob_app_cfg->action != AST_COMPLETE) {
       sprintf(newpath, "%srequest_%s.xml", path_prefix, srcnode->name);
       if (master_compose_node_request(glob_app_cfg, newpath, srcnode) == 0) {

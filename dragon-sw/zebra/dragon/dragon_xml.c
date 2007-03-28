@@ -1198,6 +1198,9 @@ dragon_link_release()
 
 	if (mylink->res.l.lsp_name[0] != '\0') 
 	  dragon_release_lsp(mylink);
+	else 
+	  mylink->status = AST_SUCCESS;
+
 	if (mylink->status == AST_SUCCESS)
 	  success++;
       }
@@ -1303,7 +1306,7 @@ xml_accept(struct thread *thread)
 
       if (glob_app_cfg->action == APP_COMPLETE) {
 	close(xml_sock);
-	xml_sock = 0;
+	xml_sock = -1;
       }
 
       if (stat(DRAGON_XML_RESULT, &file_stat) == -1)

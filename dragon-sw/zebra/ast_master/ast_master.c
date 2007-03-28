@@ -694,7 +694,7 @@ print_node(FILE* fp, struct resource* node)
 
   fprintf(fp, "<resource type=\"%s\" name=\"%s\">\n",
 		node_stype_name[node->res.n.stype], node->name);
-  if (node->res.n.stype != vlsr) 
+  if (node->res.n.stype != vlsr && node->status) 
     fprintf(fp, "\t<status>%s</status>\n", status_type_details[node->status]);
   if (node->agent_message) 
     fprintf(fp, "\t<agent_message>%s</agent_message>\n", node->agent_message);
@@ -958,7 +958,8 @@ print_final_client(char *path)
 
       fprintf(file, "<resource type=\"%s\" name=\"%s\">\n",
 		node_stype_name[mynode->res.n.stype], mynode->name); 
-      fprintf(file, "\t<status>%s</status>\n", status_type_details[mynode->status]);
+      if (mynode->res.n.stype != vlsr && mynode->status) 
+        fprintf(file, "\t<status>%s</status>\n", status_type_details[mynode->status]);
       if (mynode->agent_message) 
 	fprintf(file, "\t<agent_message>%s</agent_message>\n", mynode->agent_message);
       if (mynode->res.n.ip[0] != '\0') 
