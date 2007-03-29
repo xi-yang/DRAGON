@@ -257,8 +257,6 @@ retrieve_app_cfg(char* ast_id, int agent)
   else 
     ret = agent_final_parser(path);
 
-  if (agent == MASTER)  
-    add_cfg_to_list();
   return ret;
 }
 

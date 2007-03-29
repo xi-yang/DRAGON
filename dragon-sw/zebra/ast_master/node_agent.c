@@ -873,7 +873,6 @@ main(int argc, char* argv[])
     }
 
   glob_app_cfg = NULL;
-  memset(&app_list, 0, sizeof(struct adtlist));
 
   while (thread_fetch (master, &thread))
     thread_call (&thread);

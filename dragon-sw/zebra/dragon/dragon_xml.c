@@ -129,7 +129,7 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
   glob_app_cfg = NULL;
 
   zlog_info("dragon_upcall_callback(): START");
-  zlog_info("********* msg_type: %d; lsp_name: %s", msg_type, data->lsp_name);
+  zlog_info("** msg_type: %d; lsp_name: %s; clnt_sock: %d", msg_type, data->lsp_name, data->clnt_sock);
   unlink(DRAGON_XML_RESULT);
 
   glob_app_cfg = retrieve_app_cfg(data->ast_id, LINK_AGENT);
@@ -194,6 +194,7 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
   /* FIONA */
   if (data->clnt_sock != -1) {
     thread_remove_read(master, FIN_accept, NULL, data->clnt_sock);
+    zlog_info("SOCK: closing callback sock %d", data->clnt_sock);
     close(data->clnt_sock); 
     data->clnt_sock = -1;
   }

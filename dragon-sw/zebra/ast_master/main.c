@@ -1680,7 +1680,6 @@ master_accept(struct thread *thread)
   struct stat sb;
 
   alarm(0);
-  zlog_info("master_accept(): START");
   servSock = THREAD_FD(thread);
 
   clntLen = sizeof(clntAddr);
@@ -1692,6 +1691,7 @@ master_accept(struct thread *thread)
     exit(EXIT_FAILURE);
   }
 
+  zlog_info("master_accept(): START; fd: %d", clntSock);
   fp = fopen(AST_XML_RECV, "w");
   recv_alarm = 1;
   alarm(TIMEOUT_SECS);
@@ -1807,6 +1807,7 @@ master_accept(struct thread *thread)
 
     send_file_over_sock(clntSock, AST_XML_RESULT);
     close(clntSock);
+    zlog_info("SOCK: closing clntSock %d", clntSock);
   } else if (glob_app_cfg->clnt_sock == -1 || 
 		glob_app_cfg->status == AST_FAILURE) {
     unlink(AST_XML_RESULT); 
@@ -1814,7 +1815,12 @@ master_accept(struct thread *thread)
 
     send_file_over_sock(clntSock, AST_XML_RESULT);
     close(clntSock);
+    zlog_info("SOCK: closing clntSock %d", clntSock);
     glob_app_cfg->clnt_sock = -1;
+  } else if (glob_app_cfg->clnt_sock == -1 || 
+	     clntSock != glob_app_cfg->clnt_sock) {
+    close(clntSock);
+    zlog_info("SOCK: closing clntSock %d", clntSock);
   }
 
   if (glob_app_cfg && glob_app_cfg != search_cfg_in_list(glob_app_cfg->ast_id)) 
@@ -1843,7 +1849,7 @@ noded_callback(struct thread *thread)
   servSock = THREAD_FD(thread);
   unlink(AST_XML_RECV);
 
-  zlog_info("noded_callback(): START");
+  zlog_info("noded_callback(): START; fd: %d", servSock);
 
   total = 0;
   memset(ret_buf, 0, SENDBUFSIZE);
@@ -1923,7 +1929,7 @@ dragon_callback(struct thread *thread)
 
   unlink(AST_XML_RECV);
 
-  zlog_info("dragon_callback(): START");
+  zlog_info("dragon_callback(): START; fd: %d", servSock);
 
   total = 0;
   memset(ret_buf, 0, SENDBUFSIZE);
@@ -1931,7 +1937,7 @@ dragon_callback(struct thread *thread)
     if (!total) {  
       ret_file = fopen(AST_XML_RECV, "w");
       if (!ret_file) {
-	zlog_err("noded_callback(): can't open %s", AST_XML_RECV);
+	zlog_err("dragon_callback(): can't open %s", AST_XML_RECV);
 	ret_value = 0;
 	continue;
       }
