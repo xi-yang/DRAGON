@@ -94,6 +94,8 @@ DEFUN (master_show_ast,
       vty_out(vty, "\ttype: %s%s", node_stype_name[res->res.n.stype], VTY_NEWLINE);
       if (res->status) 
 	vty_out(vty, "\tstatus: %s%s", status_type_details[res->status], VTY_NEWLINE);
+      if (res->agent_message)
+	vty_out(vty, "\tdetails: %s%s", res->agent_message, VTY_NEWLINE);
       vty_out(vty, "\tflags: ");
       print_flags(vty, res->flags);
       vty_out(vty, VTY_NEWLINE);

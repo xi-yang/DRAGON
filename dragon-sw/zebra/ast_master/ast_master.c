@@ -143,18 +143,6 @@ set_allres_fail(char* error_msg)
   }
 }
 
-void
-set_res_fail(char* error_msg, struct resource *res)
-{
-  zlog_err(error_msg);
-  if (res->agent_message) {
-    free(res->agent_message); 
-    res->agent_message = strdup(error_msg);
-  }
-  res->status = AST_FAILURE;
-  glob_app_cfg->status = AST_FAILURE;
-}
-
 struct application_cfg*
 search_cfg_in_list(char* ast_id)
 {
@@ -757,7 +745,8 @@ print_link(FILE* fp, struct resource* link)
   fprintf(fp, "<resource type=\"%s\" name=\"%s\">\n",
 		link_stype_name[link->res.l.stype], link->name);
   fprintf(fp, "\t<status>%s</status>\n", status_type_details[link->status]);
-  fprintf(fp, "\t<link_status>%s</link_status>\n", link_status_name[link->res.l.l_status]);
+  if (glob_app_cfg->action != RELEASE_RESP) 
+    fprintf(fp, "\t<link_status>%s</link_status>\n", link_status_name[link->res.l.l_status]);
   if (link->agent_message) 
     fprintf(fp, "\t<agent_message>%s</agent_message>\n", link->agent_message);
   if (link->res.l.lsp_name[0] != '\0')
@@ -901,72 +890,6 @@ print_final(char *path)
 	  print_link(file, mylink);
 	}
       }
-    }
-  }
-
-  if (glob_app_cfg->link_list) {
-    for (curnode = glob_app_cfg->link_list->head;
-	curnode;
-	curnode = curnode->next) {
-      mylink = (struct resource*)curnode->data;
-      print_link(file, mylink); 
-    }
-  }
-
-  fprintf(file, "</topology>");
-  fflush(file);
-  fclose(file);
-}
-
-void
-print_final_client(char *path)
-{
-  struct adtlistnode *curnode;
-  struct resource *mynode, *mylink;
-  int i;
-  FILE *file;
-  
-  if (!path || !glob_app_cfg) {
-    zlog_err("print_final_client: either file path or glob_app_cfg is NULL");
-    return;
-  }
-
-  file = fopen(path, "w+");
-  if (!file)
-    return;
-
-  if (glob_app_cfg->action != SETUP_RESP && glob_app_cfg->action != RELEASE_RESP) 
-    zlog_warn("print_final_client: should only be called for SETUP_RESP or RELEASE_RESP");
-
-  if (glob_app_cfg->action == SETUP_REQ)
-    glob_app_cfg->action = SETUP_RESP;
-  else if (glob_app_cfg->action == RELEASE_REQ)
-    glob_app_cfg->action = RELEASE_RESP;
-
-  fprintf(file, "<topology ast_id=\"%s\" action=\"%s\">\n",  glob_app_cfg->ast_id, action_type_details[glob_app_cfg->action]);
-
-  fprintf(file, "<status>%s</status>\n", status_type_details[glob_app_cfg->status]);
-
-  if (glob_app_cfg->details[0] != '\0') 
-    fprintf(file, "<details>%s</details>\n", glob_app_cfg->details);
- 
-  if (glob_app_cfg->node_list) { 
-    for ( i = 1, curnode = glob_app_cfg->node_list->head;
-	  curnode;  
-	  i++, curnode = curnode->next) {
-      mynode = (struct resource*)(curnode->data);
-
-      fprintf(file, "<resource type=\"%s\" name=\"%s\">\n",
-		node_stype_name[mynode->res.n.stype], mynode->name); 
-      if (mynode->res.n.stype != vlsr && mynode->status) 
-        fprintf(file, "\t<status>%s</status>\n", status_type_details[mynode->status]);
-      if (mynode->agent_message) 
-	fprintf(file, "\t<agent_message>%s</agent_message>\n", mynode->agent_message);
-      if (mynode->res.n.ip[0] != '\0') 
-	fprintf(file, "\t<ip>%s</ip>\n", mynode->res.n.ip); 
-      if (mynode->res.n.command) 
-	fprintf(file, "\t<command>%s</command>\n", mynode->res.n.command);
-      fprintf(file, "</resource>\n");
     }
   }
 
@@ -1288,12 +1211,7 @@ establish_relationship(struct application_cfg* app_cfg)
 	}
 	  	
 	if (src->local_id_type[0] == '\0' && dest->local_id_type[0] == '\0') {
-	  if (strcmp(mylink->res.l.vtag, "any") == 0) {
-	    sprintf(src->local_id_type, "group");
-	    sprintf(dest->local_id_type, "group");
-	    src->local_id = 1000;
-	    dest->local_id = 1000;
-	  } else if (mylink->res.l.stype != uni) {
+	  if (mylink->res.l.stype != uni) {
 	    sprintf(src->local_id_type, "lsp-id");
 	    sprintf(dest->local_id_type, "lsp-id");
 	    src->local_id = random()%3000;

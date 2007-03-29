@@ -225,11 +225,6 @@ enum link_type { EtherPipeBasic = 1, EtherPipeUltra, TDMBasic };
 
 #define AST_XML_RESULT  "/usr/local/ast_master_ret.xml"
 
-int service_xml_parser(char*);
-int master_locate_resource();
-int master_validate_graph(int);
-int master_send_task();
-
 #define FULL_VERSION	1
 #define BRIEF_VERSION	2
 
@@ -246,7 +241,6 @@ void print_endpoint(FILE*, struct endpoint*);
 struct adtlist* dragon_query_result_parser(char*, struct node_cfg*);
 int dragon_result_parser(char*, struct node_cfg *);
 void print_final(char*);
-void print_final_client(char*);
 void print_error_response(char*);
 struct application_cfg* agent_final_parser(char*);
 void add_cfg_to_list();
@@ -254,7 +248,6 @@ void del_cfg_from_list(struct application_cfg*);
 struct application_cfg* search_cfg_in_list(char*);
 struct resource * search_node_by_name(struct application_cfg*, char*);
 void set_allres_fail(char*);
-void set_res_fail(char*, struct resource *);
 void app_cfg_pre_req();
 int get_node_stype_by_str(char*);
 struct resource * search_link_by_name(struct application_cfg*, char*);

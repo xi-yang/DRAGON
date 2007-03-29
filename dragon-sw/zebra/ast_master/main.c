@@ -142,7 +142,7 @@ void clean_socket(struct application_cfg *app_cfg)
     if (node->noded_sock != -1) {
       thread_remove_read(master, noded_callback, NULL, node->noded_sock);
       close(node->noded_sock);
-      zlog_info("SOCK: closing dnoded_sock %d", node->noded_sock);
+      zlog_info("SOCK: closing noded_sock %d", node->noded_sock);
     }
   }
   zlog_info("clean_socket(): end");
@@ -165,6 +165,84 @@ void init_socket(struct application_cfg *app_cfg)
     node->dragon_sock = -1;
     node->noded_sock = -1;
   }
+}
+
+void
+set_res_fail(char* error_msg, struct resource *res)
+{
+  zlog_err(error_msg);
+  if (res->agent_message) {
+    free(res->agent_message); 
+    res->agent_message = strdup(error_msg);
+  }
+  res->status = AST_FAILURE;
+  glob_app_cfg->status = AST_FAILURE;
+}
+
+void
+print_final_client(char *path)
+{
+  struct adtlistnode *curnode;
+  struct resource *mynode, *mylink;
+  int i;
+  FILE *file;
+  
+  if (!path || !glob_app_cfg) {
+    zlog_err("print_final_client: either file path or glob_app_cfg is NULL");
+    return;
+  }
+
+  file = fopen(path, "w+");
+  if (!file)
+    return;
+
+  if (glob_app_cfg->action != SETUP_RESP && glob_app_cfg->action != RELEASE_RESP) 
+    zlog_warn("print_final_client: should only be called for SETUP_RESP or RELEASE_RESP");
+
+  if (glob_app_cfg->action == SETUP_REQ)
+    glob_app_cfg->action = SETUP_RESP;
+  else if (glob_app_cfg->action == RELEASE_REQ)
+    glob_app_cfg->action = RELEASE_RESP;
+
+  fprintf(file, "<topology ast_id=\"%s\" action=\"%s\">\n",  glob_app_cfg->ast_id, action_type_details[glob_app_cfg->action]);
+
+  fprintf(file, "<status>%s</status>\n", status_type_details[glob_app_cfg->status]);
+
+  if (glob_app_cfg->details[0] != '\0') 
+    fprintf(file, "<details>%s</details>\n", glob_app_cfg->details);
+ 
+  if (glob_app_cfg->node_list) { 
+    for ( i = 1, curnode = glob_app_cfg->node_list->head;
+	  curnode;  
+	  i++, curnode = curnode->next) {
+      mynode = (struct resource*)(curnode->data);
+
+      fprintf(file, "<resource type=\"%s\" name=\"%s\">\n",
+		node_stype_name[mynode->res.n.stype], mynode->name); 
+      if (mynode->res.n.stype != vlsr && mynode->status) 
+        fprintf(file, "\t<status>%s</status>\n", status_type_details[mynode->status]);
+      if (mynode->agent_message) 
+	fprintf(file, "\t<agent_message>%s</agent_message>\n", mynode->agent_message);
+      if (mynode->res.n.ip[0] != '\0') 
+	fprintf(file, "\t<ip>%s</ip>\n", mynode->res.n.ip); 
+      if (mynode->res.n.command) 
+	fprintf(file, "\t<command>%s</command>\n", mynode->res.n.command);
+      fprintf(file, "</resource>\n");
+    }
+  }
+
+  if (glob_app_cfg->link_list) {
+    for (curnode = glob_app_cfg->link_list->head;
+	curnode;
+	curnode = curnode->next) {
+      mylink = (struct resource*)curnode->data;
+      print_link(file, mylink); 
+    }
+  }
+
+  fprintf(file, "</topology>");
+  fflush(file);
+  fclose(file);
 }
 
 int
@@ -218,8 +296,6 @@ master_process_setup_resp()
     work_res_cfg = (struct resource*)working_app_cfg->node_list->head->data;
     glob_res_cfg = search_node_by_name(glob_app_cfg, work_res_cfg->name);
 
-    zlog_info("From node_agent: %s", work_res_cfg->name);
-
     /* counter update */
     if (IS_SET_SETUP_RESP(glob_res_cfg)) 
 	zlog_warn("SETUP_RESP has been recieved, so this is an UPDATE"); 
@@ -261,6 +337,8 @@ master_process_setup_resp()
     sprintf(newpath, "%s/%s/setup_node_response_%s.xml",
 	AST_DIR, glob_app_cfg->ast_id, glob_res_cfg->name);
     glob_res_cfg->noded_sock = -1;
+
+    zlog_info("Node: %s %s", glob_res_cfg->name, status_type_details[glob_res_cfg->status]);
 
   } else {
     srcnode = (struct resource*)working_app_cfg->node_list->head->data;
@@ -451,8 +529,6 @@ master_process_release_resp()
     work_res_cfg = (struct resource*)working_app_cfg->node_list->head->data;
     glob_res_cfg = search_node_by_name(glob_app_cfg, work_res_cfg->name);
 
-    zlog_info("From node_agent: %s", work_res_cfg->name);
-
     /* counter update */
     if (IS_SET_RELEASE_RESP(glob_res_cfg)) 
 	zlog_warn("RELEASE_RESP has been recieved, so this is an update"); 
@@ -493,6 +569,8 @@ master_process_release_resp()
     sprintf(newpath, "%s/%s/release_node_response_%s.xml",
 	AST_DIR, glob_app_cfg->ast_id, glob_res_cfg->name);
     glob_res_cfg->noded_sock = -1;
+
+    zlog_info("Node: %s, %s", glob_res_cfg->name, status_type_details[glob_res_cfg->status]);
 
   } else {
     srcnode = (struct resource*)working_app_cfg->node_list->head->data;
@@ -616,8 +694,6 @@ master_process_app_complete()
     work_res_cfg = (struct resource*)working_app_cfg->node_list->head->data;
     glob_res_cfg = search_node_by_name(glob_app_cfg, work_res_cfg->name);
 
-    zlog_info("From node_agent: %s", work_res_cfg->name);
-
     /* counter update */
     if (IS_SET_APP_COMPLETE(glob_res_cfg))
         zlog_warn("APP_COMPLETE has been recieved");
@@ -642,6 +718,9 @@ master_process_app_complete()
 
     sprintf(newpath, "%s/%s/app_complete_node_%s.xml",
 	AST_DIR, glob_app_cfg->ast_id, glob_res_cfg->name);
+
+    zlog_info("Node: %s", glob_res_cfg->name);
+
   } else {
 
     srcnode = (struct resource*)working_app_cfg->node_list->head->data;
@@ -1446,7 +1525,6 @@ integrate_result()
     if (send_file_over_sock(glob_app_cfg->clnt_sock, AST_XML_RESULT) == 0)
       zlog_err("Failed to send the result back to client");
     close(glob_app_cfg->clnt_sock);
-    zlog_info("SOCK: closing fd %d", glob_app_cfg->clnt_sock);
     glob_app_cfg->clnt_sock = -1;
   }
 
@@ -1728,7 +1806,6 @@ master_accept(struct thread *thread)
       print_error_response(AST_XML_RESULT);
 
     send_file_over_sock(clntSock, AST_XML_RESULT);
-    zlog_info("SOCK: closing fd %d", clntSock);
     close(clntSock);
   } else if (glob_app_cfg->clnt_sock == -1 || 
 		glob_app_cfg->status == AST_FAILURE) {
@@ -1737,7 +1814,6 @@ master_accept(struct thread *thread)
 
     send_file_over_sock(clntSock, AST_XML_RESULT);
     close(clntSock);
-    zlog_info("SOCK: closing fd %d", clntSock);
     glob_app_cfg->clnt_sock = -1;
   }
 
@@ -1826,7 +1902,7 @@ noded_callback(struct thread *thread)
   }
 
   close(servSock);
-  zlog_info("SOCK: closing fd %d", servSock);
+  zlog_info("SOCK: closing noded_callback fd %d", servSock);
   master_check_app_list();
   zlog_info("noded_callback(): DONE");
 
@@ -1905,7 +1981,7 @@ dragon_callback(struct thread *thread)
     }
   }
 
-  zlog_info("SOCK: closing fd %d", servSock);
+  zlog_info("SOCK: closing dragon_callback fd %d", servSock);
   close(servSock);
   master_check_app_list();
   zlog_info("dragon_callback(): END");
@@ -2085,7 +2161,6 @@ master_check_app_list()
       if (send_file_over_sock(app_cfg->clnt_sock, AST_XML_RESULT) == 0)
 	zlog_err("Failed to send the result back to client");
       close(app_cfg->clnt_sock);
-      zlog_info("SOCK: closing fd %d", app_cfg->clnt_sock);
       app_cfg->clnt_sock = -1;
 
     } else if (IS_SET_SETUP_REQ(app_cfg) && !IS_SET_SETUP_RESP(app_cfg)) {
@@ -2115,7 +2190,6 @@ master_check_app_list()
       if (send_file_over_sock(app_cfg->clnt_sock, AST_XML_RESULT) == 0)
 	zlog_err("Failed to send the result back to client");
       close(app_cfg->clnt_sock);
-      zlog_info("SOCK: closing fd %d", app_cfg->clnt_sock);
       app_cfg->clnt_sock = -1;
     }
   }
