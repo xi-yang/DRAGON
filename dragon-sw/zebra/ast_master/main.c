@@ -398,8 +398,10 @@ master_process_setup_resp()
   
 	  /* parameters update */
 	  strcpy(glob_res_cfg->res.l.lsp_name, work_res_cfg->res.l.lsp_name);
-	  if (glob_res_cfg->res.l.vtag[0] == '\0' && strcmp(work_res_cfg->res.l.vtag, "65535") != 0)
-	    strcpy(glob_res_cfg->res.l.vtag, work_res_cfg->res.l.vtag);
+	  if (strcmp(work_res_cfg->res.l.vtag, "65535") != 0) {
+	    if (glob_res_cfg->res.l.vtag[0] == '\0' || strcmp(glob_res_cfg->res.l.vtag, "any") == 0)
+	      strcpy(glob_res_cfg->res.l.vtag, work_res_cfg->res.l.vtag);
+	  } 
 	}
       } else {
         work_res_cfg = (struct resource*) working_app_cfg->link_list->head->data;
