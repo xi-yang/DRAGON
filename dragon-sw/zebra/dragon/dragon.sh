@@ -180,6 +180,9 @@ case $1 in
 	    echo "dragon-sw: stopped narb daemon."
 	fi
 
+        echo "sleeping for 5 seconds for narb to clean up ..."
+        sleep 5
+
         if test "$rce_pid" != ""; then
 	    kill $rce_pid
 	    echo "dragon-sw: stopped rce daemon."
@@ -215,8 +218,8 @@ case $1 in
 	fi
 	echo "dragon-sw: started ospf intra-domain daemon."
 
-        echo "sleeping for 10 seconds before starting narb (rce & narb daemons)...please stand by."
-        sleep 10
+        echo "sleeping for 5 seconds before starting narb (rce & narb daemons)...please stand by."
+        sleep 5
     
 	$NARB_DAEMON $NARB_ARGS
 	if test $? != 0; then
@@ -235,6 +238,9 @@ case $1 in
 	    kill $narb_pid
 	    echo "dragon-sw: stopped narb daemon."
 	fi
+
+        echo "sleeping for 5 seconds for narb to clean up ..."
+        sleep 5
 
         if test "$rce_pid" != ""; then
 	    kill $rce_pid
