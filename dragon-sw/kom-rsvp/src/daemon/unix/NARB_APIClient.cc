@@ -562,7 +562,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
 
         if (hasReceivedEro && msg.getEXPLICIT_ROUTE_Object() &&  msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().size() > 0)
         {
-            AbstractNode &headNode = msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front();
+            const AbstractNode &headNode = msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front();
             if (vtag ==0 && (headNode.getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                 vtag = (headNode.getInterfaceID() & 0xffff);
 	     if (!headNode.isLoose() && (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData(headNode.getAddress(), headNode.getInterfaceID()))
@@ -656,8 +656,10 @@ uint32 NARB_APIClient::getVtagFromERO(EXPLICIT_ROUTE_Object* ero)
     AbstractNode node;
     AbstractNodeList::ConstIterator iter = ero->getAbstractNodeList().begin();
     for (; iter != ero->getAbstractNodeList().end(); ++iter)
+    {
         if ((*iter).getType() == AbstractNode::UNumIfID && ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
             return (*iter).getInterfaceID() & 0xffff;
+    }
 }
 
 void NARB_APIClient::removeExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id)
