@@ -175,6 +175,16 @@ case $1 in
         echo "dragon-sw: turning on coredump with unlimited core size."
         ulimit -c unlimited
 
+        if test "$narb_pid" != ""; then
+	    kill $narb_pid
+	    echo "dragon-sw: stopped narb daemon."
+	fi
+
+        if test "$rce_pid" != ""; then
+	    kill $rce_pid
+	    echo "dragon-sw: stopped rce daemon."
+	fi
+
         if test "$zebra_pid" != ""; then
 	    kill $zebra_pid
 	fi
@@ -221,6 +231,16 @@ case $1 in
 	    killall -9 telnet
 	fi
 
+        if test "$narb_pid" != ""; then
+	    kill $narb_pid
+	    echo "dragon-sw: stopped narb daemon."
+	fi
+
+        if test "$rce_pid" != ""; then
+	    kill $rce_pid
+	    echo "dragon-sw: stopped rce daemon."
+	fi
+
         if test "$zebra_pid" != ""; then
 	    kill $zebra_pid
 	    echo "dragon-sw: stopped zebra daemon."
@@ -249,16 +269,6 @@ case $1 in
         if test "$node_agent_pid" != ""; then
 	    kill $node_agent_pid
 	    echo "dragon-sw: stopped node agent."
-	fi
-
-        if test "$narb_pid" != ""; then
-	    kill $narb_pid
-	    echo "dragon-sw: stopped narb daemon."
-	fi
-
-        if test "$rce_pid" != ""; then
-	    kill $rce_pid
-	    echo "dragon-sw: stopped rce daemon."
 	fi
 	;;
     
