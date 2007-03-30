@@ -743,7 +743,7 @@ print_link(FILE* fp, struct resource* link)
   fprintf(fp, "<resource type=\"%s\" name=\"%s\">\n",
 		link_stype_name[link->res.l.stype], link->name);
   fprintf(fp, "\t<status>%s</status>\n", status_type_details[link->status]);
-  if (glob_app_cfg->action != RELEASE_RESP) 
+  if (glob_app_cfg && glob_app_cfg->action != RELEASE_RESP) 
     fprintf(fp, "\t<link_status>%s</link_status>\n", link_status_name[link->res.l.l_status]);
   if (link->agent_message) 
     fprintf(fp, "\t<agent_message>%s</agent_message>\n", link->agent_message);
@@ -1212,8 +1212,8 @@ establish_relationship(struct application_cfg* app_cfg)
 	  if (mylink->res.l.stype != uni) {
 	    sprintf(src->local_id_type, "lsp-id");
 	    sprintf(dest->local_id_type, "lsp-id");
-	    src->local_id = random()%3000;
-	    dest->local_id = random()%3000;
+	    src->local_id = random()%65533 + 1;
+	    dest->local_id = random()%65533 + 1;;
 	  } else if (mylink->res.l.vtag[0] != '\0') {
 	    sprintf(src->local_id_type, "tagged-group"); 
 	    sprintf(dest->local_id_type, "tagged-group"); 
@@ -1331,8 +1331,8 @@ establish_relationship(struct application_cfg* app_cfg)
 	if (src->local_id_type[0] == '\0' && dest->local_id_type[0] == '\0') {
 	  sprintf(src->local_id_type, "lsp-id");
 	  sprintf(dest->local_id_type, "lsp-id");
-	  src->local_id = random()%3000;
-	  dest->local_id = random()%3000;
+	  src->local_id = random()%65533 + 1;
+	  dest->local_id = random()%65533 + 1;
 	}
 
 	break;

@@ -80,9 +80,11 @@ DEFUN (master_show_ast,
     vty_out(vty, "----------------------------------------------%s", VTY_NEWLINE);
     vty_out(vty, "overall status: %s %s", status_type_details[curcfg->status], VTY_NEWLINE);
     vty_out(vty, "action status: %s %s", action_type_details[curcfg->action], VTY_NEWLINE);
-    vty_out(vty, "flags: ");
-    print_flags(vty, curcfg->flags);
-    vty_out(vty, VTY_NEWLINE);
+    if (curcfg->flags) { 
+      vty_out(vty, "flags: "); 
+      print_flags(vty, curcfg->flags); 
+      vty_out(vty, VTY_NEWLINE);
+    }
     vty_out(vty, "%sTotal number of nodes: %d %s", VTY_NEWLINE, curcfg->node_list->count, VTY_NEWLINE);
     
     for (curnode = curcfg->node_list->head;
@@ -90,24 +92,22 @@ DEFUN (master_show_ast,
 	 curnode = curnode->next) {
       res = (struct resource*) curnode->data;
 
-      vty_out(vty, "    NODE (%s):%s", res->name, VTY_NEWLINE);
-      vty_out(vty, "\ttype: %s%s", node_stype_name[res->res.n.stype], VTY_NEWLINE);
+      vty_out(vty, "    NODE (%s) %s:%s", res->name, node_stype_name[res->res.n.stype], VTY_NEWLINE);
       if (res->status) 
 	vty_out(vty, "\tstatus: %s%s", status_type_details[res->status], VTY_NEWLINE);
       if (res->agent_message)
 	vty_out(vty, "\tdetails: %s%s", res->agent_message, VTY_NEWLINE);
-      vty_out(vty, "\tflags: ");
-      print_flags(vty, res->flags);
-      vty_out(vty, VTY_NEWLINE);
-      vty_out(vty, "\tIP: %s%s", res->res.n.ip, VTY_NEWLINE);
+      if (res->flags) { 
+	vty_out(vty, "\tflags: "); 
+	print_flags(vty, res->flags); 
+	vty_out(vty, VTY_NEWLINE);
+      }
       if (res->res.n.router_id[0] != '\0') 
-        vty_out(vty, "\trouter_id: %s%s", res->res.n.router_id, VTY_NEWLINE);
+        vty_out(vty, "\tIP: %s\trouter_id: %s%s", res->res.n.ip, res->res.n.router_id, VTY_NEWLINE);
       else
-	vty_out(vty, "\trouter_id: None%s", VTY_NEWLINE);
+	vty_out(vty, "\tIP: %s\trouter_id: None%s", res->res.n.ip, VTY_NEWLINE);
       if (res->res.n.tunnel[0] != '\0') 
 	vty_out(vty, "\tTunnel: %s%s", res->res.n.tunnel, VTY_NEWLINE);
-      else
-	vty_out(vty, "\tTunnel: None%s", VTY_NEWLINE);
       vty_out(vty, "\tnoded_sock: %d",  res->noded_sock);
       vty_out(vty, "\tdragon_sock: %d%s", res->dragon_sock, VTY_NEWLINE);
       if (res->res.n.command)
@@ -130,16 +130,19 @@ DEFUN (master_show_ast,
 	 curnode = curnode->next) {
       res = (struct resource*) curnode->data;
 
-      vty_out(vty, "    LINK (%s):%s", res->name, VTY_NEWLINE);
-      vty_out(vty, "\ttype: %s%s", link_stype_name[res->res.l.stype], VTY_NEWLINE);
+      vty_out(vty, "    LINK (%s) %s:%s", res->name, link_stype_name[res->res.l.stype], VTY_NEWLINE);
       vty_out(vty, "\tstatus: %s%s", status_type_details[res->status], VTY_NEWLINE);
       if (res->status == AST_FAILURE && res->agent_message)
 	vty_out(vty, "\t    details: %s%s", res->agent_message, VTY_NEWLINE);
-      vty_out(vty, "\tflags: ");
-      print_flags(vty, res->flags);
-      vty_out(vty, VTY_NEWLINE);
+      if (res->flags) { 
+	vty_out(vty, "\tflags: "); 
+	print_flags(vty, res->flags); 
+	vty_out(vty, VTY_NEWLINE);
+      }
       if (res->res.l.lsp_name[0] != '\0')
 	vty_out(vty, "\tlsp_name: %s%s", res->res.l.lsp_name, VTY_NEWLINE);
+      if (res->res.l.vtag[0] != '\0')
+	vty_out(vty, "\tvtag: %s%s", res->res.l.vtag, VTY_NEWLINE);
       vty_out(vty, "\tsrc:%s", VTY_NEWLINE);
       src = res->res.l.src;
       dest = res->res.l.dest; 
@@ -188,7 +191,10 @@ DEFUN (master_show_ast,
 
     }    
   }
- 
+
+  if (curcfg != search_cfg_in_list(curcfg->ast_id))
+    free_application_cfg(curcfg);
+
   return CMD_SUCCESS;
 }
 
