@@ -304,7 +304,8 @@ static int buildNarbEroTlv (char *buf, EXPLICIT_ROUTE_Object* ero)
     return length;
 }
 
-static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 seqnum, EXPLICIT_ROUTE_Object* ero = NULL)
+
+static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 seqnum, uint32 hopback, EXPLICIT_ROUTE_Object* ero = NULL)
 {
     char buf[1024];
     memset(buf, 0, sizeof(buf));
@@ -362,6 +363,15 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
         bodylen += buildNarbEroTlv(buf+sizeof(struct narb_api_msg_header)+sizeof(struct msg_app2narb_request), ero);
     }
 
+    if (hopback != 0)
+    {
+        narb_hop_back_tlv* hopBackAddrTlv = (narb_hop_back_tlv*)(buf+sizeof(struct narb_api_msg_header)+bodylen);
+        hopBackAddrTlv->type = htons(TLV_TYPE_NARB_HOP_BACK);
+        hopBackAddrTlv->length = htons(sizeof(struct narb_hop_back_tlv) - 4);
+        hopBackAddrTlv->ipv4 = hopback;
+        bodylen += sizeof(struct narb_hop_back_tlv);
+    }
+
     msgheader->length = htons (bodylen);
     msgheader->chksum = NARB_MSG_CHKSUM(*msgheader);
 
@@ -375,7 +385,8 @@ static void deleteNarbApiMessage(narb_api_msg_header* apiMsg)
    delete []((char*)apiMsg);
 }
 
-EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLocalId, uint32& destLocalId, uint32 excl_options, void* ss_ptr)
+EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, 
+	uint32& vtag, uint32& srcLocalId, uint32& destLocalId, uint32 hopBackAddr, uint32 excl_options, void* ss_ptr)
 {
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
@@ -384,7 +395,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     ipv4_prefix_subobj* subobj_ipv4;
     unum_if_subobj* subobj_unum;
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CREATE
-            , src, dest, swtype, encoding, bandwidth, vtag, (uint32)ss_ptr);
+            , src, dest, swtype, encoding, bandwidth, vtag,  (uint32)ss_ptr, hopBackAddr);
     msgheader->options = htonl(ntohl(msgheader->options) | excl_options | NARB_APIClient::extra_options); //@@@@
 
     if (!active())
@@ -503,9 +514,9 @@ _RETURN:
     return ero;
 }
 
-EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void* ss_ptr)
+EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool hasReceivedEro, void* ss_ptr)
 {
-    uint32 srcAddr = 0, destAddr = 0, srcLocalId = 0, destLocalId = 0, vtag = 0;
+    uint32 srcAddr = 0, destAddr = 0, srcLocalId = 0, destLocalId = 0, vtag = 0, hopBackAddr = 0;
     DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
 
 	NetAddress srcNetAddr = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
@@ -549,10 +560,19 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, void
     if (!ero) {
         uint32 excl_options = RSVP_Global::switchController->getExclEntry(msg.getSESSION_ATTRIBUTE_Object().getSessionName());
 
+        if (hasReceivedEro && msg.getEXPLICIT_ROUTE_Object() &&  msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().size() > 0)
+        {
+            AbstractNode &headNode = msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front();
+            if (vtag ==0 && (headNode.getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+                vtag = (headNode.getInterfaceID() & 0xffff);
+	     if (!headNode.isLoose() && (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData(headNode.getAddress(), headNode.getInterfaceID()))
+                hopBackAddr = headNode.getAddress();
+        }
+
         ero = getExplicitRoute(srcAddr, destAddr, msg.getLABEL_REQUEST_Object().getSwitchingType(), 
                 msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                 msg.getSENDER_TSPEC_Object().get_r(),
-                vtag, srcLocalId, destLocalId, excl_options, ss_ptr);
+                vtag, srcLocalId, destLocalId, hopBackAddr, excl_options, ss_ptr);
 	 if (ero) {
             if (uni && uni->getVlanTag().vtag == ANY_VTAG)
             {
@@ -689,7 +709,7 @@ void NARB_APIClient::confirmReservation(const Message& msg)
 
     //send confirmation msg
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CONFIRM
-            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, (uint32)entry->session_ptr, ero);
+            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, (uint32)entry->session_ptr, 0, ero);
 
     //send api message
     int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
@@ -725,7 +745,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
 
     //send release msg
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_DELETE
-            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, (uint32)entry->session_ptr, ero);
+            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, (uint32)entry->session_ptr, 0, ero);
 
     //send api message
     int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));

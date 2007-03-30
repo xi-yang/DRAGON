@@ -555,6 +555,44 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	return true;
 }
 
+/*
+int Session::countLocalRouteHops( const EXPLICIT_ROUTE_Object* ero ) {
+	int localHops = 0;
+	LogicalInterface* outLif;
+	uint32 ifId;
+	NetAddress address;
+
+	//finding all local hops
+	AbstractNodeList::ConstIterator iter = ero->getAbstractNodeList().begin();
+	for (; iter != ero->getAbstractNodeList().end(); ++iter){
+		switch ((*iter).getType()) {
+		case AbstractNode::IPv4:
+			address = (*iter).getAddress();
+			ifId = 0;
+			break;
+		case AbstractNode::UNumIfID:
+			address = (*iter).getAddress();
+			ifId = (*iter).getInterfaceID();
+			break;
+		default:
+			return localHops;
+		}
+		outLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData(address, ifId); 
+		if (!outLif)
+		{
+			outLif = (LogicalInterface*)RSVP_Global::rsvp->findInterfaceByAddress(address);
+			if (!outLif)  break;
+		}
+		else // local hop
+		{
+			localHops++;
+		}
+	}
+
+	return localHops
+}
+*/
+
 bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 	LogicalInterface* outLif;
 	uint32 ifId;
@@ -598,7 +636,7 @@ bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 	//expanding loose hop
 	if ((*iter).isLoose())
 		return true;
-	//rerouting for a hop OSPFd cannot resolve
+	//rerouting for a hop OSPFd cannot resolve-->return valie lif for next-hop 
 	outLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findOutLifByOSPF(
 		     address, ifId, gw);
 	if (!outLif) return true;
@@ -821,7 +859,10 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 						if (!narbClient->active())
 							narbClient->doConnect();
 						if (narbClient->active()) {
-			                            explicitRoute = narbClient->getExplicitRoute(msg, (void*)this);
+			                            //@@@@ Missing ingress port/interface on this VLSR?!
+			                            //@@@@ oldExplicitRoute = explicitRoute;
+			                            explicitRoute = narbClient->getExplicitRoute(msg, hasReceivedExplicitRoute, (void*)this);
+			                            //@@@@ push_front ... those TE addreses of local interfaces not in the new ERO
 							if (explicitRoute) {
                        					if (!narbClient->handleRsvpMessage(msg)) {
                                               	LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");

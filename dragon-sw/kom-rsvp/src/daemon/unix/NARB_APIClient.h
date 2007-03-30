@@ -83,6 +83,13 @@ struct msg_app2narb_vtag_mask
     u_char bitmask[MAX_VLAN_NUM/8];
 };
 
+
+struct narb_hop_back_tlv {
+    uint16 type;
+    uint16 length;
+    uint32 ipv4;
+};
+
 // each NARB<->APP contains a TLV in its message body
 enum  narb_tlv_type
 {
@@ -90,6 +97,7 @@ enum  narb_tlv_type
     TLV_TYPE_NARB_ERO = 0x03,
     TLV_TYPE_NARB_ERROR_CODE = 0x04,
     TLV_TYPE_NARB_VTAG_MASK = 0x05,
+    TLV_TYPE_NARB_HOP_BACK = 0x06,
 };
 
 #define NARB_MSG_CHKSUM(X) (((u_int32_t*)&X)[0] + ((u_int32_t*)&X)[1] + ((u_int32_t*)&X)[2])
@@ -141,8 +149,8 @@ public:
 	int doConnect();
 	void disconnect();
 	bool active();
-	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLclId, uint32& destLclId, uint32 excl_options = 0, void* ss_ptr = NULL);
-	EXPLICIT_ROUTE_Object* getExplicitRoute(const Message& msg, void* ss_ptr = NULL);
+	EXPLICIT_ROUTE_Object* getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32& vtag, uint32& srcLclId, uint32& destLclId, uint32 hopBackAddr, uint32 excl_options = 0, void* ss_ptr = NULL);
+	EXPLICIT_ROUTE_Object* getExplicitRoute(const Message& msg, bool hasReceivedEro, void* ss_ptr = NULL);
 	//EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 src_addr, uint32 dest_addr, uint32 lsp_id, uint32 tunnel_id, uint32 ext_tunnel_id);
 	EXPLICIT_ROUTE_Object* lookupExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id, void* session_ptr = NULL);
 	struct ero_search_entry* lookupEntry(EXPLICIT_ROUTE_Object* ero);
