@@ -180,7 +180,7 @@ case $1 in
 	    echo "dragon-sw: stopped narb daemon."
 	fi
 
-        echo "sleeping for 5 seconds for narb to clean up ..."
+        echo "Waiting 5 seconds for NARB to cleanup domain topology ..."
         sleep 5
 
         if test "$rce_pid" != ""; then
@@ -239,7 +239,7 @@ case $1 in
 	    echo "dragon-sw: stopped narb daemon."
 	fi
 
-        echo "sleeping for 5 seconds for narb to clean up ..."
+        echo "Waiting 5 seconds for NARB to cleanup domain topology ..."
         sleep 5
 
         if test "$rce_pid" != ""; then
