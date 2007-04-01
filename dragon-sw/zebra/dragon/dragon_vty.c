@@ -1570,8 +1570,12 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 
               if (lsp->dragon.lspVtag)
         	    vty_out(vty, "E2E LSP VLAN Tag: %d. %s", lsp->dragon.lspVtag, VTY_NEWLINE);
-              else
-        	    vty_out(vty, "No E2E LSP VLAN Tag configured. %s", VTY_NEWLINE);
+              else {
+                if (lsp->flag & LSP_FLAG_RECEIVER)
+                    vty_out(vty, "LSP untagged at destination. %s", VTY_NEWLINE);
+                else
+                    vty_out(vty, "No E2E LSP VLAN Tag configured. %s", VTY_NEWLINE);
+              }
 
 		vty_out(vty, "Status: %s %s", value_to_string(&conv_lsp_status, lsp->status), VTY_NEWLINE);
 	}
