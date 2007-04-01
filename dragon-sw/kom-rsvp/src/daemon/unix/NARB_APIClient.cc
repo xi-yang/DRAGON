@@ -566,7 +566,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
             if (vtag ==0 && (headNode.getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                 vtag = (headNode.getInterfaceID() & 0xffff);
 	     if (!headNode.isLoose() && (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData(headNode.getAddress(), headNode.getInterfaceID()))
-                hopBackAddr = headNode.getAddress();
+                hopBackAddr = headNode.getAddress().rawAddress();
         }
 
         ero = getExplicitRoute(srcAddr, destAddr, msg.getLABEL_REQUEST_Object().getSwitchingType(), 
