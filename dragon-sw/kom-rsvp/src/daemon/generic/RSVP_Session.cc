@@ -877,22 +877,22 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 						LOG(5)( Log::MPLS, "MPLS: NARB server ", NARB_APIClient::_host, ":", NARB_APIClient::_port, " is down...");
 					}
 
-					if (hasReceivedExplicitRoute) //Should recompute ERO via NARB but failed
+					if (!explicitRoute && hasReceivedExplicitRoute) //Should recompute ERO via NARB but failed
 					{
 						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
 						LOG(1)(Log::MPLS, "MPLS: Tried recomputing ERO (invalid or loose hops). Request ERO from NARB failed...");
 						return;
 					}
-
-		                     //explicit routing using OSPFd
-		                     if (!explicitRoute)
-					       explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
-								 hop.getLogicalInterface().getAddress(),
-								 destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
+					else if (!explicitRoute)//explicit routing using OSPFd
+					{
+						explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
+							hop.getLogicalInterface().getAddress(),
+							destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
+					}
 					if (!explicitRoute) {
 						LOG(1)( Log::MPLS, "MPLS: requesting ERO from OSPF daemon failed ...");
 					}
-	                    	}
+               	}
 			}
 			else{
 				// further, all error conditions should return an error and ignore the message
