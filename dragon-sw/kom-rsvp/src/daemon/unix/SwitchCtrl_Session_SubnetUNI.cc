@@ -716,23 +716,20 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
 bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh)
 {
     int ret = 0;
-    char outerVlanRange[20];
+    char packetType[60];
     String suppTtp, ettpName;
 
     if (vlanLow == 0 && vlanHigh == 0)
-    {
-        vlanLow = 1; 
-        vlanHigh = 4094;
-    }
-    if (vlanHigh > vlanLow)
-        sprintf(outerVlanRange, "%d&&%d", vlanLow,vlanHigh);
+        sprintf(packetType, "%pkttype=all", vlanLow,vlanHigh);
+    else if (vlanHigh > vlanLow)
+        sprintf(packetType, "%pkttype=single_vlan_tag,outervlanidrange=d&&%d", vlanLow,vlanHigh);
     else
-        sprintf(outerVlanRange, "%d", vlanLow);
+        sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=%d", vlanLow);
 
     getCienaLogicalPortString(suppTtp, ettpName);
 
-    sprintf(bufCmd, "ent-eflow::eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,pkttype=single_vlan_tag,outervlanidrange=%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default;",
-        vcgName.chars(), getNewCtag(), ettpName.chars(), outerVlanRange, vcgName.chars());
+    sprintf(bufCmd, "ent-eflow::eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default;",
+        vcgName.chars(), getNewCtag(), ettpName.chars(), packetType, vcgName.chars());
 
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
@@ -755,8 +752,8 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         goto _out;
 
 
-    sprintf(bufCmd, "ent-eflow::eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,pkttype=single_vlan_tag,outervlanidrange=%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default;",
-        vcgName.chars(), getNewCtag(), vcgName.chars(), outerVlanRange, ettpName.chars());
+    sprintf(bufCmd, "ent-eflow::eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default;",
+        vcgName.chars(), getNewCtag(), vcgName.chars(), packetType, ettpName.chars());
 
     if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
 
