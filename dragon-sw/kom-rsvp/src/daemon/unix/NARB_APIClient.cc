@@ -545,10 +545,11 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
         //Get Local Ids if any
 		if (msg.getEXPLICIT_ROUTE_Object())
 		{
-			if (srcAddr == msg.getSENDER_TEMPLATE_Object().getSrcAddress().rawAddress() &&
+			if (srcAddr == msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front().getAddress().rawAddress() &&
 				(msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front().getInterfaceID()>>16) != LOCAL_ID_TYPE_NONE)
 				srcLocalId = msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().front().getInterfaceID();
-			if ((msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().back().getInterfaceID()>>16) != LOCAL_ID_TYPE_NONE)
+			if (destAddr == msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().back().getAddress().rawAddress() &&
+				(msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().back().getInterfaceID()>>16) != LOCAL_ID_TYPE_NONE)
 				destLocalId = msg.getEXPLICIT_ROUTE_Object()->getAbstractNodeList().back().getInterfaceID();
 		}
     }
