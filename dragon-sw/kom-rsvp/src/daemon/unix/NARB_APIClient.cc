@@ -661,6 +661,7 @@ uint32 NARB_APIClient::getVtagFromERO(EXPLICIT_ROUTE_Object* ero)
         if ((*iter).getType() == AbstractNode::UNumIfID && ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
             return (*iter).getInterfaceID() & 0xffff;
     }
+	return 0;
 }
 
 void NARB_APIClient::removeExplicitRoute(uint32 dest_addr, uint32 tunnel_id, uint32 ext_tunnel_id)
@@ -722,8 +723,8 @@ void NARB_APIClient::confirmReservation(const Message& msg)
     }
     else if (len ==0)
     {
-	disconnect();
-	LOG(1)(Log::Routing, "connection closed for NARB_APIClient.");
+		disconnect();
+		LOG(1)(Log::Routing, "connection closed for NARB_APIClient.");
     }
     else if (len != sizeof(struct narb_api_msg_header)+ntohs(msgheader->length))
     {
