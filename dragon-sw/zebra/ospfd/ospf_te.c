@@ -481,11 +481,6 @@ set_linkparams_link_id (struct ospf_interface *oi)
           oi->te_para.link_id.value = nbr->router_id;
           done = 1;
         }
-      else if (oi->uni_data) /*@@@@ UNI hacks*/
-        {
-          oi->te_para.link_id.value = oi->uni_data->loopback;
-          done = 1;
-        }
       break;
     case OSPF_IFTYPE_BROADCAST:
     case OSPF_IFTYPE_NBMA:
@@ -543,7 +538,7 @@ static void set_linkparams_rmtif_addr(struct ospf_interface *oi)
     if(oi->type == OSPF_IFTYPE_POINTOPOINT)
     {
       /* Take the router ID of the neighbor. */
-      if ((((nbr = ospf_nbr_lookup_ptop (oi)) && (nbr->state == NSM_Full)) || oi->uni_data) /*@@@@ UNI hacks*/
+      if (((nbr = ospf_nbr_lookup_ptop (oi)) && (nbr->state == NSM_Full))
       	     && ntohs(oi->te_para.lclif_ipaddr.header.type) != 0 )
       {
 	   oi->te_para.rmtif_ipaddr.header.type = htons (TE_LINK_SUBTLV_RMTIF_IPADDR);
@@ -912,18 +907,6 @@ ospf_te_ism_change (struct ospf_interface *oi, int old_state)
 
 		    	break;
 		    }
-		/*@@@@UNI hacks*/
-		LIST_LOOP(OspfTeUniConfigList, oc, node)
-		    if (strcmp(oc->if_name, oi->ifp->name)==0)
-		    {
-		    	if (ospf_te_uni_config(oi, oc)==0)
-		        	ospf_te_new_if(oi);
-		       if (oc->te_para.link_srlg.srlg_list)
-		     	      list_delete(oc->te_para.link_srlg.srlg_list);
-		    	listnode_delete(OspfTeUniConfigList, oc);
-
-		    	break;
-		    }
     	}
 	else
 	{
@@ -975,18 +958,6 @@ ospf_te_nsm_change (struct ospf_neighbor *nbr, int old_state)
 		      if (oc->te_para.link_srlg.srlg_list)
 		     	      list_delete(oc->te_para.link_srlg.srlg_list);
 		    	listnode_delete(OspfTeConfigList, oc);
-
-		    	break;
-		    }
-		/*@@@@UNI hacks*/
-		LIST_LOOP(OspfTeUniConfigList, oc, node)
-		    if (strcmp(oc->if_name, oi->ifp->name)==0)
-		    {
-		    	if (ospf_te_uni_config(oi, oc)==0)
-		        	ospf_te_new_if(oi);
-		       if (oc->te_para.link_srlg.srlg_list)
-		     	      list_delete(oc->te_para.link_srlg.srlg_list);
-		    	listnode_delete(OspfTeUniConfigList, oc);
 
 		    	break;
 		    }
@@ -1702,7 +1673,8 @@ ospf_te_verify_config(struct ospf_interface *oi, struct ospf_te_config_para *oc)
 	return ret;
 }
 
-/*@@@@UNI hacks*/
+  /*@@@@ UNI hacks ==> Obsolete*/
+#if 0
 int
 ospf_te_uni_config(struct ospf_interface *oi, struct ospf_te_config_para *oc)
 {
@@ -1743,6 +1715,7 @@ ospf_te_uni_config(struct ospf_interface *oi, struct ospf_te_config_para *oc)
   	}
 	return ret;
 }
+#endif
 
 /* This function is called when the configuration of a TE-Link is completed */
 void 
@@ -1773,11 +1746,6 @@ ospf_te_interface_config_update(struct vty* vty)
 			oc = XMALLOC(MTYPE_OSPF_TMP, sizeof(struct ospf_te_config_para));
 			memcpy(oc, &te_config, sizeof(struct ospf_te_config_para));
 			listnode_add(OspfTeConfigList, oc);
-		}
-		else if (te_config.configed == 2) {/*@@@@UNI hacks*/
-			oc = XMALLOC(MTYPE_OSPF_TMP, sizeof(struct ospf_te_config_para));
-			memcpy(oc, &te_config, sizeof(struct ospf_te_config_para));
-			listnode_add(OspfTeUniConfigList, oc);
 		}
 		memset(&te_config, 0, sizeof(struct ospf_te_config_para));
 	}
@@ -2026,6 +1994,8 @@ DEFUN (no_ospf_te_interface_ifname,
 
 }
 
+  /*@@@@ UNI hacks ==> Obsolete*/
+#if 0
 DEFUN (ospf_te_uni_ifname,
        ospf_te_uni_ifname_cmd,
        "ospf-te uni-interface INTERFACE",
@@ -2094,7 +2064,7 @@ DEFUN (no_ospf_te_uni_ifname,
   vty_out (vty, "no_ospf_te_interface: cannot find ospf interface: %s %s", argv[0], VTY_NEWLINE);
   return CMD_WARNING;
 }
-
+#endif
 
 DEFUN (ospf_te_router_addr,
        ospf_te_router_addr_cmd,
@@ -3150,9 +3120,12 @@ ospf_te_register_vty (void)
 
   install_element (OSPF_NODE, &ospf_te_router_addr_cmd);
   install_element (OSPF_NODE, &ospf_te_interface_ifname_cmd);
+  /*@@@@ UNI hacks ==> Obsolete*/
+  /*
   install_element (OSPF_NODE, &ospf_te_uni_ifname_cmd);
   install_element (OSPF_NODE, &no_ospf_te_uni_ifname_cmd);
-  
+  */
+
   install_default(OSPF_TE_IF_NODE);
   install_element (OSPF_TE_IF_NODE, &ospf_te_data_interface_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_data_interface_noproto_cmd);

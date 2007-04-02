@@ -442,8 +442,6 @@ struct ospf_te_config_para
 	struct vlsr_if vlsr_if;
 	u_char level;  /* MPLS or GMPLS */
 	struct te_area_lsa_para te_para;
-	/*@@@@UNI hacks*/
-	struct in_addr uni_loopback;
 };
 
 /* Prototypes. */

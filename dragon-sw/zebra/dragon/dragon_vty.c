@@ -1688,7 +1688,7 @@ DEFUN (dragon_set_ucid,
     ip.s_addr = 0;
     inet_aton(argv[0], &ip);
     if (ip.s_addr != 0)
-        dmaster.UCID = ip.s_addr;
+        dmaster.UCID = htonl(ip.s_addr);
     else {
 	vty_out(vty, "Wrong UCID %s: (format: number or A.B.C.D) %s", argv[0], VTY_NEWLINE);
 	return CMD_WARNING;

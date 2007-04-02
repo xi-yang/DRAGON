@@ -1063,14 +1063,6 @@ ospf_te_area_lsa_link_timer(struct thread *t)
    	rc = ospf_te_area_lsa_link_originate(oi);
      }
 
-   if (oi->uni_data) {
-	   if (oi->uni_data->te_lsa_link && oi->uni_data->te_lsa_rtid) {
-              rc |= ospf_te_area_lsa_uni_refresh(oi);	     }
-	   else {
-              rc |= ospf_te_area_lsa_uni_originate(oi);
-	     }
-    }
-
    return rc;
 }
 
@@ -1408,6 +1400,8 @@ ospf_te_cspf_calculate_schedule (struct ospf_area *area)
 
 
 
+  /*@@@@ UNI hacks ==> Obsolete*/
+
 /***********************************************************/
 /*                            @@@@ UNI hacks                                              */
 /*                                                                                                    */
@@ -1415,6 +1409,7 @@ ospf_te_cspf_calculate_schedule (struct ospf_area *area)
 /*                                                                                                    */
 /***********************************************************/
 
+#if 0
 static int
 is_mandated_params_set_for_uni(struct ospf_interface *oi)
 {
@@ -1912,7 +1907,7 @@ ospf_te_area_lsa_uni_refresh (struct ospf_interface *oi)
 out:
   return rc;
 }
-
+#endif
 
 #endif
 
