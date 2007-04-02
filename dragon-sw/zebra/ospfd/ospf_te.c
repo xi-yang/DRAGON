@@ -2834,7 +2834,8 @@ DEFUN (show_ospf_te_router,
   return CMD_SUCCESS;
 }
 
-
+/*@@@@ UNI hacks ==> Obsolete*/
+/*
 DEFUN (ospf_te_uni_loopback,
        ospf_te_uni_loopback_cmd,
        "loopback A.B.C.D",
@@ -2847,6 +2848,7 @@ DEFUN (ospf_te_uni_loopback,
   }
   return CMD_SUCCESS;
 }
+*/
 
 static void
 show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
