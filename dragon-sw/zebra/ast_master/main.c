@@ -1061,7 +1061,7 @@ main(int argc, char* argv[])
     int opt;
 
     opt = getopt_long (argc, argv, "dlc:hA:P:v", ast_master_opts, 0);
-    if (argc > 3) {
+    if (argc > 4) {
       usage(progname, 1); 
       exit(EXIT_FAILURE); 
     }
