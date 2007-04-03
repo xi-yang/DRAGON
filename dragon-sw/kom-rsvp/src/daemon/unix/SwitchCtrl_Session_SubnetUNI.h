@@ -105,7 +105,7 @@ public:
 	void getCurrentVCG(String& vcgName) { vcgName = currentVCG; }
 	void getCurrentGTP(String& gtpName) { gtpName = currentGTP; }
 	void getCurrentSNC(String& sncName) { sncName = currentSNC; }
-	void getCurrentCRS(String& crsName) { sncName = currentCRS; }
+	void getCurrentCRS(String& crsName) { crsName = currentCRS; }
 
 	//////////////// TL1 related functions >> begin  //////////////
 	//bool getReplyShell_TL1( uint32 ctag = 0 );

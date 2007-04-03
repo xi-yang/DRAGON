@@ -719,7 +719,7 @@ void SwitchCtrl_Session_SubnetUNI::getDestCRS_GTP(String& gtpName)
             pSubnetSession = (SwitchCtrl_Session_SubnetUNI*)(*sessionIter);
             if (pSubnetSession != this && !pSubnetSession->isSourceClient() && pSubnetSession->getPseudoSwitchID() == this->getPseudoSwitchID())
             {
-                gtpName = pSubnetSession->getCurrentGTP(gtpName);
+                pSubnetSession->getCurrentGTP(gtpName);
                 break;
             }
         }
@@ -740,9 +740,9 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     String suppTtp, ettpName;
 
     if (vlanLow == 0 && vlanHigh == 0)
-        sprintf(packetType, "%pkttype=all", vlanLow,vlanHigh);
+        sprintf(packetType, "pkttype=all");
     else if (vlanHigh > vlanLow)
-        sprintf(packetType, "%pkttype=single_vlan_tag,outervlanidrange=d&&%d", vlanLow,vlanHigh);
+        sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=d&&%d", vlanLow,vlanHigh);
     else
         sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=%d", vlanLow);
 
@@ -1318,7 +1318,7 @@ bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpNam
     {
         LOG(3)(Log::MPLS, crsName, " creation has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-        sncName = "";
+        crsName = "";
         return false;
     }
     else 

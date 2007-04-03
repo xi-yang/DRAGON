@@ -282,7 +282,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
 
 							//verify
-							if ((*sessionIter)->hasSourceDestPortConflict()) {
+							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSourceDestPortConflict()) {
 								LOG(2)( Log::MPLS, "VLSR-Subnet Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
 								return false;
 							}
@@ -654,9 +654,9 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                  bool noErr = true;
 
 							//verify
-							if ((*sessionIter)->hasSourceDestPortConflict()) {
+							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSourceDestPortConflict()) {
 								LOG(2)( Log::MPLS, "VLSR-Subnet Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
-								return false;
+								return;
 							}
 
 							//connect
