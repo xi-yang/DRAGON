@@ -65,6 +65,11 @@ public:
 	virtual ~SwitchCtrl_Session_SubnetUNI();
 
 	bool isSourceClient() { return isSource; }
+	bool isSourceDestSame() { return (subnetUniSrc.uni_nid_ipv4 == subnetUniDest.uni_nid_ipv4); }
+	bool hasSourceDestPortConflict() // Source and Dest ports should not be on the same ETTP 
+	{ 
+		return (isSourceDestSame() && (subnetUniSrc.logical_port >> 8) == (subnetUniDest.logical_port>>8));
+	}
 	//Backward compatibility with general SwitchCtrl_Session operations
 	virtual bool connectSwitch() { return CLI_Session::engage(); }
 	virtual void disconnectSwitch() { CLI_Session::disengage(); return; }
@@ -97,6 +102,10 @@ public:
 	uint8 getUniState() { return uniState; }
 	uint32 getPseudoSwitchID();
 	void getTimeslots(SimpleList<uint8>& timeslots);
+	void getCurrentVCG(String& vcgName) { vcgName = currentVCG; }
+	void getCurrentGTP(String& gtpName) { gtpName = currentGTP; }
+	void getCurrentSNC(String& sncName) { sncName = currentSNC; }
+	void getCurrentCRS(String& crsName) { sncName = currentCRS; }
 
 	//////////////// TL1 related functions >> begin  //////////////
 	//bool getReplyShell_TL1( uint32 ctag = 0 );
@@ -107,6 +116,7 @@ public:
 	void getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort=0);
 	void getCienaCTPGroupInVCG(String& ctpGroupString, String& vcgName);
 	void getCienaDestTimeslotsString(String& destTimeslotsString);
+	void getDestCRS_GTP(String& gtpName);
 
 	bool hasEFLOW_TL1(String& vcgName, bool ingress = true);
 	bool createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh = 0);
@@ -120,6 +130,9 @@ public:
 	bool hasSNC_TL1(String& sncName);
 	bool createSNC_TL1(String& sncName, String& gtpName);
 	bool deleteSNC_TL1(String& sncName);
+	bool hasCRS_TL1(String& xctName);
+	bool createCRS_TL1(String& xctName, String& gtpName);
+	bool deleteCRS_TL1(String& xctName);
 
 	bool createVCG()
 	{
@@ -161,18 +174,30 @@ public:
 	{
 		return deleteSNC_TL1(currentSNC);
 	}
+	bool createCRS()
+	{
+		return createCRS_TL1(currentCRS, currentGTP);
+	}
+	bool deleteCRS()
+	{
+		return deleteCRS_TL1(currentCRS);
+	}
 
 	bool hasVCG()
 	{
-		return hasVCG_TL1(currentVCG);
+		return (!currentVCG.empty() && hasVCG_TL1(currentVCG));
 	}
 	bool hasGTP()
 	{
-		return hasGTP_TL1(currentGTP);
+		return  (!currentGTP.empty() && hasGTP_TL1(currentGTP));
 	}
 	bool hasSNC()
 	{
-		return hasSNC_TL1(currentSNC);
+		return (!currentSNC.empty() && hasSNC_TL1(currentSNC));
+	}
+	bool hasCRS()
+	{
+		return (!currentCRS.empty() && hasCRS_TL1(currentCRS));
 	}
 
 	SONET_CATUNIT getConcatenationUnit_TL1(uint32 logicalPort = 0);
@@ -244,6 +269,7 @@ protected:
 	String currentVCG;
 	String currentGTP;
 	String currentSNC;
+	String currentCRS;
 
 	SONET_CATUNIT ptpCatUnit;
 private:	

@@ -280,8 +280,15 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 						break;
 					case Message::InitAPI: // inital state for TL1_TELNET only
 						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
+
+							//verify
+							if ((*sessionIter)->hasSourceDestPortConflict()) {
+								LOG(2)( Log::MPLS, "VLSR-Subnet Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
+								return false;
+							}
+                                                    
 							//connect
-							if (!(*sessionIter)->connectSwitch()){
+							if (!(*sessionIter)->connectSwitch()) {
 								LOG(2)( Log::MPLS, "VLSR-Subnet Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
 								(*sessionIter)->disconnectSwitch();
 								return false;
@@ -300,24 +307,43 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                         return false;
                                                     }
 
-                                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
-							//@@@@ sleep(1);
-                                                        //create GTP (Source node only!)
+                                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() 
+                                                        && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
+                                                        //create source GTP 
                                                         if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
                                                             (*sessionIter)->disconnectSwitch();
                                                             return false;
                                                         }
-
-                                                        //create SNC (X times?) for LOCAL_ID_TYPE_SUBNET_UNI_SRC
-                                                        if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createSNC() ) {
-                                                            (*sessionIter)->disconnectSwitch();
-                                                            return false;
+                                                        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
+                                                            //create CRS for Source == Destination
+                                                            if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createCRS() ) {
+                                                                (*sessionIter)->disconnectSwitch();
+                                                                return false;
+                                                            }
+                                                        }
+                                                        else {
+                                                            //create SNC
+                                                            if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createSNC() ) {
+                                                                (*sessionIter)->disconnectSwitch();
+                                                                return false;
+                                                            }
                                                         }
                                                     }
                                                 }
+                                                else if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() 
+                                                    && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST
+                                                    && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() )
+                                                {
+                                                    //create destination GTP (only needed for local XConn)
+                                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
+                                                        (*sessionIter)->disconnectSwitch();
+                                                        return false;
+                                                    }
+                                                }
 
-							//disconnect
-							(*sessionIter)->disconnectSwitch();
+                                                //disconnect
+                                                (*sessionIter)->disconnectSwitch();
+
 						}
 						// no break; continue to next case clauses !
 
@@ -627,6 +653,12 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
                                                  bool noErr = true;
 
+							//verify
+							if ((*sessionIter)->hasSourceDestPortConflict()) {
+								LOG(2)( Log::MPLS, "VLSR-Subnet Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
+								return false;
+							}
+
 							//connect
 							if (!(*sessionIter)->connectSwitch()){
 								LOG(2)( Log::MPLS, "VLSR-Subnet Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
@@ -636,11 +668,19 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                 if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 
                                                     if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
-                                                        //delete SNC for LOCAL_ID_TYPE_SUBNET_UNI_SRC
-                                                        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSNC())
-                                                            noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC();
+
+                                                        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
+                                                            //delete CRS for Source == Destination
+                                                            if( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasCRS() )
+                                                                noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteCRS();
+                                                        }
+                                                        else {
+                                                            //delete SNC
+                                                            if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSNC() )
+                                                                noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC();
+                                                        }
                                                             
-                                                        //delete GTP (Source node only)
+                                                        //delete GTP (for SNC: source only; for CRS: both source and dest interfaces)
                                                         if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasGTP())
                                                             noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP();
                                                     }

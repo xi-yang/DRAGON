@@ -478,6 +478,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				pSubnetUniDest = (SwitchCtrl_Session_SubnetUNI*)ssNew;
 				//Pass SubnetUNI data
 				pSubnetUniDest->setSubnetUniDest(subnetUniDataDest);
+				if (!pSubnetUniSrc)
+					pSubnetUniDest->setSubnetUniSrc(subnetUniDataSrc);
 				//kickoff UNI session
 				if (CLI_SESSION_TYPE != CLI_TL1_TELNET) {
 					pSubnetUniDest->registerRsvpApiClient();
@@ -554,44 +556,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
 	return true;
 }
-
-/*
-int Session::countLocalRouteHops( const EXPLICIT_ROUTE_Object* ero ) {
-	int localHops = 0;
-	LogicalInterface* outLif;
-	uint32 ifId;
-	NetAddress address;
-
-	//finding all local hops
-	AbstractNodeList::ConstIterator iter = ero->getAbstractNodeList().begin();
-	for (; iter != ero->getAbstractNodeList().end(); ++iter){
-		switch ((*iter).getType()) {
-		case AbstractNode::IPv4:
-			address = (*iter).getAddress();
-			ifId = 0;
-			break;
-		case AbstractNode::UNumIfID:
-			address = (*iter).getAddress();
-			ifId = (*iter).getInterfaceID();
-			break;
-		default:
-			return localHops;
-		}
-		outLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData(address, ifId); 
-		if (!outLif)
-		{
-			outLif = (LogicalInterface*)RSVP_Global::rsvp->findInterfaceByAddress(address);
-			if (!outLif)  break;
-		}
-		else // local hop
-		{
-			localHops++;
-		}
-	}
-
-	return localHops
-}
-*/
 
 bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 	LogicalInterface* outLif;

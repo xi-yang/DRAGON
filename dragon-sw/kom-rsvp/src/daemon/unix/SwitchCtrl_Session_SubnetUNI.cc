@@ -707,6 +707,26 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
     destTimeslotsString += (const char*)bufCmd;
 }
 
+void SwitchCtrl_Session_SubnetUNI::getDestCRS_GTP(String& gtpName)
+{
+    gtpName = "";
+    SwitchCtrl_Session_SubnetUNI* pSubnetSession;
+    
+    SwitchCtrlSessionList::Iterator sessionIter = RSVP_Global::switchController->getSessionList().begin();
+    for ( ; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter)
+    {
+        if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
+            pSubnetSession = (SwitchCtrl_Session_SubnetUNI*)(*sessionIter);
+            if (pSubnetSession != this && !pSubnetSession->isSourceClient() && pSubnetSession->getPseudoSwitchID() == this->getPseudoSwitchID())
+            {
+                gtpName = pSubnetSession->getCurrentGTP(gtpName);
+                break;
+            }
+        }
+    }
+    return;
+}
+
 //ent-eflow::myeflow1:123:::ingressporttype=ettp,ingressportname=1-A-3-1-1, 
 //pkttype=single_vlan_tag,outervlanidrange=1&&5,,priority=1&&8,egressporttype=vcg, 
 //egressportname=vcg02,cosmapping=cos_port_default;
@@ -1143,6 +1163,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
     if (destTimeslotsString.empty())
     {
         LOG(1)(Log::MPLS, "getCienaDestTimeslotsString returned empty string.");
+        sncName = "";
         return false;
     }
 
@@ -1258,6 +1279,139 @@ _out:
         LOG(3)(Log::MPLS, sncName, " SNC existence checking via TL1_TELNET failed...\n", bufCmd);
         return false;    
 }
+
+//;ent-crs-stspc::fromendpoint=gtp01,toendpoint=gtp02:myctag::name=crs01,fromtype=gtp,totype=gtp,;
+bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpName)
+{
+    int ret = 0;
+    char ctag[10];
+
+    sprintf(ctag, "%d", getNewCtag());
+    crsName = "crs_";
+    crsName += ctag;
+
+    // get destination time slots!
+    String destGtpName;
+    getDestCRS_GTP(destGtpName);
+    if (destGtpName.empty())
+    {
+        LOG(1)(Log::MPLS, "createCRS_TL1:getDestCRS_GTP returned empty string.");
+        crsName = "";
+        return false;
+    }
+
+    sprintf( bufCmd, "ent-crs-stspc::fromendpoint=%s,toendpoint=%s:%s::name=%s,fromtype=gtp,totype=gtp;",
+        gtpName.chars(), destGtpName.chars(), ctag, crsName.chars());
+
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, crsName, " has been created successfully.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, crsName, " creation has been denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        sncName = "";
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(3)(Log::MPLS, crsName, " creation via TL1_TELNET failed...\n", bufCmd);
+        crsName = "";
+        return false;
+}
+
+bool SwitchCtrl_Session_SubnetUNI::deleteCRS_TL1(String& crsName)
+{
+    int ret = 0;
+
+    sprintf( bufCmd, "ed-crs-stspc::name=%s:%d::,pst=oos;", crsName.chars(), getNewCtag() );
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, crsName, " state has been changed into OOS.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        //continue to next command ...
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, crsName, " state change to OOS has been denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+    sprintf( bufCmd, "dlt-crs-stspc::name=%s:%d;", crsName.chars(), getNewCtag() );
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, crsName, " has been deleted successfully.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, crsName, " deletion has been denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(3)(Log::MPLS, crsName, " change/deletion via TL1_TELNET failed...\n", bufCmd);
+        return false;
+}
+
+//rtrv-crs-stspc::name=crsName:123;
+bool SwitchCtrl_Session_SubnetUNI::hasCRS_TL1(String& crsName)
+{
+    int ret = 0;
+
+    sprintf( bufCmd, "rtrv-crs-stspc::name=%s:%d;", crsName.chars(), getNewCtag() );
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        LOG(3)(Log::MPLS, crsName, " XConn does exist.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(3)(Log::MPLS, crsName, " XConn does not exist.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else 
+        goto _out;
+
+_out:
+        LOG(3)(Log::MPLS, crsName, " Xconn existence checking via TL1_TELNET failed...\n", bufCmd);
+        return false;    
+}
+
 
 //rtrv-ocn::1-A-3-1:mytag;
 SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logicalPort)
