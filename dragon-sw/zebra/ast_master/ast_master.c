@@ -702,7 +702,8 @@ print_node(FILE* fp, struct resource* node)
       fprintf(fp, "\t<ifaces>\n");
       if (ifp->iface) 
 	fprintf(fp, "\t\t<iface>%s</iface>\n", ifp->iface);
-      fprintf(fp, "\t\t<assign_ip>%s</assign_ip>\n", ifp->assign_ip);
+      if (ifp->assign_ip)
+        fprintf(fp, "\t\t<assign_ip>%s</assign_ip>\n", ifp->assign_ip);
       if (ifp->vtag)
 	fprintf(fp, "\t\t<vtag>%d</vtag>\n", ifp->vtag);
       fprintf(fp, "\t</ifaces>\n");
@@ -726,7 +727,8 @@ print_endpoint(FILE* fp, struct endpoint* ep)
   if (ep->ifp) {
     if (ep->ifp->iface) 
       fprintf(fp, "\t\t<iface>%s</iface>\n", ep->ifp->iface);
-    fprintf(fp, "\t\t<assign_ip>%s</assign_ip>\n", ep->ifp->assign_ip);
+    if (ep->ifp->assign_ip)
+      fprintf(fp, "\t\t<assign_ip>%s</assign_ip>\n", ep->ifp->assign_ip);
   }
   if (ep->local_id_type[0] != '\0') 
     fprintf(fp, "\t\t<local_id>%c/%d</local_id>\n",
