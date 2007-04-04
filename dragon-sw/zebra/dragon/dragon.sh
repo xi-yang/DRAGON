@@ -178,10 +178,9 @@ case $1 in
         if test "$narb_pid" != ""; then
 	    kill $narb_pid
 	    echo "dragon-sw: stopped narb daemon."
+            echo "Waiting 5 seconds for NARB to cleanup domain topology ..."
+            sleep 5
 	fi
-
-        echo "Waiting 5 seconds for NARB to cleanup domain topology ..."
-        sleep 5
 
         if test "$rce_pid" != ""; then
 	    kill $rce_pid
