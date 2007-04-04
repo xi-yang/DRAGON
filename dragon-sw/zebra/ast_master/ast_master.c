@@ -1731,19 +1731,19 @@ topo_xml_parser(char* filename, int agent)
 	      if (strlen(ep->local_id_type) != 0) 
 		ep->local_id = atoi(key+2);
 
-	    } else if (strcasecmp(node_ptr->name, "iface") == 0) {
+	    } else if (myres->res.l.stype != vlsr_vlsr && strcasecmp(node_ptr->name, "iface") == 0) {
 	      if (!ep->ifp) {
 		ep->ifp = (struct if_ip*) malloc (sizeof(struct if_ip));
 		memset(ep->ifp, 0, sizeof(struct if_ip));
 	      }
 	      ep->ifp->iface = strdup(key);
-	    } else if (strcasecmp(node_ptr->name, "assign_ip") == 0) {
+	    } else if (myres->res.l.stype != vlsr_vlsr && strcasecmp(node_ptr->name, "assign_ip") == 0) {
 	      if (!ep->ifp) {
 		ep->ifp = (struct if_ip*) malloc (sizeof(struct if_ip));
 		memset(ep->ifp, 0, sizeof(struct if_ip));
 	      }
 	      ep->ifp->assign_ip = strdup(key);
-	    } else if (strcasecmp(node_ptr->name, "vtag") == 0) {
+	    } else if (myres->res.l.stype != vlsr_vlsr && strcasecmp(node_ptr->name, "vtag") == 0) {
 	      if (!ep->ifp) {
 		ep->ifp = (struct if_ip*) malloc (sizeof(struct if_ip));
 		memset(ep->ifp, 0, sizeof(struct if_ip));
