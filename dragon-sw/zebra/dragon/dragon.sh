@@ -228,6 +228,96 @@ case $1 in
 	echo "dragon-sw: started narb daemons."
 	;;
     
+    start-vlsr-narb | restart-vlsr-narb)
+        echo "dragon-sw: turning on coredump with unlimited core size."
+        ulimit -c unlimited
+
+        if test "$narb_pid" != ""; then
+	    kill $narb_pid
+	    echo "dragon-sw: stopped narb daemon."
+            echo "Waiting 5 seconds for NARB to cleanup domain topology ..."
+            sleep 5
+	fi
+        if test "$rce_pid" != ""; then
+	    kill $rce_pid
+	    echo "dragon-sw: stopped rce daemon."
+	fi
+
+        # XXX for CLI based switch control only
+        if test "$telnet_pid" != ""; then
+            killall -9 telnet
+        fi
+
+        if test "$zebra_pid" != ""; then
+	    kill $zebra_pid
+	fi
+	$ZEBRA_DAEMON $ZEBRA_ARGS
+	if test $? != 0; then
+	    echo "dragon-sw: unable to start zebra daemon."
+	    exit 1
+	fi
+	echo "dragon-sw: started zebra daemon."
+
+        if test "$ospf_inter_pid" != ""; then
+	    kill $ospf_inter_pid
+	fi
+	$OSPF_INTER_DAEMON $OSPF_INTER_ARGS
+	if test $? != 0; then
+	    echo "dragon-sw: unable to start ospf inter-domain daemon."
+	    exit 1
+	fi
+	echo "dragon-sw: started ospf inter-domain daemon."
+
+        if test "$ospf_intra_pid" != ""; then
+	    kill $ospf_intra_pid
+	fi
+	if test -e $ETC_DIR/ospfd.conf; then
+            $OSPF_DAEMON $OSPF_ARGS
+	elif test -e $ETC_DIR/ospfd-intra.conf; then
+	    $OSPF_INTRA_DAEMON $OSPF_INTRA_ARGS
+	else
+	    false
+	if
+	if test $? != 0; then
+	    echo "dragon-sw: unable to start ospf intra-domain daemon."
+	    exit 1
+	fi
+	echo "dragon-sw: started ospf intra-domain daemon."
+
+        if test "$rsvp_pid" != ""; then
+            kill $rsvp_pid   
+        fi
+        $RSVP_DAEMON $RSVP_ARGS
+        if test $? != 0; then
+            echo "dragon-sw: unable to start rsvp daemon."
+            exit 1
+        fi
+        echo "dragon-sw: started rsvp daemon."
+   
+        echo "sleeping for 2 seconds before starting dragon daemon..."
+        sleep 2
+
+        if test "$dragon_pid" != ""; then
+            kill $dragon_pid 
+        fi
+        $DRAGON_DAEMON $DRAGON_ARGS
+        if test $? != 0; then
+            echo "dragon-sw: unable to start dragon daemon."
+            exit 1
+        fi
+        echo "dragon-sw: started dragon daemon."
+
+        echo "sleeping for 5 seconds before starting narb (rce & narb daemons)...please stand by."
+        sleep 5
+    
+	$NARB_DAEMON $NARB_ARGS
+	if test $? != 0; then
+	    echo "dragon-sw: unable to start narb daemon."
+	    exit 1
+	fi
+	echo "dragon-sw: started narb daemons."
+	;;
+
     stop)   
         if test "$telnet_pid" != ""; then
 	    killall -9 telnet
