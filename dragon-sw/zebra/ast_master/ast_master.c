@@ -198,11 +198,10 @@ void
 del_cfg_from_list(struct application_cfg* app_cfg)
 {
   struct adtlistnode *curnode, *prevnode;
-
   if (!app_cfg) 
     return;
 
-  zlog_info("Adding <ast_id>:%s into glob_list", app_cfg->ast_id);
+  zlog_info("Deleting <ast_id>:%s from glob_list", app_cfg->ast_id);
 
   for (prevnode = NULL, curnode = app_list.head;
        curnode;
@@ -214,8 +213,8 @@ del_cfg_from_list(struct application_cfg* app_cfg)
       else
         app_list.head = curnode->next;
 
-      if (app_list.tail == curnode)
-        app_list.tail = NULL;
+      if (app_list.tail == curnode) 
+        app_list.tail = prevnode;
 
       app_list.count--;
       free_application_cfg(app_cfg); 
