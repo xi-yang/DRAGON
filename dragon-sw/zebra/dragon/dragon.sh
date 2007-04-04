@@ -277,7 +277,7 @@ case $1 in
 	    $OSPF_INTRA_DAEMON $OSPF_INTRA_ARGS
 	else
 	    false
-	if
+	fi
 	if test $? != 0; then
 	    echo "dragon-sw: unable to start ospf intra-domain daemon."
 	    exit 1
