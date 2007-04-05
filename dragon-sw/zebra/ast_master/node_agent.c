@@ -197,7 +197,7 @@ node_assign_ip(struct resource* node)
 	sprintf(iface_name, "%s.%d", interface, ifp->vtag);
 	ifp->iface = strdup(iface_name);
 
-	sprintf(iface_name, "vconfig add %s %d", interface, ifp->vtag);
+	sprintf(iface_name, "/sbin/vconfig add %s %d", interface, ifp->vtag);
 	zlog_info("system(): %s", iface_name);
 	system(iface_name);
       } else
@@ -258,7 +258,7 @@ node_assign_ip(struct resource* node)
     zlog_info("netmask: %s", inet_ntoa(netmask));
     zlog_info("broadcast: %s", inet_ntoa(broadcast));
 
-    sprintf(command, "ifconfig %s %s", ifp->iface, inet_ntoa(ip));
+    sprintf(command, "/sbin/ifconfig %s %s", ifp->iface, inet_ntoa(ip));
     sprintf(command+strlen(command), " netmask %s", inet_ntoa(netmask));
 
     zlog_info("system(): %s", command);
@@ -335,14 +335,14 @@ node_delete_ip(struct resource* node)
     ifp = (struct if_ip*)curnode->data;
     if (ifp->iface && ifp->vtag) {
 #ifndef __FreeBSD__
-      sprintf(iface_name, "vconfig rem %s", ifp->iface);
+      sprintf(iface_name, "/sbin/vconfig rem %s", ifp->iface);
       system(iface_name);
 #endif
     } else if (ifp->iface) {
 #ifndef __FreeBSD__
-      sprintf(iface_name, "ifconfig %s 0.0.0.0", ifp->iface);
+      sprintf(iface_name, "/sbin/ifconfig %s 0.0.0.0", ifp->iface);
 #else
-      sprintf(iface_name, "ifconfig %s delete", ifp->iface);
+      sprintf(iface_name, "/sbin/ifconfig %s delete", ifp->iface);
 #endif
       system(iface_name);
     }
