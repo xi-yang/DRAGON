@@ -406,7 +406,7 @@ case $1 in
 	fi
 
         if test "$rce_pid" != ""; then
-	    echo "dragon-sw: rce daemon is running, pid=$narb_pid."
+	    echo "dragon-sw: rce daemon is running, pid=$rce_pid."
 	else
 	    echo "dragon-sw: rce daemon is NOT running."
 	fi
