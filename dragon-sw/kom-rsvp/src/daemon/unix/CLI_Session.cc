@@ -483,6 +483,10 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
       m = read(fdin, &buf[n], 1);
       if (m != 1) {
 	alarm(0); // disable alarm
+	//exception handling
+	close(fdout);
+	close(fdin);
+	fdin = fdout = -1;
 	return(-1);
       }
 
@@ -535,6 +539,10 @@ int CLI_Session::writeShell(char *text, int timeout, bool echo_back)
   if (n != len) {
     err = errno;
     alarm(0); // disable alarm 
+    //exception handling
+    close(fdout);
+    close(fdin);
+    fdin = fdout = -1;
     return(-1);
   }
   else {
