@@ -415,7 +415,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
 	LOG(1)(Log::Routing, "connection closed for NARB_APIClient in ::getExplicitRoute.");
         goto _RETURN;
     }
-    else if (len != sizeof(struct narb_api_msg_header)+ntohs(msgheader->length))
+    else if (len != (int)(sizeof(struct narb_api_msg_header)+ntohs(msgheader->length)))
     {
         LOG(2)(Log::Routing, "NARB_APIClient::getExplicitRoute cannot write the message to: ", fd);
         goto _RETURN; 
@@ -726,7 +726,7 @@ void NARB_APIClient::confirmReservation(const Message& msg)
 		disconnect();
 		LOG(1)(Log::Routing, "connection closed for NARB_APIClient.");
     }
-    else if (len != sizeof(struct narb_api_msg_header)+ntohs(msgheader->length))
+    else if (len != (int)(sizeof(struct narb_api_msg_header)+ntohs(msgheader->length)))
     {
         LOG(2)(Log::Routing, "NARB_APIClient::confirmReservation cannot write the message to: ", fd);
     } 
@@ -762,7 +762,7 @@ void NARB_APIClient::releaseReservation(const Message& msg)
 	disconnect();
 	LOG(1)(Log::Routing, "connection closed for NARB_APIClient in ::releaseReservation.");
     }
-    else if (len != sizeof(struct narb_api_msg_header)+ntohs(msgheader->length))
+    else if (len != (int)(sizeof(struct narb_api_msg_header)+ntohs(msgheader->length)))
     {
         LOG(2)(Log::Routing, "NARB_APIClient::releaseReservation cannot write the message to: ", fd);
     } 
@@ -801,38 +801,6 @@ void NARB_APIClient::setExtraOption(String opt_str)
 }
 
 //VTAG mutral-exclusion feature --> Review
-void NARB_APIClient::addVtagInUse(int vtag)
-{
-
-    if (!vtagsAllowedforUse)
-         vtagsAllowedforUse = new UsedVtagList;
-
-    UsedVtagList::Iterator it = vtagsAllowedforUse->begin();
-    for (; it != vtagsAllowedforUse->end(); ++it)
-    {
-        if (*it == vtag)
-            return;
-    }
-    vtagsAllowedforUse->push_back(vtag);
-}
-
-
-void NARB_APIClient::removeVtagInUse(int vtag)
-{
-    if (!vtagsAllowedforUse)
-        return;
-
-    UsedVtagList::Iterator it = vtagsAllowedforUse->begin();
-    for (; it != vtagsAllowedforUse->end(); ++it)
-    {
-        if (*it == vtag)
-        {
-            vtagsAllowedforUse->erase(it);
-            return;
-        }
-    }
-}
-
 void NARB_APIClient::setAllowedVtags(uint8* bitmask)
 {
     if (!vtagsAllowedforUse)
@@ -854,9 +822,6 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
     switch (currentState) {
     case (uint32)Message::Path:
 
-        //VTAG mutral-exclusion feature --> Review
-        //addVtagInUse(msg);
-
         switch(lastState) {
         case 0:
         case (uint32)Message::Path:
@@ -871,9 +836,6 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
 
     case (uint32)Message::Resv:
 
-        //VTAG mutral-exclusion feature --> Review
-        //addVtagInUse(msg);
-
         switch(lastState) {
         case (uint32)Message::Path:
             confirmReservation(msg);
@@ -887,9 +849,6 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
 
     case (uint32)Message::PathResv:
 
-        //VTAG mutral-exclusion feature --> Review
-        //addVtagInUse(msg);
-
         switch(lastState) {
         case 0:
             confirmReservation(msg);
@@ -901,9 +860,6 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
 
     case (uint32)Message::PathTear:
     case (uint32)Message::ResvTear:
-
-        //VTAG mutral-exclusion feature --> Review
-        //removeVtagInUse(msg);
 
         switch(lastState) {
         case (uint32)Message::Resv:
@@ -921,10 +877,6 @@ bool NARB_APIClient::handleRsvpMessage(const Message& msg)
 
     case Message::PathErr:
     case Message::ResvErr:
-
-	//VTAG mutral-exclusion feature --> Review
-       //clear all VtagsInUse 
-       //vtagsAllowedforUse->clear();
 
         switch(lastState) {
         case (uint32)Message::Path: 

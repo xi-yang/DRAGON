@@ -633,10 +633,10 @@ void DRAGON_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 	buffer >>destTNA.length >> destTNA.type >> destTNA.sub_type >> destTNA.addr.s_addr >> destTNA.local_id;
 	buffer >>vlanTag.length >> vlanTag.type >> vlanTag.sub_type >> vlanTag.vtag;
 	buffer >>ingressChannelName.length >> ingressChannelName.type >> ingressChannelName.sub_type;
-	for (int i = 0; i < sizeof(struct CtrlChannel) - 4; i++)
+	for (uint32 i = 0; i < sizeof(struct CtrlChannel) - 4; i++)
 		buffer >> ingressChannelName.name[i];
 	buffer >>egressChannelName.length >> egressChannelName.type >> egressChannelName.sub_type;
-	for (int i = 0; i < sizeof(struct CtrlChannel) - 4; i++)
+	for (uint32 i = 0; i < sizeof(struct CtrlChannel) - 4; i++)
 		buffer >> egressChannelName.name[i];
 }
 
@@ -646,16 +646,15 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_UNI_Object& o 
 	buffer << o.destTNA.length << o.destTNA.type << o.destTNA.sub_type << o.destTNA.addr.s_addr << o.destTNA.local_id;
 	buffer << o.vlanTag.length << o.vlanTag.type << o.vlanTag.sub_type << o.vlanTag.vtag;
 	buffer << o.ingressChannelName.length << o.ingressChannelName.type << o.ingressChannelName.sub_type;
-	for (int i = 0; i < sizeof(struct CtrlChannel) - 4; i++)
+	for (uint32 i = 0; i < sizeof(struct CtrlChannel) - 4; i++)
 		buffer << o.ingressChannelName.name[i];
 	buffer << o.egressChannelName.length << o.egressChannelName.type << o.egressChannelName.sub_type;
-	for (int i = 0; i < sizeof(struct CtrlChannel) - 4; i++)
+	for (uint32 i = 0; i < sizeof(struct CtrlChannel) - 4; i++)
 		buffer << o.egressChannelName.name[i];
 	return buffer;
 }
 
 ostream& operator<< ( ostream& os, const DRAGON_UNI_Object& o ) {
-	char addr_str[20];
 	os <<"[ source: " << String( inet_ntoa(o.srcTNA.addr)) <<"/" << o.srcTNA.local_id;
 	os <<" <= vtag (" << o.vlanTag.vtag << ") => destination: ";
 	os << String( inet_ntoa(o.destTNA.addr)) << "/" << o.destTNA.local_id;
@@ -692,7 +691,6 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const GENERALIZED_UNI_Objec
 }
 
 ostream& operator<< ( ostream& os, const GENERALIZED_UNI_Object& o ) {
-	char addr_str[20];
 	os <<"[G_UNI Source: " << String( inet_ntoa(o.srcTNA.addr) );
 	os <<" <=> Destination: " << String( inet_ntoa(o.destTNA.addr) );
 	os <<" (Downstream port:"<< o.egressLabel.logical_port << " /Label:" << o.egressLabel.label;
