@@ -38,6 +38,7 @@
 #include <iostream>
 #include <iomanip>
 
+class TimeValue;
 class TimeValueLong {
 protected:
 	sint64 tv_sec;
@@ -65,9 +66,9 @@ public:
 	}
 	inline TimeValueLong& operator+= ( const TimeValue& t );
 	inline TimeValueLong& operator-= ( const TimeValue& t );
-	inline TimeValue TimeValueLong::operator* ( sint32 i ) const;
-	inline TimeValue TimeValueLong::operator/ ( sint32 i ) const;
-	inline TimeValue TimeValueLong::sqrt();
+	inline TimeValue operator* ( sint32 i ) const;
+	inline TimeValue operator/ ( sint32 i ) const;
+	inline TimeValue sqrt();
 };
 
 // timerep: tv_sec <-> seconds,  tv_usec <-> microseconds

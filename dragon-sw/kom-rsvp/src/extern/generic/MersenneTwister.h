@@ -105,6 +105,7 @@ protected:
 		{ return hiBit(u) | loBits(v); }
 	uint32 twist( const uint32& m, const uint32& s0, const uint32& s1 ) const
 		{ return m ^ (mixBits(s0,s1)>>1) ^ (loBit(s1) ? MAGIC : 0U); }
+		
 	inline static uint32 hash( time_t t, clock_t c );
 };
 
@@ -212,9 +213,19 @@ inline void MTRand::reload()
 	register uint32 *p = state;
 	register int i;
 	for( i = N - M; i--; )
-		*p++ = twist( p[M], p[0], p[1] );
+	{
+		const uint32 &pM = p[M];
+		const uint32 &p0 = p[0];
+		const uint32 &p1 = p[1];
+		*p++ = twist( pM, p0, p1 );
+	}
 	for( i = M; --i; )
-		*p++ = twist( p[M-N], p[0], p[1] );
+	{
+		const uint32 &pM_N = p[M-N];
+		const uint32 &p0 = p[0];
+		const uint32 &p1 = p[1];
+		*p++ = twist( pM_N, p0, p1 );
+	}
 	*p = twist( p[M-N], p[0], state[0] );
 
 	left = N, pNext = state;

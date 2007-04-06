@@ -99,7 +99,7 @@ public:
 		assert( number >= 0 && number < RSVP_Global::rsvp->getInterfaceCount() );
 		return ( field[number] != NULL );
 	}
-	ConstIterator InterfaceArray::insert_unique( T* elem, uint32 number ) {
+	ConstIterator insert_unique( T* elem, uint32 number ) {
 		assert( number >= 0 && number < RSVP_Global::rsvp->getInterfaceCount() );
 		if ( !isSet(number) ) {
 			elemCounter += 1;

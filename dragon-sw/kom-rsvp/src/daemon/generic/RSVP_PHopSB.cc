@@ -192,11 +192,11 @@ bool PHopSB::calculateForwardFlowspec( bool B_Merge ) {
 }
 
 void PHopSB_Refresh::markForResvRefresh( PSB& psb ) {
-	LOG(3)( Log::Process, *this, "marked for refresh:", psb );
+	LOG(3)( Log::Process, RSVP_HOP_Object(*this), "marked for refresh:", psb );
 	psbRefreshList.insert_unique( &psb );
 }
 
 void PHopSB_Refresh::markForResvRemove( PSB& psb ) {
-	LOG(3)( Log::Process, *this, "marked for remove:", psb );
+	LOG(3)( Log::Process, RSVP_HOP_Object(*this), "marked for remove:", psb );
 	psbRemoveList.insert_unique( &psb );
 }

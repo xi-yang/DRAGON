@@ -317,7 +317,7 @@ protected:
 	void accept();
 public:
 	TcpServer( uint32 la, uint16 lp );
-	virtual void TcpServer::receive( uint16 length = 0 );
+	virtual void receive( uint16 length = 0 );
 	virtual void showReceiveStats();
 };
 

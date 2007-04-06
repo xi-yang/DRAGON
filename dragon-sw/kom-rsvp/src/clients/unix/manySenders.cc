@@ -118,9 +118,9 @@ void createSender() {
 			cout << "reaching full load at " << (DaytimeTimeValue&)currentTime << endl;
 			cout << "average session inter-arrival time ";
 #if defined(REFRESH_REDUCTION)
-			cout << (const PreciseTimeValue&)(currentTime-startTime) / (nextCreateSession-1) << endl;
+			cout << (currentTime-startTime) / (nextCreateSession-1) << endl;
 #else
-			cout << (const PreciseTimeValue&)(currentTime-startTime) / nextCreateSession << endl;
+			cout << (currentTime-startTime) / nextCreateSession << endl;
 #endif
 			outFlag = true;
 		}

@@ -165,7 +165,7 @@ void DelayCounter::showSummaryInformation() {
 			sumDelay += (((2*i+1)*hashBinSize)/2) * hashBins[i];
 			sumDelayPow2 += (((2*i+1)*hashBinSize)/2).pow2() * hashBins[i];
 		}
-		ERROR(6)( LogStats, name, "delay", (const PreciseTimeValue&)(((2*i+1)*hashBinSize)/2), "packet count:", hashBins[i], totalCount );
+		ERROR(6)( LogStats, name, "delay", (((2*i+1)*hashBinSize)/2), "packet count:", hashBins[i], totalCount );
 	}
 	if ( totalCount > 0 ) {
 		TimeValue avgDelay = sumDelay/totalCount;

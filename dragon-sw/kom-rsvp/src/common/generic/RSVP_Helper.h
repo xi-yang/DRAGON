@@ -62,10 +62,10 @@ struct classname ## ListMemNode { \
 	static const char* const name; \
 }; \
 extern GeneralMemoryMachine<classname ## ListMemNode> machinename; \
-inline void* listtype ::ListNode::operator new( size_t s ) { \
+template<> inline void* listtype ::ListNode::operator new( size_t s ) { \
 	return machinename .alloc(s); \
 } \
-inline void listtype ::ListNode::operator delete( void* pnt ) { \
+template<> inline void listtype ::ListNode::operator delete( void* pnt ) { \
 	machinename.dealloc(pnt); \
 }
 #else
