@@ -801,6 +801,38 @@ void NARB_APIClient::setExtraOption(String opt_str)
 }
 
 //VTAG mutral-exclusion feature --> Review
+void NARB_APIClient::addVtagInUse(int vtag)
+{
+
+    if (!vtagsAllowedforUse)
+         vtagsAllowedforUse = new UsedVtagList;
+
+    UsedVtagList::Iterator it = vtagsAllowedforUse->begin();
+    for (; it != vtagsAllowedforUse->end(); ++it)
+    {
+        if (*it == (uint32)vtag)
+            return;
+    }
+    vtagsAllowedforUse->push_back(vtag);
+}
+
+
+void NARB_APIClient::removeVtagInUse(int vtag)
+{
+    if (!vtagsAllowedforUse)
+        return;
+
+    UsedVtagList::Iterator it = vtagsAllowedforUse->begin();
+    for (; it != vtagsAllowedforUse->end(); ++it)
+    {
+        if (*it == (uint32)vtag)
+        {
+            vtagsAllowedforUse->erase(it);
+            return;
+        }
+    }
+}
+
 void NARB_APIClient::setAllowedVtags(uint8* bitmask)
 {
     if (!vtagsAllowedforUse)

@@ -167,6 +167,8 @@ public:
 
        //VTAG mutral-exclusion feature --> Review
 	static UsedVtagList* vtagsAllowedforUse;
+	static void addVtagInUse(int vtag);
+	static void removeVtagInUse(int vtag);
 	static void setAllowedVtags(uint8* bitmask);
 
 	static void setHostPort(const char *host, int port);
