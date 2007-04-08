@@ -111,7 +111,7 @@ class PSB :	public RelationshipPSB_Session,
 	RSVP_HOP_Object dataInRsvpHop;
 	RSVP_HOP_Object dataOutRsvpHop;
 
-    uint32 vlanTagAsSuggestedLabel;
+	uint32 vlanTagAsSuggestedLabel;
 
 	friend ostream& operator<< ( ostream&, const PSB& );
 	PSB(const PSB&);
@@ -129,7 +129,7 @@ public:
 	void updateADSPEC_Object( const ADSPEC_Object*, bool nonRsvp );
 	void updateUnknownObjectList( const UnknownObjectList& );
 
-    void updateVlanTag( uint32 vtag ) { vlanTagAsSuggestedLabel = vtag; }
+	void updateVlanTag( uint32 vtag ) { vlanTagAsSuggestedLabel = vtag; }
 
 #if defined(ONEPASS_RESERVATION)
 	void updateRoutingInfo( const LogicalInterfaceSet&, const NetAddress&, bool, bool, bool = false, uint32 = 0 );
