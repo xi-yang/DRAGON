@@ -5529,11 +5529,18 @@ _ACEOF
 	fi
 fi
 
+echo "$as_me:$LINENO: checking gcc version" >&5
+echo $ECHO_N "checking gcc version... $ECHO_C" >&6
+gccver=`$CXX -dumpversion`
+num1=`echo $gccver | cut -d . -f1`
+num2=`echo $gccver | cut -d . -f2`
+gccnum=`(expr $num1 "*" 100 + $num2) 2>/dev/null`
+echo "$as_me:$LINENO: result: $gccver" >&5
+echo "${ECHO_T}$gccver" >&6
 
 # Check whether --enable-performance or --disable-performance was given.
 if test "${enable_performance+set}" = set; then
   enableval="$enable_performance"
-
 else
   enable_performance=no
 fi;
@@ -5552,7 +5559,9 @@ else
 	echo "$as_me:$LINENO: result: disabled" >&5
 echo "${ECHO_T}disabled" >&6
 fi
-
+if test "$gccnum" -ge "400"; then
+        COMPILE_FLAGS="$COMPILE_FLAGS -fno-threadsafe-statics"
+fi
 
 # Check whether --enable-switch-port-shutdown or --disable-switch-port-shutdown was given.
 if test "${enable_switch_port_shutdown+set}" = set; then
