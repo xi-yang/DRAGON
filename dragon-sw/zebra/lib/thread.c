@@ -312,6 +312,8 @@ thread_remove_read (struct thread_master *m,
 
   FD_CLR (fd, &m->readfd);
   thread = thread_search(&m->read, func, arg, fd);
+  if (!thread)
+    return NULL;
   thread = thread_list_delete(&thread->master->read, thread);
   XFREE (MTYPE_THREAD, thread);
   
