@@ -621,16 +621,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	uint32 phopLIH = msg.getRSVP_HOP_Object().getLIH();
 	bool Path_Refresh_Needed = false;
 
-	if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
-		if (RSVP_Global::rsvp->getRoutingService().ospfOperational())
-			RSVP_Global::rsvp->getRoutingService().ospf_socket_init();
-		if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()) {
-			RSVP_Global::rsvp->getRoutingService().disableOspfSocket();
-			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
-			return;
-		}
-	}
-
 	NetAddress loopback = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
 
 #if defined(WITH_API)
@@ -792,7 +782,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		if (generalizedUni){
 			LOG(1)(Log::Routing, "Warning: GENEALIZED UNI Object at VLSR UNI-N is not supported!");
 		}
-		/* moved up
+
 		if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
 			if (RSVP_Global::rsvp->getRoutingService().ospfOperational())
 				RSVP_Global::rsvp->getRoutingService().ospf_socket_init();
@@ -802,7 +792,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				return;
 			}
 		}
-		*/
+
 		if ( destAddress.isMulticast() ) {
 			LOG(2)( Log::MPLS, "MPLS: explicit routing not allowed for multicast sessions:", destAddress );
 			explicitRoute = NULL;

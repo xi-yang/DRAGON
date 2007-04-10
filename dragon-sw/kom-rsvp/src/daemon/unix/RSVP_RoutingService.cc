@@ -535,9 +535,15 @@ bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint
 // Get its loopback address
 // used for filling the IP address field of the RSVP_HOP object
 NetAddress RoutingService::getLoopbackAddress() {
-        //for UNI Client
-        if (ospf_socket <= 0)
+        if (ospf_socket <= 0) {
+            if (ospfOperational())
+                RSVP_Global::rsvp->getRoutingService().ospf_socket_init();
+            if (ospf_socket <= 0) {
+                RSVP_Global::rsvp->getRoutingService().disableOspfSocket();
+                //for UNI Client
                 return LogicalInterface::loopbackAddress;
+            }
+        }
 
 	//Write packet to OSPF socket ask for my hop control IP address
 	uint8 message = GetLoopbackAddress;
