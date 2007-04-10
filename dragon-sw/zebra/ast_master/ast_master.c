@@ -60,7 +60,7 @@ struct string_syntex_check local_field =
 
 struct string_syntex_check bandwidth_field = 
 {
-	22,   
+	23,   
  	{{"gige",	"GigE (1000.00 Mbps)"},
 	 {"gige_f", 	"Fast GigE (1250.00 Mbps)"},
 	 {"2gige",	"2 GigE (2000.00 Mbps)"},
@@ -72,6 +72,7 @@ struct string_syntex_check bandwidth_field =
 	 {"8gige",      "8 GigE (8000.00 Mbps)"},
 	 {"9gige",      "9 GigE (9000.00 Mbps)"},
 	 {"eth100M",	"Ethernet (100.00 Mbps)"},
+	 {"eth150M",	"Ethernet (150.00 Mbps)"},
 	 {"eth200M",    "Ethernet (200.00 Mbps)"},
 	 {"eth300M",    "Ethernet (300.00 Mbps)"},
 	 {"eth400M",    "Ethernet (400.00 Mbps)"},
