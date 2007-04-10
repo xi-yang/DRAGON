@@ -536,10 +536,11 @@ bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint
 // used for filling the IP address field of the RSVP_HOP object
 NetAddress RoutingService::getLoopbackAddress() {
         if (ospf_socket <= 0) {
-            if (ospfOperational())
-                RSVP_Global::rsvp->getRoutingService().ospf_socket_init();
+            if (ospfOperational()) {
+                if (!RSVP_Global::rsvp->getRoutingService().ospf_socket_init())
+                    RSVP_Global::rsvp->getRoutingService().disableOspfSocket()
+            }
             if (ospf_socket <= 0) {
-                RSVP_Global::rsvp->getRoutingService().disableOspfSocket();
                 //for UNI Client
                 return LogicalInterface::loopbackAddress;
             }
