@@ -136,7 +136,7 @@ struct string_value_conversion conv_gpid =
 
 struct string_value_conversion conv_bandwidth = 
 {
-	41,
+	42,
 	{{ "ds0", 	LSP_BW_DS0, 			3}, 
 	{ "ds1", 		LSP_BW_DS1, 			3}, 
 	{ "e1", 		LSP_BW_E1, 				2}, 
@@ -147,6 +147,7 @@ struct string_value_conversion conv_bandwidth =
 	{ "ds3",		LSP_BW_DS3, 			3},
 	{ "sts1", 		LSP_BW_STS1,			1}, 
 	{ "eth100M", 	LSP_BW_Fast_Eth,			7}, 
+	{ "eth150M", 	LSP_BW_150m_Eth,		7}, 
 	{ "eth200M", 	LSP_BW_200m_Eth,		7}, 
 	{ "eth300M", 	LSP_BW_300m_Eth,		7}, 
 	{ "eth400M", 	LSP_BW_400m_Eth,		7}, 
@@ -1209,7 +1210,7 @@ ALIAS (dragon_set_lsp_vtag_default,
 
 DEFUN (dragon_set_lsp_sw,
        dragon_set_lsp_sw_cmd,
-       "set bandwidth (gige|gige_f|hdtv|oc48|10g|eth100M|eth200M|eth300M|eth400M|eth500M|eth600M|eth700M|eth800M|eth900M|2gige|3gige|4gige|5gige|6gige|7gige|8gige|9gige|zero) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
+       "set bandwidth (gige|gige_f|hdtv|oc48|10g|eth100M|eth150M|eth200M|eth300M|eth400M|eth500M|eth600M|eth700M|eth800M|eth900M|2gige|3gige|4gige|5gige|6gige|7gige|8gige|9gige|zero) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
        "Set LSP parameters\n"
        "Bandwidth\n"
        "1000.00 Mbps\n"
