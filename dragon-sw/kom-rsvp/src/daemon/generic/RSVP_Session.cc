@@ -786,7 +786,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
 			if (RSVP_Global::rsvp->getRoutingService().ospfOperational()) {
 				if (!RSVP_Global::rsvp->getRoutingService().ospf_socket_init())
-					RSVP_Global::rsvp->getRoutingService().disableOspfSocket()
+					RSVP_Global::rsvp->getRoutingService().disableOspfSocket();
 			}
 			if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()) {
 				RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
