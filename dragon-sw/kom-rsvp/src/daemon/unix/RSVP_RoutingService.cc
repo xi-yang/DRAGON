@@ -537,8 +537,8 @@ bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint
 NetAddress RoutingService::getLoopbackAddress() {
         if (ospf_socket <= 0) {
             if (ospfOperational()) {
-                if (!RSVP_Global::rsvp->getRoutingService().ospf_socket_init())
-                    RSVP_Global::rsvp->getRoutingService().disableOspfSocket();
+                if (!ospf_socket_init())
+                    disableOspfSocket();
             }
             if (ospf_socket <= 0) {
                 //for UNI Client

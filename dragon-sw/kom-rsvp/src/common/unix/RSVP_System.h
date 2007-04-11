@@ -197,6 +197,7 @@ extern inline uint32 floatMbitsToBytesInNetworkOrder(ieee32float x)
 	else if (x==44.736) 			return 0x4AAAA780; //TSpec::R_DS3;
 	else if (x==51.84) 			return 0x4AC5C100; //TSpec::R_STS1;
 	else if (x==100.00) 			return 0x4B3EBC20; //TSpec::R_Fast_Eth;
+	else if (x==150.00)			return 0x4B8F0D18; //TSpec: R_150M_Eth;
 	else if (x==200.00) 			return 0x4BBEBC20; //TSpec::R_200M_Eth;
 	else if (x==300.00) 			return 0x4C0F0D18; //TSpec::R_300M_Eth;
 	else if (x==400.00) 			return 0x4C3EBC20; //TSpec::R_400M_Eth;
@@ -246,6 +247,7 @@ extern inline ieee32float bytesInNetworkOrderToFloatMbits(uint32 x)
 	else if (x==0x4AAAA780) 		return  44.736;  
 	else if (x==0x4AC5C100) 		return  51.84;   
 	else if (x==0x4B3EBC20) 		return  100.00;  
+	else if (x==0x4B8F0D18)		return  150.00;
 	else if (x==0x4BBEBC20) 		return  200.00;
 	else if (x==0x4C0F0D18) 		return  300.00;
 	else if (x==0x4C3EBC20) 		return  400.00;

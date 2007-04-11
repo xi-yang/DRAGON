@@ -124,6 +124,7 @@ public:
 			R_DS3			= 0x4AAAA780,
 			R_STS1			= 0x4AC5C100,
 			R_Fast_Eth		= 0x4B3EBC20,
+			R_150M_Eth		= 0x4B8F0D18,
 			R_200M_Eth		= 0x4BBEBC20,
 			R_300M_Eth		= 0x4C0F0D18,
 			R_400M_Eth		= 0x4C3EBC20,
