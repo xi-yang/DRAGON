@@ -224,6 +224,25 @@ public:
 		return ret;
 	}
 
+	bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOspf()
+	{
+		SubnetUNI_Data* pUniData = (isSource ? &subnetUniSrc : &subnetUniDest);
+		bool ret = RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(pUniData->data_if_ipv4, pUniData->subnet_id, *pUniData);
+		if (ret)
+		{
+			uint8 ts = 1;
+			for ( ; ts <= MAX_TIMESLOTS_NUM; ts++)
+			{
+				if (!HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
+				{
+					pUniData->first_timeslot = ts;
+					break;
+				}
+			}
+		}
+		return ret;	    
+	}
+
 	//////////////// TL1 related functions << end //////////////
 
 	//Upcall for source/destination client
