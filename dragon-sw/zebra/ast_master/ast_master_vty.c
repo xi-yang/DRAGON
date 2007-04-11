@@ -85,6 +85,17 @@ DEFUN (master_show_ast,
       print_flags(vty, curcfg->flags); 
       vty_out(vty, VTY_NEWLINE);
     }
+
+    if (!curcfg->node_list || !curcfg->link_list) {
+      if (curcfg != search_cfg_in_list(curcfg->ast_id)) 
+	free_application_cfg(curcfg);
+ 
+      vty_out(vty, "%sTotal number of nodes: 0%s", VTY_NEWLINE, VTY_NEWLINE); 
+      vty_out(vty, "%sTotal number of links: 0%s", VTY_NEWLINE, VTY_NEWLINE);
+
+      return CMD_SUCCESS;
+    }
+
     vty_out(vty, "%sTotal number of nodes: %d %s", VTY_NEWLINE, curcfg->node_list->count, VTY_NEWLINE);
     
     for (curnode = curcfg->node_list->head;
