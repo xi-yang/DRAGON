@@ -33,6 +33,7 @@ public:
 	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID);
 	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
 	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID);
+	virtual bool setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID) { return true; }
 
 	//Vendor/Model specific hook functions
 	virtual bool hook_createVLAN(const uint32 vlanID);
