@@ -742,7 +742,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     if (vlanLow == 0 && vlanHigh == 0)
         sprintf(packetType, "pkttype=all");
     else if (vlanHigh > vlanLow)
-        sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=d&&%d", vlanLow,vlanHigh);
+        sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=%d&&%d", vlanLow,vlanHigh);
     else
         sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=%d", vlanLow);
 
@@ -1532,7 +1532,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        ret = readShell(bufCmd, "   /* Empty", "   \"", 1, 5);
+        ret = readShell("   /* Empty", "   \"", 1, 5);
         if (ret == 1)
         {
             readShell(SWITCH_PROMPT, NULL, 1, 5);
@@ -1540,7 +1540,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
         }
         else if (ret = 2)
         {
-            while ((ret = ReadShellPattern(bufCmd, OMPortString.chars(), "GROUPMEM=", "VCGFAILUREBASESEV=",  ";", 5)) != READ_STOP)
+            while ((ret = ReadShellPattern(bufCmd, (char*)OMPortString.chars(), "GROUPMEM=", "VCGFAILUREBASESEV=",  ";", 5)) != READ_STOP)
             { // if (ret == 3), we have reach the end, i.e., ";"...
                 if (ret == 1)
                 {
