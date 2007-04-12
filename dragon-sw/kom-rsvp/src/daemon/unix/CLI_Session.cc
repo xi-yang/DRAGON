@@ -395,7 +395,7 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
 	alarm(0); // disable alarm
 	//stop();
 	LOG(1)(Log::MPLS, "Failed to read from telnet output -- too long line!");
-	return (-2);
+	return TOO_LONG_LINE;
       }
       m = read(fdin, &line[n], 1);
       if (m != 1) {
@@ -454,10 +454,10 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
 }
 
 // Read output until the string 'readuntil' is matched; return 1 (or 2) if the output contains pattern1 (or pattern2)
-int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,   int timeout)
+int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, char *readuntil, char *readstop, int timeout)
 {
     int ret = 0;
-    int n, m, len1, len2, len3;
+    int n, m, len1, len2, len3, len4;
     bool foundstart = false;
   
     if (fdin < 0)
@@ -467,6 +467,7 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
     len1 = (pattern1 != NULL) ? strlen(pattern1) : 0;
     len2 = (pattern2 != NULL) ? strlen(pattern1) : 0; 
     len3 = strlen(readuntil);
+    len4 = (readstop != NULL) ? strlen(readstop) : 0;
   
     // setup alarm (so we won't hang forever upon problems)
     signal(SIGALRM, sigalrm);
@@ -479,7 +480,7 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
 	alarm(0); // disable alarm
 	//stop();
 	LOG(1)(Log::MPLS, "Failed to read from telnet output -- too long line!");
-	return (-2);
+	return TOO_LONG_LINE;
       }
       m = read(fdin, &buf[n], 1);
       if (m != 1) {
@@ -509,11 +510,20 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
 
       if (n >= len3-1) {
 	if (strncmp(buf+n-len3+1, readuntil, len3) == 0) {
-	  // we found the keyword we were searching for 
+	  // we reach the readuntil string, returning the ret value...
 	  alarm(0); // disable alarm 
 	  return ret;
 	}
       }
+
+      if (len4 > 0 && n >= len4-1) {
+	if (strncmp(buf+n-len4+1, readstop, len4) == 0) {
+	  // we have to stop here, returning readstop (3), no matter what we have got...
+	  alarm(0); // disable alarm 
+	  return READ_STOP; // readstop
+	}
+      }
+
       n++;
     }
 }

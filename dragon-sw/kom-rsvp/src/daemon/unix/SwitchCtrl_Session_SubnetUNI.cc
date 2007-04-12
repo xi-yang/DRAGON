@@ -1431,7 +1431,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
     if (ret == 1) 
     {
         LOG(3)(Log::MPLS, OMPortString, " concatentation type has been found.\n", bufCmd);
-        ret = ReadShellPattern(bufCmd, "Virtual 50MBPS", "Virtual 150MBPS", "OSPFCOST", 5);
+        ret = ReadShellPattern(bufCmd, "Virtual 50MBPS", "Virtual 150MBPS", "OSPFCOST", NULL, 5);
         if (ret == 1)
             funcRet = CATUNIT_50MBPS;
         else if (ret == 2)
@@ -1479,7 +1479,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, ui
     if (ret == 1) 
     {
         LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapOCN_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
-        ret = ReadShellPattern(bufCmd, NULL, NULL, ",NOACT", 5);
+        ret = ReadShellPattern(bufCmd, NULL, NULL, ",NOACT", NULL, 5);
         if (ret == 0) {
             bufCmd[strlen(bufCmd) - 6] = 0;
             pstr = strstr(bufCmd, "TIMESLOTMAP=");
@@ -1516,7 +1516,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
 {
     int ret = 0;
     String OMPortString, ETTPString;
-    char* pbuf, pstr;
+    char* pstr;
     int ts, ts1, ts2;
 
     assert(ts_bitmask);
@@ -1533,46 +1533,37 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
     if (ret == 1) 
     {
         ret = readShell(bufCmd, "   /* Empty", "   \"", 1, 5);
-        if (ret <= 0) 
+        if (ret == 1)
         {
-            goto _out;
-        }
-        else if (ret == 0)
-        {
-            ; // Do nothing
+            readShell(SWITCH_PROMPT, NULL, 1, 5);
+            return true;
         }
         else if (ret = 2)
         {
-            do {
-                ret = ReadShellPattern(bufCmd, OMPortString.chars(), NULL, ";", 5);
+            while ((ret = ReadShellPattern(bufCmd, OMPortString.chars(), "GROUPMEM=", "VCGFAILUREBASESEV=",  ";", 5)) != READ_STOP)
+            { // if (ret == 3), we have reach the end, i.e., ";"...
                 if (ret == 1)
                 {
-                    pbuf = bufCmd;
-                    while ((pbuf = strstr(pbuf, OMPortString.chars())) != NULL)
+                    pstr = strstr(bufCmd, "GROUPMEM=");
+                    if (!pstr)
+                        goto _out;
+                    if (sscanf(pstr+9, "%d&&%d", &ts1, &ts2) != 1)
+                        goto _out;
+                    for (ts = ts1; ts <= ts2; ts++)
                     {
-                        pstr = strstr(pbuf, "GROUPMEM=");
-                        //@@@@ the line might be too long and broken in the middle of a VCG info?
-                        if (!pstr)
-                        {
-                            LOG(3)(Log::MPLS, OMPortString, " Long line broken in the middle...\n", bufCmd);
-                            goto _out;
-                        }
-                        if (sscanf(pstr+9, "%d&&%d", &ts1, &ts2) != 1)
-                        {
-                            LOG(3)(Log::MPLS, OMPortString, " Long line broken in the middle...\n", bufCmd);
-                            goto _out;
-                        }
-                        for (ts = ts1; ts <= ts2; ts++)
-                        {
-                            SET_TIMESLOT(ts_bitmask, ts);
-                        }
-                    }                    
+                        SET_TIMESLOT(ts_bitmask, ts);
+                    }
                 }
-            } while (ret == TOO_LONG_LINE); // if the output is too long, continue reading...
+                else if (ret == 2)
+                    continue; // not one of the VCGs we are looing for
+                else
+                    goto _out; // wrong
+            }
+            LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapVCG_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
+            return true;    
         }
-        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapVCG_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
-        readShell(SWITCH_PROMPT, NULL, 1, 5);
-        return true;
+        else
+            goto _out;
     }
     else if (ret == 2) 
     {

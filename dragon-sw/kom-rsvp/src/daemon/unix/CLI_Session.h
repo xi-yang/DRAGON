@@ -29,6 +29,7 @@ extern int    got_alarm;
 #define LINELEN  4096
 #define SWITCH_PROMPT ((char*)-1) // a pointer == (-1), indicating that a switch prompt is expected.
 #define TOO_LONG_LINE (-2)
+#define READ_STOP (-3)
 
 #define TELNET_EXEC     "/usr/bin/telnet"
 #define TELNET_PORT     "23"
@@ -70,7 +71,7 @@ protected:
 	//int clearShell();
 
 	int readShell(char *text1, char *text2, int verbose, int timeout);
-	int ReadShellPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,   int timeout);
+	int ReadShellPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,  char *readstop, int timeout);
 	int writeShell(char *text, int timeout, bool echo_back = false);
 	virtual bool isSwitchPrompt(char *p, int len);
 	virtual bool preAction();
