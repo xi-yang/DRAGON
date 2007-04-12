@@ -640,7 +640,9 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
     char shelf_alpha;
 
     uint32 logicalPort = ntohl(subnetUniDest.logical_port);
-    uint8 ts = subnetUniDest.first_timeslot;
+    //uint8 ts = subnetUniDest.first_timeslot;
+    //@@@@ temp!
+    uint8 ts = subnetUniSrc.first_timeslot;
     if (ptpCatUnit == CATUNIT_UNKNOWN)
     {
     	if ((ptpCatUnit = getConcatenationUnit_TL1()) == CATUNIT_UNKNOWN)
