@@ -1547,7 +1547,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
                     pstr = strstr(bufCmd, "GROUPMEM=");
                     if (!pstr)
                         goto _out;
-                    if (sscanf(pstr+9, "%d&&%d", &ts1, &ts2) != 1)
+                    if (sscanf(pstr+9, "%d&&%d", &ts1, &ts2) != 2)
                         goto _out;
                     for (ts = ts1; ts <= ts2; ts++)
                     {
