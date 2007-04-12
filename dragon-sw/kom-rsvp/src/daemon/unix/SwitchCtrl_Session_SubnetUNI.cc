@@ -1456,8 +1456,9 @@ _out:
     return funcRet;
 }
 
-
-bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap_TL1(uint8 *ts_bitmask, uint32 logicalPort)
+// Get timeslots map based on the allocated OCN timeslots on the card that has the logicalPort
+// OCN timeslots are allocated when a cross connect is in place
+bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, uint32 logicalPort)
 {
     int ret = 0;
     String OMPortString, ETTPString;
@@ -1477,7 +1478,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap_TL1(uint8 *ts_bitmask, uint3
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMap_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
+        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapOCN_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
         ret = ReadShellPattern(bufCmd, NULL, NULL, ",NOACT", 5);
         if (ret == 0) {
             bufCmd[strlen(bufCmd) - 6] = 0;
@@ -1497,7 +1498,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap_TL1(uint8 *ts_bitmask, uint3
     }
     else if (ret == 2) 
     {
-        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMap_TL1 retrieving timeslots has been denied.\n", bufCmd);
+        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapOCN_TL1 retrieving timeslots has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -1505,7 +1506,85 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap_TL1(uint8 *ts_bitmask, uint3
         goto _out;
 
 _out:
-    LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMap_TL1 method via TL1_TELNET failed...\n", bufCmd);
+    LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapOCN_TL1 method via TL1_TELNET failed...\n", bufCmd);
+    return false;
+}
+
+// Get timeslots map based on existing VCGs on the card that has the logicalPort.
+// This is more acturate timeslots map to avoid conflicting timeslots allocation to simultaneous VCGs.
+bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, uint32 logicalPort)
+{
+    int ret = 0;
+    String OMPortString, ETTPString;
+    char* pbuf, pstr;
+    int ts, ts1, ts2;
+
+    assert(ts_bitmask);
+    memset(ts_bitmask, 0, MAX_TIMESLOTS_NUM/8);
+
+    getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
+
+    sprintf(bufCmd, "rtrv-vcg::all:%d;", getCurrentCtag());
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        ret = readShell(bufCmd, "   /* Empty", "   \"", 1, 5);
+        if (ret <= 0) 
+        {
+            goto _out;
+        }
+        else if (ret == 0)
+        {
+            ; // Do nothing
+        }
+        else if (ret = 2)
+        {
+            do {
+                ret = ReadShellPattern(bufCmd, OMPortString.chars(), NULL, ";", 5);
+                if (ret == 1)
+                {
+                    pbuf = bufCmd;
+                    while ((pbuf = strstr(pbuf, OMPortString.chars())) != NULL)
+                    {
+                        pstr = strstr(pbuf, "GROUPMEM=");
+                        //@@@@ the line might be too long and broken in the middle of a VCG info?
+                        if (!pstr)
+                        {
+                            LOG(3)(Log::MPLS, OMPortString, " Long line broken in the middle...\n", bufCmd);
+                            goto _out;
+                        }
+                        if (sscanf(pstr+9, "%d&&%d", &ts1, &ts2) != 1)
+                        {
+                            LOG(3)(Log::MPLS, OMPortString, " Long line broken in the middle...\n", bufCmd);
+                            goto _out;
+                        }
+                        for (ts = ts1; ts <= ts2; ts++)
+                        {
+                            SET_TIMESLOT(ts_bitmask, ts);
+                        }
+                    }                    
+                }
+            } while (ret == TOO_LONG_LINE); // if the output is too long, continue reading...
+        }
+        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapVCG_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2) 
+    {
+        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapVCG_TL1 retrieving timeslots has been denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else
+        goto _out;
+
+_out:
+    LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapVCG_TL1 method via TL1_TELNET failed...\n", bufCmd);
     return false;
 }
 

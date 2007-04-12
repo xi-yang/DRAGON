@@ -28,6 +28,7 @@ extern int    got_alarm;
 
 #define LINELEN  4096
 #define SWITCH_PROMPT ((char*)-1) // a pointer == (-1), indicating that a switch prompt is expected.
+#define TOO_LONG_LINE (-2)
 
 #define TELNET_EXEC     "/usr/bin/telnet"
 #define TELNET_PORT     "23"

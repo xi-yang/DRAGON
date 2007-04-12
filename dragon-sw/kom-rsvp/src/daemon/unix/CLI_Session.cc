@@ -393,9 +393,9 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
     for(;;) {
       if (n == LINELEN) {
 	alarm(0); // disable alarm
-	stop();
+	//stop();
 	LOG(1)(Log::MPLS, "Failed to read from telnet output -- too long line!");
-	return (-1);        
+	return (-2);
       }
       m = read(fdin, &line[n], 1);
       if (m != 1) {
@@ -453,6 +453,7 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
   }
 }
 
+// Read output until the string 'readuntil' is matched; return 1 (or 2) if the output contains pattern1 (or pattern2)
 int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,   int timeout)
 {
     int ret = 0;
@@ -476,9 +477,9 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
     for(;;) {
       if (n == LINELEN) {
 	alarm(0); // disable alarm
-	stop();
+	//stop();
 	LOG(1)(Log::MPLS, "Failed to read from telnet output -- too long line!");
-	return (-1);        
+	return (-2);
       }
       m = read(fdin, &buf[n], 1);
       if (m != 1) {

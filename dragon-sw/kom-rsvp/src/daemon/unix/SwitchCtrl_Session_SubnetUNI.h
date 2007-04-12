@@ -201,12 +201,13 @@ public:
 	}
 
 	SONET_CATUNIT getConcatenationUnit_TL1(uint32 logicalPort = 0);
-	bool syncTimeslotsMap_TL1(uint8 *ts_bitmask, uint32 logicalPort = 0);
 
+	bool syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, uint32 logicalPort = 0);
+	bool syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, uint32 logicalPort = 0);
 	bool syncTimeslotsMap() 
 	{
 		SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
-		bool ret = syncTimeslotsMap_TL1(pUniData->timeslot_bitmask);
+		bool ret = syncTimeslotsMapVCG_TL1(pUniData->timeslot_bitmask);
 		if (ret)
 		{
 			uint8 ts = 1;
@@ -224,6 +225,7 @@ public:
 		return ret;
 	}
 
+/*
 	bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOspf()
 	{
 		SubnetUNI_Data* pUniData = (isSource ? &subnetUniSrc : &subnetUniDest);
@@ -242,7 +244,7 @@ public:
 		}
 		return ret;	    
 	}
-
+*/
 	//////////////// TL1 related functions << end //////////////
 
 	//Upcall for source/destination client
