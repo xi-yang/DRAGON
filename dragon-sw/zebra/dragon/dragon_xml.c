@@ -24,7 +24,6 @@
 
 struct dragon_callback {
   char *ast_id;
-  int clnt_sock;
   char lsp_name[LSP_NAME_LEN+1];
   enum link_stype stype;
   enum node_stype node_stype;
@@ -98,6 +97,7 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
   struct dragon_callback *data;
   int status = AST_UNKNOWN;
   FILE *fp;
+  int sock;
 
   if (pending_list.count == 0 || !lsp)
     return;
@@ -129,7 +129,7 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
   glob_app_cfg = NULL;
 
   zlog_info("dragon_upcall_callback(): START");
-  zlog_info("** msg_type: %d; lsp_name: %s; clnt_sock: %d", msg_type, data->lsp_name, data->clnt_sock);
+  zlog_info("** msg_type: %d; lsp_name: %s", msg_type, data->lsp_name);
   unlink(DRAGON_XML_RESULT);
 
   glob_app_cfg = retrieve_app_cfg(data->ast_id, LINK_AGENT);
@@ -186,18 +186,12 @@ dragon_upcall_callback(int msg_type, struct lsp* lsp)
 
   zlog_info("sending SETUP_RESP to ast_master at %s", glob_app_cfg->ast_ip);
 
-  if (send_file_over_sock(data->clnt_sock, DRAGON_XML_RESULT) == 0) 
-    data->clnt_sock = send_file_to_agent(glob_app_cfg->ast_ip, MASTER_PORT, DRAGON_XML_RESULT);
+  sock = send_file_to_agent(glob_app_cfg->ast_ip, MASTER_PORT, DRAGON_XML_RESULT);
 
   glob_app_cfg = NULL;
   
   /* FIONA */
-  if (data->clnt_sock != -1) {
-    thread_remove_read(master, FIN_accept, NULL, data->clnt_sock);
-    zlog_info("SOCK: closing callback sock %d", data->clnt_sock);
-    close(data->clnt_sock); 
-    data->clnt_sock = -1;
-  }
+  close(sock); 
   free(data->ast_id);
   free(data);
   zlog_info("dragon_upcall_callback(): DONE");
@@ -1154,7 +1148,6 @@ dragon_link_provision()
 	      break;
 
 	  }
-	  data->clnt_sock = clnt_sock;
 	  strncpy(data->link_name, mylink->name, NODENAME_MAXLEN);
 	  adtlist_add(&pending_list, data);
 	  mylink->status = AST_PENDING;

@@ -1411,18 +1411,18 @@ send_task_to_link_agent()
       set_alllink(srcnode->res.n.link_list, AST_PENDING, commit, flags, NULL);
     }
 
-    if (glob_app_cfg->action != AST_COMPLETE) {
-      zlog_info("SOCK: %d added for dragon_callback", sock);
-      thread_add_read(master, dragon_callback, NULL, sock);
-      if (srcnode->dragon_sock != -1) {
-	thread_remove_read(master, dragon_callback, NULL, srcnode->dragon_sock);
-	close(srcnode->dragon_sock);
-	zlog_info("SOCK: closing dragon_sock %d", srcnode->dragon_sock);
-      }
-      srcnode->dragon_sock = sock;
-    } else {
-      close(sock);
-      srcnode->dragon_sock = -1;
+    if (glob_app_cfg->action != AST_COMPLETE && glob_app_cfg->action != SETUP_REQ) { 
+      zlog_info("SOCK: %d added for dragon_callback", sock); 
+      thread_add_read(master, dragon_callback, NULL, sock); 
+      if (srcnode->dragon_sock != -1) { 
+	thread_remove_read(master, dragon_callback, NULL, srcnode->dragon_sock); 
+	close(srcnode->dragon_sock); 
+	zlog_info("SOCK: closing dragon_sock %d", srcnode->dragon_sock); 
+      } 
+      srcnode->dragon_sock = sock; 
+    } else { 
+      close(sock); 
+      srcnode->dragon_sock = -1; 
     }
 
     if (glob_app_cfg->action == SETUP_REQ) {
@@ -2152,7 +2152,6 @@ master_check_app_list()
       }
 
       zlog_info("master_check_app_list(): sending RELEASE_RESP for %s", app_cfg->ast_id);
-      del_cfg_from_list(app_cfg);
       app_cfg->flags |= FLAG_RELEASE_RESP;
       app_cfg->action = RELEASE_RESP;
       app_cfg->status = AST_FAILURE;
@@ -2173,6 +2172,7 @@ master_check_app_list()
       close(app_cfg->clnt_sock);
       app_cfg->clnt_sock = -1;
 
+      break;
     } else if (IS_SET_SETUP_REQ(app_cfg) && !IS_SET_SETUP_RESP(app_cfg)) {
 
       time_escape = curr_time.tv_sec - app_cfg->start_time.tv_sec;
@@ -2203,6 +2203,9 @@ master_check_app_list()
       app_cfg->clnt_sock = -1;
     }
   }
+
+  if (app_cfg->action == RELEASE_RESP) 
+    del_cfg_from_list(app_cfg);
 
   alarm(next_alarm);
   return;
