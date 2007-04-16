@@ -32,7 +32,7 @@
 #define BROKER_RECV     "/tmp/broker_resp.xml"
 #endif
 
-#define CLIENT_TIMEOUT	60
+#define CLIENT_TIMEOUT	20
 #define SQL_RESULT	"/tmp/mysql.result"
 
 /* Configuration filename and directory. */
@@ -2130,6 +2130,7 @@ master_check_app_list()
   struct timeval curr_time;
   unsigned int next_alarm = 0;
   long time_escape;
+  unsigned int client_timeout = 0;
 
   gettimeofday(&curr_time, NULL);
 
@@ -2141,15 +2142,18 @@ master_check_app_list()
 	curnode;
 	curnode = curnode->next) {
     app_cfg = (struct application_cfg*) curnode->data;
+    client_timeout = CLIENT_TIMEOUT + ((app_cfg->link_list->count)/10) * CLIENT_TIMEOUT;
+
+    time_escape = curr_time.tv_sec - app_cfg->start_time.tv_sec;
+    if (time_escape < client_timeout) {
+      if (next_alarm == 0)
+	next_alarm = client_timeout - time_escape;
+      else if ((client_timeout - time_escape) < next_alarm)
+	next_alarm = client_timeout - time_escape; 
+      continue; 
+    }
 
     if (IS_SET_RELEASE_REQ(app_cfg) && !IS_SET_RELEASE_RESP(app_cfg)) {
-
-      time_escape = curr_time.tv_sec - app_cfg->start_time.tv_sec;
-      if (time_escape < CLIENT_TIMEOUT) {
-	if ((CLIENT_TIMEOUT - time_escape) > next_alarm)
-	  next_alarm = CLIENT_TIMEOUT - time_escape;
-	continue;
-      }
 
       zlog_info("master_check_app_list(): sending RELEASE_RESP for %s", app_cfg->ast_id);
       app_cfg->flags |= FLAG_RELEASE_RESP;
@@ -2174,13 +2178,6 @@ master_check_app_list()
 
       break;
     } else if (IS_SET_SETUP_REQ(app_cfg) && !IS_SET_SETUP_RESP(app_cfg)) {
-
-      time_escape = curr_time.tv_sec - app_cfg->start_time.tv_sec;
-      if (time_escape < CLIENT_TIMEOUT) {
-	if ((CLIENT_TIMEOUT - time_escape) > next_alarm)
-	  next_alarm = CLIENT_TIMEOUT - time_escape;
-	continue;
-      }
 
       zlog_info("master_check_app_list(): sending SETUP_REQ for %s", app_cfg->ast_id);
       app_cfg->flags |= FLAG_SETUP_RESP;
@@ -2207,7 +2204,10 @@ master_check_app_list()
   if (app_cfg->action == RELEASE_RESP && app_cfg->clnt_sock == -1) 
     del_cfg_from_list(app_cfg);
 
+  if (next_alarm)
+    zlog_info("alarm(): %d", next_alarm);
   alarm(next_alarm);
+
   return;
 }
 
