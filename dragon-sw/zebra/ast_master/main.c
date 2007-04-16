@@ -2204,7 +2204,7 @@ master_check_app_list()
     }
   }
 
-  if (app_cfg->action == RELEASE_RESP) 
+  if (app_cfg->action == RELEASE_RESP && app_cfg->clnt_sock == -1) 
     del_cfg_from_list(app_cfg);
 
   alarm(next_alarm);
