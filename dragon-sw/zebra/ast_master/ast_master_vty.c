@@ -58,6 +58,27 @@ void print_flags(struct vty *vty, u_int32_t flags)
     vty_out(vty, "RES_UNFIXED"); 
 }
 
+static void release_ast(char* ast_id)
+{
+  FILE *fp;
+
+  fp = fopen(AST_XML_RECV, "w+");
+  fprintf(fp, "<topology ast_id=\"%s\" action=\"RELEASE_REQ\"></topology>",
+		  ast_id);
+  fflush(fp);
+  fclose(fp);
+
+  glob_app_cfg = topo_xml_parser(AST_XML_RECV, MASTER);
+  if (!glob_app_cfg) {
+    zlog_info("internal error");
+    return;
+  }
+  glob_app_cfg->clnt_sock = -1;
+
+  master_process_release_req();
+
+}
+
 DEFUN (master_release,
        master_release_cmd,
        "release ast NAME",
@@ -65,35 +86,36 @@ DEFUN (master_release,
        "AST\n"
        "ast_id\n")
 {
-  FILE *fp;
+  struct adtlistnode *curnode;
+  struct application_cfg *curcfg;
 
-  glob_app_cfg = retrieve_app_cfg(argv[0], MASTER);
-  if (!glob_app_cfg) {
-    vty_out(vty, "ast_id: %s is not found in the active or achieved AST list%s", argv[0], VTY_NEWLINE);
-    return CMD_SUCCESS;
-  }
-
-  if (glob_app_cfg->action == RELEASE_RESP) {
-    vty_out(vty, "ast_id: %s has received RELEASE_REQ already%s", argv[0], VTY_NEWLINE);
-    if (glob_app_cfg != search_cfg_in_list(glob_app_cfg->ast_id))
-      free_application_cfg(glob_app_cfg);
-    return CMD_SUCCESS;
-  }
+  if (argc == 0) {
+    if (app_list.count == 0) {
+      vty_out(vty, "no active ast; nothing will be released%s", VTY_NEWLINE);
+      return CMD_SUCCESS; 
+    }
+    for (curnode = app_list.head;
+	 curnode;
+	 curnode = curnode->next) {
+      curcfg = (struct application_cfg*) curnode->data;
+      vty_out(vty, "Releasing ... %s [%s]%s", curcfg->ast_id, curcfg->xml_file, VTY_NEWLINE);
+      release_ast(curcfg->ast_id);
+    }
+  } else {
+    glob_app_cfg = retrieve_app_cfg(argv[0], MASTER);
+    if (!glob_app_cfg) {
+      vty_out(vty, "ast_id: %s is not found in the active or achieved AST list%s", argv[0], VTY_NEWLINE);
+      return CMD_SUCCESS;
+    }
   
-  fp = fopen(AST_XML_RECV, "w+");
-  fprintf(fp, "<topology ast_id=\"%s\" action=\"RELEASE_REQ\"></topology>",
-		  argv[0]);
-  fflush(fp);
-  fclose(fp);
-
-  glob_app_cfg = topo_xml_parser(AST_XML_RECV, MASTER);
-  if (!glob_app_cfg) {
-    vty_out(vty, "internal error%s", VTY_NEWLINE);
-    return CMD_SUCCESS;
+    if (glob_app_cfg->action == RELEASE_RESP) {
+      vty_out(vty, "ast_id: %s has received RELEASE_REQ already%s", argv[0], VTY_NEWLINE);
+      if (glob_app_cfg != search_cfg_in_list(glob_app_cfg->ast_id))
+        free_application_cfg(glob_app_cfg);
+      return CMD_SUCCESS;
+    }
+    release_ast(glob_app_cfg->ast_id);
   }
-  glob_app_cfg->clnt_sock = -1;
-
-  master_process_release_req();
 
   return CMD_SUCCESS;
 }
@@ -225,7 +247,7 @@ DEFUN (master_show_ast,
       return (CMD_SUCCESS);
     }
 
-    vty_out(vty, "\t\t\t** ACTIVE AST session ** %s%s", VTY_NEWLINE, VTY_NEWLINE);
+    vty_out(vty, "\t\t\t** ACTIVE AST session(s) ** %s%s", VTY_NEWLINE, VTY_NEWLINE);
     vty_out(vty, "%20s%15s%15s%15s%s", "state", "status", "# of nodes", "# of links", VTY_NEWLINE);
     vty_out(vty, "----------------------------------------------------------------- %s", VTY_NEWLINE);
 
@@ -253,6 +275,12 @@ DEFUN (master_show_ast,
 
   return CMD_SUCCESS;
 }
+
+ALIAS (master_release,
+       master_release_all_cmd,
+       "release ast all",
+       SHOW_STR
+       "all active AST\n")
 
 ALIAS (master_show_ast,
        master_show_ast_all_cmd,
@@ -288,5 +316,6 @@ master_supp_vty_init()
   install_element(VIEW_NODE, &master_show_ast_cmd);
   install_element(VIEW_NODE, &master_show_ast_all_cmd);
   install_element(VIEW_NODE, &master_release_cmd);
+  install_element(VIEW_NODE, &master_release_all_cmd);
   install_element(CONFIG_NODE, &master_set_es_cmd);
 }
