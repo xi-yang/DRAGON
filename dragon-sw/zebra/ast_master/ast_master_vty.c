@@ -246,6 +246,6 @@ master_supp_vty_init()
   
   install_element(VIEW_NODE, &master_show_ast_cmd);
   install_element(VIEW_NODE, &master_show_ast_all_cmd);
-  install_element(VIEW_NODE, &master_relase_cmd);
+//  install_element(VIEW_NODE, &master_release_cmd);
   install_element(CONFIG_NODE, &master_set_es_cmd);
 }
