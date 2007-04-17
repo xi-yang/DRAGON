@@ -290,12 +290,8 @@ bool SwitchCtrl_Session_Force10E600::policeInputBandwidth_ShellScript(bool do_un
         }
     }
     else { // make the peak rate/burst-size the same as the commited
-        sprintf(append, " peak %d", committed_rate_int);
+        sprintf(append, " peak %d %d", committed_rate_int, burst_size);
         strcat(action, append);
-        if (peak_burst_size > 0) {
-            sprintf(append, " %d", burst_size);
-            strcat(action, append);
-        }
     }
 
     // enter interface/port configuration mode 
@@ -367,12 +363,8 @@ bool SwitchCtrl_Session_Force10E600::limitOutputBandwidth_ShellScript(bool do_un
         }
     }
     else { // make the peak rate/burst-size the same as the commited
-        sprintf(append, " peak %d", committed_rate_int);
+        sprintf(append, " peak %d %d", committed_rate_int, burst_size);
         strcat(action, append);
-        if (peak_burst_size > 0) {
-            sprintf(append, " %d", burst_size);
-            strcat(action, append);
-        }
     }
 
     // enter interface/port configuration mode 
