@@ -185,7 +185,7 @@ DEFUN (master_show_ast,
     }
 
     vty_out(vty, "\t\t\t** AST status summary ** %s%s", VTY_NEWLINE, VTY_NEWLINE);
-    vty_out(vty, "%20s%15s%15s%15s%s", "ast_stage", "status", "# of nodes", "# of links", VTY_NEWLINE);
+    vty_out(vty, "%20s%15s%15s%15s%s", "ast_state", "status", "# of nodes", "# of links", VTY_NEWLINE);
     vty_out(vty, "----------------------------------------------------------------- %s", VTY_NEWLINE);
 
     for (curnode = app_list.head;
@@ -246,5 +246,6 @@ master_supp_vty_init()
   
   install_element(VIEW_NODE, &master_show_ast_cmd);
   install_element(VIEW_NODE, &master_show_ast_all_cmd);
+  install_element(VIEW_NODE, &master_relase_cmd);
   install_element(CONFIG_NODE, &master_set_es_cmd);
 }
