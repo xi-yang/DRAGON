@@ -13,6 +13,7 @@
 #include "memory.h"
 #include "buffer.h"
 #include "ast_master_ext.h"
+#include "ast_master.h"
 
 char master_prompt[100] = "ast_master# ";
 extern struct host host;
@@ -55,6 +56,46 @@ void print_flags(struct vty *vty, u_int32_t flags)
     vty_out(vty, "RELEASE_RESP | ");
   if (flags & FLAG_UNFIXED)
     vty_out(vty, "RES_UNFIXED"); 
+}
+
+DEFUN (master_release,
+       master_release_cmd,
+       "release ast NAME",
+       "Release an existing AST\n"
+       "AST\n"
+       "ast_id\n")
+{
+  FILE *fp;
+
+  glob_app_cfg = retrieve_app_cfg(argv[0], MASTER);
+  if (!glob_app_cfg) {
+    vty_out(vty, "ast_id: %s is not found in the active or achieved AST list%s", argv[0], VTY_NEWLINE);
+    return CMD_SUCCESS;
+  }
+
+  if (glob_app_cfg->action == RELEASE_RESP) {
+    vty_out(vty, "ast_id: %s has received RELEASE_REQ already%s", argv[0], VTY_NEWLINE);
+    if (glob_app_cfg != search_cfg_in_list(glob_app_cfg->ast_id))
+      free_application_cfg(glob_app_cfg);
+    return CMD_SUCCESS;
+  }
+  
+  fp = fopen(AST_XML_RECV, "w+");
+  fprintf(fp, "<topology ast_id=\"%s\" action=\"RELEASE_REQ\"></topology>",
+		  argv[0]);
+  fflush(fp);
+  fclose(fp);
+
+  glob_app_cfg = topo_xml_parser(AST_XML_RECV, MASTER);
+  if (!glob_app_cfg) {
+    vty_out(vty, "internal error%s", VTY_NEWLINE);
+    return CMD_SUCCESS;
+  }
+  glob_app_cfg->clnt_sock = -1;
+
+  master_process_release_req();
+
+  return CMD_SUCCESS;
 }
 
 /* all commands for ast_master */
@@ -184,8 +225,8 @@ DEFUN (master_show_ast,
       return (CMD_SUCCESS);
     }
 
-    vty_out(vty, "\t\t\t** AST status summary ** %s%s", VTY_NEWLINE, VTY_NEWLINE);
-    vty_out(vty, "%20s%15s%15s%15s%s", "ast_state", "status", "# of nodes", "# of links", VTY_NEWLINE);
+    vty_out(vty, "\t\t\t** ACTIVE AST session ** %s%s", VTY_NEWLINE, VTY_NEWLINE);
+    vty_out(vty, "%20s%15s%15s%15s%s", "state", "status", "# of nodes", "# of links", VTY_NEWLINE);
     vty_out(vty, "----------------------------------------------------------------- %s", VTY_NEWLINE);
 
     for (curnode = app_list.head;
@@ -246,6 +287,6 @@ master_supp_vty_init()
   
   install_element(VIEW_NODE, &master_show_ast_cmd);
   install_element(VIEW_NODE, &master_show_ast_all_cmd);
-//  install_element(VIEW_NODE, &master_release_cmd);
+  install_element(VIEW_NODE, &master_release_cmd);
   install_element(CONFIG_NODE, &master_set_es_cmd);
 }

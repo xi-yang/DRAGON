@@ -88,7 +88,6 @@ static struct resource_agent agency[NUM_NODE_TYPE+1];
 int master_process_release_req();
 
 #define MAXPENDING      12
-#define AST_XML_RECV	"/usr/local/ast_master_recv.xml"
 
 int send_task_to_link_agent();
 int send_task_to_node_agent();
