@@ -273,6 +273,10 @@ bool SwitchCtrl_Session_Force10E600::policeInputBandwidth_ShellScript(bool do_un
 
     sprintf(vlanNum, "%d", vlan_id);
     sprintf(action, "%srate police %d", do_undo? "": "no ", committed_rate_int);
+
+    //@@@@temp
+    if (burst_size == 0) burst_size = 200;
+    
     if (burst_size > 0) {
         sprintf(append, " %d", burst_size);
         strcat(action, append);
@@ -282,6 +286,14 @@ bool SwitchCtrl_Session_Force10E600::policeInputBandwidth_ShellScript(bool do_un
         strcat(action, append);
         if (peak_burst_size > 0) {
             sprintf(append, " %d", peak_burst_size);
+            strcat(action, append);
+        }
+    }
+    else { // make the peak rate/burst-size the same as the commited
+        sprintf(append, " peak %d", committed_rate_int);
+        strcat(action, append);
+        if (peak_burst_size > 0) {
+            sprintf(append, " %d", burst_size);
             strcat(action, append);
         }
     }
@@ -338,6 +350,10 @@ bool SwitchCtrl_Session_Force10E600::limitOutputBandwidth_ShellScript(bool do_un
 
     sprintf(vlanNum, "%d", vlan_id);
     sprintf(action, "%srate limit %d", do_undo? "": "no ", committed_rate_int);
+
+    //@@@@temp
+    if (burst_size == 0) burst_size = 200;
+
     if (burst_size > 0) {
         sprintf(append, " %d", burst_size);
         strcat(action, append);
@@ -347,6 +363,14 @@ bool SwitchCtrl_Session_Force10E600::limitOutputBandwidth_ShellScript(bool do_un
         strcat(action, append);
         if (peak_burst_size > 0) {
             sprintf(append, " %d", peak_burst_size);
+            strcat(action, append);
+        }
+    }
+    else { // make the peak rate/burst-size the same as the commited
+        sprintf(append, " peak %d", committed_rate_int);
+        strcat(action, append);
+        if (peak_burst_size > 0) {
+            sprintf(append, " %d", burst_size);
             strcat(action, append);
         }
     }
