@@ -1540,7 +1540,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return true;
         }
-        else if (ret = 2)
+        else if (ret == 2)
         {
             while ((ret = ReadShellPattern(bufCmd, (char*)OMPortString.chars(), "GROUPMEM=", "VCGFAILUREBASESEV=",  ";", 5)) != READ_STOP)
             { // if (ret == 3), we have reach the end, i.e., ";"...
@@ -1552,7 +1552,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
                     ret = sscanf(pstr+9, "%d&&%d", &ts1, &ts2);
                     if (ret == 1)
                         ts2 = ts1;
-                    else (ret <= 0)
+                    else if (ret <= 0)
                         goto _out;
                     for (ts = ts1; ts <= ts2; ts++)
                     {
