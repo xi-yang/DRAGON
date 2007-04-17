@@ -736,6 +736,7 @@ dragon_process_ast_complete()
 	curnode = curnode->next) {
     link = (struct resource*) curnode->data;
     link->status = AST_APP_COMPLETE;
+    link->res.l.l_status = in_service;
   }
   glob_app_cfg->status = AST_APP_COMPLETE;
   sprintf(path,  "%s/%s/final.xml", LINK_AGENT_DIR, glob_app_cfg->ast_id);

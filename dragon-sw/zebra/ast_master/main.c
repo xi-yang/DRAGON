@@ -185,6 +185,7 @@ print_final_client(char *path)
   struct resource *mynode, *mylink;
   int i;
   FILE *file;
+  int old_action;
   
   if (!path || !glob_app_cfg) {
     zlog_err("print_final_client: either file path or glob_app_cfg is NULL");
@@ -198,7 +199,10 @@ print_final_client(char *path)
   if (glob_app_cfg->action != SETUP_RESP && glob_app_cfg->action != RELEASE_RESP) 
     zlog_warn("print_final_client: should only be called for SETUP_RESP or RELEASE_RESP");
 
+  old_action = glob_app_cfg->action;
   if (glob_app_cfg->action == SETUP_REQ)
+    glob_app_cfg->action = SETUP_RESP;
+  else if (glob_app_cfg->action == APP_COMPLETE || glob_app_cfg->action == AST_COMPLETE)
     glob_app_cfg->action = SETUP_RESP;
   else if (glob_app_cfg->action == RELEASE_REQ)
     glob_app_cfg->action = RELEASE_RESP;
@@ -242,6 +246,8 @@ print_final_client(char *path)
   fprintf(file, "</topology>");
   fflush(file);
   fclose(file);
+  if (old_action == AST_COMPLETE || old_action == APP_COMPLETE)
+    glob_app_cfg->action = old_action;
 }
 
 int
@@ -432,6 +438,7 @@ master_process_setup_resp()
 	
 	  /* status update */ 
 	  glob_res_cfg->status = work_res_cfg->status; 
+	  glob_res_cfg->res.l.l_status = work_res_cfg->res.l.l_status;
 	  if (glob_res_cfg->agent_message) { 
 	    free(glob_res_cfg->agent_message); 
 	    glob_res_cfg->agent_message = NULL; 
