@@ -85,6 +85,8 @@ DEFUN (master_show_ast,
       print_flags(vty, curcfg->flags); 
       vty_out(vty, VTY_NEWLINE);
     }
+    if (curcfg->xml_file[0] != '\0')
+      vty_out(vty, "xml_file: %s", curcfg->xml_file);
 
     if (!curcfg->node_list || !curcfg->link_list) {
       if (curcfg != search_cfg_in_list(curcfg->ast_id)) 
@@ -183,7 +185,7 @@ DEFUN (master_show_ast,
     }
 
     vty_out(vty, "\t\t\t** AST status summary ** %s%s", VTY_NEWLINE, VTY_NEWLINE);
-    vty_out(vty, "             ast_stage      status      # of nodes     # of links %s", VTY_NEWLINE);
+    vty_out(vty, "%20s%15s%15s%15s%s", "ast_stage", "status", "# of nodes", "# of links", VTY_NEWLINE);
     vty_out(vty, "----------------------------------------------------------------- %s", VTY_NEWLINE);
 
     for (curnode = app_list.head;
@@ -191,13 +193,15 @@ DEFUN (master_show_ast,
 	 curnode = curnode->next) {
       curcfg = (struct application_cfg*) curnode->data;
 
-      vty_out(vty, "%s%s             %s      %s     %d    %d %s", 
+      vty_out(vty, "%s [%s]%s%20s%15s%15d%15d%s%s", 
 		curcfg->ast_id, 
+		curcfg->xml_file,
 		VTY_NEWLINE,
 		action_type_details[curcfg->action],
 		status_type_details[curcfg->status], 
 		curcfg->node_list->count,
 		curcfg->link_list->count,
+		VTY_NEWLINE,
 		VTY_NEWLINE);        
 
     }    

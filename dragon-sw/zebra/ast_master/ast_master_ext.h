@@ -108,6 +108,7 @@ struct application_cfg {
  
   char* ast_id;
   char* ast_ip;
+  char xml_file[100];
   char details[200];
   struct adtlist *node_list;
   struct adtlist *link_list;

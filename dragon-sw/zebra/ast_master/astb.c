@@ -279,6 +279,10 @@ main(int argc, char* argv[])
     printf("Validation Failed\n");
     exit(1);
   }
+
+  if (glob_app_cfg->action == SETUP_REQ) 
+    strncpy(glob_app_cfg->xml_file, input_file, 100-1);
+
   break;
 
   case ID_XML:
@@ -306,7 +310,10 @@ main(int argc, char* argv[])
   astServ.sin_addr.s_addr = inet_addr("127.0.0.1");
   astServ.sin_port = htons(MASTER_PORT);
 
-  fd = open(input_file, O_RDONLY);
+  /* rewrite the input file */
+  print_final(ASTB_SEND_FILE);
+		  
+  fd = open(ASTB_SEND_FILE, O_RDONLY);
 
   if (fd == -1) {
     printf("open() failed; err = %s\n", strerror(errno));

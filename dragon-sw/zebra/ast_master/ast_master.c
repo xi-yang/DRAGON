@@ -866,7 +866,8 @@ print_final(char *path)
   fprintf(file, "<topology ast_id=\"%s\" action=\"%s\">\n",  glob_app_cfg->ast_id, action_type_details[glob_app_cfg->action]);
 
   fprintf(file, "<status>%s</status>\n", status_type_details[glob_app_cfg->status]);
-
+  if (glob_app_cfg->xml_file[0] != '\0') 
+    fprintf(file, "<xml_file>%s</xml_file>\n", glob_app_cfg->xml_file);
   if (glob_app_cfg->details[0] != '\0') 
     fprintf(file, "<details>%s</details>\n", glob_app_cfg->details);
  
@@ -1517,6 +1518,8 @@ topo_xml_parser(char* filename, int agent)
       app_cfg->ast_ip = strdup(key);
     else if (strcasecmp(cur->name, "details") == 0) 
       strncpy(app_cfg->details, key, 200-1);
+    else if (strcasecmp(cur->name, "xml_file") == 0)
+      strncpy(app_cfg->xml_file, key, 100-1);
     
     if (strcasecmp(cur->name, "resource") != 0) 
       continue;
