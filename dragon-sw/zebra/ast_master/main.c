@@ -1469,6 +1469,7 @@ integrate_result()
       if (glob_app_cfg->status != AST_SUCCESS)
 	break;
 
+      zlog_info("setup_sent = %d; setup_ready = %d", glob_app_cfg->setup_sent, glob_app_cfg->setup_ready);
       if (glob_app_cfg->setup_ready == adtlist_getcount(glob_app_cfg->link_list)) {
 
 	if (glob_app_cfg->setup_ready == glob_app_cfg->total) {

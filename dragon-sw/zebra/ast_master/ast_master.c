@@ -174,8 +174,6 @@ add_cfg_to_list()
   if (!glob_app_cfg || !glob_app_cfg->ast_id)
     return;
 
-  zlog_info("Adding <ast_id>:%s into glob_list", glob_app_cfg->ast_id);
-
   curcfg = search_cfg_in_list(glob_app_cfg->ast_id);
 
   if (!curcfg)
