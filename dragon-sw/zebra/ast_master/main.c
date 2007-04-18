@@ -834,6 +834,8 @@ master_process_setup_req()
   gettimeofday(&(glob_app_cfg->start_time), NULL);
   if (send_task_to_link_agent() == 0)
     glob_app_cfg->status = AST_FAILURE;
+  else
+    glob_app_cfg->status = AST_PENDING;
 
   integrate_result();
   return 1;
@@ -1466,10 +1468,11 @@ integrate_result()
   switch (glob_app_cfg->action) {
     case SETUP_RESP:
       sprintf(path_prefix, "%s/setup_", directory);
-      if (glob_app_cfg->status != AST_SUCCESS)
+      zlog_info("setup_sent = %d; setup_ready = %d", glob_app_cfg->setup_sent, glob_app_cfg->setup_ready);
+
+      if (glob_app_cfg->status == AST_FAILURE)
 	break;
 
-      zlog_info("setup_sent = %d; setup_ready = %d", glob_app_cfg->setup_sent, glob_app_cfg->setup_ready);
       if (glob_app_cfg->setup_ready == adtlist_getcount(glob_app_cfg->link_list)) {
 
 	if (glob_app_cfg->setup_ready == glob_app_cfg->total) {
@@ -1493,7 +1496,7 @@ integrate_result()
 	    glob_app_cfg->status = AST_FAILURE;
 	  glob_app_cfg->action = SETUP_RESP;
 
-	  if (glob_app_cfg->status == AST_SUCCESS)
+	  if (glob_app_cfg->status == AST_PENDING)
 	    return;
 	  
         } else 
@@ -1524,9 +1527,12 @@ integrate_result()
   sprintf(newpath, "%sfinal.xml", path_prefix);
   print_final(newpath);
 
+  if (glob_app_cfg->status == AST_PENDING)
+    glob_app_cfg->status = AST_SUCCESS;
   /* send the result back to user */
+
   if (glob_app_cfg->clnt_sock != -1) {
-    if (glob_app_cfg->action == SETUP_RESP) 
+    if (glob_app_cfg->action == SETUP_RESP)
       glob_app_cfg->flags |= FLAG_SETUP_RESP;
     else 
       glob_app_cfg->flags |= FLAG_RELEASE_RESP;
@@ -1772,7 +1778,8 @@ master_accept(struct thread *thread)
       if (glob_app_cfg) {
 	if ((glob_app_cfg->action == SETUP_REQ ||
 	  glob_app_cfg->action == RELEASE_REQ) &&
-	  glob_app_cfg->status == AST_SUCCESS) {
+	  (glob_app_cfg->status == AST_SUCCESS ||
+	   glob_app_cfg->status == AST_PENDING)) {
 	  glob_app_cfg->clnt_sock = clntSock;
         }
       }
@@ -2189,7 +2196,6 @@ master_check_app_list()
       zlog_info("master_check_app_list(): sending SETUP_REQ for %s", app_cfg->ast_id);
       app_cfg->flags |= FLAG_SETUP_RESP;
       app_cfg->action = SETUP_RESP;
-      app_cfg->status = AST_FAILURE;
       strcpy(app_cfg->details, "didn't receive all SETUP_RESP");
 
       
