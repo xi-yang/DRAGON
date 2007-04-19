@@ -965,7 +965,7 @@ agent_accept(struct thread *thread)
 	if (glob_app_cfg->action == APP_COMPLETE) {
 	  zlog_info("Sending APP_COMPLETE for ast_id: %s to ast_master at (%s:%d)", glob_app_cfg->ast_id, glob_app_cfg->ast_ip, MASTER_PORT);
 	  close(clntSock);
-	  clntSock = 0;
+	  clntSock = -1;
 	} else 
 	  zlog_info("sending confirmation (%s) to ast_master at (%s:%d)",
 		      status_type_details[glob_app_cfg->status],
