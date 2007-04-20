@@ -1299,7 +1299,7 @@ xml_accept(struct thread *thread)
 	return 1;
       }
 
-      if (glob_app_cfg->action == APP_COMPLETE) {
+      if (glob_app_cfg->action == APP_COMPLETE || glob_app_cfg->action == SETUP_RESP) {
 	close(xml_sock);
 	xml_sock = -1;
       }
