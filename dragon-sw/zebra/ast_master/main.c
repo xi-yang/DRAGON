@@ -58,6 +58,18 @@ static void master_check_command();
 extern int master_process_id(char*);
 extern struct application_cfg* master_final_parser(char*, int);
 extern int send_file_to_agent(char *, int, char *);
+static struct vty* fake_vty = NULL;
+
+static struct vty*
+generate_fake_vty()
+{
+  struct vty* vty;
+
+  vty = vty_new();
+  vty->type = VTY_FILE;
+
+  return vty;
+}
 
 struct vtag_tank {
   int number;
@@ -902,8 +914,10 @@ master_process_release_req()
     glob_app_cfg->ast_id = generate_ast_id(ID_TEMP);
     file_mode = 1;
  
+  } else if (strcasecmp(glob_app_cfg->ast_id, "all") == 0) {
+    
+    return 1;
   } else {
-
     working_app_cfg = glob_app_cfg;
     
     /* search in the list first */
@@ -1826,6 +1840,31 @@ master_accept(struct thread *thread)
     send_file_over_sock(clntSock, AST_XML_RESULT);
     close(clntSock);
     zlog_info("SOCK: closing clntSock %d", clntSock);
+  } else if (strcasecmp(glob_app_cfg->ast_id, "all") == 0) {
+    FILE *fp;
+
+    fp = fopen(AST_XML_RESULT, "w+");
+    
+    fprintf(fp, "<topology ast_id=\"all\" action=\"RELEASE_RESP\">\n");
+    fprintf(fp, "<status>AST_SUCCESS</status>\n");
+    fprintf(fp, "</topology>\n");
+    fflush(fp);
+    fclose(fp);
+
+    send_file_over_sock(clntSock, AST_XML_RESULT);
+    close(clntSock);
+    zlog_info("SOCK: closing clntSock %d", clntSock);
+
+    zlog_info("master_accept(): DONE");
+    thread_add_read(master, master_accept, NULL, servSock);
+    free_application_cfg(glob_app_cfg);
+
+    if (!fake_vty)
+      fake_vty = generate_fake_vty();
+    master_release(NULL, fake_vty, 0, NULL);
+    buffer_reset(fake_vty->obuf);
+
+    return 1;
   } else if (glob_app_cfg->clnt_sock == -1 || 
 		glob_app_cfg->status == AST_FAILURE) {
     unlink(AST_XML_RESULT); 

@@ -99,6 +99,7 @@ DEFUN (master_release,
 	 curnode = curnode->next) {
       curcfg = (struct application_cfg*) curnode->data;
       vty_out(vty, "Releasing ... %s [%s]%s", curcfg->ast_id, curcfg->xml_file, VTY_NEWLINE);
+      zlog_info("Releasing ... %s [%s]\n", curcfg->ast_id, curcfg->xml_file);
       release_ast(curcfg->ast_id);
     }
   } else {
