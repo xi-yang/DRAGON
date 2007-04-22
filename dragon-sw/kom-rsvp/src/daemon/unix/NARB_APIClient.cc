@@ -129,18 +129,22 @@ bool NARB_APIClient::operational()
            if(select(sock+1, NULL, &sset, NULL, &tv) > 0) {
                lon = sizeof(int);
                getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&val), &lon); 
+               close (sock);
                return ((val != 0)? false : true);
            }
            else {
+               close (sock);
                return false;
            }
        }
        else {
+           close (sock);
            return false;
        }
    }
 
     if (fcntl(sock, F_SETFL, old_flags) == -1) {
+         close (sock);
          return false;
     }
     close (sock);
