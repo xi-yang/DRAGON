@@ -15,7 +15,7 @@ OSPF_DAEMON=$PREFIX/sbin/ospfd
 OSPF_ARGS="-d -f $ETC_DIR/ospfd.conf"
 
 RSVP_DAEMON=$PREFIX/bin/RSVPD
-RSVP_ARGS="-c $ETC_DIR/RSVPD.conf -d -o /var/log/RSVPD.log -L select"
+RSVP_ARGS="-c $ETC_DIR/RSVPD.conf -d -o /var/log/RSVPD.log -L select,ref,packet"
 
 DRAGON_DAEMON=$PREFIX/bin/dragon
 DRAGON_ARGS="-d -f $ETC_DIR/dragon.conf"
