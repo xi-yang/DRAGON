@@ -8,6 +8,9 @@ enable password dragon
 log stdout
 ! log file /var/log/ospfd.log
 !
+! NOTE: max. bandwidth parameters are in bytes/sec, for example:
+!   1 Gbps = 125000000 bytes/sec
+!  10 Gbps = 1250000000 bytes/sec
 !
 ! -*- sample ospf configuration for a dragon VLSR controlling a Layer2 Ethernet switch -*-
 !
@@ -27,17 +30,33 @@ log stdout
 !  ospf-te interface gre1
 !       level gmpls 
 !       data-interface ip 10.100.0.69 protocol snmp switch-ip 10.1.1.2 switch-port 2 
-!       swcap lsc encoding ethernet 
-!       max-bw 125000000 
-!       max-rsv-bw 125000000 
+!       swcap l2sc encoding ethernet 
+!       max-bw 125000000
+!       max-rsv-bw 125000000
+!       max-lsp-bw 0 125000000
+!       max-lsp-bw 1 125000000
+!       max-lsp-bw 2 125000000
+!       max-lsp-bw 3 125000000
+!       max-lsp-bw 4 125000000
+!       max-lsp-bw 5 125000000
+!       max-lsp-bw 6 125000000
+!       max-lsp-bw 7 125000000
 !       metric 10
 !     exit 
 !  ospf-te interface gre2
 !       level gmpls 
 !       data-interface ip 10.100.0.86 protocol snmp switch-ip 10.1.1.2 switch-port 3 
-!       swcap lsc encoding ethernet 
-!       max-bw 125000000 
-!       max-rsv-bw 125000000 
+!       swcap l2sc encoding ethernet 
+!       max-bw 125000000
+!       max-rsv-bw 125000000
+!       max-lsp-bw 0 125000000
+!       max-lsp-bw 1 125000000
+!       max-lsp-bw 2 125000000
+!       max-lsp-bw 3 125000000
+!       max-lsp-bw 4 125000000
+!       max-lsp-bw 5 125000000
+!       max-lsp-bw 6 125000000
+!       max-lsp-bw 7 125000000
 !       metric 10
 !     exit 
 !
@@ -55,9 +74,17 @@ log stdout
 !  ospf-te interface gre1
 !       level gmpls
 !       data-interface ip 10.100.0.94
-!       swcap lsc encoding ethernet
-!       max-bw 125000000 
-!       max-rsv-bw 125000000 
+!       swcap l2sc encoding ethernet
+!       max-bw 125000000
+!       max-rsv-bw 125000000
+!       max-lsp-bw 0 125000000
+!       max-lsp-bw 1 125000000
+!       max-lsp-bw 2 125000000
+!       max-lsp-bw 3 125000000
+!       max-lsp-bw 4 125000000
+!       max-lsp-bw 5 125000000
+!       max-lsp-bw 6 125000000
+!       max-lsp-bw 7 125000000
 !       metric 10
 !     exit
 !
