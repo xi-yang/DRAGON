@@ -41,6 +41,7 @@ log stdout
 !       max-lsp-bw 5 125000000
 !       max-lsp-bw 6 125000000
 !       max-lsp-bw 7 125000000
+!       vlan 100 to 200
 !       metric 10
 !     exit 
 !  ospf-te interface gre2
@@ -57,6 +58,7 @@ log stdout
 !       max-lsp-bw 5 125000000
 !       max-lsp-bw 6 125000000
 !       max-lsp-bw 7 125000000
+!       vlan 100 to 200
 !       metric 10
 !     exit 
 !
@@ -85,6 +87,7 @@ log stdout
 !       max-lsp-bw 5 125000000
 !       max-lsp-bw 6 125000000
 !       max-lsp-bw 7 125000000
+!       vlan 100 to 200
 !       metric 10
 !     exit
 !
