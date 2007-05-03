@@ -149,6 +149,7 @@ bool TimerSystem::executeTimer( TimeValue& remainingTime ) {
 	if ( currentSlot - targetSlot > 0 ) {
 		ERROR(2)( Log::Error, "WARNING: clock has probably moved backwards by ", (currentSlot - targetSlot) * slotLength );
 		currentSlot = targetSlot;
+		currentFireList = timerList + currentSlot;
 	} else if ( targetSlot - currentSlot > maxDeltaSlots ) {
 		ERROR(2)( Log::Error, "WARNING: timer system overloaded, deviation is ", (targetSlot - currentSlot) * slotLength );
 	}
