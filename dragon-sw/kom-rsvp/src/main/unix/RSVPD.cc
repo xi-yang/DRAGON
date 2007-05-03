@@ -156,8 +156,12 @@ int main( int argc, char** argv ) {
 	SwitchCtrl_Global* controller = &SwitchCtrl_Global::instance();
 	RSVP_Global::switchController = controller;
 	RSVP* rsvp = new RSVP( configfile);
-	RSVP_Global::switchController->startRefreshTimer();
-	if ( rsvp->properInit() ) rsvp->main();
+	if ( rsvp->properInit() ) {
+		RSVP_Global::switchController->startRefreshTimer();
+		rsvp->main();
+	} else {
+		cerr << "RSVP init not OK ... possible errors in RSVPD.conf" << endl;
+	}
 	delete rsvp;
 	delete controller;
 	Log::close();

@@ -122,7 +122,7 @@ RSVP::RSVP( const String& confFile, LogicalInterfaceList tmpLifList )
 		if ( !reader->parseConfigFile( confFile ) ) {
 			delete reader;
 			initOK = false;
-	return;
+			return;
 		}
 	}
 #endif
