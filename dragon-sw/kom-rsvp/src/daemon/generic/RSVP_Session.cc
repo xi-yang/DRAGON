@@ -633,6 +633,10 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		&& (msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress
 		|| msg.getRSVP_HOP_Object().getAddress() == loopback
 		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress())));
+	if (fromLocalAPI && loopback.rawAddress() != msg.getSESSION_Object().getExtendedTunnelId()) {
+		LOG(2)(Log::Routing, "Routing Error: srcRouterID from API ", loopback, " does not match OSPF RouterID ", NetAddress(msg.getSESSION_Object().getExtendedTunnelId()));
+		return;
+	}
 #endif
 
 	DRAGON_UNI_Object* dragonUni = ((Message*)&msg)->getDRAGON_UNI_Object();
