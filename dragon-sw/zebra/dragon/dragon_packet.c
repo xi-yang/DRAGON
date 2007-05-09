@@ -311,10 +311,11 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 
   if (lsp->dragon.lspVtag)
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, dmaster.UCID, lsp->seqno, 
-        LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG | narb_extra_options, lsp->dragon.lspVtag);
+        LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG | LSP_OPT_QUERY_HOLD | narb_extra_options, 
+        lsp->dragon.lspVtag);
   else
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, dmaster.UCID, lsp->seqno,
-        LSP_OPT_STRICT|narb_extra_options, 0);
+        LSP_OPT_STRICT | LSP_OPT_QUERY_HOLD | narb_extra_options, 0);
 
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_CREATE, lsp);
