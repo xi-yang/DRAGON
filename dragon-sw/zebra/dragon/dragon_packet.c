@@ -316,8 +316,6 @@ dragon_topology_create_msg_new(struct lsp *lsp)
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, dmaster.UCID, lsp->seqno,
         LSP_OPT_STRICT|narb_extra_options, 0);
 
-  /*$$$$ ucid (=0 now) be assigned a meaningful id in the future.*/
-
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_CREATE, lsp);
   

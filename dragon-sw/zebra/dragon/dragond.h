@@ -208,6 +208,7 @@ struct api_msg_header
 #define LSP_OPT_BIDIRECTIONAL 0x10 << 16  /* otherwise UNIDIRECTIONAL*/
 #define LSP_OPT_E2E_VTAG  ((u_int32_t)(0x20 << 16)) //otherwise Untgged VLAN for E2E Ethernet
 #define LSP_OPT_VIA_MOVAZ  ((u_int32_t)(0x0040 << 16)) //using MOVAZ proprietary TLVs for optical layer routing
+#define LSP_OPT_QUERY_HOLD  ((u_int32_t)(0x0100 << 16)) //holding resource upon query for a short period of time to resolve contention
 
 #ifdef roundup
 #  define ROUNDUP(val, gran)	roundup(val, gran)

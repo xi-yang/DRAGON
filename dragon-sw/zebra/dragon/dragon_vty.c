@@ -40,7 +40,7 @@
 #include "buffer.h"
 
 char lsp_prompt[100] = "%s(edit-lsp)# ";
-u_int32_t narb_extra_options = 0;
+u_int32_t narb_extra_options = LSP_OPT_QUERY_HOLD;
 
 struct cmd_node lsp_node =
 {
