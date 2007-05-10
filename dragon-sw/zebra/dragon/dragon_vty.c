@@ -1713,7 +1713,7 @@ dragon_master_init()
 {
   struct _sessionParameters default_session;
 
-  srandom(time(NULL));
+  srandom(getpid() + getppid() + time(NULL));
   dmaster.UCID = random();
 
   dmaster.master = thread_master_create ();
