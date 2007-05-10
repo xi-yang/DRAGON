@@ -1618,7 +1618,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap()
 
 bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap() 
 {
-    char timeslots[MAX_TIMESLOTS_NUM/8]; //changing nothing in the actual UNIdata
+    uint8 timeslots[MAX_TIMESLOTS_NUM/8]; //changing nothing in the actual UNIdata
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
     bool ret = syncTimeslotsMapVCG_TL1(timeslots);
     if (ret)
