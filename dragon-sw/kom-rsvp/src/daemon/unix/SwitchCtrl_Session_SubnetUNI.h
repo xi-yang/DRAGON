@@ -204,26 +204,8 @@ public:
 
 	bool syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, uint32 logicalPort = 0);
 	bool syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, uint32 logicalPort = 0);
-	bool syncTimeslotsMap() 
-	{
-		SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
-		bool ret = syncTimeslotsMapVCG_TL1(pUniData->timeslot_bitmask);
-		if (ret)
-		{
-			uint8 ts = 1;
-			for ( ; ts <= MAX_TIMESLOTS_NUM; ts++)
-			{
-				if (!HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
-				{
-					// @@@@ TODO: Also check available timeslots after the first ?
-					pUniData->first_timeslot = ts;
-					break;
-				}
-			}
-			// @@@@ TODO: give error message and return false if not found?
-		}
-		return ret;
-	}
+	bool syncTimeslotsMap();
+	bool verifyTimeslotsMap();
 
 /*
 	bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOspf()

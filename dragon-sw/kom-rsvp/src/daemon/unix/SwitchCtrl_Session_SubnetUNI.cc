@@ -640,9 +640,9 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
     char shelf_alpha;
 
     uint32 logicalPort = ntohl(subnetUniDest.logical_port);
-    //uint8 ts = subnetUniDest.first_timeslot;
+    uint8 ts = subnetUniDest.first_timeslot;
     //@@@@ temp!
-    uint8 ts = subnetUniSrc.first_timeslot;
+    //uint8 ts = subnetUniSrc.first_timeslot;
     if (ptpCatUnit == CATUNIT_UNKNOWN)
     {
     	if ((ptpCatUnit = getConcatenationUnit_TL1()) == CATUNIT_UNKNOWN)
@@ -1584,4 +1584,61 @@ _out:
     return false;
 }
 
+bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap() 
+{
+    SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
+    bool ret = syncTimeslotsMapVCG_TL1(pUniData->timeslot_bitmask);
+    if (ret)
+    {
+        uint8 ts, ts_count;
+        bool ts_ok = false;
+        for (ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
+        {
+            if (!HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
+            {
+                ts_count = 1; ts++;
+                for ( ;  !HAS_TIMESLOT(pUniData->timeslot_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
+                    ts_count++;
+                if (ts_count >= pUniData->ethernet_bw/50.0)
+                {
+                    pUniData->first_timeslot = ts;
+                    ts_ok = true;
+                    break;
+                }
+            }
+        }
+        if (!ts_ok)
+        {
+            LOG(1)(Log::MPLS, "Warning (syncTimeslotsMap): insufficient number of contigious time slots for this request.\n");
+        } 
+
+    }
+    return ret;
+}
+
+bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap() 
+{
+    char timeslots[MAX_TIMESLOTS_NUM/8]; //changing nothing in the actual UNIdata
+    SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
+    bool ret = syncTimeslotsMapVCG_TL1(timeslots);
+    if (ret)
+    {
+        uint8 ts, ts_count = 0;
+        bool ts_ok = false;
+        for (ts = pUniData->first_timeslot; ts <= MAX_TIMESLOTS_NUM && !HAS_TIMESLOT(timeslots, ts); ts++)
+        {
+            ts_count++;
+            if (ts_count >= pUniData->ethernet_bw/50.0)
+            {
+                ts_ok = true;
+                break;
+            }
+        }
+        if (!ts_ok)
+        {
+            LOG(1)(Log::MPLS, "Warning (verifyTimeslotsMap): the range of contigious timeslots suggested by signaling may overlap with existing VCGs.\n");
+        } 
+    }
+    return ret;
+}
 

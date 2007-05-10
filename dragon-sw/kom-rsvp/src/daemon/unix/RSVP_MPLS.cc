@@ -295,8 +295,9 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							}
 
                                                 if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
-                                                    // $$$$ temp testing code ///
-                                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->syncTimeslotsMap() ) {
+                                                    // $$$$ verifying instead of sync'ing timeslots (for inconsistency, check error messages in log)
+                                                    //if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->syncTimeslotsMap() ) {
+                                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->verifyTimeslotsMap() ) {
                                                         (*sessionIter)->disconnectSwitch();
                                                         return false;
                                                     }
