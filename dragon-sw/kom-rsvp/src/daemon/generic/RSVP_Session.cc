@@ -293,14 +293,10 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			else 
 			{
 				LOG(2)( Log::MPLS, "MPLS: resolving loose hop by local routing module: ", explicitRoute->getAbstractNodeList().front() );
-                            EXPLICIT_ROUTE_Object* ero = NULL;
-
-                            if (!ero)
-    				    ero  = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
-											hop.getLogicalInterface().getAddress(),
-											explicitRoute->getAbstractNodeList().front().getAddress(), 
-											msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
-
+                EXPLICIT_ROUTE_Object* ero = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
+								hop.getLogicalInterface().getAddress(),
+								explicitRoute->getAbstractNodeList().front().getAddress(), 
+								msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
 				if (ero && (!ero->getAbstractNodeList().front().isLoose())){
 					explicitRoute->popFront();
 					while (!ero->getAbstractNodeList().empty()){
@@ -855,12 +851,13 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					}
 					else if (!explicitRoute)//explicit routing using OSPFd
 					{
+						LOG(1)( Log::MPLS, "MPLS: requesting ERO from OSPF daemon...");
 						explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 							hop.getLogicalInterface().getAddress(),
 							destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
 					}
 					if (!explicitRoute) {
-						LOG(1)( Log::MPLS, "MPLS: requesting ERO from OSPF daemon failed ...");
+						LOG(1)( Log::MPLS, "MPLS: getExplicitRouteByOSPF failed!");
 					}
                	}
 			}
