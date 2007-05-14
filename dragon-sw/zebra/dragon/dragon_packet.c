@@ -338,12 +338,8 @@ dragon_topology_confirm_msg_new(struct lsp *lsp)
   s = packet->s;
   packet->lsp = lsp;
   
-  /* Build DRAGON message header */
-  /* Obsolete header format
-  dmsgh = build_dragon_msg_header(s, DMSG_CLI_TOPO_CONFIRM, lsp->seqno);
-  */
   amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20 + ero_len, dmaster.UCID, lsp->seqno,
-    LSP_OPT_STRICT|narb_extra_options, lsp->dragon.lspVtag);
+    LSP_OPT_STRICT|LSP_OPT_BIDIRECTIONAL|narb_extra_options, lsp->dragon.lspVtag);
 
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_CONFIRM, lsp);
@@ -369,12 +365,8 @@ dragon_topology_remove_msg_new(struct lsp *lsp)
   s = packet->s;
   packet->lsp = lsp;
   
-  /* Build DRAGON message header */
-  /* Obsolete header format
-  dmsgh = build_dragon_msg_header(s, DMSG_CLI_TOPO_DELETE, lsp->seqno);
-  */
   amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20 + ero_len, dmaster.UCID, lsp->seqno,
-      LSP_OPT_STRICT|narb_extra_options, lsp->dragon.lspVtag);
+      LSP_OPT_STRICT|LSP_OPT_BIDIRECTIONAL|narb_extra_options, lsp->dragon.lspVtag);
 
   /* Build TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_DELETE, lsp);
