@@ -322,9 +322,9 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
     msgheader->seqnum = htonl (seqnum);
     msgheader->ucid = htonl(src);
     msgheader->tag = htonl(vtag);
-    msgheader->options = htonl(0x0007<<16); //OPT_STRICT | OPT_PREFERED |OPT_MRN
+    msgheader->options = htonl(0x0017<<16); //OPT_STRICT | OPT_PREFERED |OPT_MRN | OPT_BIDIRECTIONAL
     if (vtag > 0)
-        msgheader->options |= htonl(0x0030<<16); //OPT_BIDIRECTIONAL | OPT_E2E_VLAN
+        msgheader->options |= htonl(0x0020<<16); // OPT_E2E_VLAN
 
     //use LSP_OPT_QUERY_HOLD as a default request option to avoid contention by holding resources temporily
     msgheader->options |= htonl(0x0100<<16); //OPT_QUERY_HOLD
