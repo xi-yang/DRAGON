@@ -965,7 +965,7 @@ SONET_TSpec* SwitchCtrl_Global::addEosMapEntry(float bandwidth, String& spe, int
     SimpleList<eos_map_entry>::Iterator it = eosMapList.begin();
     for (; it != eosMapList.end(); ++it) {
         if ((*it).bandwidth == bandwidth) {
-            return (*it);
+            return (*it).sonet_tspec;
         }
         if ((*it).bandwidth > bandwidth)
             break;
