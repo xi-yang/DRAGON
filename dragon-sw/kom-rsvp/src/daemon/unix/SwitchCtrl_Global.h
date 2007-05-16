@@ -277,7 +277,7 @@ public:
 	uint16 getSlotType(uint16 slot_num);
 	void addExclEntry(sw_layer_excl_name_entry &ee) { exclList.push_back(ee); }
 	uint32 getExclEntry(String session_name);
-	void addEosMapEntry(float bandwidth, String& spe, int ncc);
+	SONET_TSpec* addEosMapEntry(float bandwidth, String& spe, int ncc);
 	SONET_TSpec* getEosMapEntry(float bandwidth);
 
 protected:

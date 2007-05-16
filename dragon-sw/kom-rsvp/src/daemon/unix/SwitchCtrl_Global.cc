@@ -956,16 +956,16 @@ static uint8 spe_string2int(String& spe)
 }
 
 
-void SwitchCtrl_Global::addEosMapEntry(float bandwidth, String& spe, int ncc)
+SONET_TSpec* SwitchCtrl_Global::addEosMapEntry(float bandwidth, String& spe, int ncc)
 {
     uint8 spe_int = spe_string2int(spe);
     if (spe_int == 0)     
-        return;
+        return NULL;
 
     SimpleList<eos_map_entry>::Iterator it = eosMapList.begin();
     for (; it != eosMapList.end(); ++it) {
         if ((*it).bandwidth == bandwidth) {
-            return;
+            return (*it);
         }
         if ((*it).bandwidth > bandwidth)
             break;
@@ -984,18 +984,21 @@ void SwitchCtrl_Global::addEosMapEntry(float bandwidth, String& spe, int ncc)
     else {
         eosMapList.insert(it, eos_map);
     }
+    return stp;
 }
 
 SONET_TSpec* SwitchCtrl_Global::getEosMapEntry(float bandwidth)
 {
     SimpleList<eos_map_entry>::Iterator it = eosMapList.begin();
     for (; it != eosMapList.end(); ++it) {
-        if ((*it).bandwidth >= bandwidth) {
+        if ((*it).bandwidth == bandwidth) {
             return (*it).sonet_tspec;
         }
     }
 
-    return NULL;
+    //add additional mapping entries.
+    String sts1("sts-1");
+    return addEosMapEntry(bandwidth, sts1, (int)floorf(bandwidth/50.0));
 }
 
 
