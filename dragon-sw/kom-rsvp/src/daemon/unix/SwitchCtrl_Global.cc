@@ -12,10 +12,13 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_Message.h"
 #include "SNMP_Session.h"
 #include "CLI_Session.h"
+#include "RSVP_RoutingService.h"
 #include "SwitchCtrl_Session_Force10E600.h"
 #include "SwitchCtrl_Session_RaptorER1010.h"
+
+#ifdef Linux
 #include "SwitchCtrl_Session_Linux.h"
-#include "RSVP_RoutingService.h"
+#endif
 
 #include <signal.h>
 

@@ -6,6 +6,8 @@ Extended from SwitchCtrl_Session_Force10E600.h by Xi Yang, 2006
 
 ****************************************************************************/
 
+#ifdef Linux
+
 #ifndef _SwitchCtrl_Session_Linux_H_
 #define _SwitchCtrl_Session_Linux_H_
 
@@ -127,3 +129,5 @@ public:
 };
 
 #endif //ifndef _SwitchCtrl_Session_Linux_H_
+
+#endif //ifdef Linux

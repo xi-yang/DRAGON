@@ -11,6 +11,9 @@ and adding the VLAN interface, ie eth0.VID, to the ethernet bridge VID.
 For this class to work the user CLI_USERNAME _must_ be able to run ifconfig, 
 brctl & vconfig through sudo without password.
 ****************************************************************************/
+
+#ifdef Linux
+
 #include "SwitchCtrl_Session_Linux.h"
 #include <string>
 #include <iterator>
@@ -449,3 +452,4 @@ bool SwitchCtrl_Session_Linux::BrctlParser::isTaggedIf(const char *ifname) {
   return false;
 }
 
+#endif
