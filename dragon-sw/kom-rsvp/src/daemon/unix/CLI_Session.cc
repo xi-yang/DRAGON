@@ -85,9 +85,11 @@ void sigfunct(int signo)
 
 /////////---------///////////
 
-bool CLI_Session::connectSwitch()
+bool CLI_Session::connectSwitch() { return connectSwitch("ogin: "); }
+
+bool CLI_Session::connectSwitch(const char *loginString)
 {
-    bool ret  = engage();
+    bool ret  = engage(loginString);
     return ret & SwitchCtrl_Session::connectSwitch();
 }
 
@@ -97,7 +99,7 @@ void CLI_Session::disconnectSwitch()
     SwitchCtrl_Session::disconnectSwitch();
 }
 
-bool CLI_Session::engage()
+bool CLI_Session::engage(const char *loginString)
 {
     int fdpipe[2][2], fderr, err, n;
     char port_str[8];
@@ -173,6 +175,11 @@ bool CLI_Session::engage()
              sprintf(port_str, "%d", cli_port);
            else
              strcpy(port_str,  TELNET_PORT);
+           //clear the environment as telnet may have difficulty reading
+           //certain prompts otherwise
+#if defined(Linux)
+           clearenv();
+#endif
            execl(TELNET_EXEC, "telnet", hostname, port_str, (char*)NULL);
            // if we're still here the TELNET_EXEC could not be exec'd 
            err = errno;
@@ -226,7 +233,7 @@ bool CLI_Session::engage()
 
     if (CLI_SESSION_TYPE == CLI_TELNET) {
      // wait for login prompt 
-     n = readShell("Login: ", TELNET_PROMPT, 1, 15);
+     n = readShell((const char*) loginString, TELNET_PROMPT, true, 1, 15);
      if (n != 1) {
        if (got_alarm == 0)
          err_msg("%s: connection to host '%s' failed\n", progname, hostname);
@@ -292,13 +299,13 @@ bool CLI_Session::engage()
     return false;
 }
 
-void CLI_Session::disengage()
+void CLI_Session::disengage(const char *exitString)
 {
     int n;
-    if (CLI_SESSION_TYPE != CLI_TL1_TELNET && pipeAlive()) {
-        if ((n = writeShell("end\n", 5)) >= 0)
+    if (pipeAlive()) {
+        if ((n = writeShell(exitString, 5)) >= 0)
           n = readShell(SWITCH_PROMPT, NULL, 1, 10);
-    } 
+    }
 
     if (fdin >= 0)
         close(fdin);
@@ -372,7 +379,11 @@ bool CLI_Session::isSwitchPrompt(char *p, int len)
 // or when the beginning of a line equals to 'text2' (and then return 2), 
 // if 'show' is non zero we display the information to the screen         
 // (using 'stdout').                                                      
-int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
+int CLI_Session::readShell(const char *text1, const char *text2, int verbose, int timeout) {
+	return readShell(text1, text2, false, verbose, timeout);
+}
+
+int CLI_Session::readShell(const char *text1, const char *text2, const bool matchAnyWhere, int verbose, int timeout)
 {
   char line[LINELEN+1];
   int n, len1, len2, count = 0, m, err;
@@ -393,9 +404,8 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
     for(;;) {
       if (n == LINELEN) {
 	alarm(0); // disable alarm
-	//stop();
-	LOG(1)(Log::MPLS, "Failed to read from telnet output -- too long line!");
-	return TOO_LONG_LINE;
+	stop();
+	err_exit("%s: too long line!\n", progname);
       }
       m = read(fdin, &line[n], 1);
       if (m != 1) {
@@ -415,7 +425,8 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
 	}
       }
       else if (n >= len1-1) {
-	if (strncmp(line, text1, len1) == 0) {
+      	char *matchPtr = strstr(line, text1);
+	if (matchPtr != 0 && (matchAnyWhere || matchPtr == line)) {
 	  // we found the keyword we were searching for 
 	  alarm(0); // disable alarm 
 	  return(1);
@@ -429,7 +440,8 @@ int CLI_Session::readShell(char *text1, char *text2, int verbose, int timeout)
 	}
       }
       else if ((text2 != NULL) && (n >= len2-1)) {
-	if (strncmp(line, text2, len2) == 0) {
+      	char *matchPtr = strstr(line, text2);
+	if (matchPtr != 0 && (matchAnyWhere || matchPtr == line)) {
 	  // we found the keyword we were searching for 
 	  alarm(0); // disable alarm 
 	  return(2);
@@ -458,7 +470,6 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
 {
     int ret = 0;
     int n, m, len1, len2, len3, len4;
-    bool foundstart = false;
   
     if (fdin < 0)
       return (-1);
@@ -529,7 +540,7 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
 }
 
 // write a command to the 'telnet' process 
-int CLI_Session::writeShell(char *text, int timeout, bool echo_back)
+int CLI_Session::writeShell(const char *text, int timeout, bool echo_back)
 {
   int err, len, n;
 
@@ -578,5 +589,69 @@ bool CLI_Session::postAction()
     DIE_IF_NEGATIVE(writeShell("end\n", 5));
     readShell(SWITCH_PROMPT, NULL, 1, 10);
     return true;
+}
+
+//Acreo additions
+bool CLI_Session::parseShellCommand(CLICommandParser &parser) {
+  if(writeShell(parser.getCommand(), parser.getWriteTimeout()) < 0)
+    return false;
+
+  if(readShellOutput(parser, parser.getReadTimeout()) < 0)
+    return false;
+  
+  return true;
+}
+
+int CLI_Session::readShellOutput(CLICommandParser &parser, int timeout) {
+  int err = 0, totalBytes = 0;
+  char line[LINELEN+1];
+  
+  if (fdin < 0)
+    return (-1);
+  
+  // setup alarm (so we won't hang forever upon problems)
+  signal(SIGALRM, sigalrm);
+  alarm(timeout);
+  
+  // start reading from 'telnet'
+  bool foundSwitchPrompt = false;
+  while(!foundSwitchPrompt) {
+    int i;
+    for(i = 0; i < LINELEN+1; i++) {
+      int m = read(fdin, &line[i], 1);
+      if (m != 1) {
+	err = errno;
+	alarm(0); // disable alarm
+	return(-1);
+      }
+
+      //ignore '\r'
+      if (line[i] == '\r') {
+	line[i--] = '\0';
+	continue;
+      }
+      totalBytes += m;
+      if(line[i] == '\n') {
+	line[i] = '\0';
+	parser.parseLine(line, i);
+	break;
+      }
+
+      if(isSwitchPrompt(line, i + 1)) {
+	alarm(0); // disable alarm
+	foundSwitchPrompt = true;
+	break;
+      }
+
+    }
+    if(i == LINELEN) {
+      alarm(0); // disable alarm
+      stop();
+      err_exit("%s: too long line!\n", progname);
+    }
+  }
+  
+  alarm(0); // disable alarm
+  return totalBytes;
 }
 

@@ -50,6 +50,7 @@ enum SupportedVendor{
 	LambdaOptical = 3,
 	Force10E600 = 4,
 	RaptorER1010 = 5,
+	LinuxSwitch = 6,
 	Illegal = 0xffff,
 };
 

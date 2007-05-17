@@ -41,6 +41,7 @@ extern int    got_alarm;
 //#define TL1_TELNET_PORT     "3083"
 #define TL1_TELNET_PORT     "10201"
 
+class CLICommandParser;
 class CLI_Session: public SwitchCtrl_Session
 {
 public:
@@ -51,11 +52,12 @@ public:
 
 	void setPort(int port) { cli_port = port; }
 	virtual bool connectSwitch();
+	virtual bool connectSwitch(const char *loginString);
 	virtual void disconnectSwitch();
 	virtual bool refresh(); //to be called by RSVP_SREFRESH !!!
 
-	bool engage();
-	void disengage();
+	bool engage(const char *loginString = "ogin: ");
+	void disengage(const char *exitString = "exit\n");
 	void stop();
 
 	///////////------QoS Functions ------/////////
@@ -68,14 +70,47 @@ protected:
 	int fdout;
 
 	inline bool pipeAlive();
-	//int clearShell();
-
-	int readShell(char *text1, char *text2, int verbose, int timeout);
+	int readShell(const char *text1, const char *text2, int verbose, int timeout);
+	int readShell(const char *text1, const char *text2, const bool matchAnyWhere, int verbose, int timeout);
 	int ReadShellPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,  char *readstop, int timeout);
-	int writeShell(char *text, int timeout, bool echo_back = false);
+	int writeShell(const char *text, int timeout, bool echo_back = false);
 	virtual bool isSwitchPrompt(char *p, int len);
 	virtual bool preAction();
 	virtual bool postAction();
+
+	//Acreo additions
+	bool parseShellCommand(CLICommandParser &parser);
+	/**
+	 * Reads shell output until it finds shell prompt and calls
+	 * StringParser for each line read.
+	 * @param parser that will be called for every line found
+	 * @param timeout maximum time before read is interrupted and method returns
+	 * @returns number of bytes actually read or negative if error.
+	 */
+	int readShellOutput(CLICommandParser &parser, int timeout);
+};
+
+//Acreo additions
+class CLICommandParser {
+ public:
+  CLICommandParser(char *command = "\n", unsigned int writeTimeout = 5,
+		   unsigned int readTimeout = 15) {
+    _command = command;
+    _writeTimeout = writeTimeout;
+    _readTimeout = readTimeout;
+  }
+  /**
+   * @param line a buffer to be parsed
+   * @param length length of string in buffer
+   */
+  virtual void parseLine(const char *line, const int length) = 0;
+  const char *getCommand() { return _command; }
+  unsigned int getReadTimeout() { return _readTimeout; }
+  unsigned int getWriteTimeout() { return _writeTimeout; }
+ private:
+  char *_command;
+  unsigned int _readTimeout;
+  unsigned int _writeTimeout;
 };
 
 
