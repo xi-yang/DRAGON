@@ -34,6 +34,7 @@ public:
   }
 
   virtual ~SwitchCtrl_Session_Linux() {}
+  virtual bool connectSwitch() { return connectSwitch("ogin: "); }
   virtual bool connectSwitch(const char *loginString);
   virtual void disconnectSwitch();
   virtual bool getSwitchVendorInfo();
