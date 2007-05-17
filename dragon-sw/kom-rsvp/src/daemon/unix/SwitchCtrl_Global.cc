@@ -689,6 +689,9 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
         case RaptorER1010:
             ssNew = new SwitchCtrl_Session_RaptorER1010("VLSR-Raptor", switchAddr);
             break;
+        case LinuxSwitch:
+            ssNew = new SwitchCtrl_Session_Linux("VLSR-Linux", switchAddr);
+            break;
         case Illegal:
             return NULL;
         default:
