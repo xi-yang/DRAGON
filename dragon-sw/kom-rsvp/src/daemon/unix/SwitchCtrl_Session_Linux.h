@@ -43,6 +43,7 @@ public:
   virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID);
   virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
   virtual bool removePortFromVLAN(uint32 port, uint32 vlanID);
+  virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID);
   virtual bool hook_createVLAN(const uint32 vlanID);
   virtual bool hook_removeVLAN(const uint32 vlanID);
   virtual bool hook_isVLANEmpty(const vlanPortMap &vpm);

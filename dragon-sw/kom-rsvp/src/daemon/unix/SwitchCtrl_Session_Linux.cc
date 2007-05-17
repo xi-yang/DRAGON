@@ -295,6 +295,25 @@ bool SwitchCtrl_Session_Linux::removePortFromVLAN(uint32 port, uint32 vlanID) {
   }
 }
 
+bool SwitchCtrl_Session_Force10E600::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
+{
+    uint32 port;
+    vlanPortMap* vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
+    if(!vpmAll)
+        return false;
+
+    portList.clear();
+    for (port = 1; port <= 32; port++)
+    {
+        if ((vpmAll->ports)&(1<<(32-port)) != 0)
+            portList.push_back(port);
+    }
+
+    if (portList.size() == 0)
+        return false;
+    return true;
+}
+
 bool SwitchCtrl_Session_Linux::hook_removeVLAN(const uint32 vlanID)
 {
 	DIE_IF_EQUAL(vlanID, 0);	
