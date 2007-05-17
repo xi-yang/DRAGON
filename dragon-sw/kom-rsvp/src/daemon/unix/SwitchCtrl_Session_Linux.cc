@@ -295,7 +295,7 @@ bool SwitchCtrl_Session_Linux::removePortFromVLAN(uint32 port, uint32 vlanID) {
   }
 }
 
-bool SwitchCtrl_Session_Force10E600::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
+bool SwitchCtrl_Session_Linux::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
 {
     uint32 port;
     vlanPortMap* vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
