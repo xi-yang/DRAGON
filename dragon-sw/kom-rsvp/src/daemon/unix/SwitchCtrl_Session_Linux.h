@@ -121,6 +121,8 @@ public:
 
  private:
   typedef std::map<int, char*> PortToIfMap;
+  //The intefaces are those defined in /proc/net/dev
+  //The port number of an interface is its one-based sequential index in the file.
   PortToIfMap _ports;
  
   /**
