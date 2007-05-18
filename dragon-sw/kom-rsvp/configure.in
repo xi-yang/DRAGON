@@ -580,31 +580,31 @@ echo setting VLSR switch vendor model to $with_switch_vendor_model
 AC_DEFINE_UNQUOTED(SWITCH_VENDOR_MODEL,$with_switch_vendor_model)
 
 if test "$with_switch_vendor_model" = "LinuxSwitch"; then
-	if test ! "$OS_NAME" = "Linux"; then
+if test ! "$OS_NAME" = "Linux"; then
           AC_MSG_ERROR(LinuxSwitch is a software switch that only runs on Linux operating system!)
-	fi
+fi
 	
-	if test -f "/sbin/vconfig"; then
-	   vconfig_path="/sbin/vconfig"
-	elif test -f "/usr/sbin/vconfig"; then
-	   vconfig_path="/usr/sbin/vconfig"
-	elif test -f "/usr/local/sbin/vconfig"; then
-	   vconfig_path="/usr/local/sbin/vconfig"
-	else
-          AC_MSG_ERROR(LinuxSwitch requires 'vconfig' being installed!)
-	fi
-	AC_DEFINE_QUOTED(VCONFIG_PATH, $vconfig_path)
+if test -f "/sbin/vconfig"; then
+   vconfig_path="/sbin/vconfig"
+elif test -f "/usr/sbin/vconfig"; then
+   vconfig_path="/usr/sbin/vconfig"
+elif test -f "/usr/local/sbin/vconfig"; then
+   vconfig_path="/usr/local/sbin/vconfig"
+else
+   AC_MSG_ERROR(LinuxSwitch requires 'vconfig' being installed!)
+fi
+AC_DEFINE_QUOTED(VCONFIG_PATH, $vconfig_path)
 
-	if test -f "/sbin/brctl"; then
-	   brctl_path="/sbin/brctl"
-	elif test -f "/usr/sbin/brctl"; then
-	   brctl_path="/usr/sbin/brctl"
-	elif test -f "/usr/local/sbin/brctl"; then
-	   brctl_path="/usr/local/sbin/brctl"
-	else
-          AC_MSG_ERROR(LinuxSwitch requires 'brctl' being installed!)
-	fi	
-	AC_DEFINE_QUOTED(BTCTL_PATH, $brctl_path)
+if test -f "/sbin/brctl"; then
+   brctl_path="/sbin/brctl"
+elif test -f "/usr/sbin/brctl"; then
+   brctl_path="/usr/sbin/brctl"
+elif test -f "/usr/local/sbin/brctl"; then
+   brctl_path="/usr/local/sbin/brctl"
+else
+   AC_MSG_ERROR(LinuxSwitch requires 'brctl' being installed!)
+fi	
+AC_DEFINE_QUOTED(BTCTL_PATH, $brctl_path)
 fi
 
 AC_ARG_WITH(switch-ctrl-port,
@@ -690,14 +690,14 @@ CLI Session Type (Default: none): $ECHO_C"
 fi
 
 if test "$with_switch_cli_type" = "ssh" || test "$with_switch_cli_type" = "shell"; then
-    if test -f "/usr/local/bin/expect"; then
-       expect_path = "/usr/local/bin/expect"
-    elif test -f "/usr/bin/expect"; then
-       expect_path = "/usr/bin/expect"
-    else
-       AC_MSG_ERROR(Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!)
-    fi
-    AC_DEFINE_QUOTED(EXPECT_PATH, $expect_path)
+if test -f "/usr/local/bin/expect"; then
+   expect_path = "/usr/local/bin/expect"
+elif test -f "/usr/bin/expect"; then
+   expect_path = "/usr/bin/expect"
+else
+   AC_MSG_ERROR(Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!)
+fi
+AC_DEFINE_QUOTED(EXPECT_PATH, $expect_path)
 fi
 if test "$with_switch_cli_type" = "telnet"; then
     eval switch_cli_type="CLI_TELNET"

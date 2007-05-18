@@ -6887,43 +6887,42 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 if test "$with_switch_vendor_model" = "LinuxSwitch"; then
-	if test ! "$OS_NAME" = "Linux"; then
-          { { echo "$as_me:$LINENO: error: LinuxSwitch is a software switch that only runs on Linux operating system!" >&5
-	    echo "$as_me: error: LinuxSwitch is a software switch that only runs on Linux operating system!" >&2;}
-          { (exit 1); exit 1; }; }
-	fi
-	
-	if test -f "/sbin/vconfig"; then
-	   vconfig_path="/sbin/vconfig"
-	elif test -f "/usr/sbin/vconfig"; then
-	   vconfig_path="/usr/sbin/vconfig"
-	elif test -f "/usr/local/sbin/vconfig"; then
-	   vconfig_path="/usr/local/sbin/vconfig"
-	else
-          { { echo "$as_me:$LINENO: error: LinuxSwitch requires 'vconfig' being installed!" >&5
-	    echo "$as_me: error: LinuxSwitch requires 'vconfig' being installed!" >&2;}
-          { (exit 1); exit 1; }; }	
-	fi
-	cat >>confdefs.h <<_ACEOF
-	#define VCONFIG_PATH "$vconfig_path"
-	_ACEOF
-
-	if test -f "/sbin/brctl"; then
-	   brctl_path="/sbin/brctl"
-	elif test -f "/usr/sbin/brctl"; then
-	   brctl_path="/usr/sbin/brctl"
-	elif test -f "/usr/local/sbin/brctl"; then
-	   brctl_path="/usr/local/sbin/brctl"
-	else
-          { { echo "$as_me:$LINENO: error: LinuxSwitch requires 'brctl' being installed!" >&5
-	    echo "$as_me: error: LinuxSwitch requires 'brctl' being installed!" >&2;}
-          { (exit 1); exit 1; }; }	
-	fi	
-	cat >>confdefs.h <<_ACEOF
-	#define BRCTL_PATH "$brctl_path"
-	_ACEOF
+if test ! "$OS_NAME" = "Linux"; then
+   { { echo "$as_me:$LINENO: error: LinuxSwitch is a software switch that only runs on Linux operating system!" >&5
+   echo "$as_me: error: LinuxSwitch is a software switch that only runs on Linux operating system!" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 
+if test -f "/sbin/vconfig"; then
+   vconfig_path="/sbin/vconfig";
+elif test -f "/usr/sbin/vconfig"; then
+   vconfig_path="/usr/sbin/vconfig";
+elif test -f "/usr/local/sbin/vconfig"; then
+   vconfig_path="/usr/local/sbin/vconfig";
+else
+   { { echo "$as_me:$LINENO: error: LinuxSwitch requires 'vconfig' being installed!" >&5
+   echo "$as_me: error: LinuxSwitch requires 'vconfig' being installed!" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+cat >>confdefs.h <<_ACEOF
+#define VCONFIG_PATH "$vconfig_path"
+_ACEOF
+
+if test -f "/sbin/brctl"; then
+    brctl_path="/sbin/brctl";
+elif test -f "/usr/sbin/brctl"; then
+    brctl_path="/usr/sbin/brctl";
+elif test -f "/usr/local/sbin/brctl"; then
+    brctl_path="/usr/local/sbin/brctl";
+else
+    { { echo "$as_me:$LINENO: error: LinuxSwitch requires 'brctl' being installed!" >&5
+    echo "$as_me: error: LinuxSwitch requires 'brctl' being installed!" >&2;}
+    { (exit 1); exit 1; }; }
+fi
+cat >>confdefs.h <<_ACEOF
+#define BRCTL_PATH "$brctl_path"
+_ACEOF
+fi
 
 # Check whether --with-switch-ctrl-port or --without-switch-ctrl-port was given.
 if test "${with_switch_ctrl_port+set}" = set; then
@@ -7027,18 +7026,18 @@ CLI Session Type (Default: none): $ECHO_C"
 fi
 
 if test "$with_switch_cli_type" = "ssh" || test "$with_switch_cli_type" = "shell"; then
-    if test -f "/usr/local/bin/expect"; then
-       expect_path = "/usr/local/bin/expect"
-    elif test -f "/usr/bin/expect"; then
-       expect_path = "/usr/bin/expect"
-    else
+if test -f "/usr/local/bin/expect"; then
+       expect_path = "/usr/local/bin/expect";
+elif test -f "/usr/bin/expect"; then
+       expect_path = "/usr/bin/expect";
+else
        { { echo "$as_me:$LINENO: error: Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!" >&5
 	echo "$as_me: error: Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!" >&2;}
 	{ (exit 1); exit 1; }; }
-    fi
-    cat >>confdefs.h <<_ACEOF
-    #define EXPECT_PATH "$expect_path"
-    _ACEOF
+fi
+cat >>confdefs.h <<_ACEOF
+#define EXPECT_PATH "$expect_path"
+_ACEOF
 fi
 
 if test "$with_switch_cli_type" = "telnet"; then
