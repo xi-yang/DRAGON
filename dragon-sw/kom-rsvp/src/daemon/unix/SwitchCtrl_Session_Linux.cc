@@ -89,7 +89,7 @@ bool SwitchCtrl_Session_Linux::movePortToVLANAsUntagged(uint32 port, uint32 vlan
       {
 	SetPortBit(vpmAll->portbits, port);
 	//clear address and activate interface before adding to bridge
-	char command[35];
+	char command[100];
 	snprintf(command, sizeof(command), "sudo /sbin/ifconfig %s 0.0.0.0 up\n", i->second);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5));
@@ -129,7 +129,7 @@ bool SwitchCtrl_Session_Linux::movePortToVLANAsTagged(uint32 port, uint32 vlanID
       {
 	SetPortBit(vpmAll->portbits, port);
 	//now add to new VLAN
-	char command[35];
+	char command[100];
 	snprintf(command, sizeof(command), "sudo /sbin/vconfig add %s %d\n", i->second, vlanID);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5));
@@ -229,7 +229,7 @@ bool SwitchCtrl_Session_Linux::readVLANFromSwitch() {
 }
 
 bool SwitchCtrl_Session_Linux::verifyVLAN(uint32 vlanID) {
-  char command[LINELEN + 1];
+  char command[100];
   
   snprintf(command, sizeof(command), "/sbin/ifconfig %s%d\n", BR_PREFIX, vlanID);
   LOG(1) (Log::MPLS, command);
@@ -272,7 +272,7 @@ bool SwitchCtrl_Session_Linux::removePortFromVLAN(uint32 port, uint32 vlanID) {
     }
 
     /* run brctl to remove interface from bridge representing vlan */	
-    char command[35], *ifname = i->second;
+    char command[100], *ifname = i->second;
     if(isTagged) 
       snprintf(command, sizeof(command), "sudo /usr/local/sbin/brctl delif %s%d %s.%d\n", BR_PREFIX, vlanID, ifname, vlanID);
     else
@@ -318,7 +318,7 @@ bool SwitchCtrl_Session_Linux::hook_removeVLAN(const uint32 vlanID)
 {
 	DIE_IF_EQUAL(vlanID, 0);	
 	
-	char command[30];
+	char command[100];
 	//need to take the interface down first
 	snprintf(command, sizeof(command), "sudo /sbin/ifconfig %s%d down\n", BR_PREFIX, vlanID);
 	LOG(1) (Log::MPLS, command);
@@ -337,7 +337,7 @@ bool SwitchCtrl_Session_Linux::hook_createVLAN(const uint32 vlanID)
 {
 	DIE_IF_EQUAL(vlanID, 0);
 
-	char command[25];
+	char command[100];
 	snprintf(command, sizeof(command), "sudo /usr/local/sbin/brctl addbr %s%d\n", BR_PREFIX, vlanID);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5)) ;
