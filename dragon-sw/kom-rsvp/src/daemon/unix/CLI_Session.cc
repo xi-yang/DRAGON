@@ -211,7 +211,9 @@ bool CLI_Session::engage(const char *loginString)
            dup(fderr);
            err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);           
         } else if (CLI_SESSION_TYPE == CLI_SHELL) {
-           execl(EXPECT_PATH, "expect", "-c", SHELL_EXEC, "-c", "interact", (char*)NULL);
+           char spawn_cmd[128];
+           sprintf(spawn_cmd, "spawn %s", SHELL_EXEC);
+           execl(EXPECT_PATH, "expect", "-c", spawn_cmd, "-c", "interact", (char*)NULL);
            // if we're still here the SHELL_EXEC could not be exec'd
            err = errno;
            close(2);
