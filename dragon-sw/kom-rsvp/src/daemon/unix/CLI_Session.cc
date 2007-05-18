@@ -192,7 +192,7 @@ bool CLI_Session::engage(const char *loginString)
              sprintf(port_str, "%d", cli_port);
            else
              strcpy(port_str,  SSH_PORT);
-           sprintf(spawn_cmd, "spawn ssh %s -l %s -p %s", hostname, CLI_USERNAME, port_str);
+           sprintf(spawn_cmd, "spawn /usr/bin/ssh %s -l %s -p %s", hostname, CLI_USERNAME, port_str);
            execl("/usr/local/bin/expect", "expect", "-c", spawn_cmd, "-c", "interact", (char*)NULL);
          
            // if we're still here the SSH_EXEC could not be exec'd 
@@ -365,7 +365,7 @@ bool CLI_Session::isSwitchPrompt(char *p, int len)
   int n, found = 0;
 
   for(n = 0; n < len; n++) {
-    if ( p[n] == '>' || p[n] =='#' || (CLI_SESSION_TYPE == CLI_TL1_TELNET && p[n] == ';') ) {
+    if ( p[n] == '>' || p[n] =='#' || p[n] == '$' || (CLI_SESSION_TYPE == CLI_TL1_TELNET && p[n] == ';') ) {
       found = 1;
       break;
     }
