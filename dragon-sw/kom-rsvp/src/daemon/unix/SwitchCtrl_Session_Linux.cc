@@ -90,12 +90,12 @@ bool SwitchCtrl_Session_Linux::movePortToVLANAsUntagged(uint32 port, uint32 vlan
 	SetPortBit(vpmAll->portbits, port);
 	//clear address and activate interface before adding to bridge
 	char command[35];
-	snprintf(command, sizeof(command), "sudo ifconfig %s 0.0.0.0 up\n", i->second);
+	snprintf(command, sizeof(command), "sudo /sbin/ifconfig %s 0.0.0.0 up\n", i->second);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5));
 	DIE_IF_NEGATIVE(readShell(SWITCH_PROMPT, NULL, 1, 10));
 	//now add to new VLAN
-	snprintf(command, sizeof(command), "sudo brctl addif %s%d %s\n", BR_PREFIX, vlanID, i->second);
+	snprintf(command, sizeof(command), "sudo /usr/local/sbin/brctl addif %s%d %s\n", BR_PREFIX, vlanID, i->second);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5));
 	DIE_IF_NEGATIVE(readShell(SWITCH_PROMPT, NULL, 1, 10));
@@ -130,11 +130,11 @@ bool SwitchCtrl_Session_Linux::movePortToVLANAsTagged(uint32 port, uint32 vlanID
 	SetPortBit(vpmAll->portbits, port);
 	//now add to new VLAN
 	char command[35];
-	snprintf(command, sizeof(command), "sudo vconfig add %s %d\n", i->second, vlanID);
+	snprintf(command, sizeof(command), "sudo /sbin/vconfig add %s %d\n", i->second, vlanID);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5));
 	DIE_IF_NEGATIVE(readShell(SWITCH_PROMPT, NULL, 1, 10));
-	snprintf(command, sizeof(command), "sudo brctl addif %s%d %s.%d\n", BR_PREFIX, vlanID, i->second, vlanID);
+	snprintf(command, sizeof(command), "sudo /usr/local/sbin/brctl addif %s%d %s.%d\n", BR_PREFIX, vlanID, i->second, vlanID);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5));
 	DIE_IF_NEGATIVE(readShell(SWITCH_PROMPT, NULL, 1, 10));
@@ -231,7 +231,7 @@ bool SwitchCtrl_Session_Linux::readVLANFromSwitch() {
 bool SwitchCtrl_Session_Linux::verifyVLAN(uint32 vlanID) {
   char command[LINELEN + 1];
   
-  snprintf(command, sizeof(command), "ifconfig %s%d\n", BR_PREFIX, vlanID);
+  snprintf(command, sizeof(command), "/sbin/ifconfig %s%d\n", BR_PREFIX, vlanID);
   LOG(1) (Log::MPLS, command);
   DIE_IF_NEGATIVE(writeShell(command, 5));
   
@@ -274,15 +274,15 @@ bool SwitchCtrl_Session_Linux::removePortFromVLAN(uint32 port, uint32 vlanID) {
     /* run brctl to remove interface from bridge representing vlan */	
     char command[35], *ifname = i->second;
     if(isTagged) 
-      snprintf(command, sizeof(command), "sudo brctl delif %s%d %s.%d\n", BR_PREFIX, vlanID, ifname, vlanID);
+      snprintf(command, sizeof(command), "sudo /usr/local/sbin/brctl delif %s%d %s.%d\n", BR_PREFIX, vlanID, ifname, vlanID);
     else
-      snprintf(command, sizeof(command), "sudo brctl delif %s%d %s\n", BR_PREFIX, vlanID, ifname);
+      snprintf(command, sizeof(command), "sudo /usr/local/sbin/brctl delif %s%d %s\n", BR_PREFIX, vlanID, ifname);
     LOG(1) (Log::MPLS, command);
     DIE_IF_NEGATIVE(writeShell(command, 5));
     DIE_IF_NEGATIVE(readShell(SWITCH_PROMPT, NULL, 1, 10));
     
     if(isTagged) {
-      snprintf(command, sizeof(command), "sudo vconfig rem %s.%d\n", ifname, vlanID);
+      snprintf(command, sizeof(command), "sudo /sbin/vconfig rem %s.%d\n", ifname, vlanID);
       LOG(1) (Log::MPLS, command);
       DIE_IF_NEGATIVE(writeShell(command, 5));
       DIE_IF_NEGATIVE(readShell(SWITCH_PROMPT, NULL, 1, 10));
@@ -320,12 +320,12 @@ bool SwitchCtrl_Session_Linux::hook_removeVLAN(const uint32 vlanID)
 	
 	char command[30];
 	//need to take the interface down first
-	snprintf(command, sizeof(command), "sudo ifconfig %s%d down\n", BR_PREFIX, vlanID);
+	snprintf(command, sizeof(command), "sudo /sbin/ifconfig %s%d down\n", BR_PREFIX, vlanID);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5)) ;
 	DIE_IF_NEGATIVE(readShell( SWITCH_PROMPT, NULL, 1, 10));
 	
-	snprintf(command, sizeof(command), "sudo brctl delbr %s%d\n", BR_PREFIX, vlanID);
+	snprintf(command, sizeof(command), "sudo /usr/local/sbin/brctl delbr %s%d\n", BR_PREFIX, vlanID);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5)) ;
 	DIE_IF_NEGATIVE(readShell( SWITCH_PROMPT, NULL, 1, 10));
@@ -338,23 +338,23 @@ bool SwitchCtrl_Session_Linux::hook_createVLAN(const uint32 vlanID)
 	DIE_IF_EQUAL(vlanID, 0);
 
 	char command[25];
-	snprintf(command, sizeof(command), "sudo brctl addbr %s%d\n", BR_PREFIX, vlanID);
+	snprintf(command, sizeof(command), "sudo /usr/local/sbin/brctl addbr %s%d\n", BR_PREFIX, vlanID);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5)) ;
 	DIE_IF_NEGATIVE(readShell( SWITCH_PROMPT, NULL, 1, 10));
 	
 	//set bridge parameters
-	snprintf(command, sizeof(command), "sudo brctl setfd %s%d 0\n", BR_PREFIX, vlanID);
+	snprintf(command, sizeof(command), "sudo /usr/local/sbin/brctl setfd %s%d 0\n", BR_PREFIX, vlanID);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5)) ;
 	DIE_IF_NEGATIVE(readShell( SWITCH_PROMPT, NULL, 1, 10));
 
-	snprintf(command, sizeof(command), "sudo brctl stp %s%d off\n", BR_PREFIX, vlanID);
+	snprintf(command, sizeof(command), "sudo /usr/local/sbin/brctl stp %s%d off\n", BR_PREFIX, vlanID);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5)) ;
 	DIE_IF_NEGATIVE(readShell( SWITCH_PROMPT, NULL, 1, 10));
 
-	snprintf(command, sizeof(command), "sudo ifconfig %s%d up\n", BR_PREFIX, vlanID);
+	snprintf(command, sizeof(command), "sudo /sbin/ifconfig %s%d up\n", BR_PREFIX, vlanID);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5)) ;
 	DIE_IF_NEGATIVE(readShell( SWITCH_PROMPT, NULL, 1, 10));
