@@ -691,9 +691,9 @@ fi
 
 if test "$with_switch_cli_type" = "ssh" || test "$with_switch_cli_type" = "shell"; then
 if test -f "/usr/local/bin/expect"; then
-   expect_path = "/usr/local/bin/expect"
+   expect_path="/usr/local/bin/expect"
 elif test -f "/usr/bin/expect"; then
-   expect_path = "/usr/bin/expect"
+   expect_path="/usr/bin/expect"
 else
    AC_MSG_ERROR(Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!)
 fi

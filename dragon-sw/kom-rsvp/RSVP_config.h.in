@@ -197,8 +197,8 @@
 #undef ENABLE_SWITCH_PORT_SHUTDOWN
 
 /* Define external commands paths */
-#define EXPECT_PATH "/usr/local/bin/expect"
 #define VCONFIG_PATH "/usr/sbin/vconfig"
 #define BRCTL_PATH "/usr/sbin/brctl"
+#define EXPECT_PATH "/usr/local/bin/expect"
 
 #endif /* _RSVP_config_h_ */
