@@ -192,9 +192,8 @@ bool CLI_Session::engage(const char *loginString)
              sprintf(port_str, "%d", cli_port);
            else
              strcpy(port_str,  SSH_PORT);
-           sprintf(spawn_cmd, "spawn /usr/bin/ssh %s -l %s -p %s", hostname, CLI_USERNAME, port_str);
-           execl("/usr/local/bin/expect", "expect", "-c", spawn_cmd, "-c", "interact", (char*)NULL);
-         
+           sprintf(spawn_cmd, "spawn %s %s -l %s -p %s", SSH_EXEC, hostname, CLI_USERNAME, port_str);
+           execl(EXPECT_PATH, "expect", "-c", spawn_cmd, "-c", "interact", (char*)NULL);
            // if we're still here the SSH_EXEC could not be exec'd 
            err = errno;
            close(2);
@@ -211,7 +210,14 @@ bool CLI_Session::engage(const char *loginString)
            close(2);
            dup(fderr);
            err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);           
-        } else {
+        } else if (CLI_SESSION_TYPE == CLI_SHELL) {
+           execl(EXPECT_PATH, "expect", "-c", SHELL_EXEC, "-c", "interact", (char*)NULL);
+           // if we're still here the SHELL_EXEC could not be exec'd
+           err = errno;
+           close(2);
+           dup(fderr);
+           err_exit("%s: execl(%s) failed: errno=%d\n", progname, SHELL_EXEC, err);
+        }else {
            err_exit("invalid cli seesion execl: %s\n", progname);
         }
         break;
@@ -287,7 +293,10 @@ bool CLI_Session::engage(const char *loginString)
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 5)) < 0) goto _telnet_dead;
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 5)) < 0) goto _telnet_dead;
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 5)) < 0) goto _telnet_dead;
-    } 
+    }
+    else if (CLI_SESSION_TYPE == CLI_SHELL) {
+     if ((n = readShell( SWITCH_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
+    }
 
     return true;
 

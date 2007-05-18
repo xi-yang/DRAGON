@@ -6871,7 +6871,7 @@ vendor/model, use the default value of 'AutoDetect'.  The VLSR will
 then attempt to detect the switch vendor and model via SNMP.
 RFC2674-compliant switches should work with 'AutoDetect'.
 
-Valid options are: AutoDetect, Force10E600, RaptorER1010.
+Valid options are: AutoDetect, Force10E600, RaptorER1010 and LinuxSwitch.
 
 Switch Vendor/Model number (Default: AutoDetect): $ECHO_C"
 
@@ -6886,6 +6886,43 @@ cat >>confdefs.h <<_ACEOF
 #define SWITCH_VENDOR_MODEL $with_switch_vendor_model
 _ACEOF
 
+if test "$with_switch_vendor_model" = "LinuxSwitch"; then
+	if test ! "$OS_NAME" = "Linux"; then
+          { { echo "$as_me:$LINENO: error: LinuxSwitch is a software switch that only runs on Linux operating system!" >&5
+	    echo "$as_me: error: LinuxSwitch is a software switch that only runs on Linux operating system!" >&2;}
+          { (exit 1); exit 1; }; }
+	fi
+	
+	if test -f "/sbin/vconfig"; then
+	   vconfig_path="/sbin/vconfig"
+	elif test -f "/usr/sbin/vconfig"; then
+	   vconfig_path="/usr/sbin/vconfig"
+	elif test -f "/usr/local/sbin/vconfig"; then
+	   vconfig_path="/usr/local/sbin/vconfig"
+	else
+          { { echo "$as_me:$LINENO: error: LinuxSwitch requires 'vconfig' being installed!" >&5
+	    echo "$as_me: error: LinuxSwitch requires 'vconfig' being installed!" >&2;}
+          { (exit 1); exit 1; }; }	
+	fi
+	cat >>confdefs.h <<_ACEOF
+	#define VCONFIG_PATH "$vconfig_path"
+	_ACEOF
+
+	if test -f "/sbin/brctl"; then
+	   brctl_path="/sbin/brctl"
+	elif test -f "/usr/sbin/brctl"; then
+	   brctl_path="/usr/sbin/brctl"
+	elif test -f "/usr/local/sbin/brctl"; then
+	   brctl_path="/usr/local/sbin/brctl"
+	else
+          { { echo "$as_me:$LINENO: error: LinuxSwitch requires 'brctl' being installed!" >&5
+	    echo "$as_me: error: LinuxSwitch requires 'brctl' being installed!" >&2;}
+          { (exit 1); exit 1; }; }	
+	fi	
+	cat >>confdefs.h <<_ACEOF
+	#define BRCTL_PATH "$brctl_path"
+	_ACEOF
+fi
 
 
 # Check whether --with-switch-ctrl-port or --without-switch-ctrl-port was given.
@@ -6980,8 +7017,8 @@ if test "$enable_switch_cli_access" = "yes"; then
 *** Setting CLI Session Type:
 
 With the --enable-switch-cli-access option,
-you also need to specify the CLI session type as either TELNET or SSH.
-This can also be specified by --with-switch-cli-type=(telnet|ssh)
+you also need to specify the CLI session type as TELNET, SSH or SHELL.
+This can also be specified by --with-switch-cli-type=(telnet|ssh|shell)
 
 CLI Session Type (Default: none): $ECHO_C"
 
@@ -6989,19 +7026,29 @@ CLI Session Type (Default: none): $ECHO_C"
        eval with_switch_cli_type=\$tmpinput
 fi
 
-if test "$with_switch_cli_type" = "ssh"; then
-    if test ! -f "/usr/local/bin/expect" && test ! -f "/usr/bin/expect"; then
+if test "$with_switch_cli_type" = "ssh" || test "$with_switch_cli_type" = "shell"; then
+    if test -f "/usr/local/bin/expect"; then
+       expect_path = "/usr/local/bin/expect"
+    elif test -f "/usr/bin/expect"; then
+       expect_path = "/usr/bin/expect"
+    else
        { { echo "$as_me:$LINENO: error: Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!" >&5
-echo "$as_me: error: Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!" >&2;}
-   { (exit 1); exit 1; }; }
+	echo "$as_me: error: Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!" >&2;}
+	{ (exit 1); exit 1; }; }
     fi
+    cat >>confdefs.h <<_ACEOF
+    #define EXPECT_PATH "$expect_path"
+    _ACEOF
 fi
+
 if test "$with_switch_cli_type" = "telnet"; then
     eval switch_cli_type="CLI_TELNET"
 elif test "$with_switch_cli_type" = "ssh"; then
     eval switch_cli_type="CLI_SSH"
 elif test "$with_switch_cli_type" = "tl1"; then
     eval switch_cli_type="CLI_TL1_TELNET"
+elif test "$with_switch_cli_type" = "shell"; then
+    eval switch_cli_type="CLI_SHELL"
 else
     eval switch_cli_type="CLI_NONE"
 fi

@@ -196,4 +196,9 @@
    (currently used only for Force10 switches) */
 #undef ENABLE_SWITCH_PORT_SHUTDOWN
 
+/* Define external commands paths */
+#define EXPECT_PATH "/usr/local/sbin/expect"
+#define VCONFIG_PATH "/usr/sbin/vconfig"
+#define BRTCL_PATH "/usr/sbin/brctl"
+
 #endif /* _RSVP_config_h_ */

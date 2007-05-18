@@ -18,7 +18,8 @@ enum CLISessionType {
 	CLI_NONE = 0,
 	CLI_TELNET = 1,
 	CLI_SSH = 2,
-	CLI_TL1_TELNET = 3
+	CLI_TL1_TELNET = 3,
+	CLI_SHELL = 4
 };
 
 extern char  progname[100];
@@ -38,8 +39,11 @@ extern int    got_alarm;
 #define SSH_EXEC     "/usr/bin/ssh"
 #define SSH_PORT     "22"
 
-//#define TL1_TELNET_PORT     "3083"
+#define SHELL_EXEC     "/bin/sh"
+
 #define TL1_TELNET_PORT     "10201"
+
+#define IFCONFIG_PATH     "/sbin/ifconfig"
 
 class CLICommandParser;
 class CLI_Session: public SwitchCtrl_Session
