@@ -243,7 +243,7 @@ bool CLI_Session::engage(const char *loginString)
      // send the telnet username and password 
      if ((n = writeShell(CLI_USERNAME, 5)) < 0) goto _telnet_dead;
      if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
-     if ((n = readShell( "Password: ", NULL, 1, 10)) < 0) goto _telnet_dead;
+     if ((n = readShell( "Password", NULL, 1, 10)) < 0) goto _telnet_dead;
      if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
      if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 30)) < 0) goto _telnet_dead;
