@@ -593,7 +593,7 @@ elif test -f "/usr/local/sbin/vconfig"; then
 else
    AC_MSG_ERROR(LinuxSwitch requires 'vconfig' being installed!)
 fi
-AC_DEFINE_QUOTED(VCONFIG_PATH, $vconfig_path)
+AC_DEFINE_UNQUOTED(VCONFIG_PATH, "$vconfig_path")
 
 if test -f "/sbin/brctl"; then
    brctl_path="/sbin/brctl"
@@ -604,7 +604,7 @@ elif test -f "/usr/local/sbin/brctl"; then
 else
    AC_MSG_ERROR(LinuxSwitch requires 'brctl' being installed!)
 fi	
-AC_DEFINE_QUOTED(BTCTL_PATH, $brctl_path)
+AC_DEFINE_UNQUOTED(BTCTL_PATH, "$brctl_path")
 fi
 
 AC_ARG_WITH(switch-ctrl-port,
@@ -669,7 +669,7 @@ elif test -f "/usr/bin/expect"; then
 else
    AC_MSG_ERROR(Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!)
 fi
-AC_DEFINE_QUOTED(EXPECT_PATH, $expect_path)
+AC_DEFINE_UNQUOTED(EXPECT_PATH, "$expect_path")
 fi
 if test "$with_switch_cli_type" = "telnet"; then
     eval switch_cli_type="CLI_TELNET"
