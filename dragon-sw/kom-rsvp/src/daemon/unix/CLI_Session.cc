@@ -369,7 +369,7 @@ bool CLI_Session::isSwitchPrompt(char *p, int len)
       found = 1;
       break;
     }
-    else if ((p[n] <= ' ') && (p[n] != '\r') && (p[n] != '\n')) break;
+    //else if ((p[n] <= ' ') && (p[n] != '\r') && (p[n] != '\n')) break;
   }
   return (found == 1);
 }
