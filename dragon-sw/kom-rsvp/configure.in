@@ -641,40 +641,10 @@ AC_DEFINE_UNQUOTED(SWITCH_CTRL_PORT,$with_switch_ctrl_port)
 AC_ARG_ENABLE(switch-cli-access,
 	[ --enable-switch-cli-access	enable VLSR switch CLI access (disabled by default)],,
 	enable_switch_cli_access=no)
+
 AC_MSG_CHECKING(for VLSR switch CLI access)
 if test "$enable_switch_cli_access" = "yes"; then
 	AC_MSG_RESULT(enabled)
-	echo $ECHO_N "
-
-*** Setting username and password to access switch via CLI:
-
-With the --enable-switch-cli-access option,
-you need to provide the username and password.
-
-Username (Default: unknown): $ECHO_C"
-
-	read tmpinput
-	if test "$tmpinput" = ""; then
-	    tmpinput="unknown"
-	fi
-	eval switch_cli_username="\$tmpinput"
-
-	stty -echo
-	echo $ECHO_N "Password (Default: unknown): $ECHO_C"
-	read tmpinput
-	if test "$tmpinput" = ""; then
-	    tmpinput="unknown"
-	fi
-	eval switch_cli_password="\$tmpinput"
-	stty echo
-	echo \*\*\*\*\*\*\*\*
-	AC_DEFINE_UNQUOTED(CLI_USERNAME,$switch_cli_username)
-	AC_DEFINE_UNQUOTED(CLI_PASSWORD,$switch_cli_password)
-else
-	AC_MSG_RESULT(disabled)
-fi
-
-if test "$enable_switch_cli_access" = "yes"; then
         echo $ECHO_N "
 
 *** Setting CLI Session Type:
@@ -687,6 +657,8 @@ CLI Session Type (Default: none): $ECHO_C"
 
        read tmpinput
        eval with_switch_cli_type=\$tmpinput
+else
+	AC_MSG_RESULT(disabled)
 fi
 
 if test "$with_switch_cli_type" = "ssh" || test "$with_switch_cli_type" = "shell"; then
@@ -717,6 +689,37 @@ AC_ARG_WITH(switch-cli-type,
 	[ --with-switch-cli-type[=X]   set VLSR switch CLI type (prompt by default)],
 	with_switch_cli_type=$withval,
 	with_switch_cli_type="no")
+
+
+if test "$enable_switch_cli_access" = "yes"; then
+	echo $ECHO_N "
+
+*** Setting username and password to access switch via CLI:
+
+With the --enable-switch-cli-access option,
+you need to provide the username and password.
+
+Username (Default: unknown): $ECHO_C"
+
+	read tmpinput
+	if test "$tmpinput" = ""; then
+	    tmpinput="unknown"
+	fi
+	eval switch_cli_username="\$tmpinput"
+
+	stty -echo
+	echo $ECHO_N "Password (Default: unknown): $ECHO_C"
+	read tmpinput
+	if test "$tmpinput" = ""; then
+	    tmpinput="unknown"
+	fi
+	eval switch_cli_password="\$tmpinput"
+	stty echo
+	echo \*\*\*\*\*\*\*\*
+	AC_DEFINE_UNQUOTED(CLI_USERNAME,$switch_cli_username)
+	AC_DEFINE_UNQUOTED(CLI_PASSWORD,$switch_cli_password)
+fi
+
 
 AC_ARG_WITH(mpls,
 	[ --with-mpls[=PATH]		path to MPLS library (disabled by default)],
