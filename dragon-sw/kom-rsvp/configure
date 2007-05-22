@@ -6982,8 +6982,8 @@ if test "$enable_switch_cli_access" = "yes"; then
 *** Setting CLI Session Type:
 
 With the --enable-switch-cli-access option,
-you also need to specify the CLI session type as TELNET, SSH or SHELL.
-This can also be specified by --with-switch-cli-type=(telnet|ssh|shell)
+you also need to specify the CLI session type as TELNET, SSH, TL1 or SHELL.
+This can also be specified by --with-switch-cli-type=(telnet|ssh|tl1|shell)
 
 CLI Session Type (Default: none): $ECHO_C"
 
