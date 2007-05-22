@@ -34,7 +34,7 @@
 
 using namespace TG;
 
-extern "C" int yyparse();
+extern int yyparse();
 extern int yylex();
 extern int yylineno;
 extern void yyerror(const char*);

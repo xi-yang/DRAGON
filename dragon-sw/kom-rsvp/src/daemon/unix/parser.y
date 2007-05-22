@@ -31,7 +31,7 @@
 %{
 #include "RSVP_ConfigFileReader.h"
 #include <stdio.h>
-extern "C" int yyparse();
+extern int yyparse();
 extern int yylex();
 extern int yylineno;
 extern void yyerror(const char*);
