@@ -294,56 +294,56 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 								return false;
 							}
 
-                                                if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
-                                                    // $$$$ verifying instead of sync'ing timeslots (for inconsistency, check error messages in log)
-                                                    //if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->syncTimeslotsMap() ) {
-                                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->verifyTimeslotsMap() ) {
-                                                        (*sessionIter)->disconnectSwitch();
-                                                        return false;
-                                                    }
-                                                    
-                                                    //create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC OR LOCAL_ID_TYPE_SUBNET_UNI_DEST
-                                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG((*iter).vlanTag) ) {
-                                                        (*sessionIter)->disconnectSwitch();
-                                                        return false;
-                                                    }
+                            if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
+                                // $$$$ verifying instead of sync'ing timeslots (for inconsistency, check error messages in log)
+                                //if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->syncTimeslotsMap() ) {
+                                if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->verifyTimeslotsMap() ) {
+                                    (*sessionIter)->disconnectSwitch();
+                                    return false;
+                                }
+                                
+                                //create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC OR LOCAL_ID_TYPE_SUBNET_UNI_DEST
+                                if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG((*iter).vlanTag) ) {
+                                    (*sessionIter)->disconnectSwitch();
+                                    return false;
+                                }
 
-                                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() 
-                                                        && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
-                                                        //create source GTP 
-                                                        if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
-                                                            (*sessionIter)->disconnectSwitch();
-                                                            return false;
-                                                        }
-                                                        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
-                                                            //create CRS for Source == Destination
-                                                            if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createCRS() ) {
-                                                                (*sessionIter)->disconnectSwitch();
-                                                                return false;
-                                                            }
-                                                        }
-                                                        else {
-                                                            //create SNC
-                                                            if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createSNC() ) {
-                                                                (*sessionIter)->disconnectSwitch();
-                                                                return false;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                else if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() 
-                                                    && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST
-                                                    && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() )
-                                                {
-                                                    //create destination GTP (only needed for local XConn)
-                                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
-                                                        (*sessionIter)->disconnectSwitch();
-                                                        return false;
-                                                    }
-                                                }
+                                if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() 
+                                    && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
+                                    //create source GTP 
+                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
+                                        (*sessionIter)->disconnectSwitch();
+                                        return false;
+                                    }
+                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
+                                        //create CRS for Source == Destination
+                                        if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createCRS() ) {
+                                            (*sessionIter)->disconnectSwitch();
+                                            return false;
+                                        }
+                                    }
+                                    else {
+                                        //create SNC
+                                        if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createSNC() ) {
+                                            (*sessionIter)->disconnectSwitch();
+                                            return false;
+                                        }
+                                    }
+                                }
+                            }
+                            else if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() 
+                                && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST
+                                && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() )
+                            {
+                                //create destination GTP (only needed for local XConn)
+                                if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
+                                    (*sessionIter)->disconnectSwitch();
+                                    return false;
+                                }
+                            }
 
-                                                //disconnect
-                                                (*sessionIter)->disconnectSwitch();
+                            //disconnect
+                            (*sessionIter)->disconnectSwitch();
 
 						}
 						// no break; continue to next case clauses !
@@ -648,11 +648,11 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 				 //@@@@ >>Xi2007<<
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ){
-                                SimpleList<uint8> ts_list;
-                                if( (*iter).switchID.rawAddress() == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
+					SimpleList<uint8> ts_list;
+					if( (*iter).switchID.rawAddress() == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
 
 						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
-                                                 bool noErr = true;
+							bool noErr = true;
 
 							//verify
 							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSourceDestPortConflict()) {
@@ -666,64 +666,88 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 								return;
 							}
 
-                                                if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
+						    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
 
-                                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
+						        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
+						            //delete CRS for Source == Destination
+						            if( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasCRS() )
+						                noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteCRS();
+						        }
+						        else {
+						            //delete SNC
+						            if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSNC() )
+						                noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC();
+						        }
+						            
+						        //delete GTP (for SNC: source only; for CRS: both source and dest interfaces)
+						        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasGTP())
+						            noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP();
 
-                                                        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
-                                                            //delete CRS for Source == Destination
-                                                            if( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasCRS() )
-                                                                noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteCRS();
-                                                        }
-                                                        else {
-                                                            //delete SNC
-                                                            if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSNC() )
-                                                                noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC();
-                                                        }
-                                                            
-                                                        //delete GTP (for SNC: source only; for CRS: both source and dest interfaces)
-                                                        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasGTP())
-                                                            noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP();
-                                                    }
-                                                    //else
-                                                    //@@@@    sleep(1); //$$$$ to be removed and put deleteVCG into a timer queue ?!
+								//delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC
+								if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasVCG())
+							        noErr == noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG();
 
-                                                    //delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC or LOCAL_ID_TYPE_SUBNET_UNI_DEST
-                                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasVCG())
-                                                        noErr == noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG();
-                                                }
+							    (*sessionIter)->disconnectSwitch();
+						    }
+						    else if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
+								if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasVCG()) {
+								    //$$$$ Special handling to adjust the sequence of SNC-VCG-deletion at destination node.
+									if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSystemSNCHolindgCurrentVCG()) {
+										pid_t pid;
+										switch( pid=fork() )
+										{
+										case 0: // child process for delayed waiting-and-deleting procedure
+	 										if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->waitUntilSystemSNCDisapear())
+											{
+												((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG(); 
+											}
+											(*sessionIter)->disconnectSwitch();
+											exit(0);
+											break;
+										case -1: // error
+											LOG(1)( Log::MPLS, "VLSR-Subnet Fatal Error: cannot fork a child process for the waiting-and-deleting procedure!");
+											exit(-1);
+											break;
+										default: // parent (orininal) process back to main logic loop
+											(*sessionIter)->closePipe();
+											continue;
+										}
+									}
+									else
+									{
+										((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG();
+									    (*sessionIter)->disconnectSwitch();
+									}
+								}
+							}
 
-						    //disconnect
-						    (*sessionIter)->disconnectSwitch();
 						    if (!noErr) return; // otherwise, continue to update bandwidth and timeslots.
 						}
 
-	   				       if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
+						if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
 
 						    if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() != Message::InitAPI)
 		   					((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
 
-	                                      // Update ingress link bandwidth
-	                                      RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false); //false == increase
-                                            // Update time slots
-                                            ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
-                                            if (ts_list.size() > 0)
-                                                RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
-	   				      }
-	                                  if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
+                                  // Update ingress link bandwidth
+                                  RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false); //false == increase
+                                  // Update time slots
+                                  ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
+                                  if (ts_list.size() > 0)
+                                      RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
+						}
+						if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 
-	                                      // ??? release path from destination client ???
-	   
-	                                      // Update egress link bandwidth
-	                                      RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, false); //false == increase
-                                            // Update time slots
-                                            ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
-                                            if (ts_list.size() > 0)
-                                                RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).outPort, ts_list, false);
-	                                  }
-                                }
+                                  // Update egress link bandwidth
+                                  RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, false); //false == increase
+                                  // Update time slots
+                                  ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
+                                  if (ts_list.size() > 0)
+                                      RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).outPort, ts_list, false);
+						}
+					}
 
-                                continue;
+					continue;
 				}
 
 				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()){

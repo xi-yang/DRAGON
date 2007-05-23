@@ -1642,3 +1642,89 @@ bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap()
     return ret;
 }
 
+bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noError)
+{
+    int ret = 0;
+    noError = true;
+    SubnetUNI_Data *pUniData = subnetUniDest;
+    if (pUniData->first_timeslot == 0 || pUniData->first_timeslot > MAX_TIMESLOTS_NUM || pUniData->logical_port == 0)
+    {
+        LOG(1)(Log::MPLS, "invalid subnetUniDest information.\n");
+        return false;
+    }
+
+    String OMPortString, ETTPString;
+    char* pstr;
+    int ts1, ts2;
+    char toEndPoint[30];
+    getCienaLogicalPortString(OMPortString, ETTPString, pUniData->logical_port);
+    sprintf("TOENDPOINT=%s", OMPortString.chars());
+
+    sprintf(bufCmd, "rtrv-snc-stspc::all:%d;", getCurrentCtag());
+    if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1) 
+    {
+        ret = readShell("   /* Empty", "   \"", 1, 5);
+        if (ret == 1)
+        {
+            LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 method found no SNC holding the current VCG.\n", bufCmd);
+            readShell(SWITCH_PROMPT, NULL, 1, 5);
+            return false;
+        }
+        else if (ret == 2)
+        {
+            while ((ret = ReadShellPattern(bufCmd, "FROMENDPOINT=gtp_", "TOENDPOINT=", toEndPoint,  ";", 5)) != READ_STOP)
+            { // if (ret == 3), we have reach the end, i.e., ";"...
+                if (ret == 1) // this is an SNC originating at source point...
+                    continue;
+                else if (ret == 2)
+                {
+                    pstr = strstr(bufCmd, toEndPoint);
+                    ret = sscanf(pstr+strlen(toEndPoint), "%d&&%d", &ts1, &ts2);
+                    if (ret == 1)
+                        ts2 = ts1;
+                    else if (ret <= 0)
+                        goto _out;
+                    if (pUniData->first_timeslot >= ts1 && pUniData->first_timeslot <= ts2)
+                    {
+                        return true;                        
+                    }
+                }
+                else
+                    goto _out; // wrong
+            }
+            LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 method found no SNC holding the current VCG.\n", bufCmd);
+            return false;    
+        }
+        else
+            goto _out;
+    }
+    else if (ret == 2) 
+    {
+        LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 retrieving SNC-STSPC list was denied.\n", bufCmd);
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else
+        goto _out;
+
+_out:
+    noError = false;
+    LOG(3)(Log::MPLS, OMPortString, " hasSystemSNCHolindgCurrentVCG_TL1 method via TL1_TELNET failed...\n", bufCmd);
+    return false;
+}
+
+bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
+{
+    bool noError = true;
+    do {
+        if (!noError)
+            return false;
+        sleep(1); //sleeping one second!
+    } while (hasSystemSNCHolindgCurrentVCG_TL1(noError));
+    return true;
+}

@@ -62,6 +62,7 @@ public:
 
 	bool engage(const char *loginString = "ogin: ");
 	void disengage(const char *exitString = "exit\n");
+	void closePipe();
 	void stop();
 
 	///////////------QoS Functions ------/////////

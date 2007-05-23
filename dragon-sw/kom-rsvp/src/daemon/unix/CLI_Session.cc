@@ -318,12 +318,17 @@ void CLI_Session::disengage(const char *exitString)
           n = readShell(SWITCH_PROMPT, NULL, 1, 10);
     }
 
+    closePipe();
+    stop();
+}
+
+void CLI_Session::closePipe()
+{
     if (fdin >= 0)
         close(fdin);
     if (fdout >= 0)
         close(fdout);
     fdin = fdout = -1;
-    stop();
 }
 
 void CLI_Session::stop()

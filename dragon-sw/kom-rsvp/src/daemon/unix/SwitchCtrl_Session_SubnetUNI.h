@@ -133,6 +133,7 @@ public:
 	bool hasCRS_TL1(String& xctName);
 	bool createCRS_TL1(String& xctName, String& gtpName);
 	bool deleteCRS_TL1(String& xctName);
+	boold hasSystemSNCHolindgCurrentVCG_TL1(bool& noError);
 
 	bool createVCG()
 	{
@@ -201,11 +202,18 @@ public:
 	}
 
 	SONET_CATUNIT getConcatenationUnit_TL1(uint32 logicalPort = 0);
-
 	bool syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, uint32 logicalPort = 0);
 	bool syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, uint32 logicalPort = 0);
 	bool syncTimeslotsMap();
 	bool verifyTimeslotsMap();
+
+	bool hasSystemSNCHolindgCurrentVCG()
+	{
+		bool noError;
+		return (!isSource && hasSystemSNCHolindgCurrentVCG_TL1(noError));
+	}
+	bool waitUntilSystemSNCDisapear();
+
 
 /*
 	bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOspf()
