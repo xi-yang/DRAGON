@@ -709,7 +709,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 											exit(-1);
 											break;
 										default: // parent (orininal) process back to main logic loop
-											(*sessionIter)->closePipe();
+											((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->closePipe();
 											continue;
 										}
 									}

@@ -1646,7 +1646,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
 {
     int ret = 0;
     noError = true;
-    SubnetUNI_Data *pUniData = subnetUniDest;
+    SubnetUNI_Data *pUniData = &subnetUniDest;
     if (pUniData->first_timeslot == 0 || pUniData->first_timeslot > MAX_TIMESLOTS_NUM || pUniData->logical_port == 0)
     {
         LOG(1)(Log::MPLS, "invalid subnetUniDest information.\n");

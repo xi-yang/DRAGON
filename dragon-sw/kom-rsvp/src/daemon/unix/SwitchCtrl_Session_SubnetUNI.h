@@ -133,7 +133,7 @@ public:
 	bool hasCRS_TL1(String& xctName);
 	bool createCRS_TL1(String& xctName, String& gtpName);
 	bool deleteCRS_TL1(String& xctName);
-	boold hasSystemSNCHolindgCurrentVCG_TL1(bool& noError);
+	bool hasSystemSNCHolindgCurrentVCG_TL1(bool& noError);
 
 	bool createVCG()
 	{
