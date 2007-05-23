@@ -1721,12 +1721,14 @@ _out:
 bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
 {
     bool noError;
-	int counter = 10;
+	int counter = 15;
     do {
         if (!noError)
             return false;
-        sleep(1); //sleeping one second!
+        sleep(1); //sleeping one second and try again
         counter--;
-    } while (counter >= 0 && hasSystemSNCHolindgCurrentVCG_TL1(noError));
+		if (counter == 0) //timeout!
+			return false;
+    } while (hasSystemSNCHolindgCurrentVCG_TL1(noError));
     return true;
 }
