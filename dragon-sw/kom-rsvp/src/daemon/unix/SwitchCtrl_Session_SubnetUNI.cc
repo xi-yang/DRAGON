@@ -1720,11 +1720,13 @@ _out:
 
 bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
 {
-    bool noError = true;
+    bool noError;
+	int counter = 10;
     do {
         if (!noError)
             return false;
         sleep(1); //sleeping one second!
-    } while (hasSystemSNCHolindgCurrentVCG_TL1(noError));
+        counter--;
+    } while (counter >= 0 && hasSystemSNCHolindgCurrentVCG_TL1(noError));
     return true;
 }
