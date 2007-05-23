@@ -207,9 +207,8 @@ public:
 	bool syncTimeslotsMap();
 	bool verifyTimeslotsMap();
 
-	bool hasSystemSNCHolindgCurrentVCG()
+	bool hasSystemSNCHolindgCurrentVCG(bool& noError)
 	{
-		bool noError;
 		return (!isSource && hasSystemSNCHolindgCurrentVCG_TL1(noError));
 	}
 	bool waitUntilSystemSNCDisapear();
