@@ -1656,9 +1656,9 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
     String OMPortString, ETTPString;
     char* pstr;
     int ts1, ts2;
-    char toEndPoint[30];
+    char fromEndPointPattern2[20];
     getCienaLogicalPortString(OMPortString, ETTPString, ntohl(pUniData->logical_port));
-    sprintf(toEndPoint, "TOENDPOINT=%s", OMPortString.chars());
+    sprintf(fromEndPointPattern2, "_%s_", OMPortString.chars());
 
     sprintf(bufCmd, "rtrv-snc-stspc::all:%d;", getCurrentCtag());
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
@@ -1677,14 +1677,14 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
         }
         else if (ret == 2)
         {
-            while ((ret = ReadShellPattern(bufCmd, "FROMENDPOINT=gtp_", toEndPoint, "MAXADMINWEIGHT=", ";", 5)) != READ_STOP)
+            while ((ret = ReadShellPattern(bufCmd, "FROMENDPOINT=gtp_", fromEndPointPattern2, "MAXADMINWEIGHT=", ";", 5)) != READ_STOP)
             { // if (ret == 3), we have reach the end, i.e., ";"...
                 if (ret == 1) // this is an SNC originating at source point...
                     continue;
                 else if (ret == 2)
                 {
-                    pstr = strstr(bufCmd, toEndPoint);
-                    ret = sscanf(pstr+strlen(toEndPoint), "%d&&%d", &ts1, &ts2);
+                    pstr = strstr(bufCmd, "TOENDPOINT=");
+                    ret = sscanf(pstr+19, "%d&&%d", &ts1, &ts2);
                     if (ret == 1)
                         ts2 = ts1;
                     else if (ret <= 0)

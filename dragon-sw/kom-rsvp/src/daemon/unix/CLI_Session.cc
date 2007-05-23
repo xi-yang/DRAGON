@@ -492,7 +492,7 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
   
     assert(readuntil);
     len1 = (pattern1 != NULL) ? strlen(pattern1) : 0;
-    len2 = (pattern2 != NULL) ? strlen(pattern1) : 0; 
+    len2 = (pattern2 != NULL) ? strlen(pattern2) : 0; 
     len3 = strlen(readuntil);
     len4 = (readstop != NULL) ? strlen(readstop) : 0;
   
