@@ -694,9 +694,14 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 								    //$$$$ Special handling to adjust the sequence of SNC-VCG-deletion at destination node.
 									if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSystemSNCHolindgCurrentVCG(noErr) && noErr) {
 										pid_t pid;
+										(*sessionIter)->disconnectSwitch();
 										switch( pid=fork() )
 										{
 										case 0: // child process for delayed waiting-and-deleting procedure
+											if (!(*sessionIter)->connectSwitch()){
+												LOG(2)( Log::MPLS, "Child-Process:: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
+												return;
+											}
 	 										if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->waitUntilSystemSNCDisapear())
 											{
 												((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG(); 
@@ -709,7 +714,6 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 											exit(-1);
 											break;
 										default: // parent (orininal) process back to main logic loop
-											((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->closePipe();
 											continue;
 										}
 									}
