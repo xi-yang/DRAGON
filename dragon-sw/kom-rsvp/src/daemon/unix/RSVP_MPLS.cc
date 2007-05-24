@@ -705,6 +705,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 								    //$$$$ Special handling to adjust the sequence of SNC-VCG-deletion at destination node.
 									if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSystemSNCHolindgCurrentVCG(noErr) && noErr) {
 										pid_t pid;
+										(*sessionIter)->disconnectSwitch(); 
 										switch( pid=fork() )
 										{
 										case 0: // child process for delayed waiting-and-deleting procedure
@@ -733,7 +734,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 										{
 											((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG();
 										}
-									    //(*sessionIter)->disconnectSwitch();
+										(*sessionIter)->disconnectSwitch();
 									}
 
 								}
@@ -744,8 +745,6 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 								((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
 								if (ts_list.size() > 0)
 									RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).outPort, ts_list, false);
-
-								(*sessionIter)->disconnectSwitch(); //up?
 						    }
 
 						    if (!noErr) return; // otherwise, continue to update bandwidth and timeslots.
