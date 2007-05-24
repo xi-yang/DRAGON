@@ -1689,6 +1689,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
                         goto _out;
                     if (pUniData->first_timeslot == ts1+1)
                     {
+                        LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 method detected an SNC holding the current VCG.\n", bufCmd);
                         return true;                        
                     }
                 }
@@ -1718,15 +1719,16 @@ _out:
 
 bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
 {
-    bool noError;
-	int counter = 15;
+    bool noError = true;
+    int counter = 15;
     do {
         if (!noError)
             return false;
+        LOG(3)(Log::MPLS, " Child-Process::waitUntilSystemSNCDisapear ... ", counter, " seconds left.\n");
         sleep(1); //sleeping one second and try again
         counter--;
-		if (counter == 0) //timeout!
-			return false;
+        if (counter == 0) //timeout!
+            return false;
     } while (hasSystemSNCHolindgCurrentVCG_TL1(noError));
     return true;
 }
