@@ -1658,7 +1658,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
     int ts1, ts2;
     char fromEndPointPattern2[20];
     getCienaLogicalPortString(OMPortString, ETTPString, ntohl(pUniData->logical_port));
-    sprintf(fromEndPointPattern2, "_%s_", OMPortString.chars());
+    sprintf(fromEndPointPattern2, "_%s_S", OMPortString.chars());
 
     sprintf(bufCmd, "rtrv-snc-stspc::all:%d;", getCurrentCtag());
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
@@ -1683,13 +1683,11 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
                     continue;
                 else if (ret == 2)
                 {
-                    pstr = strstr(bufCmd, "TOENDPOINT=");
-                    ret = sscanf(pstr+19, "%d&&%d", &ts1, &ts2);
-                    if (ret == 1)
-                        ts2 = ts1;
-                    else if (ret <= 0)
+                    pstr = strstr(bufCmd, fromEndPointPattern2);
+                    ret = sscanf(pstr+10, "%d", &ts1);
+                    if (ret != 1)
                         goto _out;
-                    if (pUniData->first_timeslot >= ts1 && pUniData->first_timeslot <= ts2)
+                    if (pUniData->first_timeslot == ts1+1)
                     {
                         return true;                        
                     }
