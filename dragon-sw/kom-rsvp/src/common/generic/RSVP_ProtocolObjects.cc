@@ -624,7 +624,7 @@ void MESSAGE_ID_LIST_Object::readFromBuffer( INetworkBuffer& buffer, uint16 len 
 
 
 //////////////////////////////////////////////////////////////////////////
-/////                 DRAGON UNI Object implementation                                            ////
+/////        DRAGON UNI Object implementation                         ////
 /////////////////////////////////////////////////////////////////////////
 
 void DRAGON_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
@@ -666,7 +666,7 @@ ostream& operator<< ( ostream& os, const DRAGON_UNI_Object& o ) {
 
 
 //////////////////////////////////////////////////////////////////////////
-/////                         Generalized UNI Object implementation                               ////
+/////     Generalized UNI Object implementation                       ////
 /////////////////////////////////////////////////////////////////////////
 
 void GENERALIZED_UNI_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
@@ -698,4 +698,31 @@ ostream& operator<< ( ostream& os, const GENERALIZED_UNI_Object& o ) {
 	os <<") ]";
 	return os;
 }
+
+//////////////////////////////////////////////////////////////////////////
+/////     DRAGON Extension Inforation Object implementation           ////
+/////////////////////////////////////////////////////////////////////////
+
+void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
+{
+	buffer >>serviceConfID.length >> serviceConfID.type >> serviceConfID.sub_type 
+		>> serviceConfID.ucid >> serviceConfID.seqnum;
+}
+
+ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Object& o ) {
+	buffer << RSVP_ObjectHeader( o.size(), o.getClassNumber(), 1);
+	buffer <<o.serviceConfID.length << o.serviceConfID.type << o.serviceConfID.sub_type 
+		<< o.serviceConfID.ucid << o.serviceConfID.seqnum;
+	return buffer;
+}
+
+ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
+	os <<"[DRAGON-EXT-INFO: ";
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+		os <<" (1: Service Confirmation ID: ucid=" << o.serviceConfID.ucid << ", 
+			seqnum=", o.serviceConfID.seqnum,")]";
+	}
+	return os;
+}
+
 

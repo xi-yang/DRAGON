@@ -853,9 +853,6 @@ public:
 	UNI_Object(RSVP_ObjectHeader::ClassNum cn): refCounter(1), cNum(cn) { }
 	RSVP_ObjectHeader::ClassNum getClassNumber()const { return cNum; }
 	virtual ~UNI_Object() {  assert(refCounter == 1); }
-
-//	virtual uint32 getSrcRawAddress() = 0;
-//	virtual uint32 getDestRawAddress() = 0;
 };
 
 class DRAGON_UNI_Object: public UNI_Object {
@@ -919,7 +916,7 @@ public:
 	}
 
 	DRAGON_UNI_Object* borrow() { refCounter++; return this; }	
-	//const DRAGON_UNI_Object* borrow(){ refCounter++; return (const DRAGON_UNI_Object*)this; }
+
 	void destroy() { 
 		if (refCounter == 1) {
 			delete this;
@@ -1045,6 +1042,51 @@ public:
 			&& memcmp(&egressLabelUp, &s.egressLabelUp, sizeof(EgressLabel_Subobject)) == 0);
 	}
 };
+
+
+//////////////////////////////////////////////////////////////////////////
+/////      DRAGON private Extension Information Object definitions   /////
+//////////////////////////////////////////////////////////////////////////
+
+#define DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID 1 //for both type and flag
+
+typedef struct  {
+	uint16 length;
+	uint8 type;
+	uint8 sub_type;
+	uint32 ucid;
+	uint32 seqnum;
+} ServiceConfirmationID_Subobject;
+
+class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
+	uint32 subobj_flags;
+	ServiceConfirmationID_Subobject serviceConfID;
+	REF_OBJECT_METHODS(DRAGON_EXT_INFO_Object)
+	friend ostream& operator<< ( ostream&, const DRAGON_EXT_INFO_Object& );
+	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_EXT_INFO_Object& );
+	void readFromBuffer( INetworkBuffer&, uint16 );
+	uint16 size() const {
+		return HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID) ? sizeof(ServiceConfirmationID_Subobject) : 0;
+	}
+public:
+	DRAGON_EXT_INFO_Object() : subobj_flags(0) {}
+	//DRAGON_EXT_INFO_Object ( const DRAGON_EXT_INFO_Object& ); 
+	//DRAGON_EXT_INFO_Object & operator= ( const DRAGON_EXT_INFO_Object & );
+	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
+	void SetSubobjFlag(uint32 flag) {subobj_flags |= flag;}
+	void ResetSubobjFlag(uint32 flag) {subobj_flags &= (~flag);}
+	bool HasSubobj(uint32 flag) { return ((subobj_flags & flag) != 0); }
+
+	bool SetServiceConfirmationID(uint32 ucid0, uint32 seqnum0)	{
+		SetSubobjFlag(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID);
+		memset(&serviceConfID, 0, sizeof(ServiceConfirmationID_Subobject));
+		serviceConfID.length = sizeof(ServiceConfirmationID_Subobject);
+		serviceConfID.type = DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID;
+		serviceConfID.ucid = ucid0;
+		serviceConfID.seqnum = seqnum0;
+	}
+};
+extern inline DRAGON_EXT_INFO_Object::~DRAGON_EXT_INFO_Object() {}
 
 #endif /* _RSVP_ProtocolObjects_h_ */
 
