@@ -732,9 +732,23 @@ void NARB_APIClient::confirmReservation(const Message& msg)
     ero_search_entry* entry = lookupEntry(ero);
     assert(entry!=NULL);
 
+    //determine ucid and seqnum
+    DRAGON_EXT_INFO_Object* dragonExtInfo = ((Message*)&msg)->getDRAGON_EXT_INFO_Object();
+    uint32 ucid, seqnum;
+    if (dragonExtInfo && dragonExtInfo->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID))
+    {
+        ucid = dragonExtInfo->getServiceConfirmationID().ucid;
+        seqnum = dragonExtInfo->getServiceConfirmationID().seqnum;
+    }
+    else
+    {
+        ucid = entry->index.src_addr;
+        seqnum = (uint32)entry->session_ptr;
+    }
+
     //send confirmation msg
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CONFIRM
-            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, (uint32)entry->session_ptr, 0, ero);
+            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, ucid, seqnum, 0, ero);
 
     //send api message
     int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
@@ -768,9 +782,23 @@ void NARB_APIClient::releaseReservation(const Message& msg)
     ero_search_entry* entry = lookupEntry(ero);
     assert(entry!=NULL);
 
+    //determine ucid and seqnum
+    DRAGON_EXT_INFO_Object* dragonExtInfo = ((Message*)&msg)->getDRAGON_EXT_INFO_Object();
+    uint32 ucid, seqnum;
+    if (dragonExtInfo && dragonExtInfo->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID))
+    {
+        ucid = dragonExtInfo->getServiceConfirmationID().ucid;
+        seqnum = dragonExtInfo->getServiceConfirmationID().seqnum;
+    }
+    else
+    {
+        ucid = entry->index.src_addr;
+        seqnum = (uint32)entry->session_ptr;
+    }
+
     //send release msg
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_DELETE
-            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, (uint32)entry->session_ptr, 0, ero);
+            , entry->index.src_addr, entry->index.dest_addr, 0, 0, entry->index.bw, 0, ucid, seqnum, 0, ero);
 
     //send api message
     int len = writen(fd, (char*)msgheader, sizeof(struct narb_api_msg_header)+ntohs(msgheader->length));
