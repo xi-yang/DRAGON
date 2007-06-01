@@ -710,7 +710,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 }
 
 ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Object& o ) {
-	buffer << RSVP_ObjectHeader( o.size(), o.getClassNumber(), 1);
+	buffer << RSVP_ObjectHeader( o.size(), , RSVP_ObjectHeader::DRAGON_EXT_INFO, 1);
 	buffer <<o.serviceConfID.length << o.serviceConfID.type << o.serviceConfID.sub_type 
 		<< o.serviceConfID.ucid << o.serviceConfID.seqnum;
 	return buffer;

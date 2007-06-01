@@ -70,9 +70,10 @@ public:
 #if defined(ONEPASS_RESERVATION)
 		DUPLEX = 208,								// uses one of the reserved value
 #endif
-		GENERALIZED_UNI = 229, //using the same class-num for GENERALIZED UNI Object
-		DRAGON_UNI = 253, //using the same class-num for GENERALIZED UNI Object
-	};
+		GENERALIZED_UNI = 229, //OIF GENERALIZED UNI Object
+		DRAGON_UNI = 253, //DRAGON UNI Object with a private class number
+		DRAGON_EXT_INFO = 254, //DRAGON Extension Information Object with a private class number
+		};
 protected:
 	uint16 length;
 	uint8 classNum;
