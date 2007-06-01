@@ -413,7 +413,7 @@ case $1 in
 	;;
     
     *)
-        echo "Usage: $0 {start-vlsr|restart-vlsr|start-uni|restart-uni|start-narb|restart-narb|status|stop}"
+        echo "Usage: $0 {start-vlsr|restart-vlsr|start-uni|restart-uni|start-narb|restart-narb|start-vlsr-narb|restart-vlsr-narb|status|stop}"
 	exit 1
 	;;
 esac
