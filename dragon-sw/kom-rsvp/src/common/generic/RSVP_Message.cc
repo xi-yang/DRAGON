@@ -69,12 +69,16 @@ void Message::init() {
 	}
 	if ( UNI_Object_P) {
 		if (UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
-			((DRAGON_UNI_Object*)UNI_Object_P)->destroy();
+			((DRAGON_RSVPUNI_Object*)UNI_Object_P)->destroy();
 		}
 		else {
 			((GENERALIZED_UNI_Object*)UNI_Object_P)->destroy();
 		}
 		UNI_Object_P = NULL;
+	}
+	if ( DRAGON_EXT_INFO_Object_P ) {
+		DRAGON_EXT_INFO_Object_P->destroy();
+		DRAGON_EXT_INFO_Object_P = NULL;
 	}
 	RSVP_HOP_Object_O = RSVP_HOP_Object();
 	
@@ -235,6 +239,9 @@ INetworkBuffer& operator>> ( INetworkBuffer& buffer, Message& m ) {
 		case RSVP_ObjectHeader::GENERALIZED_UNI:
 			m.checkUNI_Object(new GENERALIZED_UNI_Object(buffer, object.getLength() ) );
 			break;
+		case RSVP_ObjectHeader::DRAGON_EXT_INFO:
+			m.checkDRAGON_EXT_INFO_Object ( new DRAGON_EXT_INFO_Object( buffer, object.getLength() ) );
+			break;
 		case RSVP_ObjectHeader::LABEL_SET:
 			m.checkLABEL_SET_Object( new LABEL_SET_Object( buffer, object.getLength() ) );
 			break;
@@ -342,6 +349,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const Message& m ) {
                buffer  << *((GENERALIZED_UNI_Object*)m.UNI_Object_P);
 	    }
 	}
+	if (m.DRAGON_EXT_INFO_Object_P) buffer << *m.DRAGON_EXT_INFO_Object_P;
 	if (m.LABEL_SET_Object_P) buffer << *m.LABEL_SET_Object_P;
 	if (m.objectFlags & Message::SESSION_ATTRIBUTE) buffer << m.SESSION_ATTRIBUTE_Object_O;
 	if (m.objectFlags & Message::ERROR_SPEC) buffer << m.ERROR_SPEC_Object_O;
@@ -434,6 +442,9 @@ void Message::checkUNI_Object( UNI_Object* o ) {
 	}
 }
 
+void Message::checkDRAGON_EXT_INFO_Object( DRAGON_EXT_INFO_Object* o) {
+	CHECK_OBJECT_REF(DRAGON_EXT_INFO)
+}
 
 bool Message::checkForFilter() {
 	if ( flowDescriptorList.empty() && msgType == ResvTear ) {
@@ -625,7 +636,6 @@ ostream& operator<< ( ostream& os, const Message& m ) {
 	}
 	if (m.objectFlags & Message::LABEL_REQUEST) os << endl << " LABEL_REQUEST:" << m.LABEL_REQUEST_Object_O;
 	if (m.EXPLICIT_ROUTE_Object_P) os << endl << " EXPLICIT_ROUTE:" << *m.EXPLICIT_ROUTE_Object_P;
-
 	if (m.UNI_Object_P) {
 	    if (m.UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
                os << endl << " DRAGON_UNI:"  << *((DRAGON_UNI_Object*)m.UNI_Object_P);
@@ -634,6 +644,7 @@ ostream& operator<< ( ostream& os, const Message& m ) {
                os << endl << " GENERALIZED_UNI:"  << *((GENERALIZED_UNI_Object*)m.UNI_Object_P);
 	    }
 	}
+	if (m.DRAGON_EXT_INFO_Object_P ) os << endl << "DRAGON_EXT_INFO: " << *m.DRAGON_EXT_INFO_Object_P;
 	if (m.LABEL_SET_Object_P) os << endl << "LABEL_SET: " << *m.LABEL_SET_Object_P;
 	if (m.objectFlags & Message::SUGGESTED_LABEL) os << endl << "SUGGESTED_LABEL: " << m.SUGGESTED_LABEL_Object_O;
 	if (m.objectFlags & Message::UPSTREAM_LABEL) os << endl << "UPSTREAM_LABEL: " << m.UPSTREAM_LABEL_Object_O;

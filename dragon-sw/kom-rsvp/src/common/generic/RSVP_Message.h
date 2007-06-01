@@ -115,6 +115,8 @@ protected:
 
 	UNI_Object*		UNI_Object_P;
 
+	DRAGON_EXT_INFO_Object* DRAGON_EXT_INFO_Object_P;
+
 	bool checkFlowdescList() const;
 
 	friend ostream& operator<< ( ostream&, const Message& );
@@ -134,7 +136,7 @@ protected:
 	void checkLABEL_SET_Object(const LABEL_SET_Object*);
 
 	void checkUNI_Object(UNI_Object*);
-
+	void checkDRAGON_EXT_INFO_Object(DRAGON_EXT_INFO_Object*);
 	bool checkForFilter();
 	void checkStatus() const;
 
@@ -143,7 +145,7 @@ public:
 	status(Correct), objectFlags(0),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL), EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
-	, UNI_Object_P(NULL)
+	, UNI_Object_P(NULL), DRAGON_EXT_INFO_Object_P(NULL)
 	{}
 
 	Message( uint8 msgType, uint8 ttl, const SESSION_Object& session, bool clearE_Police = false )
@@ -336,7 +338,7 @@ public:
 		Message_CHECK_OBJECT(MESSAGE_ID)
 	}
 	void clearMESSAGE_ID_Object() {
-                                            assert( objectFlags & MESSAGE_ID );
+              assert( objectFlags & MESSAGE_ID );
 		objectFlags &= ~MESSAGE_ID;
 		length -= MESSAGE_ID_Object::total_size();
 	}
@@ -370,13 +372,15 @@ public:
 		else
 			return NULL;
 	}
+	DRAGON_EXT_INFO_Object* getDRAGON_EXT_INFO_Object() {
+		return DRAGON_EXT_INFO_Object_P;
+	}
 	void setUNI_Object( DRAGON_UNI_Object& o ) {
 		checkUNI_Object( o.borrow() );
 	}
 	void setUNI_Object( GENERALIZED_UNI_Object& o ) {
 		checkUNI_Object( o.borrow() );
 	}
-
 	void clearUNI_Object() {
 		if (UNI_Object_P){
 			if (UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
@@ -389,6 +393,9 @@ public:
 			}
 			UNI_Object_P = NULL;
 		}
+	}
+	void setDRAGON_EXT_INFO_Object( DRAGON_EXT_INFO_Object& o) {
+		checkDRAGON_EXT_INFO_Object( o.borrow() );
 	}
 
 	void revertToError( const ERROR_SPEC_Object& );

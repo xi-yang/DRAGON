@@ -450,7 +450,9 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
            	message.setUNI_Object(*(GENERALIZED_UNI_Object*)uni);
            }
 	}
-
+	if (dragonExtInfo) { //DRAGON addition
+		message.setDRAGON_EXT_INFO_Object(dragonExtInfo);
+	}
 	if (hasSessionAttributeObject) message.setSESSION_ATTRIBUTE_Object(sessionAttributeObject);
 
 	if (outLif == *(RSVP_Global::rsvp->getApiLif())){
@@ -513,6 +515,9 @@ void PSB::sendTearMessage() {
            else {
            	msg.setUNI_Object(*(GENERALIZED_UNI_Object*)uni);
            }
+	}
+	if (dragonExtInfo) { //DRAGON addition
+		msg.setDRAGON_EXT_INFO_Object(dragonExtInfo);
 	}
 	LogicalInterfaceSet::ConstIterator lifIter = outLifSet.begin();
 	for ( ;lifIter != outLifSet.end(); ++lifIter ) {
@@ -796,6 +801,23 @@ bool PSB::updateGENERALIZED_UNI_Object( GENERALIZED_UNI_Object* uni_new ) {
 		uni = uni_new->borrow();	
 	else
 		uni = NULL;
+	return true;
+}
+
+bool PSB::updateDRAGON_EXT_INFO_Object( DRAGON_EXT_INFO_Object* dragon_info) {
+	if (dragonExtInfo) {
+		if (!dragon_info) {
+			dragonExtInfo->destroy();
+		} else {
+			return false;
+		}
+	} else if (!dragon_info) {
+		return false;
+	}
+	if (dragon_info)
+		dragonExtInfo = dragon_info->borrow();
+	else   
+		dragonExtInfo = NULL;
 	return true;
 }
 

@@ -359,9 +359,15 @@ void MessageProcessor::refreshReservations() {
 
 			//$$$$ Comply with GMPLS RSVP-TE (Section 8.1.2 of RFC 3473)
 			resvMsg->setRSVP_HOP_Object( (*psbIter)->getDataInRsvpHop() );
+
 			resvMsg->setTIME_VALUES_Object( inLif.getRefreshInterval() );
+
+			//$$$$ DRAGON specific
 			if (currentMessage.getDRAGON_UNI_Object())
 				resvMsg->setUNI_Object(*currentMessage.getDRAGON_UNI_Object());
+			if (currentMessage.getDRAGON_EXT_INFO_Object())
+				resvMsg->setDRAGON_EXT_INFO_Object(*currentMessage.getDRAGON_EXT_INFO_Object());
+			
 			//$$$$ Always return the suggested LABEL_Object in RESV messaage (important for VLSR--Movaz interop)
 			if ( (*psbIter)->hasSUGGESTED_LABEL_Object() ) {
                             const SUGGESTED_LABEL_Object & suggestedLabelObject = (*psbIter)->getSUGGESTED_LABEL_Object();

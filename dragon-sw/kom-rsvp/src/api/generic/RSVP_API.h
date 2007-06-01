@@ -58,12 +58,14 @@ struct _rsvp_upcall_parameter {
 	uint8 switchingType; // LSP switching type
 	uint16 gPid;		//G-Pid
 	struct _Dragon_Uni_Para* dragonUniPara;
+	struct _Dragon_ExtInfo_Para* dragonExtInfoPara;
 	void* sendTSpec;  //Sender TSpec
 	void* adSpec;
 	void* session;	//RSVP_API::SessionId
 	void* senderTemplate;
 	void* dragonUni;
-    uint32 vlanTag;
+	void* dragonExtInfo;
+	uint32 vlanTag;
 	uint8 code;			//error/success code
 };
 typedef void (*zUpcall)(void* para);
@@ -155,6 +157,11 @@ struct _Dragon_Uni_Para {
 	char egressChannel[12];
 };
 
+struct _Dragon_ExtInfo_Para {
+	uint32 ucid;
+	uint32 seqnum;
+};
+
 struct _sessionParameters {
 	//Mandatory parameters
 	struct _LabelRequest_Para LabelRequest_Para;
@@ -166,6 +173,7 @@ struct _sessionParameters {
 	uint8 ERONodeNumber;	// 32 in Maximum
 	struct _EROAbstractNode_Para* EROAbstractNode_Para;
 	struct _Dragon_Uni_Para* Dragon_Uni_Para;
+	struct _Dragon_ExtInfo_Para* Dragon_ExtInfo_Para;
 	uint8 labelSetSize;	// 8 in maximum
 	uint32* labelSet;
 	struct _SessionAttribute_Para* SessionAttribute_Para;
@@ -211,14 +219,16 @@ public:
 	SessionId createSession( const NetAddress&, uint16, uint32, UpcallProcedure = NULL, void* clientData = NULL );
 	void createSender( SessionId, const NetAddress&, uint16 port, const SENDER_TSPEC_Object&,
 		const LABEL_REQUEST_Object&  labelReqObj, EXPLICIT_ROUTE_Object* ero, 
-		UNI_Object* uni,
+		UNI_Object* uni, 
+		DRAGON_EXT_INFO_Object* dragonExtInfo,
 		LABEL_SET_Object* labelSet, SESSION_ATTRIBUTE_Object* ssAttrib,
 		UPSTREAM_LABEL_Object* upstreamLabel,
 		uint8 TTL, const ADSPEC_Object* = NULL, const POLICY_DATA_Object* = NULL,
 		bool reserve = false, uint16 senderRecvPort = 0, uint16 recvSendPort = 0);
 	void createSender( SessionId session, uint16 port, const SENDER_TSPEC_Object& tspec,
 		const LABEL_REQUEST_Object&  labelReqObj, EXPLICIT_ROUTE_Object* ero, 
-		UNI_Object* uni,
+		UNI_Object* uni, 
+		DRAGON_EXT_INFO_Object* dragonExtInfo,
 		LABEL_SET_Object* labelSet, 
 		SESSION_ATTRIBUTE_Object* ssAttrib,
 		UPSTREAM_LABEL_Object* upstreamLabel,
@@ -230,7 +240,7 @@ public:
 	}
 	void createReservation( SessionId, bool confRequest, FilterStyle,
 		const FlowDescriptorList&, const POLICY_DATA_Object* policyData = NULL, 
-		UNI_Object* uni = NULL);
+		UNI_Object* uni = NULL, DRAGON_EXT_INFO_Object* dragonExtInfo = NULL);
 	void releaseSession( SessionId );
 	void releaseSession( SESSION_Object& session ) ;
 	void releaseSender( SessionId, const NetAddress&, uint16 port, uint8 TTL );

@@ -151,7 +151,7 @@ void Hop::processSrefresh( const Message& msg ) {
 						if (dragonUni != NULL) {
 							const String egressChanName = (const char*)dragonUni->getEgressCtrlChannel().name;
 							if (egressChanName == "implicit")
-								lif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)dragonUni->getDestTNA().local_id);	
+								lif = RSVP_Global::rsvp->findInterfaceByLocalId((const uint32)dragonUni->getDestTNA().local_id);
 							else
 								lif = RSVP_Global::rsvp->findInterfaceByName(egressChanName);
 						}

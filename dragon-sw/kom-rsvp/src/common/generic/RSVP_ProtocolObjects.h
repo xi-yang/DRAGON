@@ -1085,6 +1085,7 @@ public:
 		serviceConfID.ucid = ucid0;
 		serviceConfID.seqnum = seqnum0;
 	}
+	ServiceConfirmationID_Subobject& getServiceConfirmationID() { return serviceConfID; }
 };
 extern inline DRAGON_EXT_INFO_Object::~DRAGON_EXT_INFO_Object() {}
 

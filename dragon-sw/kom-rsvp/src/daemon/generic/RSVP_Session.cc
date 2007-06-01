@@ -674,6 +674,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	uint32 dynamicVlanTag = 0;
 
 
+	DRAGON_EXT_INFO_Object* dragonExtInfo = ((Message*)&msg)->getDRAGON_EXT_INFO_Object();
+
 	// DRAGON && GENERALIZED UNI processing here could be combined !! 
 	if (isDragonUniIngressClient) {              
 		const String ingressChanName = (const char*)dragonUni->getIngressCtrlChannel().name;
@@ -1194,7 +1196,12 @@ search_psb:
 	if (generalizedUni) {
 		cPSB->updateGENERALIZED_UNI_Object(generalizedUni);
 	}
-	
+
+	//$$$$ DRAGON EXT INFO
+	if (dragonExtInfo) {
+		cPSB->updateDRAGON_EXT_INFO_Object(dragonExtInfo);
+	}
+
 	// update PSB
 	if ( cPSB->updateSENDER_TSPEC_Object( msg.getSENDER_TSPEC_Object() ) ) {
 		Path_Refresh_Needed = true;

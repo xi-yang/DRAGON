@@ -283,7 +283,19 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 		{
 		   zUpcallParam.dragonUniPara = NULL;
 		   zUpcallParam.dragonUni = NULL;
+		}
 
+		if(msg.getDRAGON_EXT_INFO_Object())
+		{
+		   zUpcallParam.dragonExtInfoPara = new (struct _Dragon_ExtInfo_Para);
+		   zUpcallParam.dragonExtInfoPara->ucid = msg.getDRAGON_EXT_INFO_Object()->getServiceConfirmationID().ucid;
+		   zUpcallParam.dragonExtInfoPara->seqnum = msg.getDRAGON_EXT_INFO_Object()->getServiceConfirmationID().seqnum;
+		   zUpcallParam.dragonExtInfo = (void*)msg.getDRAGON_EXT_INFO_Object();
+		}
+		else
+		{
+		   zUpcallParam.dragonExtInfoPara = NULL;
+		   zUpcallParam.dragonExtInfo = NULL;
 		}
 
 		upcall(&zUpcallParam); //upcall to Zebra
@@ -362,6 +374,7 @@ void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port
 	const LABEL_REQUEST_Object&  labelReqObj, 
 	EXPLICIT_ROUTE_Object* ero, 
 	UNI_Object* uni,
+	DRAGON_EXT_INFO_Object* dragonExtInfo,
 	LABEL_SET_Object* labelSet, 
 	SESSION_ATTRIBUTE_Object* ssAttrib, 
 	UPSTREAM_LABEL_Object* upstreamLabel,
@@ -386,6 +399,9 @@ void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port
 		else
 			message.setUNI_Object(*(GENERALIZED_UNI_Object*)uni);
 	}
+	if (dragonExtInfo) {
+		message.setDragonExtInfo(*dragonExtInfo);
+	}
 	if (labelSet) message.setLABEL_SET_Object(*labelSet);
 	if (ssAttrib) message.setSESSION_ATTRIBUTE_Object(*ssAttrib);
 	if (upstreamLabel) message.setUPSTREAM_LABEL_Object(*upstreamLabel);
@@ -402,9 +418,10 @@ void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port
 
 void RSVP_API::createReservation( SessionId iter, bool confRequest,
 	FilterStyle style, const FlowDescriptorList& fdList,
-	const POLICY_DATA_Object* policyData, UNI_Object* uni) {
-	Message message( Message::Resv, 127, **iter );
+	const POLICY_DATA_Object* policyData, UNI_Object* uni, 
+	DRAGON_EXT_INFO_Object* dragonExtInfo) {
 
+	Message message( Message::Resv, 127, **iter );
 	message.setRSVP_HOP_Object( *apiLif );
 	message.setTIME_VALUES_Object( TimeValue(0,0) );
 	if ( confRequest ) message.setRESV_CONFIRM_Object( NetAddress(0) );
@@ -422,6 +439,9 @@ void RSVP_API::createReservation( SessionId iter, bool confRequest,
 			message.setUNI_Object(*(DRAGON_UNI_Object*)uni);
 		else
 			message.setUNI_Object(*(GENERALIZED_UNI_Object*)uni);
+	}
+	if (dragonExtInfo) {
+		message.setDragonExtInfo(*dragonExtInfo);
 	}
 	apiLif->sendMessage( message, NetAddress(0), apiLif->getLocalAddress() );
 }
@@ -545,6 +565,7 @@ void zInitRsvpPathRequest(void* thisApi, struct _sessionParameters* para, uint8 
 	SENDER_TSPEC_Object *stb = NULL;
 	EXPLICIT_ROUTE_Object *ero = NULL;
 	DRAGON_UNI_Object *uni = NULL;
+	DRAGON_EXT_INFO_Object* dragonExtInfo = NULL;
 	LABEL_SET_Object* labelSet = NULL;
 	SESSION_ATTRIBUTE_Object* ssAttrib = NULL;
 	UPSTREAM_LABEL_Object* upLabel = NULL;
@@ -620,6 +641,10 @@ void zInitRsvpPathRequest(void* thisApi, struct _sessionParameters* para, uint8 
 									para->Dragon_Uni_Para->ingressChannel,
 									para->Dragon_Uni_Para->egressChannel);
 	}
+	if (para->Dragon_ExtInfo_Para) {
+		dragonExtInfo = new DRAGON_EXT_INFO_Object;
+		dragonExtInfo->SetServiceConfirmationID(para->Dragon_ExtInfo_Para->ucid, para->Dragon_ExtInfo_Para->seqnum);
+	}
 	if (para->labelSet && para->labelSetSize > 0){
 	        labelSet = new LABEL_SET_Object();
 	        for (int i=0;i<para->labelSetSize;i++)
@@ -643,11 +668,12 @@ void zInitRsvpPathRequest(void* thisApi, struct _sessionParameters* para, uint8 
 	else
 		lr = new LABEL_REQUEST_Object (para->LabelRequest_Para.data.mpls_l3pid);
 
-       api->createSender( session, para->Session_Para.srcPort, *stb, 
-       			      *lr, ero, uni, labelSet, ssAttrib, upLabel, 50, ao, NULL );
+       api->createSender( session, para->Session_Para.srcPort, *stb, *lr, ero, 
+       			      uni, dragonExtInfo, labelSet, ssAttrib, upLabel, 50, ao, NULL );
 	if (ao) ao->destroy();
 	if (ero) ero->destroy();
 	if (uni) uni->destroy();
+	if (dragonExtInfo) dragonExtInfo->destroy();
 	if (labelSet) labelSet->destroy();
 	if (lr) delete lr;
 	if (stb) delete stb;
@@ -691,7 +717,8 @@ void zInitRsvpResvRequest(void* api, struct _rsvp_upcall_parameter* upcallPara)
 		}
 	}
        //$$$$ Add DRAGON_UNI_Object if applicable
-	((RSVP_API*)api)->createReservation( *((RSVP_API::SessionId*)(upcallPara->session)), false, FF, fdList, NULL, (DRAGON_UNI_Object*)upcallPara->dragonUni);
+	((RSVP_API*)api)->createReservation( *((RSVP_API::SessionId*)(upcallPara->session)), false, FF, fdList, NULL, 
+	(DRAGON_UNI_Object*)upcallPara->dragonUni, (DRAGON_EXT_INFO_Object*)upcallPara->dragonExtInfo);
 }
 
 void zTearRsvpPathRequest(void* api, struct _sessionParameters* para)

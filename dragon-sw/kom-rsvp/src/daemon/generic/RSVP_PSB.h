@@ -106,6 +106,7 @@ class PSB :	public RelationshipPSB_Session,
 	bool hasSessionAttributeObject;
 	EXPLICIT_ROUTE_Object* explicitRoute;
 	UNI_Object* uni;
+	DRAGON_EXT_INFO_Object* dragonExtInfo;
 	LABEL_SET_Object* labelSet;
 	VLSRRoute vlsrt;
 	RSVP_HOP_Object dataInRsvpHop;
@@ -205,9 +206,11 @@ public:
 	bool updateUNI_Object( UNI_Object* uni );
 	bool updateDRAGON_UNI_Object( DRAGON_UNI_Object* uni );
 	bool updateGENERALIZED_UNI_Object( GENERALIZED_UNI_Object* uni );
+	bool updateDRAGON_EXT_INFO_Object( DRAGON_EXT_INFO_Object* dragonExtInfo );
 	const UNI_Object* getUNI_Object() const { return uni; }
 	const DRAGON_UNI_Object* getDRAGON_UNI_Object() const { return (const DRAGON_UNI_Object*)uni; }
 	const GENERALIZED_UNI_Object* getGENERALIZED_UNI_Object() const { return (const GENERALIZED_UNI_Object*)uni; }
+	const DRAGON_EXT_INFO_Object* getDRAGON_EXT_INFO_Object() const { return dragonExtInfo; }
 
 #if defined(REFRESH_REDUCTION) || defined(ONEPASS_RESERVATION)
 	Hop* getNextHop() { return nextHop; }

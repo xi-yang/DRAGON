@@ -302,7 +302,7 @@ void SwitchCtrl_Session_SubnetUNI::createRsvpUniPath()
 
     //NetAddress srcAddress(subnetUniSrc.uni_cid_ipv4);
     //createSender( *uniSessionId, srcAddress, subnetUniSrc.tunnel_id, *stb, *lr, NULL, uni, labelSet, ssAttrib, upLabel, 50);
-    createSender( *uniSessionId, subnetUniSrc.tunnel_id, *stb, *lr, NULL, uni, labelSet, ssAttrib, upLabel, 50);
+    createSender( *uniSessionId, subnetUniSrc.tunnel_id, *stb, *lr, NULL, uni, NULL, labelSet, ssAttrib, upLabel, 50); //dagonExtInfo?
 
     if (uni) uni->destroy();
     if (labelSet) labelSet->destroy();
