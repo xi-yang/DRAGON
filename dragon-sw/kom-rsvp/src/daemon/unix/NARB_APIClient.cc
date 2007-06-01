@@ -328,6 +328,8 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
 
     //use LSP_OPT_QUERY_HOLD as a default request option to avoid contention by holding resources temporily
     msgheader->options |= htonl(0x0100<<16); //OPT_QUERY_HOLD
+    if (ucid != src && ucid != 0)
+        msgheader->options |= htonl(0x0200<<16); //OPT_QUERY_CONFIRM
 
     msgbody1->type = htons(msgType); // 2 == REQUEST; 3 == CONFIRM; 4 == RELEASE; 5 == VTAG_MASK
     msgbody1->length = htons(sizeof(struct msg_app2narb_request) - 4);
@@ -536,6 +538,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
     if (dragonExtInfo && dragonExtInfo->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID))
     {
         ucid = dragonExtInfo->getServiceConfirmationID().ucid;
+        assert (ucid != srcAddr && ucid != 0);
         seqnum = dragonExtInfo->getServiceConfirmationID().seqnum;
     }
     else
