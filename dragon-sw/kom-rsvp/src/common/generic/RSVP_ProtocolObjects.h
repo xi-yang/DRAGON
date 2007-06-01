@@ -1066,7 +1066,7 @@ class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_EXT_INFO_Object& );
 	void readFromBuffer( INetworkBuffer&, uint16 );
 	uint16 size() const {
-		return HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID) ? sizeof(ServiceConfirmationID_Subobject) : 0;
+		return (subobj_flags & DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID) ? sizeof(ServiceConfirmationID_Subobject) : 0;
 	}
 public:
 	DRAGON_EXT_INFO_Object() : subobj_flags(0) {}
@@ -1075,9 +1075,9 @@ public:
 	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }
 	void SetSubobjFlag(uint32 flag) {subobj_flags |= flag;}
 	void ResetSubobjFlag(uint32 flag) {subobj_flags &= (~flag);}
-	bool HasSubobj(uint32 flag) { return ((subobj_flags & flag) != 0); }
+	bool HasSubobj(uint32 flag) const { return ((subobj_flags & flag) != 0); }
 
-	bool SetServiceConfirmationID(uint32 ucid0, uint32 seqnum0)	{
+	void SetServiceConfirmationID(uint32 ucid0, uint32 seqnum0)	{
 		SetSubobjFlag(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID);
 		memset(&serviceConfID, 0, sizeof(ServiceConfirmationID_Subobject));
 		serviceConfID.length = sizeof(ServiceConfirmationID_Subobject);
