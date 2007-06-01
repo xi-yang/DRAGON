@@ -309,7 +309,7 @@ static int buildNarbEroTlv (char *buf, EXPLICIT_ROUTE_Object* ero)
 }
 
 
-static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 seqnum, uint32 hopback, EXPLICIT_ROUTE_Object* ero = NULL)
+static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, uint32 vtag, uint32 ucid, uint32 seqnum, uint32 hopback, EXPLICIT_ROUTE_Object* ero = NULL)
 {
     char buf[1024];
     memset(buf, 0, sizeof(buf));
@@ -319,8 +319,8 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
 
     //construct NARB API message
     msgheader->type = htons(NARB_MSG_LSPQ);
+    msgheader->ucid = htonl(ucid);
     msgheader->seqnum = htonl (seqnum);
-    msgheader->ucid = htonl(src);
     msgheader->tag = htonl(vtag);
     msgheader->options = htonl(0x0017<<16); //OPT_STRICT | OPT_PREFERED |OPT_MRN | OPT_BIDIRECTIONAL
     if (vtag > 0)
@@ -393,7 +393,7 @@ static void deleteNarbApiMessage(narb_api_msg_header* apiMsg)
 }
 
 EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest, uint8 swtype, uint8 encoding, float bandwidth, 
-	uint32& vtag, uint32& srcLocalId, uint32& destLocalId, uint32 hopBackAddr, uint32 excl_options, void* ss_ptr)
+	uint32& vtag, uint32& srcLocalId, uint32& destLocalId, uint32 hopBackAddr, uint32 excl_options, uint32 ucid, uint32 seqnum)
 {
     char buf[1024];
     EXPLICIT_ROUTE_Object* ero = NULL;
@@ -402,7 +402,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(uint32 src, uint32 dest,
     ipv4_prefix_subobj* subobj_ipv4;
     unum_if_subobj* subobj_unum;
     struct narb_api_msg_header* msgheader = buildNarbApiMessage(DMSG_CLI_TOPO_CREATE
-            , src, dest, swtype, encoding, bandwidth, vtag,  (uint32)ss_ptr, hopBackAddr);
+            , src, dest, swtype, encoding, bandwidth, vtag,  ucid, seqnum, hopBackAddr);
     msgheader->options = htonl(ntohl(msgheader->options) | excl_options | NARB_APIClient::extra_options); //@@@@
 
     if (!active())
@@ -525,11 +525,25 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
 {
     uint32 srcAddr = 0, destAddr = 0, srcLocalId = 0, destLocalId = 0, vtag = 0, hopBackAddr = 0;
     DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
+    DRAGON_EXT_INFO_Object* dragonExtInfo = ((Message*)&msg)->getDRAGON_EXT_INFO_Object();
 
-	NetAddress srcNetAddr = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
-	srcAddr = srcNetAddr.rawAddress();
-	if (srcAddr == 0)
-		return NULL;
+    NetAddress srcNetAddr = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+    srcAddr = srcNetAddr.rawAddress();
+    if (srcAddr == 0)
+        return NULL;
+
+    uint32 ucid, seqnum;
+    if (dragonExtInfo && dragonExtInfo->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID))
+    {
+        ucid = dragonExtInfo->getServiceConfirmationID().ucid;
+        seqnum = dragonExtInfo->getServiceConfirmationID().seqnum;
+    }
+    else
+    {
+        ucid = srcAddr;
+        seqnum = (uint32)ss_ptr;
+    }
+
     if (uni) 
     {
         if (srcAddr == uni->getSrcTNA().addr.s_addr)
@@ -563,7 +577,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
 
     EXPLICIT_ROUTE_Object* ero = lookupExplicitRoute(destAddr, 
             (uint32)msg.getSESSION_Object().getTunnelId(),
-            (uint32)msg.getSESSION_Object().getExtendedTunnelId(), ss_ptr);
+            (uint32)msg.getSESSION_Object().getExtendedTunnelId(), ss_ptr); //using ss_ptr as a index for local-session mutual exclusion
 
     if (!ero) {
         uint32 excl_options = RSVP_Global::switchController->getExclEntry(msg.getSESSION_ATTRIBUTE_Object().getSessionName());
@@ -580,7 +594,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
         ero = getExplicitRoute(srcAddr, destAddr, msg.getLABEL_REQUEST_Object().getSwitchingType(), 
                 msg.getLABEL_REQUEST_Object().getLspEncodingType(), 
                 msg.getSENDER_TSPEC_Object().get_r(),
-                vtag, srcLocalId, destLocalId, hopBackAddr, excl_options, ss_ptr);
+                vtag, srcLocalId, destLocalId, hopBackAddr, excl_options, ucid, seqnum);
 	 if (ero) {
             if (uni && uni->getVlanTag().vtag == ANY_VTAG)
             {
