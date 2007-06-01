@@ -69,7 +69,7 @@ void Message::init() {
 	}
 	if ( UNI_Object_P) {
 		if (UNI_Object_P->getClassNumber() == RSVP_ObjectHeader::DRAGON_UNI) {
-			((DRAGON_RSVPUNI_Object*)UNI_Object_P)->destroy();
+			((DRAGON_UNI_Object*)UNI_Object_P)->destroy();
 		}
 		else {
 			((GENERALIZED_UNI_Object*)UNI_Object_P)->destroy();

@@ -451,7 +451,7 @@ void PSB::sendRefresh( const LogicalInterface& outLif ) {
            }
 	}
 	if (dragonExtInfo) { //DRAGON addition
-		message.setDRAGON_EXT_INFO_Object(dragonExtInfo);
+		message.setDRAGON_EXT_INFO_Object(*dragonExtInfo);
 	}
 	if (hasSessionAttributeObject) message.setSESSION_ATTRIBUTE_Object(sessionAttributeObject);
 
@@ -517,7 +517,7 @@ void PSB::sendTearMessage() {
            }
 	}
 	if (dragonExtInfo) { //DRAGON addition
-		msg.setDRAGON_EXT_INFO_Object(dragonExtInfo);
+		msg.setDRAGON_EXT_INFO_Object(*dragonExtInfo);
 	}
 	LogicalInterfaceSet::ConstIterator lifIter = outLifSet.begin();
 	for ( ;lifIter != outLifSet.end(); ++lifIter ) {

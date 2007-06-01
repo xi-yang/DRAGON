@@ -180,7 +180,7 @@ int main( int argc, char** argv ) {
 
 	SESSION_ATTRIBUTE_Object* ssAttrib = new SESSION_ATTRIBUTE_Object(String("DRAGON"));
 	UPSTREAM_LABEL_Object* upLabel = new UPSTREAM_LABEL_Object(161252);
-       api.createSender( session, srcPort, stb, LABEL_REQUEST_Object(), ero, NULL, labelSet, ssAttrib, upLabel, 50, NULL, NULL );
+       api.createSender( session, srcPort, stb, LABEL_REQUEST_Object(), ero, NULL, NULL, labelSet, ssAttrib, upLabel, 50, NULL, NULL );
 	ao->destroy();
 	ero->destroy();
 	labelSet->destroy();

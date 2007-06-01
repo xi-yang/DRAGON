@@ -400,7 +400,7 @@ void RSVP_API::createSender( SessionId iter, const NetAddress& addr, uint16 port
 			message.setUNI_Object(*(GENERALIZED_UNI_Object*)uni);
 	}
 	if (dragonExtInfo) {
-		message.setDragonExtInfo(*dragonExtInfo);
+		message.setDRAGON_EXT_INFO_Object(*dragonExtInfo);
 	}
 	if (labelSet) message.setLABEL_SET_Object(*labelSet);
 	if (ssAttrib) message.setSESSION_ATTRIBUTE_Object(*ssAttrib);
@@ -441,7 +441,7 @@ void RSVP_API::createReservation( SessionId iter, bool confRequest,
 			message.setUNI_Object(*(GENERALIZED_UNI_Object*)uni);
 	}
 	if (dragonExtInfo) {
-		message.setDragonExtInfo(*dragonExtInfo);
+		message.setDRAGON_EXT_INFO_Object(*dragonExtInfo);
 	}
 	apiLif->sendMessage( message, NetAddress(0), apiLif->getLocalAddress() );
 }

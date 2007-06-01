@@ -1070,6 +1070,9 @@ class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 	}
 public:
 	DRAGON_EXT_INFO_Object() : subobj_flags(0) {}
+	DRAGON_EXT_INFO_Object( INetworkBuffer& b, uint16 len ) {
+		readFromBuffer( b, len );
+	}
 	//DRAGON_EXT_INFO_Object ( const DRAGON_EXT_INFO_Object& ); 
 	//DRAGON_EXT_INFO_Object & operator= ( const DRAGON_EXT_INFO_Object & );
 	uint16 total_size() const { return size() + RSVP_ObjectHeader::size(); }

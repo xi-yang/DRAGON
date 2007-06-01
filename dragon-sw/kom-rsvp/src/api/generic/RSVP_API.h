@@ -236,7 +236,7 @@ public:
 		const POLICY_DATA_Object* policyData = NULL, 
 		bool reserve = false,
 		uint16 senderRecvPort = 0, uint16 recvSendPort = 0 ) {
-		createSender( session, 0, port, tspec, labelReqObj, ero, uni, labelSet, ssAttrib, upstreamLabel, TTL, adSpec, policyData, reserve, senderRecvPort, recvSendPort );
+		createSender( session, 0, port, tspec, labelReqObj, ero, uni, dragonExtInfo, labelSet, ssAttrib, upstreamLabel, TTL, adSpec, policyData, reserve, senderRecvPort, recvSendPort );
 	}
 	void createReservation( SessionId, bool confRequest, FilterStyle,
 		const FlowDescriptorList&, const POLICY_DATA_Object* policyData = NULL, 
