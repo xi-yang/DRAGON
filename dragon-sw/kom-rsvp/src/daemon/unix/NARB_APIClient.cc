@@ -538,7 +538,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
     if (dragonExtInfo && dragonExtInfo->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID))
     {
         ucid = dragonExtInfo->getServiceConfirmationID().ucid;
-        assert (ucid != srcAddr && ucid != 0);
+        assert (ucid != srcAddr && ucid != 0); //@@@@
         seqnum = dragonExtInfo->getServiceConfirmationID().seqnum;
     }
     else

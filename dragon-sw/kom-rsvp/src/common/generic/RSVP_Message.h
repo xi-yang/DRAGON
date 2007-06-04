@@ -153,7 +153,7 @@ public:
 	status(Correct), objectFlags(SESSION), SESSION_Object_O(session),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL) , EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
-	, UNI_Object_P(NULL)
+	, UNI_Object_P(NULL), DRAGON_EXT_INFO_Object_P(NULL)
 	{
 		length += SESSION_Object::total_size();
 	}
@@ -163,7 +163,7 @@ public:
 	length(headerSize()), status(Correct), objectFlags(MESSAGE_ID_LIST),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL), EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
-	, MESSAGE_ID_LIST_Object_O( 0, epoch ), UNI_Object_P(NULL)
+	, MESSAGE_ID_LIST_Object_O( 0, epoch ), UNI_Object_P(NULL), DRAGON_EXT_INFO_Object_P(NULL)
 	{
 		length += MESSAGE_ID_LIST_Object_O.total_size();
 	}
@@ -171,7 +171,7 @@ public:
 	status(Correct), objectFlags(0),
 	INTEGRITY_Object_P(NULL), SCOPE_Object_P(NULL), ADSPEC_Object_P(NULL)
 	, EXPLICIT_ROUTE_Object_P(NULL), EXPLICIT_ROUTE_Object_Length(0), LABEL_SET_Object_P(NULL)
-	, UNI_Object_P(NULL)
+	, UNI_Object_P(NULL), DRAGON_EXT_INFO_Object_P(NULL)
 	{}
 #endif
 
