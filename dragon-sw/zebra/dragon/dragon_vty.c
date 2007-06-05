@@ -591,7 +591,7 @@ ALIAS (dragon_set_narb_para,
 
 DEFUN (dragon_set_narb_extra_options,
        dragon_set_narb_extra_options_cmd,
-       "set narb-extra-options (use-movaz-speical|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3)",
+       "set narb-extra-options (use-movaz-speical|query-with-confirmation|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3)",
        "Set NARB extra options\n"
        "NARB options\n"
        "Instructing NARB to compute a path using Movaz proprietary information\n"
@@ -603,6 +603,8 @@ DEFUN (dragon_set_narb_extra_options,
 {
   if (strncmp (argv[0], "use-movaz-speical", 12) == 0)
 	narb_extra_options |= LSP_OPT_VIA_MOVAZ;
+  else if (strncmp (argv[0], "query-with-confirmation", 15) == 0)
+	narb_extra_options |= (LSP_OPT_QUERY_HOLD|LSP_OPT_QUERY_CONFIRM);
   else if (strncmp (argv[0], "exclude-layer1", 14) == 0)
 	narb_extra_options |= LSP_OPT_EXCLUD_L1;
   else if (strncmp (argv[0], "exclude-layer2", 14) == 0)
@@ -624,6 +626,8 @@ DEFUN (dragon_show_narb_extra_options,
 {
   if ((narb_extra_options & LSP_OPT_VIA_MOVAZ) != 0)
   	vty_out(vty, "    >use-movaz-speical%s", VTY_NEWLINE);
+  if ((narb_extra_options & LSP_OPT_QUERY_CONFIRM) != 0)
+  	vty_out(vty, "    >query-with-confirmation%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_L1) != 0)
   	vty_out(vty, "    >exclude-layer1%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_TDM) != 0)
@@ -803,7 +807,6 @@ DEFUN (dragon_edit_lsp,
   struct listnode *node;
   struct lsp *lsp = NULL;
   int found;
-  narb_extra_options = 0;
 
   if (strlen(argv[0])>=MAX_LSP_NAME_LENGTH)
   {
@@ -910,8 +913,6 @@ DEFUN (dragon_set_lsp_dir,
   else if (strncmp(argv[0], "b", 1)==0)
   {
 	  lsp->flag |= LSP_FLAG_BIDIR;
-	  narb_extra_options |= LSP_OPT_BIDIRECTIONAL;
-
 	  if (sscanf (argv[1], "%d", &up_label) != 1)
 	  {
 		  vty_out (vty, "Invalid upstream label: %s%s", strerror (errno), VTY_NEWLINE);
@@ -1266,7 +1267,7 @@ DEFUN (dragon_set_lsp_sw,
   /* Layer2 LSPs should always be bi-directional */
   if (swcap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
   {
-      narb_extra_options |= LSP_OPT_BIDIRECTIONAL;
+      lsp->flag |= LSP_FLAG_BIDIR;
   }
 
   encoding = string_to_value(&conv_encoding, argv[2]);
