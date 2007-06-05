@@ -575,6 +575,15 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 					}
 				}
 
+				// NARB returned ERO with confirmation ID, which indicates a different inter-domain routing/signaling mode
+				if (ntohl(amsgh->options) & LSP_OPT_QUERY_CONFIRM)
+				{
+					if (lsp->common.DragonExtInfo_Para == NULL)
+						lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
+					lsp->common.DragonExtInfo_Para.ucid = ntohl(amsgh->ucid);
+					lsp->common.DragonExtInfo_Para.seqnum = ntohl(amsgh->seqnum);
+				}
+
 				/*Create source localID subobj */
 				if(lsp->dragon.srcLocalId >> 16 != LOCAL_ID_TYPE_NONE)
 				{
