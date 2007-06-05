@@ -580,8 +580,8 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				{
 					if (lsp->common.DragonExtInfo_Para == NULL)
 						lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
-					lsp->common.DragonExtInfo_Para.ucid = ntohl(amsgh->ucid);
-					lsp->common.DragonExtInfo_Para.seqnum = ntohl(amsgh->seqnum);
+					lsp->common.DragonExtInfo_Para->ucid = ntohl(amsgh->ucid);
+					lsp->common.DragonExtInfo_Para->seqnum = ntohl(amsgh->seqnum);
 				}
 
 				/*Create source localID subobj */
