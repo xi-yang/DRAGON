@@ -520,11 +520,13 @@ struct _rsvp_upcall_parameter {
 	u_int8_t switchingType; // LSP switching type
 	u_int16_t gPid;		//G-Pid
 	struct _Dragon_Uni_Para* dragonUniPara;
+	struct _Dragon_ExtInfo_Para* dragonExtInfoPara;
 	void* sendTSpec;  //Sender TSpec
 	void* adSpec;
 	void* session;	//RSVP_API::SessionId
 	void* senderTemplate;
 	void* dragonUni;
+	void* dragonExtInfo;
 	u_int32_t vlanTag;
 	u_int8_t code;			//error/success code
 };
