@@ -471,10 +471,9 @@ struct _Dragon_Uni_Para {
 	char egressChannel[12];
 };
 
-
 struct _Dragon_ExtInfo_Para {
-	uint32 ucid;
-	uint32 seqnum;
+	u_int32_t ucid;
+	u_int32_t seqnum;
 };
 
 struct _sessionParameters {
