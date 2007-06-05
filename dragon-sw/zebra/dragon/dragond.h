@@ -471,6 +471,12 @@ struct _Dragon_Uni_Para {
 	char egressChannel[12];
 };
 
+
+struct _Dragon_ExtInfo_Para {
+	uint32 ucid;
+	uint32 seqnum;
+};
+
 struct _sessionParameters {
 	//Mandatory parameters
 	struct _LabelRequest_Para LabelRequest_Para;
@@ -483,6 +489,7 @@ struct _sessionParameters {
 	u_int8_t ERONodeNumber;	// 32 in Maximum
 	struct _EROAbstractNode_Para* EROAbstractNode_Para;
 	struct _Dragon_Uni_Para* DragonUni_Para;
+	struct _Dragon_ExtInfo_Para* DragonExtInfo_Para;
 	u_int8_t labelSetSize;	// 8 in maximum
 #define MAX_LABEL_SET_SIZE	8
 	u_int32_t* labelSet;
