@@ -712,6 +712,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 	uint8 tlvSubType;
 	uint8 tlvChar;
 
+	len -= 4; // object header
 	while (readLength < len)
 	{
 		buffer >> tlvLength >> tlvType >> tlvSubType;
@@ -743,11 +744,11 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 }
 
 ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
-	os <<"[ ";
+	os <<"[";
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
-		os << " (1: Service Confirmation ID: ucid=" << o.serviceConfID.ucid << ", seqnum=" << o.serviceConfID.seqnum << ")";
+		os << "(1: Service Confirmation ID: ucid=" << o.serviceConfID.ucid << ", seqnum=" << o.serviceConfID.seqnum << ")";
 	}
-	os <<" ]";
+	os <<"]";
 	return os;
 }
 
