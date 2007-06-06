@@ -1070,7 +1070,7 @@ class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 	}
 public:
 	DRAGON_EXT_INFO_Object() : subobj_flags(0) {}
-	DRAGON_EXT_INFO_Object( INetworkBuffer& b, uint16 len ) {
+	DRAGON_EXT_INFO_Object( INetworkBuffer& b, uint16 len ):  subobj_flags(0) {
 		readFromBuffer( b, len );
 	}
 	//DRAGON_EXT_INFO_Object ( const DRAGON_EXT_INFO_Object& ); 

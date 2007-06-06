@@ -705,22 +705,49 @@ ostream& operator<< ( ostream& os, const GENERALIZED_UNI_Object& o ) {
 
 void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 {
-	buffer >>serviceConfID.length >> serviceConfID.type >> serviceConfID.sub_type 
-		>> serviceConfID.ucid >> serviceConfID.seqnum;
+	//more tlvs --> parse tlv header first?
+	int readLength= 0;
+	uint16 tlvLength; 
+	uint8 tlvType;
+	uint8 tlvSubType;
+	uint8 tlvChar;
+
+	while (readLength < len)
+	{
+		buffer >> tlvLength >> tlvType >> tlvSubType;
+		switch (tlvType)
+		{
+		case DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID:
+			serviceConfID.length = tlvLength;
+			serviceConfID.type = tlvType;
+			serviceConfID.sub_type = tlvSubType;
+			buffer >> serviceConfID.ucid >> serviceConfID.seqnum;
+			SetSubobjFlag(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID);
+			readLength += tlvLength;
+			break;
+		default:
+			readLength += tlvLength;
+			while( (tlvLength--) > 4 ) buffer >> tlvChar;
+			break;
+		}
+	}
 }
 
 ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Object& o ) {
 	buffer << RSVP_ObjectHeader( o.size(), RSVP_ObjectHeader::DRAGON_EXT_INFO, 1);
-	buffer <<o.serviceConfID.length << o.serviceConfID.type << o.serviceConfID.sub_type 
-		<< o.serviceConfID.ucid << o.serviceConfID.seqnum;
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+		buffer <<o.serviceConfID.length << o.serviceConfID.type << o.serviceConfID.sub_type 
+			<< o.serviceConfID.ucid << o.serviceConfID.seqnum;
+	}
 	return buffer;
 }
 
 ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
-	os <<"[DRAGON-EXT-INFO: ";
+	os <<"[ ";
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
-		os << " (1: Service Confirmation ID: ucid=" << o.serviceConfID.ucid << ", seqnum=" << o.serviceConfID.seqnum << ")]";
+		os << " (1: Service Confirmation ID: ucid=" << o.serviceConfID.ucid << ", seqnum=" << o.serviceConfID.seqnum << ")";
 	}
+	os <<" ]";
 	return os;
 }
 
