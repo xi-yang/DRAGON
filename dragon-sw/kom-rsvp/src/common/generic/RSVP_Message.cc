@@ -644,7 +644,7 @@ ostream& operator<< ( ostream& os, const Message& m ) {
                os << endl << " GENERALIZED_UNI:"  << *((GENERALIZED_UNI_Object*)m.UNI_Object_P);
 	    }
 	}
-	if (m.DRAGON_EXT_INFO_Object_P ) os << endl << "DRAGON_EXT_INFO: " << *m.DRAGON_EXT_INFO_Object_P;
+	if (m.DRAGON_EXT_INFO_Object_P ) os << endl << " DRAGON_EXT_INFO: " << *m.DRAGON_EXT_INFO_Object_P;
 	if (m.LABEL_SET_Object_P) os << endl << "LABEL_SET: " << *m.LABEL_SET_Object_P;
 	if (m.objectFlags & Message::SUGGESTED_LABEL) os << endl << "SUGGESTED_LABEL: " << m.SUGGESTED_LABEL_Object_O;
 	if (m.objectFlags & Message::UPSTREAM_LABEL) os << endl << "UPSTREAM_LABEL: " << m.UPSTREAM_LABEL_Object_O;
