@@ -1679,6 +1679,8 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
         {
             while ((ret = ReadShellPattern(bufCmd, "FROMENDPOINT=gtp_", fromEndPointPattern2, "MAXADMINWEIGHT=", ";", 5)) != READ_STOP)
             { // if (ret == 3), we have reach the end, i.e., ";"...
+                if (ret == 0) // this is an irrelevant SNC 
+                    continue;
                 if (ret == 1) // this is an SNC originating at source point...
                     continue;
                 else if (ret == 2)

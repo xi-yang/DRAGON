@@ -474,8 +474,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				pSubnetUniDest = (SwitchCtrl_Session_SubnetUNI*)ssNew;
 				//Pass SubnetUNI data
 				pSubnetUniDest->setSubnetUniDest(subnetUniDataDest);
-				if (!pSubnetUniSrc)
-					pSubnetUniDest->setSubnetUniSrc(subnetUniDataSrc);
+				//@@@@ if (!pSubnetUniSrc)
+				pSubnetUniDest->setSubnetUniSrc(subnetUniDataSrc);
 				//kickoff UNI session
 				if (CLI_SESSION_TYPE != CLI_TL1_TELNET) {
 					pSubnetUniDest->registerRsvpApiClient();
