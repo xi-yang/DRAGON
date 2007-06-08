@@ -315,7 +315,13 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                         (*sessionIter)->disconnectSwitch();
                                         return false;
                                     }
-                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
+                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
+                                        //create CRS for Source == Destination
+                                        if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createCRS() ) {
+                                            (*sessionIter)->disconnectSwitch();
+                                            return false;
+                                        }
+                                    } else {
                                         //create SNC
                                         if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createSNC() ) {
                                             (*sessionIter)->disconnectSwitch();
@@ -323,31 +329,21 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                         }
                                     }
                                 }
-                            }
-                            else if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() 
-                                && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST
-                                && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() )
-                            {
-                                //create destination GTP (only needed for local XConn)
-                                if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
-                                    (*sessionIter)->disconnectSwitch();
-                                    return false;
-                                }
-                                if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
-                                    //create CRS for Source == Destination
-                                    if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createCRS() ) {
+                                else if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() 
+                                    && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST
+                                    && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() )
+                                {
+                                    //create destination GTP (only needed for local XConn)
+                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
                                         (*sessionIter)->disconnectSwitch();
                                         return false;
                                     }
                                 }
-
                             }
-
                             //disconnect
                             (*sessionIter)->disconnectSwitch();
-
-						}
-						// no break; continue to next case clauses !
+			}
+			// no break; continue to next case clauses !
 
 					case Message::Resv:
 					case Message::ResvConf:
@@ -672,21 +668,21 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 						        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
 						            //delete CRS for Source == Destination
 						            if( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasCRS() )
-						                noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteCRS();
+						                noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteCRS() && noErr;
 						        }
 						        else {
 						            //delete SNC
 						            if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSNC() )
-						                noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC();
+						                noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC() && noErr;
 						        }
 						            
 						        //delete GTP (for SNC: source only; for CRS: both source and dest interfaces)
 						        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasGTP())
-						            noErr = noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP();
+						            noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP() && noErr;
 
 							//delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC
 							if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasVCG())
-								noErr == noErr && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG();
+								noErr == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG() && noErr;
 
 							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() != Message::InitAPI)
 								((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
@@ -702,6 +698,10 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 							(*sessionIter)->disconnectSwitch();
 						    }
 						    else if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
+						                //delete GTP (for SNC: source only; for CRS: both source and dest interfaces)
+						                if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasGTP()) {
+						                    noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP() && noErr;
+                                                                }
 								if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasVCG()) {
 								    //$$$$ Special handling to adjust the sequence of SNC-VCG-deletion at destination node.
 									if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSystemSNCHolindgCurrentVCG(noErr) && noErr) {
