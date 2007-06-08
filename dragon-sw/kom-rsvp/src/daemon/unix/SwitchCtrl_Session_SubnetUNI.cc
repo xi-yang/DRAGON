@@ -709,7 +709,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& destTimes
     destTimeslotsString += (const char*)bufCmd;
 }
 
-void SwitchCtrl_Session_SubnetUNI::getDestCRS_GTP(String& gtpName)
+void SwitchCtrl_Session_SubnetUNI::getPeerCRS_GTP(String& gtpName)
 {
     gtpName = "";
     SwitchCtrl_Session_SubnetUNI* pSubnetSession;
@@ -719,7 +719,7 @@ void SwitchCtrl_Session_SubnetUNI::getDestCRS_GTP(String& gtpName)
     {
         if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
             pSubnetSession = (SwitchCtrl_Session_SubnetUNI*)(*sessionIter);
-            if (pSubnetSession != this && !pSubnetSession->isSourceClient() && pSubnetSession->getPseudoSwitchID() == this->getPseudoSwitchID())
+            if (pSubnetSession != this && this->isSourceClient() != pSubnetSession->isSourceClient() && pSubnetSession->getPseudoSwitchID() == this->getPseudoSwitchID())
             {
                 pSubnetSession->getCurrentGTP(gtpName);
                 break;
@@ -1294,10 +1294,10 @@ bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpNam
 
     // get destination time slots!
     String destGtpName;
-    getDestCRS_GTP(destGtpName);
+    getPeerCRS_GTP(destGtpName);
     if (destGtpName.empty())
     {
-        LOG(1)(Log::MPLS, "createCRS_TL1:getDestCRS_GTP returned empty string.");
+        LOG(1)(Log::MPLS, "createCRS_TL1:getPeerCRS_GTP returned empty string.");
         crsName = "";
         return false;
     }

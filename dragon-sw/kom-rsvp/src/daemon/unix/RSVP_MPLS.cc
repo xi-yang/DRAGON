@@ -315,14 +315,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                         (*sessionIter)->disconnectSwitch();
                                         return false;
                                     }
-                                    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
-                                        //create CRS for Source == Destination
-                                        if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createCRS() ) {
-                                            (*sessionIter)->disconnectSwitch();
-                                            return false;
-                                        }
-                                    }
-                                    else {
+                                    if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
                                         //create SNC
                                         if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createSNC() ) {
                                             (*sessionIter)->disconnectSwitch();
@@ -340,6 +333,14 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                     (*sessionIter)->disconnectSwitch();
                                     return false;
                                 }
+                                if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
+                                    //create CRS for Source == Destination
+                                    if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createCRS() ) {
+                                        (*sessionIter)->disconnectSwitch();
+                                        return false;
+                                    }
+                                }
+
                             }
 
                             //disconnect

@@ -116,7 +116,7 @@ public:
 	void getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort=0);
 	void getCienaCTPGroupInVCG(String& ctpGroupString, String& vcgName);
 	void getCienaDestTimeslotsString(String& destTimeslotsString);
-	void getDestCRS_GTP(String& gtpName);
+	void getPeerCRS_GTP(String& gtpName);
 
 	bool hasEFLOW_TL1(String& vcgName, bool ingress = true);
 	bool createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh = 0);
