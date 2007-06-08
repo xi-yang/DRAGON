@@ -110,8 +110,8 @@ public:
 	//////////////// TL1 related functions >> begin  //////////////
 	//bool getReplyShell_TL1( uint32 ctag = 0 );
 
-	uint32 getNewCtag() { ++ctagNum; return (getPseudoSwitchID()+ctagNum)%999999+1; }
-	uint32 getCurrentCtag() { return (getPseudoSwitchID()+ctagNum)%999999+1; }
+	uint32 getNewCtag() { ++ctagNum; return (getPseudoSwitchID()+ctagNum+(isSource?0:500000))%999999+1; }
+	uint32 getCurrentCtag() { return (getPseudoSwitchID()+ctagNum+(isSource?0:500000))%999999+1; }
 	void getCienaTimeslotsString(String& groupMemString);
 	void getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort=0);
 	void getCienaCTPGroupInVCG(String& ctpGroupString, String& vcgName);
