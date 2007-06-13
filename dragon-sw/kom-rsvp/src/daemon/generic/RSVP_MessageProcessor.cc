@@ -480,9 +480,16 @@ void MessageProcessor::sendTearMessage( PHopSB_Refresh& phopRefresh ) {
 	LOG(2)( Log::Process, "creating RTEAR for", phopRefresh.getPHopSB().getAddress() );
 	const LogicalInterface& inLif = phopRefresh.getPHopSB().getHop().getLogicalInterface();
 	Message tearMsg( Message::ResvTear, 63, *currentSession );
+
 	PSB_List::ConstIterator psbIter = phopRefresh.getRemovePSB_List().begin();
 	tearMsg.setRSVP_HOP_Object( (*psbIter)->getDataInRsvpHop() );
 
+	//$$$$ DRAGON specific
+	if ((*psbIter)->getDRAGON_UNI_Object())
+		tearMsg.setUNI_Object(*(*psbIter)->getDRAGON_UNI_Object());
+	if ((*psbIter)->getDRAGON_EXT_INFO_Object())
+		tearMsg.setDRAGON_EXT_INFO_Object(*(*psbIter)->getDRAGON_EXT_INFO_Object());
+	
 	tearMsg.setSTYLE_Object( currentSession->getStyle() );
 	bool sendTear = false;
 	if ( currentSession->getStyle() == WF ) {
@@ -499,12 +506,6 @@ void MessageProcessor::sendTearMessage( PHopSB_Refresh& phopRefresh ) {
 			}
 		}
 	}
-
-	//$$$$ DRAGON specific
-	if (currentMessage.getDRAGON_UNI_Object())
-		tearMsg.setUNI_Object(*currentMessage.getDRAGON_UNI_Object());
-	if (currentMessage.getDRAGON_EXT_INFO_Object())
-		tearMsg.setDRAGON_EXT_INFO_Object(*currentMessage.getDRAGON_EXT_INFO_Object());
 	
 	if ( sendTear ) {
 		inLif.sendMessage( tearMsg, phopRefresh.getPHopSB().getAddress() );
