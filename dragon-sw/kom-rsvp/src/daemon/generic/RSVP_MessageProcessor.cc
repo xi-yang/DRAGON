@@ -499,6 +499,13 @@ void MessageProcessor::sendTearMessage( PHopSB_Refresh& phopRefresh ) {
 			}
 		}
 	}
+
+	//$$$$ DRAGON specific
+	if (currentMessage.getDRAGON_UNI_Object())
+		tearMsg->setUNI_Object(*currentMessage.getDRAGON_UNI_Object());
+	if (currentMessage.getDRAGON_EXT_INFO_Object())
+		tearMsg->setDRAGON_EXT_INFO_Object(*currentMessage.getDRAGON_EXT_INFO_Object());
+	
 	if ( sendTear ) {
 		inLif.sendMessage( tearMsg, phopRefresh.getPHopSB().getAddress() );
 	}
