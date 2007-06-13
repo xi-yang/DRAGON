@@ -486,9 +486,9 @@ void MessageProcessor::sendTearMessage( PHopSB_Refresh& phopRefresh ) {
 
 	//$$$$ DRAGON specific
 	if ((*psbIter)->getDRAGON_UNI_Object())
-		tearMsg.setUNI_Object(*(*psbIter)->getDRAGON_UNI_Object());
+		tearMsg.setUNI_Object(*(DRAGON_UNI_Object*)(*psbIter)->getDRAGON_UNI_Object());
 	if ((*psbIter)->getDRAGON_EXT_INFO_Object())
-		tearMsg.setDRAGON_EXT_INFO_Object(*(*psbIter)->getDRAGON_EXT_INFO_Object());
+		tearMsg.setDRAGON_EXT_INFO_Object(*(DRAGON_EXT_INFO_Object*)(*psbIter)->getDRAGON_EXT_INFO_Object());
 	
 	tearMsg.setSTYLE_Object( currentSession->getStyle() );
 	bool sendTear = false;
