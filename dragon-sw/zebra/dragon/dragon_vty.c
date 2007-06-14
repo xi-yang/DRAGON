@@ -591,10 +591,12 @@ ALIAS (dragon_set_narb_para,
 
 DEFUN (dragon_set_narb_extra_options,
        dragon_set_narb_extra_options_cmd,
-       "set narb-extra-options (use-movaz-speical|query-with-confirmation|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3)",
+       "set narb-extra-options (use-movaz-speical|query-with-holding|query-with-confirmation|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3)",
        "Set NARB extra options\n"
        "NARB options\n"
        "Instructing NARB to compute a path using Movaz proprietary information\n"
+       "Query and hold the resources being queired\n"
+       "Query that requires confirmation ID\n"
        "Routing-layer exclusion\n"
        "Routing-layer exclusion\n"
        "Routing-layer exclusion\n"
@@ -603,8 +605,10 @@ DEFUN (dragon_set_narb_extra_options,
 {
   if (strncmp (argv[0], "use-movaz-speical", 12) == 0)
 	narb_extra_options |= LSP_OPT_VIA_MOVAZ;
+  else if (strncmp (argv[0], "query-with-holding", 15) == 0)
+	narb_extra_options |= LSP_OPT_QUERY_HOLD;
   else if (strncmp (argv[0], "query-with-confirmation", 15) == 0)
-	narb_extra_options |= (LSP_OPT_QUERY_HOLD|LSP_OPT_QUERY_CONFIRM);
+	narb_extra_options |= LSP_OPT_QUERY_CONFIRM;
   else if (strncmp (argv[0], "exclude-layer1", 14) == 0)
 	narb_extra_options |= LSP_OPT_EXCLUD_L1;
   else if (strncmp (argv[0], "exclude-layer2", 14) == 0)
@@ -626,6 +630,8 @@ DEFUN (dragon_show_narb_extra_options,
 {
   if ((narb_extra_options & LSP_OPT_VIA_MOVAZ) != 0)
   	vty_out(vty, "    >use-movaz-speical%s", VTY_NEWLINE);
+  if ((narb_extra_options & LSP_OPT_QUERY_HOLD) != 0)
+  	vty_out(vty, "    >query-with-holding%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_QUERY_CONFIRM) != 0)
   	vty_out(vty, "    >query-with-confirmation%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_L1) != 0)

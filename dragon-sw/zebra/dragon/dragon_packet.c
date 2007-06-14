@@ -311,13 +311,12 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 
   if (lsp->dragon.lspVtag)
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, dmaster.UCID, lsp->seqno, 
-        LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG | LSP_OPT_QUERY_HOLD 
+        LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG
         |((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | narb_extra_options, 
         lsp->dragon.lspVtag);
   else
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, dmaster.UCID, lsp->seqno,
-        LSP_OPT_STRICT | LSP_OPT_QUERY_HOLD 
-        | ((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | narb_extra_options, 
+        LSP_OPT_STRICT | ((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | narb_extra_options, 
         0);
 
   /* Build TLVs */
