@@ -591,7 +591,7 @@ ALIAS (dragon_set_narb_para,
 
 DEFUN (dragon_set_narb_extra_options,
        dragon_set_narb_extra_options_cmd,
-       "set narb-extra-options (use-movaz-speical|query-with-holding|query-with-confirmation|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3)",
+       "set narb-extra-options (use-movaz-speical|query-with-holding|query-with-confirmation|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3|none)",
        "Set NARB extra options\n"
        "NARB options\n"
        "Instructing NARB to compute a path using Movaz proprietary information\n"
@@ -601,6 +601,7 @@ DEFUN (dragon_set_narb_extra_options,
        "Routing-layer exclusion\n"
        "Routing-layer exclusion\n"
        "Routing-layer exclusion\n"
+       "Clear\n"
        )
 {
   if (strncmp (argv[0], "use-movaz-speical", 12) == 0)
@@ -617,6 +618,8 @@ DEFUN (dragon_set_narb_extra_options,
 	narb_extra_options |= LSP_OPT_EXCLUD_TDM;
   else if (strncmp (argv[0], "exclude-layer3", 14) == 0)
 	narb_extra_options |= LSP_OPT_EXCLUD_L3;
+  else if (strncmp (argv[0], "none", 4) == 0)
+	narb_extra_options = 0;
 
   return CMD_SUCCESS;
 }
