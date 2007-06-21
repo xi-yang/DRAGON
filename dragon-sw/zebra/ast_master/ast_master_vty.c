@@ -121,6 +121,24 @@ DEFUN (master_release,
   return CMD_SUCCESS;
 }
 
+DEFUN(master_show_es,
+      master_show_es_cmd,
+      "show es",
+      "Show registered end system")
+{
+  int i;
+ 
+  vty_out(vty, "\t\t\t** Registered End System(s) ** %s%s", VTY_NEWLINE, VTY_NEWLINE);
+  vty_out(vty, "%-20s%-20s%-15s%s", "IP", "1st hop loopback", "tunnel to 1st hop", VTY_NEWLINE);
+  vty_out(vty, "----------------------------------------------------------------- %s", VTY_NEWLINE);
+
+  for (i=0; i < es_pool.number; i++)
+    vty_out(vty, "%-20s%-20s%-15s%s", 
+	es_pool.es[i].ip, es_pool.es[i].router_id, es_pool.es[i].tunnel, VTY_NEWLINE);
+
+  return CMD_SUCCESS;
+}
+	
 /* all commands for ast_master */
 DEFUN (master_show_ast,
        master_show_ast_cmd,
@@ -318,5 +336,8 @@ master_supp_vty_init()
   install_element(VIEW_NODE, &master_show_ast_all_cmd);
   install_element(VIEW_NODE, &master_release_cmd);
   install_element(VIEW_NODE, &master_release_all_cmd);
+  install_element(VIEW_NODE, &master_show_es_cmd);
+
+  install_element(VIEW_NODE, &master_set_es_cmd);
   install_element(CONFIG_NODE, &master_set_es_cmd);
 }
