@@ -1393,7 +1393,7 @@ agent_final_parser(char* filename)
 	return NULL;
       }
     } else if (strcasecmp(attr->name, "ast_id") == 0) 
-      app_cfg->ast_id = strdup(app_cfg->ast_id = strdup(attr->children->content));
+      app_cfg->ast_id = strdup(attr->children->content);
   } 
 	 
   for (cur = cur->xmlChildrenNode;
