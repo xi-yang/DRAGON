@@ -328,6 +328,7 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
 
     //use LSP_OPT_QUERY_HOLD as a default request option to avoid contention by holding resources temporily
     msgheader->options |= htonl(0x0100<<16); //OPT_QUERY_HOLD
+    //LSP_OPT_QUERY_CONFIRMATION is set when a q-conf ID (ucid+seqnum) is present
     if (ucid != src && ucid != 0)
         msgheader->options |= htonl(0x0200<<16); //OPT_QUERY_CONFIRM
 
@@ -842,9 +843,18 @@ void NARB_APIClient::releaseReservation(const Message& msg)
 
 void NARB_APIClient::setExtraOption(String opt_str)
 {
+	// extra options for VLSR-->NARB ERO queries (in processing UNI or Loose-Hop-Resolution logic)
 	if (opt_str=="via-movaz")
 	{
 		NARB_APIClient::extra_options |= (0x0040<<16);
+	}
+	else if (opt_str=="query-with-holding")
+	{
+		NARB_APIClient::extra_options |= (0x0100<<16);
+	}
+	else if (opt_str=="query-with-confirmation")
+	{
+		NARB_APIClient::extra_options |= (0x0200<<16);
 	}
 	else 
 	{
