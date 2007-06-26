@@ -622,7 +622,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
             entry->index.bw = (float)((const TSpec &)msg.getSENDER_TSPEC_Object()).get_r();
             entry->session_ptr = ss_ptr;
             //$$$$ setting entry->qconf_id
-            if (ucid != 0 && ucid != srcAddr || (NARB_APIClient::extra_options & 0x0200 != 0))
+            if (ucid != 0 && ucid != srcAddr || (NARB_APIClient::extra_options & (0x0200 << 16)) != 0)
             {
                 entry->qconf_id.ucid = ucid;
                 entry->qconf_id.seqnum = seqnum;
