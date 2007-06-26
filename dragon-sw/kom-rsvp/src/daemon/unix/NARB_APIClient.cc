@@ -650,7 +650,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
     {
         dragonExtInfo = new DRAGON_EXT_INFO_Object();
         dragonExtInfo->SetServiceConfirmationID(entry->qconf_id.ucid, entry->qconf_id.seqnum);
-        msg->setDRAGON_EXT_INFO_Object(*dragonExtInfo);
+        (const_cast<Message&>(msg)).setDRAGON_EXT_INFO_Object(*dragonExtInfo);
     }
 
     // generating ERO object
@@ -697,7 +697,6 @@ uint32 NARB_APIClient::getVtagFromERO(EXPLICIT_ROUTE_Object* ero)
 {
     if (!ero)
         return 0;
-    AbstractNode node;
     AbstractNodeList::ConstIterator iter = ero->getAbstractNodeList().begin();
     for (; iter != ero->getAbstractNodeList().end(); ++iter)
     {
