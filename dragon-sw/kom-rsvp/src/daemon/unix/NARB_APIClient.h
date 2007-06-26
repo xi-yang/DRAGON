@@ -115,6 +115,10 @@ struct ero_search_entry
 		uint32 lsp_id;
 		float bw;
 	} index;
+	struct {
+		uint32 ucid;
+		uint32 seqnum;
+	} qconf_id;
 	void * session_ptr;
 	EXPLICIT_ROUTE_Object *ero;
 };

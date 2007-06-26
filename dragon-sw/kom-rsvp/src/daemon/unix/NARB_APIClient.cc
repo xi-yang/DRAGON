@@ -583,6 +583,8 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
             (uint32)msg.getSESSION_Object().getTunnelId(),
             (uint32)msg.getSESSION_Object().getExtendedTunnelId(), ss_ptr); //using ss_ptr as a index for local-session mutual exclusion
 
+    struct ero_search_entry *entry = NULL;
+
     if (!ero) {
         uint32 excl_options = RSVP_Global::switchController->getExclEntry(msg.getSESSION_ATTRIBUTE_Object().getSessionName());
 
@@ -609,7 +611,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
             }
 
             //keeping the returned ero for reuse in future
-            struct ero_search_entry *entry = new (struct ero_search_entry);
+            entry = new (struct ero_search_entry);
             memset (entry, 0, sizeof(struct ero_search_entry));
             entry->ero = ero;
             entry->index.dest_addr = destAddr;
@@ -618,7 +620,13 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
             entry->index.src_addr = srcAddr;
             entry->index.lsp_id = (uint32)msg.getSENDER_TEMPLATE_Object().getLspId();
             entry->index.bw = (float)((const TSpec &)msg.getSENDER_TSPEC_Object()).get_r();
-            entry->session_ptr = ss_ptr;  //using  Session pointer as unique ref ID
+            entry->session_ptr = ss_ptr;
+            //$$$$ setting entry->qconf_id
+            if (ucid != 0 && ucid != srcAddr || (NARB_APIClient::extra_options & 0x0200 != 0))
+            {
+                entry->qconf_id.ucid = ucid;
+                entry->qconf_id.seqnum = seqnum;
+            }
             eroSearchList.push_back(entry);
 	 }
 	 else
@@ -634,8 +642,18 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
             //uni->srcTNA.local_id = srcLocalId; // A tagged-group local-id with ANY_VTAG will be used by
             //uni->destTNA.local_id = destLocalId; // the MPLS module to indicate using tagged ports at edge.
         }
+        entry = lookupEntry(ero);
     }
 
+    // adding dragonExtInfo object into msg
+    if (!dragonExtInfo && entry && entry->qconf_id.ucid != 0)
+    {
+        dragonExtInfo = new DRAGON_EXT_INFO_Object();
+        dragonExtInfo->SetServiceConfirmationID(entry->qconf_id.ucid, entry->qconf_id.seqnum);
+        msg->setDRAGON_EXT_INFO_Object(*dragonExtInfo);
+    }
+
+    // generating ERO object
     EXPLICIT_ROUTE_Object* ero_new = new EXPLICIT_ROUTE_Object;
     AbstractNodeList::ConstIterator iter = ero->getAbstractNodeList().begin();
     for (; iter != ero->getAbstractNodeList().end(); ++iter)

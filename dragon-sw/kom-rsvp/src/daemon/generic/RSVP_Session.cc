@@ -293,7 +293,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			else 
 			{
 				LOG(2)( Log::MPLS, "MPLS: resolving loose hop by local routing module: ", explicitRoute->getAbstractNodeList().front() );
-                EXPLICIT_ROUTE_Object* ero = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
+				EXPLICIT_ROUTE_Object* ero = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 								hop.getLogicalInterface().getAddress(),
 								explicitRoute->getAbstractNodeList().front().getAddress(), 
 								msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
@@ -673,9 +673,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 	uint32 dynamicVlanTag = 0;
 
-
-	DRAGON_EXT_INFO_Object* dragonExtInfo = ((Message*)&msg)->getDRAGON_EXT_INFO_Object();
-
 	// DRAGON && GENERALIZED UNI processing here could be combined !! 
 	if (isDragonUniIngressClient) {              
 		const String ingressChanName = (const char*)dragonUni->getIngressCtrlChannel().name;
@@ -834,12 +831,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			                            explicitRoute = narbClient->getExplicitRoute(msg, hasReceivedExplicitRoute, (void*)this);
 			                            //@@@@ push_front ... those TE addreses of local interfaces not in the new ERO
 							if (explicitRoute) {
-                       					if (!narbClient->handleRsvpMessage(msg)) {
-                                              	LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");
+								if (!narbClient->handleRsvpMessage(msg)) {
+									LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");
                        					}
 							}
 							else {
-		                                LOG(1)( Log::Routing, "NARB failed to find a path for this request!");
+								LOG(1)( Log::Routing, "NARB failed to find a path for this request!");
 							}
 						}
 					}
@@ -1198,6 +1195,7 @@ search_psb:
 	}
 
 	//$$$$ DRAGON EXT INFO
+	DRAGON_EXT_INFO_Object* dragonExtInfo = ((Message*)&msg)->getDRAGON_EXT_INFO_Object();
 	if (dragonExtInfo) {
 		cPSB->updateDRAGON_EXT_INFO_Object(dragonExtInfo);
 	}
