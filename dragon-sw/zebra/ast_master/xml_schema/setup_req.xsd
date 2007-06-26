@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <complexType name="endpointType">
+    <sequence>
+      <element name="ES" type="string"/>
+      <element name="vlsr" type="string"/>
+    </sequence>
+  </complexType>
+  <element name="topology">
+    <complexType>
+      <sequence>
+        <element name="resource" minOccurs="0" maxOccurs="unbounded">
+	  <complexType>
+	    <sequence>
+	      <!-- The following elements are for "node" type of resource -->
+	      <element name="status" type="string"/>
+	      <element name="ip" type="string"/>
+	      <element name="router_id" type="string"/>
+	      <element name="tunnel" type="string"/>
+	      <!-- The following elements are for "link" type of resource -->
+	      <element name="src" type="endpointType"/>
+	      <element name="dest" type="endpointType"/>
+	      <element name="te_params">
+		<complexType>
+		  <element name="swcap" type="string"/>
+		  <element name="encoding" type="string"/>
+		  <element name="bandwidth" type="string"/>
+		  <element name="gpid" type="string"/>
+		  <attribute name="profile" type="string"/>
+		</complexType>
+	      </element>
+	      <!-- The following attributes are for both "node" and "link" type -->
+	      <attribute name="type" type="string"/>
+	      <attribute name="name" type="string"/>
+	    </sequence>
+	  </complexType>
+	</element>
+        <attribute name="action" type="string"/> 
+      </sequence> 
+    </complexType> 
+  </element>
+</schema>   
