@@ -763,8 +763,8 @@ void NARB_APIClient::confirmReservation(const Message& msg)
     }
     else
     {
-        ucid = entry->index.src_addr;
-        seqnum = (uint32)entry->session_ptr;
+        ucid = entry->qconf_id.ucid;
+        seqnum = entry->qconf_id.seqnum;
     }
 
     //send confirmation msg
@@ -813,8 +813,8 @@ void NARB_APIClient::releaseReservation(const Message& msg)
     }
     else
     {
-        ucid = entry->index.src_addr;
-        seqnum = (uint32)entry->session_ptr;
+        ucid = entry->qconf_id.ucid;
+        seqnum = entry->qconf_id.seqnum;
     }
 
     //send release msg
