@@ -640,10 +640,14 @@ struct local_id {
         list group;
 };
 #define LOCAL_ID_TYPE_NONE (u_int16_t)0x0
-#define LOCAL_ID_TYPE_PORT (u_int16_t)0x1
-#define LOCAL_ID_TYPE_GROUP (u_int16_t)0x2
-#define LOCAL_ID_TYPE_TAGGED_GROUP (u_int16_t)0x3
-#define LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL (u_int16_t)0x4
+#define LOCAL_ID_TYPE_PORT (u_int16_t)0x01
+#define LOCAL_ID_TYPE_GROUP (u_int16_t)0x02
+#define LOCAL_ID_TYPE_TAGGED_GROUP (u_int16_t)0x03
+#define LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL (u_int16_t)0x04
+#define LOCAL_ID_TYPE_SUBNET_IF_ID (uint16)0x05		//Generic subnet-id-id for DRAGON CLI localID definition
+#define LOCAL_ID_TYPE_SUBNET_UNI_SRC (uint16)0x10 	//Source subnet-if-id (sender)
+#define LOCAL_ID_TYPE_SUBNET_UNI_DEST (uint16)0x11	//Destination subnet-if-id (Recv)
+
 
 /* local_id_group_mapping operators */
 void local_id_group_add(struct local_id *lid, u_int16_t  tag);

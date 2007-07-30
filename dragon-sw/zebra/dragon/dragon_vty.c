@@ -212,7 +212,7 @@ struct string_value_conversion conv_lsp_status =
 /* registerred local_id's */
 list registered_local_ids;
 
-char *lid_types[] = {"none id", "single port", "untagged group", "tagged group"};
+char *lid_types[] = {"none id", "single port", "untagged group", "tagged group", "reserved", "subnet interface"};
 
 static int
 get_switch_port_by_name(char* port_name, u_int32_t* switch_port)
@@ -997,6 +997,8 @@ DEFUN (dragon_set_lsp_ip,
         type_src = LOCAL_ID_TYPE_GROUP;
     else if (strcmp(argv[1], "tagged-group") == 0)
         type_src = LOCAL_ID_TYPE_TAGGED_GROUP;
+    else if (strcmp(argv[1], "subnet-interface") == 0)
+        type_src = LOCAL_ID_TYPE_SUBNET_IF_ID;
     else
         type_src = LOCAL_ID_TYPE_NONE;
   
@@ -1029,6 +1031,13 @@ DEFUN (dragon_set_lsp_ip,
             return CMD_WARNING;
         }
     }
+
+    /*special handling for subnet-interface at source*/
+    if (type_src == LOCAL_ID_TYPE_SUBNET_IF_ID)
+    {
+        type_src = LOCAL_ID_TYPE_SUBNET_UNI_SRC;
+        port_src = ((port_src&0xff)<<8); /*16-bit: higher 8 bits for subnet-uni-id, lower 8 bits for first_ts (0)*/
+    }
   
     inet_aton(argv[3], &ip_dst);
     if (strcmp(argv[4], "port") == 0)
@@ -1037,6 +1046,8 @@ DEFUN (dragon_set_lsp_ip,
         type_dest = LOCAL_ID_TYPE_GROUP;
     else if (strcmp(argv[4], "tagged-group") == 0)
         type_dest = LOCAL_ID_TYPE_TAGGED_GROUP;
+    else if (strcmp(argv[4], "subnet-interface") == 0)
+        type_src = LOCAL_ID_TYPE_SUBNET_IF_ID;
     else
         type_dest = LOCAL_ID_TYPE_NONE;
 
@@ -1052,6 +1063,20 @@ DEFUN (dragon_set_lsp_ip,
     else if (sscanf (argv[5], "%d", &port_dest) != 1)
     {
         vty_out (vty, "Invalid destination port: %s%s", argv[5], VTY_NEWLINE);
+        return CMD_WARNING;
+    }
+
+    /*special handling for subnet-interface at destination*/
+    if (type_dest == LOCAL_ID_TYPE_SUBNET_IF_ID)
+    {
+        type_dest = LOCAL_ID_TYPE_SUBNET_UNI_DEST;
+        port_dest = ((port_src&0xff)<<8); /*16-bit: higher 8 bits for subnet-uni-id, lower 8 bits for first_ts (0)*/
+    }
+
+    if (type_src == LOCAL_ID_TYPE_SUBNET_UNI_SRC && type_dest != LOCAL_ID_TYPE_SUBNET_UNI_DEST
+        || type_src != LOCAL_ID_TYPE_SUBNET_UNI_SRC && type_dest == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
+    {
+        vty_out (vty, "Error: source and destination must be paired up witth subnet-interface type of local-ids.%s", VTY_NEWLINE);
         return CMD_WARNING;
     }
   
@@ -2006,9 +2031,48 @@ DEFUN (dragon_set_local_id_group,
     return CMD_SUCCESS;
 }
 
+DEFUN (dragon_set_local_id_subnet_if,
+       dragon_set_local_id_subnet_if_cmd,
+       "set local-id subnet-interface IFID",
+       SET_STR
+       "A local ingress/egress subnet interface identifier\n"
+       "Subnet interface ID\n"
+       "ID number in the range <0-255>, see subnet-uni-id in ospfd.conf\n")
+{
+    u_int16_t type = LOCAL_ID_TYPE_SUBNET_IF_ID;
+    u_int32_t tag;
+    struct local_id * lid = NULL;
+    listnode node;
+
+    if (sscanf("%u", argv[0], &tag) == -1 || tag > 255)
+    {
+            vty_out (vty, "Wrong localID format (usigned integer <255 required): %s%s", argv[0], VTY_NEWLINE);
+            return CMD_WARNING;
+    
+    }
+    LIST_LOOP(registered_local_ids, lid, node)
+    {
+        if (lid->type == type && lid->value == (u_int16_t)tag)
+        {
+            vty_out (vty, "localID %s (subnet-if) has already existed... %s", argv[0], VTY_NEWLINE);
+            return CMD_WARNING;
+        }
+    }
+
+    lid = XMALLOC(MTYPE_TMP, sizeof(struct local_id));
+    memset(lid, 0, sizeof(struct local_id));
+    lid->type = type;
+    lid->value = tag;
+    listnode_add(registered_local_ids, lid);
+    zAddLocalId(dmaster.api, type, tag, 0xffff);
+    preserve_local_ids();
+    return CMD_SUCCESS;
+}
+
+
 DEFUN (dragon_delete_local_id,
        dragon_delete_local_id_cmd,
-       "delete local-id (port|group|tagged-group) NAME",
+       "delete local-id (port|group|tagged-group|subnet-interface) NAME",
        SET_STR
        "A local ingress/egress port identifier\n"
        "Pick a LocalId type\n"
@@ -2033,10 +2097,20 @@ DEFUN (dragon_delete_local_id,
         type = LOCAL_ID_TYPE_GROUP;
         sscanf(argv[1], "%d", &tag);
     }
-    else
+    else if (strcmp(argv[0], "tagged-group") == 0)
     {
         type = LOCAL_ID_TYPE_TAGGED_GROUP;
         sscanf(argv[1], "%d", &tag);
+    }
+    else if (strcmp(argv[0], "subnet-interface") == 0)
+    {
+        type = LOCAL_ID_TYPE_SUBNET_IF_ID;
+        sscanf(argv[1], "%d", &tag);
+    }
+    else
+    {
+        vty_out (vty, "Unknown local id type: %s%s", argv[1], VTY_NEWLINE);
+        return CMD_WARNING;
     }
 
     LIST_LOOP(registered_local_ids, lid, node)
@@ -2107,8 +2181,10 @@ DEFUN (dragon_show_local_id,
     {
          if (lid->type == LOCAL_ID_TYPE_PORT)
 	     vty_out(vty, "%-4d(%s) [%-12s]    ", lid->value, get_switch_port_string(lid->value), lid_types[lid->type]);
-         if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
+         else if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
             local_id_group_show(vty, lid);
+         else if (lid->type == LOCAL_ID_TYPE_SUBNET_IF_ID)
+	     vty_out(vty, "%-4d     [%-12s]    ", lid->value, lid_types[lid->type]);
          else
             vty_out(vty, "%s", VTY_NEWLINE);
     }
@@ -2169,6 +2245,8 @@ dragon_supp_vty_init ()
   install_element(CONFIG_NODE, &dragon_set_local_id_cmd);
   install_element(VIEW_NODE, &dragon_set_local_id_group_cmd);
   install_element(CONFIG_NODE, &dragon_set_local_id_group_cmd);
+  install_element(VIEW_NODE, &dragon_set_local_id_subnet_if_cmd);
+  install_element(CONFIG_NODE, &dragon_set_local_id_subnet_if_cmd);
   install_element(VIEW_NODE, &dragon_delete_local_id_cmd);
   install_element(CONFIG_NODE, &dragon_delete_local_id_cmd);
   install_element(VIEW_NODE, &dragon_delete_local_id_all_cmd);
