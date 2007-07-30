@@ -966,7 +966,7 @@ DEFUN (dragon_set_label_set,
 
 DEFUN (dragon_set_lsp_ip,
        dragon_set_lsp_ip_cmd,
-       "set source ip-address A.B.C.D (port|group|tagged-group|lsp-id) ID destination ip-address A.B.C.D  (port|group|tagged-group|tunnel-id) ID",
+       "set source ip-address A.B.C.D (port|group|tagged-group|subnet-interface|lsp-id) ID destination ip-address A.B.C.D  (port|group|tagged-group|subnet-interface|tunnel-id) ID",
        "Set LSP parameters\n"
        "Source and destination nodes\n"
        "source node IP address"
