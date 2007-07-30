@@ -1734,3 +1734,22 @@ bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
     } while (hasSystemSNCHolindgCurrentVCG_TL1(noError));
     return true;
 }
+
+uint8 SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(uint8* ts_bitmask, float bw)
+{
+        uint8 ts, ts_count;
+        for (ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
+        {
+            if (!HAS_TIMESLOT(ts_bitmask, ts))
+            {
+                ts_count = 1; ts++;
+                for ( ;  !HAS_TIMESLOT(ts_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
+                    ts_count++;
+                if (ts_count >= bw/50.0)
+                {
+                    return ts;
+                }
+            }
+        }
+	return 0;
+}

@@ -400,7 +400,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				return false;
 			}
 			subnetUniDataSrc.ethernet_bw = vlsr.bandwidth;
-			if (((uint8)inUnumIfID) != ANY_TIMESLOT)
+			if (((uint8)inUnumIfID) == ANY_TIMESLOT)
+				subnetUniDataSrc.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataSrc.timeslot_bitmask, subnetUniDataSrc.ethernet_bw);
+			else
 				subnetUniDataSrc.first_timeslot = (uint8)inUnumIfID;
 			subnetUniDataSrc.tunnel_id = msg.getSESSION_Object().getTunnelId();
 			//subnetUniDataSrc.logical_port = ntohl(subnetUniDataSrc.logical_port);
@@ -456,7 +458,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					return false;
 				}
 				subnetUniDataDest.ethernet_bw = vlsr.bandwidth;
-				if (destTimeSlot != ANY_TIMESLOT)
+				if (destTimeSlot == ANY_TIMESLOT)
+					subnetUniDataDest.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataDest.timeslot_bitmask, subnetUniDataDest.ethernet_bw);
+				else
 					subnetUniDataDest.first_timeslot = destTimeSlot;
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
 				//subnetUniDataDest.logical_port = ntohl(subnetUniDataDest.logical_port);
@@ -479,7 +483,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					return false;
 				}
 				subnetUniDataDest.ethernet_bw = vlsr.bandwidth;
-				if (((uint8)outUnumIfID) != ANY_TIMESLOT)
+				if (((uint8)outUnumIfID) == ANY_TIMESLOT)
+					subnetUniDataDest.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataDest.timeslot_bitmask, subnetUniDataDest.ethernet_bw);
+				else
 					subnetUniDataDest.first_timeslot = (uint8)outUnumIfID;
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
 				//subnetUniDataDest.logical_port = ntohl(subnetUniDataDest.logical_port);
