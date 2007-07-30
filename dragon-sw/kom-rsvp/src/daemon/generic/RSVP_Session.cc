@@ -421,7 +421,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				destUniDataIf = outRtId;
 				destTimeSlot = (uint8)outUnumIfID;
 			}
-			else ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) { //egress subnet interface is on the same vlsr
+			else if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) { //egress subnet interface is on the same vlsr
 				//$$$$ special handling for LOCAL_ID_TYPE_SUBNET_IF_ID
 				destUniId = (uint8)(outUnumIfID >> 8);
 				destUniDataIf = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
