@@ -1040,7 +1040,7 @@ DEFUN (dragon_set_lsp_ip,
     else if (strcmp(argv[4], "tagged-group") == 0)
         type_dest = LOCAL_ID_TYPE_TAGGED_GROUP;
     else if (strcmp(argv[4], "subnet-interface") == 0)
-        type_src = LOCAL_ID_TYPE_SUBNET_IF_ID;
+        type_dest = LOCAL_ID_TYPE_SUBNET_IF_ID;
     else
         type_dest = LOCAL_ID_TYPE_NONE;
 
