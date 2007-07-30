@@ -644,9 +644,9 @@ struct local_id {
 #define LOCAL_ID_TYPE_GROUP (u_int16_t)0x02
 #define LOCAL_ID_TYPE_TAGGED_GROUP (u_int16_t)0x03
 #define LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL (u_int16_t)0x04
-#define LOCAL_ID_TYPE_SUBNET_IF_ID (uint16)0x05		//Generic subnet-id-id for DRAGON CLI localID definition
-#define LOCAL_ID_TYPE_SUBNET_UNI_SRC (uint16)0x10 	//Source subnet-if-id (sender)
-#define LOCAL_ID_TYPE_SUBNET_UNI_DEST (uint16)0x11	//Destination subnet-if-id (Recv)
+#define LOCAL_ID_TYPE_SUBNET_IF_ID (u_int16_t)0x05		//Generic subnet-id-id for DRAGON CLI localID definition
+#define LOCAL_ID_TYPE_SUBNET_UNI_SRC (u_int16_t)0x10 	//Source subnet-if-id (sender)
+#define LOCAL_ID_TYPE_SUBNET_UNI_DEST (u_int16_t)0x11	//Destination subnet-if-id (Recv)
 
 
 /* local_id_group_mapping operators */
