@@ -83,7 +83,7 @@ typedef SimpleList<LocalId> LocalIdList;
 #define LOCAL_ID_TYPE_GROUP (uint16)0x2
 #define LOCAL_ID_TYPE_TAGGED_GROUP (uint16)0x3
 #define LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL (uint16)0x4
-
+#define LOCAL_ID_TYPE_SUBNET_IF_ID (uint16)0x5
 #define LOCAL_ID_TYPE_SUBNET_UNI_SRC (uint16)0x10 	//Source (sender)
 #define LOCAL_ID_TYPE_SUBNET_UNI_DEST (uint16)0x11	//Destination (Recv)
 

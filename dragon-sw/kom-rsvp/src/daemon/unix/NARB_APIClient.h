@@ -102,6 +102,7 @@ enum  narb_tlv_type
 
 #define NARB_MSG_CHKSUM(X) (((u_int32_t*)&X)[0] + ((u_int32_t*)&X)[1] + ((u_int32_t*)&X)[2])
 #define ANY_VTAG 0xffff
+#define ANY_TIMESLOT 0xff
 
 class EXPLICIT_ROUTE_Object;
 
