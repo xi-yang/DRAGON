@@ -357,6 +357,20 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		//$$$$ should have error check here. Note that when no VLAN configured on interfaces, 
 		//         there might be unreported error from OSPFD
 
+		//$$$$converting from the local id to true source subnet-if-id
+		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) 
+		{
+			inRtId = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+			// LOCAL_ID_TYPE_SUBNET_UNI_SRC (31-16) | subnet-uni-id (15-8) | first_ts = ANY (7-0)
+			inUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_SRC << 16) | ((inUnumIfID & 0xff) << 8) | ANY_TIMESLOT);
+		}
+		//$$$$converting from the local id to true destination subnet-if-id
+		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) 
+		{
+			outRtId = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+			outUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_DEST << 16) | ((outUnumIfID & 0xff) << 8) | ANY_TIMESLOT);
+		}
+
 		RSVP_Global::rsvp->getRoutingService().getVLSRRoutebyOSPF(inRtId, outRtId, inUnumIfID, outUnumIfID, vlsr);
 		vlsr.bandwidth = msg.getSENDER_TSPEC_Object().get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
 		//extract VLAN tag from later ERO subobject for end-to-end tagged VLAN provisioning
@@ -376,12 +390,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		uint8 destTimeSlot = 0; //valid: > 0; one-based
 
 		assert((inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST);
-		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) //$$$$converting from the local id to true source subnet-if-id
-		{
-			inRtId = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
-			// LOCAL_ID_TYPE_SUBNET_UNI_SRC (31-16) | subnet-uni-id (15-8) | first_ts = ANY (7-0)
-			inUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_SRC << 16) | ((inUnumIfID & 0xff) << 8) | ANY_TIMESLOT);
-		}
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
 			//Fetch SubnetUNI data 
 			memset(&subnetUniDataSrc, 0, sizeof(subnetUniDataSrc));
@@ -420,12 +428,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				destUniId = (uint8)(outUnumIfID >> 8);
 				destUniDataIf = outRtId;
 				destTimeSlot = (uint8)outUnumIfID;
-			}
-			else if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) { //egress subnet interface is on the same vlsr
-				//$$$$ special handling for LOCAL_ID_TYPE_SUBNET_IF_ID
-				destUniId = (uint8)(outUnumIfID >> 8);
-				destUniDataIf = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
-				destTimeSlot = ANY_TIMESLOT;
 			}
 			else { // otherwise lookup for destination subnet-interface in further nodes...
 				AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
@@ -466,11 +468,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
 		//creating destination G_UNI client session
 		assert((outUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_SRC);
-		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) //$$$$converting from the local id to true destination subnet-if-id
-		{
-			outRtId = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
-			outUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_DEST << 16) | ((outUnumIfID & 0xff) << 8) | ANY_TIMESLOT);
-		}
 		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {			
 			//Fetch SubnetUNI data 
 			if (destUniId == 0) {
