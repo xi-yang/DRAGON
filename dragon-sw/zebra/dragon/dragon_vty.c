@@ -212,7 +212,7 @@ struct string_value_conversion conv_lsp_status =
 /* registerred local_id's */
 list registered_local_ids;
 
-char *lid_types[] = {"none id", "single port", "untagged group", "tagged group", "reserved", "subnet interface"};
+char *lid_types[] = {"none id", "single port", "untagged group", "tagged group", "reserved", "subnet interface id"};
 
 static int
 get_switch_port_by_name(char* port_name, u_int32_t* switch_port)
@@ -2029,7 +2029,7 @@ DEFUN (dragon_set_local_id_subnet_if,
     struct local_id * lid = NULL;
     listnode node;
 
-    if (sscanf("%u", argv[0], &tag) == -1 || tag > 255)
+    if (sscanf("%d", argv[0], &tag) == -1 || tag < 1 || tag > 255)
     {
             vty_out (vty, "Wrong localID format (usigned integer <255 required): %s%s", argv[0], VTY_NEWLINE);
             return CMD_WARNING;
@@ -2166,10 +2166,11 @@ DEFUN (dragon_show_local_id,
     {
          if (lid->type == LOCAL_ID_TYPE_PORT)
 	     vty_out(vty, "%-4d(%s) [%-12s]    ", lid->value, get_switch_port_string(lid->value), lid_types[lid->type]);
-         else if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
-            local_id_group_show(vty, lid);
          else if (lid->type == LOCAL_ID_TYPE_SUBNET_IF_ID)
-	     vty_out(vty, "%-4d     [%-12s]    ", lid->value, lid_types[lid->type]);
+	     vty_out(vty, "%-4d       [%-12s]    ", lid->value, lid_types[lid->type]);
+
+         if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
+            local_id_group_show(vty, lid);
          else
             vty_out(vty, "%s", VTY_NEWLINE);
     }
