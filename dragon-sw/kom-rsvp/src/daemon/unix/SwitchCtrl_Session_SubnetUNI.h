@@ -254,7 +254,7 @@ public:
 	                    ts_count++;
 	                if (ts_count >= bw/50.0)
 	                {
-	                    return ts;
+	                    return (ts-ts_count);
 	                }
 	            }
 	        }

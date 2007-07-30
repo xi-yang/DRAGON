@@ -1601,7 +1601,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap()
                     ts_count++;
                 if (ts_count >= pUniData->ethernet_bw/50.0)
                 {
-                    pUniData->first_timeslot = ts;
+                    pUniData->first_timeslot = ts-ts_count;
                     ts_ok = true;
                     break;
                 }
