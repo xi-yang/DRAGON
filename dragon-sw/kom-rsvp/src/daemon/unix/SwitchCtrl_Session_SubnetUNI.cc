@@ -1594,10 +1594,10 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap()
         bool ts_ok = false;
         for (ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
         {
-            if (!HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
+            if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
             {
                 ts_count = 1; ts++;
-                for ( ;  !HAS_TIMESLOT(pUniData->timeslot_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
+                for ( ;  HAS_TIMESLOT(pUniData->timeslot_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
                     ts_count++;
                 if (ts_count >= pUniData->ethernet_bw/50.0)
                 {

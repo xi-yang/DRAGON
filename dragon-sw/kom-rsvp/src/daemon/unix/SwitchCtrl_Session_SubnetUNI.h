@@ -247,10 +247,10 @@ public:
 	        uint8 ts, ts_count;
 	        for (ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
 	        {
-	            if (!HAS_TIMESLOT(ts_bitmask, ts))
+	            if (HAS_TIMESLOT(ts_bitmask, ts))
 	            {
 	                ts_count = 1; ts++;
-	                for ( ;  !HAS_TIMESLOT(ts_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
+	                for ( ;  HAS_TIMESLOT(ts_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
 	                    ts_count++;
 	                if (ts_count >= bw/50.0)
 	                {
