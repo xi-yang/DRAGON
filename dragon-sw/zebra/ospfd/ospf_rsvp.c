@@ -756,7 +756,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		/* Send message.  */
 		write (fd, STREAM_DATA(s), length);             
        }
-       else if ( (inPort >> 16) == 0x10 || (outPort >> 16) == 0x11 || (inPort >> 16) == 0x5 || (outPort >> 16) == 0x5)
+       else if ( (inPort >> 16) == 0x10 || (outPort >> 16) == 0x11)
         {
 		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
 		s = stream_new(length);
