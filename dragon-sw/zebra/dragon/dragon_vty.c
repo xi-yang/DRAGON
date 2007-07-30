@@ -1031,12 +1031,6 @@ DEFUN (dragon_set_lsp_ip,
             return CMD_WARNING;
         }
     }
-
-    /*special handling for subnet-interface at source*/
-    if (type_src == LOCAL_ID_TYPE_SUBNET_IF_ID)
-    {
-        port_src = ((port_src&0xff)<<8); /*16-bit: higher 8 bits for subnet-uni-id, lower 8 bits for first_ts (0)*/
-    }
   
     inet_aton(argv[3], &ip_dst);
     if (strcmp(argv[4], "port") == 0)
@@ -1050,6 +1044,12 @@ DEFUN (dragon_set_lsp_ip,
     else
         type_dest = LOCAL_ID_TYPE_NONE;
 
+    /*special handling for subnet-interface at destination*/
+    if (type_dest == LOCAL_ID_TYPE_SUBNET_IF_ID)
+    {
+        port_dest = ((port_src&0xff)<<8); /*16-bit: higher 8 bits for subnet-uni-id, lower 8 bits for first_ts (0)*/
+    }
+  
     if (lsp->common.DragonUni_Para && type_dest== LOCAL_ID_TYPE_TAGGED_GROUP && strcasecmp(argv[5], "any") == 0)
     {
         port_dest = ANY_VTAG;
@@ -1065,17 +1065,6 @@ DEFUN (dragon_set_lsp_ip,
         return CMD_WARNING;
     }
 
-    /*special handling for subnet-interface at destination*/
-    if ((type_src == LOCAL_ID_TYPE_SUBNET_IF_ID || type_dest == LOCAL_ID_TYPE_SUBNET_IF_ID) && type_src != type_dest)
-    {
-        vty_out (vty, "Error: source and destination must be paired up witth subnet-interface type of local-ids.%s", VTY_NEWLINE);
-        return CMD_WARNING;
-    }
-    if (type_dest == LOCAL_ID_TYPE_SUBNET_IF_ID)
-    {
-        port_dest = ((port_src&0xff)<<8); /*16-bit: higher 8 bits for subnet-uni-id, lower 8 bits for first_ts (0)*/
-    }
-  
     lsp->common.Session_Para.srcAddr.s_addr = ip_src.s_addr;
     lsp->common.Session_Para.srcPort = (u_int16_t)port_src;
     lsp->common.Session_Para.destAddr.s_addr = ip_dst.s_addr;
