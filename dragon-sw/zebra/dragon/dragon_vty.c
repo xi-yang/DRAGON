@@ -1045,9 +1045,10 @@ DEFUN (dragon_set_lsp_ip,
         type_dest = LOCAL_ID_TYPE_NONE;
 
     /*special handling for subnet-interface at destination*/
-    if (type_dest == LOCAL_ID_TYPE_SUBNET_IF_ID)
+    if ((type_src == LOCAL_ID_TYPE_SUBNET_IF_ID || type_dest == LOCAL_ID_TYPE_SUBNET_IF_ID) && type_src != type_dest )
     {
-        port_dest = ((port_src&0xff)<<8); /*16-bit: higher 8 bits for subnet-uni-id, lower 8 bits for first_ts (0)*/
+        vty_out(vty, "###Ingress and egress local ID must be both subnet-interface or neither!%s", VTY_NEWLINE);
+        return CMD_WARNING;	
     }
   
     if (lsp->common.DragonUni_Para && type_dest== LOCAL_ID_TYPE_TAGGED_GROUP && strcasecmp(argv[5], "any") == 0)
