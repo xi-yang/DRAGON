@@ -1468,7 +1468,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, ui
     int ts;
 
     assert(ts_bitmask);
-    memset(ts_bitmask, 0, MAX_TIMESLOTS_NUM/8);
+    memset(ts_bitmask, 0xff, MAX_TIMESLOTS_NUM/8);
 
     getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
 
@@ -1491,7 +1491,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, ui
             while (pstr)
             {
                 if (sscanf(pstr, "%d", &ts) == 1)
-                    SET_TIMESLOT(ts_bitmask, ts);
+                    RESET_TIMESLOT(ts_bitmask, ts);
                 pstr = strtok(NULL, " &");
             }
         }
@@ -1522,7 +1522,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
     int ts, ts1, ts2;
 
     assert(ts_bitmask);
-    memset(ts_bitmask, 0, MAX_TIMESLOTS_NUM/8);
+    memset(ts_bitmask, 0xff, MAX_TIMESLOTS_NUM/8);
 
     getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
 
@@ -1556,7 +1556,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
                         goto _out;
                     for (ts = ts1; ts <= ts2; ts++)
                     {
-                        SET_TIMESLOT(ts_bitmask, ts);
+                        RESET_TIMESLOT(ts_bitmask, ts);
                     }
                 }
                 else if (ret == 2)
@@ -1597,7 +1597,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap()
             if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
             {
                 ts_count = 1; ts++;
-                for ( ;  HAS_TIMESLOT(pUniData->timeslot_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
+                for ( ; HAS_TIMESLOT(pUniData->timeslot_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
                     ts_count++;
                 if (ts_count >= pUniData->ethernet_bw/50.0)
                 {
@@ -1625,7 +1625,7 @@ bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap()
     {
         uint8 ts, ts_count = 0;
         bool ts_ok = false;
-        for (ts = pUniData->first_timeslot; ts <= MAX_TIMESLOTS_NUM && !HAS_TIMESLOT(timeslots, ts); ts++)
+        for (ts = pUniData->first_timeslot; ts <= MAX_TIMESLOTS_NUM && HAS_TIMESLOT(timeslots, ts); ts++)
         {
             ts_count++;
             if (ts_count >= pUniData->ethernet_bw/50.0)
