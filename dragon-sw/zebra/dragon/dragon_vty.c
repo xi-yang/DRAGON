@@ -2029,7 +2029,7 @@ DEFUN (dragon_set_local_id_subnet_if,
     struct local_id * lid = NULL;
     listnode node;
 
-    if (sscanf("%d", argv[0], &tag) == -1 || tag < 1 || tag > 255)
+    if (sscanf(argv[0], "%d", &tag) == -1 || tag < 1 || tag > 255)
     {
             vty_out (vty, "Wrong localID format (usigned integer <255 required): %s%s", argv[0], VTY_NEWLINE);
             return CMD_WARNING;
