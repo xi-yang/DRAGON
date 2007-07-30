@@ -896,9 +896,9 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int8_t uni_id, int fd)
 	if (area)
 	  {
 		LSDB_LOOP (area->te_lsdb->db, rn, lsa)
-		{
-		  /* If dest is the *router ID * of the remote node */
-		  if (lsa->tepara_ptr && lsa->tepara_ptr->p_lclif_ipaddr && lsa->tepara_ptr->p_lclif_ipaddr->value.s_addr == data_if->s_addr)
+		{ //matching the data_if with either a te link local if addr or a link's originating end's loopback
+		  if (lsa->tepara_ptr && lsa->tepara_ptr->p_lclif_ipaddr && 
+		  	(lsa->tepara_ptr->p_lclif_ipaddr->value.s_addr == data_if->s_addr ||lsa->data->adv_router.s_addr == data_if->s_addr))
 		   {
 		   	LIST_LOOP(lsa->tepara_ptr->p_link_ifswcap_list, ifswcap, node)
 	   		{
