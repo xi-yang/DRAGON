@@ -1107,7 +1107,7 @@ public:
 	}
 	ServiceConfirmationID_Subobject& getServiceConfirmationID() { return serviceConfID; }
 	void SetEdgeVlanMapping(uint16 ingress_outer, uint16 ingress_inner, 
-			uint16 trunk_outer, uin16 trunk_inner, uint16 egress_outer, uint16 egress_inner)	{
+			uint16 trunk_outer, uint16 trunk_inner, uint16 egress_outer, uint16 egress_inner)	{
 		SetSubobjFlag(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING);
 		memset(&edgeVlanMapping, 0, sizeof(EdgeVlanMapping_Subobject));
 		edgeVlanMapping.length = sizeof(EdgeVlanMapping_Subobject);

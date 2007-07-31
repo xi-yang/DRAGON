@@ -160,6 +160,8 @@ struct _Dragon_Uni_Para {
 struct _Dragon_ExtInfo_Para {
 	uint32 ucid;
 	uint32 seqnum;
+	uint16 ingress_vtag;
+	uint16 egress_vtag;
 };
 
 struct _sessionParameters {
