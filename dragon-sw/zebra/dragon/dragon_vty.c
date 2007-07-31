@@ -2019,28 +2019,36 @@ DEFUN (dragon_set_local_id_group,
 
 DEFUN (dragon_set_local_id_subnet_if,
        dragon_set_local_id_subnet_if_cmd,
-       "set local-id subnet-interface IFID",
+       "set local-id subnet-interface ID",
        SET_STR
        "A local ingress/egress subnet interface identifier\n"
-       "Subnet interface ID\n"
+       "Subnet interface ID in subet_id/first_timeslot format\n"
        "ID number in the range <0-255>, see subnet-uni-id in ospfd.conf\n")
 {
     u_int16_t type = LOCAL_ID_TYPE_SUBNET_IF_ID;
-    u_int32_t tag;
+    u_int32_t tag = 0, subnet_if_id = 0, first_timeslot = ANY_TIMESLOT;
     struct local_id * lid = NULL;
     listnode node;
 
-    if (sscanf(argv[0], "%d", &tag) == -1 || tag < 1 || tag > 255)
+    if (strstr(argv[0], "-") != NULL)
+        sscanf(argv[0], "%d-%d", &subnet_if_id, &first_timeslot);
+    else if (strstr(argv[0], "/") != NULL)
+        sccanf(argv[0], "%d/%d", &subnet_if_id, &first_timeslot);
+    else
+        sccanf(argv[0], "%d", &subnet_if_id);
+
+    if (subnet_if_id == 0 || subnet_if_id > = 255)
     {
-            vty_out (vty, "Wrong localID format (usigned integer <255 required): %s%s", argv[0], VTY_NEWLINE);
-            return CMD_WARNING;
-    
+        vty_out (vty, "###Wrong  subnet-interface localID %s, format should be ID, ID-TS or ID/TS (0 < ID, TS <255)...%s", argv[0], VTY_NEWLINE);
+        return CMD_WARNING;
     }
+    tag = (((subnet_if_id&0xff) << 8) | (first_timeslot&0xff));
+
     LIST_LOOP(registered_local_ids, lid, node)
     {
         if (lid->type == type && lid->value == (u_int16_t)tag)
         {
-            vty_out (vty, "localID %s (subnet-if) has already existed... %s", argv[0], VTY_NEWLINE);
+            vty_out (vty, "###The localID %s (subnet-interface) has already existed... %s", argv[0], VTY_NEWLINE);
             return CMD_WARNING;
         }
     }
@@ -2168,7 +2176,7 @@ DEFUN (dragon_show_local_id,
          if (lid->type == LOCAL_ID_TYPE_PORT)
 	     vty_out(vty, "%-4d(%s) [%-12s]    ", lid->value, get_switch_port_string(lid->value), lid_types[lid->type]);
          else if (lid->type == LOCAL_ID_TYPE_SUBNET_IF_ID)
-	     vty_out(vty, "%-4d       [%-12s]    ", lid->value, lid_types[lid->type]);
+	     vty_out(vty, "%-4d(%d/%d)   [%-12s]    ", lid->value, (lid->value >> 8), (lid->value & 0xff),  lid_types[lid->type]);
 
          if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
             local_id_group_show(vty, lid);

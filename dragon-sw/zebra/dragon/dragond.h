@@ -551,8 +551,9 @@ struct lsp_dragon_para {
     u_int32_t lspVtag;       /* LSP E2E VLAN Tag */
 };
 
-#define ANY_VTAG 0xffff  /*Indicating that LSP uses any available E2E VL
-AN Tag*/
+#define ANY_VTAG 0xffff  /*Indicating that LSP uses any available E2E VLAN Tag*/
+#define ANY_TIMESLOT 0xff 
+
 
 /* Structure of the LSP */
 struct lsp {
