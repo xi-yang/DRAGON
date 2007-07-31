@@ -462,9 +462,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					return false;
 				}
 				subnetUniDataDest.ethernet_bw = vlsr.bandwidth;
-				//if (destTimeSlot == ANY_TIMESLOT)
-				//	subnetUniDataDest.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataDest.timeslot_bitmask, subnetUniDataDest.ethernet_bw);
-				//else
+				if (destTimeSlot == ANY_TIMESLOT) //@@@@ This first timeslot based on OSPF TE info may not be accurate as compared to RCE computation...
+					subnetUniDataDest.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataDest.timeslot_bitmask, subnetUniDataDest.ethernet_bw);
+				else
 					subnetUniDataDest.first_timeslot = destTimeSlot;
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
 				//subnetUniDataDest.logical_port = ntohl(subnetUniDataDest.logical_port);
