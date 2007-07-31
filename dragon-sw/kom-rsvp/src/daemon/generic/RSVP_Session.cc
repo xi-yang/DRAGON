@@ -444,7 +444,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					}
 					 //$$$$ special handling for LOCAL_ID_TYPE_SUBNET_IF_ID
 					else if (((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) {
-						destUniId = (uint8)((*iter).getInterfaceID() >> 8);
+						destUniId = (uint8)(*iter).getInterfaceID();  //no need to >>8, since the subnet-uni-id in IfId has not been <<8.
 						destUniDataIf = (*iter).getAddress();
 						destTimeSlot = ANY_TIMESLOT;
 						break;
