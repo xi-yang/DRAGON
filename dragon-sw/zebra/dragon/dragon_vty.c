@@ -2033,11 +2033,11 @@ DEFUN (dragon_set_local_id_subnet_if,
     if (strstr(argv[0], "-") != NULL)
         sscanf(argv[0], "%d-%d", &subnet_if_id, &first_timeslot);
     else if (strstr(argv[0], "/") != NULL)
-        sccanf(argv[0], "%d/%d", &subnet_if_id, &first_timeslot);
+        sscanf(argv[0], "%d/%d", &subnet_if_id, &first_timeslot);
     else
-        sccanf(argv[0], "%d", &subnet_if_id);
+        sscanf(argv[0], "%d", &subnet_if_id);
 
-    if (subnet_if_id == 0 || subnet_if_id > = 255)
+    if (subnet_if_id == 0 || subnet_if_id >= 255)
     {
         vty_out (vty, "###Wrong  subnet-interface localID %s, format should be ID, ID-TS or ID/TS (0 < ID, TS <255)...%s", argv[0], VTY_NEWLINE);
         return CMD_WARNING;
