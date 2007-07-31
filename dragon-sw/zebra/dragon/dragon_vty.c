@@ -1229,6 +1229,7 @@ DEFUN (dragon_set_lsp_vtag_default,
         (lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID) && lsp->dragon.lspVtag == ANY_VTAG)
     {
         vty_out(vty, "###LocalID subnet-interface cannot be used with 'vtag any.' Must give a specific vlan in (1-4095)!%s", VTY_NEWLINE);
+        lsp->dragon.lspVtag = 0;
         return CMD_WARNING;
     }
 
@@ -2193,7 +2194,7 @@ DEFUN (dragon_show_local_id,
 	     vty_out(vty, "%-4d(%s) [%-12s]    ", lid->value, get_switch_port_string(lid->value), lid_types[lid->type]);
          else if (lid->type == LOCAL_ID_TYPE_SUBNET_IF_ID)
 	     vty_out(vty, "%-4d(%d/%d) [%-12s]    %s", lid->value, (lid->value >> 8), (lid->value & 0xff),  lid_types[lid->type]
-	        , (lid->value & 0xff) == 255 ? ": 255 means ANY timeslots", "" );
+	        , (lid->value & 0xff) == 255 ? ": 255 means ANY timeslots" : "" );
 
          if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
             local_id_group_show(vty, lid);
