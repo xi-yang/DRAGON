@@ -373,16 +373,21 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
 		RSVP_Global::rsvp->getRoutingService().getVLSRRoutebyOSPF(inRtId, outRtId, inUnumIfID, outUnumIfID, vlsr);
 		vlsr.bandwidth = msg.getSENDER_TSPEC_Object().get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
-		//extract VLAN tag from later ERO subobject for end-to-end tagged VLAN provisioning
 		if (vlsr.vlanTag == 0) {
-			AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
-	    		for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
-	    			if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
-	                                ||((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP) {
-	    				vlsr.vlanTag = ((*iter).getInterfaceID() & 0x0000ffff);
-	    				break;
-	    			}
-	    		}
+			//extract from DRAGON_EXT_INFO_Object::EdgeVlanMapping_Subobject if available
+			if (msg.getDRAGON_EXT_INFO_Object().HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING)) {
+				vlsr.vlanTag = msg.getDRAGON_EXT_INFO_Object().getEdgeVlanMapping().ingress_outer_vlantag;
+			}
+			else { // otherwise extract VLAN tag from later ERO subobject for end-to-end tagged VLAN provisioning
+				AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
+		    		for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
+		    			if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
+		                                ||((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP) {
+		    				vlsr.vlanTag = ((*iter).getInterfaceID() & 0x0000ffff);
+		    				break;
+		    			}
+		    		}
+			}
 		}
 		//creating source G_UNI client session
 		NetAddress destUniDataIf(0);
