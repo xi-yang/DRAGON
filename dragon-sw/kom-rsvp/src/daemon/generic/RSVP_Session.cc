@@ -395,6 +395,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			memset(&subnetUniDataSrc, 0, sizeof(subnetUniDataSrc));
 			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(inRtId, (uint8)(inUnumIfID >> 8), subnetUniDataSrc) ) {
 				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
+                            LOG(1)( Log::MPLS, "prcessERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataSrc from OSPFd.");
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vLSRoute.push_back(vlsr);
 				return false;
@@ -433,17 +434,12 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
 					if ((*iter).getType() != AbstractNode::UNumIfID)
 						continue;
-					if (((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
+					if (((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST
+						|| ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) {
 						destUniId = (uint8)((*iter).getInterfaceID() >> 8);
 						destUniDataIf = (*iter).getAddress();
 						destTimeSlot = (uint8)((*iter).getInterfaceID());
-						break;
-					}
-					 //$$$$ special handling for LOCAL_ID_TYPE_SUBNET_IF_ID
-					else if (((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) {
-						destUniId = (uint8)(*iter).getInterfaceID();  //no need to >>8, since the subnet-uni-id in IfId has not been <<8.
-						destUniDataIf = (*iter).getAddress();
-						destTimeSlot = ANY_TIMESLOT;
+						 //$$$$ No special handling for LOCAL_ID_TYPE_SUBNET_IF_ID
 						break;
 					}
 				}
@@ -454,6 +450,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				memset(&subnetUniDataDest, 0, sizeof(subnetUniDataDest));
 				if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(destUniDataIf, destUniId, subnetUniDataDest) ) {
 					//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
+	                            LOG(1)( Log::MPLS, "prcessERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
 					vLSRoute.push_back(vlsr);                    
 					return false;
@@ -479,6 +476,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				memset(&subnetUniDataDest, 0, sizeof(subnetUniDataDest));
 				if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(outRtId, (uint8)(outUnumIfID>>8), subnetUniDataDest) ) {
 					//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
+	                            LOG(1)( Log::MPLS, "prcessERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
 					vLSRoute.push_back(vlsr);                    
 					return false;
@@ -561,6 +559,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			//Check for VLAN/ports availability based on vlsr (vlsr_route)... (First PATH message only)
 			//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 			if (!foundSession && ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
+                            LOG(1)( Log::MPLS, "prcessERO: hasVLSRouteConflictonSwitch returned true.");
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vLSRoute.push_back(vlsr);                    
 				return false;
@@ -922,7 +921,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID.rawAddress() == 0) {
 					RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
 					vLSRoute.pop_back();
-					LOG(1)(Log::MPLS, "MPLS: VLSR route conflicts with existing VLAN or edge port PVID");
+					LOG(1)(Log::MPLS, "MPLS: Cannot find VLSRRoute: (possibly VLSR route conflicts with existing VLAN or edge port PVID)...");
 					return;
 				}				
 			}
