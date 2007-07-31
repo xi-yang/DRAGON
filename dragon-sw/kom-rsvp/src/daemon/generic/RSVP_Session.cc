@@ -433,8 +433,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			}
 			else { // otherwise lookup for destination subnet-interface in further nodes...
 				AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
-				bool is_2nd_subnet_if_id = false;
 				for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
+					if ((*iter).getType() != AbstractNode::UNumIfID)
+						continue;
 					if (((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
 						destUniId = (uint8)((*iter).getInterfaceID() >> 8);
 						destUniDataIf = (*iter).getAddress();
@@ -442,12 +443,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 						break;
 					}
 					 //$$$$ special handling for LOCAL_ID_TYPE_SUBNET_IF_ID
-					if (((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) {
-						if (!is_2nd_subnet_if_id)
-						{
-							is_2nd_subnet_if_id = true;
-							continue;
-						}
+					else if (((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) {
 						destUniId = (uint8)((*iter).getInterfaceID() >> 8);
 						destUniDataIf = (*iter).getAddress();
 						destTimeSlot = ANY_TIMESLOT;
