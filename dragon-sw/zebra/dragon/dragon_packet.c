@@ -581,7 +581,10 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				if (ntohl(amsgh->options) & LSP_OPT_QUERY_CONFIRM)
 				{
 					if (lsp->common.DragonExtInfo_Para == NULL)
+					{
 						lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
+						memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+					}
 					lsp->common.DragonExtInfo_Para->ucid = ntohl(amsgh->ucid);
 					lsp->common.DragonExtInfo_Para->seqnum = ntohl(amsgh->seqnum);
 				}

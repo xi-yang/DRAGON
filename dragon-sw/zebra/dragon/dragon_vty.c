@@ -1184,7 +1184,6 @@ DEFUN (dragon_set_lsp_vtag,
             (lsp->dragon.srcLocalId & 0xffff), VTY_NEWLINE);
         return CMD_WARNING;
     }
-
     if ((lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP
         && vtag != (lsp->dragon.destLocalId & 0xffff) && (lsp->dragon.destLocalId & 0xffff) != 0)
     {
@@ -1192,8 +1191,18 @@ DEFUN (dragon_set_lsp_vtag,
             (lsp->dragon.destLocalId & 0xffff), VTY_NEWLINE);
         return CMD_WARNING;
     }
-
+    
     lsp->dragon.lspVtag = vtag;
+
+    if (((lsp->dragon.srcLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID || (lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID))
+    {
+        if (lsp->common.DragonExtInfo_Para == NULL)
+        {
+            lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
+            memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+        }
+        lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->common.DragonExtInfo_Para->egress_vtag = vtag;
+    }
 
     if (lsp->common.DragonUni_Para)
 	lsp->common.DragonUni_Para->vlanTag = vtag;
@@ -1215,6 +1224,13 @@ DEFUN (dragon_set_lsp_vtag_default,
         lsp->dragon.lspVtag = (lsp->dragon.destLocalId & 0xffff);
     else
         lsp->dragon.lspVtag = ANY_VTAG;
+
+    if (((lsp->dragon.srcLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID || 
+        (lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID) && lsp->dragon.lspVtag == ANY_VTAG)
+    {
+        vty_out(vty, "###LocalID subnet-interface cannot be used with 'vtag any.' Must give a specific vlan in (1-4095)!%s", VTY_NEWLINE);
+        return CMD_WARNING;
+    }
 
     if (lsp->common.DragonUni_Para)
 	lsp->common.DragonUni_Para->vlanTag = lsp->dragon.lspVtag;
@@ -2176,7 +2192,8 @@ DEFUN (dragon_show_local_id,
          if (lid->type == LOCAL_ID_TYPE_PORT)
 	     vty_out(vty, "%-4d(%s) [%-12s]    ", lid->value, get_switch_port_string(lid->value), lid_types[lid->type]);
          else if (lid->type == LOCAL_ID_TYPE_SUBNET_IF_ID)
-	     vty_out(vty, "%-4d(%d/%d)   [%-12s]    ", lid->value, (lid->value >> 8), (lid->value & 0xff),  lid_types[lid->type]);
+	     vty_out(vty, "%-4d(%d/%d) [%-12s]    %s", lid->value, (lid->value >> 8), (lid->value & 0xff),  lid_types[lid->type]
+	        , (lid->value & 0xff) == 255 ? ": 255 means ANY timeslots", "" );
 
          if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
             local_id_group_show(vty, lid);
