@@ -1049,6 +1049,7 @@ public:
 //////////////////////////////////////////////////////////////////////////
 
 #define DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID 1 //for both type and flag
+#define DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING 2 //for both type and flag
 
 typedef struct  {
 	uint16 length;
@@ -1058,15 +1059,31 @@ typedef struct  {
 	uint32 seqnum;
 } ServiceConfirmationID_Subobject;
 
+typedef struct  {
+	uint16 length;
+	uint8 type;
+	uint8 sub_type;
+	uint16 ingress_outer_vlantag;
+	uint16 ingress_inner_vlantag;
+	uint16 trunk_outer_vlantag;
+	uint16 trunk_inner_vlantag;
+	uint16 egress_outer_vlantag;
+	uint16 egress_inner_vlantag;
+} EdgeVlanMapping_Subobject;
+
 class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 	uint32 subobj_flags;
 	ServiceConfirmationID_Subobject serviceConfID;
+	EdgeVlanMapping_Subobject edgeVlanMapping;
 	REF_OBJECT_METHODS(DRAGON_EXT_INFO_Object)
 	friend ostream& operator<< ( ostream&, const DRAGON_EXT_INFO_Object& );
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_EXT_INFO_Object& );
 	void readFromBuffer( INetworkBuffer&, uint16 );
 	uint16 size() const {
-		return (subobj_flags & DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID) ? sizeof(ServiceConfirmationID_Subobject) : 0;
+		uint16 x = 0;
+		x = x + (subobj_flags & DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID) ? sizeof(ServiceConfirmationID_Subobject) : 0;
+		x = x + (subobj_flags & DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING) ? sizeof(EdgeVlanMapping_Subobject) : 0;
+		return x;
 	}
 public:
 	DRAGON_EXT_INFO_Object() : subobj_flags(0) {}
@@ -1089,6 +1106,29 @@ public:
 		serviceConfID.seqnum = seqnum0;
 	}
 	ServiceConfirmationID_Subobject& getServiceConfirmationID() { return serviceConfID; }
+	void SetEdgeVlanMapping(uint16 ingress_outer, uint16 ingress_inner, 
+			uint16 trunk_outer, uin16 trunk_inner, uint16 egress_outer, uint16 egress_inner)	{
+		SetSubobjFlag(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING);
+		memset(&edgeVlanMapping, 0, sizeof(EdgeVlanMapping_Subobject));
+		edgeVlanMapping.length = sizeof(EdgeVlanMapping_Subobject);
+		edgeVlanMapping.type = DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING;
+		edgeVlanMapping.ingress_outer_vlantag = ingress_outer;
+		edgeVlanMapping.ingress_inner_vlantag = ingress_inner;
+		edgeVlanMapping.trunk_outer_vlantag = trunk_outer;
+		edgeVlanMapping.trunk_inner_vlantag = trunk_inner;
+		edgeVlanMapping.egress_outer_vlantag = egress_outer;
+		edgeVlanMapping.egress_inner_vlantag = egress_inner;
+	}
+	void SetEdgeVlanMapping(uint16 ingress_vtag, uint16 egress_vtag = 0)	{
+		SetSubobjFlag(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING);
+		memset(&edgeVlanMapping, 0, sizeof(EdgeVlanMapping_Subobject));
+		edgeVlanMapping.length = sizeof(EdgeVlanMapping_Subobject);
+		edgeVlanMapping.type = DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING;
+		edgeVlanMapping.ingress_outer_vlantag = ingress_vtag;
+		edgeVlanMapping.egress_outer_vlantag = (egress_vtag == 0 ? ingress_vtag : egress_vtag);
+	}
+	EdgeVlanMapping_Subobject& getEdgeVlanMapping() { return edgeVlanMapping; }
+
 };
 extern inline DRAGON_EXT_INFO_Object::~DRAGON_EXT_INFO_Object() {}
 

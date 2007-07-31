@@ -726,6 +726,16 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			SetSubobjFlag(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID);
 			readLength += tlvLength;
 			break;
+		case DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING:
+			edgeVlanMapping.length = tlvLength;
+			edgeVlanMapping.type = tlvType;
+			edgeVlanMapping.sub_type = tlvSubType;
+			buffer >> edgeVlanMapping.ingress_outer_vlantag >> edgeVlanMapping.ingress_inner_vlantag;
+			buffer >> edgeVlanMapping.trunk_outer_vlantag >> edgeVlanMapping.trunk_inner_vlantag;
+			buffer >> edgeVlanMapping.egress_outer_vlantag >> edgeVlanMapping.egress_inner_vlantag;
+			SetSubobjFlag(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING);
+			readLength += tlvLength;
+			break;
 		default:
 			readLength += tlvLength;
 			while( (tlvLength--) > 4 ) buffer >> tlvChar;
@@ -740,6 +750,12 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 		buffer <<o.serviceConfID.length << o.serviceConfID.type << o.serviceConfID.sub_type 
 			<< o.serviceConfID.ucid << o.serviceConfID.seqnum;
 	}
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING)) {
+		buffer << o.edgeVlanMapping.length << o.edgeVlanMapping.type << o.edgeVlanMapping.sub_type
+			<<o.edgeVlanMapping.ingress_outer_vlantag << o.edgeVlanMapping.ingress_inner_vlantag 
+			<< o.edgeVlanMapping.trunk_outer_vlantag << o.edgeVlanMapping.trunk_inner_vlantag 
+			<< o.edgeVlanMapping.egress_outer_vlantag << o.edgeVlanMapping.egress_inner_vlantag;
+	}
 	return buffer;
 }
 
@@ -748,8 +764,15 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
 		os << "(1: Service Confirmation ID: ucid=" << o.serviceConfID.ucid << ", seqnum=" << o.serviceConfID.seqnum << ")";
 	}
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING)) {
+		os << " (2: Edge VLAN Tag Mapping: ingress_outer_vtag=" << o.edgeVlanMapping.ingress_outer_vlantag
+			<< ", ingress_inner_vtag=" << o.edgeVlanMapping.ingress_inner_vlantag 
+			<< ", trunk_outer_vtag=" << o.edgeVlanMapping.trunk_outer_vlantag 
+			<< ", trunk_inner_vtag=" << o.edgeVlanMapping.trunk_inner_vlantag 
+			<< ", egress_outer_vtag=" << o.edgeVlanMapping.egress_outer_vlantag 
+			<< ", egress_inner_vtag=" << o.edgeVlanMapping.egress_inner_vlantag << ")";
+	}
 	os <<"]";
 	return os;
 }
-
 
