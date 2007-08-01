@@ -769,7 +769,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		/* Send message.  */
 		write (fd, STREAM_DATA(s), length);
         }
-	else if (ntohl(inRtId->s_addr)==ntohl(outRtId->s_addr) && OspfTeRouterAddr.value.s_addr == inRtId->s_addr
+	else if (inRtId->s_addr == outRtId->s_addr && OspfTeRouterAddr.value.s_addr == inRtId->s_addr
 		&& (inPort >> 16) != 0x0 && (inPort>>16) != 0x4 && (outPort >> 16) != 0x0 && (outPort>>16) != 0x4) {
 		/* srouce-destination colocated local-id provisioning */
 		u_int32_t switch_ip = 0;
