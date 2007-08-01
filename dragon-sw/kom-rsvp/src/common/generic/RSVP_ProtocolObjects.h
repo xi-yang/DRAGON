@@ -1081,8 +1081,8 @@ class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 	void readFromBuffer( INetworkBuffer&, uint16 );
 	uint16 size() const {
 		uint16 x = 0;
-		x = x + (subobj_flags & DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID) ? sizeof(ServiceConfirmationID_Subobject) : 0;
-		x = x + (subobj_flags & DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING) ? sizeof(EdgeVlanMapping_Subobject) : 0;
+		x = x + ((subobj_flags & DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) ? sizeof(ServiceConfirmationID_Subobject) : 0;
+		x = x + ((subobj_flags & DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING)) ? sizeof(EdgeVlanMapping_Subobject) : 0;
 		return x;
 	}
 public:
