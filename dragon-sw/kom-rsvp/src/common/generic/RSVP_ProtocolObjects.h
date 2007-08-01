@@ -1082,7 +1082,7 @@ class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 	uint16 size() const {
 		uint16 x = 0;
 		if (HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) x += sizeof(ServiceConfirmationID_Subobject);
-		if (HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING) x +=  sizeof(EdgeVlanMapping_Subobject);
+		if (HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING)) x += sizeof(EdgeVlanMapping_Subobject);
 		return x;
 	}
 public:
