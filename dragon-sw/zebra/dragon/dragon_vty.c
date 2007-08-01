@@ -1394,17 +1394,34 @@ DEFUN (dragon_commit_lsp_sender,
       return CMD_WARNING;
   }
 
-  if (dmaster.module[MODULE_NARB_INTRA].ip_addr.s_addr == 0 || dmaster.module[MODULE_NARB_INTRA].port==0)
+  if (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr 
+    && lsp->common.Session_Para.srcAddr.s_addr != 0)
+  {
+	  /* NARB is not required for srouce and destination co-located local ID provisioning */
+	  if (lsp->dragon.srcLocalId>>16 == LOCAL_ID_TYPE_NONE || lsp->dragon.destLocalId>>16 == LOCAL_ID_TYPE_NONE)
+	  {
+		  vty_out (vty, "### Both source and destation must use true local ID for srouce and destination co-located provisioning.%s", VTY_NEWLINE);
+		  return CMD_WARNING;
+	  }
+	  if ( lsp->uni_mode == 1 )
+	  {
+		  vty_out (vty, "### UNI mode is not supported in srouce and destination co-located provisioning.%s", VTY_NEWLINE);
+		  return CMD_WARNING;          
+	  }
+	  /* call RSVPD to set up the path */
+	  zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
+  }
+  else if (dmaster.module[MODULE_NARB_INTRA].ip_addr.s_addr == 0 || dmaster.module[MODULE_NARB_INTRA].port==0)
   {
   	  /* NARB address/port is not configured, try sending PATH requests without ERO */
-	  /* call RSVPD to set up the path */
-         if ((lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE || lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE)
+         if ((lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE || lsp->dragon.destLocalId>>16 != LOCAL_ID_TYPE_NONE)
 		 	&& lsp->uni_mode != 1 )
          {
           	vty_out (vty, "NARB is required to setup LSP with localId.%s", VTY_NEWLINE);
 	  	vty_out (vty, "LSP \"%s\" could not be committed... %s", (lsp->common.SessionAttribute_Para)->sessionName,  VTY_NEWLINE);
         	return CMD_WARNING;
          }
+	  /* call RSVPD to set up the path */
 	  zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
   }
   else{
