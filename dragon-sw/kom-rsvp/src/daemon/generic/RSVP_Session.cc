@@ -375,7 +375,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		vlsr.bandwidth = msg.getSENDER_TSPEC_Object().get_r(); //bandwidth in Mbps (* 1000000/8 => Bps)
 		if (vlsr.vlanTag == 0) {
 			//extract VLAN tag from DRAGON_EXT_INFO_Object::EdgeVlanMapping_Subobject if available
-			if ((const_cast<Message&>(msg)).getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING)) {
+			if ((const_cast<Message&>(msg)).getDRAGON_EXT_INFO_Object() != NULL && 
+				(const_cast<Message&>(msg)).getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING)) {
 				vlsr.vlanTag = (const_cast<Message&>(msg)).getDRAGON_EXT_INFO_Object()->getEdgeVlanMapping().ingress_outer_vlantag;
 			}
 			else { // otherwise extract VLAN tag from later ERO subobject for end-to-end tagged VLAN provisioning
