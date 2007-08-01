@@ -966,7 +966,9 @@ void  rsvpUpcall(void* para)
 	
 	switch( p->code) {
 		case Path:
-			if (lsp->status == LSP_LISTEN && (lsp->flag & LSP_FLAG_RECEIVER))
+			if (lsp->status == LSP_LISTEN && (lsp->flag & LSP_FLAG_RECEIVER) || 
+				lsp->status == LSP_COMMIT && !(lsp->flag & LSP_FLAG_RECEIVER)  /* src-dest colocated w/ local-id */
+				&& lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr)
 			{
 				/* send RESV message to RSVPD to set up the path */
 				zInitRsvpResvRequest(dmaster.api, para);
@@ -975,16 +977,6 @@ void  rsvpUpcall(void* para)
 				if (p->dragonUniPara) {
 					lsp->common.DragonUni_Para = p->dragonUniPara;
 					lsp->dragon.lspVtag = lsp->common.DragonUni_Para->vlanTag;
-					//if ((lsp->common.DragonUni_Para->srcLocalId & 0xffff) == ANY_VTAG)
-					//{
-					//	lsp->common.DragonUni_Para->srcLocalId &= 0xffff0000; 
-					//	lsp->common.DragonUni_Para->srcLocalId |= lsp->dragon.lspVtag ;
-					//}
-					//if ((lsp->common.DragonUni_Para->destLocalId & 0xffff) == ANY_VTAG)
-					//{
-					//	lsp->common.DragonUni_Para->destLocalId &= 0xffff0000; 
-					//	lsp->common.DragonUni_Para->destLocalId |= lsp->dragon.lspVtag ;
-					//}
 					lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
 					lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
 				}
@@ -1002,16 +994,6 @@ void  rsvpUpcall(void* para)
 			if (p->dragonUniPara) {
 				lsp->common.DragonUni_Para = p->dragonUniPara;
 				lsp->dragon.lspVtag = lsp->common.DragonUni_Para->vlanTag;
-				//if ((lsp->common.DragonUni_Para->srcLocalId & 0xffff) == ANY_VTAG)
-				//{
-				//	lsp->common.DragonUni_Para->srcLocalId &= 0xffff0000; 
-				//	lsp->common.DragonUni_Para->srcLocalId |= lsp->dragon.lspVtag ;
-				//}
-				//if ((lsp->common.DragonUni_Para->destLocalId & 0xffff) == ANY_VTAG)
-				//{
-				//	lsp->common.DragonUni_Para->destLocalId &= 0xffff0000; 
-				//	lsp->common.DragonUni_Para->destLocalId |= lsp->dragon.lspVtag ;
-				//}
 				lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
 				lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
                      }
