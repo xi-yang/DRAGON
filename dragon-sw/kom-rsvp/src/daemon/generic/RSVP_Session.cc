@@ -358,7 +358,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		//         there might be unreported error from OSPFD
 
 		//$$$$speical handling for source-destination colocated local-id provisioning
-		if (fromLocalAPI && getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()
+		if (fromLocalAPI && RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() == getDestAddress()
 			&& (inUnumIfID >> 16) != LOCAL_ID_TYPE_NONE && (inUnumIfID >> 16) != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
 			&& (outUnumIfID >> 16) != LOCAL_ID_TYPE_NONE && (outUnumIfID >> 16) != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) 
 		{
