@@ -357,12 +357,26 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		//$$$$ should have error check here. Note that when no VLAN configured on interfaces, 
 		//         there might be unreported error from OSPFD
 
+		//$$$$speical handling for source-destination colocated local-id provisioning
+		if (fromLocalAPI && getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()
+			&& (inUnumIfID >> 16) != LOCAL_ID_TYPE_NONE && (inUnumIfID >> 16) != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
+			&& (outUnumIfID >> 16) != LOCAL_ID_TYPE_NONE && (outUnumIfID >> 16) != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) 
+		{
+			inRtId = outRtId = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+		}
+
 		//$$$$converting from the local id to true source subnet-if-id
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) 
 		{
 			inRtId = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
 			// LOCAL_ID_TYPE_SUBNET_UNI_SRC (31-16) | subnet-uni-id (15-8) | first_ts = ANY (7-0)
 			inUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_SRC << 16) | (inUnumIfID & 0xffff));
+		}
+		//$$$$converting from the local id to true destination subnet-if-id
+		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) 
+		{
+			outRtId = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+			outUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_DEST << 16) | (outUnumIfID & 0xffff));
 		}
 		//$$$$converting from the local id to true destination subnet-if-id
 		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) 
