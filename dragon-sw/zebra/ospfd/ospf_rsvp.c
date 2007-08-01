@@ -590,7 +590,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 
 	if (ntohl(inRtId->s_addr)==ntohl(outRtId->s_addr) && inPort!=outPort){
 		/* un-numbered interface */
-		if (ntohl(OspfTeRouterAddr.value.s_addr) == ntohl(inRtId->s_addr) && om->ospf)
+		if (OspfTeRouterAddr.value.s_addr == inRtId->s_addr && om->ospf)
 		LIST_LOOP(om->ospf, ospf, node1)
 		{
 			if (ospf->oiflist)
@@ -769,6 +769,34 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		/* Send message.  */
 		write (fd, STREAM_DATA(s), length);
         }
+	else if (ntohl(inRtId->s_addr)==ntohl(outRtId->s_addr) && OspfTeRouterAddr.value.s_addr == inRtId->s_addr
+		&& (inPort >> 16) != 0x0 && (inPort>>16) != 0x4 && (outPort >> 16) != 0x0 && (outPort>>16) != 0x4) {
+		/* srouce-destination colocated local-id provisioning */
+		u_int32_t switch_ip = 0;
+		/* looking for any switch_address availalble as long as this is not for subnet-interface provsioning */
+		if ((inPort >> 16) != 0x10 && (outPort >> 16) != 0x11 && om->ospf)
+		LIST_LOOP(om->ospf, ospf, node1)
+		{
+			if (ospf->oiflist)
+			LIST_LOOP(ospf->oiflist, oi, node2){
+				if (INTERFACE_GMPLS_ENABLED(oi) &&	ntohs(oi->vlsr_if.switch_port)!=0)
+				{
+					switch_ip = oi->vlsr_if.switch_ip.s_addr;
+					break;
+				}
+		 	 }
+		}
+		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
+		s = stream_new(length);
+		stream_putc(s, length);
+		stream_putc(s, GetVLSRRoutebyOSPF);
+		stream_put_ipv4(s, switch_ip);
+		stream_putl(s, inPort);
+		stream_putl(s, outPort);
+		stream_putl(s, 0);
+		/* Send message.  */
+		write (fd, STREAM_DATA(s), length);		
+	}
        else
 	{
 		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
