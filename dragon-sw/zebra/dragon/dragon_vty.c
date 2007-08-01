@@ -1397,6 +1397,7 @@ DEFUN (dragon_commit_lsp_sender,
   if (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr 
     && lsp->common.Session_Para.srcAddr.s_addr != 0)
   {
+  	  struct _EROAbstractNode_Para *srcLocalId, *destLocalId;
 	  /* NARB is not required for srouce and destination co-located local ID provisioning */
 	  if (lsp->dragon.srcLocalId>>16 == LOCAL_ID_TYPE_NONE || lsp->dragon.destLocalId>>16 == LOCAL_ID_TYPE_NONE)
 	  {
@@ -1408,6 +1409,22 @@ DEFUN (dragon_commit_lsp_sender,
 		  vty_out (vty, "### UNI mode is not supported in srouce and destination co-located provisioning.%s", VTY_NEWLINE);
 		  return CMD_WARNING;          
 	  }
+	  /* create and add localId subobjects to ERO*/
+	  lsp->common.ERONodeNumber = 2;
+	  lsp->common.EROAbstractNode_Para = XMALLOC(MTYPE_OSPF_DRAGON, sizeof(struct _EROAbstractNode_Para)*2);
+	  memset(lsp->common.EROAbstractNode_Para, 0, sizeof(struct _EROAbstractNode_Para)*2);
+	  srcLocalId = lsp->common.EROAbstractNode_Para;
+	  srcLocalId->type = UNumIfID;
+	  srcLocalId->isLoose = 1;
+	  memcpy(&srcLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.srcAddr, sizeof(struct in_addr));
+	  srcLocalId->data.uNumIfID.interfaceID = lsp->dragon.srcLocalId;
+	  srcLocalId->isLoose = 0;
+	  destLocalId = lsp->common.EROAbstractNode_Para+1;
+	  destLocalId->type = UNumIfID;
+	  destLocalId->isLoose = 1;
+	  memcpy(&destLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.destAddr, sizeof(struct in_addr));
+	  destLocalId->data.uNumIfID.interfaceID = lsp->dragon.destLocalId;
+	  destLocalId->isLoose = 0;
 	  /* call RSVPD to set up the path */
 	  zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
   }
