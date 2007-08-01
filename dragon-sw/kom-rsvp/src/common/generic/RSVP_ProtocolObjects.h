@@ -1081,8 +1081,8 @@ class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 	void readFromBuffer( INetworkBuffer&, uint16 );
 	uint16 size() const {
 		uint16 x = 0;
-		x = x + ((subobj_flags & DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) ? sizeof(ServiceConfirmationID_Subobject) : 0;
-		x = x + ((subobj_flags & DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING)) ? sizeof(EdgeVlanMapping_Subobject) : 0;
+		if (HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) x += sizeof(ServiceConfirmationID_Subobject);
+		if (HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING) x +=  sizeof(EdgeVlanMapping_Subobject);
 		return x;
 	}
 public:
@@ -1120,12 +1120,7 @@ public:
 		edgeVlanMapping.egress_inner_vlantag = egress_inner;
 	}
 	void SetEdgeVlanMapping(uint16 ingress_vtag, uint16 egress_vtag = 0)	{
-		SetSubobjFlag(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING);
-		memset(&edgeVlanMapping, 0, sizeof(EdgeVlanMapping_Subobject));
-		edgeVlanMapping.length = sizeof(EdgeVlanMapping_Subobject);
-		edgeVlanMapping.type = DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING;
-		edgeVlanMapping.ingress_outer_vlantag = ingress_vtag;
-		edgeVlanMapping.egress_outer_vlantag = (egress_vtag == 0 ? ingress_vtag : egress_vtag);
+		SetEdgeVlanMapping(ingress_vtag, 0, 0, 0, egress_vtag, 0);
 	}
 	EdgeVlanMapping_Subobject& getEdgeVlanMapping() { return edgeVlanMapping; }
 

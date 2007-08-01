@@ -730,9 +730,9 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			edgeVlanMapping.length = tlvLength;
 			edgeVlanMapping.type = tlvType;
 			edgeVlanMapping.sub_type = tlvSubType;
-			buffer >> edgeVlanMapping.ingress_outer_vlantag >> edgeVlanMapping.ingress_inner_vlantag;
-			buffer >> edgeVlanMapping.trunk_outer_vlantag >> edgeVlanMapping.trunk_inner_vlantag;
-			buffer >> edgeVlanMapping.egress_outer_vlantag >> edgeVlanMapping.egress_inner_vlantag;
+			buffer >> edgeVlanMapping.ingress_outer_vlantag >> edgeVlanMapping.ingress_inner_vlantag
+				>> edgeVlanMapping.trunk_outer_vlantag >> edgeVlanMapping.trunk_inner_vlantag
+				>> edgeVlanMapping.egress_outer_vlantag >> edgeVlanMapping.egress_inner_vlantag;
 			SetSubobjFlag(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING);
 			readLength += tlvLength;
 			break;
