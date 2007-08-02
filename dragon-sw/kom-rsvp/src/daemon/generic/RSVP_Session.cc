@@ -534,9 +534,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			// The former is used to distinguish different sessions on the same physical switch. The later is the physical address needed for TL1 connection.
 			vlsr.switchID = 0;
 			if (pSubnetUniSrc)
-	              	vlsr.switchID |= (pSubnetUniSrc->getPseudoSwitchID() << 16);
+	              	vlsr.switchID = (pSubnetUniSrc->getPseudoSwitchID() << 16);
 			if (pSubnetUniDest)
-	              	vlsr.switchID |= (pSubnetUniDest->getPseudoSwitchID() & 0xffff);
+	              	vlsr.switchID = ((uint32)vlsr.switchID | (pSubnetUniDest->getPseudoSwitchID() & 0xffff));
 
 			vLSRoute.push_back(vlsr);
 		}
