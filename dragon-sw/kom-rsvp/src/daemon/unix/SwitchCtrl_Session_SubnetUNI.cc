@@ -720,7 +720,10 @@ void SwitchCtrl_Session_SubnetUNI::getPeerCRS_GTP(String& gtpName)
     {
         if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
             pSubnetSession = (SwitchCtrl_Session_SubnetUNI*)(*sessionIter);
-            if (pSubnetSession != this && this->isSourceClient() != pSubnetSession->isSourceClient() && pSubnetSession->getPseudoSwitchID() == this->getPseudoSwitchID())
+            if (pSubnetSession != this && this->isSourceClient() != pSubnetSession->isSourceClient() 
+                && pSubnetSession->getSubnetUniDest()->subnet_id == this->getSubnetUniDest()->subnet_id
+                && pSubnetSession->getSubnetUniDest()->tunnel_id == this->getSubnetUniDest()->tunnel_id)
+
             {
                 pSubnetSession->getCurrentGTP(gtpName);
                 break;

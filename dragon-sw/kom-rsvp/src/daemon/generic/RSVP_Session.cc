@@ -532,11 +532,10 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		if ( (inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC || (outUnumIfID >> 16)  == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
 			// Note that vlsr.switchID or getPseudoSwitchID() will be different that than ssNew->switchInetAddr.
 			// The former is used to distinguish different sessions on the same physical switch. The later is the physical address needed for TL1 connection.
-			vlsr.switchID = 0;
 			if (pSubnetUniSrc)
-	              	vlsr.switchID = (pSubnetUniSrc->getPseudoSwitchID() << 16);
+	              		vlsr.switchID = (pSubnetUniSrc->getPseudoSwitchID() << 16);
 			if (pSubnetUniDest)
-	              	vlsr.switchID = ((uint32)vlsr.switchID | (pSubnetUniDest->getPseudoSwitchID() & 0xffff));
+	              		vlsr.switchID = vlsr.switchID.rawAddress() | (pSubnetUniDest->getPseudoSwitchID() & 0xffff);
 
 			vLSRoute.push_back(vlsr);
 		}
