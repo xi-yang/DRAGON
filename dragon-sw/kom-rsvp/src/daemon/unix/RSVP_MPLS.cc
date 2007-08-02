@@ -654,7 +654,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 				 //@@@@ >>Xi2007<<
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ){
 					SimpleList<uint8> ts_list;
-					if( (*iter).switchID.rawAddress() == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()) {
+					if(((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).switchID.rawAddress() >> 16) == (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()& 0xffff)
+						||((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).switchID.rawAddress() & 0xffff) == (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()& 0xffff)) {
 
 						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
 							bool noErr = true;
