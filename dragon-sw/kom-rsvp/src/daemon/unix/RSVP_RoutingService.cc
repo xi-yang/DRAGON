@@ -414,8 +414,10 @@ const LogicalInterface* RoutingService::findOutLifByOSPF( const NetAddress& next
 		const LogicalInterface* lif = getUnicastRoute(nextHop, gw); 
 		const NetAddress addr = NetAddress(gw.rawAddress());
 		if (lif && RSVP_Global::rsvp->findInterfaceByAddress(addr))
+		{
 			getPeerIPAddr(addr, gw);
 			return lif;
+		}
 		return RSVP_Global::rsvp->findInterfaceByAddress(nextHop);
 	}
 
