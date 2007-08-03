@@ -1017,8 +1017,8 @@ DEFUN (dragon_set_lsp_ip,
         return CMD_WARNING;
     }
 
-    /*check type_src /port against registered_local_ids*/
-    if (type_src != LOCAL_ID_TYPE_TAGGED_GROUP || port_src != 0)
+    /*check type_src /port_src against registered_local_ids*/
+    if (!(type_src == LOCAL_ID_TYPE_TAGGED_GROUP && port_src == 0)) /*<--- exclude the special case for Tagged-Group-ANY */
     {
         LIST_LOOP(registered_local_ids, lid, node)
         {
@@ -1027,11 +1027,11 @@ DEFUN (dragon_set_lsp_ip,
         }    
         if (node == NULL && type_src != LOCAL_ID_TYPE_NONE && port_src != ANY_VTAG)
         {
-            vty_out (vty, "Unregistered source %s: %s.%s",  argv[1], argv[2], VTY_NEWLINE);
+            vty_out (vty, "Unregistered source local-id (type %s): %s.%s",  argv[1], argv[2], VTY_NEWLINE);
             return CMD_WARNING;
         }
     }
-  
+
     inet_aton(argv[3], &ip_dst);
     if (strcmp(argv[4], "port") == 0)
         type_dest = LOCAL_ID_TYPE_PORT;
@@ -1066,6 +1066,22 @@ DEFUN (dragon_set_lsp_ip,
         return CMD_WARNING;
     }
 
+    /*check type_dest /port_dest against registered_local_ids for the src-dest local-id co-located case */
+    if (ip_src.s_addr == ip_dst.s_addr && ip_src.s_addr !=0 &&  !(type_dest == LOCAL_ID_TYPE_TAGGED_GROUP && port_dest == 0))
+    {
+        LIST_LOOP(registered_local_ids, lid, node)
+        {
+            if (lid->type == type_dest && lid->value == port_dest)
+                break;
+        }    
+        if (node == NULL && type_dest != LOCAL_ID_TYPE_NONE && port_dest != ANY_VTAG)
+        {
+            vty_out (vty, "Unregistered destination local-id (type %s): %s.%s",  argv[3], argv[4], VTY_NEWLINE);
+            return CMD_WARNING;
+        }
+    }
+  
+    /*finished validation and writes the inputs to lsp data structure*/
     lsp->common.Session_Para.srcAddr.s_addr = ip_src.s_addr;
     lsp->common.Session_Para.srcPort = (u_int16_t)port_src;
     lsp->common.Session_Para.destAddr.s_addr = ip_dst.s_addr;
