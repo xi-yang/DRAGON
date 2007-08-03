@@ -418,12 +418,13 @@ int CLI_Session::readShell(const char *text1, const char *text2, const bool matc
   for(;;) {
     n = 0;
     for(;;) {
-      if (n == LINELEN) {
+      if (n == LINELEN-1) {
 	alarm(0); // disable alarm
 	stop();
 	err_exit("%s: too long line!\n", progname);
       }
       m = read(fdin, &line[n], 1);
+      line[n+1] = 0;
       if (m != 1) {
 	err = errno;
 	alarm(0); // disable alarm
@@ -503,13 +504,14 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
     // readomg  for start string ...
     n = 0;
     for(;;) {
-      if (n == LINELEN) {
+      if (n == LINELEN-1) {
 	alarm(0); // disable alarm
 	//stop();
 	LOG(1)(Log::MPLS, "Failed to read from telnet output -- too long line!");
 	return TOO_LONG_LINE;
       }
       m = read(fdin, &buf[n], 1);
+      buf[n+1] = 0;
       if (m != 1) {
 	alarm(0); // disable alarm
 	//exception handling
