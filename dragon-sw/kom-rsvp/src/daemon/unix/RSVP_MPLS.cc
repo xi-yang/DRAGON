@@ -393,11 +393,13 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                     }
                                    else if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
                                     {
-                                      vlan =  (*iter).vlanTag = (*iter).inPort & 0xffff;
+                                      vlan = (*iter).inPort & 0xffff;
+                                      (const_cast<_vlsr_route_&>(*iter)).vlanTag = vlan;
                                     }
                                    else if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
                                     {
-                                      vlan =   (*iter).vlanTag = (*iter).outPort & 0xffff;
+                                      vlan = (*iter).outPort & 0xffff;
+                                      (const_cast<_vlsr_route_&>(*iter)).vlanTag = vlan;
                                     }
                                    //source-destination local-id collocated case
                                    else if ((*iter).vlanTag != 0 && (*iter).vlanTag != ANY_VTAG //$$$$ Or simply with this condition?
@@ -405,11 +407,14 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 						&& ((*iter).inPort >> 16) != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
 					   	&& ((*iter).outPort >> 16) != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                                     {
-                                      vlan =   (*iter).vlanTag;
+                                      vlan = (*iter).vlanTag;
                                     }
                                    //port-to-port provisioning
                                    else
-                                        vlan = (*iter).vlanTag = (*sessionIter)->findEmptyVLAN();
+                                    {
+                                      vlan = (*sessionIter)->findEmptyVLAN();
+                                      (const_cast<_vlsr_route_&>(*iter)).vlanTag = vlan;
+                                    }
 
                                    if (!(*sessionIter)->verifyVLAN(vlan))
                                     {
