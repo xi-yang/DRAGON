@@ -973,7 +973,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 #if defined(WITH_API)
 		if ( fromLocalAPI ) {
 			// message is from local API -> set sender address if not set
-			if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
+			if (explicitRoute->getAbstractNodeList().front().getAddress() == loopback && loopback == getDestAddress())
+			{ // the source-destination local-id co-located provisioning case ...
+				// will redo under 'if ( RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) || destAddress == loopback )'
+				defaultOutLif = RSVP::getApiLif();
+			}
+			else if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
 			|| (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 			&& ( (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
 				|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
