@@ -391,18 +391,25 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                     {
                                       vlan = (*iter).vlanTag;
                                     }
-                                   //else if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_GROUP || ((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
                                    else if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
                                     {
-                                      vlan =   (*iter).inPort & 0xffff;
+                                      vlan =  (*iter).vlanTag = (*iter).inPort & 0xffff;
                                     }
-                                   //else if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_GROUP || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
                                    else if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
-								   	{
-                                      vlan =   (*iter).outPort & 0xffff;
+                                    {
+                                      vlan =   (*iter).vlanTag = (*iter).outPort & 0xffff;
                                     }
+                                   //source-destination local-id collocated case
+                                   else if ((*iter).vlanTag != 0 && (*iter).vlanTag != ANY_VTAG //$$$$ Or simply with this condition?
+						&& ((*iter).inPort >> 16) != LOCAL_ID_TYPE_NONE 	&& ((*iter).outPort >> 16) != LOCAL_ID_TYPE_NONE 
+						&& ((*iter).inPort >> 16) != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
+					   	&& ((*iter).outPort >> 16) != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+                                    {
+                                      vlan =   (*iter).vlanTag;
+                                    }
+                                   //port-to-port provisioning
                                    else
-                                        vlan = (*sessionIter)->findEmptyVLAN();
+                                        vlan = (*iter).vlanTag = (*sessionIter)->findEmptyVLAN();
 
                                    if (!(*sessionIter)->verifyVLAN(vlan))
                                     {
