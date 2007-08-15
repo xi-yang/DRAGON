@@ -357,7 +357,7 @@ struct te_link_subtlv_link_domain_id
 {
   struct te_tlv_header	header;
   u_int32_t	domain_id;			/*unsigned long*/
-}
+};
 
 enum sched_opcode {
   REORIGINATE_THIS_LSA, REFRESH_THIS_LSA, FLUSH_THIS_LSA
