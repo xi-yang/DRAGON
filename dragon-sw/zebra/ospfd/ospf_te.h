@@ -344,12 +344,20 @@ struct te_link_subtlv_link_srlg
 };
 
 /* DRAGON specific TLVs*/
-#define	TE_LINK_SUBTLV_LINK_TE_LAMBDA	16641 /* or 0x4101 = DRAGO_BASE+0x101*/
+#define	TE_LINK_SUBTLV_LINK_TE_LAMBDA	16641 /* or 0x4101 = DRAGO_BASE+0x0101*/
+#define	TE_LINK_SUBTLV_LINK_DOMAIN_ID	16400 /* or 0x4010 = DRAGO_BASE+0x0010*/
+
 struct te_link_subtlv_link_te_lambda
 {
   struct te_tlv_header	header;		/* Value length is variable-length octets. */
   u_int32_t	frequency;			/*Lambda in frequency format*/
 };
+
+struct te_link_subtlv_link_domain_id
+{
+  struct te_tlv_header	header;
+  u_int32_t	domain_id;			/*unsigned long*/
+}
 
 enum sched_opcode {
   REORIGINATE_THIS_LSA, REFRESH_THIS_LSA, FLUSH_THIS_LSA

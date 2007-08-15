@@ -1274,6 +1274,20 @@ show_vty_link_subtlv_te_lambda (struct vty *vty, struct te_tlv_header *tlvh)
 }
 
 static u_int16_t
+show_vty_link_subtlv_domain_id (struct vty *vty, struct te_tlv_header *tlvh)
+{
+  struct te_link_subtlv_link_domain_id *top = (struct te_link_subtlv_link_domain_id *) tlvh;
+ 
+  if (vty != NULL)
+    vty_out (vty, "  DRAGON TE Domain ID: 0x%x%s", ntohl(top->domain_id),  VTY_NEWLINE);
+  else
+    zlog_info ("   DRAGON TE Domain ID: 0x%x.", ntohl(top->domain_id));
+
+  return TLV_SIZE (tlvh);
+}
+
+
+static u_int16_t
 show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh)
 {
   struct te_link_subtlv_link_ifswcap *top;
@@ -1587,6 +1601,9 @@ ospf_te_show_link_subtlv (struct vty *vty, struct te_tlv_header *tlvh0,
           break;
         case TE_LINK_SUBTLV_LINK_TE_LAMBDA:
           sum += show_vty_link_subtlv_te_lambda(vty,  tlvh);
+          break;
+        case TE_LINK_SUBTLV_LINK_DOMAIN_ID:
+          sum += show_vty_link_subtlv_domain_id(vty,  tlvh);
           break;
         default:
           sum += show_vty_unknown_tlv (vty, tlvh);
