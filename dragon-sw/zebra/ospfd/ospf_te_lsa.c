@@ -303,11 +303,12 @@ ospf_te_area_lsa_link_body_set (struct stream *s, struct ospf_interface *oi)
 		(ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC) )
 	{
 		tlvh_s->length = htons(ntohs(tlvh_s->length) + swcap_len_adjustment);
-		if ((ntohs(tlvh_s->length) %4) != 0)
-			stream_put(s, &padding, 4-(ntohs(tlvh_s->length) %4));
+		if ((ntohs(s->putp) %4) != 0)
+			stream_put(s, &padding, 4-(ntohs(s->putp) %4));
 	}
 	BUILD_LINK_SUBTLV(link_srlg);
 	BUILD_LINK_SUBTLV(link_te_lambda);
+
   }
   return;
 }
