@@ -692,7 +692,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	GENERALIZED_UNI_Object* generalizedUni = ((Message*)&msg)->getGENERALIZED_UNI_Object();
 	if (dragonUni != NULL && generalizedUni != NULL)
 	{
-		LOG(4)(Log::Routing, "Routing Error: Cannot have both DRAGON_UNI and GENERALIZED_UNI at the same time.");
+		LOG(1)(Log::Routing, "Routing Error: Cannot have both DRAGON_UNI and GENERALIZED_UNI at the same time.");
 		RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::ErrorAPI, ERROR_SPEC_Object::InvalidUNIObject);
 		return;
 	}
