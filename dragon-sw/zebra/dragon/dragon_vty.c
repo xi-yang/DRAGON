@@ -1280,6 +1280,33 @@ ALIAS (dragon_set_lsp_vtag_default,
        "VLAN Tag from end to end\n"
        "Any Vtag to be computed\n");
 
+DEFUN (dragon_set_lsp_ext_info_edge_vtag,
+       dragon_enable_lsp_ext_info_edge_vtag_cmd,
+       "set edge ingress-vtag <1-4095> egress-vtag <1-4095>",
+       "Enable LSP using DragonExtInfo_Para to carry edge vtag information\n")
+{
+    u_int32_t ingress_vtag = atoi(argv[0]);
+    u_int32_t egress_vtag = ingress_vtag;
+    if (argc >= 2)
+        egress_vtag = atoi(argv[1]);
+
+    struct lsp *lsp = (struct lsp *)(vty->index);
+    if (lsp->common.DragonExtInfo_Para == NULL)
+    {
+        lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
+        memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+    }
+    lsp->common.DragonExtInfo_Para->ingress_vtag = (u_int16_t)ingress_vtag;
+    lsp->common.DragonExtInfo_Para->egress_vtag = (u_int16_t)egress_vtag;
+
+    return CMD_SUCCESS;
+}
+
+ALIAS (dragon_set_lsp_ext_info_edge_vtag,
+       dragon_enable_lsp_ext_info_edge_vtag_default_cmd,
+       "set edge vtag <1-4095>",
+       "Enable LSP using DragonExtInfo_Para to carry edge vtag information\n");
+
 DEFUN (dragon_set_lsp_sw,
        dragon_set_lsp_sw_cmd,
        "set bandwidth (gige|gige_f|hdtv|oc48|10g|eth100M|eth150M|eth200M|eth300M|eth400M|eth500M|eth600M|eth700M|eth800M|eth900M|2gige|3gige|4gige|5gige|6gige|7gige|8gige|9gige|zero) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
@@ -2364,5 +2391,7 @@ dragon_supp_vty_init ()
   install_element(LSP_NODE, &dragon_set_lsp_vtag_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_vtag_default_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_vtag_any_cmd);  
+  install_element(LSP_NODE, &dragon_enable_lsp_ext_info_edge_vtag_cmd);
+  install_element(LSP_NODE, &dragon_enable_lsp_ext_info_edge_vtag_default_cmd);
 }
 
