@@ -409,8 +409,14 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		uint8 destUniId = 0; // valid: > 0
 		uint8 destTimeSlot = 0; //valid: > 0; one-based
 
-		assert((inUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_DEST);
-		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
+		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
+		{
+			LOG(1)( Log::MPLS, "prcessERO: Invalid inUnumIfID type LOCAL_ID_TYPE_SUBNET_UNI_DEST.");
+			memset(&vlsr, 0, sizeof(VLSR_Route)); 
+			vLSRoute.push_back(vlsr);                    
+			return false;
+		}
+		else if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
 			//Fetch SubnetUNI data 
 			memset(&subnetUniDataSrc, 0, sizeof(subnetUniDataSrc));
 			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(inRtId, (uint8)(inUnumIfID >> 8), subnetUniDataSrc) ) {
@@ -489,8 +495,14 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		} 
 
 		//creating destination G_UNI client session
-		assert((outUnumIfID >> 16) != LOCAL_ID_TYPE_SUBNET_UNI_SRC);
-		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {			
+		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
+		{
+			LOG(1)( Log::MPLS, "prcessERO: Invalid outUnumIfID type LOCAL_ID_TYPE_SUBNET_UNI_SRC.");
+			memset(&vlsr, 0, sizeof(VLSR_Route)); 
+			vLSRoute.push_back(vlsr);                    
+			return false;
+		}
+		else if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {			
 			//Fetch SubnetUNI data 
 			if (destUniId == 0) {
 				memset(&subnetUniDataDest, 0, sizeof(subnetUniDataDest));
@@ -678,7 +690,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 	DRAGON_UNI_Object* dragonUni = ((Message*)&msg)->getDRAGON_UNI_Object();
 	GENERALIZED_UNI_Object* generalizedUni = ((Message*)&msg)->getGENERALIZED_UNI_Object();
-	assert (dragonUni == NULL || generalizedUni == NULL); // cannot have two types of UNI at the same time
+	if (dragonUni != NULL && generalizedUni != NULL)
+	{
+		LOG(4)(Log::Routing, "Routing Error: Cannot have both DRAGON_UNI and GENERALIZED_UNI at the same time.");
+		RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::ErrorAPI, ERROR_SPEC_Object::InvalidUNIObject);
+		return;
+	}
 
 	//DRAGON UNI
 	bool isDragonUniIngressClient = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
@@ -1700,7 +1717,7 @@ void Session::processRESV( const Message& msg, Hop& nhop ) {
 }
 
 void Session::processRERR( Message& msg, Hop& hop ) {
-                              assert( msg.getFlowDescriptorList().size() == 1 );
+	assert( msg.getFlowDescriptorList().size() == 1 );
 
 	const FLOWSPEC_Object& flowspec = *msg.getFlowDescriptorList().front().getFlowspec();
 	const ERROR_SPEC_Object& error = msg.getERROR_SPEC_Object();

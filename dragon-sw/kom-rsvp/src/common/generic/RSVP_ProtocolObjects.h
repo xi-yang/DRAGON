@@ -574,7 +574,8 @@ public:
 		RROtooLargeForMTU = 1,
 		RRONotification = 2,
 		TunnelLocallyRepaired = 3,
-		SubnetUNISessionFailed = 10
+		SubnetUNISessionFailed = 10,
+		InvalidUNIObject = 11
 	};
 private:
 	NetAddress nodeAddress;
