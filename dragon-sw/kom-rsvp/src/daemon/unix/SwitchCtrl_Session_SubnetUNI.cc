@@ -1173,7 +1173,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         return false;
     }
 
-    sprintf( bufCmd, "ent-snc-stspc:%s:%s,%s:%s::name=%s,type=dynamic,rmnode=%s,lep=gtp_nametype,conndir=bi_direction,prtt=aps_vlsr_unprotected,pst=is;",
+    sprintf( bufCmd, "ent-snc-stspc:%s:%s,%s:%s::name=%s,type=dynamic,rmnode=%s,lep=gtp_nametype,conndir=bi_direction,meshrst=no,prtt=aps_vlsr_unprotected,pst=is;",
         (const char*)subnetUniSrc.node_name, gtpName.chars(), destTimeslotsString.chars(), ctag, sncName.chars(), (const char*)subnetUniDest.node_name);
 
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
