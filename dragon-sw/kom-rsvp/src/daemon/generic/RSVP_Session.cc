@@ -853,6 +853,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					RSVP_Global::rsvp->getRoutingService().disableOspfSocket();
 			}
 			if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()) {
+				LOG(1)(Log::Routing, "Error: cannot open a socket connection to local OSPFd!");
 				RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
 				return;
 			}
