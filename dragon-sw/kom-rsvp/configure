@@ -5529,6 +5529,7 @@ _ACEOF
 	fi
 fi
 
+
 echo "$as_me:$LINENO: checking gcc version" >&5
 echo $ECHO_N "checking gcc version... $ECHO_C" >&6
 gccver=`$CXX -dumpversion`
@@ -5541,6 +5542,7 @@ echo "${ECHO_T}$gccver" >&6
 # Check whether --enable-performance or --disable-performance was given.
 if test "${enable_performance+set}" = set; then
   enableval="$enable_performance"
+
 else
   enable_performance=no
 fi;
@@ -5560,8 +5562,9 @@ else
 echo "${ECHO_T}disabled" >&6
 fi
 if test "$gccnum" -ge "400"; then
-        COMPILE_FLAGS="$COMPILE_FLAGS -fno-threadsafe-statics"
+	COMPILE_FLAGS="$COMPILE_FLAGS -fno-threadsafe-statics"
 fi
+
 
 # Check whether --enable-switch-port-shutdown or --disable-switch-port-shutdown was given.
 if test "${enable_switch_port_shutdown+set}" = set; then
@@ -6886,43 +6889,47 @@ cat >>confdefs.h <<_ACEOF
 #define SWITCH_VENDOR_MODEL $with_switch_vendor_model
 _ACEOF
 
+
 if test "$with_switch_vendor_model" = "LinuxSwitch"; then
 if test ! "$OS_NAME" = "Linux"; then
-   { { echo "$as_me:$LINENO: error: LinuxSwitch is a software switch that only runs on Linux operating system!" >&5
-   echo "$as_me: error: LinuxSwitch is a software switch that only runs on Linux operating system!" >&2;}
+          { { echo "$as_me:$LINENO: error: LinuxSwitch is a software switch that only runs on Linux operating system!" >&5
+echo "$as_me: error: LinuxSwitch is a software switch that only runs on Linux operating system!" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
 if test -f "/sbin/vconfig"; then
-   vconfig_path="/sbin/vconfig";
+   vconfig_path="/sbin/vconfig"
 elif test -f "/usr/sbin/vconfig"; then
-   vconfig_path="/usr/sbin/vconfig";
+   vconfig_path="/usr/sbin/vconfig"
 elif test -f "/usr/local/sbin/vconfig"; then
-   vconfig_path="/usr/local/sbin/vconfig";
+   vconfig_path="/usr/local/sbin/vconfig"
 else
    { { echo "$as_me:$LINENO: error: LinuxSwitch requires 'vconfig' being installed!" >&5
-   echo "$as_me: error: LinuxSwitch requires 'vconfig' being installed!" >&2;}
+echo "$as_me: error: LinuxSwitch requires 'vconfig' being installed!" >&2;}
    { (exit 1); exit 1; }; }
 fi
 cat >>confdefs.h <<_ACEOF
 #define VCONFIG_PATH "$vconfig_path"
 _ACEOF
 
+
 if test -f "/sbin/brctl"; then
-    brctl_path="/sbin/brctl";
+   brctl_path="/sbin/brctl"
 elif test -f "/usr/sbin/brctl"; then
-    brctl_path="/usr/sbin/brctl";
+   brctl_path="/usr/sbin/brctl"
 elif test -f "/usr/local/sbin/brctl"; then
-    brctl_path="/usr/local/sbin/brctl";
+   brctl_path="/usr/local/sbin/brctl"
 else
-    { { echo "$as_me:$LINENO: error: LinuxSwitch requires 'brctl' being installed!" >&5
-    echo "$as_me: error: LinuxSwitch requires 'brctl' being installed!" >&2;}
-    { (exit 1); exit 1; }; }
+   { { echo "$as_me:$LINENO: error: LinuxSwitch requires 'brctl' being installed!" >&5
+echo "$as_me: error: LinuxSwitch requires 'brctl' being installed!" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 cat >>confdefs.h <<_ACEOF
 #define BRCTL_PATH "$brctl_path"
 _ACEOF
+
 fi
+
 
 # Check whether --with-switch-ctrl-port or --without-switch-ctrl-port was given.
 if test "${with_switch_ctrl_port+set}" = set; then
@@ -6969,20 +6976,17 @@ else
   enable_switch_cli_access=no
 fi;
 
-
 echo "$as_me:$LINENO: checking for VLSR switch CLI access" >&5
 echo $ECHO_N "checking for VLSR switch CLI access... $ECHO_C" >&6
-
 if test "$enable_switch_cli_access" = "yes"; then
 	echo "$as_me:$LINENO: result: enabled" >&5
-       echo "${ECHO_T}enabled" >&6
-
-       echo $ECHO_N "
+echo "${ECHO_T}enabled" >&6
+        echo $ECHO_N "
 
 *** Setting CLI Session Type:
 
 With the --enable-switch-cli-access option,
-you also need to specify the CLI session type as TELNET, SSH, TL1 or SHELL.
+you also need to specify the CLI session type as either TELNET, SSH, TL1 or SHELL.
 This can also be specified by --with-switch-cli-type=(telnet|ssh|tl1|shell)
 
 CLI Session Type (Default: none): $ECHO_C"
@@ -6991,24 +6995,24 @@ CLI Session Type (Default: none): $ECHO_C"
        eval with_switch_cli_type=\$tmpinput
 else
 	echo "$as_me:$LINENO: result: disabled" >&5
-	echo "${ECHO_T}disabled" >&6
+echo "${ECHO_T}disabled" >&6
 fi
 
 if test "$with_switch_cli_type" = "ssh" || test "$with_switch_cli_type" = "shell"; then
 if test -f "/usr/local/bin/expect"; then
-       expect_path="/usr/local/bin/expect"
+   expect_path="/usr/local/bin/expect"
 elif test -f "/usr/bin/expect"; then
-       expect_path="/usr/bin/expect"
+   expect_path="/usr/bin/expect"
 else
-       { { echo "$as_me:$LINENO: error: Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!" >&5
-	echo "$as_me: error: Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!" >&2;}
-	{ (exit 1); exit 1; }; }
+   { { echo "$as_me:$LINENO: error: Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!" >&5
+echo "$as_me: error: Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 cat >>confdefs.h <<_ACEOF
 #define EXPECT_PATH "$expect_path"
 _ACEOF
-fi
 
+fi
 if test "$with_switch_cli_type" = "telnet"; then
     eval switch_cli_type="CLI_TELNET"
 elif test "$with_switch_cli_type" = "ssh"; then
@@ -7026,8 +7030,18 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-if test "$enable_switch_cli_access" = "yes" && test ! "$with_switch_cli_type" = "" && test ! "$with_switch_cli_type" = "shell"; then
-       echo $ECHO_N "
+
+# Check whether --with-switch-cli-type or --without-switch-cli-type was given.
+if test "${with_switch_cli_type+set}" = set; then
+  withval="$with_switch_cli_type"
+  with_switch_cli_type=$withval
+else
+  with_switch_cli_type="no"
+fi;
+
+
+if test "$enable_switch_cli_access" = "yes"; then
+	echo $ECHO_N "
 
 *** Setting username and password to access switch via CLI:
 
@@ -7040,7 +7054,7 @@ Username (Default: unknown): $ECHO_C"
 	if test "$tmpinput" = ""; then
 	    tmpinput="unknown"
 	fi
-	eval switch_cli_username=\$tmpinput
+	eval switch_cli_username="\$tmpinput"
 
 	stty -echo
 	echo $ECHO_N "Password (Default: unknown): $ECHO_C"
@@ -7048,7 +7062,7 @@ Username (Default: unknown): $ECHO_C"
 	if test "$tmpinput" = ""; then
 	    tmpinput="unknown"
 	fi
-	eval switch_cli_password=\$tmpinput
+	eval switch_cli_password="\$tmpinput"
 	stty echo
 	echo \*\*\*\*\*\*\*\*
 	cat >>confdefs.h <<_ACEOF
@@ -7061,13 +7075,6 @@ _ACEOF
 
 fi
 
-# Check whether --with-switch-cli-type or --without-switch-cli-type was given.
-if test "${with_switch_cli_type+set}" = set; then
-  withval="$with_switch_cli_type"
-  with_switch_cli_type=$withval
-else
-  with_switch_cli_type="no"
-fi;
 
 
 # Check whether --with-mpls or --without-mpls was given.

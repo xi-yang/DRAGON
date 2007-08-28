@@ -15,6 +15,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_RoutingService.h"
 #include "SwitchCtrl_Session_Force10E600.h"
 #include "SwitchCtrl_Session_RaptorER1010.h"
+#include "SwitchCtrl_Session_Catalyst3750.h"
 
 #ifdef Linux
 #include "SwitchCtrl_Session_Linux.h"
@@ -68,6 +69,9 @@ bool SwitchCtrl_Session::getSwitchVendorInfo()
     case IntelES530:
         rfc2674_compatible = snmp_enabled = true;
         break;
+    case Catalyst3750:
+    	snmp_enabled = true;
+     	rfc2674_compatible = false;
     }
 
     return ret;
@@ -183,7 +187,10 @@ void SwitchCtrl_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapL
     bool running = true;
     size_t rootlen;
 
-    if (!rfc2674_compatible || !snmp_enabled)
+    //Since the function takes oid_str as argument, can be used even for switches 
+    // that are not RFC2674 compatible such as Cisco Catalyst
+    //if (!rfc2674_compatible || !snmp_enabled)
+    if (!snmp_enabled)
         return;
 
     status = read_objid(oid_str, anOID, &anOID_len);
@@ -231,11 +238,32 @@ bool SwitchCtrl_Session::readVLANFromSwitch()
     if (!hook_createVlanInterfaceToIDRefTable(vlanRefIdConvList))
         return false;
 
-    readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.2", vlanPortMapListAll);
+    if (!hook_createPortToIDRefTable(portRefIdConvList))
+        return false;
+
+    // Read and record the list of ALL ports and their vlan associations
+    if (rfc2674_compatible) {
+    	readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.2", vlanPortMapListAll);
+    }
+    else if (vendor == Catalyst3750) {
+	readVlanPortMapListAllBranch(vlanPortMapListAll);
+    }
+    else {
+    	readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.2", vlanPortMapListAll);
+    }
     if (vlanPortMapListAll.size() == 0)
         ret = false;
 
-    readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.4", vlanPortMapListUntagged);
+    // Read and record the list of UNTAGGED/NON-TRUNK ports and their vlan associations
+    if (rfc2674_compatible) {
+    	readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.4", vlanPortMapListUntagged);
+    }
+    else if (vendor == Catalyst3750) {
+    	readVlanPortMapBranch(".1.3.6.1.4.1.9.9.68.1.2.1.1.3", vlanPortMapListUntagged);
+    }
+    else {
+    	readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.4", vlanPortMapListUntagged);
+    }
     if (vlanPortMapListUntagged.size() == 0)
         ret = false;
 
@@ -587,7 +615,7 @@ bool SwitchCtrl_Global::static_connectSwitch(struct snmp_session* &sessionHandle
 	 if (!(sessionHandle = snmp_open(&session))){
 		snmp_perror("snmp_open");
 		LOG(1)( Log::MPLS, "VLSR: snmp_open failed");
-		return false;  
+		return false; 
 	 }
 	return true;
 }
@@ -621,10 +649,17 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
     // Send the Request out. 
     status = snmp_synch_response(sessionHandle, pdu, &response);
 
+    // Cisco Catalyst switches output very long strings for switchVendorInfo
+    // Modified the function to only consider a maximum length of MAX_VENDOR_NAME
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
-        char vname[128];
-        strncpy(vname, (const char*)response->variables->val.string, response->variables->val_len);
-        vname[response->variables->val_len] = 0;
+        char vname[MAX_VENDOR_NAME];
+
+	int res_str_len = response->variables->val_len;
+
+	if (res_str_len > MAX_VENDOR_NAME) res_str_len = MAX_VENDOR_NAME-1;
+
+        strncpy(vname, (const char*)response->variables->val.string, res_str_len);
+        vname[res_str_len] = 0;
 
         venderSystemDescription = vname;
         snmp_free_pdu(response);
@@ -644,6 +679,11 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         	vendor = Force10E600;
         else if (venderSystemDescription.leftequal("Ether-Raptor")) 
         	vendor = RaptorER1010;
+	else if (venderSystemDescription.leftequal("Cisco IOS Software, C3750 Software")) 
+	                vendor = Catalyst3750;
+	// The Catalyst 65xx switches use the same code as Catalyst 3750 
+	else if (venderSystemDescription.leftequal("Cisco Internetwork Operating System Software"))
+	                vendor = Catalyst3750;
         else{
         	vendor = Illegal;
 		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", venderSystemDescription);
@@ -657,7 +697,7 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         else
             snmp_sess_perror("snmpget", sessionHandle);
         if(response) snmp_free_pdu(response);
-        return false;
+	 return false;
     }
 
     return true;
@@ -689,6 +729,9 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
         case RaptorER1010:
             ssNew = new SwitchCtrl_Session_RaptorER1010("VLSR-Raptor", switchAddr);
             break;
+	    case Catalyst3750:
+	    ssNew = new SwitchCtrl_Session_Catalyst3750("VLSR-Catalyst3750", switchAddr);
+	    break;
 #ifdef Linux
         case LinuxSwitch:
             ssNew = new SwitchCtrl_Session_Linux("VLSR-Linux", switchAddr);

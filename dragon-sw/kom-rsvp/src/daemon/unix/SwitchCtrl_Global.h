@@ -36,11 +36,13 @@ Notes:
 #define MIN_VLAN			2
 #define MAX_VLAN	   		4095
 #define MAX_VENDOR			6
+#define MAX_VLAN_BYTES			512
+#define MAX_VENDOR_NAME			128
 
 #ifdef FORCE10_SOFTWARE_V6
     #define MAX_VLAN_PORT_BYTES 96  // FTOS-ED-6.2.1
 #else
-    #define MAX_VLAN_PORT_BYTES 24  // FTOS-ED-5.3.1
+    #define MAX_VLAN_PORT_BYTES 256 // FTOS-ED-5.3.1 (Cisco Catalyst also supports 2k ports)
 #endif
 
 enum SupportedVendor{
@@ -51,6 +53,7 @@ enum SupportedVendor{
 	Force10E600 = 4,
 	RaptorER1010 = 5,
 	LinuxSwitch = 6,
+	Catalyst3750 = 7,
 	Illegal = 0xffff,
 };
 
@@ -68,6 +71,24 @@ struct vlanRefID{
     uint32 vlan_id;
 };
 typedef SimpleList<vlanRefID> vlanRefIDList;
+
+// Catalyst switches store portVlanMap info in inversed format
+// vlanPortMap structure is used extract the map info and convert to portVlanMap format
+struct portVlanMap{
+    uint32 pid;
+    union {
+        uint32 vlans;
+        uint8 vlanbits[MAX_VLAN_BYTES];
+    };
+};
+typedef SimpleList<portVlanMap> portVlanMapList;
+
+// The mapping of port id and port ref id needed for cisco catalyst switches
+struct portRefID{
+    uint32 ref_id;
+    uint32 port_id;
+};
+typedef SimpleList<portRefID> portRefIDList;
 
 typedef SimpleList<uint32> PortList;
 
@@ -163,6 +184,7 @@ public:
 	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID) = 0;
 	virtual uint32 getActiveVlanId(uint32 port) { return getVLANbyUntaggedPort(port); }
 	virtual bool adjustVLANbyLocalId(uint32 vlanID, uint32 lclID, uint32 trunkPort);
+	virtual bool readVlanPortMapListAllBranch(vlanPortMapList &vpmList) { return true; }
 
 	bool movePortToDefaultVLAN(uint32 port)	{ // RFC2674
 	    if ((!active) || port==SWITCH_CTRL_PORT)
@@ -186,6 +208,10 @@ public:
 	virtual uint32 hook_convertVLANIDToInterface(uint32 id) { return id; }
 	virtual bool hook_createVlanInterfaceToIDRefTable(vlanRefIDList &convList) { return true; }
 
+	//Cisco Catalyst need conversion between Port ID and port reference ID  
+	virtual uint32 hook_convertPortInterfaceToID(uint32 id) { return id; }
+	virtual uint32 hook_convertPortIDToInterface(uint32 id) { return id; }
+	virtual bool hook_createPortToIDRefTable(portRefIDList &convList) { return true; }
 protected:
 	String sessionName;
 	NetAddress switchInetAddr;
@@ -201,9 +227,10 @@ protected:
 	vlanPortMapList vlanPortMapListAll;	// List of VLANs with a map of contained untagged and tagged ports
 	vlanPortMapList vlanPortMapListUntagged; 	// List of VLANs with a map of contained untagged ports
 	vlanRefIDList vlanRefIdConvList;	// Mapping table btwn vendor's private VLAN interface ID and regular VLAN ID.
+	portRefIDList portRefIdConvList;		// Mapping table btwn vendor's private Port interface ID and regular Port ID.
 
-	//Add ports in the port mask portListNew into VLAN.
-	bool setVLANPort(uint32 portListNew, uint32 vlanID);
+       //Add ports in the port mask portListNew into VLAN.
+       bool setVLANPort(uint32 portListNew, uint32 vlanID);
 
 	void setSupportedVendorOidString() {
 		supportedVendorOidString[IntelES530] = ".1.3.6.1.4.1.343.6.63.3.8.2.3.1.3";
@@ -317,13 +344,37 @@ inline vlanPortMap *getVlanPortMapById(vlanPortMapList &vpmList, uint32 vid)
     return NULL;
 }
 
+inline bool setVlanPortMapById(vlanPortMapList &vpmList, uint32 vid, uint8* vpmPortbits)
+{
+    vlanPortMapList::Iterator iter;
+    for (iter = vpmList.begin(); iter != vpmList.end(); ++iter)
+        if (((*iter).vid) == vid) {
+	    for (int i=0; i<MAX_VLAN_PORT_BYTES; i++)
+		(*iter).portbits[i] = vpmPortbits[i];
+	    return true;
+	}
+    return false;
+}
+
 inline void SetPortBit(uint8* bitstring, uint32 bit)
 {
     uint8 mask = (1 << (7 - bit%8))&0xff;
     bitstring[bit/8] |= mask;
 }
 
+inline void SetBit(uint8* bitstring, uint32 bit)
+{
+    uint8 mask = (1 << (7 - bit%8))&0xff;
+    bitstring[bit/8] |= mask;
+}
+
 inline void ResetPortBit(uint8* bitstring, uint32 bit)
+{
+    uint8 mask = (~(1 << (7 - bit%8)))&0xff;
+    bitstring[bit/8] &= mask;
+}
+
+inline void ResetBit(uint8* bitstring, uint32 bit)
 {
     uint8 mask = (~(1 << (7 - bit%8)))&0xff;
     bitstring[bit/8] &= mask;

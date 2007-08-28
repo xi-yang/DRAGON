@@ -604,7 +604,7 @@ elif test -f "/usr/local/sbin/brctl"; then
 else
    AC_MSG_ERROR(LinuxSwitch requires 'brctl' being installed!)
 fi	
-AC_DEFINE_UNQUOTED(BTCTL_PATH, "$brctl_path")
+AC_DEFINE_UNQUOTED(BRCTL_PATH, "$brctl_path")
 fi
 
 AC_ARG_WITH(switch-ctrl-port,
@@ -716,8 +716,8 @@ Username (Default: unknown): $ECHO_C"
 	eval switch_cli_password="\$tmpinput"
 	stty echo
 	echo \*\*\*\*\*\*\*\*
-	AC_DEFINE_UNQUOTED(CLI_USERNAME,$switch_cli_username)
-	AC_DEFINE_UNQUOTED(CLI_PASSWORD,$switch_cli_password)
+	AC_DEFINE_UNQUOTED(CLI_USERNAME, "$switch_cli_username")
+	AC_DEFINE_UNQUOTED(CLI_PASSWORD, "$switch_cli_password")
 fi
 
 

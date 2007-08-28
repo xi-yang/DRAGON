@@ -20,6 +20,7 @@ public:
 	SNMP_Session(const RSVP_String& sName, const NetAddress& swAddr): SwitchCtrl_Session(sName, swAddr) { }
 	virtual ~SNMP_Session() { }
 
+	virtual bool SNMPSet(char*, char, char*);
 	////////// Below are vendor specific functions/////////
 	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID);
 	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);

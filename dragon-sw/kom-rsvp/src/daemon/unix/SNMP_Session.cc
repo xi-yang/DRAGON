@@ -314,3 +314,40 @@ bool SNMP_Session::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
     return true;
 }
 
+bool SNMP_Session::SNMPSet(char* oid_str, char type, char* value)
+{
+    struct snmp_pdu *pdu;
+    struct snmp_pdu *response;
+    oid anOID[MAX_OID_LEN];
+    size_t anOID_len = MAX_OID_LEN;
+    int status;
+
+    if (!active) //not initialized or session has been disconnected
+        return false;
+
+    // Create the PDU for the data for our SNMP request. 
+    pdu = snmp_pdu_create(SNMP_MSG_SET);
+
+    if (!(status = read_objid(oid_str, anOID, &anOID_len))) return false;
+    if ((status = snmp_add_var(pdu, anOID, anOID_len, type, value))!=0) return false;
+
+    // Send the Request out.
+    status = snmp_synch_response(snmpSessionHandle, pdu, &response);
+
+    if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
+    	snmp_free_pdu(response);
+	return true;
+    }
+    else {
+        if (status == STAT_SUCCESS){
+           LOG(4)( Log::MPLS, "VLSR: SNMP: Setting SNMP at OID", oid_str, "failed. Reason : ", snmp_errstring(response->errstat));
+        }
+        else
+      	    snmp_sess_perror("snmpset", snmpSessionHandle);
+        if(response) snmp_free_pdu(response);
+        return false;
+    }
+
+    return true;
+}
+
