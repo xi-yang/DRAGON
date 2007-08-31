@@ -1710,7 +1710,10 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
                 else
                     vty_out(vty, "No E2E LSP VLAN Tag configured. %s", VTY_NEWLINE);
               }
-
+              if (lsp->common.DragonExtInfo_Para && lsp->common.DragonExtInfo_Para.ucid != 0) {
+                  vty_out(vty, "Global Reservation ID (UCID-SeqNum): %d-%d %s", 
+                      lsp->common.DragonExtInfo_Para.ucid, lsp->common.DragonExtInfo_Para.seqnum, VTY_NEWLINE);
+		}
 		vty_out(vty, "Status: %s %s", value_to_string(&conv_lsp_status, lsp->status), VTY_NEWLINE);
 	}
 	else
