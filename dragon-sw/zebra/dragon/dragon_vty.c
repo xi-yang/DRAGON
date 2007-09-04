@@ -1665,9 +1665,9 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 		vty_out(vty, "Src %s/%d, dest %s/%d %s", temp1, 
 					lsp->common.Session_Para.srcPort,temp2, 
 					lsp->common.Session_Para.destPort, VTY_NEWLINE);
-                if (lsp->common.DragonExtInfo_Para && lsp->common.DragonExtInfo_Para->ucid != 0) {
-                    vty_out(vty, "Global Resource ID (ucid-seqnum): %u-%u %s", 
-                        lsp->common.DragonExtInfo_Para->ucid, lsp->common.DragonExtInfo_Para->seqnum, VTY_NEWLINE);
+		if (lsp->common.DragonExtInfo_Para && lsp->common.DragonExtInfo_Para->ucid != 0) {
+			vty_out(vty, "GRI: %u-%u%s", 
+				lsp->common.DragonExtInfo_Para->ucid, lsp->common.DragonExtInfo_Para->seqnum, VTY_NEWLINE);
 		}
 		if (lsp->common.GenericTSpec_Para)
 		{
