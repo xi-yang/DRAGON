@@ -705,7 +705,7 @@ void SwitchCtrl_Session_Catalyst3750::hook_getPortMapFromSnmpVars(vlanPortMap &v
 {
     memset(&vpm, 0, sizeof(vlanPortMap));
     if (vars->val.bitstring ){
-        for (int i = 0; i < vars->val_len && i < MAX_VLAN_PORT_BYTES; i++) {
+        for (unsigned int i = 0; i < vars->val_len && i < MAX_VLAN_PORT_BYTES; i++) {
             vpm.portbits[i] = vars->val.bitstring[i];
        }
     }
@@ -1037,7 +1037,7 @@ void SwitchCtrl_Session_Catalyst3750::hook_getVlanMapFromSnmpVars(portVlanMap &p
 {
     memset(&pvm, 0, sizeof(portVlanMap));
     if (vars->val.bitstring ){
-        for (int i = 0; i < vars->val_len && i < CATALYST_VLAN_BITLEN/8; i++) {
+        for (unsigned int i = 0; i < vars->val_len && i < CATALYST_VLAN_BITLEN/8; i++) {
             pvm.vlanbits[i] = vars->val.bitstring[i];
        }
     }
@@ -1069,7 +1069,7 @@ bool SwitchCtrl_Session_Catalyst3750::readVlanPortMapListALLFromPortVlanMapList(
 			while (vpmListIter != vpmList.end())
 			{
 			    if ((*vpmListIter).vid == vlanId)
-			    (*vpmListIter).portbits[port/8] = (*vpmListIter).portbits[port/8] + (uint8) exp2((double)(port%8)-1);
+			    (*vpmListIter).portbits[port/8] = (*vpmListIter).portbits[port/8] + (uint8) exponentOf2((double)(port%8)-1);
 			    ++vpmListIter;
 			}
 		}

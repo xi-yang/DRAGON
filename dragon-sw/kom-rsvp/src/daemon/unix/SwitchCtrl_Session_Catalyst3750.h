@@ -88,4 +88,12 @@ inline uint32 convertCatalyst37502UnifiedPort(uint32 port)
 	return (((((port-1)/12)&0xf)<<8) | ((port-1)%12 + 1));
 }
 
+inline double exponentOf2(double x)
+{
+   if (x<0) return 0;
+   double ret = 1;
+   for (int i=0; i<x;i++) ret *= 2.0;
+   return ret;
+}
+
 #endif /*SWITCHCTRL_SESSION_CATALYST3750_H_*/
