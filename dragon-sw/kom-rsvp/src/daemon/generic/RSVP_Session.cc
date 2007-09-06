@@ -1215,6 +1215,10 @@ search_psb:
 		if ( hop.getLogicalInterface().hasEnabledMPLS() && !getDestAddress().isMulticast()) { //&& (!fromLocalAPI) @@@@ hacked
 			cPSB->setInLabelRequested();
 		}
+		else {
+			LOG(3)( Log::MPLS, "##Warning## MPLS diabled on hop interface ", hop, " -> make sure you have configured this control channel RSVPD.conf...");
+		}
+            
 		cPSB->updateLABEL_REQUEST_Object(msg.getLABEL_REQUEST_Object());
 	}
 	else if ( cPSB->getInLabel() ) {
