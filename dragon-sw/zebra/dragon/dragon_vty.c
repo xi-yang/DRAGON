@@ -645,6 +645,7 @@ DEFUN (dragon_show_narb_extra_options,
   	vty_out(vty, "    >exclude-layer2%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_L3) != 0)
   	vty_out(vty, "    >exclude-layer3%s", VTY_NEWLINE);
+  return CMD_SUCCESS;
 }
 
 DEFUN (dragon_telnet_module,
@@ -1287,10 +1288,10 @@ DEFUN (dragon_set_lsp_ext_info_edge_vtag,
 {
     u_int32_t ingress_vtag = atoi(argv[0]);
     u_int32_t egress_vtag = ingress_vtag;
+    struct lsp *lsp = (struct lsp *)(vty->index);
     if (argc >= 2)
         egress_vtag = atoi(argv[1]);
 
-    struct lsp *lsp = (struct lsp *)(vty->index);
     if (lsp->common.DragonExtInfo_Para == NULL)
     {
         lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
