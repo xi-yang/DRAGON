@@ -16,6 +16,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_Force10E600.h"
 #include "SwitchCtrl_Session_RaptorER1010.h"
 #include "SwitchCtrl_Session_Catalyst3750.h"
+#include "SwitchCtrl_Session_Catalyst6500.h"
 
 #ifdef Linux
 #include "SwitchCtrl_Session_Linux.h"
@@ -70,6 +71,7 @@ bool SwitchCtrl_Session::getSwitchVendorInfo()
         rfc2674_compatible = snmp_enabled = true;
         break;
     case Catalyst3750:
+    case Catalyst6500:
     	snmp_enabled = true;
      	rfc2674_compatible = false;
     }
@@ -245,7 +247,7 @@ bool SwitchCtrl_Session::readVLANFromSwitch()
     if (rfc2674_compatible) {
     	readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.2", vlanPortMapListAll);
     }
-    else if (vendor == Catalyst3750) {
+    else if (vendor == Catalyst3750 || vendor == Catalyst6500) {
 	readVlanPortMapListAllBranch(vlanPortMapListAll);
     }
     else {
@@ -258,7 +260,7 @@ bool SwitchCtrl_Session::readVLANFromSwitch()
     if (rfc2674_compatible) {
     	readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.4", vlanPortMapListUntagged);
     }
-    else if (vendor == Catalyst3750) {
+    else if (vendor == Catalyst3750 || vendor == Catalyst6500) {
     	readVlanPortMapBranch(".1.3.6.1.4.1.9.9.68.1.2.1.1.3", vlanPortMapListUntagged);
     }
     else {
@@ -682,8 +684,9 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
 	else if (venderSystemDescription.leftequal("Cisco IOS Software, C3750 Software")) 
 	                vendor = Catalyst3750;
 	// The Catalyst 65xx switches use the same code as Catalyst 3750 
+	// Now the 65xx use different module than 3750
 	else if (venderSystemDescription.leftequal("Cisco Internetwork Operating System Software"))
-	                vendor = Catalyst3750;
+	                vendor = Catalyst6500;
         else{
         	vendor = Illegal;
 		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", venderSystemDescription);
@@ -731,6 +734,9 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
             break;
 	    case Catalyst3750:
 	    ssNew = new SwitchCtrl_Session_Catalyst3750("VLSR-Catalyst3750", switchAddr);
+	    break;
+	case Catalyst6500:
+	    ssNew = new SwitchCtrl_Session_Catalyst6500("VLSR-Catalyst6500", switchAddr);
 	    break;
 #ifdef Linux
         case LinuxSwitch:

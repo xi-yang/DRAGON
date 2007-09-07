@@ -54,6 +54,7 @@ enum SupportedVendor{
 	RaptorER1010 = 5,
 	LinuxSwitch = 6,
 	Catalyst3750 = 7,
+	Catalyst6500 = 8,
 	Illegal = 0xffff,
 };
 
@@ -407,6 +408,17 @@ inline char* GetSwitchPortString(u_int32_t switch_port)
 
 	sprintf(port_string, "%d/%d/%d", (switch_port>>12)&0xf, (switch_port>>8)&0xf, switch_port&0xff);
 	return port_string;
+}
+
+// Function to compute exponent of 2.
+// We implement it bcoz 'exp2' is not supported on all versions of FreeBSD.
+// Used in support of Cisco Catslyst switch support modules.
+inline double exponentOf2(double x)
+{
+   if (x<0) return 0;   
+   double ret = 1.0;
+   for (int i=0; i<x; i++) ret *= 2.0;
+   return ret;
 }
 
 #endif //#ifndef _SWITCHCTRL_GLOBAL_H_

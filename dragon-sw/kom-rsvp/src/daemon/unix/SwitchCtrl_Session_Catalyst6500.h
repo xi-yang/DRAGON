@@ -1,30 +1,30 @@
 /****************************************************************************
 
-Cisco (vendor) Catalyst 3750 (model) Control Module header file SwitchCtrl_Session_Catalyst3750.h
+Cisco (vendor) Catalyst 6500 (model) Control Module header file SwitchCtrl_Session_Catalyst6500.h
 Created by Xi Yang @ 02/24/2006
 To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/
 
-#ifndef SWITCHCTRL_SESSION_CATALYST3750_H_
-#define SWITCHCTRL_SESSION_CATALYST3750_H_
+#ifndef SWITCHCTRL_SESSION_CATALYST6500_H_
+#define SWITCHCTRL_SESSION_CATALYST6500_H_
 
 #include "SNMP_Session.h"
 
-#define CATALYST3750_MIN_VLAN_ID 1
-#define CATALYST3750_MAX_VLAN_ID 4094
-#define CATALYST3750_MIN_PORT_ID 0
-#define CATALYST3750_MAX_PORT_ID 2048
+#define CATALYST6500_MIN_VLAN_ID 1
+#define CATALYST6500_MAX_VLAN_ID 4094
+#define CATALYST6500_MIN_PORT_ID 0
+#define CATALYST6500_MAX_PORT_ID 2048
 #define CATALYST_VLAN_BITLEN		4096
 
-class SwitchCtrl_Session_Catalyst3750: public SNMP_Session
+class SwitchCtrl_Session_Catalyst6500: public SNMP_Session
 {
 	
 public:
-	SwitchCtrl_Session_Catalyst3750(): SNMP_Session() { rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; }
-	SwitchCtrl_Session_Catalyst3750(const RSVP_String& sName, const NetAddress& swAddr): SNMP_Session(sName, swAddr) 
+	SwitchCtrl_Session_Catalyst6500(): SNMP_Session() { rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; }
+	SwitchCtrl_Session_Catalyst6500(const RSVP_String& sName, const NetAddress& swAddr): SNMP_Session(sName, swAddr) 
 		{ rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; }
-	virtual ~SwitchCtrl_Session_Catalyst3750() { }
+	virtual ~SwitchCtrl_Session_Catalyst6500() { }
 
 
 	///////////------QoS Functions ------/////////
@@ -47,7 +47,7 @@ public:
 	virtual uint32 hook_convertVLANIDToInterface(uint32 id) { return id; }
 	virtual bool hook_createVlanInterfaceToIDRefTable(vlanRefIDList &convList);
 
-	//////////// Functions that need implementation since Catalyst 3750 is Does not support RFC2674 ////////////
+	//////////// Functions that need implementation since Catalyst 6500 is Does not support RFC2674 ////////////
 	virtual bool verifyVLAN(uint32 vlanID); 
 	virtual bool setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID);
 
@@ -79,13 +79,19 @@ private:
 };
 
 
-inline uint32 convertUnifiedPort2Catalyst3750(uint32 port)
+inline uint32 convertUnifiedPort2Catalyst6500(uint32 port)
 {
-	return (((port>>8)&0xf)*12 + (port&0xff));
+	//return (((port>>8)&0xf)*12 + (port&0xff));
+	// We use a different approach to do the conversion.
+	// We read the switch ports using SNMP and populate a table
+	// And use the populated table to do the conversion.
+	return port;
 }
-inline uint32 convertCatalyst37502UnifiedPort(uint32 port)
+inline uint32 convertCatalyst65002UnifiedPort(uint32 port)
 {
-	return (((((port-1)/12)&0xf)<<8) | ((port-1)%12 + 1));
+        //return (((((port-1)/12)&0xf)<<8) | ((port-1)%12 + 1));
+	// Same as above comment for 'convertUnifiedPort2Catalyst6500'.
+	return port;
 }
 
-#endif /*SWITCHCTRL_SESSION_CATALYST3750_H_*/
+#endif /*SWITCHCTRL_SESSION_CATALYST6500_H_*/
