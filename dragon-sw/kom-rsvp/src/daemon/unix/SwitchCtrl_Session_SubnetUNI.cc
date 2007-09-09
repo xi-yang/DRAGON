@@ -754,7 +754,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
 
     getCienaLogicalPortString(suppTtp, ettpName);
 
-    sprintf(bufCmd, "ent-eflow::eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default;",
+    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default;",
         vcgName.chars(), getNewCtag(), ettpName.chars(), packetType, vcgName.chars());
 
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
@@ -778,7 +778,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         goto _out;
 
 
-    sprintf(bufCmd, "ent-eflow::eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default;",
+    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default;",
         vcgName.chars(), getNewCtag(), vcgName.chars(), packetType, ettpName.chars());
 
     if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
@@ -812,7 +812,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName)
 {
     int ret = 0;
 
-    sprintf(bufCmd, "dlt-eflow::eflow_%s_in:%d;", vcgName.chars(), getNewCtag());
+    sprintf(bufCmd, "dlt-eflow::dcs_eflow_%s_in:%d;", vcgName.chars(), getNewCtag());
 
     if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
 
@@ -834,7 +834,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName)
     else 
         goto _out;
 
-    sprintf(bufCmd, "dlt-eflow::eflow_%s_out:%d;", vcgName.chars(), getNewCtag());
+    sprintf(bufCmd, "dlt-eflow::dcs_eflow_%s_out:%d;", vcgName.chars(), getNewCtag());
 
     if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
 
@@ -866,7 +866,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasEFLOW_TL1(String& vcgName, bool ingress)
 {
     int ret = 0;
 
-    sprintf(bufCmd, "rtrv-eflow::eflow_%s_%s:%d;", vcgName.chars(), ingress? "in":"out", getNewCtag());
+    sprintf(bufCmd, "rtrv-eflow::dcs_eflow_%s_%s:%d;", vcgName.chars(), ingress? "in":"out", getNewCtag());
 
     if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
 
@@ -903,7 +903,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName, bool tunnelMod
 
     sprintf(ctag, "%d", getNewCtag());
 
-    vcgName = "vcg_";
+    vcgName = "dcs_vcg_";
     vcgName += (const char*)ctag;
 
     getCienaLogicalPortString(suppTtp, tunnelPeerName);
@@ -1051,7 +1051,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
     int ret = 0;
     char ctag[10];
     sprintf(ctag, "%d", getNewCtag());
-    gtpName = "gtp_";
+    gtpName = "dcs_gtp_";
     gtpName += ctag;
 
     String ctpGroupString;
@@ -1160,7 +1160,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
     char ctag[10];
 
     sprintf(ctag, "%d", getNewCtag());
-    sncName = "snc_";
+    sncName = "dcs_snc_";
     sncName += ctag;
 
     // get destination time slots!
@@ -1293,7 +1293,7 @@ bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpNam
     char ctag[10];
 
     sprintf(ctag, "%d", getNewCtag());
-    crsName = "crs_";
+    crsName = "dcs_crs_";
     crsName += ctag;
 
     // get destination time slots!
@@ -1681,7 +1681,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
         }
         else if (ret == 2)
         {
-            while ((ret = ReadShellPattern(bufCmd, "FROMENDPOINT=gtp_", fromEndPointPattern2, "MAXADMINWEIGHT=", ";", 5)) != READ_STOP)
+            while ((ret = ReadShellPattern(bufCmd, "FROMENDPOINT=dcs_gtp_", fromEndPointPattern2, "MAXADMINWEIGHT=", ";", 5)) != READ_STOP)
             { // if (ret == 3), we have reach the end, i.e., ";"...
                 if (ret == 0) // this is an irrelevant SNC 
                     continue;
