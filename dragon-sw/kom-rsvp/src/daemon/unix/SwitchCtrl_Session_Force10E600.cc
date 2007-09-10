@@ -21,15 +21,15 @@ bool SwitchCtrl_Session_Force10E600::movePortToVLANAsUntagged(uint32 port, uint3
         return ret; //don't touch the control port!
 
     int old_vlan = getVLANbyUntaggedPort(port);
+    bit = Port2BitForce10(port);
+    assert(bit < MAX_VLAN_PORT_BYTES*8);
+    vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
+    if (vpmUntagged)
+        ResetPortBit(vpmUntagged->portbits, bit);
+    vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
+    if (vpmAll)
+        ResetPortBit(vpmAll->portbits, bit);
     if (old_vlan > 1) { //Remove untagged port from old VLAN
-        bit = Port2BitForce10(port);
-        assert(bit < MAX_VLAN_PORT_BYTES*8);
-        vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
-        if (vpmUntagged)
-            ResetPortBit(vpmUntagged->portbits, bit);
-        vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
-        if (vpmAll)
-            ResetPortBit(vpmAll->portbits, bit);
         ret &= deleteVLANPort_ShellScript(port, old_vlan, false);
     }
 
