@@ -1472,7 +1472,8 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, ui
     int ts;
 
     assert(ts_bitmask);
-    memset(ts_bitmask, 0xff, MAX_TIMESLOTS_NUM/8);
+    //@@@@ Should not set all bits. Otherwise, the timeslot configuration in ospfd.conf will be overriden.
+    //memset(ts_bitmask, 0xff, MAX_TIMESLOTS_NUM/8);
 
     getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
 
@@ -1526,7 +1527,8 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
     int ts, ts1, ts2;
 
     assert(ts_bitmask);
-    memset(ts_bitmask, 0xff, MAX_TIMESLOTS_NUM/8);
+    //@@@@ Should not set all bits. Otherwise, the timeslot configuration in ospfd.conf will be overriden.
+    //memset(ts_bitmask, 0xff, MAX_TIMESLOTS_NUM/8);
 
     getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
 
