@@ -591,7 +591,7 @@ ALIAS (dragon_set_narb_para,
 
 DEFUN (dragon_set_narb_extra_options,
        dragon_set_narb_extra_options_cmd,
-       "set narb-extra-options (use-movaz-speical|query-with-holding|query-with-confirmation|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3|none)",
+       "set narb-extra-options (use-movaz-speical|query-with-holding|query-with-confirmation|query-subnet-ero|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3|none)",
        "Set NARB extra options\n"
        "NARB options\n"
        "Instructing NARB to compute a path using Movaz proprietary information\n"
@@ -639,6 +639,8 @@ DEFUN (dragon_show_narb_extra_options,
   	vty_out(vty, "    >query-with-holding%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_QUERY_CONFIRM) != 0)
   	vty_out(vty, "    >query-with-confirmation%s", VTY_NEWLINE);
+  if ((narb_extra_options & LSP_OPT_SUBNET_ERO) != 0)
+  	vty_out(vty, "    >query-subnet-ero%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_L1) != 0)
   	vty_out(vty, "    >exclude-layer1%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_TDM) != 0)
