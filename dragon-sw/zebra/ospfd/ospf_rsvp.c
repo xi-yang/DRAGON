@@ -961,7 +961,7 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int8_t uni_id, int fd)
 			stream_putc(s, uni_data->control_channel[i]);
 		for (i = 0; i < 16; i++)
 			stream_putc(s, uni_data->node_name[i]);
-		for (i = 1; i <= MAX_TIMESLOTS_NUM/8; i++)
+		for (i = 0; i < MAX_TIMESLOTS_NUM/8; i++)
 			stream_putc(s, uni_data->timeslot_bitmask[i]);
 	}
 	write (fd, STREAM_DATA(s), length);
