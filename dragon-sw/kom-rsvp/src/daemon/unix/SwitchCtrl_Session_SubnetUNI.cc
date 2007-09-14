@@ -614,7 +614,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
                 group++;
                 numGroups++;
                 first_ts = ts;
-                sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts/3+1);
+                sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts);
                 continue;
             }
             sprintf(ctp, "&%s-CTP-%d", vcgName.chars(), ts);
@@ -1109,7 +1109,6 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
         {
             LOG(5)(Log::MPLS, gtpName, "-", group+1, " has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
-            return true;
         }
         else if (ret == 2)
         {
@@ -1121,11 +1120,13 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
         else 
             goto _out;
     }
+
+    return true;
     
 _out:
-        LOG(5)(Log::MPLS, gtpName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
-        gtpName = "";
-        return false;    
+    LOG(5)(Log::MPLS, gtpName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
+    gtpName = "";
+    return false;    
 }
 
 //;DLT-GTP::gtp1:123;
@@ -1145,7 +1146,6 @@ bool SwitchCtrl_Session_SubnetUNI::deleteGTP_TL1(String& gtpName)
         {
             LOG(5)(Log::MPLS, gtpName, "-", group+1, " has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
-            return true;
         }
         else if (ret == 2)
         {
@@ -1157,9 +1157,11 @@ bool SwitchCtrl_Session_SubnetUNI::deleteGTP_TL1(String& gtpName)
             goto _out;
     }
 
+    return true;
+
 _out:
-        LOG(5)(Log::MPLS, gtpName, "-", group+1, " deletion via TL1_TELNET failed...\n", bufCmd);
-        return false;    
+    LOG(5)(Log::MPLS, gtpName, "-", group+1, " deletion via TL1_TELNET failed...\n", bufCmd);
+    return false;    
 }
 
 bool SwitchCtrl_Session_SubnetUNI::hasGTP_TL1(String& gtpName)
@@ -1189,8 +1191,8 @@ bool SwitchCtrl_Session_SubnetUNI::hasGTP_TL1(String& gtpName)
         goto _out;
 
 _out:
-        LOG(3)(Log::MPLS, gtpName, " GTP existence checking via TL1_TELNET failed...\n", bufCmd);
-        return false;    
+    LOG(3)(Log::MPLS, gtpName, " GTP existence checking via TL1_TELNET failed...\n", bufCmd);
+    return false;    
 }
 
 //;ent-snc-stspc:SEAT:gtp_x,1-a-5-1-1&&21:myctag::name=sncname,type=dynamic,rmnode=GRNOC,lep=gtp_nametype,conndir=bi_direction,prtt=aps_vlsr_unprotected,pst=is;
@@ -1230,7 +1232,6 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         {
             LOG(5)(Log::MPLS, sncName, "-", group+1, " has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
-            return true;
         }
         else if (ret == 2)
         {
@@ -1243,10 +1244,12 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
             goto _out;
     }
 
+    return true;
+
 _out:
-        LOG(5)(Log::MPLS, sncName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
-        sncName = "";
-        return false;    
+    LOG(5)(Log::MPLS, sncName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
+    sncName = "";
+    return false;    
 }
 
 //ED-SNC-STSPC::snc001:123::,PST=OOS;
@@ -1289,7 +1292,6 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         {
             LOG(5)(Log::MPLS, sncName, "-", group+1, " has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
-            return true;
         }
         else if (ret == 2)
         {
@@ -1301,9 +1303,11 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
             goto _out;
     }
 
+    return true;
+
 _out:
-        LOG(5)(Log::MPLS, sncName, "-", group+1, " change/deletion via TL1_TELNET failed...\n", bufCmd);
-        return false;    
+    LOG(5)(Log::MPLS, sncName, "-", group+1, " change/deletion via TL1_TELNET failed...\n", bufCmd);
+    return false;    
 }
 
 bool SwitchCtrl_Session_SubnetUNI::hasSNC_TL1(String& sncName)
@@ -1333,8 +1337,8 @@ bool SwitchCtrl_Session_SubnetUNI::hasSNC_TL1(String& sncName)
         goto _out;
 
 _out:
-        LOG(3)(Log::MPLS, sncName, " SNC existence checking via TL1_TELNET failed...\n", bufCmd);
-        return false;    
+    LOG(3)(Log::MPLS, sncName, " SNC existence checking via TL1_TELNET failed...\n", bufCmd);
+    return false;    
 }
 
 //;ent-crs-stspc::fromendpoint=gtp01,toendpoint=gtp02:myctag::name=crs01,fromtype=gtp,totype=gtp,;
@@ -1372,7 +1376,6 @@ bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpNam
         {
             LOG(5)(Log::MPLS, crsName, "-", group+1, " has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
-            return true;
         }
         else if (ret == 2)
         {
@@ -1385,10 +1388,12 @@ bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpNam
             goto _out;
     }
 
+    return true;
+
 _out:
-        LOG(5)(Log::MPLS, crsName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
-        crsName = "";
-        return false;
+    LOG(5)(Log::MPLS, crsName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
+    crsName = "";
+    return false;
 }
 
 bool SwitchCtrl_Session_SubnetUNI::deleteCRS_TL1(String& crsName)
@@ -1429,7 +1434,6 @@ bool SwitchCtrl_Session_SubnetUNI::deleteCRS_TL1(String& crsName)
         {
             LOG(5)(Log::MPLS, crsName, "-", group+1, " has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
-            return true;
         }
         else if (ret == 2)
         {
@@ -1441,9 +1445,11 @@ bool SwitchCtrl_Session_SubnetUNI::deleteCRS_TL1(String& crsName)
             goto _out;
     }
 
+    return true;
+
 _out:
-        LOG(5)(Log::MPLS, crsName, "-", group+1, " change/deletion via TL1_TELNET failed...\n", bufCmd);
-        return false;
+    LOG(5)(Log::MPLS, crsName, "-", group+1, " change/deletion via TL1_TELNET failed...\n", bufCmd);
+    return false;
 }
 
 //rtrv-crs-stspc::name=crsName:123;
