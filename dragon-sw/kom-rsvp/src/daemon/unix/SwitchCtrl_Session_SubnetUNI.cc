@@ -585,7 +585,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
 
         for ( ; ts < ts_num; ts += 3)
         {
-            if (ts == ts_num -1 || ts - first_ts == 48)
+            if (ts - first_ts == 48)
             {
                 ctpGroupStringArray[group] = (const char*)bufCmd;
                 group++;
@@ -597,6 +597,8 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
             sprintf(ctp, "&%s-CTP-%d", vcgName.chars(), ts/3+1);
             strcat(bufCmd, ctp);
         }
+        ctpGroupStringArray[group] = (const char*)bufCmd;
+        numGroups++;        
     }
     else // must be CATUNIT_50MBPS
     {
@@ -618,6 +620,8 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
             sprintf(ctp, "&%s-CTP-%d", vcgName.chars(), ts);
             strcat(bufCmd, ctp);
         }
+        ctpGroupStringArray[group] = (const char*)bufCmd;
+        numGroups++;        
     }
 
 }
@@ -728,7 +732,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String*& destTime
 
     for (group = 0; group < numGroups; group++)
     {
-        sprintf(bufCmd, "%d-%c-%d-%d-%d&&%d", bay, shelf_alpha, slot, subslot, ts+group*48, (group == numGroups-1? ts+group*48+47 : ts+ts_num-1));
+        sprintf(bufCmd, "%d-%c-%d-%d-%d&&%d", bay, shelf_alpha, slot, subslot, ts+group*48, (group == numGroups-1? ts+ts_num-1 : ts+group*48+47));
         destTimeslotsStringArray[group] = (const char*)bufCmd;
     }
 }
