@@ -909,7 +909,7 @@ bool Message::checkFlowdescList() const {
 		}
 		break;
 	default:
-		ERROR(2)( Log::Error, "ERROR in Message: unkown filter style", (uint32)STYLE_Object_O.getStyle() );
+		ERROR(2)( Log::Error, "ERROR in Message: unknown filter style", (uint32)STYLE_Object_O.getStyle() );
 		return false;
 		break;
 	}
