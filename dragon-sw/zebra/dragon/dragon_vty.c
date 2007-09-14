@@ -548,8 +548,8 @@ DEFUN (dragon_set_narb_para,
        "configure narb (intra-domain|inter-domain) ip-address A.B.C.D port <0-65535>",
        "Set IP address and port of supported software modules\n"
        "NARB\n"
-	"NARB Intra-domain (default: localhost/2614)\n"
-	"NARB Inter-domain (default: localhost/2604)\n"
+	"NARB Intra-domain (default: localhost/2609)\n"
+	"NARB Inter-domain (default: localhost/0)\n"
        "IP address\n"
 	"IP address, where A, B, C, and D are integers 0 to 255\n"
        "port\n"
@@ -584,8 +584,8 @@ ALIAS (dragon_set_narb_para,
        "configure narb (intra-domain|inter-domain) ip-address A.B.C.D",
        "Configure NARB parameters\n"
        "NARB\n"
-	"NARB Intra-domain (default: localhost/2614)\n"
-	"NARB Inter-domain (default: localhost/2604)\n"
+	"NARB Intra-domain (default: localhost/2609)\n"
+	"NARB Inter-domain (default: localhost/0)\n"
        "IP address\n"
 	"IP address, where A, B, C, and D are integers 0 to 255\n");
 
@@ -595,7 +595,7 @@ DEFUN (dragon_set_narb_extra_options,
        "Set NARB extra options\n"
        "NARB options\n"
        "Instructing NARB to compute a path using Movaz proprietary information\n"
-       "Query and hold the resources being queired\n"
+       "Query and hold the resources being queried\n"
        "Query that requires confirmation ID\n"
        "Routing-layer exclusion\n"
        "Routing-layer exclusion\n"
@@ -813,8 +813,8 @@ set_lsp_default_para (struct lsp *lsp)
 DEFUN (dragon_edit_lsp,
        dragon_edit_lsp_cmd,
        "edit lsp NAME",
-       "Edit a GMPLS label switching path (LSP)\n"
-       "Label switching path\n"
+       "Edit a GMPLS label switched path (LSP)\n"
+       "Label switched path\n"
        "LSP name, maximum length is 64 characters\n"
        )
 {
@@ -974,16 +974,23 @@ DEFUN (dragon_set_lsp_ip,
        "set source ip-address A.B.C.D (port|group|tagged-group|subnet-interface|lsp-id) ID destination ip-address A.B.C.D  (port|group|tagged-group|subnet-interface|tunnel-id) ID",
        "Set LSP parameters\n"
        "Source and destination nodes\n"
-       "source node IP address"
-       "IP address\n"
+       "Source node IP address\n"
        "IP address, where A, B, C, and D are integers 0 to 255\n"
+       "port LocalID (must be registered at source)\n"
+       "group LocalID (must be registered at source)\n"
+       "tagged-group LocalID (must be registered at source)\n"
+       "subnet-interface LocalID (must be registered at source)\n"
+       "lsp-id\n"
+       "LSP ID, integer between 1 and 65535, or any (for localID)\n"
        "Destination node IP address\n"
-       "IP address\n"
+       "Destination node IP address\n"
        "IP address, where A, B, C, and D are integers 0 to 255\n"
-	"Tunnel ID, or destination port number, or localID\n"
-	"Tunnel ID, integer between 1 and 65535, or any (for localID)\n"
-	"LSP ID, or source port number, or localID\n"
-	"LSP ID, integer between 1 and 65535, or any (for localID)\n"
+       "port LocalID (must be registered at destination)\n"
+       "group LocalID (must be registered at destination)\n"
+       "tagged-group LocalID (must be registered at destination)\n"
+       "subnet-interface LocalID (must be registered at destination)\n"
+       "tunnel-id\n"
+       "Tunnel ID, integer between 1 and 65535, or any (for localID)\n"
        )
 {
     struct lsp *lsp = (struct lsp *)(vty->index);
@@ -1319,12 +1326,13 @@ DEFUN (dragon_set_lsp_sw,
        "set bandwidth (gige|gige_f|hdtv|oc48|10g|eth100M|eth150M|eth200M|eth300M|eth400M|eth500M|eth600M|eth700M|eth800M|eth900M|2gige|3gige|4gige|5gige|6gige|7gige|8gige|9gige|zero) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
        "Set LSP parameters\n"
        "Bandwidth\n"
-       "1000.00 Mbps\n"
-       "1250.00 Mbps\n"
-       "1485.00 Mbps\n"
-       "2488.32 Mbps\n"
-       "11095.19 Mbps\n"
+       "GigE (1000.00 Mbps)\n"
+       "GigE over fiber (1250.00 Mbps)\n"
+       "HDTV (1485.00 Mbps)\n"
+       "OC-48/STM-16 (2488.32 Mbps)\n"
+       "10GigE-LAN (10000.00 Mbps)\n"
        "100.0 Mbps\n"       
+       "150.0 Mbps\n"       
        "200.0 Mbps\n"       
        "300.0 Mbps\n"       
        "400.0 Mbps\n"       
@@ -1333,20 +1341,29 @@ DEFUN (dragon_set_lsp_sw,
        "700.0 Mbps\n"       
        "800.0 Mbps\n"       
        "900.0 Mbps\n"       
+       "2000.0 Mbps\n"       
+       "3000.0 Mbps\n"       
+       "4000.0 Mbps\n"       
+       "5000.0 Mbps\n"       
+       "6000.0 Mbps\n"       
+       "7000.0 Mbps\n"       
+       "8000.0 Mbps\n"       
+       "9000.0 Mbps\n"       
+       "zero (0 Mbps)\n"       
        "Switching capability\n"
-       "Packeting switching capable 1\n"
-       "Layer 2 switching capable\n"
-       "Lambda switching capable\n"
-       "TDM switching capable\n"
-       "Encoding type\n"
+       "Packet-Switch Capable-1 (PSC-1)\n"
+       "Layer-2 Switch Capable (L2SC)\n"
+       "Lambda-Switch Capable (LSC)\n"
+       "Time-Division-Multiplex Capable (TDM)\n"
+       "LSP Encoding Type\n"
        "Packet\n"
        "Ethernet\n"
-       "Lambda\n"
-       "SDH\n"
-       "G-Pid\n"
+       "Lambda (photonic)\n"
+       "SDH ITU-T G.707 / SONET ANSI T1.105\n"
+       "Generalized PID (G-PID)\n"
        "Lambda\n"
        "Ethernet\n"
-       "SDH\n"
+       "SONET/SDH\n"
        )
 {
   struct lsp *lsp = (struct lsp *)(vty->index);
@@ -1403,8 +1420,8 @@ DEFUN (dragon_set_lsp_sw,
 DEFUN (dragon_commit_lsp_sender,
        dragon_commit_lsp_sender_cmd,
        "commit lsp NAME sender",
-       "Commit a GMPLS label switching path (LSP)\n"
-       "Label switching path\n"
+       "Commit a GMPLS label switched path (LSP)\n"
+       "Label switched path\n"
        "LSP name\n"
        "This node is an RSVP sender\n")
 {
@@ -1544,15 +1561,15 @@ DEFUN (dragon_commit_lsp_sender,
 ALIAS (dragon_commit_lsp_sender,
        dragon_commit_lsp_default_cmd,
        "commit lsp NAME",
-       "Commit a GMPLS label switching path (LSP)\n"
-       "Label switching path\n"
+       "Commit a GMPLS label switched path (LSP)\n"
+       "Label switched path\n"
        "LSP name\n");
 
 DEFUN (dragon_commit_lsp_receiver,
        dragon_commit_lsp_receiver_cmd,
        "commit lsp NAME receiver",
-       "Commit a GMPLS label switching path (LSP)\n"
-       "Label switching path\n"
+       "Commit a GMPLS label switched path (LSP)\n"
+       "Label switched path\n"
        "LSP name\n"
        "This node is an RSVP receiver\n")
 {
@@ -1603,7 +1620,7 @@ DEFUN (dragon_delete_lsp,
        dragon_delete_lsp_cmd,
        "delete lsp NAME",
        "Delete an existing LSP\n"
-       "Label switching path\n"
+       "Label switched path\n"
        "LSP name\n")
 {
   struct listnode *node;
