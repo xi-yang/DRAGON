@@ -114,8 +114,8 @@ public:
 	uint32 getCurrentCtag() { return (getPseudoSwitchID()+ctagNum+(isSource?0:500000))%999999+1; }
 	void getCienaTimeslotsString(String& groupMemString);
 	void getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort=0);
-	void getCienaCTPGroupInVCG(String& ctpGroupString, String& vcgName);
-	void getCienaDestTimeslotsString(String& destTimeslotsString);
+	void getCienaCTPGroupsInVCG(String& *ctpGroupStringArray, String& vcgName);
+	void getCienaDestTimeslotsString(String& *destTimeslotsStringArray);
 	void getPeerCRS_GTP(String& gtpName);
 
 	bool hasEFLOW_TL1(String& vcgName, bool ingress = true);
@@ -300,7 +300,7 @@ protected:
 	String currentGTP;
 	String currentSNC;
 	String currentCRS;
-
+	int numGroups;
 	SONET_CATUNIT ptpCatUnit;
 private:	
 	void internalInit ();
