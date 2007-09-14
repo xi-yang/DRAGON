@@ -608,7 +608,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
         ts += 1;
         for ( ; ts < ts_num; ts++)
         {
-            if (ts == ts_num -1 || ts - first_ts == 48)
+            if (ts - first_ts == 48)
             {
                 ctpGroupStringArray[group] = (const char*)bufCmd;
                 group++;
