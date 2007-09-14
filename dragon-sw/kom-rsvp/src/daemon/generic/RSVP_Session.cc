@@ -571,7 +571,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
                             ssNew = RSVP_Global::switchController->createSession(vlsr.switchID);
                             if (!ssNew) {
-                                    LOG(1)( Log::MPLS, "Failed to create VLSR SwitchCtrl Session: Unkown switch Vendor/Model");
+                                    LOG(1)( Log::MPLS, "Failed to create VLSR SwitchCtrl Session: Unknown switch Vendor/Model -- verify switch-ip is correct in ospfd.conf");
         				return false;
                             }
 
@@ -847,9 +847,9 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	// Xi2007<<
 	else { //regular RSVP (network) Path message
 
-		//No GENEALIZED UNI supported at VLSR UNI-N side
+		//No GENERALIZED UNI supported at VLSR UNI-N side
 		if (generalizedUni){
-			LOG(1)(Log::Routing, "Warning: GENEALIZED UNI Object at VLSR UNI-N is not supported!");
+			LOG(1)(Log::Routing, "Warning: GENERALIZED UNI Object at VLSR UNI-N is not supported!");
 		}
 
 		if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
@@ -1221,7 +1221,7 @@ search_psb:
 			cPSB->setInLabelRequested();
 		}
 		else {
-			LOG(3)( Log::MPLS, "##Warning## MPLS diabled on hop interface ", hop, " -> make sure you have configured this control channel RSVPD.conf...");
+			LOG(3)( Log::MPLS, "##Warning## MPLS disabled on hop interface ", hop, " -> make sure you have configured this control channel interface in RSVPD.conf...");
 		}
             
 		cPSB->updateLABEL_REQUEST_Object(msg.getLABEL_REQUEST_Object());
