@@ -529,7 +529,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
     assert(ctpGroupStringArray);
     int group;
     for (group = 0; group < 4; group++) 
-        ctpGroupStringArray[group].clear();
+        ctpGroupStringArray[group] = "";
     
     char ctp[20];
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
@@ -663,7 +663,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String*& destTime
     assert(destTimeslotsStringArray);
     int group;
     for (group = 0; group < 4; group++) 
-        destTimeslotsStringArray[group].clear();
+        destTimeslotsStringArray[group] = "";
 
     int bay, shelf, slot, subslot;
     char shelf_alpha;
@@ -721,7 +721,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String*& destTime
         ts_num = sonet_tb1->getNCC() * 3;
         break;
     }
-    if (ts_num == 0 || ts+ts_num-1 > MAX_TIMESLOTS_NUM || ts_num/48 != numGroups - (ts_num%48 == 0 ? 0 : 1)
+    if (ts_num == 0 || ts+ts_num-1 > MAX_TIMESLOTS_NUM || ts_num/48 != numGroups - (ts_num%48 == 0 ? 0 : 1))
     {
         return;
     }
@@ -1080,7 +1080,8 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
     gtpName += ctag;
 
     String ctpGroupStringArray[4];
-    getCienaCTPGroupsInVCG(ctpGroupStringArray, vcgName);
+    String* pString = ctpGroupStringArray;
+    getCienaCTPGroupsInVCG(pString, vcgName);
     if (ctpGroupStringArray[0].empty() || numGroups == 0)
     {
         LOG(1)(Log::MPLS, "getCienaCTPGroupInVCG returned empty string");
@@ -1093,7 +1094,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
     {
         assert(!ctpGroupStringArray[group].empty());
 
-        sprintf( bufCmd, "ent-gtp::%s:%s::lbl=gtp-%s-%d,,ctp=%s;", gtpName.chars(), group+1, ctag, vcgName.chars(), ctpGroupStringArray[group].chars() );
+        sprintf( bufCmd, "ent-gtp::%s-%d:%s::lbl=gtp-%s,,ctp=%s;", gtpName.chars(), group+1, ctag, vcgName.chars(), ctpGroupStringArray[group].chars() );
 
         if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
@@ -1201,7 +1202,8 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
     assert(numGroups > 0);
     // get destination time slots!
     String destTimeslotsStringArray[4];
-    getCienaDestTimeslotsString(destTimeslotsStringArray);
+    String* pString = destTimeslotsStringArray;
+    getCienaDestTimeslotsString(pString);
     if (destTimeslotsStringArray[0].empty())
     {
         LOG(1)(Log::MPLS, "getCienaDestTimeslotsString returned empty strings.");
@@ -1355,7 +1357,7 @@ bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpNam
     for (group = 0; group < numGroups; group++)
     {
         sprintf( bufCmd, "ent-crs-stspc::fromendpoint=%s-%d,toendpoint=%s-%d:%s::name=%s-%d,fromtype=gtp,totype=gtp, alias=%s;",
-            gtpName.chars(), group+1, destGtpName.chars(), group+1, ctag, crsName.chars(), group+1, lspName);
+            gtpName.chars(), group+1, destGtpName.chars(), group+1, ctag, crsName.chars(), group+1, lspName.chars());
 
         if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
@@ -1715,7 +1717,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
 
     String OMPortString, ETTPString;
     char* pstr;
-    int ts1, ts2;
+    int ts1;
     char fromEndPointPattern2[20];
     getCienaLogicalPortString(OMPortString, ETTPString, ntohl(pUniData->logical_port));
     sprintf(fromEndPointPattern2, "_%s_S", OMPortString.chars());
