@@ -524,7 +524,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemStrin
     groupMemString = (const char*)bufCmd;
 }
 
-void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String& *ctpGroupStringArray, String& vcgName)
+void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStringArray, String& vcgName)
 {
     assert(ctpGroupStringArray);
     int group;
@@ -658,7 +658,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
     ETTPString = (const char*)bufCmd;
 }
 
-void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String& *destTimeslotsStringArray)
+void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String*& destTimeslotsStringArray)
 {
     assert(destTimeslotsStringArray);
     int group;
