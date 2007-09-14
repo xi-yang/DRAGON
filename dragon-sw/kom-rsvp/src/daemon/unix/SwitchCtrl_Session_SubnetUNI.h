@@ -63,7 +63,7 @@ public:
 	SwitchCtrl_Session_SubnetUNI(const String& sName, const NetAddress& swAddr, bool isSrc=true): 
 		CLI_Session(sName, swAddr), RSVP_API(), isSource(isSrc) { internalInit(); }
 	virtual ~SwitchCtrl_Session_SubnetUNI();
-
+	void setLspName(String& name) { lspName = name; }
 	bool isSourceClient() { return isSource; }
 	bool isSourceDestSame() { return (subnetUniSrc.uni_nid_ipv4 == subnetUniDest.uni_nid_ipv4); }
 	bool hasSourceDestPortConflict() // Source and Dest ports should not be on the same ETTP 
@@ -286,6 +286,7 @@ protected:
 
 	bool isSource; //true --> isSender == 1
 	RSVP_API::SessionId* uniSessionId;
+	String lspName;
 
 	//UNI Ctrl/TE parameters
 	SubnetUNI_Data subnetUniSrc; //not needed for destination UNI client
