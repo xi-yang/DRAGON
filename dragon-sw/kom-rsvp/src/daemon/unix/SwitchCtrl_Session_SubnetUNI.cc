@@ -585,7 +585,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
 
         for ( ; ts < ts_num; ts += 3)
         {
-            if (ts - first_ts == 48)
+            if (ts == ts_num -1 || ts - first_ts == 48)
             {
                 ctpGroupStringArray[group] = (const char*)bufCmd;
                 group++;
@@ -606,7 +606,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
         ts += 1;
         for ( ; ts < ts_num; ts++)
         {
-            if (ts - first_ts == 48)
+            if (ts == ts_num -1 || ts - first_ts == 48)
             {
                 ctpGroupStringArray[group] = (const char*)bufCmd;
                 group++;
@@ -1084,7 +1084,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
     getCienaCTPGroupsInVCG(pString, vcgName);
     if (ctpGroupStringArray[0].empty() || numGroups == 0)
     {
-        LOG(1)(Log::MPLS, "getCienaCTPGroupInVCG returned empty string");
+        LOG(1)(Log::MPLS, "getCienaCTPGroupsInVCG returned empty strings");
         gtpName = "";
         return false;
     }
