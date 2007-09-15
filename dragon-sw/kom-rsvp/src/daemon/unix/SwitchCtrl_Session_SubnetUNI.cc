@@ -1048,7 +1048,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasVCG_TL1(String& vcgName)
 {
     int ret = 0;
 
-    sprintf( bufCmd, "rtrv-vcg::%s:%d;", vcgName.chars(), getNewCtag() );
+    sprintf( bufCmd, "rtrv-vcg::%s:%d;\r", vcgName.chars(), getNewCtag() );
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
@@ -1598,7 +1598,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
 
     getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
 
-    sprintf(bufCmd, "rtrv-vcg::all:%d;", getCurrentCtag());
+    sprintf(bufCmd, "rtrv-vcg::all:%d;\r", getCurrentCtag());
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
@@ -1614,7 +1614,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
         }
         else if (ret == 2)
         {
-            while ((ret = ReadShellPattern(bufCmd, (char*)OMPortString.chars(), "GROUPMEM=", "MEMBERDETAIL=",  ";", 5)) != READ_STOP)
+            while ((ret = ReadShellPattern(bufCmd, (char*)OMPortString.chars(), "GROUPMEM=", "VCGFAILUREBASESEV=",  ";", 5)) != READ_STOP)
             { // if (ret == 3), we have reach the end, i.e., ";"...
                 if (ret == 1)
                 {
