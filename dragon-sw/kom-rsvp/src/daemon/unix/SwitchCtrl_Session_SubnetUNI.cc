@@ -1660,6 +1660,26 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap()
 {
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
     bool ret = syncTimeslotsMapVCG_TL1(pUniData->timeslot_bitmask);
+
+    //TODO: make this an inline function...
+    SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
+    assert (sonet_tb1);
+    uint8 ts_num = 0;
+    switch (sonet_tb1->getSignalType())
+    {
+    case SONET_TSpec::S_STS1SPE_VC3:
+    case SONET_TSpec::S_STS1_STM0:
+        ts_num = sonet_tb1->getNCC();
+        if (ptpCatUnit == CATUNIT_150MBPS)
+            ts_num = ((ts_num+2)/3)*3;
+        break;
+
+    case SONET_TSpec::S_STS3CSPE_VC4:
+    case SONET_TSpec::S_STS3_STM1:
+        ts_num = sonet_tb1->getNCC() * 3;
+        break;
+    }
+
     if (ret)
     {
         uint8 ts, ts_count;
@@ -1671,7 +1691,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap()
                 ts_count = 1; ts++;
                 for ( ; HAS_TIMESLOT(pUniData->timeslot_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
                     ts_count++;
-                if (ts_count >= pUniData->ethernet_bw/50.0)
+                if (ts_count >= ts_num)
                 {
                     pUniData->first_timeslot = ts-ts_count;
                     ts_ok = true;
@@ -1693,6 +1713,26 @@ bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap()
     uint8 timeslots[MAX_TIMESLOTS_NUM/8]; //changing nothing in the actual UNIdata
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
     bool ret = syncTimeslotsMapVCG_TL1(timeslots);
+
+    //TODO: make this an inline function...
+    SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
+    assert (sonet_tb1);
+    uint8 ts_num = 0;
+    switch (sonet_tb1->getSignalType())
+    {
+    case SONET_TSpec::S_STS1SPE_VC3:
+    case SONET_TSpec::S_STS1_STM0:
+        ts_num = sonet_tb1->getNCC();
+        if (ptpCatUnit == CATUNIT_150MBPS)
+            ts_num = ((ts_num+2)/3)*3;
+        break;
+
+    case SONET_TSpec::S_STS3CSPE_VC4:
+    case SONET_TSpec::S_STS3_STM1:
+        ts_num = sonet_tb1->getNCC() * 3;
+        break;
+    }
+
     if (ret)
     {
         uint8 ts, ts_count = 0;
@@ -1700,7 +1740,7 @@ bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap()
         for (ts = pUniData->first_timeslot; ts <= MAX_TIMESLOTS_NUM && HAS_TIMESLOT(timeslots, ts); ts++)
         {
             ts_count++;
-            if (ts_count >= pUniData->ethernet_bw/50.0)
+            if (ts_count >=  ts_num)
             {
                 ts_ok = true;
                 break;
