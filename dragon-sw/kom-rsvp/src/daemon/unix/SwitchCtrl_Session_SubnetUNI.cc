@@ -1761,7 +1761,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
                     ret = sscanf(pstr+10, "%d", &ts1);
                     if (ret != 1)
                         goto _out;
-                    if (pUniData->first_timeslot == ts1+1)
+                    if ((ts1+1 - pUniData->first_timeslot) %48 == 0 &&  (ts1+1 - pUniData->first_timeslot) / 48 < numGroups)
                     {
                         LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 method detected an SNC holding the current VCG.\n", bufCmd);
                         ret = readShell(SWITCH_PROMPT, NULL, 1, 5);
