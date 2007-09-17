@@ -1761,7 +1761,27 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
                     ret = sscanf(pstr+10, "%d", &ts1);
                     if (ret != 1)
                         goto _out;
-                    if ((ts1+1 - pUniData->first_timeslot) %48 == 0 &&  (ts1+1 - pUniData->first_timeslot) / 48 < numGroups)
+
+                    //TODO: make this an inline function...
+                    SONET_TSpec* sonet_tb1 = RSVP_Global::switchController->getEosMapEntry(pUniData->ethernet_bw);
+                    assert (sonet_tb1);
+                    uint8 ts_num = 0;
+                    switch (sonet_tb1->getSignalType())
+                    {
+                    case SONET_TSpec::S_STS1SPE_VC3:
+                    case SONET_TSpec::S_STS1_STM0:
+                        ts_num = sonet_tb1->getNCC();
+                        if (ptpCatUnit == CATUNIT_150MBPS)
+                            ts_num = ((ts_num+2)/3)*3;
+                        break;
+
+                    case SONET_TSpec::S_STS3CSPE_VC4:
+                    case SONET_TSpec::S_STS3_STM1:
+                        ts_num = sonet_tb1->getNCC() * 3;
+                        break;
+                    }
+                    //conditions for VCG-owned SNC detection
+                    if ((ts1+1 - pUniData->first_timeslot) %48 == 0 &&  ts1+1 - pUniData->first_timeslot < ts_num)
                     {
                         LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 method detected an SNC holding the current VCG.\n", bufCmd);
                         ret = readShell(SWITCH_PROMPT, NULL, 1, 5);
