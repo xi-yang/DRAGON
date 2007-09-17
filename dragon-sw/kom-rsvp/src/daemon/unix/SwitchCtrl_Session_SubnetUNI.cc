@@ -1794,12 +1794,12 @@ _out:
 bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
 {
     bool noError = true;
-    int counter = 15;
+    int counter = 5;
     do {
         if (!noError)
             return false;
         LOG(3)(Log::MPLS, " Child-Process::waitUntilSystemSNCDisapear ... ", counter, " seconds left.\n");
-        sleep(1); //sleeping one second and try again
+        sleep(3); //sleeping one second and try again
         counter--;
         if (counter == 0) //timeout!
             return false;
