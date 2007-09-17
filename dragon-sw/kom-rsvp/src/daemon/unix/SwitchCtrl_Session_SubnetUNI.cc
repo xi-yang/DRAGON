@@ -1732,7 +1732,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
     getCienaLogicalPortString(OMPortString, ETTPString, ntohl(pUniData->logical_port));
     sprintf(fromEndPointPattern2, "_%s_S", OMPortString.chars());
 
-    sprintf(bufCmd, "rtrv-snc-stspc::all:%d;", getCurrentCtag());
+    sprintf(bufCmd, "rtrv-snc-stspc::all:%d;\r", getCurrentCtag());
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
@@ -1764,6 +1764,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
                     if (pUniData->first_timeslot == ts1+1)
                     {
                         LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 method detected an SNC holding the current VCG.\n", bufCmd);
+                        ret = readShell(SWITCH_PROMPT, NULL, 1, 5);
                         return true;                        
                     }
                 }
@@ -1798,7 +1799,7 @@ bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
     do {
         if (!noError)
             return false;
-        LOG(3)(Log::MPLS, " Child-Process::waitUntilSystemSNCDisapear ... ", counter, " seconds left.\n");
+        LOG(3)(Log::MPLS, " Child-Process::waitUntilSystemSNCDisapear ... 3x5 seconds left.\n");
         sleep(3); //sleeping one second and try again
         counter--;
         if (counter == 0) //timeout!
