@@ -1799,7 +1799,7 @@ bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
     do {
         if (!noError)
             return false;
-        LOG(3)(Log::MPLS, " Child-Process::waitUntilSystemSNCDisapear ... 3x5 seconds left.\n");
+        LOG(1)(Log::MPLS, " Child-Process::waitUntilSystemSNCDisapear ... 3x5 seconds left.\n");
         sleep(3); //sleeping one second and try again
         counter--;
         if (counter == 0) //timeout!
