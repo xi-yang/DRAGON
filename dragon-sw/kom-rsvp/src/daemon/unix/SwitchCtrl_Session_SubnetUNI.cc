@@ -1712,6 +1712,7 @@ bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap()
 {
     uint8 timeslots[MAX_TIMESLOTS_NUM/8]; //changing nothing in the actual UNIdata
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
+    memcpy(timeslots, pUniData->timeslot_bitmask, MAX_TIMESLOTS_NUM/8);
     bool ret = syncTimeslotsMapVCG_TL1(timeslots);
 
     //TODO: make this an inline function...
