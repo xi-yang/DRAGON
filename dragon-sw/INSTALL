@@ -1,7 +1,21 @@
 The do_build.sh script does everything except the install, so please
 try it first:
 
-        $ ./do_build.sh
+        $ ./do_build.sh [target]
+
+The option [target] tells what kind of control entity to build. The control
+entity could be one of the following.
+  vlsr -- A generic VLSR that uses automatic probe to determine switch type
+  vlsr-verbose -- Build a VLSR with user's interactive input
+  vlsr-force10 -- A VLSR that operates on a Force10 E300/E600 switch
+  vlsr-force10-v6 -- A VLSR that operates on a Force10 switch with software version 6.x.x.x
+  vlsr-raptor -- A VLSR that operates on a Raptor E1010 switch
+  vlsr-cat3750 -- A VLSR that operates on a Cisco Catalyst 3750 switch
+  vlsr-cat6500 -- A VLSR that operates on a Cisco Catalyst 6500 switch
+  vlsr-linux -- A VLSR that operates on the Linux host using brctl/vconfig
+  csa -- A End System Agent
+  narb -- Supporting software components for NARB sever.
+  Without provided the [target] option, the default option will be vlsr.
 
 The do_install script then takes care of installing everything:
 
@@ -20,3 +34,6 @@ should work, assuming the net-snmp header files can be found in
 	$ make
 	$ sudo make install
 
+---------------
+To checkout the latest package, do
+ svn co svn://svn.maxgigapop.net/dragon-sw/trunk/dragon-sw

@@ -3,6 +3,64 @@
 
 PREFIX=/usr/local/dragon
 
+target=$1
+
+if test "$target" = ""; then
+  target=default
+fi
+
+echo "Building softare target: $target ..."
+
+rsvpconf=
+zebraconf=
+
+case "$target" in
+  vlsr|VLSR|csa|CSA|narb|NARB|default)
+    rsvpconf=`echo "--with-switch-vendor-model=AutoDetect --with-switch-ctrl-port=255 --disable-altq"`
+  ;;
+  vlsr-force10|VLSR-FORCE10)
+    rsvpconf=`echo "--enable-switch-cli-access --with-switch-vendor-model=Force10E600 --with-switch-ctrl-port=255 --disable-altq --enable-switch-port-shutdown"`
+  ;;
+  vlsr-force10-v6|VLSR-FORCE10-V6)
+    rsvpconf=`echo "--enable-switch-cli-access --with-switch-vendor-model=Force10E600 --with-switch-ctrl-port=255 --disable-altq --with-force10-software-v6 --enable-switch-port-shutdown"`
+  ;;
+  vlsr-raptor|VLSR-RAPTOR)
+    rsvpconf=`echo "--with-switch-vendor-model=RaptorER1010 --with-switch-ctrl-port=255 --disable-altq"`
+  ;;
+  vlsr-cat3750|vlsr-catalyst3750|VLSR-CATALYST3750|VLSR-Catalyst3750)
+    rsvpconf=`echo "--with-switch-vendor-model=Catalyst3750 --with-switch-ctrl-port=255 --disable-altq --enable-switch-port-shutdown"`
+  ;;
+  vlsr-cat6500|vlsr-catalyst6500|VLSR-CATALYST6500|VLSR-Catalyst6500)
+    rsvpconf=`echo "--with-switch-vendor-model=Catalyst6500 --with-switch-ctrl-port=255 --disable-altq --enable-switch-port-shutdown"`
+  ;;
+  vlsr-subnet|VLSR-SUBNET)
+    rsvpconf=`echo "--enable-switch-cli-access --with-switch-vendor-model=AutoDetect --with-switch-ctrl-port=255 --disable-altq"`
+  ;;
+  vlsr-linux|VLSR-LINUX)
+    rsvpconf=`echo "--enable-switch-cli-access --with-switch-vendor-model=LinuxSwitch --with-switch-ctrl-port=1 --disable-altq"`
+  ;;
+  vlsr-verbose|VLSR-VERBOSE)
+    rsvpconf=`echo "--enable-switch-cli-access --disable-altq"`
+  ;;
+  cleanup)
+    cd kom-rsvp
+    if test -f Makefile; then
+      make clean
+    fi
+    cd ../zebra
+    if test -f Makefile; then
+      make clean
+    fi
+    cd ..
+    echo "dragon-sw: cleanup finished ... "
+    exit 0
+  ;;
+  *)
+    echo "Unknown target: $target ... abort!"
+    exit 1
+  ;;
+esac
+
 # determine a valid path for net-snmp header files
 if test -f /usr/local/include/net-snmp/net-snmp-config.h; then
     SNMP_PATH=/usr/local
@@ -20,7 +78,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring kom-rsvp...'
     cd kom-rsvp
-    ./configure --prefix=$PREFIX --with-snmp=$SNMP_PATH CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --disable-java-api --with-snmp=$SNMP_PATH $rsvpconf CFLAG=-g CPPFLAG=-g
     if test $? != 0; then
 	echo "dragon-sw: kom-rsvp configure error!"
 	exit 1
@@ -37,7 +95,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring zebra...'
     cd ../zebra
-    ./configure --prefix=$PREFIX --enable-dragon CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g
     if test $? != 0; then
 	echo "dragon-sw: zebra configure error!"
 	exit 1
@@ -63,7 +121,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring kom-rsvp...'
     cd kom-rsvp
-    ./configure --prefix=$PREFIX --with-snmp=$SNMP_PATH CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --disable-java-api --with-snmp=$SNMP_PATH $rsvpconf CFLAG=-g CPPFLAG=-g
     if test $? != 0; then
 	echo "dragon-sw: kom-rsvp configure error!"
 	exit 1
@@ -80,7 +138,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring zebra...'
     cd ../zebra
-    ./configure --prefix=$PREFIX --enable-dragon CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g
     if test $? != 0; then
         echo "dragon-sw: zebra configure error!"
         exit 1
