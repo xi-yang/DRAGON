@@ -6874,7 +6874,8 @@ vendor/model, use the default value of 'AutoDetect'.  The VLSR will
 then attempt to detect the switch vendor and model via SNMP.
 RFC2674-compliant switches should work with 'AutoDetect'.
 
-Valid options are: AutoDetect, Force10E600, RaptorER1010, Catalyst3750 and LinuxSwitch.
+Valid options are: AutoDetect, Force10E600, RaptorER1010,
+Catalyst3750, Catalyst6500 and LinuxSwitch.
 
 Switch Vendor/Model number (Default: AutoDetect): $ECHO_C"
 
