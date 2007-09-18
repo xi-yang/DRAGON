@@ -1,0 +1,9 @@
+#!/bin/sh
+
+test -x /usr/sbin/logrotate || exit 0
+/usr/sbin/logrotate /usr/local/etc/logrotate4dragon.conf
+
+if test -e /usr/local/dragon/etc/narb.conf; then
+  /usr/sbin/logrotate /usr/local/etc/logrotate4narb.conf
+fi
+
