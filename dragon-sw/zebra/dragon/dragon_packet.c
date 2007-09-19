@@ -298,24 +298,24 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   struct stream *s;
   struct api_msg_header *amsgh;
   struct dragon_fifo_elt *packet;
-  
+  int msglen;
+
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
   s = packet->s;
   packet->lsp = lsp;
   
   /* Build DRAGON message header */
-  /*obsolete format
-  dmsgh = build_dragon_msg_header(s, DMSG_CLI_TOPO_CREATE, lsp->seqno);
-  */
-
+  msglen = 20; 
+  if (lsp->dragon.srcLocalId != 0 && lsp->dragon.destLocalId != 0)
+      msglen += sizeof(u_int16_t)*2 + sizeof(u_int32_t)*2;
   if (lsp->dragon.lspVtag)
-      amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, dmaster.UCID, lsp->seqno, 
+      amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno, 
         LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG
         |((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | narb_extra_options, 
         lsp->dragon.lspVtag);
   else
-      amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20, dmaster.UCID, lsp->seqno,
+      amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno,
         LSP_OPT_STRICT | ((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | narb_extra_options, 
         0);
 
@@ -324,18 +324,18 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 
   /* Put optional TLV data */
   /* Local ID TLV */
-  if (lsp->dragon.srcLocalId != 0 && lsp->dragon.srcLocalId != 0)
+  if (lsp->dragon.srcLocalId != 0 && lsp->dragon.destLocalId != 0)
   {
       u_int16_t type, length;
-	  u_int32_t src_lclid, dest_lclid;
-	  type = htons(DRAGON_TLV_LCLID);
-	  length = htons(sizeof (u_int16_t)*2 + sizeof (u_int32_t)*2);
-	  src_lclid = htonl(lsp->dragon.srcLocalId);
-	  dest_lclid = htonl(lsp->dragon.destLocalId);
-      stream_put (s, &type, sizeof (u_int16_t));
-      stream_put (s, &length, sizeof (u_int16_t));
-      stream_put (s, &src_lclid, sizeof (u_int32_t));
-      stream_put (s, &dest_lclid, sizeof (u_int32_t));
+      u_int32_t src_lclid, dest_lclid;
+      type = htons(DRAGON_TLV_LCLID);
+      length = htons(sizeof(u_int32_t)*2);
+      src_lclid = htonl(lsp->dragon.srcLocalId);
+      dest_lclid = htonl(lsp->dragon.destLocalId);
+      stream_put (s, &type, sizeof(u_int16_t));
+      stream_put (s, &length, sizeof(u_int16_t));
+      stream_put (s, &src_lclid, sizeof(u_int32_t));
+      stream_put (s, &dest_lclid, sizeof(u_int32_t));
   }
   
   return packet;
