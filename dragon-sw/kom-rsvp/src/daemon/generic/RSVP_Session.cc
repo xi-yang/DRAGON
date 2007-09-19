@@ -1220,7 +1220,7 @@ search_psb:
 		if ( hop.getLogicalInterface().hasEnabledMPLS() && !getDestAddress().isMulticast()) { //&& (!fromLocalAPI) @@@@ hacked
 			cPSB->setInLabelRequested();
 		}
-		else if (hop.getLogicalInterface() != RSVP::getApiLif()){
+		else if (&hop.getLogicalInterface() != RSVP::getApiLif()){
 			LOG(3)( Log::MPLS, "##Warning## MPLS disabled on hop interface ", hop, " -> make sure you have configured this control channel interface in RSVPD.conf...");
 		}
             
