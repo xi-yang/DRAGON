@@ -1260,6 +1260,7 @@ DEFUN (dragon_set_lsp_vtag_default,
     else
         lsp->dragon.lspVtag = ANY_VTAG;
 
+    /*
     if (((lsp->dragon.srcLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID || 
         (lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID) && lsp->dragon.lspVtag == ANY_VTAG)
     {
@@ -1267,6 +1268,7 @@ DEFUN (dragon_set_lsp_vtag_default,
         lsp->dragon.lspVtag = 0;
         return CMD_WARNING;
     }
+    */
 
     /* Mandate a VLAN via DragonExtInfo::edgeVlanMapping subobject for source-destination colocated local-id provisioning*/
     if ( lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr
