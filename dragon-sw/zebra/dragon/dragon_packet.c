@@ -319,8 +319,24 @@ dragon_topology_create_msg_new(struct lsp *lsp)
         LSP_OPT_STRICT | ((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | narb_extra_options, 
         0);
 
-  /* Build TLVs */
+  /* Build mandatory /request TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_CREATE, lsp);
+
+  /* Put optional TLV data */
+  /* Local ID TLV */
+  if (lsp->dragon.srcLocalId != 0 && lsp->dragon.srcLocalId != 0)
+  {
+      u_int16_t type, length;
+	  u_int32_t src_lclid, dest_lclid;
+	  type = htons(DRAGON_TLV_LCLID);
+	  length = htons(sizeof (u_int16_t)*2 + sizeof (u_int32_t)*2);
+	  src_lclid = htonl(lsp->dragon.srcLocalId);
+	  dest_lclid = htonl(lsp->dragon.destLocalId);
+      stream_put (s, &type, sizeof (u_int16_t));
+      stream_put (s, &length, sizeof (u_int16_t));
+      stream_put (s, &src_lclid, sizeof (u_int32_t));
+      stream_put (s, &dest_lclid, sizeof (u_int32_t));
+  }
   
   return packet;
 }
