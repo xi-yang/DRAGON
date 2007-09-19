@@ -166,6 +166,8 @@ struct dmsg_header {
 #define	DRAGON_TLV_ERO		DRAGON_TLV_BASE + 2
 /* Error code - returned by NARB */ 
 #define	DRAGON_TLV_ERR		DRAGON_TLV_BASE + 3
+/* Local ID TLV */
+#define	DRAGON_TLV_LCLID	DRAGON_TLV_BASE + 9
 
 struct dragon_tlv_header
 {
