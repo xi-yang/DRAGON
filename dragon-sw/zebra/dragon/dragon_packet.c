@@ -610,8 +610,13 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 					&& lsp->common.EROAbstractNode_Para[0].data.uNumIfID.interfaceID >> 16 == LOCAL_ID_TYPE_SUBNET_UNI_SRC
 					&& lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.interfaceID >> 16 == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
 				{
-					break; /*subnet-interface local-ids have been passed to NARB for edge constraints.
-							The returned ERO contains edge port control information equivalent to local-ids.*/
+					/*subnet-interface local-ids have been passed to NARB for edge constraints.	The returned ERO contains 
+					  edge port control information equivalent to local-ids. Just convert them into the equivalent local-ids*/
+					lsp->common.EROAbstractNode_Para[0].data.uNumIfID.interfaceID = ((LOCAL_ID_TYPE_SUBNET_IF_ID << 16) 
+						| (lsp->common.EROAbstractNode_Para[0].data.uNumIfID.interfaceID & 0xffff));
+					lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.interfaceID = ((LOCAL_ID_TYPE_SUBNET_IF_ID << 16)
+						| (lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.interfaceID & 0xffff));					
+					break;
 				}
 
 				/*Adding Local-ID ERO subobject(s)*/ 
