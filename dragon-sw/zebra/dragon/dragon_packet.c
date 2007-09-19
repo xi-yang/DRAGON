@@ -605,6 +605,16 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 					lsp->common.DragonExtInfo_Para->seqnum = ntohl(amsgh->seqnum);
 				}
 
+				
+				if (lsp->dragon.srcLocalId != 0 && lsp->dragon.destLocalId != 0
+					&& lsp->common.EROAbstractNode_Para[0].data.uNumIfID.interfaceID >> 16 == LOCAL_ID_TYPE_SUBNET_UNI_SRC
+					&& lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.interfaceID >> 16 == LOCAL_ID_TYPE_SUBNET_UNI_DEST))
+				{
+					break; /*subnet-interface local-ids have been passed to NARB for edge constraints.
+							The returned ERO contains edge port control information equivalent to local-ids.*/
+				}
+
+				/*Adding Local-ID ERO subobject(s)*/ 
 				/*Create source localID subobj */
 				if(lsp->dragon.srcLocalId >> 16 != LOCAL_ID_TYPE_NONE)
 				{
