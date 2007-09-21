@@ -143,6 +143,7 @@ bool RSB::setFiltersAndTimeout( const PSB_List& newList, uint32 timeout, bool re
 				if ( knownFilterList ) knownFilterList->push_back( **iter2 );
 			}
 			(*iter2)->refreshReservation( LIH, timeout );
+			//@@@@ TODO currentRSB::errorCode (from (*iter2) PSB::errorCode) (for switch operation etc...)!
 			result = true;
 			++iter2;
 		} else {

@@ -1708,15 +1708,11 @@ void Session::processRESV( const Message& msg, Hop& nhop ) {
 			}
 		}
 		else{  //Send notification to OSPF
-			//@@@@hack
-			//if (outLif && outLif != RSVP_Global::rsvp->getApiLif()){
-			//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), outLif->getAddress(), bandwidth);
-			//}
-			//if (inLif && inLif != RSVP_Global::rsvp->getApiLif() && biDir){
-			//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(msg.getMsgType(), inLif->getAddress(), bandwidth);
-			//}
 
-			//@@@@ update NARB client state (e.g., reply to NARB server with reservation confirmation)
+			//@@@@ TODO : Add errorCode to PSB/RSB/Session to indicate singlaing/sw-op errors!
+			//                      OR add ErrorNotification Object to RESV!!
+
+			// update NARB client state (e.g., reply to NARB server with reservation confirmation)
 			if (narbClient && narbClient->active())
 				if (!narbClient->handleRsvpMessage(msg)) {
                         		LOG(3)( Log::Routing, "The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
