@@ -324,7 +324,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 
   /* Put optional TLV data */
   /* Local ID TLV */
-  if (lsp->dragon.srcLocalId != 0 && lsp->dragon.destLocalId != 0)
+  if (lsp->dragon.srcLocalId != 0 || lsp->dragon.destLocalId != 0)
   {
       u_int16_t type, length;
       u_int32_t src_lclid, dest_lclid;
