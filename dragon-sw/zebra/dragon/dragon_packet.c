@@ -307,7 +307,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   
   /* Build DRAGON message header */
   msglen = 20; 
-  if (lsp->dragon.srcLocalId != 0 && lsp->dragon.destLocalId != 0)
+  if (lsp->dragon.srcLocalId != 0 || lsp->dragon.destLocalId != 0)
       msglen += sizeof(u_int16_t)*2 + sizeof(u_int32_t)*2;
   if (lsp->dragon.lspVtag)
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno, 
@@ -603,47 +603,54 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 					}
 					lsp->common.DragonExtInfo_Para->ucid = ntohl(amsgh->ucid);
 					lsp->common.DragonExtInfo_Para->seqnum = ntohl(amsgh->seqnum);
-				}
+				}			
 
-				
-				if (lsp->dragon.srcLocalId != 0 && lsp->dragon.destLocalId != 0
-					&& lsp->common.EROAbstractNode_Para[0].data.uNumIfID.interfaceID >> 16 == LOCAL_ID_TYPE_SUBNET_UNI_SRC
-					&& lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.interfaceID >> 16 == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
-				{
-					/*subnet-interface local-ids have been passed to NARB for edge constraints.	The returned ERO contains 
-					  edge port control information equivalent to local-ids. Just convert them into the equivalent local-ids*/
-					lsp->common.EROAbstractNode_Para[0].data.uNumIfID.routerID.s_addr = lsp->common.Session_Para.srcAddr.s_addr;
-					lsp->common.EROAbstractNode_Para[0].data.uNumIfID.interfaceID = ((LOCAL_ID_TYPE_SUBNET_IF_ID << 16) 
-						| (lsp->common.EROAbstractNode_Para[0].data.uNumIfID.interfaceID & 0xffff));
-					lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.routerID.s_addr = lsp->common.Session_Para.destAddr.s_addr;
-					lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.interfaceID = ((LOCAL_ID_TYPE_SUBNET_IF_ID << 16)
-						| (lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.interfaceID & 0xffff));					
-					break;
-				}
-
-				/*Adding Local-ID ERO subobject(s)*/ 
+				/*Handling Local-ID ERO subobject(s)*/ 
 				/*Create source localID subobj */
 				if(lsp->dragon.srcLocalId >> 16 != LOCAL_ID_TYPE_NONE)
 				{
-				    srcLocalId = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
-				    memset(srcLocalId, 0, sizeof(struct _EROAbstractNode_Para));
-				    srcLocalId->type = UNumIfID;
-				    srcLocalId->isLoose = 1;
-				    memcpy(&srcLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.srcAddr, sizeof(struct in_addr));
-				    srcLocalId->data.uNumIfID.interfaceID = lsp->dragon.srcLocalId;
-				    srcLocalId->isLoose = 0;
+					if (lsp->dragon.srcLocalId != 0 && lsp->common.EROAbstractNode_Para[0].data.uNumIfID.interfaceID >> 16 == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
+					{
+						/*Source subnet-interface local-id has been passed to NARB for edge constraints. The returned ERO contains 
+						  edge port control information equivalent to local-id. Just convert them into the equivalent local-id*/
+						lsp->common.EROAbstractNode_Para[0].data.uNumIfID.routerID.s_addr = lsp->common.Session_Para.srcAddr.s_addr;
+						lsp->common.EROAbstractNode_Para[0].data.uNumIfID.interfaceID = ((LOCAL_ID_TYPE_SUBNET_IF_ID << 16) 
+							| (lsp->common.EROAbstractNode_Para[0].data.uNumIfID.interfaceID & 0xffff));
+					}
+					else
+					{
+						srcLocalId = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
+						memset(srcLocalId, 0, sizeof(struct _EROAbstractNode_Para));
+						srcLocalId->type = UNumIfID;
+						srcLocalId->isLoose = 1;
+						memcpy(&srcLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.srcAddr, sizeof(struct in_addr));
+						srcLocalId->data.uNumIfID.interfaceID = lsp->dragon.srcLocalId;
+						srcLocalId->isLoose = 0;
+					}
 				}
 				/*Create destination localID subobj */
 				if(lsp->dragon.destLocalId >> 16 != LOCAL_ID_TYPE_NONE)
 				{
-				    destLocalId = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
-				    memset(destLocalId, 0, sizeof(struct _EROAbstractNode_Para));
-				    destLocalId->type = UNumIfID;
-				    destLocalId->isLoose = 1;
-				    memcpy(&destLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.destAddr, sizeof(struct in_addr));
-				    destLocalId->data.uNumIfID.interfaceID = lsp->dragon.destLocalId;
-				    destLocalId->isLoose = 0;
+					if (lsp->dragon.destLocalId != 0 && lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.interfaceID >> 16 == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
+					{
+						/*Destintaion subnet-interface local-id has been passed to NARB for edge constraints.	The returned ERO contains 
+						  edge port control information equivalent to local-id. Just convert them into the equivalent local-id*/
+						lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.routerID.s_addr = lsp->common.Session_Para.destAddr.s_addr;
+						lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.interfaceID = ((LOCAL_ID_TYPE_SUBNET_IF_ID << 16)
+							| (lsp->common.EROAbstractNode_Para[lsp->common.ERONodeNumber-1].data.uNumIfID.interfaceID & 0xffff));					
+					}
+					else
+					{
+						destLocalId = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
+						memset(destLocalId, 0, sizeof(struct _EROAbstractNode_Para));
+						destLocalId->type = UNumIfID;
+						destLocalId->isLoose = 1;
+						memcpy(&destLocalId->data.uNumIfID.routerID, &lsp->common.Session_Para.destAddr, sizeof(struct in_addr));
+						destLocalId->data.uNumIfID.interfaceID = lsp->dragon.destLocalId;
+						destLocalId->isLoose = 0;
+					}
 				}
+				/*Adding new nodes*/
 				num_newnodes = 0;
 				if (srcLocalId) 
 				    num_newnodes++;
