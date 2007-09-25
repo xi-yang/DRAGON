@@ -1271,6 +1271,7 @@ DEFUN (dragon_set_lsp_vtag_default,
     */
 
     /* Mandate a VLAN via DragonExtInfo::edgeVlanMapping subobject for source-destination colocated local-id provisioning*/
+    /* Moved to dragon_narb_topo_rsp_proc (in support of VTAG ANY
     if ( lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr
 		&& lsp->common.Session_Para.srcAddr.s_addr != 0 && lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE
 		&& lsp->dragon.destLocalId>>16 != LOCAL_ID_TYPE_NONE && lsp->dragon.lspVtag != 0 && lsp->dragon.lspVtag != ANY_VTAG)
@@ -1282,7 +1283,7 @@ DEFUN (dragon_set_lsp_vtag_default,
         }
         lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->common.DragonExtInfo_Para->egress_vtag = lsp->dragon.lspVtag;
     }
-
+    */
     if (lsp->common.DragonUni_Para)
 	lsp->common.DragonUni_Para->vlanTag = lsp->dragon.lspVtag;
 

@@ -593,6 +593,21 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 					}
 				}
 
+				/* Mandate a VLAN via DragonExtInfo::edgeVlanMapping subobject for (1) subnet-interface local-id provisioning,
+				  or (2) source-destination colocated local-id provisioning*/
+				if ( (((lsp->dragon.srcLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID || (lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID)
+				|| (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr && lsp->common.Session_Para.srcAddr.s_addr != 0
+					&& lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE && lsp->dragon.destLocalId>>16 != LOCAL_ID_TYPE_NONE))
+					&& lsp->dragon.lspVtag != ANY_VTAG)
+				{
+				    if (lsp->common.DragonExtInfo_Para == NULL)
+				    {
+				        lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
+				        memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+				    }
+				    lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->common.DragonExtInfo_Para->egress_vtag = lsp->dragon.lspVtag & 0xffff;
+				}
+
 				// NARB returned ERO with confirmation ID, which indicates a different inter-domain routing/signaling mode
 				if (ntohl(amsgh->options) & LSP_OPT_QUERY_CONFIRM)
 				{
@@ -673,6 +688,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				    lsp->common.ERONodeNumber++;
 				    XFREE(MTYPE_TMP, destLocalId);
 				}
+
 				break;
 
 			default: /* Unrecognized tlv from NARB, just ignore it */
