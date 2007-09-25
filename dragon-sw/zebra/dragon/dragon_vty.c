@@ -1057,12 +1057,12 @@ DEFUN (dragon_set_lsp_ip,
         type_dest = LOCAL_ID_TYPE_NONE;
 
     /*special handling for subnet-interface at destination*/
+    /*	Relaxed --> Obsolete code
     if ((type_src == LOCAL_ID_TYPE_SUBNET_IF_ID || type_dest == LOCAL_ID_TYPE_SUBNET_IF_ID) && type_src != type_dest )
     {
-        vty_out(vty, "#Warning# Only one of the ingress and egress local IDs is subnet-interface!%s", VTY_NEWLINE);
-        /*This restriction is relaxed in light of static/manual ERO*/
-        /*return CMD_WARNING;*/
+        vty_out(vty, "\t >>Warning>> Only one of the ingress and egress local IDs is subnet-interface!%s", VTY_NEWLINE);
     }
+    */
   
     if (lsp->common.DragonUni_Para && type_dest== LOCAL_ID_TYPE_TAGGED_GROUP && strcasecmp(argv[5], "any") == 0)
     {
