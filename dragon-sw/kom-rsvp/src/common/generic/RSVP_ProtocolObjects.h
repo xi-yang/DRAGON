@@ -574,6 +574,7 @@ public:
 		RROtooLargeForMTU = 1,
 		RRONotification = 2,
 		TunnelLocallyRepaired = 3,
+		SwitchSessionFailed = 9,
 		SubnetUNISessionFailed = 10,
 		InvalidUNIObject = 11
 	};

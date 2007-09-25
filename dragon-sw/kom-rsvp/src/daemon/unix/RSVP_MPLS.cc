@@ -276,9 +276,8 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 					case Message::PathTear:
 					case Message::ResvErr:
 					case Message::ResvTear:
-						RSVP_Global::messageProcessor->sendResvErrMessage( 0, ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed ); //UNI ERROR ??
 						LOG(2)( Log::MPLS, "VLSR: SubnetUNI session failed with message state : ", ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() );
-						return false;
+						goto _Exit_Error_Subnet;
 						break;
 					case Message::InitAPI: // inital state for TL1_TELNET only
 						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
@@ -286,14 +285,13 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							//verify
 							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSourceDestPortConflict()) {
 								LOG(2)( Log::MPLS, "VLSR-Subnet Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
-								return false;
+								goto _Exit_Error_Subnet;
 							}
                                                     
 							//connect
 							if (!(*sessionIter)->connectSwitch()) {
 								LOG(2)( Log::MPLS, "VLSR-Subnet Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
-								(*sessionIter)->disconnectSwitch();
-								return false;
+								goto _Exit_Error_Subnet;
 							}
 
                             if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
@@ -303,19 +301,19 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 					||((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST && ((*iter).outPort &0xff) == ANY_TIMESLOT ) {
                                     if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->syncTimeslotsMap() ) {
                                         (*sessionIter)->disconnectSwitch();
-                                        return false;
+                                        goto _Exit_Error_Subnet;
                                     }
                                 } else {
                                     if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->verifyTimeslotsMap() ) {
                                         (*sessionIter)->disconnectSwitch();
-                                        return false;
+                                        goto _Exit_Error_Subnet;
                                     }
                                 }	
 				                                
                                 //create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC OR LOCAL_ID_TYPE_SUBNET_UNI_DEST
                                 if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG((*iter).vlanTag) ) {
                                     (*sessionIter)->disconnectSwitch();
-                                    return false;
+                                    goto _Exit_Error_Subnet;
                                 }
 
                                 if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() 
@@ -323,19 +321,19 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                     //create source GTP 
                                     if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
                                         (*sessionIter)->disconnectSwitch();
-                                        return false;
+                                        goto _Exit_Error_Subnet;
                                     }
                                     if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
                                         //create CRS for Source == Destination
                                         if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createCRS() ) {
                                             (*sessionIter)->disconnectSwitch();
-                                            return false;
+                                            goto _Exit_Error_Subnet;
                                         }
                                     } else {
                                         //create SNC
                                         if( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createSNC() ) {
                                             (*sessionIter)->disconnectSwitch();
-                                            return false;
+                                            goto _Exit_Error_Subnet;
                                         }
                                     }
                                 }
@@ -346,7 +344,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                     //create destination GTP (only needed for local XConn)
                                     if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createGTP() ) {
                                         (*sessionIter)->disconnectSwitch();
-                                        return false;
+                                        goto _Exit_Error_Subnet;
                                     }
                                 }
                             }
@@ -447,7 +445,6 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           }
                                           else if (portList.size() == 0){
                                                 LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress: ", inPort);
-                                                //return false;
                                                 noError = false;
                                           }
                                           while (portList.size()) {
@@ -491,7 +488,6 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                           }
                                           else if (portList.size() == 0){
         					      LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort);
-                                                //return false;
                                                 noError = false;
                                           }
                                           while (portList.size()) {
@@ -537,13 +533,21 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 				}
 			}
 			if (!noError){
-				return false;
+				//return false;
+				goto _Exit_Error_Switch;
 			}
 		}
 	}
 
 	return true;
 
+_Exit_Error_Switch:
+	RSVP_Global::messageProcessor->sendResvErrMessage( 0, ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SwitchSessionFailed );
+	return false;
+
+_Exit_Error_Subnet:
+	RSVP_Global::messageProcessor->sendResvErrMessage( 0, ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed );
+	return false;
 }
 
 bool MPLS::refreshVLSRbyLocalId( PSB& psb, uint32 lclid) {

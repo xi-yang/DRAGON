@@ -1017,7 +1017,7 @@ static uint8 spe_string2int(String& spe)
 SONET_TSpec* SwitchCtrl_Global::addEosMapEntry(float bandwidth, String& spe, int ncc)
 {
     uint8 spe_int = spe_string2int(spe);
-    if (spe_int == 0)     
+    if (spe_int == 0)
         return NULL;
 
     SimpleList<eos_map_entry>::Iterator it = eosMapList.begin();

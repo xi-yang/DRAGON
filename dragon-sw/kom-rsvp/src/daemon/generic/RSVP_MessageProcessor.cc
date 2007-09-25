@@ -258,7 +258,7 @@ void MessageProcessor::processMessage() {
 		B_Merge = true;
 		fullRefresh = true;
 		break;
-	//@@@@hacked
+	//$$$$ DRAGON specific
 	case Message::AddLocalId:
 	case Message::DeleteLocalId:
 	case Message::RefreshLocalId:
@@ -513,7 +513,7 @@ void MessageProcessor::sendTearMessage( PHopSB_Refresh& phopRefresh ) {
 }
 
 bool MessageProcessor::createResvMessageShared( PHopSB_Refresh& phopRefresh ) {
-                          assert( resvMsg->getSTYLE_Object().getStyle() != FF);
+	assert( resvMsg->getSTYLE_Object().getStyle() != FF);
 	const FLOWSPEC_Object* currentFlowspec = phopRefresh.getPHopSB().getForwardFlowspec().borrow();
 	phopRefresh.calculateForwardFlowspec( B_Merge );
 	const FLOWSPEC_Object& newFlowspec = phopRefresh.getPHopSB().getForwardFlowspec();
@@ -521,7 +521,7 @@ bool MessageProcessor::createResvMessageShared( PHopSB_Refresh& phopRefresh ) {
 
 #if defined(ONEPASS_RESERVATION)
 	if ( phopRefresh.getPHopSB().isOnepassAll() ) {
-                                                      assert( !confirmOutISB );
+		assert( !confirmOutISB );
 		currentFlowspec->destroy();
 	return false;
 	}
@@ -796,7 +796,7 @@ void MessageProcessor::sendResvErrMessage( uint8 errorFlags, uint8 errorCode, ui
 
 void MessageProcessor::sendResvErrMessage( uint8 errorFlags, uint8 errorCode, uint16 errorValue, const FlowDescriptor& fd ) {
 	ERROR_SPEC_Object error( currentLif->getLocalAddress() ,errorFlags, errorCode, errorValue );
-                       assert( currentMessage.getMsgType() == Message::Resv );
+	assert( currentMessage.getMsgType() == Message::Resv );
 	Message errorMsg( Message::ResvErr, 63, currentMessage.getSESSION_Object() );
 	errorMsg.setERROR_SPEC_Object( error );
 	if ( currentMessage.getSCOPE_Object() ) {
@@ -812,6 +812,8 @@ void MessageProcessor::sendResvErrMessage( uint8 errorFlags, uint8 errorCode, ui
 	}
 	else
 		currentLif->sendMessage( errorMsg, currentMessage.getRSVP_HOP_Object().getAddress() );
+
+    // TODO: @@@@ if (resvMsg) delete resvMsg; resvMsg = NULL; ??
 }
 
 void MessageProcessor::sendPathErrMessage( uint8 errorCode, uint16 errorValue ) {

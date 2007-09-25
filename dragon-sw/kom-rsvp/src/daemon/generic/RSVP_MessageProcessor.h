@@ -189,9 +189,9 @@ public:
 	void sendResvErrMessage( uint8 errorFlags, uint8 errorCode, uint16 errorValue );
 	void sendPathErrMessage( uint8 errorCode, uint16 errorValue );
 
-//@@@@hack: Xi2007>>
+//@@@@hack: Xi2007 for SubnetUNI>>
 	bool queryEnqueuedMessages();
-//@@@@hack: Xi2007<<
+//@@@@hack: Xi2007 for SubnetUNI<<
 
 };
 
