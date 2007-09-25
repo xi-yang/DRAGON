@@ -201,12 +201,13 @@ struct string_value_conversion conv_rsvp_event =
 
 struct string_value_conversion conv_lsp_status = 
 {
-	5,
+	6,
 	{{ "Edit", 			LSP_EDIT,		1}, 
 	{ "Commit", 			LSP_COMMIT, 	1}, 
 	{ "In service", 		LSP_IS, 			1}, 
 	{ "Delete", 			LSP_DELETE, 		1},
 	{ "Listening", 			LSP_LISTEN, 		1}} 
+	{ "Error", 			LSP_ERROR, 		1}}
 };
 
 /* registerred local_id's */
@@ -1651,7 +1652,7 @@ DEFUN (dragon_delete_lsp,
 
    /* if the LSP is in state COMMIT or IS then we need to notify the NARB 
         if the LSP is in state LISTEN then we need to unregister from RSVP */
-  if ((lsp->status == LSP_COMMIT || lsp->status == LSP_IS) && 
+  if ((lsp->status == LSP_COMMIT || lsp->status == LSP_IS || lsp->status == LSP_ERROR) && 
   	(!(lsp->flag & LSP_FLAG_RECEIVER)) && (!(lsp->flag & LSP_FLAG_REG_BY_RSVP)) && lsp->narb_fd>0)
   {
 	/* Construct topology create message */
@@ -1665,7 +1666,7 @@ DEFUN (dragon_delete_lsp,
 	/* Set DELETE flag */
 	lsp->status = LSP_DELETE;
   }
-  else if (lsp->status == LSP_IS && (lsp->flag & LSP_FLAG_RECEIVER))
+  else if ((lsp->status == LSP_IS || lsp->status == LSP_ERROR) && (lsp->flag & LSP_FLAG_RECEIVER))
   {
 	zTearRsvpPathRequest(dmaster.api, &lsp->common);
 	lsp->status = LSP_LISTEN;  	

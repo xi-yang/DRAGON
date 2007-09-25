@@ -1096,6 +1096,7 @@ void  rsvpUpcall(void* para)
 			
 		case PathErr:
 		case ResvErr:
+			lsp->status = LSP_ERROR; 
 			break;
 		default:
 			break;

@@ -568,6 +568,7 @@ struct lsp {
 #define	LSP_IS 			2		/* This LSP is in service */
 #define	LSP_DELETE		3		/* This LSP is in deletion */
 #define	LSP_LISTEN 		4		/* This LSP is a receiver  */	
+#define	LSP_ERROR 		5		/* This LSP has an error  */	
 #define	LSP_RECYCLE	0xff	
 
        u_int8_t uni_mode;  /* UNI mode */
