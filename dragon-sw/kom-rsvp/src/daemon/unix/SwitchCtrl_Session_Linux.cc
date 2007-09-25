@@ -134,6 +134,12 @@ bool SwitchCtrl_Session_Linux::movePortToVLANAsTagged(uint32 port, uint32 vlanID
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5));
 	DIE_IF_NEGATIVE(readShell(SWITCH_PROMPT, NULL, 1, 10));
+	// run ifconfig intX.XX up
+	snprintf(command, sizeof(command), "sudo %s %s.%d up\n", IFCONFIG_PATH, i->second, vlanID);
+	LOG(1) (Log::MPLS, command);
+	DIE_IF_NEGATIVE(writeShell(command, 5));
+	DIE_IF_NEGATIVE(readShell(SWITCH_PROMPT, NULL, 1, 10));
+	// run brctl to add tagged interface to bridge representing vlan
 	snprintf(command, sizeof(command), "sudo %s addif %s%d %s.%d\n", BRCTL_PATH, BR_PREFIX, vlanID, i->second, vlanID);
 	LOG(1) (Log::MPLS, command);
 	DIE_IF_NEGATIVE(writeShell(command, 5));
