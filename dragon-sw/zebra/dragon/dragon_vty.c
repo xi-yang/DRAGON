@@ -203,10 +203,10 @@ struct string_value_conversion conv_lsp_status =
 {
 	6,
 	{{ "Edit", 			LSP_EDIT,		1}, 
-	{ "Commit", 			LSP_COMMIT, 	1}, 
-	{ "In service", 		LSP_IS, 			1}, 
+	{ "Commit", 			LSP_COMMIT, 		1}, 
+	{ "In service", 		LSP_IS, 		1}, 
 	{ "Delete", 			LSP_DELETE, 		1},
-	{ "Listening", 			LSP_LISTEN, 		1}} 
+	{ "Listening", 			LSP_LISTEN, 		1},
 	{ "Error", 			LSP_ERROR, 		1}}
 };
 
