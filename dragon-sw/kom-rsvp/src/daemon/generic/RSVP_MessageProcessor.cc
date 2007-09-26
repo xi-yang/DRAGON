@@ -813,14 +813,8 @@ void MessageProcessor::sendResvErrMessage( uint8 errorFlags, uint8 errorCode, ui
 	else
 		currentLif->sendMessage( errorMsg, currentMessage.getRSVP_HOP_Object().getAddress() );
 
-    // $$$$ DRAGON specific --> No RESV message should be forwarded upstream 
+    // TODO: DRAGON specific --> No RESV message should be forwarded upstream 
     //		upon switch/subnet operation errors!
-    if ( resvMsg && errorCode ==  ERROR_SPEC_Object::Notify 
-		|| (errorValue == ERROR_SPEC_Object::SwitchSessionFailed 
-		|| errorValue == ERROR_SPEC_Object::SubnetUNISessionFailed) )
-   	{
-		delete resvMsg; resvMsg = NULL;
-   	}
 }
 
 void MessageProcessor::sendPathErrMessage( uint8 errorCode, uint16 errorValue ) {
