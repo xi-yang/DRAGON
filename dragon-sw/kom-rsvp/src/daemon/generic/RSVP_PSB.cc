@@ -92,6 +92,7 @@ PSB::PSB( const SENDER_Object& senderTemplate )
 	hasUpstreamInLabel = hasUpstreamOutLabel = false;
 	E_Police = false;
 	vlanTagAsSuggestedLabel = 0;
+	gmplsErrorCode = 0;
 }
 
 PSB::~PSB() {

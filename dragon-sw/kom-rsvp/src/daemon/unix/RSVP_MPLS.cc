@@ -542,13 +542,15 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 	return true;
 
 _Exit_Error_Switch:
+	//$$$$ DRAGON specific
 	RSVP_Global::messageProcessor->sendResvErrMessage( 0, ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SwitchSessionFailed );
-	/* @@@@ mark PSB for errors */
+	psb.setGMPLSError(ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SwitchSessionFailed);
 	return false;
 
 _Exit_Error_Subnet:
+	//$$$$ DRAGON specific
 	RSVP_Global::messageProcessor->sendResvErrMessage( 0, ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed );
-	/* @@@@ mark PSB for errors */
+	psb.setGMPLSError(ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed);
 	return false;
 }
 
