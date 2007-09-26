@@ -543,10 +543,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
 _Exit_Error_Switch:
 	RSVP_Global::messageProcessor->sendResvErrMessage( 0, ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SwitchSessionFailed );
+	/* @@@@ mark PSB for errors */
 	return false;
 
 _Exit_Error_Subnet:
 	RSVP_Global::messageProcessor->sendResvErrMessage( 0, ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed );
+	/* @@@@ mark PSB for errors */
 	return false;
 }
 
