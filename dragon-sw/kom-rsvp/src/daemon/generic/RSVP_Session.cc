@@ -1616,7 +1616,7 @@ inline ERROR_SPEC_Object::ErrorCode Session::processRESV_FDesc( const FLOWSPEC_O
 			} else if ( tcResult.changed ) {
 				PSB_List::ConstIterator psbIter = matchingPSB_List.begin();
 				for ( ; psbIter != matchingPSB_List.end(); ++psbIter ) {
-					if (!(*psbIter)->hasGMPLSError())//$$$$ DRAGON specific checking
+					if (!(*psbIter)->hasVLSRError())//$$$$ DRAGON specific checking
 						RSVP_Global::messageProcessor->markForResvRefresh( **psbIter );
 				}
 			} else if ( style == SE ) {

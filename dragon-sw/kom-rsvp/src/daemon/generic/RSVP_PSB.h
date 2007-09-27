@@ -114,7 +114,7 @@ class PSB :	public RelationshipPSB_Session,
 
 	//$$$$ DRAGON specific
 	uint32 vlanTagAsSuggestedLabel;
-	uint16 gmplsErrorCode;
+	uint16 vlsrErrorCode;
 
 	friend ostream& operator<< ( ostream&, const PSB& );
 	PSB(const PSB&);
@@ -213,8 +213,8 @@ public:
 	const DRAGON_UNI_Object* getDRAGON_UNI_Object() const { return (const DRAGON_UNI_Object*)uni; }
 	const GENERALIZED_UNI_Object* getGENERALIZED_UNI_Object() const { return (const GENERALIZED_UNI_Object*)uni; }
 	const DRAGON_EXT_INFO_Object* getDRAGON_EXT_INFO_Object() const { return dragonExtInfo; }
-	bool hasGMPLSError() { return (gmplsErrorCode != 0); }
-	void setGMPLSError(uint8 errCode, uint8 errValue) { gmplsErrorCode = ((errCode << 8) | errValue); }
+	bool hasVLSRError() { return (vlsrErrorCode != 0); }
+	void setVLSRError(uint8 errCode, uint8 errValue) { vlsrErrorCode = ((errCode << 8) | errValue); }
 
 #if defined(REFRESH_REDUCTION) || defined(ONEPASS_RESERVATION)
 	Hop* getNextHop() { return nextHop; }
