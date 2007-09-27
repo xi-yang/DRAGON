@@ -678,6 +678,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 			 }
 		}
 	}
+
        if ( (inPort >> 16) == 0x4 && (outPort >> 16) == 0x4
           //&& ((inPort & 0xffff) != 0) && ((outPort & 0xffff) != 0) 
           && (inPort != outPort ) && in_oi && out_oi && in_oi->vlsr_if.switch_ip.s_addr!=0)
@@ -720,7 +721,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		stream_put_ipv4(s, in_oi->vlsr_if.switch_ip.s_addr);
 		if ((inPort >> 16) == 0x4)
                 {
-			vlan = inPort&0xffff;
+			if (vlan == 0) vlan = inPort&0xffff;
                 	inPort &= 0xffff0000;
                 	inPort |= in_oi->vlsr_if.switch_port;
 		}
@@ -744,7 +745,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		stream_putl(s, inPort);
 		if ((outPort >> 16) == 0x4)
                 {
-			vlan = outPort&0xffff;
+                	if (vlan == 0)	vlan = outPort&0xffff;
                 	outPort &= 0xffff0000;
                 	outPort |= out_oi->vlsr_if.switch_port;
 		}
