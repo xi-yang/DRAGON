@@ -1483,11 +1483,11 @@ DEFUN (dragon_commit_lsp_sender,
       return CMD_WARNING;
   }
 
-  if (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr 
-    && lsp->common.Session_Para.srcAddr.s_addr != 0)
+  if (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr && lsp->common.Session_Para.srcAddr.s_addr != 0
+  	&& !((lsp->dragon.srcLocalId >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID || (lsp->dragon.destLocalId >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID))
   {
   	  struct _EROAbstractNode_Para *srcLocalId, *destLocalId;
-	  /* NARB is not required for srouce and destination co-located local ID provisioning */
+	  /* NARB is not required for srouce and destination co-located local ID provisioning, unless one of the local-ids is subnet-interface */
 	  if (lsp->dragon.srcLocalId>>16 == LOCAL_ID_TYPE_NONE || lsp->dragon.destLocalId>>16 == LOCAL_ID_TYPE_NONE)
 	  {
 		  vty_out (vty, "### Both source and destation must use true local ID for srouce and destination co-located provisioning.%s", VTY_NEWLINE);
