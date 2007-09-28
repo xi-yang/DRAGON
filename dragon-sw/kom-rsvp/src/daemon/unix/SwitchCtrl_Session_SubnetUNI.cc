@@ -1054,7 +1054,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasVCG_TL1(String& vcgName)
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
     sprintf(strDENY, "M  %d DENY", getCurrentCtag());
     ret = readShell(strCOMPLD, strDENY, 1, 5);
-    if (ret == 1 || ret == READ_STOP) 
+    if (ret == 1) 
     {
         LOG(3)(Log::MPLS, vcgName, " VCG does exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, "TRUNCATED\"", true, 1, 5);
