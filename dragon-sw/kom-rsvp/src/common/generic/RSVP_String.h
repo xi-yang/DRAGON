@@ -127,6 +127,10 @@ public:
 	bool empty() const { return len == 0; }
 	unsigned int length() const { return len; }
 	char operator[](int i) const { return rep[i]; }
+	void replacechar(char c1, char c2) { //replace all occurances of c1 with c2 --> DRAGON addition
+		for (int i = 0; i < len; i++)
+			if (rep[i]  == c1)	rep[i] = c2;
+	}
 };
 
 inline ostream& operator<< ( ostream& os, const RSVP_String& s ) {
