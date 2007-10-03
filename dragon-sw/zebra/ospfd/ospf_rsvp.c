@@ -618,6 +618,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(inRtId->s_addr)
                                 && (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
         			    && HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
+        			    	/*TODO @@@@ if !HAS_VLAN --> should return empty vlsr_route */
 				        inPort &= 0xffff0000;
                                     inPort |= oi->vlsr_if.switch_port;
 					 in_oi = oi;
@@ -625,6 +626,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(outRtId->s_addr)
                                 && (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
       			           && HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
+        			    	/*TODO @@@@ if !HAS_VLAN --> should return empty vlsr_route */
 				        outPort &= 0xffff0000;
                                     outPort |= oi->vlsr_if.switch_port;
 					 out_oi = oi;

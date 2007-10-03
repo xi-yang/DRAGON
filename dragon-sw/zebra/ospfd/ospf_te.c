@@ -1690,50 +1690,6 @@ ospf_te_verify_config(struct ospf_interface *oi, struct ospf_te_config_para *oc)
 	return ret;
 }
 
-  /*@@@@ UNI hacks ==> Obsolete*/
-#if 0
-int
-ospf_te_uni_config(struct ospf_interface *oi, struct ospf_te_config_para *oc)
-{
-	struct in_addr mask, addr;
-	int ret = 0;
-	if ((!oi) || (!oc) || (strcmp(oi->ifp->name, oc->if_name)!=0))
-		ret = -1;
-	else if (!(INTERFACE_MPLS_ENABLED(oi) || oc->level >= INTERFACE_TE_MPLS))
-		/* Level must be at least MPLS */
-		ret = -1;
-
-	if (ret==0)
-  	{
-  		if (!oi->uni_data)
-			oi->uni_data = (struct uni_data*)XCALLOC(MTYPE_TMP, sizeof(struct uni_data));
-  		memset(oi->uni_data, 0, sizeof(struct uni_data));
-		memcpy(&oi->uni_data->te_para, &oc->te_para, sizeof(struct uni_data));
-		oi->uni_data->loopback.s_addr = oc->uni_loopback.s_addr;
-
-		oi->uni_data->te_para.instance = oi->te_para.instance;
-		oi->uni_data->te_para.link = oi->te_para.link;
-		oi->uni_data->te_para.link_type = oi->te_para.link_type;
-
-		oi->uni_data->te_para.link_id = oi->te_para.link_id;
-		oi->uni_data->te_para.link_id.value.s_addr = OspfTeRouterAddr.value.s_addr;
-
-		oi->uni_data->te_para.lclif_ipaddr = oi->te_para.lclif_ipaddr;
-		oi->uni_data->te_para.lclif_ipaddr.value.s_addr = oc->vlsr_if.data_ip.s_addr;
-
-		oi->uni_data->te_para.rmtif_ipaddr.header.type = htons(TE_LINK_SUBTLV_RMTIF_IPADDR);
-		oi->uni_data->te_para.rmtif_ipaddr.header.length = htons(sizeof(struct in_addr));
-		masklen2ip (IPV4_ALLOWABLE_BITLEN_P2P, &mask);
-		addr.s_addr = oi->uni_data->te_para.lclif_ipaddr.value.s_addr & mask.s_addr;
-		if (htonl(ntohl(addr.s_addr)+1) == oi->uni_data->te_para.lclif_ipaddr.value.s_addr)
-			oi->uni_data->te_para.rmtif_ipaddr.value.s_addr = htonl(ntohl(addr.s_addr)+2);
-		else
-			oi->uni_data->te_para.rmtif_ipaddr.value.s_addr = htonl(ntohl(addr.s_addr)+1);
-  	}
-	return ret;
-}
-#endif
-
 /* This function is called when the configuration of a TE-Link is completed */
 void 
 ospf_te_interface_config_update(struct vty* vty)
@@ -2010,78 +1966,6 @@ DEFUN (no_ospf_te_interface_ifname,
   return CMD_WARNING;
 
 }
-
-  /*@@@@ UNI hacks ==> Obsolete*/
-#if 0
-DEFUN (ospf_te_uni_ifname,
-       ospf_te_uni_ifname_cmd,
-       "ospf-te uni-interface INTERFACE",
-       "Configure OSPF-TE UNI parameters\n"
-       "Configure TE UNI parameters for the interface\n"
-       "Interface name\n")
-{
-  struct ospf_interface *oi;
-  struct ospf_te_config_para *oc;
-  struct interface *ifp;
-  struct listnode *node;
-  struct ospf *ospf = (struct ospf *)vty->index;
-  u_int8_t find;
-  
-  if ((ifp = if_lookup_by_name (argv[0])) == NULL){
-        vty_out (vty, "No such interface name %s %s", argv[0], VTY_NEWLINE);
-        return CMD_WARNING;
-  }
-  
-if (OspfTeConfigList)
-  LIST_LOOP(OspfTeConfigList, oc, node)
-    if (strcmp(oc->if_name, argv[0])==0)
-    {
-        vty->node = OSPF_TE_UNI_NODE;
-        strcpy(OspfTeIfPrompt,"%s(config-te-uni-");
-        strcat(OspfTeIfPrompt,argv[0]);
-        strcat(OspfTeIfPrompt,")# ");
-        memset(&te_config, 0, sizeof(struct ospf_te_config_para));
-        te_config.configed = 2;
-        strcpy(te_config.if_name, argv[0]);
-        return CMD_SUCCESS;
-    }
-
-  vty_out (vty, "No configued TE interface name %s for UNI ...%s", argv[0], VTY_NEWLINE);
-  return CMD_WARNING;
-}
-  	
-
-DEFUN (no_ospf_te_uni_ifname,
-       no_ospf_te_uni_ifname_cmd,
-       "no ospf-te uni INTERFACE",
-       NO_STR
-       "Configure OSPF-TE UNI parameters\n"
-       "Disable OSPF-TE UNI functionality for an interface\n"
-       "Interface name")
-{
-  struct ospf_interface *oi;
-  struct listnode *node;
-  struct interface *ifp;
-  struct ospf *ospf = (struct ospf *)vty->index;
-  
-  if ((ifp = if_lookup_by_name (argv[0])) == NULL){
-        vty_out (vty, "No such interface name %s %s", argv[0], VTY_NEWLINE);
-        return CMD_WARNING;
-  }
-  if (ospf->oiflist)
-  LIST_LOOP(ospf->oiflist, oi, node){
-    if (oi->ifp == ifp){
-	 if (oi->uni_data) {
-	     free(oi->uni_data);
-            oi->uni_data = NULL;
-          }
-	 return CMD_SUCCESS;
-    }
-  }
-  vty_out (vty, "no_ospf_te_interface: cannot find ospf interface: %s %s", argv[0], VTY_NEWLINE);
-  return CMD_WARNING;
-}
-#endif
 
 DEFUN (ospf_te_router_addr,
        ospf_te_router_addr_cmd,
