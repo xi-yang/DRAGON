@@ -103,24 +103,22 @@ ZEBRA = @ZEBRA@
 am__include = @am__include@
 am__quote = @am__quote@
 install_sh = @install_sh@
-DEFS = @DEFS@ -DRESOURCE_BROKER -DSYSCONFDIR=\"$(sysconfdir)/\"
+DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
 XML_LIBS = -L/usr/lib -L/usr/local/lib
 
 LIBS = @LIBS@ @CURSES@ @LIBPAM@ $(XML_LIBS)
 
 INSTALL_SDATA = @INSTALL@ -m 600
 
-bin_PROGRAMS = ast_master node_agent astb
+bin_PROGRAMS = ast_master node_agent
 noinst_LIBRARIES = libastb.a
 
-noinst_HEADERS = adt.h ast_master.h
-ast_master_SOURCES = adt.c ast_master.c main.c local_id_cfg.c ast_master_vty.c
-ast_master_LDADD = ../lib/libzebra.a  $(XML_LIBS) -lcrypt -lxml2 -lm
-node_agent_SOURCES = node_agent.c adt.c ast_master.c
-node_agent_LDADD = ../lib/libzebra.a $(XML_LIBS) -lcrypt -lxml2 -lm
-astb_SOURCES = astb.c
-astb_LDADD = libastb.a ../lib/libzebra.a  $(XML_LIBS) -lcrypt -lxml2 -lm
-libastb_a_SOURCES = adt.c ast_master.c local_id_cfg.c
+noinst_HEADERS = adt.h ast_master.h dragon_app.h
+ast_master_SOURCES = main.c ast_master_vty.c dragon_app.c
+ast_master_LDADD = libastb.a ../lib/libzebra.a  $(XML_LIBS) -lcrypt -lxml2 -lm
+node_agent_SOURCES = node_agent.c dragon_app.c
+node_agent_LDADD = libastb.a ../lib/libzebra.a $(XML_LIBS) -lcrypt -lxml2 -lm
+libastb_a_SOURCES = adt.c ast_master.c local_id_cfg.c 
 
 sysconf_DATA = ast_master.conf.sample
 
@@ -134,24 +132,19 @@ LIBRARIES = $(noinst_LIBRARIES)
 libastb_a_AR = $(AR) cru
 libastb_a_LIBADD =
 am_libastb_a_OBJECTS = adt.$(OBJEXT) ast_master.$(OBJEXT) \
-	local_id_cfg.$(OBJEXT)
+	local_id_cfg.$(OBJEXT) 
 libastb_a_OBJECTS = $(am_libastb_a_OBJECTS)
-bin_PROGRAMS = ast_master$(EXEEXT) node_agent$(EXEEXT) astb$(EXEEXT)
+bin_PROGRAMS = ast_master$(EXEEXT) node_agent$(EXEEXT) 
 PROGRAMS = $(bin_PROGRAMS)
 
-am_ast_master_OBJECTS = adt.$(OBJEXT) ast_master.$(OBJEXT) \
-	main.$(OBJEXT) local_id_cfg.$(OBJEXT) ast_master_vty.$(OBJEXT)
+am_ast_master_OBJECTS = dragon_app.$(OBJEXT)\
+	main.$(OBJEXT) ast_master_vty.$(OBJEXT)
 ast_master_OBJECTS = $(am_ast_master_OBJECTS)
-ast_master_DEPENDENCIES = ../lib/libzebra.a
+ast_master_DEPENDENCIES = libastb.a ../lib/libzebra.a
 ast_master_LDFLAGS =
-am_astb_OBJECTS = astb.$(OBJEXT)
-astb_OBJECTS = $(am_astb_OBJECTS)
-astb_DEPENDENCIES = libastb.a ../lib/libzebra.a
-astb_LDFLAGS =
-am_node_agent_OBJECTS = node_agent.$(OBJEXT) adt.$(OBJEXT) \
-	ast_master.$(OBJEXT)
+am_node_agent_OBJECTS = node_agent.$(OBJEXT) dragon_app.$(OBJEXT)
 node_agent_OBJECTS = $(am_node_agent_OBJECTS)
-node_agent_DEPENDENCIES = ../lib/libzebra.a
+node_agent_DEPENDENCIES = ../lib/libzebra.a libastb.a
 node_agent_LDFLAGS =
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)
 CPPFLAGS = @CPPFLAGS@
@@ -159,7 +152,7 @@ LDFLAGS = @LDFLAGS@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/adt.Po ./$(DEPDIR)/ast_master.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ast_master_vty.Po ./$(DEPDIR)/astb.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/dragon_app.Po ./$(DEPDIR)/ast_master_vty.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/local_id_cfg.Po ./$(DEPDIR)/main.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/node_agent.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -168,13 +161,13 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 CFLAGS = @CFLAGS@
 DIST_SOURCES = $(libastb_a_SOURCES) $(ast_master_SOURCES) \
-	$(astb_SOURCES) $(node_agent_SOURCES)
+	$(node_agent_SOURCES)
 DATA = $(sysconf_DATA)
 
 HEADERS = $(noinst_HEADERS)
 
 DIST_COMMON = $(noinst_HEADERS) Makefile.am Makefile.in
-SOURCES = $(libastb_a_SOURCES) $(ast_master_SOURCES) $(astb_SOURCES) $(node_agent_SOURCES)
+SOURCES = $(libastb_a_SOURCES) $(ast_master_SOURCES) $(node_agent_SOURCES)
 
 all: all-am
 
@@ -219,9 +212,6 @@ clean-binPROGRAMS:
 ast_master$(EXEEXT): $(ast_master_OBJECTS) $(ast_master_DEPENDENCIES) 
 	@rm -f ast_master$(EXEEXT)
 	$(LINK) $(ast_master_LDFLAGS) $(ast_master_OBJECTS) $(ast_master_LDADD) $(LIBS)
-astb$(EXEEXT): $(astb_OBJECTS) $(astb_DEPENDENCIES) 
-	@rm -f astb$(EXEEXT)
-	$(LINK) $(astb_LDFLAGS) $(astb_OBJECTS) $(astb_LDADD) $(LIBS)
 node_agent$(EXEEXT): $(node_agent_OBJECTS) $(node_agent_DEPENDENCIES) 
 	@rm -f node_agent$(EXEEXT)
 	$(LINK) $(node_agent_LDFLAGS) $(node_agent_OBJECTS) $(node_agent_LDADD) $(LIBS)
@@ -235,10 +225,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/adt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ast_master.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ast_master_vty.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/astb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/local_id_cfg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/node_agent.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_app.Po@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)

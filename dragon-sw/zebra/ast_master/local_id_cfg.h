@@ -13,7 +13,7 @@ struct id_cfg_res {
 
   char name[NODENAME_MAXLEN + 1];
   char ip[IP_MAXLEN+1];
-  enum node_stype stype;
+  struct res_def *subtype;
   struct adtlist *cfg_list;
 };
 

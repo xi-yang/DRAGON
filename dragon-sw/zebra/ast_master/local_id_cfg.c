@@ -8,7 +8,6 @@
 #include "log.h"
 #include "local_id_cfg.h"
 
-extern char* node_stype_name[];
 extern char* status_type_details[];
 extern int send_file_to_agent(char *, int, char *);
 
@@ -86,7 +85,7 @@ compose_id_req(struct application_cfg *app_cfg, char* path, struct id_cfg_res *r
   else 
     fprintf(send_file, "<local_id_query ast_id=\"%s\">\n", app_cfg->ast_id);
 
-  fprintf(send_file, "<resource type=\"%s\" name=\"%s\">\n", node_stype_name[res->stype], res->name);
+  fprintf(send_file, "<resource type=\"%s\" name=\"%s\">\n", "FIONA", res->name);
   fprintf(send_file, "\t<ip>%s</ip>\n", res->ip);
  
   if (app_cfg->xml_type == ID_XML) {
@@ -132,7 +131,7 @@ process_id_result(struct application_cfg *working_app_cfg, struct id_cfg_res* re
 
   if (!working_app_cfg->node_list) {
     zlog_err("process_id_result: no resource in the file");
-    res->status = AST_FAILURE;
+    res->status = ast_failure;
     return 0;
   }
 
@@ -152,11 +151,11 @@ process_id_result(struct application_cfg *working_app_cfg, struct id_cfg_res* re
 
   if (!found) {
     zlog_err("process_id_result: can't find the resource from the resturn file");
-    res->status = AST_UNKNOWN;
+    res->status = status_unknown;
     return 0;
   } else if (working_app_cfg->xml_type == ID_XML && !newres->cfg_list) {
     zlog_err("process_id_result: resource found with no local_id in it");
-    res->status = AST_UNKNOWN;
+    res->status = status_unknown;
     return 0;
   }
 
@@ -176,7 +175,7 @@ process_id_result(struct application_cfg *working_app_cfg, struct id_cfg_res* re
       if (new_cfg->id == old_cfg->id &&
 	  new_cfg->type == old_cfg->type) {
 	old_cfg->status = new_cfg->status;
-	if (old_cfg->status != AST_SUCCESS)
+	if (old_cfg->status != ast_success)
 	  ret_val = 0;
 	if (new_cfg->msg) {
 	  old_cfg->msg = new_cfg->msg;
@@ -233,7 +232,7 @@ print_id_response(char * path, int agent)
 	 cur = cur->next) {
       myres = (struct id_cfg_res*) cur->data;
 
-      fprintf(fp, "<resource type=\"%s\" name=\"%s\">\n", node_stype_name[myres->stype], myres->name);
+      fprintf(fp, "<resource type=\"%s\" name=\"%s\">\n", "FIONA", myres->name);
       fprintf(fp, "\t<ip>%s</ip>\n", myres->ip);
       fprintf(fp, "\t<status>%s</status>\n", status_type_details[myres->status]);
       if (myres->msg)
@@ -345,23 +344,23 @@ id_xml_parser(char* filename, int agent)
 	 attr = attr->next) {
       if (strcasecmp(attr->name, "type") == 0) {
 	for (i = 1;
-	     i <= NUM_NODE_STYPE;
+	     i <= 10;
 	     i++) {
-	  if (strcasecmp(attr->children->content, node_stype_name[i]) == 0) {
-	    myres->stype = i;
+	  if (strcasecmp(attr->children->content, "FIONA") == 0) {
+//	    myres->stype = i;
 	    break;
 	  }
 	} 
       } else if (strcasecmp(attr->name, "name") == 0)
 	strncpy(myres->name, attr->children->content, NODENAME_MAXLEN);
     }
-
+#ifdef FIONA
     if (myres->stype == 0 || myres->name[0] == '\0') {
       zlog_err("id_xml_parser: resource doesn't have valid stype nor a name");
       free_id_cfg_res(myres);
       continue;
     }
-
+#endif
     for (cur1 = resource_ptr->xmlChildrenNode;
 	 cur1;
 	 cur1 = cur1->next) {
@@ -541,7 +540,7 @@ master_process_id(char* filename)
   }
 
   if (!glob_app_cfg->node_list) {
-    glob_app_cfg->status = AST_SUCCESS;
+    glob_app_cfg->status = ast_success;
     print_id_response(AST_XML_RESULT, MASTER);
     return 1;
   }
@@ -588,11 +587,11 @@ master_process_id(char* filename)
 
     /* call send_file_to_agent */
     zlog_info("master_process_id: sending request to %s (%s:%d)", 
-	      myres->name, myres->ip, DRAGON_XML_PORT);
-    sock = send_file_to_agent(myres->ip, DRAGON_XML_PORT, newpath);
+	      myres->name, myres->ip, DEFAULT_LINK_XML_PORT);
+    sock = send_file_to_agent(myres->ip, DEFAULT_LINK_XML_PORT, newpath);
 
     if (sock == -1) {
-      myres->status = AST_FAILURE;
+      myres->status = ast_failure;
       myres->msg = strdup("Failed to connect to link_agent");
       ret_value = 0;
       close(sock);
@@ -623,7 +622,7 @@ master_process_id(char* filename)
 
     if (total == 0) {
       zlog_err("master_process_id: No confirmation from %s", myres->name);
-      myres->status = AST_UNKNOWN;
+      myres->status = status_unknown;
       ret_value = 0;
     } else {
 
@@ -632,7 +631,7 @@ master_process_id(char* filename)
 
       if ((working_app_cfg = id_xml_parser(newpath, MASTER)) == NULL) {
 	zlog_err("master_process_id: returned file (%s) is not parsed correctly", newpath);
-	myres->status = AST_UNKNOWN;
+	myres->status = status_unknown;
 	myres->msg = strdup("The response file is not parsed correctly");
 	ret_value = 0;
       } else 
@@ -645,9 +644,9 @@ master_process_id(char* filename)
 
   /* integrate the result and put the result into AST_XML_RESULT */
   if (ret_value)
-    glob_app_cfg->status = AST_SUCCESS;
+    glob_app_cfg->status = ast_success;
   else
-    glob_app_cfg->status = AST_FAILURE;
+    glob_app_cfg->status = ast_failure;
 
   sprintf(newpath, "%s/final.xml", directory);
   symlink(newpath, AST_XML_RESULT);
