@@ -36,7 +36,7 @@
 #include "stream.h"
 #include "log.h"
 #include "memory.h"
-
+#include "ast_master/dragon_app.h"
 #include "ast_master/ast_master_ext.h"
 #include "dragon/dragond.h"
 
@@ -172,6 +172,15 @@ signal_init ()
 #endif
   signal_set (SIGUSR1, sigusr1);
 }
+
+static void
+init_application_module()
+{
+  /* DEVELOPER: add your resource module in here
+   * dragon_app serves as an example, please consult dragon_app.[ch]
+   */
+  init_dragon_module();
+}
  
 /* DRAGONd main routine. */
 int
@@ -249,6 +258,15 @@ main (int argc, char **argv)
   if (dragon_master_init() < 0)
   	return (-1);
 
+  /* init all dragon_app related stuff */
+  init_application_module();
+  if (init_resource()) {
+    zlog_err("There is no resource defined in this ast_master instance; exit ..");
+    exit(0);
+  }
+  if (init_schema("http://wiki.maxgigapop.net/twiki/pub/Main/FionaLeung/setup_req.rng")==NULL)
+    init_schema("/usr/local/ast_file/schema/setup_req.rng");
+
   /* Library inits. */
   signal_init ();
   dragon_cmd_init (dragon_config_write);
@@ -273,7 +291,7 @@ main (int argc, char **argv)
   vty_serv_sock (vty_addr,
 		 vty_port ? vty_port : DRAGON_VTY_PORT, DRAGON_VTYSH_PATH);
 
-  /* init xml socket */
+  /* init xml related stuff */
   /*DRAGON_XML_PORT defined in ast_master/ast_master.h*/
   xml_serv_sock (vty_addr, DRAGON_XML_PORT, DRAGON_XML_PATH); 
   

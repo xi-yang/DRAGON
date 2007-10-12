@@ -116,7 +116,7 @@ INSTALL_SDATA = @INSTALL@ -m 600
 
 bin_PROGRAMS = dragon
 
-dragon_SOURCES = dragon_main.c dragon_vty.c dragon_packet.c dragon_xml.c
+dragon_SOURCES = ../ast_master/dragon_app.c dragon_main.c dragon_vty.c dragon_packet.c dragon_xml.c
 noinst_HEADERS = dragond.h
 dragon_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP $(XML_LIBS) -lxml2
 
@@ -130,8 +130,8 @@ CONFIG_CLEAN_FILES =
 bin_PROGRAMS = dragon$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 
-am_dragon_OBJECTS = dragon_main.$(OBJEXT) dragon_vty.$(OBJEXT) \
-	dragon_packet.$(OBJEXT) dragon_xml.$(OBJEXT)
+am_dragon_OBJECTS = ../ast_master/dragon_app.$(OBJEXT) dragon_main.$(OBJEXT) \
+	dragon_vty.$(OBJEXT) dragon_packet.$(OBJEXT) dragon_xml.$(OBJEXT)
 dragon_OBJECTS = $(am_dragon_OBJECTS)
 dragon_DEPENDENCIES = ../ast_master/libastb.a ../lib/libzebra.a
 dragon_LDFLAGS =
@@ -142,7 +142,8 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/dragon_main.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/dragon_packet.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/dragon_vty.Po ./$(DEPDIR)/dragon_xml.Po
+@AMDEP_TRUE@	./$(DEPDIR)/dragon_vty.Po ./$(DEPDIR)/dragon_xml.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/../ast_master/dragon_app.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -203,6 +204,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_packet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_vty.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_xml.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/../ast_master/dragon_app.Po@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)
