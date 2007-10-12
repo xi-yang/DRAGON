@@ -1023,12 +1023,13 @@ void  rsvpUpcall(void* para)
 	switch( p->code) {
 		case Path:
 			if (lsp->status == LSP_LISTEN && (lsp->flag & LSP_FLAG_RECEIVER) || 
-				lsp->status == LSP_COMMIT && !(lsp->flag & LSP_FLAG_RECEIVER)  /* src-dest colocated w/ local-id */
+				lsp->status == LSP_COMMIT && !(lsp->flag & LSP_FLAG_RECEIVER)  /* OR src-dest colocated w/ local-id */
 				&& lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr)
 			{
 				/* send RESV message to RSVPD to set up the path */
 				zInitRsvpResvRequest(dmaster.api, para);
-				lsp->status = LSP_IS;
+				if (lsp->status == LSP_LISTEN && (lsp->flag & LSP_FLAG_RECEIVER)) /* otherwise: src-dest colocated w/ local-id --> stay in commit status */
+					lsp->status = LSP_IS;
 				/* update LSP baed on DRAGON UNI Object */
 				if (p->dragonUniPara) {
 					lsp->common.DragonUni_Para = p->dragonUniPara;
