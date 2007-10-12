@@ -1425,15 +1425,15 @@ dragon_link_profile_read()
 	cur;
 	err = 0, cur = cur->next) {
 
-    if (strcasecmp(cur->name, "service") == 0) {
+    if (strcasecmp((char*)cur->name, "service") == 0) {
       link = (struct dragon_link_profile*)malloc(sizeof(struct dragon_link_profile));
       memset(link, 0, sizeof(struct dragon_link_profile));
 
       for (attr = cur->properties;
 	   attr;
 	   attr = attr->next) {
-	if (strcasecmp(attr->name, "type") == 0) 
-	  strncpy(link->service_name, attr->children->content, REG_TXT_FIELD_LEN);
+	if (strcasecmp((char*)attr->name, "type") == 0) 
+	  strncpy(link->service_name, (char*)attr->children->content, REG_TXT_FIELD_LEN);
       }
 
       if (link->service_name[0] == '\0')
@@ -1447,8 +1447,8 @@ dragon_link_profile_read()
         if (!key)
 	  continue;
 
-	if (strcasecmp(i_ptr->name, "bandwidth") == 0) {
-	  strncpy(link->bandwidth, key, REG_TXT_FIELD_LEN);
+	if (strcasecmp((char*)i_ptr->name, "bandwidth") == 0) {
+	  strncpy(link->bandwidth, (char*)key, REG_TXT_FIELD_LEN);
 	  if (link->bandwidth[0] != '\0') {
 	    for (i = 0; i < bandwidth_field.number; i++) {
 	      if (strcasecmp(link->bandwidth, bandwidth_field.ss[i].abbre) == 0)
@@ -1460,8 +1460,8 @@ dragon_link_profile_read()
 	    } else
 	      field++;
 	  }
-	} else if (strcasecmp(i_ptr->name, "swcap") == 0) {
-	  strncpy(link->swcap, key, REG_TXT_FIELD_LEN);
+	} else if (strcasecmp((char*)i_ptr->name, "swcap") == 0) {
+	  strncpy(link->swcap, (char*)key, REG_TXT_FIELD_LEN);
 	  for (i = 0; i < swcap_field.number; i++) {
 	    if (strcasecmp(link->swcap, swcap_field.ss[i].abbre) == 0)
 	      break;
@@ -1471,8 +1471,8 @@ dragon_link_profile_read()
 	    err = 1;
 	  } else
 	    field++;
-	} else if (strcasecmp(i_ptr->name, "encoding") == 0) {
-	  strncpy(link->encoding, key, REG_TXT_FIELD_LEN);
+	} else if (strcasecmp((char*)i_ptr->name, "encoding") == 0) {
+	  strncpy(link->encoding, (char*)key, REG_TXT_FIELD_LEN);
 	  for (i = 0; i < encoding_field.number; i++) {
 	    if (strcasecmp(link->encoding, encoding_field.ss[i].abbre) == 0)
 	      break;
@@ -1482,8 +1482,8 @@ dragon_link_profile_read()
 	    err = 1;
 	  } else
 	    field++;
-	} else if (strcasecmp(i_ptr->name, "gpid") == 0) {
-	  strncpy(link->gpid, key, REG_TXT_FIELD_LEN);
+	} else if (strcasecmp((char*)i_ptr->name, "gpid") == 0) {
+	  strncpy(link->gpid, (char*)key, REG_TXT_FIELD_LEN);
 	  for (i = 0; i < gpid_field.number; i++) {
 	    if (strcasecmp(link->gpid, gpid_field.ss[i].abbre) == 0)
 	      break;
