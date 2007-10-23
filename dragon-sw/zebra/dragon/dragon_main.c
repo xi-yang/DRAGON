@@ -193,6 +193,7 @@ main (int argc, char **argv)
   char *config_file = NULL;
   char *progname;
   struct thread thread;
+  int xml_mode = 1;
 
   /* Set umask before anything for security */
   umask (0027);
@@ -261,11 +262,13 @@ main (int argc, char **argv)
   /* init all dragon_app related stuff */
   init_application_module();
   if (init_resource()) {
-    zlog_err("There is no resource defined in this ast_master instance; exit ..");
-    exit(0);
+    zlog_warn("There is no resource defined in this ast_master instance; exit ..");
+    xml_mode = 0;
   }
-  if (init_schema("http://wiki.maxgigapop.net/twiki/pub/Main/FionaLeung/setup_req.rng")==NULL)
-    init_schema("/usr/local/ast_file/schema/setup_req.rng");
+  if (xml_mode) {
+    if (init_schema("http://wiki.maxgigapop.net/twiki/pub/Main/FionaLeung/setup_req.rng")==NULL)
+      init_schema("/usr/local/ast_file/schema/setup_req.rng");
+  }
 
   /* Library inits. */
   signal_init ();
@@ -291,9 +294,11 @@ main (int argc, char **argv)
   vty_serv_sock (vty_addr,
 		 vty_port ? vty_port : DRAGON_VTY_PORT, DRAGON_VTYSH_PATH);
 
-  /* init xml related stuff */
-  /*DRAGON_XML_PORT defined in ast_master/ast_master.h*/
-  xml_serv_sock (vty_addr, DRAGON_XML_PORT, DRAGON_XML_PATH); 
+  if (xml_mode) {
+    /* init xml related stuff */
+    /*DRAGON_XML_PORT defined in ast_master/ast_master.h*/
+    xml_serv_sock (vty_addr, DRAGON_XML_PORT, DRAGON_XML_PATH); 
+  }
   
   /* Fetch next active thread. */
   while (thread_fetch (master, &thread))
