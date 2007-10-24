@@ -669,7 +669,9 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         	vendor = RFC2674;
         else if (String("Intel(R) Express 530T Switch ") == venderSystemDescription)
         	vendor = IntelES530;
-        else if (String("Ethernet Switch") == venderSystemDescription)
+        else if (String("Ethernet Switch") == venderSystemDescription) // Dell PowerConnect 5324 running 1.0.0.xx SW
+        	vendor = RFC2674;
+        else if (String("Neyland 24T") == venderSystemDescription) // Dell PowerConnect 5324 running 2.0.0.xx SW
         	vendor = RFC2674;
         else if (String("Ethernet Routing Switch") == venderSystemDescription) // Dell PowerConnect 6024/6024F
         	vendor = RFC2674;
