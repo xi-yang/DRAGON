@@ -531,7 +531,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
     for (group = 0; group < 4; group++) 
         ctpGroupStringArray[group] = "";
     
-    char ctp[20];
+    char ctp[60];
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
     uint8 ts = pUniData->first_timeslot;
 
@@ -781,7 +781,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
 
     getCienaLogicalPortString(suppTtp, ettpName);
 
-    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default;",
+    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default,collectpm=yes;",
         vcgName.chars(), getNewCtag(), ettpName.chars(), packetType, vcgName.chars());
 
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
@@ -805,7 +805,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         goto _out;
 
 
-    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default;",
+    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,collectpm=yes;",
         vcgName.chars(), getNewCtag(), vcgName.chars(), packetType, ettpName.chars());
 
     if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
