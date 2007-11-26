@@ -1097,8 +1097,15 @@ DEFUN (dragon_set_lsp_ip,
   
     /*finished validation and writes the inputs to lsp data structure*/
     lsp->common.Session_Para.srcAddr.s_addr = ip_src.s_addr;
-    lsp->common.Session_Para.srcPort = (u_int16_t)port_src;
+    /* ramdomize source port (lsp-id) */
+    if (type_src== LOCAL_ID_TYPE_TAGGED_GROUP && port_src == ANY_VTAG)
+        lsp->common.Session_Para.srcPort = (u_int16_t)random();
+    else if (type_src== LOCAL_ID_TYPE_SUBNET_IF_ID && (port_src & 0xff) == ANY_TIMESLOT)
+        lsp->common.Session_Para.srcPort = (u_int16_t)((port_src & 0xff00) + random()%255);
+    else
+        lsp->common.Session_Para.srcPort = (u_int16_t)port_src;
     lsp->common.Session_Para.destAddr.s_addr = ip_dst.s_addr;
+    /* ramdomize detination port (tunnel-id) */
     if (type_dest== LOCAL_ID_TYPE_TAGGED_GROUP && port_dest == ANY_VTAG)
         lsp->common.Session_Para.destPort = (u_int16_t)random();
     else if (type_dest== LOCAL_ID_TYPE_SUBNET_IF_ID && (port_dest & 0xff) == ANY_TIMESLOT)
