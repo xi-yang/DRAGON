@@ -562,7 +562,7 @@ struct lsp_dragon_para {
     u_int32_t srcLocalId;         /* Source is (port|tagged-group|tag-group) */
     u_int32_t destLocalId;       /* Destination is (port|untagged-group|tagged-group) */
     u_int32_t lspVtag;       /* LSP E2E VLAN Tag */
-    list *dtl; /*pointer to list of 'struct dtl_hop'*/
+    list dtl; /*pointer to list of 'struct dtl_hop'*/
 };
 
 #define ANY_VTAG 0xffff  /*Indicating that LSP uses any available E2E VLAN Tag*/

@@ -842,10 +842,10 @@ DEFUN (dragon_edit_lsp,
 		{
 			found = 1;
 			/*$$$$ clear DTL*/
-			if (lsp->dragon.dtl)
+			if (lsp->dragon.dtl != NULL)
 			{
 				struct dtl_hop *hop;
-				struct listnode* node2;
+				struct listnode *node2;
 				LIST_LOOP(lsp->dragon.dtl, hop, node2)
 				{
 					free(hop);
