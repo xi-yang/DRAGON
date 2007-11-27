@@ -546,19 +546,27 @@ struct lsp_optional_constraints {
     list excluded_node;		/* Exclude all nodes in this list */
 };
 
+/* $$$$ DCN-Subnet special handling */
+/* Structure of DTL hop */
+#define MAX_DTL_NODENAME_LEN 19
+struct dtl_hop {
+	char nodename[MAX_DTL_NODENAME_LEN+1]; /*19-char C string*/
+	u_int32_t linkid;  /*link ID number*/
+};
+
 /* NSF DRAGON specific LSP parameters */
 struct lsp_dragon_para {
     time_t lsp_start_time;		/* Scheduled establishment time of the LSP */
     time_t lsp_duration;		/* Duration of the LSP */
-    u_int32_t aaaReserved;				/* A(uthentication), A(uthorization), and A(ccounting) */
+    u_int32_t aaaReserved;		/* A(uthentication), A(uthorization), and A(ccounting) */
     u_int32_t srcLocalId;         /* Source is (port|tagged-group|tag-group) */
     u_int32_t destLocalId;       /* Destination is (port|untagged-group|tagged-group) */
     u_int32_t lspVtag;       /* LSP E2E VLAN Tag */
+    list *dtl; /*pointer to list of 'struct dtl_hop'*/
 };
 
 #define ANY_VTAG 0xffff  /*Indicating that LSP uses any available E2E VLAN Tag*/
 #define ANY_TIMESLOT 0xff 
-
 
 /* Structure of the LSP */
 struct lsp {

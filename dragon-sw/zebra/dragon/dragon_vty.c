@@ -841,6 +841,17 @@ DEFUN (dragon_edit_lsp,
 		else
 		{
 			found = 1;
+			/*$$$$ clear DTL*/
+			if (lsp->dragon.dtl)
+			{
+				struct dtl_hop *hop;
+				struct listnode* node2;
+				LIST_LOOP(lsp->dragon.dtl, hop, node2)
+				{
+					free(hop);
+				}
+				list_delete_all_node(lsp->dragon.dtl);
+			}
 			break;
 		}
   	}
@@ -1425,6 +1436,31 @@ DEFUN (dragon_set_lsp_sw,
   lsp->common.LabelRequest_Para.data.gmpls.switchingType = swcap;
   lsp->common.LabelRequest_Para.data.gmpls.gPid = gpid;
 
+  return CMD_SUCCESS;
+}
+
+
+DEFUN (dragon_set_lsp_dtl_hop,
+       dragon_set_lsp_dtl_hop_cmd,
+       "set dtl-hop node NAME link <1-4294967295>",
+       "Add an dlt-hop to the DLT list\n"
+       "DTL hop\n"
+       "Node name\n"
+       "NAME\n"
+       "Link ID number\n"
+       "NUMBER\n"
+	)
+{
+  struct lsp *lsp = (struct lsp *)(vty->index);
+  struct dtl_hop *hop;
+  if (!lsp->dragon.dtl)
+  {
+  	lsp->dragon.dtl = list_new();
+  }
+  hop = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop));
+  strncpy(hop->nodename, argv[0], MAX_DTL_NODENAME_LEN);
+  sscanf(argv[1], "%d", &hop->linkid);
+  listnode_add(lsp->dragon.dtl, hop);
   return CMD_SUCCESS;
 }
 
@@ -2431,5 +2467,6 @@ dragon_supp_vty_init ()
   install_element(LSP_NODE, &dragon_set_lsp_vtag_any_cmd);  
   install_element(LSP_NODE, &dragon_enable_lsp_ext_info_edge_vtag_cmd);
   install_element(LSP_NODE, &dragon_enable_lsp_ext_info_edge_vtag_default_cmd);
+  install_element(LSP_NODE, &dragon_set_lsp_dtl_hop_cmd);
 }
 
