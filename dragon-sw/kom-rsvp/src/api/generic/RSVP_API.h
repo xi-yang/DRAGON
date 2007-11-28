@@ -157,14 +157,6 @@ struct _Dragon_Uni_Para {
 	char egressChannel[12];
 };
 
-/* $$$$ DCN-Subnet special handling */
-/* Structure of DTL hop */
-#define MAX_DTL_NODENAME_LEN 19
-struct dtl_hop {
-	uint8 nodename[MAX_DTL_NODENAME_LEN+1]; /*19-char C string*/
-	uint32 linkid;  /*link ID number*/
-};
-
 struct _Dragon_ExtInfo_Para {
 	uint32 ucid;
 	uint32 seqnum;

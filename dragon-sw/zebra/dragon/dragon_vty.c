@@ -1527,7 +1527,7 @@ DEFUN (dragon_commit_lsp_sender,
   }
 
   /*$$$$ Special handling for DCN-DTL*/
-  if (lsp->dragon.dtl && lsp->dragon.dtl.count > 0)
+  if (lsp->dragon.dtl != NULL && listcount(lsp->dragon.dtl) > 0)
   {
   	int i = 0;
 	struct dtl_hop *hop;
@@ -1535,13 +1535,13 @@ DEFUN (dragon_commit_lsp_sender,
 	/*assemble DTL TLV*/
 	if (lsp->common.DragonExtInfo_Para != NULL)
 	{
-		XFREE(lsp->common.DragonExtInfo_Para->dtl_hops);
+		XFREE(MTYPE_TMP, lsp->common.DragonExtInfo_Para->dtl_hops);
 	}
-	lsp->common.DragonExtInfo_Para->num_dlt_hops = lsp->dragon.dtl.count;
+	lsp->common.DragonExtInfo_Para->num_dlt_hops = listcount(lsp->dragon.dtl);
 	lsp->common.DragonExtInfo_Para->dtl_hops = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_dlt_hops);
 	LIST_LOOP(lsp->dragon.dtl, hop, node2)
 	{
-		memcpy(lsp->common.DragonExtInfo_Para->dtl_hops+i, hop);
+		memcpy(lsp->common.DragonExtInfo_Para->dtl_hops+i, hop, sizeof(struct dtl_hop));
 		i++;
 	}
   }

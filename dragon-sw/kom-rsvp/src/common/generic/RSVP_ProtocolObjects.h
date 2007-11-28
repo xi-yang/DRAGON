@@ -1074,6 +1074,13 @@ typedef struct  {
 	uint16 egress_inner_vlantag;
 } EdgeVlanMapping_Subobject;
 
+/* $$$$ DCN-Subnet special handling */
+/* Structure of DTL hop */
+#define MAX_DTL_NODENAME_LEN 19
+struct dtl_hop {
+        uint8 nodename[MAX_DTL_NODENAME_LEN+1]; /*19-char C string*/
+        uint32 linkid;  /*link ID number*/
+};
 typedef struct  {
 	uint16 length;
 	uint8 type;
@@ -1138,7 +1145,7 @@ public:
 	EdgeVlanMapping_Subobject& getEdgeVlanMapping() { return edgeVlanMapping; }
 	void SetDTL(u_int32_t num_hops, dtl_hop* dtl) { 
 		SetSubobjFlag(DRAGON_EXT_SUBOBJ_DTL);
-		memset(&DTL, 0, sizeof(DTL_Subobject);
+		memset(&DTL, 0, sizeof(DTL_Subobject));
 		DTL.length = sizeof(8+num_hops*sizeof(dtl_hop));
 		DTL.type = DRAGON_EXT_SUBOBJ_DTL;
 		memcpy(DTL.hops, dtl, sizeof(dtl_hop)*num_hops);
