@@ -276,6 +276,10 @@ public:
 		ssName += mainSessionName;
 	}
 
+	//DCN-DTL special handling
+	void SwitchCtrl_Session_SubnetUNI::getDTLString(String& dtlStr);
+	void setDTL(DTL_Subobject& dtl) { DTL = dtl; }
+
 	//////// ---- To be overriden for edge control ---- ////////
 	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID)  { return false; }
 	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID) { return false; }
@@ -307,6 +311,9 @@ protected:
 	String currentCRS;
 	int numGroups;
 	SONET_CATUNIT ptpCatUnit;
+
+	//DCN-DTL special
+	DTL_Subobject DTL; //valid if DTL.count > 0
 private:	
 	void internalInit ();
 	void setSubnetUniData(SubnetUNI_Data& data, uint8 id, uint8 first_ts, uint16 tunnel_id, float bw, uint32 tna, uint32 uni_c_id, 

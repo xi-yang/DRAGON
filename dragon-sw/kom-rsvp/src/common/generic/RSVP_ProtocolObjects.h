@@ -1081,12 +1081,13 @@ struct dtl_hop {
         uint8 nodename[MAX_DTL_NODENAME_LEN+1]; /*19-char C string*/
         uint32 linkid;  /*link ID number*/
 };
+#define MAX_DTL_LEN 20
 typedef struct  {
 	uint16 length;
 	uint8 type;
 	uint8 sub_type;
 	uint32 count;
-	struct dtl_hop hops[20];
+	struct dtl_hop hops[MAX_DTL_LEN];
 } DTL_Subobject;
 
 class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {

@@ -743,6 +743,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			DTL.type = tlvType;
 			DTL.sub_type = tlvSubType;
 			buffer >> DTL.count;
+			assert(DTL.count <= MAX_DTL_LEN);
 			for (i = 0; i < DTL.count; i++)
 			{
 				for (j = 0; j < MAX_DTL_NODENAME_LEN+1; j++)
@@ -773,6 +774,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 			<< o.edgeVlanMapping.egress_outer_vlantag << o.edgeVlanMapping.egress_inner_vlantag;
 	}
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_DTL)) {
+		assert(o.DTL.count <= MAX_DTL_LEN);
 		buffer << o.DTL.length << o.DTL.type << o.DTL.sub_type<<o.DTL.count;
 		int i, j;
 		for (i = 0; i < o.DTL.count; i++)

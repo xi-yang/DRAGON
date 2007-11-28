@@ -453,6 +453,12 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				}
 			}
 
+			// $$$$ DCN-DTL special handling
+			if ((const_cast<Message&>(msg)).getDRAGON_EXT_INFO_Object() != NULL && 
+				(const_cast<Message&>(msg)).getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_DTL)) {
+				pSubnetUniSrc->setDTL((const_cast<Message&>(msg)).getDRAGON_EXT_INFO_Object()->getDTL());
+			}
+			
 			if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) { //egress subnet interface is on the same vlsr 
 				destUniId = (uint8)(outUnumIfID >> 8);
 				destUniDataIf = outRtId;
