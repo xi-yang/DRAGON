@@ -711,6 +711,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 	uint8 tlvType;
 	uint8 tlvSubType;
 	uint8 tlvChar;
+	int i, j;
 
 	len -= 4; // object header
 	while (readLength < len)
@@ -736,6 +737,21 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			SetSubobjFlag(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING);
 			readLength += tlvLength;
 			break;
+		case DRAGON_EXT_SUBOBJ_DTL:
+			memset(&DTL, 0, sizeof(DTL_Subobject));
+			DTL.length = tlvLength;
+			DTL.type = tlvType;
+			DTL.sub_type = tlvSubType;
+			buffer >> DTL.count;
+			for (i = 0; i < DTL.count; i++)
+			{
+				for (j = 0; j < MAX_DTL_NODENAME_LEN+1; j++)
+					buffer >> DTL.hops[i].nodename[j];
+				buffer >> DTL.hops[i].linkid;
+			}
+			SetSubobjFlag(DRAGON_EXT_SUBOBJ_DTL);
+			readLength += tlvLength;
+			break;
 		default:
 			readLength += tlvLength;
 			while( (tlvLength--) > 4 ) buffer >> tlvChar;
@@ -756,6 +772,16 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 			<< o.edgeVlanMapping.trunk_outer_vlantag << o.edgeVlanMapping.trunk_inner_vlantag 
 			<< o.edgeVlanMapping.egress_outer_vlantag << o.edgeVlanMapping.egress_inner_vlantag;
 	}
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_DTL)) {
+		buffer << o.DTL.length << o.DTL.type << o.DTL.sub_type<<o.DTL.count;
+		int i, j;
+		for (i = 0; i < o.DTL.count; i++)
+		{
+			for (j = 0; j < MAX_DTL_NODENAME_LEN+1; j++)
+				buffer << o.DTL.hops[i].nodename[j];
+			buffer << o.DTL.hops[i].linkid;
+		}
+	}
 	return buffer;
 }
 
@@ -771,6 +797,16 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 			<< ", trunk_inner_vtag=" << o.edgeVlanMapping.trunk_inner_vlantag 
 			<< ", egress_outer_vtag=" << o.edgeVlanMapping.egress_outer_vlantag 
 			<< ", egress_inner_vtag=" << o.edgeVlanMapping.egress_inner_vlantag << ")";
+	}
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_DTL)) {
+		int i, j;
+		os << "(3: Designated Transport List: ";
+		for (i = 0; i < o.DTL.count; i++)
+		{
+			os << (char*)(o.DTL.hops[i].nodename);
+			os << o.DTL.hops[i].linkid;
+		}
+		os << ")";
 	}
 	os <<"]";
 	return os;

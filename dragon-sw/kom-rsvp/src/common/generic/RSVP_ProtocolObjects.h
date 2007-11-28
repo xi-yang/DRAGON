@@ -1052,6 +1052,7 @@ public:
 
 #define DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID 1 //for both type and flag
 #define DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING 2 //for both type and flag
+#define DRAGON_EXT_SUBOBJ_DTL 4 
 
 typedef struct  {
 	uint16 length;
@@ -1073,10 +1074,19 @@ typedef struct  {
 	uint16 egress_inner_vlantag;
 } EdgeVlanMapping_Subobject;
 
+typedef struct  {
+	uint16 length;
+	uint8 type;
+	uint8 sub_type;
+	uint32 count;
+	struct dtl_hop hops[20];
+} DTL_Subobject;
+
 class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 	uint32 subobj_flags;
 	ServiceConfirmationID_Subobject serviceConfID;
 	EdgeVlanMapping_Subobject edgeVlanMapping;
+	DTL_Subobject DTL;
 	REF_OBJECT_METHODS(DRAGON_EXT_INFO_Object)
 	friend ostream& operator<< ( ostream&, const DRAGON_EXT_INFO_Object& );
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_EXT_INFO_Object& );
@@ -1085,11 +1095,12 @@ class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 		uint16 x = 0;
 		if (HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) x += sizeof(ServiceConfirmationID_Subobject);
 		if (HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING)) x += sizeof(EdgeVlanMapping_Subobject);
+		if (HasSubobj(DRAGON_EXT_SUBOBJ_DTL)) x += (8 + sizeof(dtl_hop)*DTL.count);
 		return x;
 	}
 public:
-	DRAGON_EXT_INFO_Object() : subobj_flags(0) {}
-	DRAGON_EXT_INFO_Object( INetworkBuffer& b, uint16 len ):  subobj_flags(0) {
+	DRAGON_EXT_INFO_Object() : subobj_flags(0){}
+	DRAGON_EXT_INFO_Object( INetworkBuffer& b, uint16 len ):  subobj_flags(0){
 		readFromBuffer( b, len );
 	}
 	//DRAGON_EXT_INFO_Object ( const DRAGON_EXT_INFO_Object& ); 
@@ -1125,7 +1136,14 @@ public:
 		SetEdgeVlanMapping(ingress_vtag, 0, 0, 0, egress_vtag, 0);
 	}
 	EdgeVlanMapping_Subobject& getEdgeVlanMapping() { return edgeVlanMapping; }
-
+	void SetDTL(u_int32_t num_hops, dtl_hop* dtl) { 
+		SetSubobjFlag(DRAGON_EXT_SUBOBJ_DTL);
+		memset(&DTL, 0, sizeof(DTL_Subobject);
+		DTL.length = sizeof(8+num_hops*sizeof(dtl_hop));
+		DTL.type = DRAGON_EXT_SUBOBJ_DTL;
+		memcpy(DTL.hops, dtl, sizeof(dtl_hop)*num_hops);
+	}
+	DTL_Subobject& getDTL() { return DTL; }
 };
 extern inline DRAGON_EXT_INFO_Object::~DRAGON_EXT_INFO_Object() {}
 
