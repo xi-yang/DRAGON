@@ -845,7 +845,7 @@ DEFUN (dragon_edit_lsp,
 			if (lsp->dragon.dtl != NULL)
 			{
 				struct dtl_hop *hop;
-				struct listnode *node2;
+				listnode node2;
 				LIST_LOOP(lsp->dragon.dtl, hop, node2)
 				{
 					free(hop);
@@ -1520,12 +1520,31 @@ DEFUN (dragon_commit_lsp_sender,
       && (lsp->dragon.destLocalId & 0xffff) != lsp->dragon.lspVtag
       && lsp->dragon.lspVtag  != ANY_VTAG)
   {
-      vty_out(vty, "###Egress port tag (%d) does not match the LSP Vtag (%d)!%s", 
+ 	vty_out(vty, "###Egress port tag (%d) does not match the LSP Vtag (%d)!%s", 
           (lsp->dragon.destLocalId & 0xffff), lsp->dragon.lspVtag, VTY_NEWLINE);
   	vty_out (vty, "LSP \"%s\" could not be committed... %s", (lsp->common.SessionAttribute_Para)->sessionName,  VTY_NEWLINE);
       return CMD_WARNING;
   }
 
+  /*$$$$ Special handling for DCN-DTL*/
+  if (lsp->dragon.dtl && lsp->dragon.dtl.count > 0)
+  {
+  	int i = 0;
+	struct dtl_hop *hop;
+	listnode node2;
+	/*assemble DTL TLV*/
+	if (lsp->common.DragonExtInfo_Para != NULL)
+	{
+		XFREE(lsp->common.DragonExtInfo_Para->dtl_hops);
+	}
+	lsp->common.DragonExtInfo_Para->num_dlt_hops = lsp->dragon.dtl.count;
+	lsp->common.DragonExtInfo_Para->dtl_hops = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_dlt_hops);
+	LIST_LOOP(lsp->dragon.dtl, hop, node2)
+	{
+		memcpy(lsp->common.DragonExtInfo_Para->dtl_hops+i, hop);
+		i++;
+	}
+  }
   if (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr && lsp->common.Session_Para.srcAddr.s_addr != 0
   	&& !((lsp->dragon.srcLocalId >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID || (lsp->dragon.destLocalId >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID))
   {

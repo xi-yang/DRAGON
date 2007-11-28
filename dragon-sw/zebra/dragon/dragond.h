@@ -480,6 +480,8 @@ struct _Dragon_ExtInfo_Para {
 	u_int32_t seqnum;
 	u_int16_t ingress_vtag;
 	u_int16_t egress_vtag;
+	u_int32_t num_dlt_hops;
+	struct dtl_hop *dtl_hops;
 };
 
 struct _sessionParameters {
@@ -550,7 +552,7 @@ struct lsp_optional_constraints {
 /* Structure of DTL hop */
 #define MAX_DTL_NODENAME_LEN 19
 struct dtl_hop {
-	char nodename[MAX_DTL_NODENAME_LEN+1]; /*19-char C string*/
+	u_int8_t nodename[MAX_DTL_NODENAME_LEN+1]; /*19-char C string*/
 	u_int32_t linkid;  /*link ID number*/
 };
 
