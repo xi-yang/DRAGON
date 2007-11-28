@@ -109,8 +109,6 @@ SwitchCtrl_Session_SubnetUNI::~SwitchCtrl_Session_SubnetUNI()
     deregisterRsvpApiClient();
     if (uniSessionId)
         delete uniSessionId;
-    if (pDTL)
-        delete pDTL;
 }
 
 void SwitchCtrl_Session_SubnetUNI::uniRsvpSrcUpcall(const GenericUpcallParameter& upcallParam, void* uniClientData)
@@ -764,7 +762,7 @@ void SwitchCtrl_Session_SubnetUNI::getPeerCRS_GTP(String& gtpName)
 
 void SwitchCtrl_Session_SubnetUNI::getDTLString(String& dtlStr)
 {
-    dtlStr.clear();
+    dtlStr = "";
     if (DTL.count <2 || DTL.count > MAX_DTL_LEN)
         return;
     bufCmd[0] = 0;
@@ -1316,7 +1314,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
         sprintf(strCOMPLD, "M  %s COMPLD", ctag);
-        sprintf(strDENY, "M  %d DENY", ctag);
+        sprintf(strDENY, "M  %s DENY", ctag);
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
@@ -1347,6 +1345,7 @@ _out:
 bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
 {
     int ret = 0;
+    String dtlString;
 
     int group;
     for (group = 0; group < numGroups; group++)
@@ -1393,7 +1392,6 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
             goto _out;
     }
 
-    String dtlString;
     getDTLString(dtlString);
     if (!dtlString.empty())
     {
