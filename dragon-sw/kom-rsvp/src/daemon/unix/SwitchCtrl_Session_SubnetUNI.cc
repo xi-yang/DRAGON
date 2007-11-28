@@ -769,12 +769,12 @@ void SwitchCtrl_Session_SubnetUNI::getDTLString(String& dtlStr)
         return;
     bufCmd[0] = 0;
     int i = 0; char hop[40];
-    for (i=0; i < DTL.count -1; i++)
+    for (i=0; i < DTL.count; i++)
     {
         sprintf(hop, "nodename%d=%s,osrpltpid%d=%d,", i+1, (char*)DTL.hops[i].nodename, i+1, DTL.hops[i].linkid);
         strcat(bufCmd, hop);
     }
-    sprintf(hop, "termnodename=%s", (char*)DTL.hops[i].nodename);
+    sprintf(hop, "termnodename=%s", (char*)subnetUniDest.node_name);
     strcat(bufCmd, hop);
     dtlStr = bufCmd;
     return;
@@ -1258,19 +1258,19 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl", " has been created successfully.\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl", " has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl", " creation has been denied.\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl", " creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             sncName = "";
             return false;
         }
         else 
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl", " creation via TL1_TELNET failed...\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl", " creation via TL1_TELNET failed...\n", bufCmd);
             return false;
         }
 
@@ -1283,19 +1283,19 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl_set", " has been created successfully.\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl_set", " has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl_set", " creation has been denied.\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl_set", " creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             sncName = "";
             return false;
         }
         else 
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl_set", " deletion via TL1_TELNET failed...\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl_set", " deletion via TL1_TELNET failed...\n", bufCmd);
             return false;
         }
     }
@@ -1405,18 +1405,18 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl_set", " has been deleted successfully.\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl_set", " has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl_set", " deletion has been denied.\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl_set", " deletion has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
         else 
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl_set", " deletion via TL1_TELNET failed...\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl_set", " deletion via TL1_TELNET failed...\n", bufCmd);
             return false;
         }
         
@@ -1428,18 +1428,18 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl", " has been deleted successfully.\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl", " has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl", " deletion has been denied.\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl", " deletion has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
         else 
         {
-            LOG(5)(Log::MPLS, sncName, "-dtl", " deletion via TL1_TELNET failed...\n", bufCmd);
+            LOG(4)(Log::MPLS, sncName, "-dtl", " deletion via TL1_TELNET failed...\n", bufCmd);
             return false;
         }
     }
