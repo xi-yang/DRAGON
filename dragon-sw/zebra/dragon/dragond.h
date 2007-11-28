@@ -213,6 +213,7 @@ struct api_msg_header
 #define LSP_OPT_QUERY_HOLD  ((u_int32_t)(0x0100 << 16)) //holding resource upon query for a short period of time to resolve contention
 #define LSP_OPT_QUERY_CONFIRM  ((u_int32_t)(0x0200 << 16)) //return confirmation ID (instead of strict ERO hops)
 #define LSP_OPT_SUBNET_ERO  ((u_int32_t)(0x0400 << 16)) //return subnet ERO TLV if any
+#define LSP_OPT_SUBNET_DTL  ((u_int32_t)(0x0400 << 16)) //return subnet DTL TLV if any
 
 #ifdef roundup
 #  define ROUNDUP(val, gran)	roundup(val, gran)
