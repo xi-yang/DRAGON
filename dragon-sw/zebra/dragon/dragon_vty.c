@@ -644,6 +644,8 @@ DEFUN (dragon_show_narb_extra_options,
   	vty_out(vty, "    >query-with-confirmation%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_SUBNET_ERO) != 0)
   	vty_out(vty, "    >query-subnet-ero%s", VTY_NEWLINE);
+  if ((narb_extra_options & LSP_OPT_SUBNET_DTL) != 0)
+  	vty_out(vty, "    >query-subnet-dtl%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_L1) != 0)
   	vty_out(vty, "    >exclude-layer1%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_TDM) != 0)
