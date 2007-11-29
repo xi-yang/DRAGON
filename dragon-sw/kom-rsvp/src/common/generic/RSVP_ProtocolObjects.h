@@ -1149,6 +1149,7 @@ public:
 		memset(&DTL, 0, sizeof(DTL_Subobject));
 		DTL.length = 8+num_hops*sizeof(dtl_hop);
 		DTL.type = DRAGON_EXT_SUBOBJ_DTL;
+		DTL.count = num_hops;
 		memcpy(DTL.hops, dtl, sizeof(dtl_hop)*num_hops);
 	}
 	DTL_Subobject& getDTL() { return DTL; }
