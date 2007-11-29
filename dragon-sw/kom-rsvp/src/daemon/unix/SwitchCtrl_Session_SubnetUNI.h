@@ -277,7 +277,7 @@ public:
 	}
 
 	//DCN-DTL special handling
-	void SwitchCtrl_Session_SubnetUNI::getDTLString(String& dtlStr);
+	void getDTLString(String& dtlStr);
 	void setDTL(DTL_Subobject& dtl) { DTL = dtl; }
 
 	//////// ---- To be overriden for edge control ---- ////////
