@@ -1147,7 +1147,7 @@ public:
 	void SetDTL(u_int32_t num_hops, dtl_hop* dtl) { 
 		SetSubobjFlag(DRAGON_EXT_SUBOBJ_DTL);
 		memset(&DTL, 0, sizeof(DTL_Subobject));
-		DTL.length = sizeof(8+num_hops*sizeof(dtl_hop));
+		DTL.length = 8+num_hops*sizeof(dtl_hop);
 		DTL.type = DRAGON_EXT_SUBOBJ_DTL;
 		memcpy(DTL.hops, dtl, sizeof(dtl_hop)*num_hops);
 	}
