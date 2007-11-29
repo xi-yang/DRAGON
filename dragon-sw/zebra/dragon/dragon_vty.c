@@ -592,7 +592,7 @@ ALIAS (dragon_set_narb_para,
 
 DEFUN (dragon_set_narb_extra_options,
        dragon_set_narb_extra_options_cmd,
-       "set narb-extra-options (use-movaz-speical|query-with-holding|query-with-confirmation|query-subnet-ero|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3|none)",
+       "set narb-extra-options (use-movaz-speical|query-with-holding|query-with-confirmation|query-subnet-ero|query-subnet-dtl|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3|none)",
        "Set NARB extra options\n"
        "NARB options\n"
        "Instructing NARB to compute a path using Movaz proprietary information\n"
