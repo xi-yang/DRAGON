@@ -805,8 +805,11 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 		os << "(3: Designated Transport List: ";
 		for (i = 0; i < o.DTL.count; i++)
 		{
+			os <<"-"
 			os << (char*)(o.DTL.hops[i].nodename);
+			os <<":"
 			os << o.DTL.hops[i].linkid;
+			os <<"-"
 		}
 		os << ")";
 	}

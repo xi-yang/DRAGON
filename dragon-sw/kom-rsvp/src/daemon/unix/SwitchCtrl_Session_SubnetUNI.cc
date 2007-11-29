@@ -763,7 +763,7 @@ void SwitchCtrl_Session_SubnetUNI::getPeerCRS_GTP(String& gtpName)
 void SwitchCtrl_Session_SubnetUNI::getDTLString(String& dtlStr)
 {
     dtlStr = "";
-    if (DTL.count <2 || DTL.count > MAX_DTL_LEN)
+    if (DTL.count == 0 || DTL.count > MAX_DTL_LEN)
         return;
     bufCmd[0] = 0;
     int i = 0; char hop[40];
