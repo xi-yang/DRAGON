@@ -1249,7 +1249,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
 
         //ent-dtl::dtl1:123::NODENAME1=SEAT,OSRPLTPID1=1,TERMNODENAME=GRNOC;
         //DTL named 'sncname-dtl'
-        sprintf( bufCmd, "ent-dtl:%s-dtl:%d::%s;", sncName.chars(), getNewCtag(), dtlString.chars());
+        sprintf( bufCmd, "ent-dtl::%s-dtl:%d::%s;", sncName.chars(), getNewCtag(), dtlString.chars());
         if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
         sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
         sprintf(strDENY, "M  %d DENY", getCurrentCtag());
@@ -1272,9 +1272,9 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
             return false;
         }
 
-        //end-dtl-set::dtlset1:123::WRKNM=dtl1,;
+        //ent-dtl-set::dtlset1:123::WRKNM=dtl1,;
         //DTL-SET named 'sncname-dtl_set'
-        sprintf( bufCmd, "ent-dtl-set:%s-dtl_set:%d::wrknm=%s,;", sncName.chars(), getNewCtag(), sncName.chars());
+        sprintf( bufCmd, "ent-dtl-set::%s-dtl_set:%d::wrknm=%s,;", sncName.chars(), getNewCtag(), sncName.chars());
         if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
         sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
         sprintf(strDENY, "M  %d DENY", getCurrentCtag());
