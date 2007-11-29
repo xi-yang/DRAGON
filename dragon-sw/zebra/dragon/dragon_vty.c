@@ -613,6 +613,8 @@ DEFUN (dragon_set_narb_extra_options,
 	narb_extra_options |= LSP_OPT_QUERY_CONFIRM;
   else if (strncmp (argv[0], "query-subnet-ero", 15) == 0)
 	narb_extra_options |= LSP_OPT_SUBNET_ERO;
+  else if (strncmp (argv[0], "query-subnet-dtl", 15) == 0)
+	narb_extra_options |= LSP_OPT_SUBNET_DTL;
   else if (strncmp (argv[0], "exclude-layer1", 14) == 0)
 	narb_extra_options |= LSP_OPT_EXCLUD_L1;
   else if (strncmp (argv[0], "exclude-layer2", 14) == 0)

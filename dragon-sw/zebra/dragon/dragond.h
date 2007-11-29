@@ -161,13 +161,17 @@ struct dmsg_header {
 
 #define DRAGON_TLV_BASE		0x01
 /* Source, destination, bandwidth, encoding type, switching type, G-Pid */ /*Mandatory TLV */
-#define	DRAGON_TLV_SRCDST	DRAGON_TLV_BASE + 1
+#define	DRAGON_TLV_SRCDST	DRAGON_TLV_BASE + 0x01
 /* ERO - a list of IP addresses */ /*Mandatory TLV */
-#define	DRAGON_TLV_ERO		DRAGON_TLV_BASE + 2
+#define	DRAGON_TLV_ERO		DRAGON_TLV_BASE + 0x02
 /* Error code - returned by NARB */ 
-#define	DRAGON_TLV_ERR		DRAGON_TLV_BASE + 3
+#define	DRAGON_TLV_ERR		DRAGON_TLV_BASE + 0x03
+/* Subnet DTL ERO */
+#define	DRAGON_TLV_SUBNET_ERO	DRAGON_TLV_BASE + 0x08
 /* Local ID TLV */
-#define	DRAGON_TLV_LCLID	DRAGON_TLV_BASE + 9
+#define	DRAGON_TLV_LCLID	DRAGON_TLV_BASE + 0x09
+/* Subnet DTL TLV */
+#define	DRAGON_TLV_SUBNET_DTL	DRAGON_TLV_BASE + 0x0A
 
 struct dragon_tlv_header
 {

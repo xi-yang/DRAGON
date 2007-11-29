@@ -691,6 +691,37 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 
 				break;
 
+			case DRAGON_TLV_SUBNET_DTL:
+			{
+				struct dtl_hop *hop;
+				listnode node2;
+				int i, count = DTLV_BODY_SIZE(tlvh) / sizeof(struct dtl_hop);
+
+				if (!lsp->dragon.dtl)
+				{
+					lsp->dragon.dtl = list_new();
+				}
+				for (i = 0; i < count; i++)
+				{
+					listnode_add(lsp->dragon.dtl, ((struct dtl_hop*)(((char*)tlvh)+TLV_HDR_SIZE))[i]);
+				}
+
+				if (lsp->common.DragonExtInfo_Para == NULL)
+				{
+					lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
+					memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+				}
+				lsp->common.DragonExtInfo_Para->num_dlt_hops = listcount(lsp->dragon.dtl);
+				lsp->common.DragonExtInfo_Para->dtl_hops = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_dlt_hops);
+				LIST_LOOP(lsp->dragon.dtl, hop, node2)
+				{
+					memcpy(lsp->common.DragonExtInfo_Para->dtl_hops+i, hop, sizeof(struct dtl_hop));
+					i++;
+				}
+
+				break;
+			}
+
 			default: /* Unrecognized tlv from NARB, just ignore it */
 				break;
 		}
