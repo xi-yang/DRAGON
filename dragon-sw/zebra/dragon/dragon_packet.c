@@ -299,12 +299,17 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   struct api_msg_header *amsgh;
   struct dragon_fifo_elt *packet;
   int msglen;
+  u_int32_t narb_extra_options_mask = 0;
 
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
   s = packet->s;
   packet->lsp = lsp;
-  
+
+  /* Turn off certain NARB extra options that conflict with others */
+  if (listcount(lsp->dragon.dtl) > 0)
+      narb_extra_options_mask |= LSP_OPT_SUBNET_DTL;
+
   /* Build DRAGON message header */
   msglen = 20; 
   if (lsp->dragon.srcLocalId != 0 || lsp->dragon.destLocalId != 0)
@@ -312,11 +317,11 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   if (lsp->dragon.lspVtag)
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno, 
         LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG
-        |((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | narb_extra_options, 
+        |((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | (narb_extra_options & (~narb_extra_options_mask)), 
         lsp->dragon.lspVtag);
   else
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno,
-        LSP_OPT_STRICT | ((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | narb_extra_options, 
+        LSP_OPT_STRICT | ((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | (narb_extra_options & (~narb_extra_options_mask)), 
         0);
 
   /* Build mandatory /request TLVs */
