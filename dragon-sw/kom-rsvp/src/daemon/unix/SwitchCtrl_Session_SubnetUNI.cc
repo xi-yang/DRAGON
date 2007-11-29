@@ -1265,6 +1265,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             sncName = "";
             return false;
+            // OR continue to SNC creation with 'dtlexcl=no' option ?'
         }
         else 
         {
@@ -1289,7 +1290,9 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
             LOG(4)(Log::MPLS, sncName, "-dtl_set", " creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             sncName = "";
+            // ? Delete the created DTL ?
             return false;
+            // OR continue to SNC creation with 'dtlexcl=no' option ?'
         }
         else 
         {
@@ -1325,6 +1328,9 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         {
             LOG(5)(Log::MPLS, sncName, "-", group+1, " creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
+
+            // TODO: dlt-snc for other groups; dlt-dlt-set:: ; dlt-dlt::
+
             sncName = "";
             return false;
         }
@@ -1386,7 +1392,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         {
             LOG(5)(Log::MPLS, sncName, "-", group+1, " deletion has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
-            return false;
+            //continue to delete dtl-set
         }
         else 
             goto _out;
@@ -1410,7 +1416,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         {
             LOG(4)(Log::MPLS, sncName, "-dtl_set", " deletion has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
-            return false;
+            //continue to delete dtl
         }
         else 
         {
