@@ -307,7 +307,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   packet->lsp = lsp;
 
   /* Turn off certain NARB extra options that conflict with others */
-  if (listcount(lsp->dragon.dtl) > 0)
+  if (lsp->dragon.dtl != NULL && listcount(lsp->dragon.dtl) > 0)
       narb_extra_options_mask |= LSP_OPT_SUBNET_DTL;
 
   /* Build DRAGON message header */
@@ -702,7 +702,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				listnode node2;
 				int i, count = DTLV_BODY_SIZE(tlvh) / sizeof(struct dtl_hop);
 
-				if (!lsp->dragon.dtl)
+				if (lsp->dragon.dtl == NULL)
 				{
 					lsp->dragon.dtl = list_new();
 				}

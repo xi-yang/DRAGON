@@ -1457,7 +1457,7 @@ DEFUN (dragon_set_lsp_dtl_hop,
 {
   struct lsp *lsp = (struct lsp *)(vty->index);
   struct dtl_hop *hop;
-  if (!lsp->dragon.dtl)
+  if (lsp->dragon.dtl == NULL)
   {
   	lsp->dragon.dtl = list_new();
   }
