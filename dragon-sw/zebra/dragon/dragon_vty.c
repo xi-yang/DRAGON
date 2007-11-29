@@ -1533,9 +1533,10 @@ DEFUN (dragon_commit_lsp_sender,
 	struct dtl_hop *hop;
 	listnode node2;
 	/*assemble DTL TLV*/
-	if (lsp->common.DragonExtInfo_Para != NULL)
+	if (lsp->common.DragonExtInfo_Para == NULL)
 	{
-		XFREE(MTYPE_TMP, lsp->common.DragonExtInfo_Para->dtl_hops);
+		lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
+		memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
 	}
 	lsp->common.DragonExtInfo_Para->num_dlt_hops = listcount(lsp->dragon.dtl);
 	lsp->common.DragonExtInfo_Para->dtl_hops = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_dlt_hops);
