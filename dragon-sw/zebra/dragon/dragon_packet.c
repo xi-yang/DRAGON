@@ -703,7 +703,9 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				}
 				for (i = 0; i < count; i++)
 				{
-					listnode_add(lsp->dragon.dtl, ((struct dtl_hop*)(((char*)tlvh)+TLV_HDR_SIZE))[i]);
+					hop = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop));
+					*hop = ((struct dtl_hop*)(((char*)tlvh)+DTLV_HDR_SIZE))[i];
+					listnode_add(lsp->dragon.dtl, hop);
 				}
 
 				if (lsp->common.DragonExtInfo_Para == NULL)
