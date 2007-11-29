@@ -715,6 +715,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				}
 				lsp->common.DragonExtInfo_Para->num_dlt_hops = listcount(lsp->dragon.dtl);
 				lsp->common.DragonExtInfo_Para->dtl_hops = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_dlt_hops);
+				i = 0;
 				LIST_LOOP(lsp->dragon.dtl, hop, node2)
 				{
 					memcpy(lsp->common.DragonExtInfo_Para->dtl_hops+i, hop, sizeof(struct dtl_hop));
