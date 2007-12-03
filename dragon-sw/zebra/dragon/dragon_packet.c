@@ -314,6 +314,9 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   msglen = 20; 
   if (lsp->dragon.srcLocalId != 0 || lsp->dragon.destLocalId != 0)
       msglen += sizeof(u_int16_t)*2 + sizeof(u_int32_t)*2;
+  if (lsp->common.DragonExtInfo_Para != NULL && lsp->common.DragonExtInfo_Para->num_dlt_hops > 0)
+      msglen += sizeof(u_int16_t)*2 + sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_dlt_hops;
+  
   if (lsp->dragon.lspVtag)
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno, 
         LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG
@@ -342,7 +345,19 @@ dragon_topology_create_msg_new(struct lsp *lsp)
       stream_put (s, &src_lclid, sizeof(u_int32_t));
       stream_put (s, &dest_lclid, sizeof(u_int32_t));
   }
-  
+  /* Subnet DTL TLV */
+  if (lsp->common.DragonExtInfo_Para != NULL && lsp->common.DragonExtInfo_Para->num_dlt_hops > 0)
+  {
+      u_int16_t type, length;
+      u_int32_t i;
+      type = htons(DRAGON_TLV_SUBNET_DTL);
+      length = htons(sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_dlt_hops);
+      stream_put (s, &type, sizeof(u_int16_t));
+      stream_put (s, &length, sizeof(u_int16_t));
+      for (i = 0; i < lsp->common.DragonExtInfo_Para->num_dlt_hops; i++)
+          stream_put (s, lsp->common.DragonExtInfo_Para->dtl_hops + i, sizeof(struct dtl_hop));
+  }
+
   return packet;
 }
 
