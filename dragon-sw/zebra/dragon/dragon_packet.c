@@ -313,9 +313,9 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   /* Build DRAGON message header */
   msglen = 20; 
   if (lsp->dragon.srcLocalId != 0 || lsp->dragon.destLocalId != 0)
-      msglen += sizeof(u_int16_t)*2 + sizeof(u_int32_t)*2;
+      msglen += (sizeof(u_int16_t)*2 + sizeof(u_int32_t)*2);
   if (lsp->common.DragonExtInfo_Para != NULL && lsp->common.DragonExtInfo_Para->num_dlt_hops > 0)
-      msglen += sizeof(u_int16_t)*2 + sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_dlt_hops;
+      msglen += (sizeof(u_int16_t)*2 + sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_dlt_hops);
   
   if (lsp->dragon.lspVtag)
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno, 
@@ -532,6 +532,46 @@ dragon_narb_topo_rsp_proc_ero(struct dragon_tlv_header *tlvh, u_int8_t *node_num
 	return node;
 }
 
+struct _EROAbstractNode_Para *
+dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, int num_ero_hops, list ero_list)
+{
+	struct _EROAbstractNode_Para* hop, *lhop, *hop_s = NULL, * hop_d = NULL;
+	int i, num_ero_hops_ret = 0;
+	struct _EROAbstractNode_Para* ero_hops_ret = NULL;
+	struct _EROAbstractNode_Para*  = ero_hops;
+	struct _EROAbstractNode_Para* hop_d = ero_hops+(num_ero_hops-1);
+	listnode node;
+
+	if (ero_hops_ret[0] .type == UNumIfID && (ero_hops_ret[0].data.uNumIfID.interfaceID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
+	{
+		hop_s = &ero_hops_ret[0];
+		num_ero_hops_ret++;
+	}
+	if (ero_hops_ret[num_ero_hops-1] .type == UNumIfID && (ero_hops_ret[num_ero_hops-1].data.uNumIfID.interfaceID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
+	{
+		hop_d = &ero_hops_ret[num_ero_hops-1];
+		num_ero_hops_ret++;
+	}
+	num_ero_hops_ret += listcount(ero_list);
+	ero_hops_ret = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*num_ero_hops_ret);
+	hop = ero_hops;
+	if (hop_s)
+	{
+		ero_hops_ret[0] = *hop_s;
+		hop++;
+	}
+	LIST_LOOP(ero_list, lhop, node);
+	{
+		*hop = *(lhop);
+		hop++;
+	}
+	if (hop_d)
+	{
+		ero_hops_ret[num_ero_hops_ret-1] = *hop_d;
+	}
+	return ero_hops_ret;
+}
+
 struct lsp *
 dragon_find_lsp_by_seqno(u_int32_t seqno)
 {
@@ -600,6 +640,10 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				if (lsp->common.EROAbstractNode_Para)
 					XFREE(MTYPE_OSPF_DRAGON, lsp->common.EROAbstractNode_Para);
 				lsp->common.EROAbstractNode_Para = dragon_narb_topo_rsp_proc_ero(tlvh, &lsp->common.ERONodeNumber);
+
+				/* Override NARB returned ERO (keep some local-id subobjects if applicable) if manual ERO has been input from CLI*/
+				if (lsp->dragon.ero != NULL && listcount(lsp->dragon.ero) > 0)
+					lsp->common.EROAbstractNode_Para = dragon_narb_override_ero(lsp->common.EROAbstractNode_Para, lsp->common.ERONodeNumber, lsp->dragon.ero);
 
 				if (lsp->dragon.lspVtag == ANY_VTAG)
 				{
