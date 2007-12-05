@@ -536,10 +536,8 @@ struct _EROAbstractNode_Para *
 dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, int num_ero_hops, list ero_list)
 {
 	struct _EROAbstractNode_Para* hop, *lhop, *hop_s = NULL, * hop_d = NULL;
-	int i, num_ero_hops_ret = 0;
+	int num_ero_hops_ret = 0;
 	struct _EROAbstractNode_Para* ero_hops_ret = NULL;
-	struct _EROAbstractNode_Para*  = ero_hops;
-	struct _EROAbstractNode_Para* hop_d = ero_hops+(num_ero_hops-1);
 	listnode node;
 
 	if (ero_hops_ret[0] .type == UNumIfID && (ero_hops_ret[0].data.uNumIfID.interfaceID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
@@ -620,9 +618,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 	struct dragon_tlv_header *tlvh;
 	u_int32_t read_len;
 	struct lsp *lsp = NULL;
-       struct _EROAbstractNode_Para *srcLocalId=NULL, *destLocalId=NULL;
-       struct _EROAbstractNode_Para *temp_ero = NULL;
-       char buf[sizeof(struct _EROAbstractNode_Para)*2];
+	struct _EROAbstractNode_Para *srcLocalId=NULL, *destLocalId=NULL;
 
 	/* Look for the corresponding LSP request according to the sequence number */
 	if (!(lsp = dragon_find_lsp_by_seqno(ntohl(amsgh->seqnum))))

@@ -1457,7 +1457,7 @@ DEFUN (dragon_set_lsp_sw,
 
 DEFUN (dragon_set_lsp_ero_hop,
        dragon_set_lsp_ero_hop_cmd,
-       "set ero-hop {strict|loose} ip-address A.B.C.D interface-id ID",
+       "set ero-hop (strict|loose) ip-address A.B.C.D interface-id ID",
        "Add an ero-hop to the ERO list\n"
        "ERO hop\n"
        "IP address\n"
@@ -1477,24 +1477,32 @@ DEFUN (dragon_set_lsp_ero_hop,
   hop = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
 
   if (strcmp(argv[0], "loose") == 0)
-	hop.isLoose = 1;
+	hop->isLoose = 1;
   inet_aton(argv[1], &ip);
-  if (sscanf("%d", argv[2], &if_id) != 1 || if_id == 0)
+  if (argc < 3 || sscanf("%d", argv[2], &if_id) != 1 || if_id == 0)
   {
-  	hop.type = IPv4;
-	hop.data.ipv4..addr.s_addr = ip.s_addr;
-	hop.data.ipv4..prefix = 32;
+  	hop->type = IPv4;
+	hop->data.ip4.addr.s_addr = ip.s_addr;
+	hop->data.ip4.prefix = 32;
   }
   else
   {
-  	hop.type = UNumIfID;
-	hop.data.uNumIfID.routerID.s_addr = ip.s_addr;
-	hop.data.uNumIfID.interfaceID = if_id;
+  	hop->type = UNumIfID;
+	hop->data.uNumIfID.routerID.s_addr = ip.s_addr;
+	hop->data.uNumIfID.interfaceID = if_id;
   }
 
   listnode_add(lsp->dragon.ero, hop);
   return CMD_SUCCESS;
 }
+
+ALIAS (dragon_set_lsp_ero_hop,
+       dragon_set_lsp_ero_hop_ipv4_cmd,
+       "set ero_hop (loose|strict) ipv4 A.B.C.D",
+       "Add an ero-hop to the ERO list\n"
+       "ERO hop\n"
+       "IP address\n"
+       "IPv4n")
 
 DEFUN (dragon_set_lsp_dtl_hop,
        dragon_set_lsp_dtl_hop_cmd,
@@ -2544,5 +2552,7 @@ dragon_supp_vty_init ()
   install_element(LSP_NODE, &dragon_enable_lsp_ext_info_edge_vtag_cmd);
   install_element(LSP_NODE, &dragon_enable_lsp_ext_info_edge_vtag_default_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_dtl_hop_cmd);
+  install_element(LSP_NODE, &dragon_set_lsp_ero_hop_cmd);
+  install_element(LSP_NODE, &dragon_set_lsp_ero_hop_ipv4_cmd);
 }
 
