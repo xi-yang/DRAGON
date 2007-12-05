@@ -1498,7 +1498,7 @@ DEFUN (dragon_set_lsp_ero_hop,
 
 ALIAS (dragon_set_lsp_ero_hop,
        dragon_set_lsp_ero_hop_ipv4_cmd,
-       "set ero_hop (loose|strict) ipv4 A.B.C.D",
+       "set ero-hop-ipv4 (loose|strict) ip-address A.B.C.D",
        "Add an ero-hop to the ERO list\n"
        "ERO hop\n"
        "IP address\n"
