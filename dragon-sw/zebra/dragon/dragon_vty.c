@@ -1475,7 +1475,7 @@ DEFUN (dragon_set_lsp_ero_hop,
   	lsp->dragon.ero = list_new();
   }
   hop = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
-
+  memset(hop, 0, sizeof(struct _EROAbstractNode_Para));
   if (strcmp(argv[0], "loose") == 0)
 	hop->isLoose = 1;
   inet_aton(argv[1], &ip);
