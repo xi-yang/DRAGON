@@ -540,32 +540,32 @@ dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, int num_ero_ho
 	struct _EROAbstractNode_Para* ero_hops_ret = NULL;
 	listnode node;
 
-	if (ero_hops_ret[0] .type == UNumIfID && (ero_hops_ret[0].data.uNumIfID.interfaceID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
+	if (ero_hops[0] .type == UNumIfID && (ero_hops[0].data.uNumIfID.interfaceID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
 	{
-		hop_s = &ero_hops_ret[0];
+		hop_s = &ero_hops[0];
 		num_ero_hops_ret++;
 	}
-	if (ero_hops_ret[num_ero_hops-1] .type == UNumIfID && (ero_hops_ret[num_ero_hops-1].data.uNumIfID.interfaceID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
+	if (ero_hops[num_ero_hops-1] .type == UNumIfID && (ero_hops[num_ero_hops-1].data.uNumIfID.interfaceID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
 	{
-		hop_d = &ero_hops_ret[num_ero_hops-1];
+		hop_d = &ero_hops[num_ero_hops-1];
 		num_ero_hops_ret++;
 	}
 	num_ero_hops_ret += listcount(ero_list);
 	ero_hops_ret = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*num_ero_hops_ret);
-	hop = ero_hops;
+	hop = ero_hops_ret;
 	if (hop_s)
 	{
-		ero_hops_ret[0] = *hop_s;
+		*hop = *hop_s;
 		hop++;
 	}
-	LIST_LOOP(ero_list, lhop, node);
+	LIST_LOOP(ero_list, lhop, node)
 	{
-		*hop = *(lhop);
+		*hop = *lhop;
 		hop++;
 	}
 	if (hop_d)
 	{
-		ero_hops_ret[num_ero_hops_ret-1] = *hop_d;
+		*hop = *hop_d;
 	}
 	return ero_hops_ret;
 }
