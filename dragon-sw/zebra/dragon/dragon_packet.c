@@ -307,6 +307,10 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   packet->lsp = lsp;
 
   /* Turn off certain NARB extra options that conflict with others */
+  /* Asking for SubnetDTL has priority over SubnetERO, only one should be returned */
+  if ((narb_extra_options & LSP_OPT_SUBNET_DTL) != 0)
+      narb_extra_options_mask |= LSP_OPT_SUBNET_ERO;
+  /* CLI supplied DTL has piority over NARB returned DTL */
   if (lsp->dragon.dtl != NULL && listcount(lsp->dragon.dtl) > 0)
       narb_extra_options_mask |= LSP_OPT_SUBNET_DTL;
 
