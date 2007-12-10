@@ -362,6 +362,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
 							if (ts_list.size() > 0)
 								RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, true);
+							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->setResourceHeld(true);
 						}
 						if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 							// Update egress link bandwidth
@@ -370,6 +371,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
 							if (ts_list.size() > 0)
 								RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).outPort, ts_list, true);
+							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->setResourceHeld(true);
 						}
 						noError = true;
 						break;
@@ -718,13 +720,14 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() != Message::InitAPI)
 								((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
 
-							// Update ingress link bandwidth
-							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false); //false == increase
-
-							// Update time slots
-							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
-							if (ts_list.size() > 0)
-								RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
+							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isResourceHeld()) {
+								// Update ingress link bandwidth
+								RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false); //false == increase
+								// Update time slots
+								((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
+								if (ts_list.size() > 0)
+									RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
+							}
 
 							(*sessionIter)->disconnectSwitch();
 						    }
@@ -771,12 +774,14 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 								}
 
-								// Update egress link bandwidth
-								RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, false); //false == increase
-								// Update time slots
-								((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
-								if (ts_list.size() > 0)
-									RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).outPort, ts_list, false);
+								if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isResourceHeld()) {
+									// Update egress link bandwidth
+									RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, false); //false == increase
+									// Update time slots
+									((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
+									if (ts_list.size() > 0)
+										RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).outPort, ts_list, false);
+								}
 						    }
 
 						    if (!noErr) return; // otherwise, continue to update bandwidth and timeslots.
