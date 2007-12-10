@@ -276,8 +276,8 @@ public:
 		ssName += mainSessionName;
 	}
 
-	bool isResourceHeld() { return isResourceHeld; }
-	bool setResourceHeld(bool hold) { isResourceHeld = hold; }
+	bool isResourceHeld() { return resourceHeld; }
+	void setResourceHeld(bool hold) { resourceHeld = hold; }
 
 	//DCN-DTL special handling
 	void getDTLString(String& dtlStr);
@@ -307,7 +307,7 @@ protected:
 	//UNI signaling states (along with PATH/RESV/ERR/TEAR messages); To be handled by uniRsvpSrcUpcall/uniRsvpDestUpcall.
 	uint8 uniState; //Message::Type 
 
-	bool isResourceHeld;
+	bool resourceHeld;
 
 	uint32 ctagNum;
 	String currentVCG;

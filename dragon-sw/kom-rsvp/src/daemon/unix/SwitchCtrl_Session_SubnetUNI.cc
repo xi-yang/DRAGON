@@ -28,7 +28,7 @@ void SwitchCtrl_Session_SubnetUNI::internalInit ()
     ctagNum = 0;
     numGroups = 0;
     ptpCatUnit = CATUNIT_UNKNOWN;
-    isResourceHeld = false;
+    resourceHeld = false;
     memset(&DTL, 0, sizeof(DTL_Subobject));
 }
 
