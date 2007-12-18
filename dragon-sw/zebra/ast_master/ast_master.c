@@ -1029,7 +1029,212 @@ master_final_parser(char* filename, int agent)
   return (ret);
 }
 
-  
+struct application_cfg *
+old_topo_xml_parser(char* filename, int agent)
+{
+  xmlChar *key;
+  xmlDocPtr doc;
+  xmlNodePtr cur, topo_ptr, node_ptr, resource_ptr;
+  char keyToFound[100]; 
+  struct resource *myres, *myres2;
+  struct adtlist *node_list, *link_list, *res_list;
+  struct adtlistnode *curnode;
+  struct _xmlAttr* attr;
+  struct application_cfg* app_cfg;
+
+  node_list = NULL;
+  link_list = NULL;
+
+  doc = xmlParseFile(filename);
+ 
+  if (doc == NULL) {
+    zlog_err("topo_xml_parser: Document not parsed successfully.");
+    return NULL;
+  }
+
+  cur = xmlDocGetRootElement(doc);
+
+  if (cur == NULL) {
+    zlog_err("topo_xml_parser: Empty document");
+    xmlFreeDoc(doc);
+    return NULL;
+  }
+
+  /* first locate "topology" keyword
+   */
+  strcpy(keyToFound, "topology");
+  cur = findxmlnode(cur, keyToFound);
+
+  if (!cur) {
+    zlog_err("topo_xml_parser: Can't locate <%s> in the document", keyToFound);
+    xmlFreeDoc(doc);
+    return NULL;
+  }
+  topo_ptr = cur;
+  app_cfg = (struct application_cfg*)malloc(sizeof(struct application_cfg));
+  memset(app_cfg, 0, sizeof(struct application_cfg));
+  app_cfg->xml_type = TOPO_XML;
+  app_cfg->ast_ip.s_addr = -1;
+  app_cfg->clnt_sock = -1;
+
+  /* parse the parameter inside topology tab 
+   */
+  for ( attr = topo_ptr->properties;
+	attr;
+	attr = attr->next) {
+    if (strcasecmp(attr->name, "action") == 0) {
+      app_cfg->action = get_action_by_str(attr->children->content);
+      if (app_cfg->action == 0) {
+	zlog_err("Invalid <topology action> found: %s", key);
+	xmlFreeDoc(doc);
+	free(app_cfg);
+	return (NULL);
+      }
+    } else if (strcasecmp(attr->name, "ast_id") == 0) 
+      app_cfg->ast_id = strdup(attr->children->content);
+  }
+      
+  /* parse all the nodes 
+   * since cur is now pointing to the <nodes> xmlnode, 
+   * set it to point to the child level; then, go through all
+   * the nodes in the child level and dump the extract nodes into 
+   * node_list
+   */
+  for (cur = cur->xmlChildrenNode;
+       cur;
+       cur=cur->next) {
+    key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+
+    if (strcasecmp(cur->name, "status") == 0) 
+      app_cfg->status = get_status_by_str(key);
+    else if (strcasecmp(cur->name, "details") == 0) 
+      strncpy(app_cfg->details, key, 200-1);
+    else if (strcasecmp(cur->name, "xml_file") == 0)
+      strncpy(app_cfg->xml_file, key, 100-1);
+    
+    if (strcasecmp(cur->name, "resource") != 0) 
+      continue;
+
+    /* First, we need to know what kind of resource this is:
+     * link or node by looking at its <resource type> keyword
+     */
+    resource_ptr = cur;
+ 
+    myres = (struct resource*) malloc(sizeof(struct resource));
+    memset(myres, 0, sizeof(struct resource));
+ 
+    /* parse the parameter inside topology tab 
+     */
+    for ( attr = resource_ptr->properties;
+	  attr;
+	  attr = attr->next) {
+      if (strcasecmp(attr->name, "res_type") == 0 ||
+	  strcasecmp(attr->name, "subtype") == 0) {
+	free(myres);
+	return NULL;
+      }
+      if (strcasecmp(attr->name, "type") == 0) {
+        if (strcasecmp(attr->children->content, "PC") == 0 ||
+      	    strcasecmp(attr->children->content, "correlator") == 0 || 
+	    strcasecmp(attr->children->content, "computation_array") == 0 || 
+	    strcasecmp(attr->children->content, "vlsr") ==0) { 
+	  myres->res_type = res_node;
+          myres->subtype = search_res_type(myres->res_type, "dragon_node_pc");
+          if (!myres->subtype) { 
+            free(myres); 
+            myres = NULL; 
+            break; 
+	  }
+	  if (myres->subtype->mod && myres->subtype->mod->read_func)
+	    myres->res = myres->subtype->mod->read_func(app_cfg, resource_ptr, agent);
+        } else if (strcasecmp(attr->children->content, "uni") == 0 ||
+		strcasecmp(attr->children->content, "non_uni") == 0 ||
+		strcasecmp(attr->children->content, "vlsr_vlsr") == 0 ||
+		strcasecmp(attr->children->content, "vlsr_es") == 0) {
+	  myres->res_type = res_link;
+	  myres->subtype = search_res_type(myres->res_type, "dragon_link");
+	  if (!myres->subtype) {
+            free(myres);
+            myres = NULL;
+            break;
+          }
+	  if (myres->subtype->mod && myres->subtype->mod->old_read_func)
+	    myres->res = myres->subtype->mod->old_read_func(app_cfg, resource_ptr, agent);
+	}
+      } else if (strcasecmp(attr->name, "name") == 0) 
+	strncpy(myres->name, attr->children->content, NODENAME_MAXLEN);
+    }
+
+    if (!myres)
+      continue;
+
+    if (myres->name[0] == '\0') {
+      zlog_err("RESource doesn't have a name; ignore ...");
+      free(myres);
+      myres = NULL;
+      continue;
+    }
+
+    /* check for name */
+    res_list = (myres->res_type == res_node)? node_list:link_list;
+    if (res_list) {
+      for (curnode = res_list->head;
+           curnode;
+           curnode = curnode->next) {
+        myres2 = (struct resource*)curnode->data;
+        if (strcasecmp(myres2->name, myres->name) == 0) {
+          zlog_warn("res name (%s) has to be unique", myres->name);
+          free(myres);
+          myres = NULL;
+          break;
+        }
+      }
+    }
+    if (!myres)
+      continue;
+
+    /* read in common resource elements */
+    for (node_ptr = resource_ptr->xmlChildrenNode;
+         node_ptr;
+         node_ptr = node_ptr->next) {
+      key = xmlNodeListGetString(doc, node_ptr->xmlChildrenNode, 1);
+
+      if (!key)
+        continue;
+
+      if (strcasecmp((char*)node_ptr->name, "ip") == 0)
+	myres->ip.s_addr = inet_addr((char*)key);
+      else if (strcasecmp((char*)node_ptr->name, "status") == 0)
+	myres->status = get_status_by_str((char*)key);
+      else if (strcasecmp(node_ptr->name, "agent_message") == 0)
+        myres->agent_message = strdup((char*)key);
+    }
+
+    if (!res_list) {
+      res_list = malloc(sizeof(struct adtlist));
+      memset(res_list, 0, sizeof(struct adtlist));
+
+      if (myres->res_type == res_node) {
+        node_list = res_list;
+        app_cfg->node_list = node_list;
+      } else {
+        link_list = res_list;
+        app_cfg->link_list = link_list;
+      }
+    }
+    adtlist_add(res_list, myres);
+  }
+
+  xmlFreeDoc(doc);
+  if (app_cfg->node_list)
+    app_cfg->total += app_cfg->node_list->count;
+  if (app_cfg->link_list)
+    app_cfg->total += app_cfg->link_list->count;
+
+  app_cfg->old_xml = 1;
+  return app_cfg;
+} 
+
 /* parse xml and build internal representation;
  * parser_type:
  *	FULL_VERSION		1

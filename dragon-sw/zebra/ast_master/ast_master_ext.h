@@ -26,6 +26,7 @@ extern char* action_type_details[];
 
 struct application_cfg {
   int xml_type;
+  int old_xml;
   int clnt_sock;
   enum action_type org_action;
   enum action_type action;
@@ -94,6 +95,8 @@ struct res_mod {
   void (*print_cli_func)(struct vty*, void*);
   void (*free_func) (void*);
   int (*minion_proc_func)(enum action_type, struct resource*);
+  void *(*old_read_func) (struct application_cfg*, xmlNodePtr, int);
+  void (*old_print_func)(FILE*, struct resource*, int);
 };
 struct res_mods {
   int total;
@@ -194,6 +197,7 @@ struct adtlist app_list;
 
 /* Functions related to overall topology configuraiton processing */
 struct application_cfg* topo_xml_parser(char*, int);
+struct application_cfg* old_topo_xml_parser(char*, int);
 struct application_cfg* retrieve_app_cfg(char*, int);
 int topo_validate_graph(int, struct application_cfg*);
 int xml_parser(char*);

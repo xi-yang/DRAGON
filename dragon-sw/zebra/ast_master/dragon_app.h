@@ -65,6 +65,7 @@ int dragon_node_pc_compose_req(char*, struct application_cfg*, struct resource*)
 void dragon_node_pc_print(FILE*, void*, int);
 void dragon_node_pc_print_cli(struct vty*, void*);
 void dragon_node_pc_free(void*);
+void dragon_node_pc_old_print(FILE*, struct resource*, int);
 
 /* functions for RESOURCE dragon_link */
 void* dragon_link_read(struct application_cfg*, xmlNodePtr, int);
@@ -74,6 +75,8 @@ int dragon_link_compose_req(char*, struct application_cfg*, struct resource*);
 void dragon_link_print(FILE*, void*, int);
 void dragon_link_print_cli(struct vty*, void*);
 void dragon_link_free(void*);
+void dragon_link_old_print(FILE*, struct resource*, int);
+void* dragon_link_old_read(struct application_cfg*, xmlNodePtr, int);
 
 /* functions for dragon app modele */
 int init_dragon_module();

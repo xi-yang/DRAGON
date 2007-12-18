@@ -64,6 +64,8 @@ extern struct application_cfg* master_final_parser(char*, int);
 extern int send_file_to_agent(char *, int, char *);
 static struct vty* fake_vty = NULL;
 
+/* backward compatibility */
+
 static struct vty*
 generate_fake_vty()
 {
@@ -247,9 +249,54 @@ set_res_fail(char* error_msg, struct resource *res)
 }
 
 void
+print_old_final(char* path)
+{
+  FILE *fp;
+  struct adtlistnode *curnode;
+
+  if (!path)
+    return;
+
+  fp = fopen(path, "w+");
+  if (!fp)
+    return;
+
+  fprintf(fp, "<topology ast_id=\"%s\" action=\"%s\">\n",
+                glob_app_cfg->ast_id, action_type_details[glob_app_cfg->action])
+;
+  if (glob_app_cfg->status)
+    fprintf(fp, "<status>%s</status>\n", status_type_details[glob_app_cfg->status]);
+  if (glob_app_cfg->xml_file[0] != '\0')
+    fprintf(fp, "<xml_file>%s</xml_file>\n", glob_app_cfg->xml_file);
+  if (glob_app_cfg->details[0] != '\0')
+    fprintf(fp, "<details>%s</details>\n", glob_app_cfg->details);
+  if (glob_app_cfg->ast_ip.s_addr != -1)
+    fprintf(fp, "<ast_ip>%s</ast_ip>\n", inet_ntoa(glob_app_cfg->ast_ip));
+
+  if (glob_app_cfg->node_list) {
+    for (curnode = glob_app_cfg->node_list->head;
+	 curnode;
+	 curnode = curnode->next) 
+      dragon_node_pc_old_print(fp, (struct resource*)curnode->data, MASTER);
+  }
+  if (glob_app_cfg->link_list) {
+    for (curnode = glob_app_cfg->link_list->head;
+         curnode;
+         curnode = curnode->next)
+      dragon_link_old_print(fp, (struct resource*)curnode->data, MASTER);
+  }
+  fprintf(fp, "</topology>");
+  fflush(fp);
+  fclose(fp);
+}
+
+void
 print_final_client(char *path)
 {
-  print_final(path, MASTER);
+  if (!glob_app_cfg->old_xml)
+    print_final(path, MASTER);
+  else 
+    print_old_final(path);
 }
 
 int
@@ -705,7 +752,8 @@ master_process_topo(char* input_file)
 
   /* after all the preparation, parse the application xml file 
    */ 
-  if ((glob_app_cfg = topo_xml_parser(AST_XML_RECV, MASTER)) == NULL) { 
+  if ((glob_app_cfg = old_topo_xml_parser(AST_XML_RECV, MASTER)) == NULL &&
+      (glob_app_cfg = topo_xml_parser(AST_XML_RECV, MASTER)) == NULL) { 
     zlog_err("master_process_topo: topo_xml_parser() failed"); 
     return 0;
   }
@@ -802,7 +850,8 @@ process_client(char *str, char action)
 
     case TOPO_XML: 
 
-      if ( (glob_app_cfg = topo_xml_parser(str, ASTB)) == NULL) { 
+      if ((glob_app_cfg = old_topo_xml_parser(str, ASTB)) == NULL &&
+	  (glob_app_cfg = topo_xml_parser(str, ASTB)) == NULL) { 
 	printf("Validation Failed\n"); 
 	exit(1); 
       } 
@@ -823,7 +872,10 @@ process_client(char *str, char action)
       filename = str;
       /* rewrite the input file */
       if (glob_app_cfg) {
-        print_final(AST_CLIENT_SEND_FILE, ASTB);
+	if (glob_app_cfg->old_xml) 
+	  print_old_final(AST_CLIENT_SEND_FILE);
+	else 
+	  print_final(AST_CLIENT_SEND_FILE, ASTB);
 	filename = AST_CLIENT_SEND_FILE;
       }
 

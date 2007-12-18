@@ -91,7 +91,9 @@ struct res_mod dragon_node_pc_mod =
 	dragon_node_pc_print,
 	dragon_node_pc_print_cli,
 	dragon_node_pc_free,
-        NULL};
+        NULL,
+	NULL,
+	dragon_node_pc_old_print};
 
 struct res_mod dragon_link_mod =  
        {"dragon_link", 
@@ -103,7 +105,9 @@ struct res_mod dragon_link_mod =
 	dragon_link_print,
 	dragon_link_print_cli,
 	dragon_link_free,
-	NULL};
+	NULL,
+	dragon_link_old_read,
+	dragon_link_old_print};
 
 char *link_stype_name[] =
   { "none",
@@ -530,6 +534,31 @@ free_endpoint(struct dragon_if_ip* ifp)
 }
 
 static void
+print_old_endpoint(FILE* fp,
+               struct dragon_endpoint* ep,
+                enum link_stype stype)
+{
+  if (!fp || !ep)
+    return;
+
+  if (ep->node && (stype == uni || stype == non_uni))
+    fprintf(fp, "\t\t<ES>%s</ES>\n", ep->node->name);
+  if (ep->node && stype == vlsr_vlsr)
+    fprintf(fp, "\t\t<vlsr>%s</vlsr>\n", ep->node->name);
+  if (ep->proxy)
+    fprintf(fp, "\t\t<proxy>%s</proxy>\n", ep->proxy->name);
+  if (ep->ifp) {
+    if (ep->ifp->iface)
+      fprintf(fp, "\t\t<iface>%s</iface>\n", ep->ifp->iface);
+    if (ep->ifp->assign_ip)
+      fprintf(fp, "\t\t<assign_ip>%s</assign_ip>\n", ep->ifp->assign_ip);
+  }
+  if (ep->local_id_type[0] != '\0')
+    fprintf(fp, "\t\t<local_id>%c/%d</local_id>\n",
+                ep->local_id_type[0], ep->local_id);
+}
+
+static void
 print_endpoint(FILE* fp, 
 	       struct dragon_endpoint* ep)
 {
@@ -740,6 +769,54 @@ dragon_node_pc_print(FILE* fp,
     }
   }
   fprintf(fp, "\t</res_details>\n");
+}
+
+
+void 
+dragon_node_pc_old_print(FILE* fp, 
+			 struct resource* res, 
+			 int agent)
+{
+  struct dragon_node_pc *node;
+  struct adtlistnode *curnode;
+  struct dragon_if_ip* ifp;
+
+  if (!fp || !res || !res->res)
+    return;
+
+  node = res->res;
+
+  fprintf(fp, "<resource type=\"PC\" name=\"%s\">\n", res->name);
+  fprintf(fp, "\t<status>%s</status>\n", status_type_details[res->status]);
+  if (res->agent_message) 
+    fprintf(fp, "\t<agent_message>%s</agent_message>\n", res->agent_message);
+  fprintf(fp, "\t<ip>%s</ip>\n", inet_ntoa(res->ip));
+  
+  if (node->router_id.s_addr != -1)
+    fprintf(fp, "\t<router_id>%s</router_id>\n", inet_ntoa(node->router_id));
+  if (node->tunnel[0] != '\0')
+    fprintf(fp, "\t<tunnel>%s</tunnel>\n", node->tunnel);
+  if (node->command)
+    fprintf(fp, "\t<command>%s</command>\n", node->command);
+
+  /* if this is sending to NODE_AGENT or MASTER */
+  if (node->if_list) {
+    for (curnode = node->if_list->head;
+         curnode;
+         curnode = curnode->next) {
+      ifp = (struct dragon_if_ip*) curnode->data;
+
+      fprintf(fp, "\t<ifaces>\n");
+      if (ifp->iface)
+        fprintf(fp, "\t\t<iface>%s</iface>\n", ifp->iface);
+      if (ifp->assign_ip)
+        fprintf(fp, "\t\t<assign_ip>%s</assign_ip>\n", ifp->assign_ip);
+      if (ifp->vtag)
+        fprintf(fp, "\t\t<vtag>%d</vtag>\n", ifp->vtag);
+      fprintf(fp, "\t</ifaces>\n");
+    }
+  }
+  fprintf(fp, "</resource>\n");
 }
 
 void
@@ -1012,6 +1089,196 @@ dragon_link_read(struct application_cfg* app_cfg,
   return res;
 }
 
+void*
+dragon_link_old_read(struct application_cfg* app_cfg, 
+	         xmlNodePtr xmlnode, 
+		 int agent)
+{
+  struct dragon_link *res;
+  xmlNodePtr cur, node_ptr;
+  struct dragon_endpoint *ep;
+  struct dragon_node_pc *node_res;
+  struct _xmlAttr* attr;
+  int i;
+
+  res = malloc(sizeof(struct dragon_link));
+  memset(res, 0, sizeof(struct dragon_link));
+
+  /* first extract the subtype for dragon_link */
+  for ( attr = xmlnode->properties;
+	attr;
+	attr = attr->next) {
+    if (strcasecmp((char*)attr->name, "type") == 0) {
+      for (i = 1; i <= NUM_DRAGON_LINK_TYPE; i++ ) {
+	if (strcasecmp((char*)attr->children->content, link_stype_name[i]) == 0) {
+	  res->stype = i;
+	  break;
+	}
+      }
+    }
+  }
+
+  for (cur = xmlnode->xmlChildrenNode;
+	cur;
+	cur=cur->next) {
+    if (strcasecmp((char*)cur->name, "src") == 0 ||
+	strcasecmp((char*)cur->name, "dest") == 0) {
+
+      ep = (struct dragon_endpoint*) malloc(sizeof(struct dragon_endpoint));
+      memset(ep, 0, sizeof(struct dragon_endpoint));
+      
+      for (node_ptr = cur->xmlChildrenNode;
+	   node_ptr;
+	   node_ptr = node_ptr->next) {
+
+	if (strcasecmp((char*)node_ptr->name, "ES") == 0 ||
+	    strcasecmp((char*)node_ptr->name, "vlsr") == 0) {
+	  ep->node = search_res_by_name(app_cfg, res_node, (char*)node_ptr->children->content);
+	  if (!ep->node) {
+	    if (ep->ifp) {
+	      if (ep->ifp->iface) 
+		free(ep->ifp->iface); 
+	    } 
+	    free(ep); 
+	    ep = NULL;
+	    break; 
+	  } 
+	} else if (strcasecmp((char*)node_ptr->name, "proxy") == 0)
+	  ep->proxy = search_res_by_name(app_cfg, res_node, (char*)node_ptr->children->content);
+	else if (strcasecmp((char*)node_ptr->name, "local_id") == 0) {
+	  switch(node_ptr->children->content[0]) {
+	    case 'l':
+	      strcpy(ep->local_id_type, "lsp-id");
+	      break;
+	    case 'p':
+	      strcpy(ep->local_id_type, "port");
+	      break;
+	    case 't':
+	      strcpy(ep->local_id_type, "tagged-group");
+	      break;
+	    case 'g':
+	      strcpy(ep->local_id_type, "group");
+	      break;
+	    default:
+	      zlog_err("invalid local_id type: %s", (char*)node_ptr->children->content);
+	  }
+
+	  if (strlen(ep->local_id_type) != 0)
+	    ep->local_id = atoi((char*)node_ptr->children->content+2);
+
+	} else if (res->stype != vlsr_vlsr) {
+
+	  if (agent != NODE_AGENT &&
+		(strcasecmp((char*)node_ptr->name, "iface") == 0 || 
+		strcasecmp((char*)node_ptr->name, "assign_ip") == 0 ||
+		strcasecmp((char*)node_ptr->name, "vtag") == 0)) {
+	    if (!ep->ifp) {
+	      ep->ifp = (struct dragon_if_ip*) malloc (sizeof(struct dragon_if_ip));
+	      memset(ep->ifp, 0, sizeof(struct dragon_if_ip));
+	    }
+	    
+	    if (strcasecmp((char*)node_ptr->name, "iface") == 0) 
+	      ep->ifp->iface = strdup((char*)node_ptr->children->content); 
+	    else if (strcasecmp((char*)node_ptr->name, "assign_ip") == 0) 
+	      ep->ifp->assign_ip = strdup((char*)node_ptr->children->content); 
+	    else if (strcasecmp((char*)node_ptr->name, "vtag") == 0) 
+	      ep->ifp->vtag = atoi((char*)node_ptr->children->content);
+	  }
+	}
+      }
+
+      if (!ep)
+	continue;
+
+      if (!ep->node) {
+	if (ep->ifp && ep->ifp->iface) 
+	    free(ep->ifp->iface);
+	free(ep);
+	continue;
+      }
+
+      if (strcasecmp((char*)cur->name, "src") == 0) 
+	res->src = ep;
+      else 
+	res->dest = ep;
+
+      if (ep->ifp && agent != LINK_AGENT) {
+	/* put this if_ip into if_list in node
+	 */
+	if (ep->node && ep->node->res) { 
+	  /* FIONA:
+	   * should check the subtype of this node_res before casting
+	   * to dragon_node_pc*
+	   */
+	  node_res = (struct dragon_node_pc*)ep->node->res; 
+	  if (!node_res->if_list) { 
+	    node_res->if_list = malloc(sizeof(struct adtlist));
+	    memset(node_res->if_list, 0, sizeof(struct adtlist));
+	  }
+	  adtlist_add(node_res->if_list, ep->ifp);
+	}
+      }
+
+    } else if (strcasecmp((char*)cur->name, "te_params") == 0) {
+
+      if ((agent == MASTER || agent == ASTB) 
+		&& app_cfg->action == setup_req) {
+
+	for (attr = cur->properties;
+	     attr;
+	     attr = attr->next) {
+
+	  if (strcasecmp((char*)attr->name, "profile") == 0) {
+
+	    if (agent == ASTB) {
+	      res->profile = malloc(sizeof(struct dragon_link_profile));
+	      strcpy(res->profile->service_name, (char*)attr->children->content);
+	    } else {
+              res->profile = get_profile_by_str((char*)attr->children->content);
+              if (!res->profile)
+                zlog_err("service type (%s) unknown", (char*)attr->children->content);
+              else {
+                strcpy(res->bandwidth, res->profile->bandwidth);
+                strcpy(res->swcap, res->profile->swcap);
+                strcpy(res->encoding, res->profile->encoding);
+                strcpy(res->gpid, res->profile->gpid);
+              }
+	    }
+	  }
+	}
+      }
+
+      for (node_ptr = cur->xmlChildrenNode;
+	    node_ptr;
+	    node_ptr = node_ptr->next) {
+
+	if (strcasecmp((char*)node_ptr->name, "bandwidth") == 0)
+	  strncpy(res->bandwidth, (char*)node_ptr->children->content, REG_TXT_FIELD_LEN);
+	else if (strcasecmp((char*)node_ptr->name, "swcap") == 0)
+	  strncpy(res->swcap, (char*)node_ptr->children->content, REG_TXT_FIELD_LEN);
+	else if (strcasecmp((char*)node_ptr->name, "encoding") == 0)
+	  strncpy(res->encoding, (char*)node_ptr->children->content, REG_TXT_FIELD_LEN);
+	else if (strcasecmp((char*)node_ptr->name, "gpid") == 0)
+	  strncpy(res->gpid, (char*)node_ptr->children->content, REG_TXT_FIELD_LEN);
+	else if (strcasecmp((char*)node_ptr->name, "vtag") == 0) {
+	  strncpy(res->vtag, (char*)node_ptr->children->content, REG_TXT_FIELD_LEN);
+	  if (res->src && res->src->ifp)
+	    res->src->ifp->vtag = atoi((char*)node_ptr->children->content);
+	  if (res->dest && res->dest->ifp)
+	    res->dest->ifp->vtag = atoi((char*)node_ptr->children->content);
+	}
+      }
+    } else if (strcasecmp((char*)cur->name, "lsp_name") == 0 &&
+	    app_cfg->action != setup_req )
+      strncpy(res->lsp_name, (char*)cur->children->content, LSP_NAME_LEN);
+    else if (strcasecmp((char*)cur->name, "dragon") == 0)
+      res->dragon = search_res_by_name(app_cfg, res_node, (char*)cur->children->content);
+    else if (strcasecmp((char*)cur->name, "link_status") == 0)
+      res->l_status = get_link_status_by_str((char*)cur->children->content);
+  }
+
+  return res;
+}
 int
 dragon_link_validate(struct application_cfg* app_cfg, 
 		     struct resource* res, 
@@ -1299,9 +1566,9 @@ dragon_link_print(FILE* fp,
     fprintf(fp, "\t\t</dest>\n");
   }
   if (link->profile)
-    fprintf(fp, "\t\t<te_params profile=\"%s\">\n", link->profile->service_name);
+    fprintf(fp, "\t<te_params profile=\"%s\">\n", link->profile->service_name);
   else
-    fprintf(fp, "\t\t<te_params>\n");
+    fprintf(fp, "\t<te_params>\n");
   if (link->bandwidth[0] != '\0')
     fprintf(fp, "\t\t\t<bandwidth>%s</bandwidth>\n", link->bandwidth);
   if (link->swcap[0] != '\0')
@@ -1314,6 +1581,54 @@ dragon_link_print(FILE* fp,
     fprintf(fp, "\t\t\t<vtag>%s</vtag>\n", link->vtag);
   fprintf(fp, "\t\t</te_params>\n");
   fprintf(fp, "\t</res_details>\n");
+}
+
+void
+dragon_link_old_print(FILE* fp, 
+		  struct resource* res, 
+		  int print_type)
+{
+  struct dragon_link *link;
+
+  if (!fp || !res || !res->res)
+    return;
+
+  link = (struct dragon_link *)res->res;
+
+  fprintf(fp, "<resource type=\"%s\" name=\"%s\">\n",
+                link_stype_name[link->stype], res->name);
+  fprintf(fp, "\t<status>%s</status>\n", status_type_details[res->status]);
+  fprintf(fp, "\t<link_status>%s</link_status>\n", link_status_name[link->l_status]);
+  if (res->agent_message)
+    fprintf(fp, "\t<agent_message>%s</agent_message>\n", res->agent_message);
+  if (link->lsp_name[0] != '\0')
+    fprintf(fp, "\t<lsp_name>%s</lsp_name>\n", link->lsp_name);
+  if (link->src) {
+    fprintf(fp, "\t<src>\n");
+    print_old_endpoint(fp, link->src, link->stype);
+    fprintf(fp, "\t</src>\n");
+  }
+  if (link->dest) {
+    fprintf(fp, "\t<dest>\n");
+    print_old_endpoint(fp, link->dest, link->stype);
+    fprintf(fp, "\t</dest>\n");
+  }
+  if (link->profile)
+    fprintf(fp, "\t\t<te_params profile=\"%s\">\n", link->profile->service_name);
+  else
+    fprintf(fp, "\t<te_params>\n");
+  if (link->bandwidth[0] != '\0')
+    fprintf(fp, "\t\t<bandwidth>%s</bandwidth>\n", link->bandwidth);
+  if (link->swcap[0] != '\0')
+    fprintf(fp, "\t\t<swcap>%s</swcap>\n", link->swcap);
+  if (link->encoding[0] != '\0')
+    fprintf(fp, "\t\t<encoding>%s</encoding>\n", link->encoding);
+  if (link->gpid[0] != '\0')
+    fprintf(fp, "\t\t<gpid>%s</gpid>\n", link->gpid);
+  if (link->vtag[0] != '\0')
+    fprintf(fp, "\t\t<vtag>%s</vtag>\n", link->vtag);
+  fprintf(fp, "\t</te_params>\n");
+  fprintf(fp, "</resource>\n");
 }
 
 void
