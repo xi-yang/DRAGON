@@ -1,0 +1,62 @@
+<element name="res_details" xmlns="http://relaxng.org/ns/structure/1.0">
+  <optional>
+  <attribute name="dragon_type">
+    <choice>
+      <value>uni</value>
+      <value>vlsr_vlsr</value>
+      <value>non_uni</value>
+    </choice>
+  </attribute>
+  </optional>
+  <interleave>
+    <optional><element name="link_status"><text/></element></optional>
+    <optional><element name="lsp_name"><text/></element></optional>
+    <optional><element name="src"> 
+      <element name="node"><text/></element>
+      <optional><element name="local_id"><text/></element></optional>
+      <optional><element name="iface"><text/></element></optional>
+      <optional><element name="assign_ip"><text/></element></optional>
+    </element></optional>
+    <optional><element name="dest"> 
+      <element name="node"><text/></element>
+      <optional><element name="local_id"><text/></element></optional>
+      <optional><element name="iface"><text/></element></optional>
+      <optional><element name="assign_ip"><text/></element></optional>
+    </element></optional>
+    <element name="te_params">
+	  <optional><attribute name="profile"><text/></attribute></optional>
+	  <interleave>
+	  <optional><element name="bandwidth">
+	    <choice>
+	      <value>gige</value><value>gige_f</value><value>2gige</value>
+	      <value>3gige</value><value>4gige</value><value>5gige</value>
+	      <value>6gige</value><value>7gige</value><value>8gige</value>
+	      <value>9gige</value><value>eth100M</value><value>eth150M</value>
+	      <value>eth200M</value><value>eth300M</value><value>eth400M</value>
+	      <value>eth500M</value><value>eth600M</value><value>eth700M</value>
+	      <value>eth800M</value><value>eth900M</value><value>10g</value>
+	      <value>hdtv</value><value>oc48</value> 
+	    </choice>
+	  </element></optional>
+          <optional><element name="swcap">
+	    <choice>
+	      <value>psc1</value><value>l2sc</value>
+	      <value>lsc</value><value>tdm</value>
+	    </choice>
+	  </element></optional>
+          <optional><element name="encoding">
+	    <choice>
+	      <value>packet</value><value>ethernet</value>
+	      <value>lambda</value><value>sdh</value>
+	    </choice>
+	  </element></optional>
+          <optional><element name="gpid">
+	    <choice>
+	      <value>ethernet</value><value>lambda</value><value>sdh</value>
+	    </choice>
+	  </element></optional>
+          <optional><element name="vtag"><text/></element></optional>
+	  </interleave>
+    </element> 
+  </interleave>
+</element>

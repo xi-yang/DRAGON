@@ -584,7 +584,7 @@ main(int argc, char* argv[])
   }
 
   if (init_schema("http://wiki.maxgigapop.net/twiki/pub/Main/FionaLeung/setup_req.rng")==NULL)
-    init_schema("/usr/local/ast_file/schema/setup_req.rng");
+    init_schema("/usr/local/ast_file/xml_schema/setup_req.rng");
 
   zlog_default = openzlog (progname, ZLOG_NOLOG, ZLOG_ASTB,
                            LOG_CONS|LOG_NDELAY|LOG_PID, LOG_DAEMON);

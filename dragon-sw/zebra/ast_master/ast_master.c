@@ -45,7 +45,7 @@ init_resource()
   struct broker *broker;
   struct _xmlAttr* attr;
  
-  ctxt = build_RNGValidCtxt("/usr/local/ast_file/schema/resource_def.rng"); 
+  ctxt = build_RNGValidCtxt("/usr/local/ast_file/xml_schema/resource_def.rng"); 
   if (!ctxt) {
     zlog_err("init_resource(): ctxt NULL");
     return 1;

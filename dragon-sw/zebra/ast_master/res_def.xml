@@ -1,0 +1,10 @@
+<resource_definition>
+<resource res_type="node" subtype="dragon_node_pc">
+    <schema>/usr/local/ast_file/xml_schema/dragon_node_pc.rng</schema>
+    <agent port="2623"></agent>
+</resource>
+<resource res_type="link" subtype="dragon_link">
+    <schema>/usr/local/ast_file/xml_schema/dragon_link.rng</schema>
+    <agent port="2618"></agent>
+</resource>
+</resource_definition>

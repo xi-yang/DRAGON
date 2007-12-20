@@ -1,0 +1,65 @@
+<element name="topology" xmlns="http://relaxng.org/ns/structure/1.0">
+  <optional><attribute name="ast_id"><text/></attribute></optional>
+  <attribute name="action">
+    <choice> 
+      <value>SETUP_REQ</value><value>SETUP_RESP</value>
+      <value>RELEASE_REQ</value><value>RELEASE_RESP</value>
+      <value>AST_COMPLETE</value><value>APP_COMPLETE</value>
+      <value>QUERY_REQ</value><value>QUERY_RESP</value>
+      <value>setup_req</value><value>setup_resp</value>
+      <value>release_req</value><value>release_resp</value>
+      <value>ast_complete</value><value>app_complete</value>
+      <value>query_req</value><value>query_resp</value>
+    </choice>
+  </attribute>
+
+  <interleave>
+  <optional><element name="status">
+    <choice>
+      <value>AST_UNKNOWN</value><value>AST_SUCCESS</value>
+      <value>AST_FAILURE</value><value>AST_PENDING</value>
+      <value>AST_AST_COMPLETE</value><value>AST_APP_COMPLETE</value>
+      <value>ast_unknown</value><value>ast_success</value>
+      <value>ast_failure</value><value>ast_pending</value>
+      <value>ast_ast_complete</value><value>ast_app_complete</value>
+    </choice>
+  </element></optional>
+  <optional><element name="ast_ip"><text/></element></optional>
+  <optional><element name="details"><text/></element></optional>
+  <optional><element name="xml_file"><text/></element></optional>
+  </interleave>
+  <zeroOrMore>
+    <element name="resource">
+      <interleave>
+      <attribute name="subtype"><text/></attribute>
+      <attribute name="name"><text/></attribute>
+      <attribute name="res_type">
+	<choice>
+	  <value type="string">node</value>
+	  <value type="string">link</value>
+	</choice>
+      </attribute>
+      <optional><element name="ip"><text/></element></optional> 
+      <optional><element name="status"><text/></element></optional>
+      <optional><element name="agent_message"><text/></element></optional>
+      </interleave>
+      <optional><element name="res_details"> 
+	<zeroOrMore> 
+	  <choice> 
+	    <element><anyName/>
+		<zeroOrMore>
+		<choice>
+			<text/>
+			<element><anyName/><text/></element>
+		        <attribute><anyName/><text/></attribute>
+	        </choice>
+		</zeroOrMore>
+	    </element> 
+	    <attribute><anyName/><text/></attribute> 
+	    <text/> 
+	  </choice> 
+	</zeroOrMore>
+      </element></optional>
+   </element> 
+  </zeroOrMore>
+</element>

@@ -1,0 +1,16 @@
+<element name="res_details" xmlns="http://relaxng.org/ns/structure/1.0">
+  <interleave>
+    <optional><element name="router_id"><text/></element></optional>
+    <optional><element name="tunnel"><text/></element></optional>
+    <optional><element name="command"><text/></element></optional>
+    <zeroOrMore> 
+      <element name="ifaces">
+	<interleave>
+	<optional><element name="iface"><text/></element></optional>
+	<optional><element name="assign_ip"><text/></element></optional>
+	<optional><element name="vtag"><text/></element></optional>
+	</interleave>
+      </element>
+    </zeroOrMore>
+  </interleave>
+</element>

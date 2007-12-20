@@ -1,0 +1,23 @@
+<element name="resource_definition" xmlns="http://relaxng.org/ns/structure/1.0">
+  <zeroOrMore>
+    <element name="resource">
+      <attribute name="subtype"> <text/> </attribute>
+      <attribute name="res_type">
+	<choice>
+	  <value type="string">node</value>
+	  <value type="string">link</value>
+	</choice>
+      </attribute>
+      <zeroOrMore>
+	<element name="broker">
+	  <attribute name="ip"><text/></attribute>
+	  <attribute name="port"><text/></attribute>
+	</element>
+      </zeroOrMore>
+      <optional><element name="schema"><text/></element></optional>
+      <optional><element name="agent">
+	<optional><attribute name="ip"><text/></attribute></optional>
+	<attribute name="port"><text/></attribute></element></optional>
+   </element>
+  </zeroOrMore>
+</element>
