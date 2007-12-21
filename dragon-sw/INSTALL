@@ -13,7 +13,8 @@ entity could be one of the following.
   vlsr-cat3750 -- A VLSR that operates on a Cisco Catalyst 3750 switch
   vlsr-cat6500 -- A VLSR that operates on a Cisco Catalyst 6500 switch
   vlsr-linux -- A VLSR that operates on the Linux host using brctl/vconfig
-  csa -- A End System Agent
+  vlsr-subnet -- Ethernet-over-SONET subnet control 
+  csa -- An Client System Agent
   narb -- Supporting software components for NARB sever.
   Without provided the [target] option, the default option will be vlsr.
 

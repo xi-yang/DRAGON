@@ -1,2 +1,4 @@
-zebra: exported revision 590.
-kom-rsvp: exported revision 750.
+
+svn export svn://svn.maxgigapop.net/dragon-sw/trunk/dragon-sw
+
+exported revision-1694
