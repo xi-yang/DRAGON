@@ -104,7 +104,7 @@ ZEBRA = @ZEBRA@
 am__include = @am__include@
 am__quote = @am__quote@
 install_sh = @install_sh@
-DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
+DEFS = @DEFS@ -DRESOURCE_BROKER -DSYSCONFDIR=\"$(sysconfdir)/\"
 XML_LIBS = -L/usr/lib -L/usr/local/lib
 
 LIBS = @LIBS@ @CURSES@ @LIBPAM@ $(XML_LIBS)
