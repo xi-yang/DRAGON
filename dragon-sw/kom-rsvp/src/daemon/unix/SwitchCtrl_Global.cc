@@ -675,7 +675,7 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         	vendor = RFC2674;
         else if (String("Ethernet Routing Switch") == venderSystemDescription) // Dell PowerConnect 6024/6024F
         	vendor = RFC2674;
-        else if (venderSystemDescription.leftequal("Summit1i") || venderSystemDescription.leftequal("Summit5i")) 
+        else if (venderSystemDescription.leftequal("Summit1") || venderSystemDescription.leftequal("Summit5")) 
         	vendor = RFC2674;
         else if (venderSystemDescription.leftequal("Spectra")) 
         	vendor = LambdaOptical;
