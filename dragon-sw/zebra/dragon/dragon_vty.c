@@ -857,15 +857,26 @@ DEFUN (dragon_edit_lsp,
 				list_delete_all_node(lsp->dragon.ero);
 			}
 			/*$$$$ clear DTL*/
-			if (lsp->dragon.dtl != NULL)
+			if (lsp->dragon.subnet_dtl != NULL)
 			{
 				struct dtl_hop *hop;
 				listnode node2;
-				LIST_LOOP(lsp->dragon.dtl, hop, node2)
+				LIST_LOOP(lsp->dragon.subnet_dtl, hop, node2)
 				{
 					free(hop);
 				}
-				list_delete_all_node(lsp->dragon.dtl);
+				list_delete_all_node(lsp->dragon.subnet_dtl);
+			}
+			/*$$$$ clear subnet ERO*/
+			if (lsp->dragon.subnet_ero != NULL)
+			{
+				struct _EROAbstractNode_Para *hop;
+				listnode node3;
+				LIST_LOOP(lsp->dragon.subnet_ero, hop, node3)
+				{
+					free(hop);
+				}
+				list_delete_all_node(lsp->dragon.subnet_ero);
 			}
 			break;
 		}
@@ -1460,6 +1471,8 @@ DEFUN (dragon_set_lsp_ero_hop,
        "set ero-hop (strict|loose) ip-address A.B.C.D interface-id ID",
        "Add an ero-hop to the ERO list\n"
        "ERO hop\n"
+       "Strict hop\n"
+       "Loose hop\n"
        "IP address\n"
        "IPv4n"
        "Interface ID\n"
@@ -1500,9 +1513,11 @@ ALIAS (dragon_set_lsp_ero_hop,
        dragon_set_lsp_ero_hop_ipv4_cmd,
        "set ero-hop-ipv4 (loose|strict) ip-address A.B.C.D",
        "Add an ero-hop to the ERO list\n"
-       "ERO hop\n"
+       "IPv4 ERO hop\n"
+       "Strict hop\n"
+       "Loose hop\n"
        "IP address\n"
-       "IPv4n")
+       "IPv4\n")
 
 DEFUN (dragon_set_lsp_dtl_hop,
        dragon_set_lsp_dtl_hop_cmd,
@@ -1517,16 +1532,65 @@ DEFUN (dragon_set_lsp_dtl_hop,
 {
   struct lsp *lsp = (struct lsp *)(vty->index);
   struct dtl_hop *hop;
-  if (lsp->dragon.dtl == NULL)
+  if (lsp->dragon.subnet_dtl == NULL)
   {
-  	lsp->dragon.dtl = list_new();
+  	lsp->dragon.subnet_dtl = list_new();
   }
   hop = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop));
   strncpy(hop->nodename, argv[0], MAX_DTL_NODENAME_LEN);
   sscanf(argv[1], "%d", &hop->linkid);
-  listnode_add(lsp->dragon.dtl, hop);
+  listnode_add(lsp->dragon.subnet_dtl, hop);
   return CMD_SUCCESS;
 }
+
+DEFUN (dragon_set_lsp_subnet_ero_hop,
+       dragon_set_lsp_subnet_ero_hop_cmd,
+       "set subnet-ero-hop ip-address A.B.C.D interface-id ID",
+       "Add a subnet-ero-hop to the SubnetERO list\n"
+       "SubnetERO hop\n"
+       "IP address\n"
+       "IPv4n"
+       "Interface ID\n"
+       "ID\n"
+	)
+{
+  struct _EROAbstractNode_Para *hop;
+  struct in_addr ip;
+  u_int32_t if_id;
+  struct lsp *lsp = (struct lsp *)(vty->index);
+  if (lsp->dragon.subnet_ero == NULL)
+  {
+  	lsp->dragon.subnet_ero = list_new();
+  }
+  hop = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
+  memset(hop, 0, sizeof(struct _EROAbstractNode_Para));
+  hop->isLoose = 0; //subnet hop must be 'strict'
+  inet_aton(argv[1], &ip);
+  if (argc < 3 || sscanf("%d", argv[2], &if_id) != 1 || if_id == 0)
+  {
+  	hop->type = IPv4;
+	hop->data.ip4.addr.s_addr = ip.s_addr;
+	hop->data.ip4.prefix = 32;
+  }
+  else
+  {
+  	hop->type = UNumIfID;
+	hop->data.uNumIfID.routerID.s_addr = ip.s_addr;
+	hop->data.uNumIfID.interfaceID = if_id;
+  }
+
+  listnode_add(lsp->dragon.subnet_ero, hop);
+  return CMD_SUCCESS;
+}
+
+ALIAS (dragon_set_lsp_subnet_ero_hop,
+       dragon_set_lsp_subnet_ero_hop_ipv4_cmd,
+       "set subnet-ero-hop-ipv4 ip-address A.B.C.D",
+       "Add a subnet-ero-hop to the ERO list\n"
+       "SunbetERO hop\n"
+       "IP address\n"
+       "IPv4\n")
+
 
 DEFUN (dragon_commit_lsp_sender,
        dragon_commit_lsp_sender_cmd,
@@ -1590,8 +1654,8 @@ DEFUN (dragon_commit_lsp_sender,
       return CMD_WARNING;
   }
 
-  /*$$$$ Special handling for DCN-DTL*/
-  if (lsp->dragon.dtl != NULL && listcount(lsp->dragon.dtl) > 0)
+  /*$$$$ Special handling for DCN Subnet-DTL*/
+  if (lsp->dragon.subnet_dtl != NULL && listcount(lsp->dragon.subnet_dtl) > 0)
   {
   	int i = 0;
 	struct dtl_hop *hop;
@@ -1602,11 +1666,31 @@ DEFUN (dragon_commit_lsp_sender,
 		lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
 		memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
 	}
-	lsp->common.DragonExtInfo_Para->num_dlt_hops = listcount(lsp->dragon.dtl);
-	lsp->common.DragonExtInfo_Para->dtl_hops = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_dlt_hops);
-	LIST_LOOP(lsp->dragon.dtl, hop, node2)
+	lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops = listcount(lsp->dragon.subnet_dtl);
+	lsp->common.DragonExtInfo_Para->subnet_dtl_hops = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops);
+	LIST_LOOP(lsp->dragon.subnet_dtl, hop, node2)
 	{
-		memcpy(lsp->common.DragonExtInfo_Para->dtl_hops+i, hop, sizeof(struct dtl_hop));
+		memcpy(lsp->common.DragonExtInfo_Para->subnet_dtl_hops+i, hop, sizeof(struct dtl_hop));
+		i++;
+	}
+  }
+  /*$$$$ Special handling for Subnet-ERO*/
+  if (lsp->dragon.subnet_ero  != NULL && listcount(lsp->dragon.subnet_ero) > 0)
+  {
+  	int i = 0;
+  	struct _EROAbstractNode_Para *hop;
+	listnode node3;
+	/*assemble Subnet-ERO TLV*/
+	if (lsp->common.DragonExtInfo_Para == NULL)
+	{
+		lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
+		memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+	}
+	lsp->common.DragonExtInfo_Para->num_subnet_ero_hops = listcount(lsp->dragon.subnet_ero);
+	lsp->common.DragonExtInfo_Para->subnet_ero_hops = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*lsp->common.DragonExtInfo_Para->num_subnet_ero_hops);
+	LIST_LOOP(lsp->dragon.subnet_ero, hop, node3)
+	{
+		memcpy(lsp->common.DragonExtInfo_Para->subnet_ero_hops+i, hop, sizeof(struct _EROAbstractNode_Para));
 		i++;
 	}
   }

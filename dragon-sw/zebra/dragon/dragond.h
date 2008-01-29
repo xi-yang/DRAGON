@@ -485,8 +485,10 @@ struct _Dragon_ExtInfo_Para {
 	u_int32_t seqnum;
 	u_int16_t ingress_vtag;
 	u_int16_t egress_vtag;
-	u_int32_t num_dlt_hops;
-	struct dtl_hop *dtl_hops;
+	u_int32_t num_subnet_dtl_hops;
+	struct dtl_hop *subnet_dtl_hops;
+	u_int32_t num_subnet_ero_hops;
+	struct dtl_hop *subnet_ero_hops;
 };
 
 struct _sessionParameters {
@@ -570,7 +572,8 @@ struct lsp_dragon_para {
     u_int32_t destLocalId;       /* Destination is (port|untagged-group|tagged-group) */
     u_int32_t lspVtag;       /* LSP E2E VLAN Tag */
     list ero; /* pointer to list of CLI supplied ERO subobjects (struct _EROAbstractNode_Para)*/
-    list dtl; /*pointer to list of CLI supplied DTL hops (struct dtl_hop),*/
+    list subnet_dtl; /*pointer to list of CLI supplied DTL hops (struct dtl_hop),*/
+    list subnet_ero; /*pointer to list of CLI supplied DTL hops (struct dtl_hop),*/
 };
 
 #define ANY_VTAG 0xffff  /*Indicating that LSP uses any available E2E VLAN Tag*/
