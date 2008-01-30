@@ -359,8 +359,47 @@ dragon_topology_create_msg_new(struct lsp *lsp)
       stream_put (s, &src_lclid, sizeof(u_int32_t));
       stream_put (s, &dest_lclid, sizeof(u_int32_t));
   }
-  /* Subnet DTL TLV */
-  if (lsp->dragon.subnet_dtl != NULL && listcount(lsp->dragon.subnet_dtl) > 0)
+  /* Subnet ERO TLV */
+  if (lsp->dragon.subnet_ero != NULL && listcount(lsp->dragon.subnet_ero) > 0)
+  {
+	struct _EROAbstractNode_Para *hop;
+	listnode node;
+	char ero_buf[DRAGON_MAX_PACKET_SIZE];
+	char * p = ero_buf;
+	u_int16_t length = 0;
+	LIST_LOOP(lsp->dragon.subnet_ero, hop, node)
+	{
+		if (hop->type == IPv4)
+		{
+			((struct AbstractNode_IPv4 *)p)->typeOrLoose = hop->type | (hop->isLoose << 7);
+			((struct AbstractNode_IPv4 *)p)->length = sizeof(struct AbstractNode_IPv4 );
+			memcpy(((struct AbstractNode_IPv4 *)p)->addr, &hop->data.ip4.addr, sizeof(struct in_addr));
+			((struct AbstractNode_IPv4 *)p)->prefix = hop->data.ip4.prefix;
+			((struct AbstractNode_IPv4 *)p)->resvd = 0;
+			p+=sizeof(struct AbstractNode_IPv4);
+			length += sizeof(struct AbstractNode_IPv4);
+			
+		}
+		else if (hop->type == UNumIfID)
+		{
+			((struct AbstractNode_UnNumIfID *)p)->typeOrLoose = hop->type | (hop->isLoose << 7);
+			((struct AbstractNode_UnNumIfID *)p)->length = sizeof(struct AbstractNode_UnNumIfID );
+			memcpy(((struct AbstractNode_UnNumIfID *)p)->routerID, &hop->data.uNumIfID.routerID, sizeof(struct in_addr));
+			((struct AbstractNode_UnNumIfID *)p)->interfaceID =  htonl(hop->data.uNumIfID.interfaceID);
+			((struct AbstractNode_UnNumIfID *)p)->resvd = 0;
+			p+=sizeof(struct AbstractNode_UnNumIfID);
+			length += sizeof(struct AbstractNode_UnNumIfID);
+		}
+	}
+	u_int16_t type = htons(DRAGON_TLV_SUBNET_ERO);
+	stream_put (s, &type, sizeof(u_int16_t));
+	length = htons(length);
+	stream_put (s, &length, sizeof(u_int16_t));
+  	stream_put(s, ero_buf, ntohs(length));
+  }
+  /* Subnet DTL TLV*/ 
+  /* @@@@ Obsolete: no DTL in NARB request*/
+  else if (lsp->dragon.subnet_dtl != NULL && listcount(lsp->dragon.subnet_dtl) > 0)
   {
 	struct dtl_hop *hop;
 	listnode node;
