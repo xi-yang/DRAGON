@@ -2633,5 +2633,7 @@ dragon_supp_vty_init ()
   install_element(LSP_NODE, &dragon_set_lsp_dtl_hop_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_ero_hop_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_ero_hop_ipv4_cmd);
+  install_element(LSP_NODE, &dragon_set_lsp_subnet_ero_hop_cmd);
+  install_element(LSP_NODE, &dragon_set_lsp_subnet_ero_hop_ipv4_cmd);
 }
 
