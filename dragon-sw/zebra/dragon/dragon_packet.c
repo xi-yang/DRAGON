@@ -299,6 +299,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   struct api_msg_header *amsgh;
   struct dragon_fifo_elt *packet;
   int msglen;
+  u_int16_t* p_s_msglen;
   u_int32_t narb_extra_options_mask = 0;
 
   /* Create a stream for topology request. */
@@ -321,11 +322,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 
   /* Build DRAGON message header */
   msglen = 20; 
-  if (lsp->dragon.srcLocalId != 0 || lsp->dragon.destLocalId != 0)
-      msglen += (sizeof(u_int16_t)*2 + sizeof(u_int32_t)*2);
-  if (lsp->common.DragonExtInfo_Para != NULL && lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops > 0)
-      msglen += (sizeof(u_int16_t)*2 + sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops);
-  
+
   if (lsp->dragon.lspVtag)
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno, 
         LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG
@@ -341,6 +338,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
         | (narb_extra_options & (~narb_extra_options_mask)),
          0);
 
+  p_s_msglen = ((u_int16_t*)amsgh) + 1;
   /* Build mandatory /request TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_CREATE, lsp);
 
@@ -358,6 +356,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
       stream_put (s, &length, sizeof(u_int16_t));
       stream_put (s, &src_lclid, sizeof(u_int32_t));
       stream_put (s, &dest_lclid, sizeof(u_int32_t));
+      msglen += (sizeof(u_int16_t)*2 + sizeof(u_int32_t)*2);
   }
   /* Subnet ERO TLV */
   if (lsp->dragon.subnet_ero != NULL && listcount(lsp->dragon.subnet_ero) > 0)
@@ -396,6 +395,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 	length = htons(length);
 	stream_put (s, &length, sizeof(u_int16_t));
   	stream_put(s, ero_buf, ntohs(length));
+	msglen += (4+ntohs(length));
   }
   /* Subnet DTL TLV*/ 
   /* @@@@ Obsolete: no DTL in NARB request*/
@@ -410,8 +410,11 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 	stream_put (s, &length, sizeof(u_int16_t));
 	LIST_LOOP(lsp->dragon.subnet_dtl, hop, node)
 		stream_put (s, hop, sizeof(struct dtl_hop));
+	msglen += (4+ntohs(length));
   }
 
+  /*adjusting the message length in the msg_header that has been put into stream buffer*/
+  *p_s_msglen = htons(msglen);
   return packet;
 }
 
