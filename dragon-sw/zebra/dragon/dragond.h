@@ -487,8 +487,6 @@ struct _Dragon_ExtInfo_Para {
 	u_int16_t egress_vtag;
 	u_int32_t num_subnet_dtl_hops;
 	struct dtl_hop *subnet_dtl_hops;
-	u_int32_t num_subnet_ero_hops;
-	struct dtl_hop *subnet_ero_hops;
 };
 
 struct _sessionParameters {

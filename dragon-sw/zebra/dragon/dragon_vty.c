@@ -1482,11 +1482,18 @@ DEFUN (dragon_set_lsp_ero_hop,
   struct _EROAbstractNode_Para *hop;
   struct in_addr ip;
   u_int32_t if_id;
+
   struct lsp *lsp = (struct lsp *)(vty->index);
+  if (lsp->dragon.subnet_ero != NULL && listcount(lsp->dragon.subnet_ero) > 0)
+  {
+      vty_out(vty, "###User supplied subnet-DTL cannot be used together with subnet-ERO!%s", VTY_NEWLINE);
+      return CMD_WARNING;
+  }
   if (lsp->dragon.ero == NULL)
   {
   	lsp->dragon.ero = list_new();
   }
+
   hop = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
   memset(hop, 0, sizeof(struct _EROAbstractNode_Para));
   if (strcmp(argv[0], "loose") == 0)
@@ -1557,11 +1564,18 @@ DEFUN (dragon_set_lsp_subnet_ero_hop,
   struct _EROAbstractNode_Para *hop;
   struct in_addr ip;
   u_int32_t if_id;
+
   struct lsp *lsp = (struct lsp *)(vty->index);
+  if (lsp->dragon.subnet_dtl != NULL && listcount(lsp->dragon.subnet_dtl) > 0)
+  {
+      vty_out(vty, "###User supplied subnet-ERO cannot be used together with subnet-DTL!%s", VTY_NEWLINE);
+      return CMD_WARNING;
+  }  	
   if (lsp->dragon.subnet_ero == NULL)
   {
   	lsp->dragon.subnet_ero = list_new();
   }
+
   hop = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
   memset(hop, 0, sizeof(struct _EROAbstractNode_Para));
   hop->isLoose = 0; //subnet hop must be 'strict'
@@ -1655,12 +1669,12 @@ DEFUN (dragon_commit_lsp_sender,
   }
 
   /*$$$$ Special handling for DCN Subnet-DTL*/
+  /* Note: With the user supplied DTL in lsp->dragon.subnet_dtl, NARB will not send back a DTL TLV. */
   if (lsp->dragon.subnet_dtl != NULL && listcount(lsp->dragon.subnet_dtl) > 0)
   {
   	int i = 0;
 	struct dtl_hop *hop;
 	listnode node2;
-	/*assemble DTL TLV*/
 	if (lsp->common.DragonExtInfo_Para == NULL)
 	{
 		lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
@@ -1674,26 +1688,7 @@ DEFUN (dragon_commit_lsp_sender,
 		i++;
 	}
   }
-  /*$$$$ Special handling for Subnet-ERO*/
-  if (lsp->dragon.subnet_ero  != NULL && listcount(lsp->dragon.subnet_ero) > 0)
-  {
-  	int i = 0;
-  	struct _EROAbstractNode_Para *hop;
-	listnode node3;
-	/*assemble Subnet-ERO TLV*/
-	if (lsp->common.DragonExtInfo_Para == NULL)
-	{
-		lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
-		memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
-	}
-	lsp->common.DragonExtInfo_Para->num_subnet_ero_hops = listcount(lsp->dragon.subnet_ero);
-	lsp->common.DragonExtInfo_Para->subnet_ero_hops = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*lsp->common.DragonExtInfo_Para->num_subnet_ero_hops);
-	LIST_LOOP(lsp->dragon.subnet_ero, hop, node3)
-	{
-		memcpy(lsp->common.DragonExtInfo_Para->subnet_ero_hops+i, hop, sizeof(struct _EROAbstractNode_Para));
-		i++;
-	}
-  }
+  
   if (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr && lsp->common.Session_Para.srcAddr.s_addr != 0
   	&& !((lsp->dragon.srcLocalId >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID || (lsp->dragon.destLocalId >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID))
   {

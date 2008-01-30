@@ -312,9 +312,12 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   if ((narb_extra_options & LSP_OPT_SUBNET_DTL) != 0)
       narb_extra_options_mask |= LSP_OPT_SUBNET_ERO;
   */
-  /* CLI supplied DTL has piority over NARB returned DTL */
+  /* CLI supplied SubnetDTL has piority over NARB returned SubnetDTL */
   if (lsp->dragon.subnet_dtl != NULL && listcount(lsp->dragon.subnet_dtl) > 0)
       narb_extra_options_mask |= LSP_OPT_SUBNET_DTL;
+  /* CLI supplied SubnetERO has piority over NARB returned SubnetERO */
+  if (lsp->dragon.subnet_ero != NULL && listcount(lsp->dragon.subnet_ero) > 0)
+      narb_extra_options_mask |= LSP_OPT_SUBNET_ERO;
 
   /* Build DRAGON message header */
   msglen = 20; 
@@ -326,17 +329,22 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   if (lsp->dragon.lspVtag)
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno, 
         LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG
-        |((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | (narb_extra_options & (~narb_extra_options_mask)), 
+        |((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) 
+        | ((lsp->dragon.subnet_ero != NULL && listcount(lsp->dragon.subnet_ero) > 0) ? LSP_OPT_SUBNET_DTL : 0) 
+        | (narb_extra_options & (~narb_extra_options_mask)), 
         lsp->dragon.lspVtag);
   else
       amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno,
-        LSP_OPT_STRICT | ((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) | (narb_extra_options & (~narb_extra_options_mask)), 
-        0);
+        LSP_OPT_STRICT \
+        | ((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) 
+        | ((lsp->dragon.subnet_ero != NULL && listcount(lsp->dragon.subnet_ero) > 0) ? LSP_OPT_SUBNET_DTL : 0)
+        | (narb_extra_options & (~narb_extra_options_mask)),
+         0);
 
   /* Build mandatory /request TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_CREATE, lsp);
 
-  /* Put optional TLV data */
+  /* Adding optional TLV data */
   /* Local ID TLV */
   if (lsp->dragon.srcLocalId != 0 || lsp->dragon.destLocalId != 0)
   {
@@ -352,16 +360,17 @@ dragon_topology_create_msg_new(struct lsp *lsp)
       stream_put (s, &dest_lclid, sizeof(u_int32_t));
   }
   /* Subnet DTL TLV */
-  if (lsp->common.DragonExtInfo_Para != NULL && lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops > 0)
+  if (lsp->dragon.subnet_dtl != NULL && listcount(lsp->dragon.subnet_dtl) > 0)
   {
-      u_int16_t type, length;
-      u_int32_t i;
-      type = htons(DRAGON_TLV_SUBNET_DTL);
-      length = htons(sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops);
-      stream_put (s, &type, sizeof(u_int16_t));
-      stream_put (s, &length, sizeof(u_int16_t));
-      for (i = 0; i < lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops; i++)
-          stream_put (s, lsp->common.DragonExtInfo_Para->subnet_dtl_hops + i, sizeof(struct dtl_hop));
+	struct dtl_hop *hop;
+	listnode node;
+	u_int16_t type = htons(DRAGON_TLV_SUBNET_DTL);
+	u_int16_t length = htons(sizeof(struct dtl_hop)*listcount(lsp->dragon.subnet_dtl));
+	/*assemble DTL TLV*/
+	stream_put (s, &type, sizeof(u_int16_t));
+	stream_put (s, &length, sizeof(u_int16_t));
+	LIST_LOOP(lsp->dragon.subnet_dtl, hop, node)
+		stream_put (s, hop, sizeof(struct dtl_hop));
   }
 
   return packet;
@@ -758,36 +767,25 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				break;
 
 			case DRAGON_TLV_SUBNET_DTL:
-			{
-				struct dtl_hop *hop;
-				listnode node2;
+			{ 
 				int i, count = DTLV_BODY_SIZE(tlvh) / sizeof(struct dtl_hop);
-
-				if (lsp->dragon.subnet_dtl == NULL)
-				{
-					lsp->dragon.subnet_dtl = list_new();
-				}
-				for (i = 0; i < count; i++)
-				{
-					hop = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop));
-					*hop = ((struct dtl_hop*)(((char*)tlvh)+DTLV_HDR_SIZE))[i];
-					listnode_add(lsp->dragon.subnet_dtl, hop);
-				}
-
+				/* Note: With the user supplied DTL in lsp->dragon.subnet_dtl, NARB will not send back a DTL TLV. */
+				assert (lsp->dragon.subnet_dtl == NULL || listcount(lsp->dragon.subnet_dtl) == 0);
 				if (lsp->common.DragonExtInfo_Para == NULL)
 				{
 					lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
 					memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
 				}
-				lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops = listcount(lsp->dragon.subnet_dtl);
-				lsp->common.DragonExtInfo_Para->subnet_dtl_hops = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops);
-				i = 0;
-				LIST_LOOP(lsp->dragon.subnet_dtl, hop, node2)
-				{
-					memcpy(lsp->common.DragonExtInfo_Para->subnet_dtl_hops+i, hop, sizeof(struct dtl_hop));
-					i++;
+				else if (lsp->common.DragonExtInfo_Para->subnet_dtl_hops != NULL) 
+				{	/* override by NARB results ...*/
+					XFREE(MTYPE_TMP, lsp->common.DragonExtInfo_Para->subnet_dtl_hops);
 				}
-
+				lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops = count;
+				lsp->common.DragonExtInfo_Para->subnet_dtl_hops = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop)*count);
+				for (i = 0; i < count; i++)
+				{
+					memcpy(lsp->common.DragonExtInfo_Para->subnet_dtl_hops+i, ((struct dtl_hop*)(((char*)tlvh)+DTLV_HDR_SIZE)) + i, sizeof(struct dtl_hop));
+				}
 				break;
 			}
 
