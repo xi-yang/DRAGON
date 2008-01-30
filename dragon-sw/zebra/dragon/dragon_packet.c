@@ -299,7 +299,6 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   struct api_msg_header *amsgh;
   struct dragon_fifo_elt *packet;
   int msglen;
-  u_int16_t* p_s_msglen;
   u_int32_t narb_extra_options_mask = 0;
 
   /* Create a stream for topology request. */
@@ -338,7 +337,6 @@ dragon_topology_create_msg_new(struct lsp *lsp)
         | (narb_extra_options & (~narb_extra_options_mask)),
          0);
 
-  p_s_msglen = ((u_int16_t*)amsgh) + 1;
   /* Build mandatory /request TLVs */
   build_dragon_tlv_srcdst(s, DMSG_CLI_TOPO_CREATE, lsp);
 
@@ -413,8 +411,10 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 	msglen += (4+ntohs(length));
   }
 
-  /*adjusting the message length in the msg_header that has been put into stream buffer*/
-  *p_s_msglen = htons(msglen);
+  /*adjusting the message length and checksum in the msg_header that has been put into stream buffer*/
+  *(((u_int16_t*)amsgh) + 1) = htons(msglen);
+  *(((u_int32_t*)amsgh) + 3) = API_MSG_CHKSUM(*amsgh);
+
   return packet;
 }
 
