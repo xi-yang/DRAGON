@@ -319,6 +319,8 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   if (lsp->dragon.subnet_ero != NULL && listcount(lsp->dragon.subnet_ero) > 0)
       narb_extra_options_mask |= LSP_OPT_SUBNET_ERO;
 
+  /* CLI supplied SubnetERO automatically turns on  LSP_OPT_SUBNET_DTL*/
+
   /* Build DRAGON message header */
   msglen = 20; 
 

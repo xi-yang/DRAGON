@@ -1579,8 +1579,8 @@ DEFUN (dragon_set_lsp_subnet_ero_hop,
   hop = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para));
   memset(hop, 0, sizeof(struct _EROAbstractNode_Para));
   hop->isLoose = 0; //subnet hop must be 'strict'
-  inet_aton(argv[1], &ip);
-  if (argc < 3 || sscanf("%d", argv[2], &if_id) != 1 || if_id == 0)
+  inet_aton(argv[0], &ip);
+  if (argc < 2 || sscanf("%d", argv[1], &if_id) != 1 || if_id == 0)
   {
   	hop->type = IPv4;
 	hop->data.ip4.addr.s_addr = ip.s_addr;
