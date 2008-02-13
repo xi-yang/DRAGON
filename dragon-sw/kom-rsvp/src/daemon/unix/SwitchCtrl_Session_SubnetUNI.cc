@@ -1036,7 +1036,10 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
     }
     else 
         goto _out;
-    
+
+    //sleep one second to let finish status change into OOS  
+    sleep(1);
+
     ctag = getNewCtag();
     sprintf(bufCmd, "dlt-vcg::name=%s:%d;", vcgName.chars(), ctag);
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
@@ -1979,7 +1982,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
                     goto _out; // wrong
             }
             LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 method found no SNC holding the current VCG.\n", bufCmd);
-            return false;    
+            return false;
         }
         else
             goto _out;
@@ -2006,8 +2009,8 @@ bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
     do {
         if (!noError)
             return false;
-        LOG(1)(Log::MPLS, " Child-Process::waitUntilSystemSNCDisapear ... 3x5 seconds left.\n");
-        sleep(3); //sleeping one second and try again
+        LOG(1)(Log::MPLS, " Child-Process::waitUntilSystemSNCDisapear ... 2x5 seconds left.\n");
+        sleep(2); //sleeping two second and try again
         counter--;
         if (counter == 0) //timeout!
             return false;
