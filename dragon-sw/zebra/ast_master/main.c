@@ -562,7 +562,7 @@ master_process_setup_req()
   init_socket(glob_app_cfg);
   glob_app_cfg->flags |= FLAG_SETUP_REQ;
   gettimeofday(&(glob_app_cfg->start_time), NULL);
-  if (send_task_to_minions(glob_app_cfg->link_list, res_link))
+  if (glob_app_cfg->link_list && send_task_to_minions(glob_app_cfg->link_list, res_link))
     glob_app_cfg->status = ast_failure;
   else
     glob_app_cfg->status = ast_pending;
@@ -1175,6 +1175,9 @@ send_task_to_minions(struct adtlist *res_list,
   static char path_prefix[300];
   char *type = (res_type == res_node)?"node":"link";
 
+  if (!res_list)
+    return 1;
+
   zlog_info("send_task_to_minions %s ...", type);
   strcpy(directory, AST_DIR);
   sprintf(directory+strlen(directory), "/%s", glob_app_cfg->ast_id);
@@ -1354,6 +1357,22 @@ integrate_result()
 	glob_app_cfg->status = ast_success;
 	return;
       }
+      break;
+
+    case setup_req:
+      sprintf(path_prefix, "%s/setup_", directory);
+
+      if (!glob_app_cfg->link_list) {
+
+        print_final(newpath, MASTER);
+        sendtask_ret = send_task_to_minions(glob_app_cfg->node_list, res_node);
+        if (sendtask_ret)
+          glob_app_cfg->status = ast_failure;
+        else 
+          return;
+      }
+
+      break;
     default:
       return;
   }
@@ -1724,7 +1743,10 @@ master_check_app_list()
 	curnode;
 	curnode = curnode->next) {
     app_cfg = (struct application_cfg*) curnode->data;
-    client_timeout = CLIENT_TIMEOUT + ((app_cfg->link_list->count)/10) * CLIENT_TIMEOUT;
+    if (app_cfg->link_list)
+      client_timeout = CLIENT_TIMEOUT + ((app_cfg->link_list->count)/10) * CLIENT_TIMEOUT;
+    else
+      client_timeout = CLIENT_TIMEOUT;
 
     time_escape = curr_time.tv_sec - app_cfg->start_time.tv_sec;
     if (time_escape < client_timeout) {

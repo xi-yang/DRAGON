@@ -229,8 +229,8 @@ DEFUN (master_show_ast,
 		VTY_NEWLINE,
 		action_type_details[curcfg->action],
 		status_type_details[curcfg->status], 
-		curcfg->node_list->count,
-		curcfg->link_list->count,
+		(curcfg->node_list) ? curcfg->node_list->count : 0,
+		(curcfg->link_list) ? curcfg->link_list->count : 0,
 		VTY_NEWLINE,
 		VTY_NEWLINE);        
 
