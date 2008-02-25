@@ -2179,9 +2179,15 @@ int dragon_config_write(struct vty *vty)
 				     value_to_string (&conv_gpid, lsp->common.LabelRequest_Para.data.gmpls.gPid), 
 				     VTY_NEWLINE);
 	if (lsp->flag & LSP_FLAG_BIDIR)
-	      vty_out (vty, "  set direction bi upstream-label %d%s", *(lsp->common.upstreamLabel), VTY_NEWLINE);
+	{
+	    vty_out (vty, "  set direction bi upstream-label ");
+	    if (lsp->common.upstreamLabel)
+	      vty_out (vty, " %d%s", *(lsp->common.upstreamLabel), VTY_NEWLINE);
+            else
+	      vty_out (vty, " <unassigned-label>%s", VTY_NEWLINE);
+	}
 	else
-	      vty_out (vty, "  set direction uni upstream-label 1%s", VTY_NEWLINE);
+	    vty_out (vty, "  set direction uni upstream-label 1%s", VTY_NEWLINE);
 
        if (lsp->common.labelSet && lsp->common.labelSetSize)
        {
