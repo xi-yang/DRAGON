@@ -577,7 +577,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
                             ssNew = RSVP_Global::switchController->createSession(vlsr.switchID);
                             if (!ssNew) {
-                                    LOG(1)( Log::MPLS, "Failed to create VLSR SwitchCtrl Session: Unknown switch Vendor/Model -- verify switch-ip is correct in ospfd.conf");
+                                   LOG(1)( Log::MPLS, "Failed to create VLSR SwitchCtrl Session: Unknown switch Vendor/Model -- verify switch-ip is correct in ospfd.conf");
         				return false;
                             }
 

@@ -684,11 +684,14 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         else if (venderSystemDescription.leftequal("Ether-Raptor")) 
         	vendor = RaptorER1010;
 	else if (venderSystemDescription.leftequal("Cisco IOS Software, C3750 Software")) 
-	                vendor = Catalyst3750;
+        	vendor = Catalyst3750;
 	// The Catalyst 65xx switches use the same code as Catalyst 3750 
 	// Now the 65xx use different module than 3750
 	else if (venderSystemDescription.leftequal("Cisco Internetwork Operating System Software"))
-	                vendor = Catalyst6500;
+        	vendor = Catalyst6500;
+	// Temp setting for HP 5406 switches, yet to verify compatibility with RFC2674
+        else if (venderSystemDescription.leftequal("ProCurve J8697A Switch 5406zl"))
+        	vendor = RFC2674;
         else{
         	vendor = Illegal;
 		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", venderSystemDescription);
