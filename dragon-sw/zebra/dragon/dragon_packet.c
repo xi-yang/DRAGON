@@ -366,6 +366,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 	char ero_buf[DRAGON_MAX_PACKET_SIZE];
 	char * p = ero_buf;
 	u_int16_t length = 0;
+	u_int16_t type = htons(DRAGON_TLV_SUBNET_ERO);
 	LIST_LOOP(lsp->dragon.subnet_ero, hop, node)
 	{
 		if (hop->type == IPv4)
@@ -390,7 +391,6 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 			length += sizeof(struct AbstractNode_UnNumIfID);
 		}
 	}
-	u_int16_t type = htons(DRAGON_TLV_SUBNET_ERO);
 	stream_put (s, &type, sizeof(u_int16_t));
 	length = htons(length);
 	stream_put (s, &length, sizeof(u_int16_t));
