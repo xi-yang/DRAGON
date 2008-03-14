@@ -545,7 +545,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
     else
     {
         ucid = srcAddr;
-        seqnum = (uint32)ss_ptr + random();
+        seqnum = (long)ss_ptr + random();
     }
 
     if (uni) 

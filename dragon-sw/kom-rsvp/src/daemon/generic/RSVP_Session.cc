@@ -64,7 +64,7 @@ Session::Session( const SESSION_Object &session) : SESSION_Object(session),
 Session::~Session() {
 	LOG(2)( Log::Session, "delete Session:", *this );
 	RSVP_Global::rsvp->removeSession( iterFromRSVP );
-	RSVP_Global::rsvp->getMPLS().deleteExplicitRouteBySession((uint32)this); //@@@@ use pointer address as unique ID (DRAGON)
+	RSVP_Global::rsvp->getMPLS().deleteExplicitRouteBySession((long)this); //@@@@ use pointer address as unique ID (DRAGON)
 	if (narbClient)
 		delete narbClient;
 	if (pSubnetUniSrc)

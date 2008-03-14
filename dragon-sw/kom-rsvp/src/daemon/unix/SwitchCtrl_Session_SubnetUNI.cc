@@ -102,7 +102,7 @@ uint32 SwitchCtrl_Session_SubnetUNI::getPseudoSwitchID()
 	SubnetUNI_Data* uniData = (isSource ? &subnetUniSrc : &subnetUniDest);
 	//return (((uint32)uniData->subnet_id) << 16) | ((uint32)uniData->tunnel_id);
 	//return ((uint32)uniData->tunnel_id);
-	return ((((uint32)this)&0xff)*100 + (uint32)uniData->tunnel_id); //the session has an unique ID on this VLSR!
+	return ((((long)this)&0xff)*100 + (uint32)uniData->tunnel_id); //the session has an unique ID on this VLSR!
 }
 
 SwitchCtrl_Session_SubnetUNI::~SwitchCtrl_Session_SubnetUNI() 
