@@ -311,7 +311,16 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                 }	
 				                                
                                 //create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC OR LOCAL_ID_TYPE_SUBNET_UNI_DEST
-                                if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG((*iter).vlanTag) ) {
+                                int vlanLow = 0;
+                                if (psb.getDRAGON_EXT_INFO_Object())
+                                {
+                                    if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
+                                        vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().ingress_outer_vlantag;
+                                    else if (!((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
+                                        vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().egress_outer_vlantag;
+                                }
+                                int vlanTrunk = (*iter).vlanTag;
+                                if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG(vlanLow, 0, vlanTrunk)) {
                                     (*sessionIter)->disconnectSwitch();
                                     goto _Exit_Error_Subnet;
                                 }
