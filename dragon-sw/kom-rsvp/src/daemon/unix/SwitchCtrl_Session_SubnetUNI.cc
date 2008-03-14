@@ -814,7 +814,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     }
     if (vlanTrunk > 0 && vlanTrunk < 4096 && vlanLow != vlanTrunk) 
     {
-        sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_one,outertagtype=0X8100,outervlanid=%d,", vlanTrunk);
+        sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_outer,outertagtype=0X8100,outervlanid=%d,", vlanTrunk);
     }
     else
     {
@@ -862,7 +862,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     }
     if (vlanLow > 0 && vlanLow < 4096 && vlanLow != vlanTrunk) 
     {
-        sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_one,outertagtype=0X8100,outervlanid=%d,", vlanLow);
+        sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_outer,outertagtype=0X8100,outervlanid=%d,", vlanLow);
     }
     else
     {
