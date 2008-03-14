@@ -172,6 +172,11 @@ struct dmsg_header {
 #define	DRAGON_TLV_LCLID	DRAGON_TLV_BASE + 0x09
 /* Subnet DTL TLV */
 #define	DRAGON_TLV_SUBNET_DTL	DRAGON_TLV_BASE + 0x0A
+/* ALTERATE_ERO and SubnetERO*/
+/* not used in DRAGON CLI
+#define	DRAGON_TLV_ALTERNATE_ERO	DRAGON_TLV_BASE + 0x010
+#define	DRAGON_TLV_ALTERNATE_SUBNET_ERO	DRAGON_TLV_BASE + 0x011
+*/
 
 struct dragon_tlv_header
 {

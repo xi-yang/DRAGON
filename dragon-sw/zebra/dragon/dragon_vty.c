@@ -1342,6 +1342,54 @@ ALIAS (dragon_set_lsp_vtag_default,
        "VLAN Tag from end to end\n"
        "Any Vtag to be computed\n");
 
+DEFUN (dragon_set_lsp_vtag_subnet_edge,
+       dragon_set_lsp_vtag_subnet_edge_cmd,
+       "set vtag (subnet-ingress|subnet-egress) TAG",
+       "Set LSP VLAN Tag\n"
+       "VLAN Tag\n"
+       "Subnet-Ingress\n"
+       "Subnet-Egress\n"
+       "Tag# or Untagged\n")
+{
+    int is_ingress = 0;
+    int edge_vtag = ANY_VTAG; /* ANY_VTAG: tunnel mode */
+    struct lsp *lsp = (struct lsp *)(vty->index);
+
+    if (strncmp(argv[0], "subnet-ingress", 8) == 0)
+    {
+        is_ingress = 1;
+    }
+
+    if (strncmp(argv[1], "untagged", 2) == 0)
+    {
+        edge_vtag = 0; /* 0: untagged*/
+    }
+    else 
+    {
+	sscanf(argv[1], "%d", &edge_vtag); /* tagged; tunnel mode if sccanf fails */
+    }
+
+    if (lsp->common.DragonExtInfo_Para == NULL)
+    {
+        lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
+        memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+    }
+    if (is_ingress)
+    {
+        lsp->common.DragonExtInfo_Para->ingress_vtag = (u_int16_t)edge_vtag;
+    }
+    else
+    {
+        lsp->common.DragonExtInfo_Para->egress_vtag = (u_int16_t)edge_vtag;
+    }
+
+    /* lsp->common.DragonExtInfo_Para->trunk_vtag is determined by 'set vtag TAG' command. 
+        The actual tag assignment happens with NARB replies a path with a specific vtag */
+
+    return CMD_SUCCESS;
+}
+
+/*
 DEFUN (dragon_set_lsp_ext_info_edge_vtag,
        dragon_enable_lsp_ext_info_edge_vtag_cmd,
        "set edge ingress-vtag <1-4095> egress-vtag <1-4095>",
@@ -1368,6 +1416,7 @@ ALIAS (dragon_set_lsp_ext_info_edge_vtag,
        dragon_enable_lsp_ext_info_edge_vtag_default_cmd,
        "set edge vtag <1-4095>",
        "Enable LSP using DragonExtInfo_Para to carry edge vtag information\n");
+*/
 
 DEFUN (dragon_set_lsp_sw,
        dragon_set_lsp_sw_cmd,
@@ -2634,8 +2683,9 @@ dragon_supp_vty_init ()
   install_element(LSP_NODE, &dragon_set_lsp_vtag_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_vtag_default_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_vtag_any_cmd);  
-  install_element(LSP_NODE, &dragon_enable_lsp_ext_info_edge_vtag_cmd);
-  install_element(LSP_NODE, &dragon_enable_lsp_ext_info_edge_vtag_default_cmd);
+  install_element(LSP_NODE, &dragon_set_lsp_vtag_subnet_edge_cmd);  
+  //install_element(LSP_NODE, &dragon_enable_lsp_ext_info_edge_vtag_cmd);
+  //install_element(LSP_NODE, &dragon_enable_lsp_ext_info_edge_vtag_default_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_dtl_hop_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_ero_hop_cmd);
   install_element(LSP_NODE, &dragon_set_lsp_ero_hop_ipv4_cmd);

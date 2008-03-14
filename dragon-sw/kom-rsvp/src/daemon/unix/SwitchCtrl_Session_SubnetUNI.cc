@@ -785,23 +785,44 @@ void SwitchCtrl_Session_SubnetUNI::getDTLString(String& dtlStr)
 //
 //                  $$$$ We do not consider inner VLAN tags at this point!
 //
-bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh)
+bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh, int vlanTrunk)
 {
     int ret = 0;
     char packetType[60];
+    char modificationRule[60];
     String suppTtp, ettpName;
 
-    if (vlanLow == 0 && vlanHigh == 0)
+    if (vlanLow == 0)
+        sprintf(packetType, "pkttype=untagged_unicast");
+    else if (vlanLow == ANY_VTAG)
         sprintf(packetType, "pkttype=all");
-    else if (vlanHigh > vlanLow)
+    else if (vlanHigh < 4096 && vlanHigh > vlanLow)
         sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=%d&&%d", vlanLow,vlanHigh);
     else
         sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=%d", vlanLow);
 
     getCienaLogicalPortString(suppTtp, ettpName);
 
-    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default,collectpm=yes;",
-        vcgName.chars(), getNewCtag(), ettpName.chars(), packetType, vcgName.chars());
+    // applying VLAN modification rule on ingress eflow
+    if (vlanLow > 0 && vlanLow < 4096 && vlanLow != vlanTrunk) 
+    {
+        sprintf(modificationRule, "tagstoremove=remove_outer,");
+    }
+    else
+    {
+        sprintf(modificationRule, "tagstoremove=remove_none,");
+    }
+    if (vlanTrunk > 0 && vlanTrunk < 4096 && vlanLow != vlanTrunk) 
+    {
+        sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_one,outertagtype=0X8100,outervlanid=%d,", vlanTrunk);
+    }
+    else
+    {
+        sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_none,");
+    }
+
+    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default,%sinheritpriority=yes,collectpm=yes;",
+        vcgName.chars(), getNewCtag(), ettpName.chars(), packetType, vcgName.chars(), modificationRule);
 
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
@@ -823,9 +844,33 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     else 
         goto _out;
 
+    if (vlanTrunk == 0)
+        sprintf(packetType, "pkttype=untagged_unicast");
+    else if (vlanTrunk == ANY_VTAG)
+        sprintf(packetType, "pkttype=all");
+    else if (vlanTrunk < 4096)
+        sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=%d", vlanTrunk);
 
-    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,collectpm=yes;",
-        vcgName.chars(), getNewCtag(), vcgName.chars(), packetType, ettpName.chars());
+    // applying VLAN modification rule on egress eflow
+    if (vlanTrunk > 0 && vlanTrunk < 4096 && vlanLow != vlanTrunk)
+    {
+        sprintf(modificationRule, "tagstoremove=remove_outer,");
+    }
+    else
+    {
+        sprintf(modificationRule, "tagstoremove=remove_none,");
+    }
+    if (vlanLow > 0 && vlanLow < 4096 && vlanLow != vlanTrunk) 
+    {
+        sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_one,outertagtype=0X8100,outervlanid=%d,", vlanLow);
+    }
+    else
+    {
+        sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_none,");
+    }
+
+    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,%sinheritpriority=yes,collectpm=yes;",
+        vcgName.chars(), getNewCtag(), vcgName.chars(), packetType, ettpName.chars(), modificationRule);
 
     if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
 
