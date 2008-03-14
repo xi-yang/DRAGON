@@ -645,7 +645,7 @@ void zInitRsvpPathRequest(void* thisApi, struct _sessionParameters* para, uint8 
 		dragonExtInfo = new DRAGON_EXT_INFO_Object;
 		if (para->Dragon_ExtInfo_Para->ucid != 0 && para->Dragon_ExtInfo_Para->seqnum != 0)
 			dragonExtInfo->SetServiceConfirmationID(para->Dragon_ExtInfo_Para->ucid, para->Dragon_ExtInfo_Para->seqnum);
-		if (para->Dragon_ExtInfo_Para->ingress_vtag != 0 || para->Dragon_ExtInfo_Para->egress_vtag != 0)
+		if (para->Dragon_ExtInfo_Para->ingress_vtag != ANY_VTAG || para->Dragon_ExtInfo_Para->egress_vtag != ANY_VTAG)
 		{
 			dragonExtInfo->SetEdgeVlanMapping(para->Dragon_ExtInfo_Para->ingress_vtag, 0, 
                         para->Dragon_ExtInfo_Para->ingress_vtag != 0 ? para->Dragon_ExtInfo_Para->ingress_vtag : para->Dragon_ExtInfo_Para->egress_vtag, 0,

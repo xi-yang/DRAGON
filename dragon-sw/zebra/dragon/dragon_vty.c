@@ -1280,6 +1280,7 @@ DEFUN (dragon_set_lsp_vtag,
         {
             lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
             memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+            lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->common.DragonExtInfo_Para->ingress_vtag = ANY_VTAG;
         }
         lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->common.DragonExtInfo_Para->egress_vtag = vtag;
     }
@@ -1349,7 +1350,7 @@ DEFUN (dragon_set_lsp_vtag_subnet_edge,
        "VLAN Tag\n"
        "Subnet-Ingress\n"
        "Subnet-Egress\n"
-       "Tag# or Untagged\n")
+       "'untagged' or vtag#\n")
 {
     int is_ingress = 0;
     int edge_vtag = ANY_VTAG; /* ANY_VTAG: tunnel mode */
@@ -1373,6 +1374,7 @@ DEFUN (dragon_set_lsp_vtag_subnet_edge,
     {
         lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
         memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+        lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->common.DragonExtInfo_Para->ingress_vtag = ANY_VTAG;
     }
     if (is_ingress)
     {
@@ -1728,6 +1730,7 @@ DEFUN (dragon_commit_lsp_sender,
 	{
 		lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
 		memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+       	lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->common.DragonExtInfo_Para->ingress_vtag = ANY_VTAG;
 	}
 	lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops = listcount(lsp->dragon.subnet_dtl);
 	lsp->common.DragonExtInfo_Para->subnet_dtl_hops = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop)*lsp->common.DragonExtInfo_Para->num_subnet_dtl_hops);

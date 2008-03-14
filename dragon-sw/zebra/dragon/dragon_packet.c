@@ -724,9 +724,9 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				        lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
 				        memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
 				    }
-				    if (lsp->common.DragonExtInfo_Para->ingress_vtag == 0)
+				    if (lsp->common.DragonExtInfo_Para->ingress_vtag == ANY_VTAG)
 				        lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->dragon.lspVtag & 0xffff;
-				    if (lsp->common.DragonExtInfo_Para->egress_vtag == 0)
+				    if (lsp->common.DragonExtInfo_Para->egress_vtag == ANY_VTAG)
 				        lsp->common.DragonExtInfo_Para->egress_vtag = lsp->dragon.lspVtag & 0xffff;
 				}
 
@@ -737,6 +737,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 					{
 						lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
 						memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+						lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->common.DragonExtInfo_Para->ingress_vtag = ANY_VTAG;
 					}
 					lsp->common.DragonExtInfo_Para->ucid = ntohl(amsgh->ucid);
 					lsp->common.DragonExtInfo_Para->seqnum = ntohl(amsgh->seqnum);
@@ -822,6 +823,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				{
 					lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
 					memset(lsp->common.DragonExtInfo_Para, 0, sizeof(struct _Dragon_ExtInfo_Para));
+					lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->common.DragonExtInfo_Para->ingress_vtag = ANY_VTAG;
 				}
 				else if (lsp->common.DragonExtInfo_Para->subnet_dtl_hops != NULL) 
 				{	/* override by NARB results ...*/
