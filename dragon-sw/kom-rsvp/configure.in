@@ -650,8 +650,8 @@ if test "$enable_switch_cli_access" = "yes"; then
 
 *** Setting CLI Session Type:
 
-With the --enable-switch-cli-access option,
-you also need to specify the CLI session type as either TELNET, SSH, TL1 or SHELL.
+With the --enable-switch-cli-access option, you also need to specify 
+the CLI session type as either 'telnet', 'ssh', 'tl1' or 'shell'.
 This can also be specified by --with-switch-cli-type=(telnet|ssh|tl1|shell)
 
 CLI Session Type (Default: none): $ECHO_C"
@@ -662,23 +662,24 @@ else
 	AC_MSG_RESULT(disabled)
 fi
 
-if test "$with_switch_cli_type" = "ssh" || test "$with_switch_cli_type" = "shell"; then
-if test -f "/usr/local/bin/expect"; then
-   expect_path="/usr/local/bin/expect"
-elif test -f "/usr/bin/expect"; then
-   expect_path="/usr/bin/expect"
-else
-   AC_MSG_ERROR(Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!)
+if test "$with_switch_cli_type" = "ssh" || test "$with_switch_cli_type" = "shell" ||
+   test "$with_switch_cli_type" = "SSH" || test "$with_switch_cli_type" = "SHELL"; then
+   if test -f "/usr/local/bin/expect"; then
+      expect_path="/usr/local/bin/expect"
+   elif test -f "/usr/bin/expect"; then
+      expect_path="/usr/bin/expect"
+   else
+      AC_MSG_ERROR(Using SSH to control VLSR switch requires the 'expect' package (http://expect.nist.gov) to be installed!)
+   fi
+   AC_DEFINE_UNQUOTED(EXPECT_PATH, "$expect_path")
 fi
-AC_DEFINE_UNQUOTED(EXPECT_PATH, "$expect_path")
-fi
-if test "$with_switch_cli_type" = "telnet"; then
+if test "$with_switch_cli_type" = "telnet" || test "$with_switch_cli_type" = "TELNET"; then
     eval switch_cli_type="CLI_TELNET"
-elif test "$with_switch_cli_type" = "ssh"; then
+elif test "$with_switch_cli_type" = "ssh" || test "$with_switch_cli_type" = "SSH"; then
     eval switch_cli_type="CLI_SSH"
-elif test "$with_switch_cli_type" = "tl1"; then
+elif test "$with_switch_cli_type" = "tl1" || test "$with_switch_cli_type" = "TL1"; then
     eval switch_cli_type="CLI_TL1_TELNET"
-elif test "$with_switch_cli_type" = "shell"; then
+elif test "$with_switch_cli_type" = "shell" || test "$with_switch_cli_type" = "SHELL"; then
     eval switch_cli_type="CLI_SHELL"
 else
     eval switch_cli_type="CLI_NONE"
