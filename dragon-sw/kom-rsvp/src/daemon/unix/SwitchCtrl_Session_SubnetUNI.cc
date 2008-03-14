@@ -789,7 +789,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
 {
     int ret = 0;
     char packetType[60];
-    char modificationRule[60];
+    char modificationRule[100];
     String suppTtp, ettpName;
 
     if (vlanLow == 0)
