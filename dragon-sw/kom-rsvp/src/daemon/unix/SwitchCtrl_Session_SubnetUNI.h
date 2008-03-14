@@ -148,8 +148,8 @@ public:
 	bool createVCG(int vlanLow, int vlanHigh = 0, int vlanTrunk = 0)
 	{
 		//if (hasVCG_TL1(currentVCG)) return true;
-		if (vlanLow == 0) // tunnel mode with untagged EFLOW
-            return createVCG_TL1(currentVCG);
+		if (vlanLow == ANY_VTAG) // tunnel mode with untagged EFLOW
+			return createVCG_TL1(currentVCG);
 		if (!createVCG_TL1(currentVCG, false))
 			return false;
 		if (!createEFLOWs_TL1(currentVCG, vlanLow, vlanHigh, vlanTrunk))
