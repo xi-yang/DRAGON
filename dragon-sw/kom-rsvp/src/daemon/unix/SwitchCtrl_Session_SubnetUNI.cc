@@ -821,7 +821,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_none,");
     }
 
-    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default,%sinheritpriority=yes,collectpm=yes;",
+    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,%s,,priority=1&&8,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
         vcgName.chars(), getNewCtag(), ettpName.chars(), packetType, vcgName.chars(), modificationRule);
 
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
@@ -869,7 +869,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_none,");
     }
 
-    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,%sinheritpriority=yes,collectpm=yes;",
+    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,%s,,priority=1&&8,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
         vcgName.chars(), getNewCtag(), vcgName.chars(), packetType, ettpName.chars(), modificationRule);
 
     if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
