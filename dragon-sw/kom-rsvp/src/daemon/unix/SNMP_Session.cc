@@ -267,6 +267,103 @@ bool SNMP_Session::setVLANPort(uint8* portbits, int bitlen, uint32 vlanID)
 
 /////////////----------///////////
 
+bool SNMP_Session::hook_createVLAN(const uint32 vlanID)
+{
+    if (!vlanCreation_enabled)
+        return false;
+
+    struct snmp_pdu *pdu;
+    struct snmp_pdu *response;
+    oid anOID[MAX_OID_LEN];
+    size_t anOID_len = MAX_OID_LEN;
+    char type, value[128], oid_str[128];
+    int status;
+    String tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.5";
+
+    if (!active) //not initialized or session has been disconnected
+        return false;
+    // Create the PDU for the data for our request. 
+    pdu = snmp_pdu_create(SNMP_MSG_SET);
+
+    // vlan port list 
+    sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
+    status = read_objid(oid_str, anOID, &anOID_len);
+    type='i'; 
+    strcpy(value, "4");
+
+    status = snmp_add_var(pdu, anOID, anOID_len, type, value);
+
+    // Send the Request out. 
+    status = snmp_synch_response(snmpSessionHandle, pdu, &response);
+
+    if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
+    	snmp_free_pdu(response);
+    }
+    else {
+        if (status == STAT_SUCCESS){
+        LOG(4)( Log::MPLS, "VLSR: SNMP: Setting VLAN PVID", switchInetAddr, "failed. Reason : ", snmp_errstring(response->errstat));
+        }
+        else
+      	    snmp_sess_perror("snmpset", snmpSessionHandle);
+        if(response) snmp_free_pdu(response);
+        return false;
+    }
+
+    //add the new *empty* vlan into PortMapListAll and portMapListUntagged
+    vlanPortMap vpm;
+    memset(&vpm, 0, sizeof(vlanPortMap));
+    vpm.vid = vlanID;
+    vlanPortMapListAll.push_back(vpm);
+    memset(vpm.portbits, 0xff, MAX_VLAN_PORT_BYTES);
+    vlanPortMapListUntagged.push_back(vpm);
+
+    return true;
+}
+
+bool SNMP_Session::hook_removeVLAN(const uint32 vlanID)
+{
+    if (!vlanCreation_enabled)
+        return false;
+
+    struct snmp_pdu *pdu;
+    struct snmp_pdu *response;
+    oid anOID[MAX_OID_LEN];
+    size_t anOID_len = MAX_OID_LEN;
+    char type, value[128], oid_str[128];
+    int status;
+    String tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.5";
+
+    if (!active) //not initialized or session has been disconnected
+        return false;
+    // Create the PDU for the data for our request. 
+    pdu = snmp_pdu_create(SNMP_MSG_SET);
+
+    // vlan port list 
+    sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
+    status = read_objid(oid_str, anOID, &anOID_len);
+    type='i'; 
+    strcpy(value, "6");
+
+    status = snmp_add_var(pdu, anOID, anOID_len, type, value);
+
+    // Send the Request out. 
+    status = snmp_synch_response(snmpSessionHandle, pdu, &response);
+
+    if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
+    	snmp_free_pdu(response);
+    }
+    else {
+        if (status == STAT_SUCCESS){
+        LOG(4)( Log::MPLS, "VLSR: SNMP: Setting VLAN PVID", switchInetAddr, "failed. Reason : ", snmp_errstring(response->errstat));
+        }
+        else
+      	    snmp_sess_perror("snmpset", snmpSessionHandle);
+        if(response) snmp_free_pdu(response);
+        return false;
+    }
+    return true;
+}
+
 bool SNMP_Session::hook_isVLANEmpty(const vlanPortMap &vpm)
 {
     return (vpm.ports == 0);

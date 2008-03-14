@@ -16,7 +16,7 @@ class SNMP_Session: public SwitchCtrl_Session
 {
 	
 public:
-	SNMP_Session(): SwitchCtrl_Session() { }
+	SNMP_Session(): SwitchCtrl_Session() { vlanCreation_enabled = false; }
 	SNMP_Session(const RSVP_String& sName, const NetAddress& swAddr): SwitchCtrl_Session(sName, swAddr) { }
 	virtual ~SNMP_Session() { }
 
@@ -32,8 +32,8 @@ public:
 	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0) { return false; }
 
 	////////-----Vendor/Model specific hook functions------//////
-	virtual bool hook_createVLAN(const uint32 vlanID) { return false; }
-	virtual bool hook_removeVLAN(const uint32 vlanID) { return false; }
+	virtual bool hook_createVLAN(const uint32 vlanID);
+	virtual bool hook_removeVLAN(const uint32 vlanID);
 	virtual bool hook_isVLANEmpty(const vlanPortMap &vpm);
        virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars);
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port);

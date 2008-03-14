@@ -752,6 +752,12 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
             return NULL;
         default:
             ssNew = new SNMP_Session("VLSR-SNMP", switchAddr);
+            if (vendor_desc.leftequal("PowerConnect 5224")
+                    ||vendor_desc.leftequal("Intel(R) Express 530T Switch ")
+                    ||vendor_desc.leftequal("Ethernet Switch")
+                    ||vendor_desc.leftequal("Neyland 24T") 
+                    ||vendor_desc.leftequal("Ethernet Routing Switch"))
+                ssNew->enableVLANCreation(false);
             break;
     }
 
