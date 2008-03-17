@@ -2013,13 +2013,13 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
                       vty_out(vty, "Subnet Ingress VLAN: tunnel-mode %s", VTY_NEWLINE);
 
                   if (lsp->common.DragonExtInfo_Para->egress_vtag != lsp->dragon.lspVtag && lsp->common.DragonExtInfo_Para->egress_vtag == 0)
-                      vty_out(vty, "Subnet Ingress VLAN: untagged %s", VTY_NEWLINE);
+                      vty_out(vty, "Subnet Egress VLAN: untagged %s", VTY_NEWLINE);
                   else if (lsp->common.DragonExtInfo_Para->egress_vtag != lsp->dragon.lspVtag 
 		      && lsp->common.DragonExtInfo_Para->egress_vtag > 0 
 		      && lsp->common.DragonExtInfo_Para->egress_vtag < 4096)
-                      vty_out(vty, "Subnet Ingress VLAN: tag-%d %s", lsp->common.DragonExtInfo_Para->egress_vtag, VTY_NEWLINE);
+                      vty_out(vty, "Subnet Egress VLAN: tag-%d %s", lsp->common.DragonExtInfo_Para->egress_vtag, VTY_NEWLINE);
                   else if (lsp->common.DragonExtInfo_Para->egress_vtag == ANY_VTAG)
-                      vty_out(vty, "Subnet Ingress VLAN: tunnel-mode %s", VTY_NEWLINE);
+                      vty_out(vty, "Subnet Egress VLAN: tunnel-mode %s", VTY_NEWLINE);
               }
 
               vty_out(vty, "Status: %s %s", value_to_string(&conv_lsp_status, lsp->status), VTY_NEWLINE);
