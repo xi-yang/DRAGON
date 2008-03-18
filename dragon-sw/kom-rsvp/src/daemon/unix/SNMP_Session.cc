@@ -161,6 +161,7 @@ bool SNMP_Session::setVLANPortTag(uint32 portListNew, uint32 vlanID)
     return setVLANPortTag((uint8*)&portListNew, 32, vlanID);
 }
 
+//reset port bit  for untagged-only OID
 bool SNMP_Session::setVLANPortTag(uint8* portbits, int bitlen, uint32 vlanID)
 {
 	struct snmp_pdu *pdu;
@@ -221,6 +222,7 @@ bool SNMP_Session::setVLANPort(uint32 portListNew, uint32 vlanID)
     	return setVLANPort((uint8*)&portListNew, 32, vlanID);
 }
 
+//set port bitmask for tagged/untagged (egress) OID
 bool SNMP_Session::setVLANPort(uint8* portbits, int bitlen, uint32 vlanID)
 {
 	struct snmp_pdu *pdu;

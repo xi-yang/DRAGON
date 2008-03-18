@@ -17,6 +17,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_RaptorER1010.h"
 #include "SwitchCtrl_Session_Catalyst3750.h"
 #include "SwitchCtrl_Session_Catalyst6500.h"
+#include "SwitchCtrl_Session_HP5406.h"
 
 #ifdef Linux
 #include "SwitchCtrl_Session_Linux.h"
@@ -689,9 +690,8 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
 	// Now the 65xx use different module than 3750
 	else if (venderSystemDescription.leftequal("Cisco Internetwork Operating System Software"))
         	vendor = Catalyst6500;
-	// Temp setting for HP 5406 switches, yet to verify compatibility with RFC2674
         else if (venderSystemDescription.leftequal("ProCurve J8697A Switch 5406zl"))
-        	vendor = RFC2674;
+        	vendor = HP5406;
         else{
         	vendor = Illegal;
 		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", venderSystemDescription);
@@ -737,12 +737,15 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
         case RaptorER1010:
             ssNew = new SwitchCtrl_Session_RaptorER1010("VLSR-Raptor", switchAddr);
             break;
-	    case Catalyst3750:
+       case Catalyst3750:
 	    ssNew = new SwitchCtrl_Session_Catalyst3750("VLSR-Catalyst3750", switchAddr);
 	    break;
 	case Catalyst6500:
 	    ssNew = new SwitchCtrl_Session_Catalyst6500("VLSR-Catalyst6500", switchAddr);
 	    break;
+        case HP5406:
+            ssNew = new SwitchCtrl_Session_RaptorER1010("VLSR-HP5406", switchAddr);
+            break;
 #ifdef Linux
         case LinuxSwitch:
             ssNew = new SwitchCtrl_Session_Linux("VLSR-Linux", switchAddr);

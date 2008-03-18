@@ -55,6 +55,7 @@ enum SupportedVendor{
 	LinuxSwitch = 6,
 	Catalyst3750 = 7,
 	Catalyst6500 = 8,
+	HP5406 = 9,
 	Illegal = 0xffff,
 };
 
@@ -241,6 +242,7 @@ protected:
 		supportedVendorOidString[RFC2674] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
 		supportedVendorOidString[LambdaOptical] = "1.3.6.1.4.1.7156.1.4.1.1";
 		supportedVendorOidString[RaptorER1010] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
+		supportedVendorOidString[HP5406] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
 	}
 };
 
