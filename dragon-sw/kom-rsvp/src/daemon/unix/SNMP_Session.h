@@ -16,8 +16,8 @@ class SNMP_Session: public SwitchCtrl_Session
 {
 	
 public:
-	SNMP_Session(): SwitchCtrl_Session() { vlanCreation_enabled = false; untaggedPortBit_reverse = false; }
-	SNMP_Session(const RSVP_String& sName, const NetAddress& swAddr): SwitchCtrl_Session(sName, swAddr) { vlanCreation_enabled = false; untaggedPortBit_reverse = false;  }
+	SNMP_Session(): SwitchCtrl_Session() { untaggedPortBit_reverse = false; }
+	SNMP_Session(const RSVP_String& sName, const NetAddress& swAddr): SwitchCtrl_Session(sName, swAddr) { untaggedPortBit_reverse = false;  }
 	virtual ~SNMP_Session() { }
 
 	virtual bool SNMPSet(char*, char, char*);
