@@ -35,7 +35,7 @@ Notes:
 
 #define MIN_VLAN			2
 #define MAX_VLAN	   		4095
-#define MAX_VENDOR			6
+#define MAX_VENDOR			20
 #define MAX_VLAN_BYTES			512
 #define MAX_VENDOR_NAME			128
 
