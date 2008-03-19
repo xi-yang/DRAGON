@@ -21,12 +21,12 @@ bool SwitchCtrl_Session_HP5406::movePortToVLANAsUntagged(uint32 port, uint32 vla
 
     //Changing port from untagged into tagged in old VLAN
     if (old_vlan) {
-        //uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF; // supporting up to 32 ports for now...
+        //uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF;
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
         if (vpmUntagged) {
             ResetPortBit(vpmUntagged->portbits, port-1);
             //Set port "tagged" state in the orignal VLAN
-            ret&=setVLANPortTag(vpmUntagged->ports , old_vlan); 
+            ret&=setVLANPortTag(vpmUntagged->portbits, HP5406_VLAN_BITLEN, old_vlan); 
         }
    }
 
@@ -34,14 +34,14 @@ bool SwitchCtrl_Session_HP5406::movePortToVLANAsUntagged(uint32 port, uint32 vla
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
         SetPortBit(vpmAll->portbits, port-1);
-        ret&=setVLANPort(vpmAll->ports, vlanID);
+        ret&=setVLANPort(vpmAll->portbits, HP5406_VLAN_BITLEN, vlanID);
     }
 
     //changing port from tagged into untagged in new VLAN
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged) {
         SetPortBit(vpmUntagged->portbits, port-1); //Setting bit=1: untagged
-        ret&=setVLANPortTag(vpmAll->ports, vlanID);
+        ret&=setVLANPortTag(vpmAll->portbits, HP5406_VLAN_BITLEN, vlanID);
     }
 
     //remove tagged port out of the old VLAN
@@ -49,7 +49,7 @@ bool SwitchCtrl_Session_HP5406::movePortToVLANAsUntagged(uint32 port, uint32 vla
         vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
         if (vpmAll) {
             ResetPortBit(vpmAll->portbits, port-1);
-            ret&=setVLANPort(vpmAll->ports, old_vlan);
+            ret&=setVLANPort(vpmAll->portbits, HP5406_VLAN_BITLEN, old_vlan);
         }
     }
 
@@ -71,7 +71,7 @@ bool SwitchCtrl_Session_HP5406::movePortToVLANAsTagged(uint32 port, uint32 vlanI
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
         SetPortBit(vpmAll->portbits, port-1);
-        ret&=setVLANPort(vpmAll->ports, vlanID);
+        ret&=setVLANPort(vpmAll->portbits, HP5406_VLAN_BITLEN, vlanID);
     }
 
     activeVlanId = vlanID; //$$
@@ -106,21 +106,21 @@ bool SwitchCtrl_Session_HP5406::removePortFromVLAN(uint32 port, uint32 vlanID)
         if (vpmUntagged) {
             ResetPortBit(vpmUntagged->portbits, port-1);;
             //Set port "tagged" state
-            ret&=setVLANPortTag(vpmUntagged->ports , vlanID); 
+            ret&=setVLANPortTag(vpmUntagged->portbits, HP5406_VLAN_BITLEN , vlanID); 
         }
 
         //adding port as tagged in VLAN 1
         vpmAll = getVlanPortMapById(vlanPortMapListAll, 1);
         if (vpmAll) {
             SetPortBit(vpmAll->portbits, port-1);
-            ret&=setVLANPort(vpmAll->ports, 1);
+            ret&=setVLANPort(vpmAll->portbits, HP5406_VLAN_BITLEN, 1);
         }
 
         //changing port into untagged in VLAN 1
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, 1);
         if (vpmUntagged) {
             SetPortBit(vpmUntagged->portbits, port-1);
-            ret&=setVLANPortTag(vpmAll->ports, 1);
+            ret&=setVLANPortTag(vpmAll->portbits, HP5406_VLAN_BITLEN, 1);
         }
     }
 
@@ -128,7 +128,7 @@ bool SwitchCtrl_Session_HP5406::removePortFromVLAN(uint32 port, uint32 vlanID)
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
         ResetPortBit(vpmAll->portbits, port-1);
-        ret&=setVLANPort(vpmAll->ports, vlanID);
+        ret&=setVLANPort(vpmAll->portbits, HP5406_VLAN_BITLEN, vlanID);
     }
 
     return ret;
@@ -139,20 +139,18 @@ bool SwitchCtrl_Session_HP5406::removePortFromVLAN(uint32 port, uint32 vlanID)
 
 
 ///////////------HP 5406 specific hooks -------///////////
-// Although we are only handling up to 32 ports and these functions are no different than those in SNMP_Session,
-// we keep them here for possible upgrade in future ...
 
 bool SwitchCtrl_Session_HP5406::hook_isVLANEmpty(const vlanPortMap &vpm)
 {
-    //$$$$ handling up to 32 ports for now
-    return (memcmp(vpm.portbits, "\0\0\0\0", 4) == 0);
+    //$$$$ checking first 64 port
+    return (memcmp(vpm.portbits, "\0\0\0\0\0\0\0\0\0", 8) == 0);
 }
 
 void SwitchCtrl_Session_HP5406::hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars)
 {
     memset(&vpm, 0, sizeof(vlanPortMap));
     if (vars->val.bitstring ){
-        for (int i = 0; i < vars->val_len && i < HP5406_VLAN_BITLEN/8; i++) {
+        for (uint32 i = 0; i < vars->val_len && i < HP5406_VLAN_BITLEN/8; i++) {
             vpm.portbits[i] = vars->val.bitstring[i];
        }
     }
