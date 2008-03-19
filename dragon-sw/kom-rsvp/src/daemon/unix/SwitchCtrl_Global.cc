@@ -744,7 +744,7 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
 	    ssNew = new SwitchCtrl_Session_Catalyst6500("VLSR-Catalyst6500", switchAddr);
 	    break;
         case HP5406:
-            ssNew = new SwitchCtrl_Session_RaptorER1010("VLSR-HP5406", switchAddr);
+            ssNew = new SwitchCtrl_Session_HP5406("VLSR-HP5406", switchAddr);
             break;
 #ifdef Linux
         case LinuxSwitch:
