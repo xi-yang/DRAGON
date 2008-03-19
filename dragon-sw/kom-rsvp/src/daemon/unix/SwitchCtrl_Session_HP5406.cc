@@ -6,7 +6,7 @@ To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/
 
-#include "SwitchCtrl_Session_HP5406.hh"
+#include "SwitchCtrl_Session_HP5406.h"
 #include "RSVP_Log.h"
 
 bool SwitchCtrl_Session_HP5406::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
@@ -24,7 +24,7 @@ bool SwitchCtrl_Session_HP5406::movePortToVLANAsUntagged(uint32 port, uint32 vla
         //uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF; // supporting up to 32 ports for now...
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
         if (vpmUntagged) {
-            ResetPortBit(vpmUntagged->portbits, port-1);;
+            ResetPortBit(vpmUntagged->portbits, port-1);
             //Set port "tagged" state in the orignal VLAN
             ret&=setVLANPortTag(vpmUntagged->ports , old_vlan); 
         }
