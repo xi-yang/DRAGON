@@ -44,6 +44,6 @@ private:
 	uint16 activeVlanId; 
 };
 
-#define HP5406_VLAN_BITLEN	361
+#define HP5406_VLAN_BITLEN	368
 
 #endif
