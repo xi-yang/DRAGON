@@ -16,8 +16,8 @@ class SNMP_Session: public SwitchCtrl_Session
 {
 	
 public:
-	SNMP_Session(): SwitchCtrl_Session() { vlanCreation_enabled = false; }
-	SNMP_Session(const RSVP_String& sName, const NetAddress& swAddr): SwitchCtrl_Session(sName, swAddr) { }
+	SNMP_Session(): SwitchCtrl_Session() { vlanCreation_enabled = false; untaggedPortBit_reverse = false; }
+	SNMP_Session(const RSVP_String& sName, const NetAddress& swAddr): SwitchCtrl_Session(sName, swAddr) { vlanCreation_enabled = false; untaggedPortBit_reverse = false;  }
 	virtual ~SNMP_Session() { }
 
 	virtual bool SNMPSet(char*, char, char*);
@@ -48,6 +48,12 @@ public:
 	bool setVLANPVID(uint32 port, uint32 vlanID); 
 	// RFC2674 (DELL and Extreme)
 	bool movePortToDefaultVLAN(uint32 port); 
+
+	// when set true, bit=0 means *set* to indicate the port is untagged
+	void setUntaggedPortBitReverse(bool b) { untaggedPortBit_reverse = b; } 
+
+protected:
+	bool untaggedPortBit_reverse;
 };
 
 #endif //ifndef _SNMP_SESSION_H_

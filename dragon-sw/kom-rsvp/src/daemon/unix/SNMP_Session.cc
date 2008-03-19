@@ -316,7 +316,7 @@ bool SNMP_Session::hook_createVLAN(const uint32 vlanID)
     memset(&vpm, 0, sizeof(vlanPortMap));
     vpm.vid = vlanID;
     vlanPortMapListAll.push_back(vpm);
-    memset(vpm.portbits, 0xff, MAX_VLAN_PORT_BYTES);
+    memset(vpm.portbits, untaggedPortBit_reverse? 0xff : 0, MAX_VLAN_PORT_BYTES);
     vlanPortMapListUntagged.push_back(vpm);
 
     return true;
