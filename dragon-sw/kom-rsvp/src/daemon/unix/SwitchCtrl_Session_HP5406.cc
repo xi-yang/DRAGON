@@ -41,7 +41,7 @@ bool SwitchCtrl_Session_HP5406::movePortToVLANAsUntagged(uint32 port, uint32 vla
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged) {
         SetPortBit(vpmUntagged->portbits, port-1); //Setting bit=1: untagged
-        ret&=setVLANPortTag(vpmAll->portbits, HP5406_VLAN_BITLEN, vlanID);
+        ret&=setVLANPortTag(vpmUntagged->portbits, HP5406_VLAN_BITLEN, vlanID);
     }
 
     //remove tagged port out of the old VLAN
