@@ -18,6 +18,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_Catalyst3750.h"
 #include "SwitchCtrl_Session_Catalyst6500.h"
 #include "SwitchCtrl_Session_HP5406.h"
+#include "SwitchCtrl_Session_SMC10G8708.h"
 
 #ifdef Linux
 #include "SwitchCtrl_Session_Linux.h"
@@ -692,6 +693,8 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         	vendor = Catalyst6500;
         else if (venderSystemDescription.leftequal("ProCurve J8697A Switch 5406zl"))
         	vendor = HP5406;
+	else if (String("8*10GE L2 Switch") == venderSystemDescription) // SMC 8 ports 10G Ethernet switch
+        	vendor = SMC10G8708;
         else{
         	vendor = Illegal;
 		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", venderSystemDescription);
@@ -745,6 +748,9 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
 	    break;
         case HP5406:
             ssNew = new SwitchCtrl_Session_HP5406("VLSR-HP5406", switchAddr);
+            break;
+        case SMC10G8708:
+            ssNew = new SwitchCtrl_Session_SMC10G8708("VLSR-SMC-10G8708", switchAddr);
             break;
 #ifdef Linux
         case LinuxSwitch:

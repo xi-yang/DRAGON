@@ -56,6 +56,7 @@ enum SupportedVendor{
 	Catalyst3750 = 7,
 	Catalyst6500 = 8,
 	HP5406 = 9,
+	SMC10G8708 = 10, //SMC 10G 8708 switch
 	Illegal = 0xffff,
 };
 
@@ -243,6 +244,7 @@ protected:
 		supportedVendorOidString[LambdaOptical] = "1.3.6.1.4.1.7156.1.4.1.1";
 		supportedVendorOidString[RaptorER1010] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
 		supportedVendorOidString[HP5406] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
+		supportedVendorOidString[SMC10G8708] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
 	}
 };
 
