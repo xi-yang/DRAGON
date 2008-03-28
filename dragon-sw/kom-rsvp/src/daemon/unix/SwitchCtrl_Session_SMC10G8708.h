@@ -57,7 +57,6 @@ public:
 	virtual bool hook_createVlanInterfaceToIDRefTable(vlanRefIDList &convList);
 
 	///////------Vendor/model specific functions--------///////
-///////------Vendor/model specific functions--------///////
 	bool setVLANPortTag(uint32 portListNew, uint32 vlanID);
 	bool setVLANPort(uint32 portListNew, uint32 vlanID);
 	bool setVLANPortTag(uint8 * portbits, int bitlen, uint32 vlanID);	
@@ -72,11 +71,11 @@ protected:
 	// ---------------- SMC 8708 port rate_limit configuration ----------//
 	//  set SMC 8708 port ingress rate_limit
 	bool setPortIngressBandwidth(uint32 input_port, uint32 vlan_id, uint32 committed_rate);
-	// enable ( 1) or disable (2) on port ingress rate_limit
+	// enable (1) or disable (2) on port ingress rate_limit
 	bool setPortIngressRateLimitFlag(uint32 input_port, uint32 flag);
 	// set SMC 8708 port egress rate_limit
 	bool setPortEgressBandwidth(uint32 input_port, uint32 vlan_id, uint32 committed_rate);
-	// enable ( 1) or disable (2) on port egress rate_limit
+	// enable (1) or disable (2) on port egress rate_limit
 	bool setPortEgressRateLimitFlag(uint32 input_port, uint32 flag);
 	
 	//retrieve port rate information from switch
