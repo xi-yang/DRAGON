@@ -643,12 +643,13 @@ void zInitRsvpPathRequest(void* thisApi, struct _sessionParameters* para, uint8 
 	}
 	if (para->Dragon_ExtInfo_Para) {
 		dragonExtInfo = new DRAGON_EXT_INFO_Object;
-		if (para->Dragon_ExtInfo_Para->ucid != 0 && para->Dragon_ExtInfo_Para->seqnum != 0)
+		if ((para->Dragon_ExtInfo_Para->flags & EXT_INFO_FLAG_CONFIRMATION_ID) != 0 && para->Dragon_ExtInfo_Para->ucid != 0 && para->Dragon_ExtInfo_Para->seqnum != 0)
 			dragonExtInfo->SetServiceConfirmationID(para->Dragon_ExtInfo_Para->ucid, para->Dragon_ExtInfo_Para->seqnum);
-		dragonExtInfo->SetEdgeVlanMapping(para->Dragon_ExtInfo_Para->ingress_vtag, 0, 
+		if ((para->Dragon_ExtInfo_Para->flags & EXT_INFO_FLAG_SUBNET_EDGE_VLAN) != 0)
+			dragonExtInfo->SetEdgeVlanMapping(para->Dragon_ExtInfo_Para->ingress_vtag, 0, 
                         (para->Dragon_ExtInfo_Para->ingress_vtag != 0 && para->Dragon_ExtInfo_Para->ingress_vtag != ANY_VTAG) ? para->Dragon_ExtInfo_Para->ingress_vtag : para->Dragon_ExtInfo_Para->egress_vtag, 0,
                         para->Dragon_ExtInfo_Para->egress_vtag, 0);
-		if (para->Dragon_ExtInfo_Para->dtl_hops != NULL)
+		if ((para->Dragon_ExtInfo_Para->flags & EXT_INFO_FLAG_SUBNET_DTL) != 0 && para->Dragon_ExtInfo_Para->dtl_hops != NULL)
 			dragonExtInfo->SetDTL(para->Dragon_ExtInfo_Para->num_dlt_hops, para->Dragon_ExtInfo_Para->dtl_hops);
 	}
 	if (para->labelSet && para->labelSetSize > 0){

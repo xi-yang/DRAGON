@@ -157,11 +157,16 @@ struct _Dragon_Uni_Para {
 	char egressChannel[12];
 };
 
+#define EXT_INFO_FLAG_CONFIRMATION_ID 0x0001
+#define EXT_INFO_FLAG_SUBNET_EDGE_VLAN 0x0002
+#define EXT_INFO_FLAG_SUBNET_DTL 0x0004
 struct _Dragon_ExtInfo_Para {
-	uint32 ucid;
-	uint32 seqnum;
-	uint16 ingress_vtag;
-	uint16 egress_vtag;
+	u_int32_t ucid;
+	u_int32_t seqnum;
+	u_int16_t flags;
+	u_int16_t ingress_vtag;
+	u_int16_t trunk_vtag;
+	u_int16_t egress_vtag;
 	u_int32_t num_dlt_hops;
 	struct dtl_hop *dtl_hops;
 };

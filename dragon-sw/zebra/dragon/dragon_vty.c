@@ -1283,6 +1283,7 @@ DEFUN (dragon_set_lsp_vtag,
             lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->common.DragonExtInfo_Para->egress_vtag = ANY_VTAG;
         }
         lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->common.DragonExtInfo_Para->egress_vtag = vtag;
+	 lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_SUBNET_EDGE_VLAN;
     }
 
     if (lsp->common.DragonUni_Para)
@@ -1384,6 +1385,8 @@ DEFUN (dragon_set_lsp_vtag_subnet_edge,
     {
         lsp->common.DragonExtInfo_Para->egress_vtag = (u_int16_t)edge_vtag;
     }
+
+    lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_SUBNET_EDGE_VLAN;
 
     /* lsp->common.DragonExtInfo_Para->trunk_vtag is determined by 'set vtag TAG' command. 
         The actual tag assignment happens with NARB replies a path with a specific vtag */
@@ -1739,6 +1742,7 @@ DEFUN (dragon_commit_lsp_sender,
 		memcpy(lsp->common.DragonExtInfo_Para->subnet_dtl_hops+i, hop, sizeof(struct dtl_hop));
 		i++;
 	}
+	lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_SUBNET_DTL;
   }
   
   if (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr && lsp->common.Session_Para.srcAddr.s_addr != 0
@@ -1951,7 +1955,7 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 		vty_out(vty, "Src %s/%d, dest %s/%d %s", temp1, 
 					lsp->common.Session_Para.srcPort,temp2, 
 					lsp->common.Session_Para.destPort, VTY_NEWLINE);
-		if (lsp->common.DragonExtInfo_Para && lsp->common.DragonExtInfo_Para->ucid != 0) {
+		if (lsp->common.DragonExtInfo_Para && (lsp->common.DragonExtInfo_Para->flags&EXT_INFO_FLAG_CONFIRMATION_ID) != 0) {
 			vty_out(vty, "GRI: %u-%u%s", 
 				lsp->common.DragonExtInfo_Para->ucid, lsp->common.DragonExtInfo_Para->seqnum, VTY_NEWLINE);
 		}
@@ -2001,7 +2005,7 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
                     vty_out(vty, "No E2E LSP VLAN Tag configured. %s", VTY_NEWLINE);
               }
 
-              if (lsp->common.DragonExtInfo_Para)
+              if (lsp->common.DragonExtInfo_Para && (lsp->common.DragonExtInfo_Para->flags&EXT_INFO_FLAG_SUBNET_EDGE_VLAN) != 0)
               {
                   if (lsp->common.DragonExtInfo_Para->ingress_vtag != lsp->dragon.lspVtag && lsp->common.DragonExtInfo_Para->ingress_vtag == 0)
                       vty_out(vty, "Subnet Ingress VLAN: untagged %s", VTY_NEWLINE);

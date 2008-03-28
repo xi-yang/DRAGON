@@ -728,9 +728,10 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				        lsp->common.DragonExtInfo_Para->ingress_vtag = lsp->dragon.lspVtag & 0xffff;
 				    if (lsp->common.DragonExtInfo_Para->egress_vtag == ANY_VTAG)
 				        lsp->common.DragonExtInfo_Para->egress_vtag = lsp->dragon.lspVtag & 0xffff;
+				    lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_SUBNET_EDGE_VLAN;
 				}
 
-				// NARB returned ERO with confirmation ID, which indicates a different inter-domain routing/signaling mode
+				/* NARB returned ERO with confirmation ID, which indicates a different inter-domain routing/signaling mode*/
 				if (ntohl(amsgh->options) & LSP_OPT_QUERY_CONFIRM)
 				{
 					if (lsp->common.DragonExtInfo_Para == NULL)
@@ -741,6 +742,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 					}
 					lsp->common.DragonExtInfo_Para->ucid = ntohl(amsgh->ucid);
 					lsp->common.DragonExtInfo_Para->seqnum = ntohl(amsgh->seqnum);
+					lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_SUBNET_DTL;
 				}			
 
 				/*Handling Local-ID ERO subobject(s)*/ 
@@ -835,6 +837,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				{
 					memcpy(lsp->common.DragonExtInfo_Para->subnet_dtl_hops+i, ((struct dtl_hop*)(((char*)tlvh)+DTLV_HDR_SIZE)) + i, sizeof(struct dtl_hop));
 				}
+                            lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_SUBNET_DTL;
 				break;
 			}
 
