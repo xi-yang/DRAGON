@@ -742,7 +742,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 					}
 					lsp->common.DragonExtInfo_Para->ucid = ntohl(amsgh->ucid);
 					lsp->common.DragonExtInfo_Para->seqnum = ntohl(amsgh->seqnum);
-					lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_SUBNET_DTL;
+					lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_CONFIRMATION_ID;
 				}			
 
 				/*Handling Local-ID ERO subobject(s)*/ 
