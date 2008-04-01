@@ -1040,8 +1040,7 @@ main(int argc, char* argv[])
     exit(0);
   }
 
-  if (init_schema("http://wiki.maxgigapop.net/twiki/pub/Main/FionaLeung/setup_req.rng")==NULL)
-    init_schema("/usr/local/ast_file/xml_schema/setup_req.rng");
+  init_schema("/usr/local/ast_file/xml_schema/setup_req.rng");
   glob_app_cfg = NULL;
   memset(&app_list, 0, sizeof(struct adtlist));
 
