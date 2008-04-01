@@ -266,8 +266,7 @@ main (int argc, char **argv)
     xml_mode = 0;
   }
   if (xml_mode) {
-    if (init_schema("http://wiki.maxgigapop.net/twiki/pub/Main/FionaLeung/setup_req.rng")==NULL)
-      init_schema("/usr/local/ast_file/schema/setup_req.rng");
+    init_schema("/usr/local/ast_file/xml_schema/setup_req.rng");
   }
 
   /* Library inits. */
