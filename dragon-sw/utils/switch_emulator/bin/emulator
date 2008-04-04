@@ -1,0 +1,77 @@
+#!/usr/bin/perl -w
+
+use POSIX qw(setsid);
+use Getopt::Std;
+use FindBin;
+
+use lib "$FindBin::Bin/../lib";
+use Emulator;
+use strict;
+use warnings;
+
+$| = 1;
+
+# Gracefully handle termination signals.
+$SIG{HUP} = $SIG{INT} = sub { exit };
+
+# Get the command-line arguments:
+my %opt; getopts( "?DFf:" => \%opt );
+
+if ( $opt{"?"} ) {
+    die <<End;
+Emulator command-line arguments:
+    -D          Debug mode. Server forks a child that actually
+                performs the gateway functions.
+    -F          Foreground mode. Don't fork into the background.
+    -f <file>   Use the specified file instead of emulator.conf
+    -?          This, obviously.
+End
+}
+
+# Load the server object.
+my $config = $opt{f} || $ENV{EMULATOR};
+my $server = Emulator->server( ConfigFile => $config );
+
+# See if we can bind the listener port.
+exit 1 unless $server->bind_socket;
+
+# Set up the requisite logs (syslog is handled internal to Emulator.pm).
+if ( $server->{LogFacility} ne "syslog" and my $log = $server->{ServerLog} ) {
+    open STDERR, ">>$log" or die "Can't open log file $log: $!";
+    open STDOUT, ">&STDERR" or die "Can't dup STDOUT to STDERR: $!";
+}
+
+$server->log( 1, "Emulator running on port $server->{ServerPort}." );
+
+# Daemonize, unless we're told not to.
+unless ( $opt{F} ) {
+    if ( my $pid = fork ) {
+        exit;
+    } elsif ( not defined $pid ) {
+        die "Can't fork: $!";
+    }
+    setsid;
+}
+
+# Fork a child process and watch it, if we're in debug mode.
+if ( $opt{D} ) {
+    if ( my $pid = fork ) {
+        1 until waitpid( $pid, 0 );
+        $server->log( 0, "NOTE: Server returned", $? >> 8,
+            "on signal", $? & 127 );
+    } elsif ( not defined $pid ) {
+        die "Can't fork: $!";
+    } else {
+        $server->run;
+    }
+} else {
+# otherwise, just run the gateway.
+    $server->run;
+}
+
+END {
+    unless (getppid) {
+        Emulator->log( 0, "Exiting emulator." );
+        # any cleanup stuff that needs to happen when we exit...?
+    }
+}

@@ -1,0 +1,43 @@
+Switch Emulator for DRAGON VLSR
+- Chris Tracy <chris@maxgigapop.net>
+
+This is a switch emulator package, designed for use with the DRAGON
+VLSR.
+
+The purpose is to provide a "software switch" so that it is possible
+to test LSP signalling without real switching hardware.  This has been
+found to be useful for testing, development, and/or educational
+purposes.
+
+In order to use this software, you should already be familiar with
+deploying and configuring the DRAGON software packages.  This package
+is written in Perl, so no compilation is necessary.  It has been
+tested with perl-5.8.8 on a stock Debian 4.0 system and it does not
+require any additional perl components.
+
+To get started, run the emulator with '-?' to see the usage
+information:
+
+$ bin/emulator -?
+Emulator command-line arguments:
+    -D          Debug mode. Server forks a child that actually
+                performs the gateway functions.
+    -F          Foreground mode. Don't fork into the background.
+    -f <file>   Use the specified file instead of emulator.conf
+    -?          This, obviously.
+
+The emulator requires a configuration file to start.  By default, the
+emulator will attempt to load 'bin/../emulator.conf', assuming the
+perl script is in the 'bin' directory.  You can optionally set the
+EMULATOR environment variable to point to the .conf file, or you can
+use the '-f <file>' option to load a specific file.
+
+Please refer to the emulator.conf file in this directory for the
+format of the configuration file.  The 'examples' directory contains
+specific examples.
+
+The DRAGON software has been designed to work with different types of
+switching hardware which are produced by many different vendors.  This
+package will eventually attempt to emulate all of the switches which
+the DRAGON software is compatible with, but only a subset of all real
+switch hardware may be emulated at any given time.
