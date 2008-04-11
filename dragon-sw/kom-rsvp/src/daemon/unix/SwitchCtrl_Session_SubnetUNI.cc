@@ -2050,11 +2050,11 @@ _out:
 bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
 {
     bool noError = true;
-    int counter = 5;
+    int counter = 15;
     do {
         if (!noError)
             return false;
-        LOG(1)(Log::MPLS, " Child-Process::waitUntilSystemSNCDisapear ... 2x5 seconds left.\n");
+        LOG(3)(Log::MPLS, " Child-Process::waitUntilSystemSNCDisapear ... 2x", counter," seconds left.\n");
         sleep(2); //sleeping two second and try again
         counter--;
         if (counter == 0) //timeout!
