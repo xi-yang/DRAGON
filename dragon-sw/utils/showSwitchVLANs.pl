@@ -6,7 +6,7 @@
 # (C) 2008 by Mid-Atlantic Crossroads (MAX).  All rights reserved.
 #
 # Time-stamp: <2008-04-09 11:41:00 EDT>
-# $Rev$
+# $Id$
 #
 # Author: Chris Tracy <chris@maxgigapop.net>
 #
