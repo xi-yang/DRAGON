@@ -58,7 +58,7 @@ $DEFAULTS =
 $VERSION = '0.1';
 $DESCR = 'show VLAN mapping on RFC2674 compliant switch';
 $AUTHOR = 'Chris Tracy <chris@maxgigapop.net>';
-$VERBOSE = 0;
+$VERBOSE = 2;
 $COPYRIGHT = '(C) 2008 by Mid-Atlantic Crossroads (MAX).  All rights reserved.';
 $LOG_STDERR = 1;
 $LOG_FILE = undef;
@@ -244,6 +244,7 @@ foreach my $host ( sort keys %vlan_ports ) {
     my $p = 7;
     printf "%4d  ", $vlan;
     log_msg( 2, "host $host: vlan $vlan" );
+    my $count = 0;
     foreach my $port ( sort {$a <=> $b} keys %{ $vlan_ports{$host}{$vlan} } ) {
       last if $port > $opts{maxports};
       my $name = getPortNameByNumber($SWITCHES{$host}{'model'}, $port);
@@ -258,10 +259,12 @@ foreach my $host ( sort keys %vlan_ports ) {
             $vlan_ports{$host}{$vlan}{$port} == 1) {
           log_msg( 2, "host $host: port $name is in VLAN $vlan as untagged" );
           $str = "U $name [pvid=$PVIDs{$host}{$port}], ";
+          $count++;
         } elsif ($untagged_vlan_ports{$host}{$vlan}{$port} == 0 and
                  $vlan_ports{$host}{$vlan}{$port} == 1) {
           log_msg( 2, "host $host: port $name is in VLAN $vlan as tagged" );
           $str = "T $name [pvid=$PVIDs{$host}{$port}], ";
+          $count++;
         } else {
           log_msg( 2, "something unexpected happened!" );
         }
@@ -277,6 +280,7 @@ foreach my $host ( sort keys %vlan_ports ) {
         log_msg( 2, "something unexpected happened!" );
       }
     }
+    print "[empty]" if $count == 0;
     print "\n";
   }
   print "\n";
@@ -310,14 +314,19 @@ sub getRaptorPortNameByNumber {
   my ( $port_num ) = @_;
 
   # Unit and port numbering is 1-based while slot numbering is 0-based
-  my $unit = int($port_num / 48) + 1;
-  my $slot = int(($port_num % 48) / 12);
-  my $port = int(($port_num % 48) % 12);
+  my $unit = int(($port_num-1) / 48) + 1;
+  my $slot = int((($port_num-1) % 48) / 12);
+  my $port = int((($port_num-1) % 48) % 12) + 1;
 
-  if (($slot >= 2 and $slot <= 3) and $port > 3) {
-#    print "invalid port - $port_num - $unit/$slot/$port\n";
+  if (($slot >= 2 and $slot <= 3) and ($port > 3 or $port < 1)) {
+    # slots 2 and 3 can only have 3 ports each (ports are numbered 1-3)
+    # print "invalid port - $port_num - $unit/$slot/$port\n";
     return undef;
-  } 
+  } elsif (($slot >= 0 and $slot <= 1) and ($port > 12 or $port < 1)) {
+    # slots 0 and 1 can only have 12 ports each (ports are numbered 1-12)
+    # print "invalid port - $port_num - $unit/$slot/$port\n";
+    return undef;
+  }
   return "$unit/$slot/$port";
 }
 
