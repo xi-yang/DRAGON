@@ -1,3 +1,6 @@
+#
+# $Id$
+#
 package Emulator::Server::CoreDirectorTL1;
 
 use Emulator qw( );

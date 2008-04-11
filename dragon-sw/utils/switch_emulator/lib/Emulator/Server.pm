@@ -1,3 +1,6 @@
+#
+# $Id$
+#
 package Emulator::Server;
 
 use IO::Socket;

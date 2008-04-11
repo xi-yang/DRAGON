@@ -1,3 +1,6 @@
+#
+# $Id$
+#
 package Emulator;
 
 use constant VERSION	=> "0.1";

@@ -1,3 +1,6 @@
+#
+# $Id$
+#
 package Emulator::Peer;
 
 use Emulator qw( );
