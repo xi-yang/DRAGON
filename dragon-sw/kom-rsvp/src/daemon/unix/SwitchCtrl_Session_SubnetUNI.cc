@@ -2016,7 +2016,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
                         break;
                     }
                     //conditions for VCG-owned SNC detection
-                    if ((ts1+1 - pUniData->first_timeslot) %48 == 0 &&  ts1+1 - pUniData->first_timeslot < ts_num)
+                    if ((ts1+1 - pUniData->first_timeslot) %48 == 0 && ts1+1 - pUniData->first_timeslot > 0 && ts1+1 - pUniData->first_timeslot < ts_num)
                     {
                         LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 method detected an SNC holding the current VCG.\n", bufCmd);
                         ret = readShell(SWITCH_PROMPT, NULL, 1, 5);
