@@ -188,6 +188,14 @@ foreach my $HOST (@HOSTS) {
         # looks like a continuation of the data for a previous line..
         $data = $1;
         processHexString( $HOST, $vlan, $type, $data );
+      } elsif (/^($opts{vlanports}|$opts{untaggedvlanports})\.(\d+)\s+\=\s+\"\"\s*/i) {
+        $oid  = $1;
+        $vlan = $2;
+        $data = 0;
+        $type = "T" if $oid eq $opts{vlanports};
+        $type = "U" if $oid eq $opts{untaggedvlanports};
+        log_msg( 2, "vlan=$vlan, type=$type" );
+        processHexString( $HOST, $vlan, $type, $data );
       } else {
         log_msg( 1, "unrecognized line='$_'" );
       }
@@ -248,36 +256,35 @@ foreach my $host ( sort keys %vlan_ports ) {
     foreach my $port ( sort {$a <=> $b} keys %{ $vlan_ports{$host}{$vlan} } ) {
       last if $port > $opts{maxports};
       my $name = getPortNameByNumber($SWITCHES{$host}{'model'}, $port);
-
+      
       next if $vlan_ports{$host}{$vlan}{$port} != 1;
+      next if !defined($name);
 
-      if (defined($name)) {
-        my $str;
-        # untagged ports are always printed:
-        # only print a port as tagged if it has not already been printed as untagged!
-        if ($untagged_vlan_ports{$host}{$vlan}{$port} == 1 and
-            $vlan_ports{$host}{$vlan}{$port} == 1) {
-          log_msg( 2, "host $host: port $name is in VLAN $vlan as untagged" );
-          $str = "U $name [pvid=$PVIDs{$host}{$port}], ";
-          $count++;
-        } elsif ($untagged_vlan_ports{$host}{$vlan}{$port} == 0 and
-                 $vlan_ports{$host}{$vlan}{$port} == 1) {
-          log_msg( 2, "host $host: port $name is in VLAN $vlan as tagged" );
-          $str = "T $name [pvid=$PVIDs{$host}{$port}], ";
-          $count++;
-        } else {
-          log_msg( 2, "something unexpected happened!" );
-        }
-        if (defined($str)) {
-          $p += length($str);
-          if ($p > $opts{termcolumns}) {
-            print "\n" . " " x 6;
-            $p = 7 + length($str);
-          }
-          print $str;
-        }
+      my $str;
+      # untagged ports are always printed:
+      # only print a port as tagged if it has not already been printed as untagged!
+      if (defined($untagged_vlan_ports{$host}{$vlan}{$port}) and
+          $untagged_vlan_ports{$host}{$vlan}{$port} == 1 and
+          $vlan_ports{$host}{$vlan}{$port} == 1) {
+        log_msg( 2, "host $host: port $name is in VLAN $vlan as untagged" );
+        $str = "U $name [pvid=$PVIDs{$host}{$port}], ";
+        $count++;
+      } elsif ((!defined($untagged_vlan_ports{$host}{$vlan}{$port}) or
+                $untagged_vlan_ports{$host}{$vlan}{$port} == 0) and
+               $vlan_ports{$host}{$vlan}{$port} == 1) {
+        log_msg( 2, "host $host: port $name is in VLAN $vlan as tagged" );
+        $str = "T $name [pvid=$PVIDs{$host}{$port}], ";
+        $count++;
       } else {
         log_msg( 2, "something unexpected happened!" );
+      }
+      if (defined($str)) {
+        $p += length($str);
+        if ($p > $opts{termcolumns}) {
+          print "\n" . " " x 6;
+          $p = 7 + length($str);
+        }
+        print $str;
       }
     }
     print "[empty]" if $count == 0;
