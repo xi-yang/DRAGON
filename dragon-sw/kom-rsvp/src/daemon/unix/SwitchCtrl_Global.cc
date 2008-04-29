@@ -1007,7 +1007,14 @@ uint16 SwitchCtrl_Global::getSlotType(uint16 slot_num)
         if ((*it).slot_num == slot_num)
             return (*it).slot_type;
     }
-    return SLOT_TYPE_ILLEGAL;
+
+    //returning default types
+    if (slot_num < 2)
+        return SLOT_TYPE_TENGIGE;
+    else
+        return SLOT_TYPE_GIGE;
+
+    //return SLOT_TYPE_ILLEGAL;
 }
 
 uint32 SwitchCtrl_Global::getExclEntry(String session_name)
