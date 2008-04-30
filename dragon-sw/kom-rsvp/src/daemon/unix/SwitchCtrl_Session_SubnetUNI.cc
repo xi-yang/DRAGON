@@ -1535,6 +1535,60 @@ _out:
     return false;    
 }
 
+//return 0 if all snc's have been in stable working state 
+//return negative id (-1 ~ -4) of the first group/snc that has an error
+//return positive id (1 ~ 4) of the first group/snc that is in neither stable or erro state
+int SwitchCtrl_Session_SubnetUNI::verifySNCInStableWorkingState_TL1(String& sncName)
+{
+    int funcRet = 0;
+    int group;
+    for (group = 0; group < numGroups; group++)
+    {
+        int ret = 0;
+        sprintf( bufCmd, "rtrv-snc-diag::%s-%d:%d;", sncName.chars(), group+1, getNewCtag() );
+        if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+        sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+        sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+        ret = readShell(strCOMPLD, strDENY, 1, 5);
+        if (ret == 1) 
+        {
+            ret = ReadShellPattern(bufCmd, "Snc IC Path Defect Clear", NULL, ";", NULL, 5);
+            if (ret == 1)
+            {
+                //making sure there is no 'Backoff Expiry' and 'STARTING' status after 'Snc IC Path Defect Clear'
+                char* pMoreRecords = strstr(bufCmd, "Snc IC Path Defect Clear");
+                if (strstr(pMoreRecords, "Backoff Expiry") != NULL || strstr(pMoreRecords, "STARTING") != NULL)
+                    return -(group+1); //this SNC is in unstable/error state
+            }
+            else if (strstr(bufCmd, "Backoff Expiry") != NULL)
+            {
+                return -(group+1); //this SNC is not in unstatble/error state
+            }
+            else 
+            {
+                funcRet = group + 1; //this SNC is in neither working or unstatble/error state
+                continue;
+            }
+        }
+        else if (ret == 2)
+        {
+            LOG(5)(Log::MPLS, "verifySNCWorkingStatus_TL1 found no such SNC:", sncName, '-', group,  "\n");
+            readShell(SWITCH_PROMPT, NULL, 1, 5);
+            return -(group+1);
+        }
+        else 
+            goto _out;
+    }
+
+   //all snc's are in stable working state -> funcRet == 0; or one of the snc's not ready (neither working or error) -> funcRet > 0
+   return funcRet;
+   
+_out:
+    LOG(3)(Log::MPLS, sncName, " SNC existence checking via TL1_TELNET failed...\n", bufCmd);
+    return -(numGroups+1);    
+}
+
+
 //;ent-crs-stspc::fromendpoint=gtp01,toendpoint=gtp02:myctag::name=crs01,fromtype=gtp,totype=gtp,;
 bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpName)
 {
@@ -1949,6 +2003,30 @@ bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap()
     return ret;
 }
 
+//return 0 if all snc's have been in stable working state or return id (1-4) of the first group/snc that isn't working
+bool SwitchCtrl_Session_SubnetUNI::hasSNCInStableWorkingState()
+{
+    int interval = 10;
+    int countDown = 6;
+    while (countDown-- > 0)
+    {
+        sleep(interval);
+        int ret = verifySNCInStableWorkingState_TL1(currentSNC);
+        if (ret == 0)
+            return true;
+        else if (ret < 0)
+        {
+            LOG(3)(Log::MPLS, "verifySNCInStableWorkingState found SNC#", -ret, " in error or unstable state.\n");
+            return false;
+        }
+        //else ret > 0 --> neither working or error wait more
+    }
+
+    LOG(1)(Log::MPLS, "verifySNCInStableWorkingState failed to confirm that all SNCs are in stable working state after 60 seconds.\n");
+    return false;
+}
+
+
 bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noError)
 {
     int ret = 0;
@@ -2058,7 +2136,10 @@ bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
         sleep(2); //sleeping two second and try again
         counter--;
         if (counter == 0) //timeout!
+        {
+            LOG(3)(Log::MPLS, " ### Child-Process::waitUntilSystemSNCDisapear still sees an SCN holding the VCG after ", counter*2, " seconds --> Child-Process aborted!\n");
             return false;
+        }
     } while (hasSystemSNCHolindgCurrentVCG_TL1(noError));
     return true;
 }

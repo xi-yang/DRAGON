@@ -139,6 +139,7 @@ public:
 	bool createCRS_TL1(String& xctName, String& gtpName);
 	bool deleteCRS_TL1(String& xctName);
 	bool hasSystemSNCHolindgCurrentVCG_TL1(bool& noError);
+	int verifySNCInStableWorkingState_TL1(String& sncName);
 
 	bool createVCG()
 	{
@@ -212,6 +213,7 @@ public:
 	bool syncTimeslotsMap();
 	bool verifyTimeslotsMap();
 
+	bool hasSNCInStableWorkingState();
 	bool hasSystemSNCHolindgCurrentVCG(bool& noError)
 	{
 		return (!isSource && hasSystemSNCHolindgCurrentVCG_TL1(noError));

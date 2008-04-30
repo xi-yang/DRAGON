@@ -80,6 +80,10 @@ MessageProcessor::~MessageProcessor() {
 	}
 }
 
+//@@@@ Xi2008 >>
+extern pid_t pid_verifySNCStateWorkingState;
+//@@@@ Xi2008 <<
+
 void MessageProcessor::processMessage() {
 
 #if defined(WITH_API)
@@ -234,6 +238,12 @@ void MessageProcessor::processMessage() {
 		fullRefresh = false;
 		currentSession->processRESV( currentMessage, *sendingHop );
 		refreshReservations();
+		//@@@@ Xi2008 >>
+		//This is a diverged child process, it comes here only for sending out delayed RESV messages
+		if (pid_verifySNCStateWorkingState == 0) {
+			exit(0);
+		}
+		//@@@@ Xi2008 <<
 		finishAndSendConfirmMsg();
 		fullRefresh = true;
 	}	break;
@@ -374,7 +384,7 @@ void MessageProcessor::refreshReservations() {
                             const LABEL_Object labelObject(suggestedLabelObject.getLabel(), suggestedLabelObject.getLabelCType());
                             resvMsg->setLABEL_Object(labelObject);
 			}
-            //$$$$ end
+			//$$$$ end
 
 			if ( forwardConfirm && currentMessage.hasRESV_CONFIRM_Object() ) {
 				RESV_CONFIRM_Object confirm = currentMessage.getRESV_CONFIRM_Object();
