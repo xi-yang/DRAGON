@@ -492,7 +492,7 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
 	
     // We only need the remove the port if the port is Trunkport	
     if (!isPortTrunking(port)) {
-        //SwitchPortOnOff(port, false); //Trun off the switch port
+        SwitchPortOnOff(port, false); //Trun off the switch port
         //removeVLAN(vlanID);
         //return true;
         port = convertUnifiedPort2Catalyst3750(port);
