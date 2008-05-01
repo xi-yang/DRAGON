@@ -480,9 +480,10 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
     oid anOID[MAX_OID_LEN];
     size_t anOID_len = MAX_OID_LEN;
     char type, value[500], oid_str[128], oct[3];
-    int status, i;
+    int status, i, j;
     uint32 port_id;
     portVlanMap vlanmap;
+    uint8 mask;
     String tag_oid_str[4] = { ".1.3.6.1.4.1.9.9.46.1.6.1.1.4", ".1.3.6.1.4.1.9.9.46.1.6.1.1.17", \
     				".1.3.6.1.4.1.9.9.46.1.6.1.1.18", ".1.3.6.1.4.1.9.9.46.1.6.1.1.19"};
 
@@ -492,15 +493,19 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
     // We only need the remove the port if the port is Trunkport	
     if (!isPortTrunking(port)) {
         SwitchPortOnOff(port, false); //Trun off the switch port
-	removeVLAN(vlanID);
-        return true;
+	//removeVLAN(vlanID);
+        //return true;
+        port = convertUnifiedPort2Catalyst3750(port);
+        goto _update_vpm;
     }
 
-    if (!isSwitchport(port))
+    if (!isSwitchport(port)) {
         return false;
+    }
 
     // Get the current vlan mapping for the port
     port_id = hook_convertPortIDToInterface(port);
+    port = convertUnifiedPort2Catalyst3750(port);
     sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
     status = read_objid(oid_str, anOID, &anOID_len);
 
@@ -525,12 +530,12 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
        return false;
     }
    
-    uint8 mask=(~(1<<(7-(vlanID%8)))) & 0xFF;
+    mask=(~(1<<(7-(vlanID%8)))) & 0xFF;
     vlanmap.vlanbits[vlanID/8] &= mask;
 
     // Set the vlan mapping for the port
     sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
-    int j=((vlanID-1)/1024)*128;
+    j=((vlanID-1)/1024)*128;
     value[0] = 0;
     for (i = 0; i < 128; i++) {
         snprintf(oct, 3, "%.2x", vlanmap.vlanbits[i+j]);
@@ -544,6 +549,8 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
        return false;
     }
    
+_update_vpm:
+
     if (vlanID>=CATALYST3750_MIN_VLAN_ID && vlanID<=CATALYST3750_MAX_VLAN_ID) {
        vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
        if (vpmAll) {
