@@ -321,10 +321,10 @@ bool SwitchCtrl_Session_Catalyst3750::movePortToVLANAsUntagged(uint32 port, uint
     if ((!active) || port==SWITCH_CTRL_PORT || vlanID<CATALYST3750_MIN_VLAN_ID || vlanID>CATALYST3750_MAX_VLAN_ID) 
     	return false; //don't touch the control port!
 
+    PortStaticAccessOn(port);
+
     if (isPortTrunking(port))
         PortTrunkingOff(port);
-
-    PortStaticAccessOn(port);
 
     port_id = hook_convertPortIDToInterface(port);
     port = convertUnifiedPort2Catalyst3750(port);
