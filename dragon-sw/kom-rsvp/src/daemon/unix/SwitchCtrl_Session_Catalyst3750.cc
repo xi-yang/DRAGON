@@ -322,7 +322,7 @@ bool SwitchCtrl_Session_Catalyst3750::movePortToVLANAsUntagged(uint32 port, uint
     	return false; //don't touch the control port!
 
     if (isPortTrunking(port))
-            PortTrunkingOff(port);
+        PortTrunkingOff(port);
 
     PortStaticAccessOn(port);
 
@@ -492,8 +492,8 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
 	
     // We only need the remove the port if the port is Trunkport	
     if (!isPortTrunking(port)) {
-        SwitchPortOnOff(port, false); //Trun off the switch port
-	//removeVLAN(vlanID);
+        //SwitchPortOnOff(port, false); //Trun off the switch port
+        //removeVLAN(vlanID);
         //return true;
         port = convertUnifiedPort2Catalyst3750(port);
         goto _update_vpm;
