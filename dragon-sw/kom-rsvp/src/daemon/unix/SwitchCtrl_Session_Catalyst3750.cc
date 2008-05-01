@@ -251,7 +251,7 @@ bool SwitchCtrl_Session_Catalyst3750::isSwitchport(uint32 port)
         vars = response->variables;
        bool ret = ((*(vars->val.integer)) ==1);
     	snmp_free_pdu(response);
-	return true;
+	return ret;
     }
     else {
        if (status == STAT_SUCCESS){
@@ -1124,7 +1124,7 @@ bool SwitchCtrl_Session_Catalyst3750::isPortTrunking(uint32 port)
        vars = response->variables;
        bool ret = ((*(vars->val.integer)) !=2);
     	snmp_free_pdu(response);
-	return true;
+	return ret;
     }
     else {
        if (status == STAT_SUCCESS){
