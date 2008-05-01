@@ -249,9 +249,9 @@ bool SwitchCtrl_Session_Catalyst3750::isSwitchport(uint32 port)
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
         vars = response->variables;
+       bool ret = ((*(vars->val.integer)) ==1);
     	snmp_free_pdu(response);
-	if ((*(vars->val.integer)) ==2) return true;
-	else if ((*(vars->val.integer)) ==1) return false;
+	return true;
     }
     else {
        if (status == STAT_SUCCESS){
@@ -1067,7 +1067,8 @@ bool SwitchCtrl_Session_Catalyst3750::readVlanPortMapListALLFromPortVlanMapList(
     while (pvmListIter != pvmList.end()) 
     {
 	portId = (*pvmListIter).pid;
-	uint32 port = hook_convertPortInterfaceToID(portId);
+	uint32 port_id = hook_convertPortInterfaceToID(portId);
+	uint32 port = convertUnifiedPort2Catalyst3750( port_id);
 	for (byteIndex=0; byteIndex<128; byteIndex++) {
 	    vlanbyte = (uint8) (*pvmListIter).vlanbits[byteIndex]; 
 	    bitIndex = 0;
@@ -1120,10 +1121,10 @@ bool SwitchCtrl_Session_Catalyst3750::isPortTrunking(uint32 port)
     status = snmp_synch_response(snmpSessionHandle, pdu, &response);
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
-        vars = response->variables;
+       vars = response->variables;
+       bool ret = ((*(vars->val.integer)) !=2);
     	snmp_free_pdu(response);
-	if ((*(vars->val.integer)) ==2) return false;
-	else return true;
+	return true;
     }
     else {
        if (status == STAT_SUCCESS){
