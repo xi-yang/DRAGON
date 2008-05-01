@@ -326,8 +326,8 @@ bool SwitchCtrl_Session_Catalyst3750::movePortToVLANAsUntagged(uint32 port, uint
 
     PortStaticAccessOn(port);
 
-    port = convertUnifiedPort2Catalyst3750(port);
     port_id = hook_convertPortIDToInterface(port);
+    port = convertUnifiedPort2Catalyst3750(port);
 
     String tag_oid_str = ".1.3.6.1.4.1.9.9.68.1.2.2.1.2";
     sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
@@ -401,8 +401,8 @@ bool SwitchCtrl_Session_Catalyst3750::movePortToVLANAsTagged(uint32 port, uint32
     else PortTrunkingOn(port);
         
     // Get the current vlan mapping for the port
-    port = convertUnifiedPort2Catalyst3750(port);
     port_id = hook_convertPortIDToInterface(port);
+    port = convertUnifiedPort2Catalyst3750(port);
     sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
     status = read_objid(oid_str, anOID, &anOID_len);
 
