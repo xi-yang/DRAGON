@@ -249,7 +249,7 @@ bool SwitchCtrl_Session_Catalyst3750::isSwitchport(uint32 port)
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
         vars = response->variables;
-       bool ret = ((*(vars->val.integer)) ==1);
+       bool ret = ((*(vars->val.integer)) ==2);
     	snmp_free_pdu(response);
 	return ret;
     }
@@ -1122,7 +1122,7 @@ bool SwitchCtrl_Session_Catalyst3750::isPortTrunking(uint32 port)
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
        vars = response->variables;
-       bool ret = ((*(vars->val.integer)) !=2);
+       bool ret = ((*(vars->val.integer)) ==4);
     	snmp_free_pdu(response);
 	return ret;
     }
