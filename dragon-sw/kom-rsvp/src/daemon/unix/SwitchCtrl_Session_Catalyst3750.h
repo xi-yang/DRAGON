@@ -1,7 +1,7 @@
 /****************************************************************************
 
 Cisco (vendor) Catalyst 3750 (model) Control Module header file SwitchCtrl_Session_Catalyst3750.h
-Created by Xi Yang @ 02/24/2006
+Created by Ajay Todimala, 2007
 To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/

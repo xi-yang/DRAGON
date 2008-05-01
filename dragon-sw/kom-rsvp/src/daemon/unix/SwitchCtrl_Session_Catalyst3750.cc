@@ -1,7 +1,8 @@
 /****************************************************************************
 
 Cisco (vendor) Catalyst 3750 (model) Control Module source file SwitchCtrl_Session_Catalyst3750.cc
-Created by Xi Yang @ 02/24/2006
+Created by Ajay Todimala, 2007
+Modified by Xi Yang, 05/2007
 To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/
@@ -618,6 +619,15 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createVLAN(const uint32 vlanID)
         return false;
     }
 
+
+    // Add the new *empty* vlan into PortMapListAll and portMapListUntagged
+    vlanPortMap vpm;
+    memset(&vpm, 0, sizeof(vlanPortMap));
+    vpm.vid = vlanID;
+    vlanPortMapListAll.push_back(vpm);
+    memset(vpm.portbits, 0, MAX_VLAN_PORT_BYTES);
+    vlanPortMapListUntagged.push_back(vpm);
+
     // Release the Lock of the VLAN table 
     tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
     sprintf(oid_str, "%s", tag_oid_str.chars());
@@ -628,14 +638,6 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createVLAN(const uint32 vlanID)
         LOG(1)( Log::MPLS, "VLSR: SNMP: Releasing the Lock of the VLAN table creation failed.");
         return false;
     } 
-
-    //add the new *empty* vlan into PortMapListAll and portMapListUntagged
-    vlanPortMap vpm;
-    memset(&vpm, 0, sizeof(vlanPortMap));
-    vpm.vid = vlanID;
-    vlanPortMapListAll.push_back(vpm);
-    memset(vpm.portbits, 0, MAX_VLAN_PORT_BYTES);
-    vlanPortMapListUntagged.push_back(vpm);
 
     return true;
 }
@@ -669,16 +671,18 @@ bool SwitchCtrl_Session_Catalyst3750::hook_removeVLAN(const uint32 vlanID)
         return false;
     }
 
-    // Apply the VLAN creation request 
+    // Apply the VLAN removal  request 
     tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
     sprintf(oid_str, "%s", tag_oid_str.chars());
     strcpy(value, "3");
     type='i'; 
     if (!SNMPSet(oid_str, type, value)) 
     {
-        LOG(1)( Log::MPLS, "VLSR: SNMP: Applying the VLAN creation request failed.");
+        LOG(1)( Log::MPLS, "VLSR: SNMP: Applying the VLAN creation removal failed.");
         return false;
     }
+
+    // Removal of vlan info from PortMapListAll and portMapListUntagged is performed in removeVLAN (caller)
 
     // Release the Lock of the VLAN table 
     tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
@@ -826,8 +830,8 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
 				tmp_mod_id = 100000; 
                                 if (sscanf(ref_str, "GigabitEthernet%d/0/%d", &tmp_mod_id, &tmp_port_id) == 2) {
 				    if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
-				    	ref_id.port_id = tmp_port_id;
-                                    	portRefIdConvList.push_back(ref_id);
+                                    ref_id.port_id = (((tmp_mod_id&0xf) << 12) | (tmp_port_id&0xff));
+                                    portRefIdConvList.push_back(ref_id);
     				    } else {
         				LOG(2) (Log::Error, "Illegal VLAN ID ", tmp_port_id);
     				    }

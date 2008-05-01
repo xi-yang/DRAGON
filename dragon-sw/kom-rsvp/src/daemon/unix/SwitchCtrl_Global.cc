@@ -109,7 +109,10 @@ bool SwitchCtrl_Session::createVLAN(uint32 &vlanID)
     //check if the VLAN has already been existing
     for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter) {
         if ((*iter).vid == vlanID)
+        {
+            LOG(3)( Log::MPLS, "Warning : VLAN ", vlanID,  " shows up  in vlanPortMapListAll but not on switch --> corrupted VLSR data?");
             return false;
+        }
     }
 
     //otherwise, create it

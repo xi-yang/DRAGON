@@ -1,7 +1,7 @@
 /****************************************************************************
 
 Cisco (vendor) Catalyst 6500 (model) Control Module source file SwitchCtrl_Session_Catalyst6500.cc
-Created by Xi Yang @ 02/24/2006
+Created by Ajay Todimala, 2007
 To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/
@@ -835,8 +835,8 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createPortToIDRefTable(portRefIDList 
 				}
                                 else if (sscanf(ref_str, "GigabitEthernet%d/%d", &tmp_slot_id, &tmp_port_id) == 2) {
 				    if (tmp_port_id>=CATALYST6500_MIN_PORT_ID && tmp_port_id<= CATALYST6500_MAX_PORT_ID ) {
-				    	ref_id.port_id = ((tmp_shelf_id&0xf) << 12) | ((tmp_slot_id&0xf)<<8) | (tmp_port_id&0xff);
-                                    	portRefIdConvList.push_back(ref_id);
+                                    ref_id.port_id = ((tmp_shelf_id&0xf) << 12) | ((tmp_slot_id&0xf)<<8) | (tmp_port_id&0xff);
+                                    portRefIdConvList.push_back(ref_id);
     				    } else {
         				LOG(2) (Log::Error, "Illegal Port ID: ", tmp_port_id);
     				    }
