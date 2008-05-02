@@ -361,7 +361,6 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                            }
 			                                            if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSNCInStableWorkingState() ) {
 			                                                (*sessionIter)->disconnectSwitch();
-			                                                RSVP_Global::messageProcessor->sendResvErrMessage( 0, ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed );
 			                                                goto _Exit_Error_Subnet;
 			                                            }
 			                                            (*sessionIter)->disconnectSwitch();
