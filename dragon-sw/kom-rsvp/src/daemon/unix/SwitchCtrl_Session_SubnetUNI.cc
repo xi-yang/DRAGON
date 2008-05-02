@@ -2013,7 +2013,10 @@ bool SwitchCtrl_Session_SubnetUNI::hasSNCInStableWorkingState()
         sleep(interval);
         int ret = verifySNCInStableWorkingState_TL1(currentSNC);
         if (ret == 0)
+        {
+            LOG(1)(Log::MPLS, "verifySNCInStableWorkingState confirmed the SNC(s) are in stable working state.\n");
             return true;
+        }
         else if (ret < 0)
         {
             LOG(3)(Log::MPLS, "verifySNCInStableWorkingState found SNC#", -ret, " in error or unstable state.\n");

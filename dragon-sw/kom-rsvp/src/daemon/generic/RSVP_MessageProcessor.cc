@@ -251,7 +251,7 @@ void MessageProcessor::processMessage() {
 		if ( checkPathMessage() ) {
 			currentSession->processPTEAR( currentMessage, currentHeader, *currentLif );
 		}
-                                            assert( phopRefreshList.empty() );
+		assert( phopRefreshList.empty() );
 		break;
 	case Message::PathErr:
 		currentSession->processPERR( currentMessage, *currentLif );
@@ -265,6 +265,12 @@ void MessageProcessor::processMessage() {
 		fullRefresh = false;
 		currentSession->processRERR( currentMessage, *sendingHop );
 		refreshReservations();
+		//@@@@ Xi2008 >>
+		//This is a diverged child process, it comes here only for sending out delayed RESV messages
+		if (pid_verifySNCStateWorkingState == 0) {
+			exit(0);
+		}
+		//@@@@ Xi2008 <<
 		B_Merge = true;
 		fullRefresh = true;
 		break;
