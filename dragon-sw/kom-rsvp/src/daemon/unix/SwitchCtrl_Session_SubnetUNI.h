@@ -123,9 +123,9 @@ public:
 	void getCienaDestTimeslotsString(String*& destTimeslotsStringArray);
 	void getPeerCRS_GTP(String& gtpName);
 
-	bool hasEFLOW_TL1(String& vcgName, bool ingress = true);
+	bool hasEFLOW_TL1(String& vcgName, bool ingress = true, bool untaggedMulticast = false);
 	bool createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh = 0, int vlanTrunk = 0);
-	bool deleteEFLOWs_TL1(String& vcgName);
+	bool deleteEFLOWs_TL1(String& vcgName, bool hasUntaggedMulticast = false);
 	bool hasVCG_TL1(String& vcgName);
 	bool createVCG_TL1(String& vcgName, bool tunnelMode = true);
 	bool deleteVCG_TL1(String& vcgName);
@@ -160,7 +160,10 @@ public:
 	bool deleteVCG() 
 	{
 		if (hasEFLOW_TL1(currentVCG))
-			deleteEFLOWs_TL1(currentVCG);
+		{
+			bool hasUntaggedMulticast = hasEFLOW_TL1(currentVCG, true, true);
+			deleteEFLOWs_TL1(currentVCG, hasUntaggedMulticast);
+		}
 		return deleteVCG_TL1(currentVCG);
 	}
 	bool createGTP()

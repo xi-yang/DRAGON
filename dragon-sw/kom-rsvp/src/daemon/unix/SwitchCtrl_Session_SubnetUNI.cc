@@ -833,7 +833,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     {
         LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW has been created successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-        // contine to egress EFLOW creation ...
+        // contine to other EFLOW creation ...
     }
     else if (ret == 2)
     {
@@ -843,6 +843,32 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     }
     else 
         goto _out;
+
+    if (strncmp(packetType, "pkttype=untagged", 16) == 0)
+    {
+        sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in_multicast:%d:::ingressporttype=ettp,ingressportname=%s,pkttype=untagged_multicast,,,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
+            vcgName.chars(), getNewCtag(), ettpName.chars(), vcgName.chars(), modificationRule);
+        if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
+    
+        sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+        sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+        ret = readShell(strCOMPLD, strDENY, 1, 5);
+        if (ret == 1) 
+        {
+            LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW (untagged multicast) has been created successfully.\n", bufCmd);
+            readShell(SWITCH_PROMPT, NULL, 1, 5);
+            // contine to other EFLOW creation ...
+        }
+        else if (ret == 2)
+        {
+            LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW (untagged multicast) creation has been denied.\n", bufCmd);
+            readShell(SWITCH_PROMPT, NULL, 1, 5);
+            return false;
+        }
+        else 
+            goto _out;
+
+    }
 
     if (vlanTrunk == 0)
         sprintf(packetType, "pkttype=untagged_unicast,,");
@@ -881,17 +907,45 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     {
         LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW has been created successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-        return true;
+        if (strncmp(packetType, "pkttype=untagged", 16) != 0)
+            return true;
+        //otherwise, contine to create egress untagged multicast eflow
     }
     else if (ret == 2)
     {
         LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW creation has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-        //$$$$ Delete ingress EFLOW
         return false;
     }
     else 
         goto _out;
+
+    if (strncmp(packetType, "pkttype=untagged", 16) == 0)
+    {
+        sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out_multicase:%d:::ingressporttype=vcg,ingressportname=%s,pkttype=untagged_multicast,,,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
+            vcgName.chars(), getNewCtag(), vcgName.chars(), ettpName.chars(), modificationRule);
+    
+        if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
+    
+        sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+        sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+        ret = readShell(strCOMPLD, strDENY, 1, 5);
+        if (ret == 1) 
+        {
+            LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW (untagged multicast) has been created successfully.\n", bufCmd);
+            readShell(SWITCH_PROMPT, NULL, 1, 5);
+            // done!
+            return true;
+        }
+        else if (ret == 2)
+        {
+            LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW (untagged multicast) creation has been denied.\n", bufCmd);
+            readShell(SWITCH_PROMPT, NULL, 1, 5);
+            return false;
+        }
+        else 
+            goto _out;
+    }
 
 _out:
         LOG(3)(Log::MPLS, vcgName, " EFLOWs creation via TL1_TELNET failed...\n", bufCmd);
@@ -899,7 +953,7 @@ _out:
 }
 
 //dlt-elow::myeflow1:myctag;
-bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName)
+bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasUntaggedMulticast)
 {
     int ret = 0;
 
@@ -914,7 +968,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName)
     {
         LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW has been deleted successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-        // contine to egress EFLOW creation ...
+        // contine to delete other eflows
     }
     else if (ret == 2)
     {
@@ -936,7 +990,9 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName)
     {
         LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW has been deleted successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-        return true;
+        if (!hasUntaggedMulticast)
+            return true;
+        //otherwise continue to delete other eflows
     }
     else if (ret == 2)
     {
@@ -947,17 +1003,65 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName)
     else 
         goto _out;
 
+    if (hasUntaggedMulticast)
+    {
+        sprintf(bufCmd, "dlt-eflow::dcs_eflow_%s_in_multicast:%d;", vcgName.chars(), getNewCtag());
+       
+        if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
+       
+        sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+        sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+        ret = readShell(strCOMPLD, strDENY, 1, 5);
+        if (ret == 1) 
+        {
+            LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW (untagged multicast) has been deleted successfully.\n", bufCmd);
+            readShell(SWITCH_PROMPT, NULL, 1, 5);
+            // contine to egress untagged multicast EFLOW creation ...
+        }
+        else if (ret == 2)
+        {
+            LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW (untagged multicast) deletion has been denied.\n", bufCmd);
+            readShell(SWITCH_PROMPT, NULL, 1, 5);
+            return false;
+        }
+        else 
+            goto _out;
+
+        sprintf(bufCmd, "dlt-eflow::dcs_eflow_%s_out_multicast:%d;", vcgName.chars(), getNewCtag());
+    
+        if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
+    
+        sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+        sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+        ret = readShell(strCOMPLD, strDENY, 1, 5);
+        if (ret == 1) 
+        {
+            LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW (untagged multicast) has been deleted successfully.\n", bufCmd);
+            readShell(SWITCH_PROMPT, NULL, 1, 5);
+            return true;
+        }
+        else if (ret == 2)
+        {
+            LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW (untagged multicast) deletion has been denied.\n", bufCmd);
+            readShell(SWITCH_PROMPT, NULL, 1, 5);
+            return false;
+        }
+        else 
+            goto _out;
+    }
+
+
 _out:
         LOG(3)(Log::MPLS, vcgName, " EFLOWs deletion via TL1_TELNET failed...\n", bufCmd);
         return false;
 }
 
 //rtrv-eflow::myeflow1:myctag;
-bool SwitchCtrl_Session_SubnetUNI::hasEFLOW_TL1(String& vcgName, bool ingress)
+bool SwitchCtrl_Session_SubnetUNI::hasEFLOW_TL1(String& vcgName, bool ingress, bool untaggedMulticast)
 {
     int ret = 0;
 
-    sprintf(bufCmd, "rtrv-eflow::dcs_eflow_%s_%s:%d;", vcgName.chars(), ingress? "in":"out", getNewCtag());
+    sprintf(bufCmd, "rtrv-eflow::dcs_eflow_%s_%s%s:%d;", vcgName.chars(), ingress? "in":"out", untaggedMulticast? "_multicast":"", getNewCtag());
 
     if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
 
@@ -966,13 +1070,13 @@ bool SwitchCtrl_Session_SubnetUNI::hasEFLOW_TL1(String& vcgName, bool ingress)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(4)(Log::MPLS, vcgName, (ingress? "_in":"_out"), " EFLOW does exist.\n", bufCmd);
+        LOG(5)(Log::MPLS, vcgName, (ingress? "_in":"_out"), (untaggedMulticast? "_multicast":"_unicast"), " EFLOW does exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(4)(Log::MPLS, vcgName, (ingress? "_in":"_out"), " EFLOW does not exist.\n", bufCmd);
+        LOG(5)(Log::MPLS, vcgName, (ingress? "_in":"_out"), (untaggedMulticast? "_multicast":"_unicast"), " EFLOW does not exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
