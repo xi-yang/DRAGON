@@ -922,7 +922,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
 
     if (strncmp(packetType, "pkttype=untagged", 16) == 0)
     {
-        sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out_multicase:%d:::ingressporttype=vcg,ingressportname=%s,pkttype=untagged_multicast,,,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
+        sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out_multicast:%d:::ingressporttype=vcg,ingressportname=%s,pkttype=untagged_multicast,,,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
             vcgName.chars(), getNewCtag(), vcgName.chars(), ettpName.chars(), modificationRule);
     
         if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
