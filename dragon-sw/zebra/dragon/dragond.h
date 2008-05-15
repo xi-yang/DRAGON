@@ -166,7 +166,7 @@ struct dmsg_header {
 #define	DRAGON_TLV_ERO		DRAGON_TLV_BASE + 0x02
 /* Error code - returned by NARB */ 
 #define	DRAGON_TLV_ERR		DRAGON_TLV_BASE + 0x03
-/* Subnet DTL ERO */
+/* Subnet ERO TLV */
 #define	DRAGON_TLV_SUBNET_ERO	DRAGON_TLV_BASE + 0x08
 /* Local ID TLV */
 #define	DRAGON_TLV_LCLID	DRAGON_TLV_BASE + 0x09
@@ -177,6 +177,8 @@ struct dmsg_header {
 #define	DRAGON_TLV_ALTERNATE_ERO	DRAGON_TLV_BASE + 0x010
 #define	DRAGON_TLV_ALTERNATE_SUBNET_ERO	DRAGON_TLV_BASE + 0x011
 */
+/* User Supplied TLV */
+#define DRAGON_TLV_USER_SUPPLIED_ERO DRAGON_TLV_BASE + 0x12
 
 struct dragon_tlv_header
 {
