@@ -1553,7 +1553,7 @@ DEFUN (dragon_set_lsp_ero_hop,
   if (strcmp(argv[0], "loose") == 0)
 	hop->isLoose = 1;
   inet_aton(argv[1], &ip);
-  if (argc < 3 || sscanf("%d", argv[2], &if_id) != 1 || if_id == 0)
+  if (argc < 3 || sscanf(argv[2], "%d", &if_id) != 1 || if_id == 0)
   {
   	hop->type = IPv4;
 	hop->data.ip4.addr.s_addr = ip.s_addr;

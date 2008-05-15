@@ -592,7 +592,7 @@ dragon_narb_topo_rsp_proc_ero(struct dragon_tlv_header *tlvh, u_int8_t *node_num
 }
 
 struct _EROAbstractNode_Para *
-dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, int num_ero_hops, list ero_list)
+dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, int* num_ero_hops, list ero_list)
 {
 	struct _EROAbstractNode_Para* hop, *lhop, *hop_s = NULL, * hop_d = NULL;
 	int num_ero_hops_ret = 0;
@@ -604,9 +604,9 @@ dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, int num_ero_ho
 		hop_s = &ero_hops[0];
 		num_ero_hops_ret++;
 	}
-	if (ero_hops[num_ero_hops-1] .type == UNumIfID && (ero_hops[num_ero_hops-1].data.uNumIfID.interfaceID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
+	if (ero_hops[(*num_ero_hops)-1] .type == UNumIfID && (ero_hops[(*num_ero_hops)-1].data.uNumIfID.interfaceID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
 	{
-		hop_d = &ero_hops[num_ero_hops-1];
+		hop_d = &ero_hops[(*num_ero_hops)-1];
 		num_ero_hops_ret++;
 	}
 	num_ero_hops_ret += listcount(ero_list);
@@ -626,6 +626,7 @@ dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, int num_ero_ho
 	{
 		*hop = *hop_d;
 	}
+	*num_ero_hops = num_ero_hops_ret;
 	return ero_hops_ret;
 }
 
@@ -698,7 +699,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 
 				/* Override NARB returned ERO (keep some local-id subobjects if applicable) if manual ERO has been input from CLI*/
 				if (lsp->dragon.ero != NULL && listcount(lsp->dragon.ero) > 0)
-					lsp->common.EROAbstractNode_Para = dragon_narb_override_ero(lsp->common.EROAbstractNode_Para, lsp->common.ERONodeNumber, lsp->dragon.ero);
+					lsp->common.EROAbstractNode_Para = dragon_narb_override_ero(lsp->common.EROAbstractNode_Para, &lsp->common.ERONodeNumber, lsp->dragon.ero);
 
 				if (lsp->dragon.lspVtag == ANY_VTAG)
 				{
