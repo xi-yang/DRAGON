@@ -406,7 +406,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
 	char * p = ero_buf;
 	u_int16_t length = 0;
 	u_int16_t type = htons(DRAGON_TLV_SUBNET_ERO);
-	LIST_LOOP(lsp->dragon.subnet_ero, hop, node)
+	LIST_LOOP(lsp->dragon.ero, hop, node)
 	{
 		if (hop->type == IPv4)
 		{
