@@ -78,6 +78,7 @@ $USAGE = <<__UsAGe__;
            --snmpwalk=[string]         full path to snmpwalk binary
                                           (default searches /usr/bin and /usr/local/bin)
            --maxports=[number]         maximum number of ports on the switch (default=255)
+           --showempty                 print empty VLANs (default is not to print)
            -h                          print this message and exit
            -v                          be verbose
 __UsAGe__
@@ -108,6 +109,7 @@ usage() unless
                 "snmpwalk=s",
                 "maxports=s",
                 "termcolumns=s",
+                "showempty",
                 );
 usage(undef, 1) if $opts{h};
 $LOG_FILE = $opts{log};
@@ -249,8 +251,9 @@ foreach my $host ( sort keys %vlan_ports ) {
   print "VLAN  Ports (U=untagged, T=tagged)\n";
   print "----  " . "-" x ($opts{termcolumns} - 6) . "\n";
   foreach my $vlan ( sort {$a <=> $b} keys %{ $vlan_ports{$host} } ) {
+    my $line = "";
     my $p = 7;
-    printf "%4d  ", $vlan;
+    $line .= sprintf("%4d  ", $vlan);
     log_msg( 2, "host $host: vlan $vlan" );
     my $count = 0;
     foreach my $port ( sort {$a <=> $b} keys %{ $vlan_ports{$host}{$vlan} } ) {
@@ -281,14 +284,14 @@ foreach my $host ( sort keys %vlan_ports ) {
       if (defined($str)) {
         $p += length($str);
         if ($p > $opts{termcolumns}) {
-          print "\n" . " " x 6;
+          $line .= sprintf("\n" . " " x 6);
           $p = 7 + length($str);
         }
-        print $str;
+        $line .= $str;
       }
     }
-    print "[empty]" if $count == 0;
-    print "\n";
+    $line .= "[empty]" if $count == 0;
+    print "$line\n" unless !defined($opts{showempty}) and $count == 0;
   }
   print "\n";
 }
