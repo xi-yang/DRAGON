@@ -19,29 +19,19 @@ node_agent_LDADD =  libastb.a ../lib/libzebra.a $(XML_LIBS) -lcrypt -lxml2 -lm
 libastb_a_SOURCES = adt.c ast_master.c local_id_cfg.c 
 
 sysconf_DATA = ast_master.conf.sample
-astconf_DATA = service_template.xml res_def.xml xml_schema/resource_def.rng \
-		xml_schema/dragon_link.rng xml_schema/dragon_node_pc.rng \
-		xml_schema/setup_req.rng
+# RC_SCRIPT = ast_master.sh
+
 ASTCONFDIR = /usr/local/ast_file
-RC_SCRIPT = ast_master.sh
-
-install-astconfDATA: $(astconf_DATA)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(astconfdir) $(astconfdir)/xml_schema
-	@list='$(astconf_DATA)'; for p in $$list; do \
-	  if test -f $(srcdir)/$$p; then \
-	    echo " $(INSTALL_SDATA) $(srcdir)/$$p $(astconfdir)/$$p"; \
-	    $(INSTALL_SDATA) $(srcdir)/$$p $(astconfdir)/$$p; \
-	  else if test -f $$p; then \
-	    echo " $(INSTALL_SDATA) $$p $(astconfdir)/$$p"; \
-	    $(INSTALL_SDATA) $$p $(astconfdir)/$$p; \
-	  fi; fi; \
-	done
-
+EXTRA_DIST = service_template.xml \
+             res_def.xml \
+             xml_schema/resource_def.rng \
+             xml_schema/dragon_link.rng \
+             xml_schema/dragon_node_pc.rng \
+             xml_schema/setup_req.rng
 
 install-sysconfDATA: $(sysconf_DATA)
 	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(sysconfdir) $(ASTCONFDIR)
+	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
 	@list='$(sysconf_DATA)'; for p in $$list; do \
 	  if test -f $(srcdir)/$$p; then \
 	    echo " $(INSTALL_SDATA) $(srcdir)/$$p $(DESTDIR)$(sysconfdir)/$$p"; \
@@ -49,6 +39,16 @@ install-sysconfDATA: $(sysconf_DATA)
 	  else if test -f $$p; then \
 	    echo " $(INSTALL_SDATA) $$p $(DESTDIR)$(sysconfdir)/$$p"; \
 	    $(INSTALL_SDATA) $$p $(DESTDIR)$(sysconfdir)/$$p; \
+	  fi; fi; \
+	done
+	$(mkinstalldirs) $(ASTCONFDIR) $(ASTCONFDIR)/xml_schema
+	@list='$(EXTRA_DIST)'; for p in $$list; do \
+	  if test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_SDATA) $(srcdir)/$$p $(ASTCONFDIR)/$$p"; \
+	    $(INSTALL_SDATA) $(srcdir)/$$p $(ASTCONFDIR)/$$p; \
+	  else if test -f $$p; then \
+	    echo " $(INSTALL_SDATA) $$p $(ASTCONFDIR)/$$p"; \
+	    $(INSTALL_SDATA) $$p $(ASTCONFDIR)/$$p; \
 	  fi; fi; \
 	done
 #	@$(INSTALL) $(RC_SCRIPT) $(DESTDIR)$(bindir)/$(RC_SCRIPT);

@@ -26,7 +26,6 @@ sbindir = @sbindir@
 libexecdir = @libexecdir@
 datadir = @datadir@
 sysconfdir = @sysconfdir@
-astconfdir = /usr/local/ast_file
 sharedstatedir = @sharedstatedir@
 localstatedir = @localstatedir@
 libdir = @libdir@
@@ -118,16 +117,20 @@ noinst_HEADERS = adt.h ast_master.h dragon_app.h
 ast_master_SOURCES = main.c ast_master_vty.c dragon_app.c
 ast_master_LDADD = libastb.a ../lib/libzebra.a  $(XML_LIBS) -lcrypt -lxml2 -lm
 node_agent_SOURCES = node_agent.c dragon_app.c
-node_agent_LDADD = libastb.a ../lib/libzebra.a $(XML_LIBS) -lcrypt -lxml2 -lm
+node_agent_LDADD = libastb.a ../lib/libzebra.a $(XML_LIBS) -lcrypt -lxml2 -lm 
 libastb_a_SOURCES = adt.c ast_master.c local_id_cfg.c 
 
-sysconf_DATA = ast_master.conf.sample 
-astconf_DATA = service_template.xml res_def.xml xml_schema/resource_def.rng \
-		xml_schema/dragon_link.rng xml_schema/dragon_node_pc.rng \
-		xml_schema/setup_req.rng 
-ASTCONFDIR = /usr/local/ast_file
+sysconf_DATA = ast_master.conf.sample
 
-RC_SCRIPT = ast_master.sh
+# RC_SCRIPT = ast_master.sh
+ASTCONFDIR = /usr/local/ast_file
+EXTRA_DIST = service_template.xml \
+             res_def.xml \
+             xml_schema/resource_def.rng \
+             xml_schema/dragon_link.rng \
+             xml_schema/dragon_node_pc.rng \
+             xml_schema/setup_req.rng
+
 subdir = ast_master
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config.h
@@ -137,19 +140,19 @@ LIBRARIES = $(noinst_LIBRARIES)
 libastb_a_AR = $(AR) cru
 libastb_a_LIBADD =
 am_libastb_a_OBJECTS = adt.$(OBJEXT) ast_master.$(OBJEXT) \
-	local_id_cfg.$(OBJEXT) 
+	local_id_cfg.$(OBJEXT)
 libastb_a_OBJECTS = $(am_libastb_a_OBJECTS)
-bin_PROGRAMS = ast_master$(EXEEXT) node_agent$(EXEEXT) 
+bin_PROGRAMS = ast_master$(EXEEXT) node_agent$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 
-am_ast_master_OBJECTS = dragon_app.$(OBJEXT)\
-	main.$(OBJEXT) ast_master_vty.$(OBJEXT)
+am_ast_master_OBJECTS = main.$(OBJEXT) ast_master_vty.$(OBJEXT) \
+	dragon_app.$(OBJEXT)
 ast_master_OBJECTS = $(am_ast_master_OBJECTS)
 ast_master_DEPENDENCIES = libastb.a ../lib/libzebra.a
 ast_master_LDFLAGS =
 am_node_agent_OBJECTS = node_agent.$(OBJEXT) dragon_app.$(OBJEXT)
 node_agent_OBJECTS = $(am_node_agent_OBJECTS)
-node_agent_DEPENDENCIES = ../lib/libzebra.a libastb.a
+node_agent_DEPENDENCIES = libastb.a ../lib/libzebra.a
 node_agent_LDFLAGS =
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)
 CPPFLAGS = @CPPFLAGS@
@@ -157,7 +160,8 @@ LDFLAGS = @LDFLAGS@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 @AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/adt.Po ./$(DEPDIR)/ast_master.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/dragon_app.Po ./$(DEPDIR)/ast_master_vty.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ast_master_vty.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/dragon_app.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/local_id_cfg.Po ./$(DEPDIR)/main.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/node_agent.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
@@ -167,7 +171,7 @@ LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 CFLAGS = @CFLAGS@
 DIST_SOURCES = $(libastb_a_SOURCES) $(ast_master_SOURCES) \
 	$(node_agent_SOURCES)
-DATA = $(sysconf_DATA) ${astconf_DATA}
+DATA = $(sysconf_DATA)
 
 HEADERS = $(noinst_HEADERS)
 
@@ -193,7 +197,7 @@ libastb.a: $(libastb_a_OBJECTS) $(libastb_a_DEPENDENCIES)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(bindir) $(ASTCONFDIR)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
 	@list='$(bin_PROGRAMS)'; for p in $$list; do \
 	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
 	  if test -f $$p \
@@ -230,10 +234,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/adt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ast_master.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ast_master_vty.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_app.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/local_id_cfg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/node_agent.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_app.Po@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)
@@ -252,14 +256,6 @@ distclean-depend:
 CCDEPMODE = @CCDEPMODE@
 uninstall-info-am:
 sysconfDATA_INSTALL = $(INSTALL_DATA)
-
-uninstall-astconfDATA:
-	@$(NORMAL_UNINSTALL) 
-	@list='$(astconf_DATA)'; for p in $$list; do \
-	  f="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " rm -f $(astconfdir)/$$f"; \
-	  rm -f $(astconfdir)/$$f; \
-	done
 
 uninstall-sysconfDATA:
 	@$(NORMAL_UNINSTALL)
@@ -310,6 +306,7 @@ top_distdir = ..
 distdir = $(top_distdir)/$(PACKAGE)-$(VERSION)
 
 distdir: $(DISTFILES)
+	$(mkinstalldirs) $(distdir)/xml_schema
 	@list='$(DISTFILES)'; for file in $$list; do \
 	  if test -f $$file || test -d $$file; then d=.; else d=$(srcdir); fi; \
 	  dir=`echo "$$file" | sed -e 's,/[^/]*$$,,'`; \
@@ -381,7 +378,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am: install-binPROGRAMS install-sysconfDATA install-astconfDATA
+install-exec-am: install-binPROGRAMS install-sysconfDATA
 
 install-info: install-info-am
 
@@ -398,7 +395,7 @@ mostlyclean: mostlyclean-am
 mostlyclean-am: mostlyclean-compile mostlyclean-generic
 
 uninstall-am: uninstall-binPROGRAMS uninstall-info-am \
-	uninstall-sysconfDATA uninstall-astconfDATA
+	uninstall-sysconfDATA
 
 .PHONY: GTAGS all all-am check check-am clean clean-binPROGRAMS \
 	clean-generic clean-noinstLIBRARIES distclean distclean-compile \
@@ -407,25 +404,11 @@ uninstall-am: uninstall-binPROGRAMS uninstall-info-am \
 	install-data install-data-am install-exec install-exec-am \
 	install-info install-info-am install-man install-strip \
 	install-sysconfDATA installcheck installcheck-am installdirs \
-	install-astconfDATA 
 	maintainer-clean maintainer-clean-generic mostlyclean \
 	mostlyclean-compile mostlyclean-generic tags uninstall \
 	uninstall-am uninstall-binPROGRAMS uninstall-info-am \
-	uninstall-sysconfDATA uninstall-astconfDATA
+	uninstall-sysconfDATA
 
-
-install-astconfDATA: $(astconf_DATA)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(astconfdir) $(astconfdir)/xml_schema
-	@list='$(astconf_DATA)'; for p in $$list; do \
-	  if test -f $(srcdir)/$$p; then \
-	    echo " $(INSTALL_SDATA) $(srcdir)/$$p $(astconfdir)/$$p"; \
-	    $(INSTALL_SDATA) $(srcdir)/$$p $(astconfdir)/$$p; \
-	  else if test -f $$p; then \
-	    echo " $(INSTALL_SDATA) $$p $(astconfdir)/$$p"; \
-	    $(INSTALL_SDATA) $$p $(astconfdir)/$$p; \
-	  fi; fi; \
-	done
 
 install-sysconfDATA: $(sysconf_DATA)
 	@$(NORMAL_INSTALL)
@@ -437,6 +420,16 @@ install-sysconfDATA: $(sysconf_DATA)
 	  else if test -f $$p; then \
 	    echo " $(INSTALL_SDATA) $$p $(DESTDIR)$(sysconfdir)/$$p"; \
 	    $(INSTALL_SDATA) $$p $(DESTDIR)$(sysconfdir)/$$p; \
+	  fi; fi; \
+	done
+	$(mkinstalldirs) $(ASTCONFDIR) $(ASTCONFDIR)/xml_schema
+	@list='$(EXTRA_DIST)'; for p in $$list; do \
+	  if test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_SDATA) $(srcdir)/$$p $(ASTCONFDIR)/$$p"; \
+	    $(INSTALL_SDATA) $(srcdir)/$$p $(ASTCONFDIR)/$$p; \
+	  else if test -f $$p; then \
+	    echo " $(INSTALL_SDATA) $$p $(ASTCONFDIR)/$$p"; \
+	    $(INSTALL_SDATA) $$p $(ASTCONFDIR)/$$p; \
 	  fi; fi; \
 	done
 #	@$(INSTALL) $(RC_SCRIPT) $(DESTDIR)$(bindir)/$(RC_SCRIPT);
