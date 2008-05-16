@@ -45,11 +45,19 @@ case "$target" in
   cleanup)
     cd kom-rsvp
     if test -f Makefile; then
-      make clean
+      if test -e /etc/debian_version; then
+        make clean
+      else
+        gmake clean
+      fi
     fi
     cd ../zebra
     if test -f Makefile; then
-      make clean
+      if test -e /etc/debian_version; then
+        make clean
+      else
+        gmake clean
+      fi
     fi
     cd ..
     echo "dragon-sw: cleanup finished ... "
@@ -88,7 +96,7 @@ case `uname` in
 	echo 'making kom-rsvp...'
     gmake
     if test $? != 0; then
-	echo "dragon-sw: kom-rsvp gmake error!"
+	echo "dragon-sw: kom-rsvp GNU make error!"
 	exit 1
     fi
 
@@ -136,7 +144,7 @@ case `uname` in
 	gmake
     fi
     if test $? != 0; then
-	echo "dragon-sw: kom-rsvp gmake error!"
+	echo "dragon-sw: kom-rsvp GNU make error!"
 	exit 1
     fi
 
