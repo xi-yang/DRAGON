@@ -649,7 +649,7 @@ dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, int* num_ero_h
 		num_ero_hops_ret++;
 	}
 	num_ero_hops_ret += listcount(ero_list);
-	ero_hops_ret = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*num_ero_hops_ret);
+	ero_hops_ret = XMALLOC(MTYPE_TMP, sizeof(struct _EROAbstractNode_Para)*MAX_ERO_NUMBER);
 	hop = ero_hops_ret;
 	if (hop_s)
 	{
@@ -666,6 +666,7 @@ dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, int* num_ero_h
 		*hop = *hop_d;
 	}
 	*num_ero_hops = num_ero_hops_ret;
+	XFREE(MTYPE_TMP, ero_hops);
 	return ero_hops_ret;
 }
 
