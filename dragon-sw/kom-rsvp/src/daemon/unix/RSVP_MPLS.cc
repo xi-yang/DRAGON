@@ -318,7 +318,9 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                int vlanLow = 0;
 			                                if (psb.getDRAGON_EXT_INFO_Object())
 			                                {
-			                                    if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
+			                                    if (!psb.getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING))
+			                                        vlanLow = (*iter).vlanTag;
+			                                    else if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
 			                                        vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().ingress_outer_vlantag;
 			                                    else if (!((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
 			                                        vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().egress_outer_vlantag;
