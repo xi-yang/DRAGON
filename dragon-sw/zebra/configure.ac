@@ -692,6 +692,27 @@ if test "${enable_dragon}" = "yes";then
   LIBS="${old_libs}"
 fi
 
+dnl ------------------
+dnl check XML2 library
+dnl ------------------
+if test "${enable_dragon}" = "yes";then
+  old_libs="${LIBS}"
+  LIBS="-L/usr/lib -L/usr/local/lib"
+  AC_CHECK_LIB(xml2, xmlParseFile, HAVE_XML=yes, )
+  if test "${HAVE_XML}" = ""; then
+     AC_MSG_ERROR([cannot find the libxml2 library, cannot enable dragon interface!])
+  fi
+  LIBS="${old_libs}"
+  AC_MSG_CHECKING(for libxml2 include files)
+  if test -e "/usr/include/libxml2/libxml/parser.h"; then
+     AC_MSG_RESULT(found in /usr/include/libxml2)
+  elif test -e "/usr/local/include/libxml2/libxml/parser.h"; then
+     AC_MSG_RESULT(found in /usr/local/include/libxml2)
+  else
+     AC_MSG_ERROR([not found, please make sure you have the libxml2 include files installed])
+  fi
+fi
+
 dnl ----------------------------
 dnl compile without optimization
 dnl ----------------------------

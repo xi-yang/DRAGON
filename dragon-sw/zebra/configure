@@ -7809,6 +7809,98 @@ echo "$as_me: error: Zebra cannot find the kom-rsvp library libRSVP.a, cannot en
   LIBS="${old_libs}"
 fi
 
+if test "${enable_dragon}" = "yes";then
+  old_libs="${LIBS}"
+  LIBS="-L/usr/lib -L/usr/local/lib"
+  echo "$as_me:$LINENO: checking for xmlParseFile in -lxml2" >&5
+echo $ECHO_N "checking for xmlParseFile in -lxml2... $ECHO_C" >&6
+if test "${ac_cv_lib_xml2_xmlParseFile+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lxml2  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char xmlParseFile ();
+int
+main ()
+{
+xmlParseFile ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_xml2_xmlParseFile=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_xml2_xmlParseFile=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_xml2_xmlParseFile" >&5
+echo "${ECHO_T}$ac_cv_lib_xml2_xmlParseFile" >&6
+if test $ac_cv_lib_xml2_xmlParseFile = yes; then
+  HAVE_XML=yes
+fi
+
+  if test "${HAVE_XML}" = ""; then
+     { { echo "$as_me:$LINENO: error: cannot find the libxml2 library, cannot enable dragon interface!" >&5
+echo "$as_me: error: cannot find the libxml2 library, cannot enable dragon interface!" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+  LIBS="${old_libs}"
+  echo "$as_me:$LINENO: checking for libxml2 include files" >&5
+echo $ECHO_N "checking for libxml2 include files... $ECHO_C" >&6
+  if test -e "/usr/include/libxml2/libxml/parser.h"; then
+     echo "$as_me:$LINENO: result: found in /usr/include/libxml2" >&5
+echo "${ECHO_T}found in /usr/include/libxml2" >&6
+  elif test -e "/usr/local/include/libxml2/libxml/parser.h"; then
+     echo "$as_me:$LINENO: result: found in /usr/local/include/libxml2" >&5
+echo "${ECHO_T}found in /usr/local/include/libxml2" >&6
+  else
+     { { echo "$as_me:$LINENO: error: not found, please make sure you have the libxml2 include files installed" >&5
+echo "$as_me: error: not found, please make sure you have the libxml2 include files installed" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+fi
+
 if test "$optimize" != "yes"; then
     echo "$as_me:$LINENO: result: Disabling compiler optimizations" >&5
 echo "${ECHO_T}Disabling compiler optimizations" >&6
