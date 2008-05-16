@@ -129,7 +129,12 @@ case `uname` in
 
     echo '' && \
 	echo 'making kom-rsvp...'
-    gmake
+    # Debian systems install GNU make as 'make' not 'gmake'
+    if test -e /etc/debian_version; then
+	make
+    else
+	gmake
+    fi
     if test $? != 0; then
 	echo "dragon-sw: kom-rsvp gmake error!"
 	exit 1
