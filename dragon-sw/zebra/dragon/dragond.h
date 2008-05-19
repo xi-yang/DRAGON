@@ -226,6 +226,9 @@ struct api_msg_header
 #define LSP_OPT_SUBNET_ERO  ((u_int32_t)(0x0400 << 16)) //return subnet ERO TLV if any
 #define LSP_OPT_SUBNET_DTL  ((u_int32_t)(0x0800 << 16)) //return subnet DTL TLV if any
 
+/* NARB related variables used in DRAGON CLI only */
+extern int override_narb_ero_forced ;
+
 #ifdef roundup
 #  define ROUNDUP(val, gran)	roundup(val, gran)
 #else /* roundup */

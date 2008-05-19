@@ -590,12 +590,15 @@ ALIAS (dragon_set_narb_para,
        "IP address\n"
 	"IP address, where A, B, C, and D are integers 0 to 255\n");
 
+int override_narb_ero_forced = 0;
+
 DEFUN (dragon_set_narb_extra_options,
        dragon_set_narb_extra_options_cmd,
-       "set narb-extra-options (use-movaz-speical|query-with-holding|query-with-confirmation|query-subnet-ero|query-subnet-dtl|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3|none)",
+       "set narb-extra-options (use-movaz-speical|override-narb-ero|query-with-holding|query-with-confirmation|query-subnet-ero|query-subnet-dtl|exclude-layer1|exclude-layer2|exclude-tdm|exclude-layer3|none)",
        "Set NARB extra options\n"
        "NARB options\n"
        "Instructing NARB to compute a path using Movaz proprietary information\n"
+       "Forcing overriding NARB ERO w/ user supplied ERO\n"
        "Query and hold the resources being queried\n"
        "Query that requires confirmation ID\n"
        "Routing-layer exclusion\n"
@@ -623,9 +626,10 @@ DEFUN (dragon_set_narb_extra_options,
 	narb_extra_options |= LSP_OPT_EXCLUD_TDM;
   else if (strncmp (argv[0], "exclude-layer3", 14) == 0)
 	narb_extra_options |= LSP_OPT_EXCLUD_L3;
+  else if (strncmp (argv[0], "override-narb-ero", 12) == 0)
+	override_narb_ero_forced = 1;
   else if (strncmp (argv[0], "none", 4) == 0)
 	narb_extra_options = 0;
-
   return CMD_SUCCESS;
 }
 
@@ -654,6 +658,8 @@ DEFUN (dragon_show_narb_extra_options,
   	vty_out(vty, "    >exclude-layer2%s", VTY_NEWLINE);
   if ((narb_extra_options & LSP_OPT_EXCLUD_L3) != 0)
   	vty_out(vty, "    >exclude-layer3%s", VTY_NEWLINE);
+  if (override_narb_ero_forced == 1)
+  	vty_out(vty, "    >override-narb-ero%s", VTY_NEWLINE);
   return CMD_SUCCESS;
 }
 

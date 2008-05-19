@@ -739,8 +739,10 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 
 				/* Override NARB returned ERO (keep some local-id subobjects if applicable) if manual ERO has been input from CLI*/
 				if (lsp->dragon.ero != NULL && listcount(lsp->dragon.ero) > 0)
-					lsp->common.EROAbstractNode_Para = dragon_narb_override_ero(lsp->common.EROAbstractNode_Para, &lsp->common.ERONodeNumber, lsp->dragon.ero);
-
+				{
+					if (override_narb_ero_forced == 1)
+						lsp->common.EROAbstractNode_Para = dragon_narb_override_ero(lsp->common.EROAbstractNode_Para, &lsp->common.ERONodeNumber, lsp->dragon.ero);
+				}
 				if (lsp->dragon.lspVtag == ANY_VTAG)
 				{
 					for ( i = 0; i < lsp->common.ERONodeNumber; i++)
