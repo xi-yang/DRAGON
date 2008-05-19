@@ -629,7 +629,10 @@ DEFUN (dragon_set_narb_extra_options,
   else if (strncmp (argv[0], "override-narb-ero", 12) == 0)
 	override_narb_ero_forced = 1;
   else if (strncmp (argv[0], "none", 4) == 0)
+  {
 	narb_extra_options = 0;
+	override_narb_ero_forced = 0;
+  }
   return CMD_SUCCESS;
 }
 
