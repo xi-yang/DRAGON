@@ -9966,4 +9966,3 @@ compiler                : ${CC}
 compiler flags          : ${CFLAGS}
 directory for pid files : ${ac_piddir}
 "
-
