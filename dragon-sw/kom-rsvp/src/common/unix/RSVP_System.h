@@ -164,30 +164,9 @@ extern inline void convertToLocalTime( uint32 seconds, uint32& hours, uint32& mi
 // Only supports positive floating point value
 extern inline uint32 floatMbitsToBytesInNetworkOrder(ieee32float x)
 {
-	/*			assert(x>0);
-	uint32 result = 0;
-	
-	uint32 intPortion = floor(x);
-	ieee32float fractPortion = x-intPortion;
-	uint8 bitMantissa = 0;
-	while (bitMantissa<23){
-		uint32 bit = (fractPortion*2)>=1?1:0;
-		fractPortion = (fractPortion*2)>=1?(fractPortion*2-1):fractPortion*2;
-		result |= bit << (22-bitMantissa);
-		bitMantissa++;
-	}
-
-	//We have int portion stored in the variable  intPortion, and Mantissa portion stored in the variable result
-	//Now do a normalization
-	uint32 move = 0;
-	if (intPortion>=1){
-		move = 0;
-		while (intPortion/pow(2, ++move)>1);
-	}
-	else if (
-	
-	*/
-	if (x==0.064)					return 0x45FA0000; //TSpec::R_DS0;
+	if (x==0.0)					return 0x0;
+	/*
+	else if (x==0.064)			return 0x45FA0000; //TSpec::R_DS0;
 	else if (x==1.544) 			return 0x483C7A00; //TSpec::R_DS1;
 	else if (x==2.048) 			return 0x487A0000; //TSpec::R_E1;
 	else if (x==6.312) 			return 0x4940A080; //TSpec::R_DS2;
@@ -228,16 +207,19 @@ extern inline uint32 floatMbitsToBytesInNetworkOrder(ieee32float x)
 	else if (x==9953.28) 			return 0x4E9450C0; //TSpec::R_OC192;
 	else if (x==10000.00) 			return 0x4E9502F9; //TSpec::R_10Gig_E;
 	else if (x==39813.12) 			return 0x4F9450C0; //TSpec::R_OC768;
+	*/
 	else{ 
-		//LOG(2)( Log::MPLS, "Data rate not supported :", x);
-		return 0;
+		x= x*1000000/8;
+		uint32 *p = (uint32*)&x;
+		return *p;
 	}
-	
 }
 
 extern inline ieee32float bytesInNetworkOrderToFloatMbits(uint32 x)
 {
-	if (x==0x45FA0000) 			return  0.064;  
+	if (x == 0) 					return 0.0;
+	/*
+	else if (x==0x45FA0000) 		return  0.064;  
 	else if (x==0x483C7A00) 		return  1.544;   
 	else if (x==0x487A0000) 		return  2.048;   
 	else if (x==0x4940A080) 		return  6.312;   
@@ -278,9 +260,11 @@ extern inline ieee32float bytesInNetworkOrderToFloatMbits(uint32 x)
 	else if (x==0x4E9450C0) 		return  9953.28;
 	else if (x==0x4E9502F9) 		return  10000.00;
 	else if (x==0x4F9450C0) 		return  39813.12;
+	*/
 	else{ 
-		//LOG(2)( Log::MPLS, "Data rate not supported :", x);
-		return 0;
+		float* p = (float*)x;
+		*p = (*p)*8/1000000;
+		return *p;
 	}
 }
 
