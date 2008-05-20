@@ -262,7 +262,7 @@ extern inline ieee32float bytesInNetworkOrderToFloatMbits(uint32 x)
 	else if (x==0x4F9450C0) 		return  39813.12;
 	*/
 	else{ 
-		float* p = (float*)x;
+		float* p = (float*)&x;
 		*p = (*p)*8/1000000;
 		return *p;
 	}
