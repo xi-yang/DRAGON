@@ -1481,16 +1481,42 @@ DEFUN (dragon_set_lsp_sw,
   u_int32_t bandwidth;
   u_int8_t swcap, encoding;
   u_int16_t gpid;
+  float float_bw;
+  char char_mg;
 
-  
-  bandwidth = string_to_value(&conv_bandwidth, argv[0]);
-/*
-  if (bandwidth==0)
+  if (strcasecmp(argv[0], "zero") == 0)
   {
-      vty_out (vty, "unsupported bandwidth: %s %s", argv[0], VTY_NEWLINE);
-      return CMD_WARNING;
+      bandwidth = 0;
   }
-*/
+  else if (sscanf(argv[0], "eth%f%c", &float_bw, &char_mg) == 2)
+  {
+      if (float_bw == 0 || (char_mg != 'm' && char_mg != 'M' && char_mg != 'g' && char_mg != 'G'))
+      {
+          vty_out (vty, "unsupported bandwidth : %s %s", argv[0], VTY_NEWLINE);
+          return CMD_WARNING;
+      }
+      if (char_mg == 'g' || char_mg == 'G')
+      {
+          float_bw *= 1000;
+      }
+      if (float_bw > 10000.0)
+      {
+          vty_out (vty, "unsupported bandwidth : %s (bandwith over eth10G or eth10000M)%s", argv[0], VTY_NEWLINE);
+          return CMD_WARNING;
+      }	  
+      float_bw = float_bw*1000000/8;
+      bandwidth = *(u_int32_t*)&float_bw;
+  }
+  else
+  {
+      bandwidth = string_to_value(&conv_bandwidth, argv[0]);
+      if (bandwidth==0)
+      {
+          vty_out (vty, "unsupported bandwidth: %s %s", argv[0], VTY_NEWLINE);
+          return CMD_WARNING;
+      }
+  }
+
   swcap = string_to_value(&conv_swcap, argv[1]);
   if (swcap==0)
   {
