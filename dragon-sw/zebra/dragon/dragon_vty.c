@@ -1434,7 +1434,7 @@ ALIAS (dragon_set_lsp_ext_info_edge_vtag,
 
 DEFUN (dragon_set_lsp_sw,
        dragon_set_lsp_sw_cmd,
-       "set bandwidth (gige|gige_f|hdtv|oc48|10g|eth100M|eth150M|eth200M|eth300M|eth400M|eth500M|eth600M|eth700M|eth800M|eth900M|2gige|3gige|4gige|5gige|6gige|7gige|8gige|9gige|zero) swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
+       "set bandwidth NAME swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
        "Set LSP parameters\n"
        "Bandwidth\n"
        "GigE (1000.00 Mbps)\n"
@@ -1488,7 +1488,7 @@ DEFUN (dragon_set_lsp_sw,
   {
       bandwidth = 0;
   }
-  else if (sscanf(argv[0], "eth%f%c", &float_bw, &char_mg) == 2)
+  else if (sscanf(argv[0], "eth%f%c", &float_bw, &char_mg) == 2 || sscanf(argv[0], "Eth%f%c", &float_bw, &char_mg) == 2 || sscanf(argv[0], "ETH%f%c", &float_bw, &char_mg) == 2)
   {
       if (float_bw == 0 || (char_mg != 'm' && char_mg != 'M' && char_mg != 'g' && char_mg != 'G'))
       {
