@@ -1497,7 +1497,7 @@ DEFUN (dragon_set_lsp_sw,
       }
       if (char_mg == 'g' || char_mg == 'G')
       {
-          float_bw *= 1000;
+          float_bw *= 1000.0;
       }
       if (float_bw > 10000.0)
       {
