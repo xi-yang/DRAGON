@@ -1120,9 +1120,9 @@ show_vty_link_subtlv_max_bw (struct vty *vty, struct te_tlv_header *tlvh)
   ntohf (&top->value, &fval);
 
   if (vty != NULL)
-    vty_out (vty, "  Maximum Bandwidth: %g (Bytes/sec)%s", fval, VTY_NEWLINE);
+    vty_out (vty, "  Maximum Bandwidth: %.0lf (Bytes/sec)%s", fval, VTY_NEWLINE);
   else
-    zlog_info ("    Maximum Bandwidth: %g (Bytes/sec)", fval);
+    zlog_info ("    Maximum Bandwidth: %.0lf (Bytes/sec)", fval);
 
   return TLV_SIZE (tlvh);
 }
@@ -1137,9 +1137,9 @@ show_vty_link_subtlv_max_rsv_bw (struct vty *vty, struct te_tlv_header *tlvh)
   ntohf (&top->value, &fval);
 
   if (vty != NULL)
-    vty_out (vty, "  Maximum Reservable Bandwidth: %g (Bytes/sec)%s", fval, VTY_NEWLINE);
+    vty_out (vty, "  Maximum Reservable Bandwidth: %.0lf (Bytes/sec)%s", fval, VTY_NEWLINE);
   else
-    zlog_info ("    Maximum Reservable Bandwidth: %g (Bytes/sec)", fval);
+    zlog_info ("    Maximum Reservable Bandwidth: %.0lf (Bytes/sec)", fval);
 
   return TLV_SIZE (tlvh);
 }
@@ -1156,9 +1156,9 @@ show_vty_link_subtlv_unrsv_bw (struct vty *vty, struct te_tlv_header *tlvh)
     {
       ntohf (&top->value[i], &fval);
       if (vty != NULL)
-        vty_out (vty, "  Unreserved Bandwidth (pri %d): %g (Bytes/sec)%s", i, fval, VTY_NEWLINE);
+        vty_out (vty, "  Unreserved Bandwidth (pri %d): %.0lf (Bytes/sec)%s", i, fval, VTY_NEWLINE);
       else
-        zlog_info ("    Unreserved Bandwidth (pri %d): %g (Bytes/sec)", i, fval);
+        zlog_info ("    Unreserved Bandwidth (pri %d): %.0lf (Bytes/sec)", i, fval);
     }
 
   return TLV_SIZE (tlvh);
@@ -1307,7 +1307,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
     for (i = 0; i < LINK_MAX_PRIORITY; i++)
     {
            ntohf (&top->link_ifswcap_data.max_lsp_bw_at_priority[i], &fval);
-	    vty_out (vty, "  Max LSP Bandwidth %d: %g (Bytes/sec) %s", i , fval, VTY_NEWLINE);
+	    vty_out (vty, "  Max LSP Bandwidth %d: %.0lf (Bytes/sec) %s", i , fval, VTY_NEWLINE);
     }
   }
   else{
@@ -1315,7 +1315,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
     for (i = 0; i < LINK_MAX_PRIORITY; i++)
     {
            ntohf (&top->link_ifswcap_data.max_lsp_bw_at_priority[i], &fval);
-	   zlog_info ("  Max LSP Bandwidth %d: %g (Bytes/sec)", i , fval);
+	   zlog_info ("  Max LSP Bandwidth %d: %.0lf (Bytes/sec)", i , fval);
     }
   }
 
@@ -1326,13 +1326,13 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
   {
          ntohf (&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.min_lsp_bw, &fval);
 	  if (vty != NULL){
-	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %g (Bytes/sec) %s", 
+	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec) %s", 
 	    				fval, VTY_NEWLINE);
 	    vty_out (vty, "                                      : Interface MTU: %d %s", 
 	    				ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu), VTY_NEWLINE);
 	  }
 	  else{
-	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %g (Bytes/sec)",  fval);
+	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec)",  fval);
 	    zlog_info ("                                      : Interface MTU: %d", 
 	    				ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu));
 	  }
@@ -1341,13 +1341,13 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
   {
          ntohf (&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.min_lsp_bw, &fval);
 	  if (vty != NULL){
-	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %g (Bytes/sec) %s", 
+	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec) %s", 
 	    				fval, VTY_NEWLINE);
 	    vty_out (vty, "                                      : Indication: %d %s", 
 	    				top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication, VTY_NEWLINE);
 	  }
 	  else{
-	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %g (Bytes/sec)", 
+	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec)", 
 	    				fval);
 	    zlog_info ("                                      : Indication: %d", 
 	    				top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication);
@@ -1431,7 +1431,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
     for (i = 0; i < LINK_MAX_PRIORITY; i++)
     {
            ntohf (f, &fval);
-	    vty_out (vty, "  Max LSP Bandwidth %d: %g (Bytes/sec) %s", i , fval, VTY_NEWLINE);
+	    vty_out (vty, "  Max LSP Bandwidth %d: %.0lf (Bytes/sec) %s", i , fval, VTY_NEWLINE);
 	    f++;
     }
   }
@@ -1440,7 +1440,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
     for (i = 0; i < LINK_MAX_PRIORITY; i++)
     {
            ntohf (f, &fval);
-	   zlog_info ("  Max LSP Bandwidth %d: %g (Bytes/sec)", i , fval);
+	   zlog_info ("  Max LSP Bandwidth %d: %.0lf (Bytes/sec)", i , fval);
 	   f++;
     }
   }
@@ -1452,7 +1452,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   	  f = (float *)v;
          ntohf (f, &fval);
 	  if (vty != NULL){
-	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %g (Bytes/sec) %s", 
+	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec) %s", 
 	    				fval, VTY_NEWLINE);
 	    f++;
 	    dc = (u_int16_t *)f;
@@ -1460,7 +1460,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	    				ntohs(*dc), VTY_NEWLINE);
 	  }
 	  else{
-	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %g (Bytes/sec)",  fval);
+	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec)",  fval);
 	    f++;
 	    dc = (u_int16_t *)f;
 	    zlog_info ("                                      : Interface MTU: %d", 
@@ -1472,7 +1472,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   	  f = (float *)v;
          ntohf (f, &fval);
 	  if (vty != NULL){
-	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %g (Bytes/sec) %s", 
+	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec) %s", 
 	    				fval, VTY_NEWLINE);
 	    f++;
 	    v = (u_char *)f;
@@ -1480,7 +1480,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	    				*v, VTY_NEWLINE);
 	  }
 	  else{
-	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %g (Bytes/sec)", 
+	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec)", 
 	    				fval);
 	    f++;
 	    v = (u_char *)f;
@@ -1783,12 +1783,12 @@ static void ospf_te_config_write (struct vty *vty)
 	    	if (ntohs(oi->te_para.max_bw.header.type) != 0)
 	    	{
 	    		ntohf(&oi->te_para.max_bw.value, &bw);
-		    	vty_out(vty, "       max-bw %g %s", bw, VTY_NEWLINE);
+		    	vty_out(vty, "       max-bw %.0lf %s", bw, VTY_NEWLINE);
 	    	}
 	    	if (ntohs(oi->te_para.max_rsv_bw.header.type) != 0)
 	    	{
 	    		ntohf(&oi->te_para.max_rsv_bw.value, &bw);
-		    	vty_out(vty, "       max-rsv-bw %g %s", bw, VTY_NEWLINE);
+		    	vty_out(vty, "       max-rsv-bw %.0lf %s", bw, VTY_NEWLINE);
 	    	}
 	    	if (ntohs(oi->te_para.rsc_clsclr.header.type) != 0)
 		    	vty_out(vty, "       color 0x%x %s", ntohl(oi->te_para.rsc_clsclr.value), VTY_NEWLINE);
@@ -1808,13 +1808,13 @@ static void ospf_te_config_write (struct vty *vty)
 	    	if (ntohs(oi->te_para.link_ifswcap.header.type) != 0)
 	    	{
 	    		p = val2str(&str_val_conv_swcap, oi->te_para.link_ifswcap.link_ifswcap_data.switching_cap);
-		    	vty_out(vty, "      swcap %s", p);
+		    	vty_out(vty, "       swcap %s", p);
 	    		p = val2str(&str_val_conv_encoding, oi->te_para.link_ifswcap.link_ifswcap_data.encoding);
 		    	vty_out(vty, "  encoding %s %s", p, VTY_NEWLINE);
 	  		for (i=0;i<8;i++){  		
 		    		ntohf(&oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i], &bw);
 		    		if (bw > 0)
-				    	vty_out(vty, "      max-lsp-bw %d %g %s", i, bw, VTY_NEWLINE);
+				    	vty_out(vty, "       max-lsp-bw %d %.0lf %s", i, bw, VTY_NEWLINE);
 	  		}
 	  		if (oi->te_para.link_ifswcap.link_ifswcap_data.switching_cap>=LINK_IFSWCAP_SUBTLV_SWCAP_PSC1 &&
 	  		     oi->te_para.link_ifswcap.link_ifswcap_data.switching_cap>=LINK_IFSWCAP_SUBTLV_SWCAP_PSC4)
@@ -1822,7 +1822,7 @@ static void ospf_te_config_write (struct vty *vty)
 	  			if (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu) > 0)
 	  			{
 		  		       ntohf(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.min_lsp_bw, &bw);
-		  			vty_out(vty, "      min-lsp-bw %g mtu %d %s", 
+		  			vty_out(vty, "       min-lsp-bw %.0lf mtu %d %s", 
 		  				              bw,
 		  				              ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu), 
 		  				              VTY_NEWLINE);
@@ -1833,7 +1833,7 @@ static void ospf_te_config_write (struct vty *vty)
 	  			if (oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication > 0)
 	  			{
 		  		       ntohf(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.min_lsp_bw, &bw);
-		  			vty_out(vty, "      min-lsp-bw %g indication %d %s", 
+		  			vty_out(vty, "       min-lsp-bw %.0lf indication %d %s", 
 		  				              bw,
 		  				              oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication, 
 		  				              VTY_NEWLINE);
