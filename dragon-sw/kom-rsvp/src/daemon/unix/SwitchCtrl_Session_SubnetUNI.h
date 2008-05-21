@@ -335,8 +335,8 @@ private:
 };
 
 //@@@@ Xi2008 >>
-#define NSIG_SNC_STABLE 100
-#define SIG_SNC_STABLE_BASE (NSIG+NSIG_SNC_STABLE)
+#define NSIG_SNC_STABLE 30
+#define SIG_SNC_STABLE_BASE 33
 extern PSB* psbArrayWaitingForStableSNC[NSIG_SNC_STABLE];
 int alloc_snc_stable_psb_slot(PSB* psb);
 void free_snc_stable_psb_slot(PSB* psb);

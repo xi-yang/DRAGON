@@ -110,7 +110,7 @@ bool CLI_Session::engage(const char *loginString)
 
     // setup signals properly
     for(n = 1; n < NSIG; n++)
-        if (n != 11)
+        if (n != SIGSEGV)
             signal(n, sigfunct);
     signal(SIGCHLD, SIG_IGN);
 #ifdef SIGPIPE
