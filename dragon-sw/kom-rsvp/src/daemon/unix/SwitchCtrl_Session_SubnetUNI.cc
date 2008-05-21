@@ -2256,7 +2256,7 @@ bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
 
 //@@@@ Xi2008 >>
 
-PSB* psbArrayWaitingForStableSNC[100];
+PSB* psbArrayWaitingForStableSNC[NSIG_SNC_STABLE];
 
 int alloc_snc_stable_psb_slot(PSB* psb)
 {
