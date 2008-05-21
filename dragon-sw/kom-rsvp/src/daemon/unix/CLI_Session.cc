@@ -109,8 +109,8 @@ bool CLI_Session::engage(const char *loginString)
     strcpy(hostname, convertAddressToString(switchInetAddr).chars());
 
     // setup signals properly
-    for(n = 1; n < NSIG; n++)
-        if (n != SIGSEGV)
+    for(n = 1; n < 33; n++)
+        if (n != 11)
             signal(n, sigfunct);
     signal(SIGCHLD, SIG_IGN);
 #ifdef SIGPIPE
