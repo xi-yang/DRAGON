@@ -2288,6 +2288,7 @@ void sigfunc_snc_stable(int signo)
 	assert (psb != NULL);
 	RSVP_Global::messageProcessor->internalResvRefresh(&psb->getSession(), psb->getPHopSB());
 	signal(signo-SIG_SNC_STABLE_BASE, SIG_IGN);
+	SignalHandling::userSignal = true;
 }
 //@@@@ Xi2008 <<
 
