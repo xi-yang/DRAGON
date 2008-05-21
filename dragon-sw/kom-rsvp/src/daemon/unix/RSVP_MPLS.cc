@@ -354,9 +354,8 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                        //@@@@ Xi2008 >>
 			                                        //$$$$ verifying SNC(s) are in stable working state
 			                                        (*sessionIter)->disconnectSwitch();
-
+			                                        signal(SIGCHLD, SIG_IGN);
 			                                        int slot_psb_to_verify = alloc_snc_stable_psb_slot(&psb);
-
 			                                        switch(pid_verifySNCStateWorkingState=fork() )
 			                                        {
 			                                        case 0: // child process for delayed waiting-and-deleting procedure
