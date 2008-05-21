@@ -788,7 +788,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 								    //$$$$ Special handling to adjust the sequence of SNC-VCG-deletion at destination node.
 									if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSystemSNCHolindgCurrentVCG(noErr) && noErr) {
 										(*sessionIter)->disconnectSwitch(); 
-										pid_t pid;                                        
+										signal(SIGCHLD, SIG_IGN);
+										pid_t pid;
 										switch(pid=fork() )
 										{
 										case 0: // child process for delayed waiting-and-deleting procedure
