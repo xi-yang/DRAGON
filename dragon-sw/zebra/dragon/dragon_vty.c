@@ -251,7 +251,7 @@ const char* bandwidth_value_to_string(struct string_value_conversion *db, u_int3
 		return pstr;
 	*bw = (*bw)*8/1000000;
 	if (*bw > 0 && *bw <= 10000.0)
-		sprintf(bw_str, "eth%.2fM", *bw);
+		sprintf(bw_str, "eth%.1fM", *bw);
 	else
 		sprintf(bw_str, "Unknown");		
 	return (const char*)bw_str;
