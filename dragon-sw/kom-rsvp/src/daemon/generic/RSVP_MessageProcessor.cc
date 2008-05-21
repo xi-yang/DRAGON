@@ -64,6 +64,11 @@ MessageProcessor::MessageProcessor() : ibuffer(LogicalInterface::maxPayloadLengt
 #endif
 
 	msgQueue = new MessageQueue;
+
+//@@@@ Xi2008 >>
+	for (int i = 0; i < NSIG_SNC_STABLE; i++)
+		psbArrayWaitingForStableSNC[i] = NULL;
+//@@@@ Xi2008 <<
 }
 
 MessageProcessor::~MessageProcessor() {

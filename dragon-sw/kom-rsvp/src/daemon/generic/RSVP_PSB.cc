@@ -122,6 +122,9 @@ PSB::~PSB() {
 	if (duplexObject) delete duplexObject;
 	if (duplexPSB) delete duplexPSB;
 #endif
+	//@@@@ Xi 2008 >>
+	free_snc_stable_psb_slot(this);
+	//@@@@ Xi 2008 <<
 }
 
 OutISB* PSB::getOutISB( uint32 i ) const {

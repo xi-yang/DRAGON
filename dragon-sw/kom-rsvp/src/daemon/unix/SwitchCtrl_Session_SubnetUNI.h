@@ -334,5 +334,13 @@ private:
 	char strDENY[20];
 };
 
+//@@@@ Xi2008 >>
+#define NSIG_SNC_STABLE 100
+#define SIG_SNC_STABLE_BASE (NSIG+NSIG_SNC_STABLE)
+extern PSB* psbArrayWaitingForStableSNC[NSIG_SNC_STABLE];
+int alloc_snc_stable_psb_slot(PSB* psb);
+void free_snc_stable_psb_slot(PSB* psb);
+void sigfunc_snc_stable(int signo);
+//@@@@ Xi2008 <<
 
 #endif

@@ -12,6 +12,8 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_RoutingService.h"
 #include "RSVP_NetworkServiceDaemon.h"
 #include "RSVP_Message.h"
+#include "RSVP_MessageProcessor.h"
+#include "RSVP_PSB.h"
 #include "RSVP_Log.h"
 
 SwitchCtrl_Session_SubnetUNI_List* SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList = NULL;
@@ -2250,4 +2252,42 @@ bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
     } while (hasSystemSNCHolindgCurrentVCG_TL1(noError));
     return true;
 }
+
+
+//@@@@ Xi2008 >>
+
+PSB* psbArrayWaitingForStableSNC[100];
+
+int alloc_snc_stable_psb_slot(PSB* psb)
+{
+	for (int i = 0; i < NSIG_SNC_STABLE; i++)
+	{
+		if (psbArrayWaitingForStableSNC[i] == NULL)
+		{
+			psbArrayWaitingForStableSNC[i] = psb;
+			return i;
+		}
+	}
+	return -1;
+}
+void free_snc_stable_psb_slot(PSB* psb)
+{
+	for (int i = 0; i < NSIG_SNC_STABLE; i++)
+	{
+		if (psbArrayWaitingForStableSNC[i] == psb)
+		{
+			psbArrayWaitingForStableSNC[i] = NULL;
+		}
+	}
+
+}
+void sigfunc_snc_stable(int signo)
+{
+	assert (signo - SIG_SNC_STABLE_BASE >= 0 && signo - SIG_SNC_STABLE_BASE < NSIG_SNC_STABLE);
+	PSB* psb = psbArrayWaitingForStableSNC[signo - SIG_SNC_STABLE_BASE];
+	assert (psb != NULL);
+	RSVP_Global::messageProcessor->internalResvRefresh(&psb->getSession(), psb->getPHopSB());
+	signal(signo-SIG_SNC_STABLE_BASE, SIG_IGN);
+}
+//@@@@ Xi2008 <<
 

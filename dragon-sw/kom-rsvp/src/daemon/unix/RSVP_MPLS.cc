@@ -353,7 +353,10 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
 			                                        //@@@@ Xi2008 >>
 			                                        //$$$$ verifying SNC(s) are in stable working state
-			                                        (*sessionIter)->disconnectSwitch(); 
+			                                        (*sessionIter)->disconnectSwitch();
+
+			                                        int slot_psb_to_verify = alloc_snc_stable_psb_slot(&psb);
+
 			                                        switch(pid_verifySNCStateWorkingState=fork() )
 			                                        {
 			                                        case 0: // child process for delayed waiting-and-deleting procedure
@@ -366,7 +369,9 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                                goto _Exit_Error_Subnet;
 			                                            }
 			                                            (*sessionIter)->disconnectSwitch();
-			                                            return true; // exit(0) --> later after a resvRefresh is done
+			                                            kill(getppid(), SIG_SNC_STABLE_BASE+slot_psb_to_verify);
+			                                            exit(0); // signaled the parent process and exit
+			                                            //return true; // exit(0) --> later after a resvRefresh is done
 			                                            break;
 			                                        case -1: // error
 			                                            LOG(1)( Log::MPLS, "VLSR-Subnet Fatal Error: cannot fork a child process for the verifiing SNCInStableWorkingState procedure!");
@@ -374,6 +379,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                            break;
 			                                        default: // parent (orininal) process back to main logic loop
 			                                         	  psb.setVLSRError(0xff, 0xff); // this will turn off resvRefresh (no call to markForResvRefresh) upon this RESV message for this session
+			                                         	  signal(SIG_SNC_STABLE_BASE+slot_psb_to_verify, sigfunc_snc_stable);
 			                                            break;
 			                                        }
 			                                        //@@@@ Xi2008 <<

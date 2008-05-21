@@ -213,7 +213,7 @@ public:
 	const DRAGON_UNI_Object* getDRAGON_UNI_Object() const { return (const DRAGON_UNI_Object*)uni; }
 	const GENERALIZED_UNI_Object* getGENERALIZED_UNI_Object() const { return (const GENERALIZED_UNI_Object*)uni; }
 	const DRAGON_EXT_INFO_Object* getDRAGON_EXT_INFO_Object() const { return dragonExtInfo; }
-	bool hasVLSRError() { return (vlsrErrorCode != 0); }
+	uint16 getVLSRError() { return vlsrErrorCode; }
 	void setVLSRError(uint8 errCode, uint8 errValue) { vlsrErrorCode = ((errCode << 8) | errValue); }
 
 #if defined(REFRESH_REDUCTION) || defined(ONEPASS_RESERVATION)
