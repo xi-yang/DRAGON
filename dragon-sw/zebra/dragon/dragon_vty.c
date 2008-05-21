@@ -215,6 +215,49 @@ list registered_local_ids;
 
 char *lid_types[] = {"none id", "single port", "untagged group", "tagged group", "reserved", "subnet interface id"};
 
+u_int32_t 
+string_to_value(struct string_value_conversion *db, const char *str)
+{
+	int i;
+	
+	for (i=0; i<db->number; i++)
+	{
+		if (strncmp(db->sv[i].string, str, db->sv[i].len)==0)
+			return db->sv[i].value;
+	}
+	return 0;
+}
+
+const char * 
+value_to_string(struct string_value_conversion *db, u_int32_t value)
+{
+	int i;
+	static const char* def_string = "Unknown";
+	
+	for (i=0; i<db->number; i++)
+	{
+		if (db->sv[i].value == value)
+			return db->sv[i].string;
+	}
+	return def_string;
+}
+
+const char* bandwidth_value_to_string(struct string_value_conversion *db, u_int32_t value)
+{
+	static char bw_str[20];
+	float* bw = (float*)&value;
+	const char* pstr = value_to_string (&conv_bandwidth, value);
+	if (strcmp(pstr, "Unknown") != 0)
+		return pstr;
+	*bw = (*bw)*8/1000000;
+	if (*bw > 0 && *bw <= 10000.0)
+		sprintf(bw_str, "eth%.2fM", *bw);
+	else
+		sprintf(bw_str, "Unknown");		
+	return (const char*)bw_str;
+}
+
+
 static int
 get_switch_port_by_name(char* port_name, u_int32_t* switch_port)
 {
@@ -1492,7 +1535,7 @@ DEFUN (dragon_set_lsp_sw,
   {
       if (float_bw == 0 || (char_mg != 'm' && char_mg != 'M' && char_mg != 'g' && char_mg != 'G'))
       {
-          vty_out (vty, "unsupported bandwidth : %s %s", argv[0], VTY_NEWLINE);
+          vty_out (vty, "###ERROR: unsupported bandwidth : %s %s", argv[0], VTY_NEWLINE);
           return CMD_WARNING;
       }
       if (char_mg == 'g' || char_mg == 'G')
@@ -1501,7 +1544,7 @@ DEFUN (dragon_set_lsp_sw,
       }
       if (float_bw > 10000.0)
       {
-          vty_out (vty, "unsupported bandwidth : %s (bandwith over eth10G or eth10000M)%s", argv[0], VTY_NEWLINE);
+          vty_out (vty, "###ERROR: unsupported bandwidth : %s (bandwith over eth10G or eth10000M)%s", argv[0], VTY_NEWLINE);
           return CMD_WARNING;
       }	  
       float_bw = float_bw*1000000/8;
@@ -1512,7 +1555,7 @@ DEFUN (dragon_set_lsp_sw,
       bandwidth = string_to_value(&conv_bandwidth, argv[0]);
       if (bandwidth==0)
       {
-          vty_out (vty, "unsupported bandwidth: %s %s", argv[0], VTY_NEWLINE);
+          vty_out (vty, "###ERROR: unsupported bandwidth: %s %s", argv[0], VTY_NEWLINE);
           return CMD_WARNING;
       }
   }
@@ -1520,7 +1563,7 @@ DEFUN (dragon_set_lsp_sw,
   swcap = string_to_value(&conv_swcap, argv[1]);
   if (swcap==0)
   {
-      vty_out (vty, "unsupported switching capability: %s %s", argv[1], VTY_NEWLINE);
+      vty_out (vty, "###ERROR: unsupported switching capability: %s %s", argv[1], VTY_NEWLINE);
       return CMD_WARNING;
   }
   /* Layer2 LSPs should always be bi-directional */
@@ -1532,13 +1575,13 @@ DEFUN (dragon_set_lsp_sw,
   encoding = string_to_value(&conv_encoding, argv[2]);
   if (encoding==0)
   {
-      vty_out (vty, "unsupported encoding type: %s %s", argv[2], VTY_NEWLINE);
+      vty_out (vty, "###ERROR: unsupported encoding type: %s %s", argv[2], VTY_NEWLINE);
       return CMD_WARNING;
   }
   gpid = string_to_value(&conv_gpid, argv[3]);
   if (gpid==0)
   {
-      vty_out (vty, "unsupported gpid: %s %s", argv[3], VTY_NEWLINE);
+      vty_out (vty, "###ERROR: unsupported gpid: %s %s", argv[3], VTY_NEWLINE);
       return CMD_WARNING;
   }
 
@@ -1997,9 +2040,9 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 		if (lsp->common.GenericTSpec_Para)
 		{
 			vty_out(vty, "Generic TSPEC R=%s, B=%s, P=%s, m=%d, M=%d %s", 
-					  value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->R),
-					  value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->B),
-					  value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->P),
+					  bandwidth_value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->R),
+					  bandwidth_value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->B),
+					  bandwidth_value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->P),
 					  (lsp->common.GenericTSpec_Para)->m,
 					  (lsp->common.GenericTSpec_Para)->M, VTY_NEWLINE);
 		}
@@ -2072,9 +2115,9 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 		if (lsp->common.GenericTSpec_Para)
 		{
 			zlog_info("Generic TSPEC R=%s, B=%s, P=%s, m=%d, M=%d", 
-					  value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->R),
-					  value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->B),
-					  value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->P),
+					  bandwidth_value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->R),
+					  bandwidth_value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->B),
+					  bandwidth_value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->P),
 					  (lsp->common.GenericTSpec_Para)->m,
 					  (lsp->common.GenericTSpec_Para)->M);
 		}
@@ -2286,7 +2329,7 @@ int dragon_config_write(struct vty *vty)
 	   	                  (int)(lsp->common.Session_Para.destPort),
 				    (int)(lsp->common.Session_Para.srcPort), VTY_NEWLINE);
        vty_out (vty, "  set bandwidth %s swcap %s encoding %s gpid %s%s", 
-	   			     value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->R),
+	   			     bandwidth_value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->R),
 		   		     value_to_string (&conv_swcap, lsp->common.LabelRequest_Para.data.gmpls.switchingType),
 				     value_to_string (&conv_encoding, lsp->common.LabelRequest_Para.data.gmpls.lspEncodingType),
 				     value_to_string (&conv_gpid, lsp->common.LabelRequest_Para.data.gmpls.gPid), 
@@ -2310,33 +2353,6 @@ int dragon_config_write(struct vty *vty)
 	vty_out (vty, "exit%s",  VTY_NEWLINE);
   }
   return 0;
-}
-
-u_int32_t 
-string_to_value(struct string_value_conversion *db, const char *str)
-{
-	int i;
-	
-	for (i=0; i<db->number; i++)
-	{
-		if (strncmp(db->sv[i].string, str, db->sv[i].len)==0)
-			return db->sv[i].value;
-	}
-	return 0;
-}
-
-const char * 
-value_to_string(struct string_value_conversion *db, u_int32_t value)
-{
-	int i;
-	static const char* def_string = "Unknown";
-	
-	for (i=0; i<db->number; i++)
-	{
-		if (db->sv[i].value == value)
-			return db->sv[i].string;
-	}
-	return def_string;
 }
 
 static void preserve_local_ids()
