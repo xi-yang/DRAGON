@@ -320,13 +320,15 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
     if ((!active) || port==SWITCH_CTRL_PORT || vlanID<CATALYST6500_MIN_VLAN_ID || vlanID>CATALYST6500_MAX_VLAN_ID) 
     	return false; //don't touch the control port!
 
+    PortStaticAccessOn(port);
+
     if (isPortTrunking(port))
-            PortTrunkingOff(port);
+        PortTrunkingOff(port);
 
     PortStaticAccessOn(port);
 
-    port = convertUnifiedPort2Catalyst6500(port);
     port_id = hook_convertPortIDToInterface(port);
+    port = convertUnifiedPort2Catalyst6500(port);
 
     String tag_oid_str = ".1.3.6.1.4.1.9.9.68.1.2.2.1.2";
     sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
@@ -400,8 +402,8 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged(uint32 port, uint32
     else PortTrunkingOn(port);
         
     // Get the current vlan mapping for the port
-    port = convertUnifiedPort2Catalyst6500(port);
     port_id = hook_convertPortIDToInterface(port);
+    port = convertUnifiedPort2Catalyst6500(port);
     sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
     status = read_objid(oid_str, anOID, &anOID_len);
 
@@ -479,9 +481,10 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
     oid anOID[MAX_OID_LEN];
     size_t anOID_len = MAX_OID_LEN;
     char type, value[500], oid_str[128], oct[3];
-    int status, i;
+    int status, i, j;
     uint32 port_id;
     portVlanMap vlanmap;
+    uint8 mask;
     String tag_oid_str[4] = { ".1.3.6.1.4.1.9.9.46.1.6.1.1.4", ".1.3.6.1.4.1.9.9.46.1.6.1.1.17", \
     				".1.3.6.1.4.1.9.9.46.1.6.1.1.18", ".1.3.6.1.4.1.9.9.46.1.6.1.1.19"};
 
@@ -491,8 +494,10 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
     // We only need the remove the port if the port is Trunkport	
     if (!isPortTrunking(port)) {
         SwitchPortOnOff(port, false); //Trun off the switch port
-	removeVLAN(vlanID);
-        return true;
+        //removeVLAN(vlanID);
+        //return true;
+        port = convertUnifiedPort2Catalyst6500(port);
+        goto _update_vpm;
     }
 
     if (!isSwitchport(port))
@@ -524,12 +529,12 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
        return false;
     }
    
-    uint8 mask=(~(1<<(7-(vlanID%8)))) & 0xFF;
+    mask =(~(1<<(7-(vlanID%8)))) & 0xFF;
     vlanmap.vlanbits[vlanID/8] &= mask;
 
     // Set the vlan mapping for the port
     sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
-    int j=((vlanID-1)/1024)*128;
+    j=((vlanID-1)/1024)*128;
     value[0] = 0;
     for (i = 0; i < 128; i++) {
         snprintf(oct, 3, "%.2x", vlanmap.vlanbits[i+j]);
@@ -542,7 +547,9 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
        LOG(3)( Log::MPLS, "VLSR: SNMP: Setting Vlan map of Trunk port ", port, "failed.");
        return false;
     }
-   
+
+_update_vpm:
+
     if (vlanID>=CATALYST6500_MIN_VLAN_ID && vlanID<=CATALYST6500_MAX_VLAN_ID) {
        vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
        if (vpmAll) {
@@ -618,6 +625,14 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createVLAN(const uint32 vlanID)
         return false;
     }
 
+    //add the new *empty* vlan into PortMapListAll and portMapListUntagged
+    vlanPortMap vpm;
+    memset(&vpm, 0, sizeof(vlanPortMap));
+    vpm.vid = vlanID;
+    vlanPortMapListAll.push_back(vpm);
+    memset(vpm.portbits, 0, MAX_VLAN_PORT_BYTES);
+    vlanPortMapListUntagged.push_back(vpm);
+
     // Release the Lock of the VLAN table 
     tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
     sprintf(oid_str, "%s", tag_oid_str.chars());
@@ -628,14 +643,6 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createVLAN(const uint32 vlanID)
         LOG(1)( Log::MPLS, "VLSR: SNMP: Releasing the Lock of the VLAN table creation failed.");
         return false;
     } 
-
-    //add the new *empty* vlan into PortMapListAll and portMapListUntagged
-    vlanPortMap vpm;
-    memset(&vpm, 0, sizeof(vlanPortMap));
-    vpm.vid = vlanID;
-    vlanPortMapListAll.push_back(vpm);
-    memset(vpm.portbits, 0, MAX_VLAN_PORT_BYTES);
-    vlanPortMapListUntagged.push_back(vpm);
 
     return true;
 }
@@ -669,16 +676,18 @@ bool SwitchCtrl_Session_Catalyst6500::hook_removeVLAN(const uint32 vlanID)
         return false;
     }
 
-    // Apply the VLAN creation request 
+    // Apply the VLAN removal  request 
     tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
     sprintf(oid_str, "%s", tag_oid_str.chars());
     strcpy(value, "3");
     type='i'; 
     if (!SNMPSet(oid_str, type, value)) 
     {
-        LOG(1)( Log::MPLS, "VLSR: SNMP: Applying the VLAN creation request failed.");
+        LOG(1)( Log::MPLS, "VLSR: SNMP: Applying the VLAN removal request failed.");
         return false;
     }
+
+    // Removal of vlan info from PortMapListAll and portMapListUntagged is performed in removeVLAN (caller)
 
     // Release the Lock of the VLAN table 
     tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
@@ -1118,10 +1127,10 @@ bool SwitchCtrl_Session_Catalyst6500::isPortTrunking(uint32 port)
     status = snmp_synch_response(snmpSessionHandle, pdu, &response);
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
-        vars = response->variables;
+       vars = response->variables;
+       bool ret = ((*(vars->val.integer)) ==4);
     	snmp_free_pdu(response);
-	if ((*(vars->val.integer)) ==2) return false;
-	else return true;
+	return ret;
     }
     else {
        if (status == STAT_SUCCESS){
