@@ -13,6 +13,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_NetworkServiceDaemon.h"
 #include "RSVP_Message.h"
 #include "RSVP_MessageProcessor.h"
+#include "RSVP_SignalHandling.h"
 #include "RSVP_PSB.h"
 #include "RSVP_Log.h"
 

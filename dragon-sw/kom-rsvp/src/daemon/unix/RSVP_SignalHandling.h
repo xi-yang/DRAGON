@@ -37,6 +37,8 @@
 class SignalHandling {
 public:
 	typedef void (*SigHandler)( void* );
+	static bool userSignal;
+
 private:
 	static SigHandler alarmHandler;
 	static SigHandler exitHandler;
@@ -44,12 +46,11 @@ private:
 	static SigHandler userHandler2;
 	static void* clientData;
 	static struct sigaction sigAction;
-	static bool userSignal;
 	static void internal_SigHandler(int);
-	friend class NetworkServiceDaemon;
+
 public:
 	static void install( SigHandler exitHandler = SigHandler(0),
-		SigHandler alarmHandler = SigHandler(0), void* = (void*)0 );
+	SigHandler alarmHandler = SigHandler(0), void* = (void*)0 );
 	static void installUserSignal( SigHandler, SigHandler = SigHandler(0) );
 	static void wait( bool, TimeValue& );
 };
