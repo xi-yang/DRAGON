@@ -2287,8 +2287,9 @@ void sigfunc_snc_stable(int signo)
 	assert (signo - SIG_SNC_STABLE_BASE >= 0 && signo - SIG_SNC_STABLE_BASE < NSIG_SNC_STABLE);
 	PSB* psb = psbArrayWaitingForStableSNC[signo - SIG_SNC_STABLE_BASE];
 	assert (psb != NULL);
-	RSVP_Global::messageProcessor->internalResvRefresh(&psb->getSession(), psb->getPHopSB());
-	signal(signo-SIG_SNC_STABLE_BASE, SIG_IGN);
+	RSVP_Global::messageProcessor->resurrectResvRefresh(&psb->getSession(), psb->getPHopSB());
+	psbArrayWaitingForStableSNC[signo - SIG_SNC_STABLE_BASE] = NULL;
+	signal(signo, SIG_IGN);
 	SignalHandling::userSignal = true;
 }
 //@@@@ Xi2008 <<

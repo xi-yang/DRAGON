@@ -761,6 +761,14 @@ void MessageProcessor::internalResvRefresh( Session* s, PHopSB& phopState ) {
 	refreshReservations();
 }
 
+void MessageProcessor::resurrectResvRefresh( Session* s, PHopSB& phopState ) {
+                                            assert( phopRefreshList.empty() );
+	fullRefresh = true;
+	phopRefreshList.push_back( PHopSB_Refresh(phopState) );
+	currentSession = s;
+	refreshReservations();
+}
+
 void MessageProcessor::processAsyncRoutingEvent( Session* s, const NetAddress& src,
 	const LogicalInterface& inLif, LogicalInterfaceSet lifList ) {
                                    assert( s->getDestAddress().isMulticast() );

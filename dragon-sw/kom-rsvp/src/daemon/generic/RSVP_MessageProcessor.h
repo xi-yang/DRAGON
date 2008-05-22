@@ -157,7 +157,7 @@ public:
 	// for unicast sessions
 	void processAsyncRoutingEvent( Session*, const LogicalInterface&, const NetAddress& );
 	void internalResvRefresh( Session*, PHopSB& );
-
+	void resurrectResvRefresh( Session* s, PHopSB& phopState );
 	void prepareExit() { fullRefresh = false; }
 
 	// implemented in respective class files
