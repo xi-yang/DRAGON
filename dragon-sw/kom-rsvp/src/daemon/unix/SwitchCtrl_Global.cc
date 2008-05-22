@@ -692,7 +692,7 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         	vendor = Catalyst3750;
 	// The Catalyst 65xx switches use the same code as Catalyst 3750 
 	// Now the 65xx use different module than 3750
-	else if (venderSystemDescription.leftequal("Cisco Internetwork Operating System Software") || venderSystemDescription.leftequal("Cisco IOS Software,")
+	else if (venderSystemDescription.leftequal("Cisco Internetwork Operating System Software") || venderSystemDescription.leftequal("Cisco IOS Software,"))
         	vendor = Catalyst6500;
         else if (venderSystemDescription.leftequal("ProCurve J8697A Switch 5406zl"))
         	vendor = HP5406;
