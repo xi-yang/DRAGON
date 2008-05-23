@@ -1148,7 +1148,7 @@ bool SwitchCtrl_Session_Catalyst6500::isPortTrunking(uint32 port)
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
        vars = response->variables;
-       bool ret = ((*(vars->val.integer)) ==4);
+       bool ret = ((*(vars->val.integer)) ==5);
     	snmp_free_pdu(response);
 	return ret;
     }
