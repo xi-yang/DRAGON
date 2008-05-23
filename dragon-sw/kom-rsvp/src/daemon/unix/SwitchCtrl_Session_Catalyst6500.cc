@@ -248,9 +248,9 @@ bool SwitchCtrl_Session_Catalyst6500::isSwitchport(uint32 port)
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
         vars = response->variables;
+       bool ret = ((*(vars->val.integer)) ==2);
     	snmp_free_pdu(response);
-	if ((*(vars->val.integer)) ==2) return true;
-	else if ((*(vars->val.integer)) ==1) return false;
+	return ret;
     }
     else {
        if (status == STAT_SUCCESS){
