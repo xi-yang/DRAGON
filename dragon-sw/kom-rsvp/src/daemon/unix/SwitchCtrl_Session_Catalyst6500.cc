@@ -491,9 +491,18 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
 	
     // We only need the remove the port if the port is Trunkport	
     if (!isPortTrunking(port)) {
+        // Set access VLAN ID to 1 (default)
+        String tag_oid_str = ".1.3.6.1.4.1.9.9.68.1.2.2.1.2";
+        sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
+        type='i'; 
+        sprintf(value, "%d", 1);
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+            LOG(3)( Log::MPLS, "VLSR: SNMP: Removing port ", port, " failed: cannot set access VLAN# to 1");
+            //return false; //turning off anyway
+        }
+        // Turn off the port
         SwitchPortOnOff(port, false); //Trun off the switch port
-        //removeVLAN(vlanID);
-        //return true;
         port = convertUnifiedPort2Catalyst6500(port);
         goto _update_vpm;
     }
