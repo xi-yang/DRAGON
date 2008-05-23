@@ -1042,7 +1042,8 @@ bool SwitchCtrl_Session_Catalyst6500::readTrunkPortVlanMap(portVlanMapList &trun
                 }
 
 	 	int tmp_port_id = vars->name_loc[vars->name_length-1];	
-		if (isPortTrunking(hook_convertPortInterfaceToID(tmp_port_id))) {
+		uint32 port = hook_convertPortInterfaceToID(tmp_port_id);
+		if (port > 0 && isPortTrunking(port)) {
 			hook_getVlanMapFromSnmpVars(vlanmap, vars);
                	 	trunkPortVlanMapList.push_back(vlanmap);
 		}
@@ -1091,6 +1092,10 @@ bool SwitchCtrl_Session_Catalyst6500::readVlanPortMapListALLFromPortVlanMapList(
     {
 	portId = (*pvmListIter).pid;
 	uint32 port = hook_convertPortInterfaceToID(portId);
+	if (port == 0) {
+		++pvmListIter;
+		continue;
+	}
 	for (byteIndex=0; byteIndex<128; byteIndex++) {
 	    vlanbyte = (uint8) (*pvmListIter).vlanbits[byteIndex]; 
 	    bitIndex = 0;
