@@ -1019,7 +1019,9 @@ bool SwitchCtrl_Session_Catalyst3750::readTrunkPortVlanMap(portVlanMapList &trun
                 }
 
 	 	int tmp_port_id = vars->name_loc[vars->name_length-1];	
-		if (isPortTrunking(hook_convertPortInterfaceToID(tmp_port_id))) {
+		//the port id could belong to a Port-Channel, which will be ignored since only gigaE and tenGigaE ports are counted.
+		uint32 port = hook_convertPortInterfaceToID(tmp_port_id); // port = 0 for non-ethernet ports
+		if (port > 0 && isPortTrunking(port)) {
 			hook_getVlanMapFromSnmpVars(vlanmap, vars);
                	 	trunkPortVlanMapList.push_back(vlanmap);
 		}
@@ -1069,6 +1071,10 @@ bool SwitchCtrl_Session_Catalyst3750::readVlanPortMapListALLFromPortVlanMapList(
 	portId = (*pvmListIter).pid;
 	uint32 port_id = hook_convertPortInterfaceToID(portId);
 	uint32 port = convertUnifiedPort2Catalyst3750( port_id);
+	if (port == 0) {
+		++pvmListIter;
+		continue;
+	}
 	for (byteIndex=0; byteIndex<128; byteIndex++) {
 	    vlanbyte = (uint8) (*pvmListIter).vlanbits[byteIndex]; 
 	    bitIndex = 0;

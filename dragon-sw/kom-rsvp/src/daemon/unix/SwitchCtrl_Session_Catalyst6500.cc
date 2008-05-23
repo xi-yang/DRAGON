@@ -320,8 +320,6 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
     if ((!active) || port==SWITCH_CTRL_PORT || vlanID<CATALYST6500_MIN_VLAN_ID || vlanID>CATALYST6500_MAX_VLAN_ID) 
     	return false; //don't touch the control port!
 
-    PortStaticAccessOn(port);
-
     if (isPortTrunking(port))
         PortTrunkingOff(port);
 
@@ -1041,8 +1039,9 @@ bool SwitchCtrl_Session_Catalyst6500::readTrunkPortVlanMap(portVlanMapList &trun
                     continue;
                 }
 
-	 	int tmp_port_id = vars->name_loc[vars->name_length-1];	
-		uint32 port = hook_convertPortInterfaceToID(tmp_port_id);
+	 	int tmp_port_id = vars->name_loc[vars->name_length-1];
+		//the port id could belong to a Port-Channel, which will be ignored since only gigaE and tenGigaE ports are counted.
+		uint32 port = hook_convertPortInterfaceToID(tmp_port_id); // port = 0 for non-ethernet ports
 		if (port > 0 && isPortTrunking(port)) {
 			hook_getVlanMapFromSnmpVars(vlanmap, vars);
                	 	trunkPortVlanMapList.push_back(vlanmap);
