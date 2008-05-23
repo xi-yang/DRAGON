@@ -489,6 +489,8 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
     if ((!active) || port==SWITCH_CTRL_PORT || vlanID<CATALYST6500_MIN_VLAN_ID || vlanID>CATALYST6500_MAX_VLAN_ID) 
     	return false; //don't touch the control port!
 	
+    port_id = hook_convertPortIDToInterface(port);
+
     // We only need the remove the port if the port is Trunkport	
     if (!isPortTrunking(port)) {
         // Set access VLAN ID to 1 (default)
@@ -511,7 +513,6 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
         return false;
 
     // Get the current vlan mapping for the port
-    port_id = hook_convertPortIDToInterface(port);
     sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
     status = read_objid(oid_str, anOID, &anOID_len);
 
