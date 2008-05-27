@@ -81,17 +81,11 @@ private:
 
 inline uint32 convertUnifiedPort2Catalyst6500(uint32 port)
 {
-	//return (((port>>8)&0xf)*12 + (port&0xff));
-	// We use a different approach to do the conversion.
-	// We read the switch ports using SNMP and populate a table
-	// And use the populated table to do the conversion.
-	return port;
+	return (((port>>8)&0xf)*12 + (port&0xff));
 }
 inline uint32 convertCatalyst65002UnifiedPort(uint32 port)
 {
-        //return (((((port-1)/12)&0xf)<<8) | ((port-1)%12 + 1));
-	// Same as above comment for 'convertUnifiedPort2Catalyst6500'.
-	return port;
+	return (((((port-1)/12)&0xf)<<8) | ((port-1)%12 + 1));
 }
 
 #endif /*SWITCHCTRL_SESSION_CATALYST6500_H_*/
