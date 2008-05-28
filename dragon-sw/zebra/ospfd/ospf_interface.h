@@ -82,16 +82,6 @@ struct ospf_vl_data
   u_char flags;
 };
 
-/*@@@@UNI hacks*/ 
-/*Obsolete
-struct uni_data {
-    struct te_area_lsa_para te_para;
-    struct in_addr loopback;
-    struct ospf_lsa *te_lsa_rtid;
-    struct ospf_lsa *te_lsa_link;
-} ;
-*/
-
 #define OSPF_VL_MAX_COUNT 256
 #define OSPF_VL_MTU	  1500
 
@@ -221,6 +211,8 @@ struct vlsr_if vlsr_if;
 
 /* TE-Link parameters */
 struct te_area_lsa_para te_para;
+/* DRAGON GRI list */
+list dragon_gri;
 
 /* Self-originated TE-LSAs */
 struct ospf_lsa *te_area_lsa_link_self;		/* Type-10 link LSA */

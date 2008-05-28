@@ -208,7 +208,9 @@ ospf_if_new (struct ospf *ospf, struct interface *ifp, struct prefix *p)
 #endif /* HAVE_OPAQUE_LSA */
 
   oi->ospf = ospf;
-  
+
+  oi->dragon_gri = NULL;
+
   return oi;
 }
 
@@ -322,6 +324,14 @@ ospf_if_free (struct ospf_interface *oi)
 
   listnode_delete (oi->ospf->oiflist, oi);
   listnode_delete (oi->area->oiflist, oi);
+
+  if (oi->dragon_gri) 
+    {
+      listnode node; struct dragon_gri_para* gri;
+      LIST_LOOP(oi->dragon_gri, gri, node)
+          XFREE(MTYPE_TMP, gri);
+      list_delete(oi->dragon_gri);
+    }
 
   memset (oi, 0, sizeof (*oi));
   XFREE (MTYPE_OSPF_IF, oi);

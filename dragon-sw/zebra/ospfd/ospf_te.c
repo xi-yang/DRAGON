@@ -640,6 +640,30 @@ set_linkparams_rmt_id (struct te_link_subtlv_link_lcrmt_id *para, u_int32_t valu
    return;
 }
 
+void 
+insert_gri(list gri_list, u_int32_t ucid, u_int32_t seqnum)
+{
+	listnode node;
+	struct dragon_gri_para* gri;
+	struct timeval timer_now;
+	gettimeofday (&timer_now, NULL);
+
+	if (gri_list = NULL)
+		gri_list = list_new();
+	LIST_LOOP(gri_list, gri, node)
+	{
+		if (timer_now.tv_sec - gri->timestamp > MAX_GRI_AGE)
+			list_delete_node(gri_list, node);
+		if (gri->ucid == ucid && gri->seqnum == seqnum)
+			return;
+	}
+	gri = XMALLOC(MTYPE_TMP, sizeof(struct dragon_gri_para));
+	gri ->timestamp = timer_now.tv_sec;
+	gri->ucid = ucid;
+	gri->seqnum = seqnum;
+	listnode_add(gri_list, gri);
+}
+
 static void
 srlg_del(u_int32_t *value)
 {
@@ -3053,29 +3077,6 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7a_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_te_lambda_cmd);
-  
-  /*@@@@ UNI hacks ==> Obsolete*/
-  /*
-  install_node (&ospf_te_uni_node, NULL);
-  install_default(OSPF_TE_UNI_NODE);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_data_interface_noproto_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_data_interface_unnum_noproto_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_level_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_metric_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_maxbw_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_max_rsv_bw_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_rsc_clsclr_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_remote_ifid_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_protection_type_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_srlg_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap1_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap2_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap3a_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap3b_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap4_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_interface_ifsw_cap4a_cmd);
-  install_element (OSPF_TE_UNI_NODE, &ospf_te_uni_loopback_cmd);
-  */
 
   set_config_end_call_back_func(ospf_te_interface_config_update);
   

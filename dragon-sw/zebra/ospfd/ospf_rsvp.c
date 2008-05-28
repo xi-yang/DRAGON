@@ -474,6 +474,8 @@ static int hold_bandwidth(struct ospf_interface *oi, float bandwidth, u_int32_t 
 			unrsv_bw = zero_bw;
 		set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
 		htonf(&unrsv_bw, &oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i]);
+		if (ucid != 0 && seqnum != 0)
+			insert_gri(oi->dragon_gri, ucid, seqnum);
 	}
 	return 1;
 }
@@ -493,6 +495,8 @@ static int release_bandwidth(struct ospf_interface *oi, float bandwidth, u_int32
 			unrsv_bw = max_rsv_bw;
 		set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
 		htonf(&unrsv_bw, &oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i]);
+		if (ucid != 0 && seqnum != 0)
+			insert_gri(oi->dragon_gri, ucid, seqnum);
 	}
 
 	return 1;

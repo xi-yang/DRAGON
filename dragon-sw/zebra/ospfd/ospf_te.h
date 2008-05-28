@@ -419,7 +419,7 @@ struct te_area_lsa_para
   struct te_link_subtlv_link_protype  link_protype;
   struct te_link_subtlv_link_ifswcap link_ifswcap;
   struct te_link_subtlv_link_srlg	link_srlg;   /* length is variable */
-  struct te_link_subtlv_link_te_lambda	 link_te_lambda;
+  struct te_link_subtlv_link_te_lambda	 link_te_lambda;  
 };
 
 /* te_link_local_lsa_para is present for each type-9 ospf_te_lsa */
@@ -451,6 +451,16 @@ struct ospf_te_config_para
 	u_char level;  /* MPLS or GMPLS */
 	struct te_area_lsa_para te_para;
 };
+
+/* DRAGON GRI struct */
+struct dragon_gri_para
+{
+	u_int32_t timestamp;
+	u_int32_t ucid;
+	u_int32_t seqnum;
+};
+#define MAX_GRI_AGE 180
+extern void insert_gri(list gri_list, u_int32_t ucid, u_int32_t seqnum);
 
 /* Prototypes. */
 extern struct te_tlv_router_addr OspfTeRouterAddr;
