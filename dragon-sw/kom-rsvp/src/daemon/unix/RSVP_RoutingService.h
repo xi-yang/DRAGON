@@ -115,7 +115,7 @@ public:
 	const void notifyOSPF(uint8 msgType, const NetAddress& ctrlIfIP, ieee32float bw  );
 	const LogicalInterface* findOutLifByOSPF( const NetAddress& , const uint32 , NetAddress& );
 	const void getVLSRRoutebyOSPF(const NetAddress& inRtID, const NetAddress& outRtID, const uint32 inIfId, const uint32 outIfId, VLSR_Route& vlsr);
-	const void holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold = true);
+	const void holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold = true, u_int32_t ucid = 0, u_int32_t seqnum = 0);
 	const void holdVtagbyOSPF(u_int32_t port, u_int32_t vtag, bool hold = true);
 	const void holdTimeslotsbyOSPF(u_int32_t port, SimpleList<uint8>& timeslots, bool hold);
 	NetAddress getLoopbackAddress();

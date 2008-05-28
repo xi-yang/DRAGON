@@ -405,7 +405,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 					case Message::ResvConf:
 		                            if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC) {
 							// Update ingress link bandwidth
-		                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, true); //true == decrease
+							u_int32_t ucid = 0, seqnum = 0;
+							if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+								ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+								seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+							}
+		                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, true, ucid, seqnum); //true == decrease
 		                                   // Update time slots
 							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
 							if (ts_list.size() > 0)
@@ -414,7 +419,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 						}
 						if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
 							// Update egress link bandwidth
-		                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, true); //true == decrease
+							u_int32_t ucid = 0, seqnum = 0;
+							if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+								ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+								seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+							}
+		                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, true, ucid, seqnum); //true == decrease
 		                                   // Update time slots
 							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
 							if (ts_list.size() > 0)
@@ -516,7 +526,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
 							//deduct bandwidth from the link associated with the port (revserse link bandwidth for bidirectional LSP only)
 							//$$$$ To be moved into bindUpstreamInAndOut
-							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true); //true == deduct
+							u_int32_t ucid = 0, seqnum = 0;
+							if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+								ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+								seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+							}
+							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true, ucid, seqnum); //true == deduct
                                                 portList.pop_front();
                                           }
                                           portList.clear();
@@ -558,7 +573,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                  (*sessionIter)->limitOutputBandwidth(true, port, vlan,  (*iter).bandwidth);
 
 							//deduct bandwidth from the link associated with the port
-							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true); //true == deduct
+							u_int32_t ucid = 0, seqnum = 0;
+							if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+								ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+								seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+							}
+							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true, ucid, seqnum); //true == deduct
                                                 portList.pop_front();
                                           }
 										  
@@ -770,7 +790,12 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isResourceHeld()) {
 								// Update ingress link bandwidth
-								RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false); //false == increase
+								u_int32_t ucid = 0, seqnum = 0;
+								if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+									ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+									seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+								}
+								RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false, ucid, seqnum); //false == increase
 								// Update time slots
 								((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
 								if (ts_list.size() > 0)
@@ -825,7 +850,12 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 								if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isResourceHeld()) {
 									// Update egress link bandwidth
-									RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, false); //false == increase
+									u_int32_t ucid = 0, seqnum = 0;
+									if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+										ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+										seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+									}
+									RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, false, ucid, seqnum); //false == increase
 									// Update time slots
 									((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
 									if (ts_list.size() > 0)
@@ -880,7 +910,12 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                             if (vlanID !=  0) {
                                                 //increase the bandwidth by the amount taken by the removed LSP (on revserse link for bidirectional LSP only)
                                                 //$$$$ To be moved into deleteUpstreamInLabel
-                                                RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false); //false == increase
+							u_int32_t ucid = 0, seqnum = 0;
+							if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+								ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+								seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+							}
+                                                RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false, ucid, seqnum); //false == increase
 
              					     //Undo rate policing and limitation on the port, which is both input and output port
             					     //as the VLAN is duplex.
@@ -927,7 +962,12 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
                                             if (vlanID !=  0) {
                                                 //increase the bandwidth by the amount taken by the removed LSP
-                                                RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false); //false == increase
+							u_int32_t ucid = 0, seqnum = 0;
+							if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+								ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+								seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+							}
+                                                RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false, ucid, seqnum); //false == increase
 
                                                 //Undo rate policing and limitation on the port, which is both input and output port
                                                 //as the VLAN is duplex.

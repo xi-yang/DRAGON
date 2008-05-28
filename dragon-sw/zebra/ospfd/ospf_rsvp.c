@@ -460,7 +460,7 @@ ospf_hold_vtag(u_int32_t port, u_int32_t vtag, u_int8_t hold_flag)
 	}
 }
 
-static int hold_bandwidth(struct ospf_interface *oi, float bandwidth)
+static int hold_bandwidth(struct ospf_interface *oi, float bandwidth, u_int32_t ucid, u_int32_t seqnum)
 {
 	u_int8_t i;
 	static float zero_bw = 0;
@@ -478,7 +478,7 @@ static int hold_bandwidth(struct ospf_interface *oi, float bandwidth)
 	return 1;
 }
 
-static int release_bandwidth(struct ospf_interface *oi, float bandwidth)
+static int release_bandwidth(struct ospf_interface *oi, float bandwidth, u_int32_t ucid, u_int32_t seqnum)
 {
 	u_int8_t i;
 	float max_rsv_bw;
@@ -499,7 +499,7 @@ static int release_bandwidth(struct ospf_interface *oi, float bandwidth)
 }
 
 void
-ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag)
+ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag, u_int32_t ucid, u_int32_t seqnum)
 {
 	struct ospf_interface *oi;
 	struct listnode *node1, *node2;
@@ -522,11 +522,11 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag)
 					&& ( oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) ) ) ) {
 				if (hold_flag == 1)
 				{
-					updated = hold_bandwidth(oi, bw);
+					updated = hold_bandwidth(oi, bw, ucid, seqnum);
 				}
 				else 
 				{
-					updated = release_bandwidth(oi, bw);
+					updated = release_bandwidth(oi, bw, ucid, seqnum);
 				}
 				if (updated && oi->t_te_area_lsa_link_self)
 				{
@@ -906,8 +906,6 @@ ospf_rsvp_get_loopback_addr(int fd)
 void
 ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int8_t uni_id, int fd)
 {
-	struct ospf_interface *oi;
-	struct ospf *ospf;
 	struct ospf_area *area;
 	listnode node;
 	struct route_node *rn;
@@ -984,7 +982,7 @@ ospf_rsvp_read (struct thread *thread)
   struct in_addr addr, addr1;
   u_int32_t if_id;
   u_int32_t vlsr_in_if_id, vlsr_out_if_id;
-  u_int32_t port, bw_uint32;
+  u_int32_t port, bw_uint32, ucid, seqnum;
   u_int32_t vtag;
   u_int8_t hold_flag;
   u_int8_t uni_id;
@@ -1058,7 +1056,9 @@ ospf_rsvp_read (struct thread *thread)
 	port = stream_getl(s);	
 	bw_uint32 = stream_getl(s);	
 	hold_flag = stream_getc(s);
-	ospf_hold_bandwidth(port, *(float*)&bw_uint32, hold_flag);
+	ucid = stream_getl(s);
+	seqnum = stream_getl(s);
+	ospf_hold_bandwidth(port, *(float*)&bw_uint32, hold_flag, ucid, seqnum);
      break;
 
     case HoldVtagbyOSPF:
