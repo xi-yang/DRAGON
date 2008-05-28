@@ -341,13 +341,15 @@ bool SwitchCtrl_Session_Catalyst3750::movePortToVLANAsUntagged(uint32 port, uint
 
     int old_vlan = getVLANbyUntaggedPort(port);
     if (old_vlan) { //Remove untagged port from old VLAN
-        uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF;
+        //uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF;
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
         if (vpmUntagged)
-            vpmUntagged->ports&=mask;
+            //vpmUntagged->ports&=mask;
+            ResetBit(vpmUntagged->portbits, port-1);
         vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
         if (vpmAll)
-    	    vpmAll->ports&=mask;
+    	    //vpmAll->ports&=mask;
+            ResetBit(vpmAll->portbits, port-1);
 
         //Set original ports back to their "tagged" or "untagged" states
         if (vpmUntagged) setVlanPortMapById(vlanPortMapListUntagged, old_vlan, &vpmUntagged->portbits[0]); 
@@ -506,7 +508,6 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
         }
         // Turn off the port
         SwitchPortOnOff(port, false); //Trun off the switch port
-        port = convertUnifiedPort2Catalyst3750(port);
         goto _update_vpm;
     }
 
@@ -515,7 +516,6 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
     }
 
     // Get the current vlan mapping for the port
-    port = convertUnifiedPort2Catalyst3750(port);
     sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
     status = read_objid(oid_str, anOID, &anOID_len);
 
@@ -561,6 +561,7 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
    
 _update_vpm:
 
+    port = convertUnifiedPort2Catalyst3750(port);
     if (vlanID>=CATALYST3750_MIN_VLAN_ID && vlanID<=CATALYST3750_MAX_VLAN_ID) {
        vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
        if (vpmAll) {
