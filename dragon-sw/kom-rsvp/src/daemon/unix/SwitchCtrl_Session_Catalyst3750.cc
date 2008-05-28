@@ -813,6 +813,7 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
     bool running = true;
     size_t rootlen;
     uint32 tmp_port_id = 100000; 
+    uint32 tmp_slot_id = 100000; 
     uint32 tmp_mod_id = 100000; 
 
     if (!snmpEnabled())
@@ -844,9 +845,9 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
                             if (ref_str[0] != 0) {
                                 ref_id.ref_id = (int)vars->name[vars->name_length - 1];
                                 tmp_port_id = 100000; tmp_mod_id = 100000; 
-                                if (sscanf(ref_str, "GigabitEthernet%d/0/%d", &tmp_mod_id, &tmp_port_id) == 2) {
+                                if (sscanf(ref_str, "GigabitEthernet%d/%d/%d", &tmp_mod_id, &tmp_slot_id, &tmp_port_id) == 3) {
 	  				    if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
-	                                      ref_id.port_id = (((tmp_mod_id&0xf) << 12) | (tmp_port_id&0xff));
+	                                      ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
 	                                      portRefIdConvList.push_back(ref_id);
 	      				    } else {
 	          				LOG(2) (Log::Error, "Illegal VLAN ID ", tmp_port_id);
@@ -860,9 +861,9 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
             				    LOG(2) (Log::Error, "Illegal Port ID: ", tmp_port_id);
         				    }
                                 }
-                                else if (sscanf(ref_str, "TenGigabitEthernet%d/0/%d", &tmp_mod_id, &tmp_port_id) == 2) {
+                                else if (sscanf(ref_str, "TenGigabitEthernet%d/%d/%d", &tmp_mod_id, &tmp_slot_id, &tmp_port_id) == 3) {
     				      if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
-	                                    ref_id.port_id = (((tmp_mod_id&0xf) << 12) | (tmp_port_id&0xff));
+	                                    ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
 	                                    portRefIdConvList.push_back(ref_id);
         				    } else {
             				    LOG(2) (Log::Error, "Illegal Port ID: ", tmp_port_id);
@@ -876,6 +877,22 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
             				    LOG(2) (Log::Error, "Illegal Port ID: ", tmp_port_id);
         				    }
                                 }
+                                else if (sscanf(ref_str, "FastEthernet%d/%d/%d", &tmp_mod_id, &tmp_slot_id, &tmp_port_id) == 3) {
+    				      if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
+	                                    ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | ((tmp_port_id+2)&0xff));
+	                                    portRefIdConvList.push_back(ref_id);
+        				    } else {
+            				    LOG(2) (Log::Error, "Illegal Port ID: ", tmp_port_id);
+        				    }
+                                }								
+                                else if (sscanf(ref_str, "FastEthernet%d/%d", &tmp_mod_id, &tmp_slot_id, &tmp_port_id) == 2) {
+    				      if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
+	                                    ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_port_id+2)&0xff));
+	                                    portRefIdConvList.push_back(ref_id);
+        				    } else {
+            				    LOG(2) (Log::Error, "Illegal Port ID: ", tmp_port_id);
+        				    }
+                                }								
                             }
                             if ((vars->type != SNMP_ENDOFMIBVIEW) &&
                                 (vars->type != SNMP_NOSUCHOBJECT) &&

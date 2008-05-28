@@ -81,13 +81,13 @@ private:
 
 inline uint32 convertUnifiedPort2Catalyst6500(uint32 port)
 {
-	//return (((port>>8)&0xf)*12 + (port&0xff));
-	return port; // support up to 8 slots
+	return (((port>>8)&0xf)*128 + (port&0xff));
+	return port; // support up to 16 slots
 }
 inline uint32 convertCatalyst65002UnifiedPort(uint32 port)
 {
-	//return (((((port-1)/12)&0xf)<<8) | ((port-1)%12 + 1));
-	return port; // support up to 8 slots
+	return (((((port-1)/128)&0xf)<<8) | ((port-1)%128 + 1));
+	return port; // support up to 16 slots
 }
 
 #endif /*SWITCHCTRL_SESSION_CATALYST6500_H_*/

@@ -340,13 +340,15 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
 
     int old_vlan = getVLANbyUntaggedPort(port);
     if (old_vlan) { //Remove untagged port from old VLAN
-        uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF;
+        //uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF;
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
         if (vpmUntagged)
-            vpmUntagged->ports&=mask;
+            //vpmUntagged->ports&=mask;
+            ResetBit(vpmUntagged->portbits, port-1)
         vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
         if (vpmAll)
-    	    vpmAll->ports&=mask;
+    	    //vpmAll->ports&=mask;
+            ResetBit(vpmAll->portbits, port-1)
 
         //Set original ports back to their "tagged" or "untagged" states
         if (vpmUntagged) setVlanPortMapById(vlanPortMapListUntagged, old_vlan, &vpmUntagged->portbits[0]); 
