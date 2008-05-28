@@ -507,7 +507,6 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
         }
         // Turn off the port
         SwitchPortOnOff(port, false); //Trun off the switch port
-        port = convertUnifiedPort2Catalyst6500(port);
         goto _update_vpm;
     }
 
@@ -560,6 +559,7 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
 
 _update_vpm:
 
+    port = convertUnifiedPort2Catalyst6500(port);
     if (vlanID>=CATALYST6500_MIN_VLAN_ID && vlanID<=CATALYST6500_MAX_VLAN_ID) {
        vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
        if (vpmAll) {
