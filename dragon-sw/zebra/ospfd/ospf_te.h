@@ -462,7 +462,7 @@ struct dragon_gri_para
 	u_int32_t seqnum;
 };
 #define MAX_GRI_AGE 180
-extern void insert_gri(list gri_list, u_int32_t ucid, u_int32_t seqnum);
+extern void insert_gri(struct ospf_interface* oi, u_int32_t ucid, u_int32_t seqnum);
 
 /* Prototypes. */
 extern struct te_tlv_router_addr OspfTeRouterAddr;

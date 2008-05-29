@@ -641,19 +641,19 @@ set_linkparams_rmt_id (struct te_link_subtlv_link_lcrmt_id *para, u_int32_t valu
 }
 
 void 
-insert_gri(list gri_list, u_int32_t ucid, u_int32_t seqnum)
+insert_gri(struct ospf_interface* oi, u_int32_t ucid, u_int32_t seqnum)
 {
 	listnode node;
 	struct dragon_gri_para* gri;
 	struct timeval time_now;
 	gettimeofday (&time_now, NULL);
 
-	if (gri_list = NULL)
-		gri_list = list_new();
-	LIST_LOOP(gri_list, gri, node)
+	if (oi->dragon_gri = NULL)
+		oi->dragon_gri  = list_new();
+	LIST_LOOP(oi->dragon_gri, gri, node)
 	{
 		if (time_now.tv_sec - gri->timestamp >= MAX_GRI_AGE)
-			list_delete_node(gri_list, node);
+			list_delete_node(oi->dragon_gri, node);
 		if (gri->ucid == ucid && gri->seqnum == seqnum)
 			return;
 	}
@@ -661,7 +661,7 @@ insert_gri(list gri_list, u_int32_t ucid, u_int32_t seqnum)
 	gri ->timestamp = time_now.tv_sec;
 	gri->ucid = ucid;
 	gri->seqnum = seqnum;
-	listnode_add(gri_list, gri);
+	listnode_add(oi->dragon_gri, gri);
 }
 
 static void
