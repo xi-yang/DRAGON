@@ -324,7 +324,6 @@ static char*
 get_switch_port_string(u_int32_t switch_port)
 {
 	static char port_string[20];
-	u_int32_t shelf, slot, port;
 
 	sprintf(port_string, "%d-%d-%d", (switch_port>>12)&0xf, (switch_port>>8)&0xf, switch_port&0xff);
 	return port_string;
@@ -662,6 +661,21 @@ insert_gri(struct ospf_interface* oi, u_int32_t ucid, u_int32_t seqnum)
 	gri->ucid = ucid;
 	gri->seqnum = seqnum;
 	listnode_add(oi->dragon_gri, gri);
+}
+
+void 
+delete_gri(struct ospf_interface* oi, u_int32_t ucid, u_int32_t seqnum)
+{
+	listnode node;
+	struct dragon_gri_para* gri;
+
+	if (oi->dragon_gri == NULL)
+		return;
+	LIST_LOOP(oi->dragon_gri, gri, node)
+	{
+		if (gri->ucid == ucid && gri->seqnum == seqnum)
+			list_delete_node(oi->dragon_gri, node);
+	}
 }
 
 static void
@@ -1286,7 +1300,7 @@ show_vty_link_subtlv_te_lambda (struct vty *vty, struct te_tlv_header *tlvh)
   struct te_link_subtlv_link_te_lambda *top;
   const char *p;
   
-  top = (struct te_link_subtlv_link_protype *) tlvh;
+  top = (struct te_link_subtlv_link_te_lambda *) tlvh;
   p = frequency2wavelength(ntohl(top->frequency));
  
   if (vty != NULL)
