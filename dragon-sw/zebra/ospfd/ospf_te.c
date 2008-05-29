@@ -648,7 +648,7 @@ insert_gri(struct ospf_interface* oi, u_int32_t ucid, u_int32_t seqnum)
 	struct timeval time_now;
 	gettimeofday (&time_now, NULL);
 
-	if (oi->dragon_gri = NULL)
+	if (oi->dragon_gri == NULL)
 		oi->dragon_gri  = list_new();
 	LIST_LOOP(oi->dragon_gri, gri, node)
 	{
