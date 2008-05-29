@@ -645,20 +645,20 @@ insert_gri(list gri_list, u_int32_t ucid, u_int32_t seqnum)
 {
 	listnode node;
 	struct dragon_gri_para* gri;
-	struct timeval timer_now;
-	gettimeofday (&timer_now, NULL);
+	struct timeval time_now;
+	gettimeofday (&time_now, NULL);
 
 	if (gri_list = NULL)
 		gri_list = list_new();
 	LIST_LOOP(gri_list, gri, node)
 	{
-		if (timer_now.tv_sec - gri->timestamp > MAX_GRI_AGE)
+		if (time_now.tv_sec - gri->timestamp >= MAX_GRI_AGE)
 			list_delete_node(gri_list, node);
 		if (gri->ucid == ucid && gri->seqnum == seqnum)
 			return;
 	}
 	gri = XMALLOC(MTYPE_TMP, sizeof(struct dragon_gri_para));
-	gri ->timestamp = timer_now.tv_sec;
+	gri ->timestamp = time_now.tv_sec;
 	gri->ucid = ucid;
 	gri->seqnum = seqnum;
 	listnode_add(gri_list, gri);

@@ -269,6 +269,38 @@ build_link_local_id_tlv (struct stream *s, struct ospf_interface *oi)
   return;
 }
 
+/* 
+  * Packing a list of GRI into the TE_LINK_SUBTLV_LINK_DRAGON_GRI TLV.
+  * These GRI's in OSPF LSA updates will be associated with NARB resource queries in order to
+  * eliminate double holdings. 
+  */
+static void
+build_dragon_gri_tlv(struct stream* s, list gri_list)
+{
+  struct dragon_gri_para* gri;
+  listnode node;
+  struct timeval time_now;
+  struct te_tlv_header tlv_header;
+  struct te_tlv_header* tlvh_s = (struct te_tlv_header *)(s->data + s->putp); /* pointing to the TE Link sub-TLV header in stream*/
+  int n_gri = 0;
+
+  if (gri_list == NULL || listcount(gri_list) == 0)
+    return;
+  gettimeofday (&time_now, NULL);  
+  tlv_header.type = htons(TE_LINK_SUBTLV_LINK_DRAGON_GRI);
+  build_tlv_header(s, &tlv_header);
+  LIST_LOOP(gri_list, gri, node)
+  {
+    if (time_now.tv_sec - gri->timestamp < MAX_GRI_AGE)
+    {
+        stream_putl(s, gri->ucid);
+        stream_putl(s, gri->seqnum);
+        n_gri++;
+    }
+  }
+  tlvh_s->length = htons(n_gri*8);
+}
+
 static void
 ospf_te_area_lsa_link_body_set (struct stream *s, struct ospf_interface *oi)
 {
@@ -280,7 +312,7 @@ ospf_te_area_lsa_link_body_set (struct stream *s, struct ospf_interface *oi)
   u_int32_t padding = 0;
 
   set_linkparams_link_header (oi);
-  tlvh_s = (struct te_tlv_header *)(s->data + s->putp); // pointing to the TE Link TLV header in stream
+  tlvh_s = (struct te_tlv_header *)(s->data + s->putp); /* pointing to the TE Link sub-TLV header in stream*/
   build_tlv_header (s, &oi->te_para.link.header);
 
   BUILD_LINK_SUBTLV(link_type);
@@ -311,7 +343,7 @@ ospf_te_area_lsa_link_body_set (struct stream *s, struct ospf_interface *oi)
 	}
 	BUILD_LINK_SUBTLV(link_srlg);
 	BUILD_LINK_SUBTLV(link_te_lambda);
-
+	build_dragon_gri_tlv(s, oi->dragon_gri);
   }
   return;
 }

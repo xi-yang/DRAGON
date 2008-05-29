@@ -344,8 +344,10 @@ struct te_link_subtlv_link_srlg
 };
 
 /* DRAGON specific TLVs*/
-#define	TE_LINK_SUBTLV_LINK_TE_LAMBDA	33025 /* or 0x8901 = DRAGO_BASE+0x0101*/
+
 #define	TE_LINK_SUBTLV_LINK_DOMAIN_ID	34832 /* or 0x8810 = DRAGO_BASE+0x0010*/
+#define	TE_LINK_SUBTLV_LINK_TE_LAMBDA	35073 /* or 0x8901 = DRAGO_BASE+0x0101*/
+#define	TE_LINK_SUBTLV_LINK_DRAGON_GRI	35074 /* or 0x8902 = DRAGO_BASE+0x0102*/
 
 struct te_link_subtlv_link_te_lambda
 {
