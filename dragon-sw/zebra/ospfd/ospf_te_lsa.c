@@ -293,8 +293,8 @@ build_dragon_gri_tlv(struct stream* s, list gri_list)
   {
     if (time_now.tv_sec - gri->timestamp < MAX_GRI_AGE)
     {
-        stream_putl(s, htonl(gri->ucid));
-        stream_putl(s, htonl(gri->seqnum));
+        stream_putl(s, gri->ucid);
+        stream_putl(s, gri->seqnum);
         n_gri++;
     }
   }
