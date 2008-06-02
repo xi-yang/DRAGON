@@ -298,6 +298,12 @@ build_dragon_gri_tlv(struct stream* s, list gri_list)
         n_gri++;
     }
   }
+  if (n_gri == 0)
+  {
+    /*no tlv created*/
+    s->putp -= sizeof(struct te_tlv_header);
+    return;
+  }
   tlvh_s->length = htons(n_gri*8);
 }
 
