@@ -54,6 +54,7 @@ $DEFAULTS =
     SNMPWALK          => undef,
     MAXPORTS          => 255,
     TERMCOLUMNS       => 50,
+    VLANS             => undef,
 };
 $VERSION = '0.1';
 $DESCR = 'show VLAN mapping on RFC2674 compliant switch';
@@ -79,6 +80,7 @@ $USAGE = <<__UsAGe__;
                                           (default searches /usr/bin and /usr/local/bin)
            --maxports=[number]         maximum number of ports on the switch (default=255)
            --showempty                 print empty VLANs (default is not to print)
+           --vlans=[ID,{ID,..}]        only print these VLAN ID(s) (default=show all)
            -h                          print this message and exit
            -v                          be verbose
 __UsAGe__
@@ -93,6 +95,7 @@ my %opts = ('log'               => $DEFAULTS->{LOG},
             'snmpwalk'          => $DEFAULTS->{SNMPWALK},
             'maxports'          => $DEFAULTS->{MAXPORTS},
             'termcolumns'       => $DEFAULTS->{TERMCOLUMNS},
+            'vlans'             => $DEFAULTS->{VLANS},
             );
 
 usage() unless scalar(@ARGV);
@@ -110,6 +113,7 @@ usage() unless
                 "maxports=s",
                 "termcolumns=s",
                 "showempty",
+                "vlans=s",
                 );
 usage(undef, 1) if $opts{h};
 $LOG_FILE = $opts{log};
@@ -290,6 +294,11 @@ foreach my $host ( sort keys %vlan_ports ) {
         $line .= $str;
       }
     }
+    my @print_vlans;
+    if (defined($opts{vlans})) {
+      @print_vlans = split(/,/, $opts{vlans});
+    }
+    next if defined($opts{vlans}) and grep(/^$vlan$/, @print_vlans) == 0;
     $line .= "[empty]" if $count == 0;
     print "$line\n" unless !defined($opts{showempty}) and $count == 0;
   }
