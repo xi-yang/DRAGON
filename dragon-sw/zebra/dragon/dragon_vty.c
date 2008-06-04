@@ -2576,7 +2576,7 @@ DEFUN (dragon_delete_local_id,
                 local_id_group_free(lid);
             listnode_delete(registered_local_ids, lid);
             XFREE(MTYPE_TMP, lid);
-            zDeleteLocalId(dmaster.api, type, tag, 0);
+            zDeleteLocalId(dmaster.api, type, tag, 0xffff);
             preserve_local_ids();
             return CMD_SUCCESS;
         }
