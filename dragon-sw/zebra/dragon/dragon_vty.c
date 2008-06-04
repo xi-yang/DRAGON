@@ -1480,7 +1480,7 @@ DEFUN (dragon_set_lsp_sw,
        "set bandwidth NAME swcap (psc1|l2sc|lsc|tdm) encoding (packet|ethernet|lambda|sdh) gpid (lambda|ethernet|sdh)",
        "Set LSP parameters\n"
        "Bandwidth\n"
-       "Bandwidth Name\n"
+       "Bandwidth name: eth100M, eth149.3M, eth2.4G, gige_f, hdtv, etc\n"
        "Switching capability\n"
        "Packet-Switch Capable-1 (PSC-1)\n"
        "Layer-2 Switch Capable (L2SC)\n"
