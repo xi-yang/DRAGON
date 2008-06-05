@@ -225,6 +225,7 @@ struct api_msg_header
 #define LSP_OPT_QUERY_CONFIRM  ((u_int32_t)(0x0200 << 16)) //return confirmation ID (instead of strict ERO hops)
 #define LSP_OPT_SUBNET_ERO  ((u_int32_t)(0x0400 << 16)) //return subnet ERO TLV if any
 #define LSP_OPT_SUBNET_DTL  ((u_int32_t)(0x0800 << 16)) //return subnet DTL TLV if any
+#define LSP_OPT_ALT_PATHS  ((u_int32_t)(0x1000 << 16)) //returning alternate paths (ERO + subnetERO if any)
 
 /* NARB related variables used in DRAGON CLI only */
 extern int override_narb_ero_forced ;
