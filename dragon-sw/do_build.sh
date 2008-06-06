@@ -83,10 +83,13 @@ case `uname` in
   *BSD)
     echo This is BSD Unix
 
+    CONFIG_SHELL=/bin/sh
+    export CONFIG_SHELL
+
     echo '' && \
 	echo 'configuring kom-rsvp...'
     cd kom-rsvp
-    ./configure --prefix=$PREFIX --disable-java-api --with-snmp=$SNMP_PATH $rsvpconf CFLAG=-g CPPFLAG=-g
+    $CONFIG_SHELL ./configure --prefix=$PREFIX --disable-java-api --with-snmp=$SNMP_PATH $rsvpconf CFLAG=-g CPPFLAG=-g
     if test $? != 0; then
 	echo "dragon-sw: kom-rsvp configure error!"
 	exit 1
@@ -103,7 +106,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring zebra...'
     cd ../zebra
-    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g
+    $CONFIG_SHELL ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g
     if test $? != 0; then
 	echo "dragon-sw: zebra configure error!"
 	exit 1
