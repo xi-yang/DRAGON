@@ -14,7 +14,7 @@
 
 #include <iostream>
 #include <iomanip>
-#include "_types.h"
+#include "_generic_types.h"
 #include "source.h"
 
 //#define NEXT_SOURCE( P )       P = (Source*)P->GetNext()

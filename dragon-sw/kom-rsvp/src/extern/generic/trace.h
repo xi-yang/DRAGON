@@ -11,7 +11,7 @@
 #if !defined(_TRACE_H_INCLUDED_)
 #define _TRACE_H_INCLUDED_
 
-#include "_types.h"
+#include "_generic_types.h"
 #include "_rand_MT.h"
 
 typedef int16s   pct_size_t;

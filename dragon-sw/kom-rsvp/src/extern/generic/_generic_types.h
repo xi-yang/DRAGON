@@ -1,5 +1,5 @@
 /**********************************************************
- * Filename:    _types.h
+ * Filename:    _generic_types.h
  *
  * Description: This file contains type definitions and
  *              general macros

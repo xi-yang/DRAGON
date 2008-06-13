@@ -65,13 +65,22 @@ elif echo $host | fgrep bsd >/dev/null 2>/dev/null; then
 	OS_NAME=FreeBSD
 	SHARED_LD="$CXX -shared"
 	NUMCPUS=`/sbin/sysctl -n hw.ncpu`
+elif echo $host | fgrep darwin >/dev/null 2>/dev/null; then
+        AC_DEFINE(Darwin)
+        AC_DEFINE(NEED_MULTICAST_TTL)
+        AC_DEFINE(RSRR_SERV_PATH,"/var/run/rsrr_svr")
+        AC_DEFINE(PIDFILE,"/var/run/RSVPD.pid")
+        OS_NAME=Darwin
+        SHARED_LD="$CXX -shared"
+        NUMCPUS=`/usr/sbin/sysctl -n hw.ncpu`
 fi
 AC_DEFINE(RSRR_CLI_PATH,"/tmp/.rsrr_cli")
 AC_SUBST(SHARED_LD)
-if test $NUMCPUS && test $NUMCPUS -gt 1; then
-	MAKEFLAGS="-j $NUMCPUS"
-fi
-AC_SUBST(MAKEFLAGS)
+# eliminate warning: -jN forced in submake: disabling jobserver mode...
+# if test $NUMCPUS && test $NUMCPUS -gt 1; then
+# 	MAKEFLAGS="-j $NUMCPUS"
+# fi
+# AC_SUBST(MAKEFLAGS)
 AC_SUBST(OS_NAME)
 
 AC_C_BIGENDIAN

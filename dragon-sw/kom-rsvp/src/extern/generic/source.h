@@ -14,7 +14,7 @@
 
 //#define RND_LARGE_RANGE
 
-#include "_types.h"
+#include "_generic_types.h"
 #include "_rand_MT.h"
 #include "_link.h"
 #include "trace.h"

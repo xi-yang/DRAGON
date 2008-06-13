@@ -13,7 +13,7 @@
 
 #include <math.h>
 
-#include "_types.h"
+#include "_generic_types.h"
 #include "MersenneTwister.h"
 
 //extern MTRand RND;

@@ -70,6 +70,7 @@
 #undef Linux
 #undef FreeBSD
 #undef SunOS
+#undef Darwin
 
 #undef FATAL_ON
 #undef ERROR_ON

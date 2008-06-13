@@ -51,6 +51,9 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>                        // field types for iphdr struct
 #endif
+#if defined(Darwin)
+#include <unistd.h>                            // getpid
+#endif
 #include <netinet/ip.h>                        // iphdr struct
 #include <netinet/udp.h>                       // udphdr struct
 #include <netinet/tcp.h>                       // tcphdr struct

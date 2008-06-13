@@ -679,7 +679,6 @@ host_cpu
 host_vendor
 host_os
 SHARED_LD
-MAKEFLAGS
 OS_NAME
 GREP
 EGREP
@@ -3940,16 +3939,37 @@ _ACEOF
 	OS_NAME=FreeBSD
 	SHARED_LD="$CXX -shared"
 	NUMCPUS=`/sbin/sysctl -n hw.ncpu`
+elif echo $host | fgrep darwin >/dev/null 2>/dev/null; then
+        cat >>confdefs.h <<\_ACEOF
+#define Darwin 1
+_ACEOF
+
+        cat >>confdefs.h <<\_ACEOF
+#define NEED_MULTICAST_TTL 1
+_ACEOF
+
+        cat >>confdefs.h <<\_ACEOF
+#define RSRR_SERV_PATH "/var/run/rsrr_svr"
+_ACEOF
+
+        cat >>confdefs.h <<\_ACEOF
+#define PIDFILE "/var/run/RSVPD.pid"
+_ACEOF
+
+        OS_NAME=Darwin
+        SHARED_LD="$CXX -shared"
+        NUMCPUS=`/usr/sbin/sysctl -n hw.ncpu`
 fi
 cat >>confdefs.h <<\_ACEOF
 #define RSRR_CLI_PATH "/tmp/.rsrr_cli"
 _ACEOF
 
 
-if test $NUMCPUS && test $NUMCPUS -gt 1; then
-	MAKEFLAGS="-j $NUMCPUS"
-fi
-
+# eliminate warning: -jN forced in submake: disabling jobserver mode...
+# if test $NUMCPUS && test $NUMCPUS -gt 1; then
+# 	MAKEFLAGS="-j $NUMCPUS"
+# fi
+# AC_SUBST(MAKEFLAGS)
 
 
 
@@ -9043,7 +9063,6 @@ host_cpu!$host_cpu$ac_delim
 host_vendor!$host_vendor$ac_delim
 host_os!$host_os$ac_delim
 SHARED_LD!$SHARED_LD$ac_delim
-MAKEFLAGS!$MAKEFLAGS$ac_delim
 OS_NAME!$OS_NAME$ac_delim
 GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
@@ -9077,7 +9096,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 96; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

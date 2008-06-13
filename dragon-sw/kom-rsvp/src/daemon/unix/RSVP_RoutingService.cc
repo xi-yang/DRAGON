@@ -41,7 +41,7 @@
 #include "RSVP_Daemon_Wrapper.h"
 #endif
  #include <fcntl.h>
-#if defined(SunOS) || defined(FreeBSD)
+#if defined(SunOS) || defined(FreeBSD) || defined(Darwin)
 #include <sys/types.h>                           // div. typedefs
 #include <sys/un.h>
 #include <sys/socket.h>                          // socket
@@ -152,7 +152,7 @@ void RoutingService::init2() {
 	}
 }
 
-#if defined(FreeBSD)
+#if defined(FreeBSD) || defined(Darwin)
 //non-blocking connect to OSPFD
 bool RoutingService::ospf_socket_init (){
 	  int val, ret;
@@ -687,7 +687,7 @@ bool RoutingService::getAsyncMulticastRoutingEvent( NetAddress& src, NetAddress&
 #if !defined(RTAX_MAX)
 #define RTAX_MAX        8
 #endif
-#if defined(FreeBSD)
+#if defined(FreeBSD) || defined(Darwin)
 #define RTA_NUMBITS			8 /* Number of bits used in RTA_* */
 #define ROUNDUP(a, size) (((a) & ((size)-1)) ? (1 + ((a) | ((size)-1))) : (a))
 #endif
@@ -745,7 +745,7 @@ bool RoutingService::sendRouteRequest( const NetAddress& dest ) const {
 	mhp->rtm_type = RTM_GET;
 	mhp->rtm_seq = ++queryCounter;
 	mhp->rtm_addrs = RTA_DST|RTA_IFP;
-#if defined(FreeBSD)
+#if defined(FreeBSD) || defined(Darwin)
 	mhp->rtm_flags = RTF_UP|RTF_GATEWAY|RTF_HOST|RTF_STATIC;
 #else /* SunOS */
 	mhp->rtm_pid = my_pid;
