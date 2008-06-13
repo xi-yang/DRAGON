@@ -13,9 +13,9 @@ noinst_LIBRARIES = libastb.a
 
 noinst_HEADERS = adt.h ast_master.h dragon_app.h
 ast_master_SOURCES = main.c ast_master_vty.c dragon_app.c
-ast_master_LDADD =  libastb.a ../lib/libzebra.a  $(XML_LIBS) -lcrypt -lxml2 -lm
+ast_master_LDADD =  libastb.a ../lib/libzebra.a  $(XML_LIBS) -lxml2 -lm
 node_agent_SOURCES = node_agent.c dragon_app.c
-node_agent_LDADD =  libastb.a ../lib/libzebra.a $(XML_LIBS) -lcrypt -lxml2 -lm 
+node_agent_LDADD =  libastb.a ../lib/libzebra.a $(XML_LIBS) -lxml2 -lm 
 libastb_a_SOURCES = adt.c ast_master.c local_id_cfg.c 
 
 sysconf_DATA = ast_master.conf.sample
