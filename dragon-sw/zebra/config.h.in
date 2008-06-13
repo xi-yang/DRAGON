@@ -3,6 +3,9 @@
 /* BSDI */
 #undef BSDI_NRL
 
+/* Darwin */
+#undef DARWIN
+
 /* Disable BGP installation to zebra */
 #undef DISABLE_BGP_ANNOUNCE
 

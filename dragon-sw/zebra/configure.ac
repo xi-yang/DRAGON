@@ -207,6 +207,10 @@ case "$host" in
       OTHER_METHOD="mtu_kvm.o"
       AC_CHECK_LIB(kvm, main)
   ;;
+  *-darwin*)
+      opsys=darwin
+      AC_DEFINE(DARWIN,,Darwin)
+  ;;
 esac
 
 dnl ---------------------

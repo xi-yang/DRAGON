@@ -174,6 +174,49 @@ case `uname` in
     echo '' && \
         echo "Now, as root, run 'sh do_install.sh' to complete the installation."
     ;;
+  *Darwin)
+    echo This is Darwin
+
+    echo '' && \
+        echo 'configuring kom-rsvp...'
+    cd kom-rsvp
+    ./configure --prefix=$PREFIX --disable-java-api --with-snmp=$SNMP_PATH --disable-cbq --disable-traffgen $rsvpconf CFLAG=-g CPPFLAG=-g
+    if test $? != 0; then
+        echo "dragon-sw: kom-rsvp configure error!"
+        exit 1
+    fi
+
+    echo '' && \
+        echo 'making kom-rsvp...'
+    gmake
+    if test $? != 0; then
+        echo "dragon-sw: kom-rsvp gmake error!"
+        exit 1
+    fi
+
+    echo '' && \
+        echo 'configuring zebra...'
+    cd ../zebra
+    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g
+    if test $? != 0; then
+        echo "dragon-sw: zebra configure error!"
+        exit 1
+    fi
+
+    echo '' && \
+        echo 'making zebra...'
+    make
+    if test $? != 0; then
+        echo "dragon-sw: zebra make error!"
+        exit 1
+    fi
+
+    echo '' && \
+        echo 'dragon-sw build finished.'
+
+    echo '' && \
+        echo "Now, as root, run 'sh do_install.sh' to complete the installation."
+    ;;
   *)
     echo Do not know what kind of system this is, do it by hand
     ;;
