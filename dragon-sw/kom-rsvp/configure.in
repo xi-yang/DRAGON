@@ -580,7 +580,7 @@ Catalyst3750, Catalyst6500 and LinuxSwitch.
 
 Switch Vendor/Model number (Default: AutoDetect): $ECHO_C"
 
-       read tmpinput
+       read tmpinput <&AS_ORIGINAL_STDIN_FD
        if test "$tmpinput" = ""; then
 	  tmpinput="AutoDetect"
        fi
@@ -639,7 +639,7 @@ will avoid this prompt.
 
 Switch control port to use (Default: 255): $ECHO_C"
 
-       read tmpinput
+       read tmpinput <&AS_ORIGINAL_STDIN_FD
        if test "$tmpinput" = ""; then
 	  tmpinput="255"
        fi
@@ -665,7 +665,7 @@ This can also be specified by --with-switch-cli-type=(telnet|ssh|tl1|shell)
 
 CLI Session Type (Default: none): $ECHO_C"
 
-       read tmpinput
+       read tmpinput <&AS_ORIGINAL_STDIN_FD
        eval with_switch_cli_type=\$tmpinput
 else
 	AC_MSG_RESULT(disabled)
@@ -712,7 +712,7 @@ you need to provide the username and password.
 
 Username (Default: unknown): $ECHO_C"
 
-	read tmpinput
+	read tmpinput <&AS_ORIGINAL_STDIN_FD
 	if test "$tmpinput" = ""; then
 	    tmpinput="unknown"
 	fi
@@ -720,7 +720,7 @@ Username (Default: unknown): $ECHO_C"
 
 	stty -echo
 	echo $ECHO_N "Password (Default: unknown): $ECHO_C"
-	read tmpinput
+	read tmpinput <&AS_ORIGINAL_STDIN_FD
 	if test "$tmpinput" = ""; then
 	    tmpinput="unknown"
 	fi
