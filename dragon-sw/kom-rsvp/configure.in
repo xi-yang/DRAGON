@@ -718,14 +718,14 @@ Username (Default: unknown): $ECHO_C"
 	fi
 	eval switch_cli_username="\$tmpinput"
 
-	stty -echo
+	stty -echo <&AS_ORIGINAL_STDIN_FD
 	echo $ECHO_N "Password (Default: unknown): $ECHO_C"
 	read tmpinput <&AS_ORIGINAL_STDIN_FD
 	if test "$tmpinput" = ""; then
 	    tmpinput="unknown"
 	fi
 	eval switch_cli_password="\$tmpinput"
-	stty echo
+	stty echo <&AS_ORIGINAL_STDIN_FD
 	echo \*\*\*\*\*\*\*\*
 	AC_DEFINE_UNQUOTED(CLI_USERNAME, "$switch_cli_username")
 	AC_DEFINE_UNQUOTED(CLI_PASSWORD, "$switch_cli_password")

@@ -7523,14 +7523,14 @@ Username (Default: unknown): $ECHO_C"
 	fi
 	eval switch_cli_username="\$tmpinput"
 
-	stty -echo
+	stty -echo <&7
 	echo $ECHO_N "Password (Default: unknown): $ECHO_C"
 	read tmpinput <&7
 	if test "$tmpinput" = ""; then
 	    tmpinput="unknown"
 	fi
 	eval switch_cli_password="\$tmpinput"
-	stty echo
+	stty echo <&7
 	echo \*\*\*\*\*\*\*\*
 	cat >>confdefs.h <<_ACEOF
 #define CLI_USERNAME "$switch_cli_username"
