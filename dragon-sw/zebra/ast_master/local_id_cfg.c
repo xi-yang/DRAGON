@@ -320,8 +320,8 @@ id_xml_parser(char* filename, int agent)
   for (attr = cur->properties;
 	attr;
 	attr = attr->next) {
-    if (strcasecmp(attr->name, "ast_id") == 0) {
-      app_cfg->ast_id = strdup(attr->children->content);
+    if (strcasecmp((char*)attr->name, "ast_id") == 0) {
+      app_cfg->ast_id = strdup((char*)attr->children->content);
       break;
     }
   }
@@ -331,7 +331,7 @@ id_xml_parser(char* filename, int agent)
        cur = cur->next) {
     key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 
-    if (strcasecmp(cur->name, "resource") != 0) 
+    if (strcasecmp((char*)cur->name, "resource") != 0) 
       continue;
 
     resource_ptr = cur;
@@ -342,17 +342,17 @@ id_xml_parser(char* filename, int agent)
     for (attr = resource_ptr->properties;
 	 attr;
 	 attr = attr->next) {
-      if (strcasecmp(attr->name, "type") == 0) {
+      if (strcasecmp((char*)attr->name, "type") == 0) {
 	for (i = 1;
 	     i <= 10;
 	     i++) {
-	  if (strcasecmp(attr->children->content, "FIONA") == 0) {
+	  if (strcasecmp((char*)attr->children->content, "FIONA") == 0) {
 //	    myres->stype = i;
 	    break;
 	  }
 	} 
-      } else if (strcasecmp(attr->name, "name") == 0)
-	strncpy(myres->name, attr->children->content, NODENAME_MAXLEN);
+      } else if (strcasecmp((char*)attr->name, "name") == 0)
+	strncpy(myres->name, (char*)attr->children->content, NODENAME_MAXLEN);
     }
 #ifdef FIONA
     if (myres->stype == 0 || myres->name[0] == '\0') {
@@ -366,13 +366,13 @@ id_xml_parser(char* filename, int agent)
 	 cur1 = cur1->next) {
       key = xmlNodeListGetString(doc, cur1->xmlChildrenNode, 1);
 
-      if (strcasecmp(cur1->name, "ip") == 0) 
-	strncpy(myres->ip, key, IP_MAXLEN);
-      else if (strcasecmp(cur1->name, "status") == 0) 
-	myres->status = get_status_by_str(key);
-      else if (strcasecmp(cur1->name, "agent_message") == 0) 
-	myres->msg = strdup(key);
-      else if (strcasecmp(cur1->name, "local_id") == 0) {
+      if (strcasecmp((char*)cur1->name, "ip") == 0) 
+	strncpy(myres->ip, (char*)key, IP_MAXLEN);
+      else if (strcasecmp((char*)cur1->name, "status") == 0) 
+	myres->status = get_status_by_str((char*)key);
+      else if (strcasecmp((char*)cur1->name, "agent_message") == 0) 
+	myres->msg = strdup((char*)key);
+      else if (strcasecmp((char*)cur1->name, "local_id") == 0) {
 	if (type == ID_QUERY_XML && !app_cfg->ast_id) 
 	  continue;
 
@@ -383,20 +383,20 @@ id_xml_parser(char* filename, int agent)
 	for (attr = cur1->properties, err = 0; 
 	     attr && !err;
 	     attr = attr->next) {
-	  if (strcasecmp(attr->name, "id") == 0) {
-	    myIDcfg->id = atoi(attr->children->content);
+	  if (strcasecmp((char*)attr->name, "id") == 0) {
+	    myIDcfg->id = atoi((char*)attr->children->content);
 	    if (myIDcfg->id < 0 || myIDcfg->id > 65535) {
 	      zlog_err("id_xml_parser: local_id (%d) ignored: not within range <0-65535>", myIDcfg->id);
 	      err = 1;
 	    }
-	  } else if (strcasecmp(attr->name, "action") == 0) {
-	    myIDcfg->action = get_id_action_by_name(attr->children->content);
+	  } else if (strcasecmp((char*)attr->name, "action") == 0) {
+	    myIDcfg->action = get_id_action_by_name((char*)attr->children->content);
 	    if (!myIDcfg->action) {
 	      zlog_err("id_xml_parser: <local_id action> is invalid: %s", attr->children->content);
 	      err = 1;
 	    } 
-	  } else if (strcasecmp(attr->name, "type") == 0) {
-	    myIDcfg->type = get_type_by_name(attr->children->content);
+	  } else if (strcasecmp((char*)attr->name, "type") == 0) {
+	    myIDcfg->type = get_type_by_name((char*)attr->children->content);
 	    if (!myIDcfg->type) {
 	      zlog_err("id_xml_parser: <local_id type> is invalid: %s", attr->children->content);
 	      err = 1;
@@ -429,7 +429,7 @@ id_xml_parser(char* filename, int agent)
 	  if (!key) 
 	    continue;
 	
-	  if (strcasecmp(cur2->name, "member") == 0)
+	  if (strcasecmp((char*)cur2->name, "member") == 0)
 	    myIDcfg->num_mem++;
 	}
 
@@ -481,18 +481,18 @@ id_xml_parser(char* filename, int agent)
 	  if (!key)
 	    continue;
 
-	  if (strcasecmp(cur2->name, "member") == 0 && myIDcfg->num_mem) {
+	  if (strcasecmp((char*)cur2->name, "member") == 0 && myIDcfg->num_mem) {
   
 	    if (i==myIDcfg->num_mem) {
 	      zlog_err("id_xml_parser: the num_mem calculated before is wrong");
 	      break;
 	    }
-	    myIDcfg->mems[i] = atoi(key);
+	    myIDcfg->mems[i] = atoi((char*)key);
 	    i++;
-	  } else if (strcasecmp(cur2->name, "status") == 0)
-	    myIDcfg->status = get_status_by_str(key);
-	  else if (strcasecmp(cur2->name, "agent_message") == 0)
-	    myIDcfg->msg = strdup(key);
+	  } else if (strcasecmp((char*)cur2->name, "status") == 0)
+	    myIDcfg->status = get_status_by_str((char*)key);
+	  else if (strcasecmp((char*)cur2->name, "agent_message") == 0)
+	    myIDcfg->msg = strdup((char*)key);
 	}
 
 	if (!myres->cfg_list) {

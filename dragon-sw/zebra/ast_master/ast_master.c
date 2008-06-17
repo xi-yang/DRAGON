@@ -2,6 +2,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string.h>
+#if !defined( __FreeBSD__) && !defined(__APPLE__)
+#include <sys/sendfile.h>
+#endif
 #include <fcntl.h>
 #include "libxml/xmlmemory.h"
 #include "libxml/parser.h"
@@ -621,7 +624,7 @@ int
 send_file_over_sock(int sock, char* newpath)
 {
   int fd, total;
-#ifndef __FreeBSD__
+#if !defined( __FreeBSD__) && !defined(__APPLE__)
   static struct stat file_stat;
 #endif
 
@@ -633,9 +636,10 @@ send_file_over_sock(int sock, char* newpath)
   if (fd == -1) 
     return 1;
 
-#ifdef __FreeBSD__
+#if defined(__APPLE__)
+  total = sendfile(fd, sock, 0, 0, NULL, 0);
+#elif defined(__FreeBSD__)
   total = sendfile(fd, sock, 0, 0, NULL, NULL, 0);
-  if (total < 0) {
 #else
   if (fstat(fd, &file_stat) == -1) {
     zlog_err("send_file_over_sock: fstat() failed on %s", newpath);
@@ -644,8 +648,8 @@ send_file_over_sock(int sock, char* newpath)
     return (1);
   }
   total = sendfile(sock, fd, 0, file_stat.st_size);
-  if (total < 0) {
 #endif
+  if (total < 0) {
     zlog_err("send_file_over_sock: sendfile() failed; %d(%s)", errno, strerror(errno));
     close(sock);
     close(fd);
@@ -662,7 +666,7 @@ send_file_to_agent(char *ipadd, int port, char *newpath)
   int sock;
   struct sockaddr_in servAddr;
   int fd;
-#ifndef __FreeBSD__
+#if !defined( __FreeBSD__) && !defined(__APPLE__)
   static struct stat file_stat;
 #endif
 
@@ -687,7 +691,9 @@ send_file_to_agent(char *ipadd, int port, char *newpath)
 
   fd = open(newpath, O_RDONLY);
 
-#ifdef __FreeBSD__
+#if defined(__APPLE__)
+  if ( sendfile(fd, sock, 0, 0, NULL, 0) < 0) {
+#elif defined(__FreeBSD__)
   if (sendfile(fd, sock, 0, 0, NULL, NULL, 0) < 0) {
 #else
   if (fstat(fd, &file_stat) == -1) {
@@ -1082,16 +1088,16 @@ old_topo_xml_parser(char* filename, int agent)
   for ( attr = topo_ptr->properties;
 	attr;
 	attr = attr->next) {
-    if (strcasecmp(attr->name, "action") == 0) {
-      app_cfg->action = get_action_by_str(attr->children->content);
+    if (strcasecmp((char*)attr->name, "action") == 0) {
+      app_cfg->action = get_action_by_str((char*)attr->children->content);
       if (app_cfg->action == 0) {
 	zlog_err("Invalid <topology action> found: %s", key);
 	xmlFreeDoc(doc);
 	free(app_cfg);
 	return (NULL);
       }
-    } else if (strcasecmp(attr->name, "ast_id") == 0) 
-      app_cfg->ast_id = strdup(attr->children->content);
+    } else if (strcasecmp((char*)attr->name, "ast_id") == 0) 
+      app_cfg->ast_id = strdup((char*)attr->children->content);
   }
       
   /* parse all the nodes 
@@ -1105,14 +1111,14 @@ old_topo_xml_parser(char* filename, int agent)
        cur=cur->next) {
     key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 
-    if (strcasecmp(cur->name, "status") == 0) 
-      app_cfg->status = get_status_by_str(key);
-    else if (strcasecmp(cur->name, "details") == 0) 
-      strncpy(app_cfg->details, key, 200-1);
-    else if (strcasecmp(cur->name, "xml_file") == 0)
-      strncpy(app_cfg->xml_file, key, 100-1);
+    if (strcasecmp((char*)cur->name, "status") == 0) 
+      app_cfg->status = get_status_by_str((char*)key);
+    else if (strcasecmp((char*)cur->name, "details") == 0) 
+      strncpy(app_cfg->details, (char*)key, 200-1);
+    else if (strcasecmp((char*)cur->name, "xml_file") == 0)
+      strncpy(app_cfg->xml_file, (char*)key, 100-1);
     
-    if (strcasecmp(cur->name, "resource") != 0) 
+    if (strcasecmp((char*)cur->name, "resource") != 0) 
       continue;
 
     /* First, we need to know what kind of resource this is:
@@ -1128,16 +1134,16 @@ old_topo_xml_parser(char* filename, int agent)
     for ( attr = resource_ptr->properties;
 	  attr;
 	  attr = attr->next) {
-      if (strcasecmp(attr->name, "res_type") == 0 ||
-	  strcasecmp(attr->name, "subtype") == 0) {
+      if (strcasecmp((char*)attr->name, "res_type") == 0 ||
+	  strcasecmp((char*)attr->name, "subtype") == 0) {
 	free(myres);
 	return NULL;
       }
-      if (strcasecmp(attr->name, "type") == 0) {
-        if (strcasecmp(attr->children->content, "PC") == 0 ||
-      	    strcasecmp(attr->children->content, "correlator") == 0 || 
-	    strcasecmp(attr->children->content, "computation_array") == 0 || 
-	    strcasecmp(attr->children->content, "vlsr") ==0) { 
+      if (strcasecmp((char*)attr->name, "type") == 0) {
+        if (strcasecmp((char*)attr->children->content, "PC") == 0 ||
+      	    strcasecmp((char*)attr->children->content, "correlator") == 0 || 
+	    strcasecmp((char*)attr->children->content, "computation_array") == 0 || 
+	    strcasecmp((char*)attr->children->content, "vlsr") ==0) { 
 	  myres->res_type = res_node;
           myres->subtype = search_res_type(myres->res_type, "dragon_node_pc");
           if (!myres->subtype) { 
@@ -1147,10 +1153,10 @@ old_topo_xml_parser(char* filename, int agent)
 	  }
 	  if (myres->subtype->mod && myres->subtype->mod->read_func)
 	    myres->res = myres->subtype->mod->read_func(app_cfg, resource_ptr, agent);
-        } else if (strcasecmp(attr->children->content, "uni") == 0 ||
-		strcasecmp(attr->children->content, "non_uni") == 0 ||
-		strcasecmp(attr->children->content, "vlsr_vlsr") == 0 ||
-		strcasecmp(attr->children->content, "vlsr_es") == 0) {
+        } else if (strcasecmp((char*)attr->children->content, "uni") == 0 ||
+		strcasecmp((char*)attr->children->content, "non_uni") == 0 ||
+		strcasecmp((char*)attr->children->content, "vlsr_vlsr") == 0 ||
+		strcasecmp((char*)attr->children->content, "vlsr_es") == 0) {
 	  myres->res_type = res_link;
 	  myres->subtype = search_res_type(myres->res_type, "dragon_link");
 	  if (!myres->subtype) {
@@ -1161,8 +1167,8 @@ old_topo_xml_parser(char* filename, int agent)
 	  if (myres->subtype->mod && myres->subtype->mod->old_read_func)
 	    myres->res = myres->subtype->mod->old_read_func(app_cfg, resource_ptr, agent);
 	}
-      } else if (strcasecmp(attr->name, "name") == 0) 
-	strncpy(myres->name, attr->children->content, NODENAME_MAXLEN);
+      } else if (strcasecmp((char*)attr->name, "name") == 0) 
+	strncpy(myres->name, (char*)attr->children->content, NODENAME_MAXLEN);
     }
 
     if (!myres)
@@ -1206,7 +1212,7 @@ old_topo_xml_parser(char* filename, int agent)
 	myres->ip.s_addr = inet_addr((char*)key);
       else if (strcasecmp((char*)node_ptr->name, "status") == 0)
 	myres->status = get_status_by_str((char*)key);
-      else if (strcasecmp(node_ptr->name, "agent_message") == 0)
+      else if (strcasecmp((char*)node_ptr->name, "agent_message") == 0)
         myres->agent_message = strdup((char*)key);
     }
 

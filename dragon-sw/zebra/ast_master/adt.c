@@ -1,4 +1,5 @@
 #include "adt.h"
+#include <string.h>
 
 int adtlist_getcount(struct adtlist* myadtlist)
 {

@@ -7,9 +7,6 @@
 #include <sys/wait.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
-#ifndef __FreeBSD__
-#include <sys/sendfile.h>
-#endif
 #include "vty.h"
 #include "ast_master_ext.h"
 
@@ -188,10 +185,12 @@ node_assign_ip(struct dragon_node_pc* node)
   static char command[200];
 #ifndef __FreeBSD__
   static char iface_name[50];
+#if 0
   int ioctl_ret;
   struct sockaddr_in *sock;
   int sockfd = -1;
   struct ifreq if_info;
+#endif
 #endif
 
   if (!node) 
@@ -203,7 +202,9 @@ node_assign_ip(struct dragon_node_pc* node)
 	curnode;
 	curnode = curnode->next) {
 #ifndef __FreeBSD__
+#if 0
     static char bcast[IP_MAXLEN+1];
+#endif
 #endif 
 
     ifp = (struct dragon_if_ip*)curnode->data;
@@ -513,7 +514,6 @@ main(int argc, char* argv[])
   char *p;
   char *progname, *config_file = NULL;
   int daemon_mode = 0;
-  int broker_mode = 0;
   struct thread thread;
   struct sigaction myAlarmAction;
   
@@ -573,7 +573,7 @@ main(int argc, char* argv[])
 
   /* Change to the daemon program. */
   if (daemon_mode)
-    daemon (0, 0);
+    daemon(0, 0);
 
   master = thread_master_create();
 
@@ -847,49 +847,6 @@ broker_init()
   return 1;
 }  
 #endif
-
-static int
-FIN_accept(struct thread *thread)
-{
-  int servSock, total;
-  static char buffer[RCVBUFSIZE];
-  static char ret_buf[SENDBUFSIZE];
-  int bytesRcvd, ret_value = 1;
-  FILE* ret_file = NULL;
-  
-  servSock = THREAD_FD(thread);
-  
-  zlog_info("FIN_accept(): START");
-
-  total = 0;
-  memset(ret_buf, 0, SENDBUFSIZE);
-  while ((bytesRcvd = recv(servSock, buffer, RCVBUFSIZE-1, 0)) > 0) {
-    if (!total) {
-      ret_file = fopen("/usr/local/noded_void.xml", "w");
-      if (!ret_file) {
-        ret_value = 0;
-        continue;
-      }
-    }
-    total+=bytesRcvd;
-    buffer[bytesRcvd] = '\0';
-    sprintf(ret_buf+strlen(ret_buf), buffer);
-    fprintf(ret_file, buffer);
-  }
-
-  if (total == 0) {
-    ret_value = 0;
-  } else {
-    fflush(ret_file);
-    fclose(ret_file);
-
-    zlog_err("SHOULD NOT RECEIVED ANYTHING HERE: look at /usr/local/noded_void.xml");
-  }
-
-  close(servSock);
-  zlog_info("FIN_accept(): END");
-  return 1;
-}
 
 #ifdef RESOURCE_BROKER
 static int 

@@ -4,7 +4,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <time.h>
-#ifndef __FreeBSD__
+#if !defined(__FreeBSD__) && !defined(__APPLE__)
 #include <sys/sendfile.h>
 #endif
 #include "vty.h"
@@ -62,21 +62,8 @@ static void handle_alarm();
 extern int master_process_id(char*);
 extern struct application_cfg* master_final_parser(char*, int);
 extern int send_file_to_agent(char *, int, char *);
-static struct vty* fake_vty = NULL;
 
 /* backward compatibility */
-
-static struct vty*
-generate_fake_vty()
-{
-  struct vty* vty;
-
-  vty = vty_new();
-  vty->type = VTY_FILE;
-
-  return vty;
-}
-
 struct vtag_tank {
   int number;
   int vtags[20];
@@ -931,7 +918,9 @@ process_client(char *str, char action)
     exit(1);
   }
 
-#ifdef __FreeBSD__
+#if defined(__APPLE__)
+  total = sendfile(fd, sock, 0, 0, NULL, 0);
+#elif defined( __FreeBSD__)
   total = sendfile(fd, sock, 0, 0, NULL, NULL, 0);
   printf("sendfile() returns %d\n", total);
 #else
