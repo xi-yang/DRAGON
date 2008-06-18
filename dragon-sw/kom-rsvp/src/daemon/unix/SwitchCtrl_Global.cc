@@ -821,7 +821,7 @@ void SwitchCtrl_Global::deleteLocalId(uint16 type, uint16 value, uint16  tag)
 	        if ((type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)) {
 	            if (tag == ANY_VTAG && lid.group) {
 	                delete lid.group;
-	                localIdList.erase(it);
+	                it = localIdList.erase(it);
 	                }
 	            else {
 	                SimpleList<uint16>::Iterator it_uint16;
@@ -833,14 +833,14 @@ void SwitchCtrl_Global::deleteLocalId(uint16 type, uint16 value, uint16  tag)
 	                   }
 	                if (lid.group->size() == 0) {
 	                    delete lid.group;
-	                    localIdList.erase(it);
+	                    it = localIdList.erase(it);
 	                    }
 	                }
 	            return;
 	            }
 	        else {
 	                delete lid.group;
-	                localIdList.erase(it);
+	                it = localIdList.erase(it);
 	                return;
 	            }
 	        }
