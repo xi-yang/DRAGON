@@ -430,8 +430,8 @@ ospf_te_lsa_parse (struct ospf_lsa *new)
 	struct te_tlv_header *tlvh = NULL;
 	struct te_tlv_header *sub_tlvh = NULL;
 	u_int32_t read_len;
-	struct te_link_subtlv_link_ifswcap* swcap;
-	uLongf z_len;
+	/* struct te_link_subtlv_link_ifswcap* swcap; */
+	/* uLongf z_len; */
 
 	if (new == NULL)
 		goto out;
@@ -539,7 +539,7 @@ ospf_te_lsa_parse (struct ospf_lsa *new)
 					new->tepara_ptr->p_link_srlg = (struct te_tlv_header *)sub_tlvh;
 					break;
 				case TE_LINK_SUBTLV_LINK_TE_LAMBDA:
-					new->tepara_ptr->p_link_te_lambda = (struct te_link_subtlv_link_te_lambda *)sub_tlvh;
+				        new->tepara_ptr->p_link_te_lambda = (struct te_link_subtlv_link_protype *)sub_tlvh;
 					break;
 				default: /* Unrecognized link sub-tlv, just ignore it */
 					break;
@@ -1419,12 +1419,12 @@ out:
 void
 ospf_te_cspf_calculate_schedule (struct ospf_area *area)
 {
-	struct in_addr source_ip, dest_ip;
-	 list explicit_path = NULL;
-
-	listnode node;	 
-	struct in_addr* nodedata;
-	
+  /* 
+     struct in_addr source_ip, dest_ip;
+     list explicit_path = NULL;
+     listnode node;   
+     struct in_addr* nodedata;
+  */
   if (IS_DEBUG_OSPF_EVENT)
     zlog_info ("CSPF: calculation timer is assumed to be scheduled");
 }

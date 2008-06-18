@@ -322,7 +322,7 @@ stream_read (struct stream *s, int fd, size_t size)
 {
   int nbytes;
 
-  nbytes = readn (fd, s->data + s->putp, size);
+  nbytes = readn (fd, (char*)(s->data + s->putp), size);
 
   if (nbytes > 0)
     {

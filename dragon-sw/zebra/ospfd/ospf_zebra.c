@@ -144,7 +144,7 @@ zebra_interface_if_lookup (struct stream *s)
   stream_get (ifname_tmp, s, INTERFACE_NAMSIZ);
 
   /* Lookup this by interface index. */
-  ifp = if_lookup_by_name (ifname_tmp);
+  ifp = if_lookup_by_name ((char*)ifname_tmp);
 
   /* If such interface does not exist, indicate an error */
   if (!ifp)
@@ -390,7 +390,7 @@ ospf_zebra_add (struct prefix_ipv4 *p, struct ospf_route *or)
 
       stream_putw_at (s, 0, stream_get_endp (s));
 
-      writen (zclient->sock, s->data, stream_get_endp (s));
+      writen (zclient->sock, (char*)s->data, stream_get_endp (s));
 
 #if 0
       if (IS_DEBUG_OSPF (zebra, ZEBRA_REDISTRIBUTE))

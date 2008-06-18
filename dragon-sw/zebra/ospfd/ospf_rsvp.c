@@ -61,6 +61,8 @@
 /* For registering threads. */
 extern struct thread_master *master;
 
+extern void delete_gri(struct ospf_interface*, u_int32_t, u_int32_t);
+
 enum OspfRsvpMessage {
 	OspfResv = 2,
 	OspfPathTear = 5,

@@ -143,7 +143,7 @@ void SwitchCtrl_Session_RaptorER1010::hook_getPortMapFromSnmpVars(vlanPortMap &v
 {
     memset(&vpm, 0, sizeof(vlanPortMap));
     if (vars->val.bitstring ){
-        for (int i = 0; i < vars->val_len && i < RAPTOR_VLAN_BITLEN/8; i++) {
+        for (uint32 i = 0; i < vars->val_len && i < RAPTOR_VLAN_BITLEN/8; i++) {
             vpm.portbits[i] = vars->val.bitstring[i];
        }
     }

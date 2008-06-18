@@ -448,9 +448,9 @@ bool SwitchCtrl_Session::setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID)
     pdu = snmp_pdu_create(SNMP_MSG_SET);
     // vlan port list 
     type='x';   
-    sprintf(value, "%.8lx", 0); // set all ports tagged
+    sprintf(value, "%.8lx", (long unsigned int)0); // set all ports tagged
     status = snmp_add_var(pdu, anOID, anOID_len, type, value);
-    sprintf(value, "%.8lx", ports); //restore those originally untagged ports execept the 'taggedPorts'
+    sprintf(value, "%.8lx", (long unsigned int)ports); //restore those originally untagged ports execept the 'taggedPorts'
     status = snmp_add_var(pdu, anOID, anOID_len, type, value);
     // Send the Request out. 
     status = snmp_synch_response(snmpSessionHandle, pdu, &response);
@@ -881,7 +881,7 @@ void SwitchCtrl_Global::readPreservedLocalIds()
 		sscanf(str, "%d:%d", &type, &value);
 		if (type == LOCAL_ID_TYPE_GROUP || type == LOCAL_ID_TYPE_TAGGED_GROUP)
 		{
-			while (str = strtok(NULL, " "))
+			while ((str = strtok(NULL, " ")))
 			{
 				if (str) sscanf(str, "%d", &tag);
 				else break;

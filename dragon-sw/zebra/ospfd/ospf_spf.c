@@ -1106,7 +1106,7 @@ ospf_spf_calculate_schedule (struct ospf *ospf)
     delay = ospf->spf_delay;
 
   if (IS_DEBUG_OSPF_EVENT)
-    zlog_info ("SPF: calculation timer delay = %ld", delay);
+    zlog_info ("SPF: calculation timer delay = %ld", (long int)delay);
   ospf->t_spf_calc =
     thread_add_timer (master, ospf_spf_calculate_timer, ospf, delay);
 }

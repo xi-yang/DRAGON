@@ -23,6 +23,20 @@
 #define XML_FILE_RECV_BUF	250
 #define TIMEOUT_SECS		3
 
+extern int dragon_set_local_id(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_set_local_id_group(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_delete_local_id(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_set_local_id_group_refresh(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_net_lsp_uni(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_delete_lsp(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_set_lsp_ip(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_set_lsp_sw(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_set_lsp_dir(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_set_lsp_vtag_default(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_set_lsp_vtag(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_commit_lsp_sender(struct cmd_element*, struct vty*, int, char**);
+extern int dragon_set_lsp_uni(struct cmd_element*, struct vty*, int, char**);
+
 struct dragon_callback {
   char *ast_id;
   char lsp_name[LSP_NAME_LEN+1];
@@ -70,34 +84,6 @@ generate_fake_vty()
   vty->type = VTY_FILE;
 
   return vty;
-}
-
-
-static void
-dragon_establish_relationship()
-{
-#ifdef FIONA
-  struct resource *mylink, *dragon;
-  struct adtlistnode *curnode;
-  
-  if (!glob_app_cfg->link_list)
-    return;
-
-  for (curnode = glob_app_cfg->link_list->head;
-	curnode;
-	curnode = curnode->next) {
-    mylink = (struct resource*) curnode->data;
-
-    dragon = mylink->res.l.dragon;
-    if (dragon) {
-      if (!dragon->res.n.link_list) {
-	dragon->res.n.link_list = malloc(sizeof(struct adtlist));
-	memset(dragon->res.n.link_list, 0, sizeof(struct adtlist));
-      }
-      adtlist_add(dragon->res.n.link_list, mylink);
-    }
-  }
-#endif
 }
 
 void
@@ -262,7 +248,7 @@ dragon_process_id_cfg()
 	  if (id->type == 3) {
 	    sprintf(argv[0], "%d", id->id);
 	    strcpy(argv[1], local_id_name[id->type]);
-	    if (dragon_set_local_id(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+	    if (dragon_set_local_id(NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
 	      id->status = ast_failure;
 	      buffer_putc(fake_vty->obuf, '\0');
 	      id->msg = buffer_getstr(fake_vty->obuf);
@@ -279,7 +265,7 @@ dragon_process_id_cfg()
   
 	    for (i = 0; i < id->num_mem; i++) {
 	      sprintf(argv[3], "%d", id->mems[i]);
-	      if (dragon_set_local_id_group(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+	      if (dragon_set_local_id_group(NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
 		id->status = ast_failure;
 		buffer_putc(fake_vty->obuf, '\0');
 		id->msg = buffer_getstr(fake_vty->obuf);
@@ -298,7 +284,7 @@ dragon_process_id_cfg()
 	  strcpy(argv[0], local_id_name[id->type]);
 	  sprintf(argv[1], "%d", id->id);
   
-	  if (dragon_delete_local_id(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+	  if (dragon_delete_local_id(NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
 	    id->status = ast_failure;
 	    buffer_putc(fake_vty->obuf, '\0');
 	    id->msg = buffer_getstr(fake_vty->obuf);
@@ -348,7 +334,7 @@ dragon_process_id_cfg()
 	    if (!found) {
 	      /* this member doesn't exist in the list yet, so add */
 	      sprintf(argv[3], "%d", id->mems[i]);
-	      if (dragon_set_local_id_group(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+	      if (dragon_set_local_id_group(NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
 		id->status = ast_failure;
 		buffer_putc(fake_vty->obuf, '\0');
 		id->msg = buffer_getstr(fake_vty->obuf);
@@ -374,7 +360,7 @@ dragon_process_id_cfg()
 	    if (!found) {
 	      /* this member doesn't exist in the new list, so need to delete */
 	      sprintf(argv[3], "%d", *iter_tag);
-	      if (dragon_set_local_id_group(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+	      if (dragon_set_local_id_group(NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
 		id->status = ast_failure;
 		buffer_putc(fake_vty->obuf, '\0');
 		id->msg = buffer_getstr(fake_vty->obuf);
@@ -388,7 +374,7 @@ dragon_process_id_cfg()
 	  /* after updating the local_id, need to do refresh 
 	   */
 	   argc = 2;
-	  if (dragon_set_local_id_group_refresh(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+	  if (dragon_set_local_id_group_refresh(NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
 	    id->status = ast_failure;
 	    buffer_putc(fake_vty->obuf, '\0'); 
 	    id->msg = buffer_getstr(fake_vty->obuf); 
@@ -654,10 +640,10 @@ dragon_build_lsp(struct resource *res)
       strcpy(argv[2], "implicit");
 
     zlog_info("dragon_set_lsp_uni: %s | %s | %s", argv[0], argv[1], argv[2]);
-    if (dragon_set_lsp_uni (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+    if (dragon_set_lsp_uni (NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
       argc = 1;
       strcpy(argv[0], lsp_name);
-      dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+      dragon_delete_lsp(NULL, fake_vty, argc, (char**)&argv);
       return NULL;
     }
   }
@@ -698,11 +684,11 @@ dragon_build_lsp(struct resource *res)
   }
 
   zlog_info("dragon_set_lsp_ip: %s | %s | %s | %s | %s | %s", argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
-  if (dragon_set_lsp_ip (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+  if (dragon_set_lsp_ip (NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
     
     argc = 1;
     strcpy(argv[0], lsp_name);
-    dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+    dragon_delete_lsp(NULL, fake_vty, argc, (char**)&argv);
     return NULL;
   }
 
@@ -715,11 +701,11 @@ dragon_build_lsp(struct resource *res)
   strcpy(argv[3], link->gpid);  
   zlog_info("dragon_set_lsp_sw: %s | %s | %s | %s", argv[0], argv[1], argv[2], argv[3]);
 
-  if (dragon_set_lsp_sw (NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+  if (dragon_set_lsp_sw (NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
 
     argc = 1;
     strcpy(argv[0], lsp_name);
-    dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+    dragon_delete_lsp(NULL, fake_vty, argc, (char**)&argv);
     return NULL;
   }
 
@@ -730,11 +716,11 @@ dragon_build_lsp(struct resource *res)
   strcpy(argv[1], "161252");
   zlog_info("dragon_set_lsp_dir: %s | %s", argv[0], argv[1]);
   
-  if (dragon_set_lsp_dir(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+  if (dragon_set_lsp_dir(NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
     
     argc = 1;
     strcpy(argv[0], lsp_name);
-    dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+    dragon_delete_lsp(NULL, fake_vty, argc, (char**)&argv);
     return NULL;
   }
 
@@ -744,13 +730,13 @@ dragon_build_lsp(struct resource *res)
 
     if (strcmp(argv[0], "any") == 0) {
       zlog_info("dragon_set_lsp_vtag_default");
-      dragon_set_lsp_vtag_default(NULL, fake_vty, 0, &argv);
+      dragon_set_lsp_vtag_default(NULL, fake_vty, 0, (char**)&argv);
     } else {
       zlog_info("dragon_set_lsp_vtag: %s", argv[0]);
-      if (dragon_set_lsp_vtag(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+      if (dragon_set_lsp_vtag(NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
  	argc = 1;
 	strcpy(argv[0], lsp_name);
-        dragon_delete_lsp(NULL, fake_vty, argc, &argv);
+        dragon_delete_lsp(NULL, fake_vty, argc, (char**)&argv);
         return NULL;
       }
     }
@@ -760,10 +746,10 @@ dragon_build_lsp(struct resource *res)
    */
   argc = 1;
   strcpy(argv[0], lsp_name);
-  if (dragon_commit_lsp_sender(NULL, fake_vty, argc, &argv) != CMD_SUCCESS) {
+  if (dragon_commit_lsp_sender(NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS) {
     strcpy(argv[0], lsp_name);
     argc = 1;
-    dragon_delete_lsp(NULL, fake_vty, argc, &argv); 
+    dragon_delete_lsp(NULL, fake_vty, argc, (char**)&argv); 
     return NULL;
   }
  
@@ -845,7 +831,7 @@ dragon_link_release(struct resource *link_res)
   if (link->lsp_name[0] != '\0') { 
     argc = 1;
     strcpy(argv[0], link->lsp_name);
-    return (dragon_delete_lsp (NULL, fake_vty, argc, &argv) != CMD_SUCCESS);
+    return (dragon_delete_lsp (NULL, fake_vty, argc, (char**)&argv) != CMD_SUCCESS);
   }
 
   return 0;
@@ -871,7 +857,7 @@ xml_accept(struct thread *thread)
   accept_sock = THREAD_FD (thread);
   xml_module_reset();
   clientLen = sizeof(clientAddr);
-  xml_sock = accept (accept_sock, (struct sockaddr*)&clientAddr, &clientLen);
+  xml_sock = accept (accept_sock, (struct sockaddr*)&clientAddr, (socklen_t*)&clientLen);
 
   if (xml_sock < 0) {
     zlog_err("xml_accept: accept failed() for xmlServSock");

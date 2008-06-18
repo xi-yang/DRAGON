@@ -82,6 +82,9 @@
 list apiserver_list;
 int  OSPF_API_SYNC_PORT;
 
+int ospf_apiserver_handle_neighbor_count_request (struct ospf_apiserver *, struct msg *);
+int ospf_apiserver_handle_originate_ready_polling (struct ospf_apiserver *, struct msg *);
+
 /* -----------------------------------------------------------
  * Functions to lookup interfaces
  * -----------------------------------------------------------
@@ -688,8 +691,8 @@ ospf_apiserver_accept (struct thread *thread)
   struct sockaddr_in peer_async;
   struct sockaddr_in peer_sync;
   int peerlen;
-  list funclist;
-  int registered;
+  /* list funclist; */
+  /* int registered; */
   int ret;
 
   /* THREAD_ARG (thread) is NULL */
@@ -713,7 +716,7 @@ ospf_apiserver_accept (struct thread *thread)
   memset(&peer_sync, 0, sizeof(struct sockaddr_in));
   peerlen = sizeof (struct sockaddr_in);
 
-  ret = getpeername (new_sync_sock, (struct sockaddr *)&peer_sync, &peerlen);
+  ret = getpeername (new_sync_sock, (struct sockaddr *)&peer_sync, (socklen_t*)&peerlen);
   if (ret < 0)
     {
       zlog_warn ("ospf_apiserver_accept: getpeername: %s", strerror (errno));
@@ -2993,7 +2996,7 @@ ospf_apiserver_handle_originate_ready_polling (struct ospf_apiserver *apiserv, s
   struct ospf_interface *oi;
   listnode node;
   uint32_t seqnum = ntohl(msg->hdr.msgseq);
-  int rc = 0;
+  /* int rc = 0; */
 
   originate_ready_query = (struct msg_originate_ready_query*)STREAM_DATA(msg->s);
   originate_ready_reply = XMALLOC(MTYPE_TMP, sizeof(struct msg_originate_ready_reply));

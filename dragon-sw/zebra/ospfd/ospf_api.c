@@ -433,7 +433,7 @@ msg_write (int fd, struct msg *msg)
   memcpy (buf + sizeof (struct apimsghdr), STREAM_DATA (msg->s),
 	  ntohs (msg->hdr.msglen));
 
-  wlen = writen (fd, buf, l);
+  wlen = writen (fd, (char*)buf, l);
   if (wlen < 0)
     {
       zlog_warn ("msg_write: writen %s", strerror (errno));

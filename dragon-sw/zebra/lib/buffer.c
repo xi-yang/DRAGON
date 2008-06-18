@@ -199,7 +199,7 @@ buffer_putc (struct buffer *b, u_char c)
 int
 buffer_putw (struct buffer *b, u_short c)
 {
-  buffer_write (b, (char *)&c, 2);
+  buffer_write (b, (u_char *)&c, 2);
   return 1;
 }
 

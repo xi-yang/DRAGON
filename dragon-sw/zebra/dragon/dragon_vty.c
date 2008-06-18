@@ -26,7 +26,7 @@
 #include <sys/wait.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
- #include <fcntl.h>
+#include <fcntl.h>
 
 #include "command.h"
 #include "memory.h"
@@ -51,15 +51,15 @@ struct cmd_node lsp_node =
 
 struct dragon_module dmodule[] =
 {
-	{MODULE_CLI, 	  0x100007f,   2611,     "CLI"},
-	{MODULE_OSPF,	  0x100007f,   2604,     "OSPF-TE"},
-	{MODULE_ZEBRA,	  0x100007f,   2601,   	"ZEBRA"   },
-	{MODULE_RSVP,	  0x100007f,   0,  		 "RSVP-TE"},
-	{MODULE_ASTDL,	  0,   		0,   		"ASTDL"   },
-	{MODULE_NARB_INTRA,   0,   	0,  		 "NARB-Intra"	 },
-	{MODULE_NARB_INTER,   0,   	0,   		"NARB-Inter"    },
-	{MODULE_PCE,	  0,   		0,    		"PCE"      },
-        {MODULE_XML,      0x100007f,   2618,     "XML"}
+	{MODULE_CLI, 	  {0x100007f},   2611,     "CLI"},
+	{MODULE_OSPF,	  {0x100007f},   2604,     "OSPF-TE"},
+	{MODULE_ZEBRA,	  {0x100007f},   2601,   	"ZEBRA"   },
+	{MODULE_RSVP,	  {0x100007f},   0,  		 "RSVP-TE"},
+	{MODULE_ASTDL,	  {0},   		0,   		"ASTDL"   },
+	{MODULE_NARB_INTRA,   {0},   	0,  		 "NARB-Intra"	 },
+	{MODULE_NARB_INTER,   {0},   	0,   		"NARB-Inter"    },
+	{MODULE_PCE,	  {0},   		0,    		"PCE"      },
+        {MODULE_XML,      {0x100007f},   2618,     "XML"}
 };
 
 
@@ -1660,7 +1660,7 @@ DEFUN (dragon_set_lsp_dtl_hop,
   	lsp->dragon.subnet_dtl = list_new();
   }
   hop = XMALLOC(MTYPE_TMP, sizeof(struct dtl_hop));
-  strncpy(hop->nodename, argv[0], MAX_DTL_NODENAME_LEN);
+  strncpy((char*)hop->nodename, argv[0], MAX_DTL_NODENAME_LEN);
   sscanf(argv[1], "%d", &hop->linkid);
   listnode_add(lsp->dragon.subnet_dtl, hop);
   return CMD_SUCCESS;

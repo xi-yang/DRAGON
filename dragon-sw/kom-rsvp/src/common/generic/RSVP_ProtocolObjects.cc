@@ -711,7 +711,8 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 	uint8 tlvType;
 	uint8 tlvSubType;
 	uint8 tlvChar;
-	int i, j;
+	uint32 i;
+	int j;
 
 	len -= 4; // object header
 	while (readLength < len)
@@ -776,7 +777,8 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_DTL)) {
 		assert(o.DTL.count <= MAX_DTL_LEN);
 		buffer << o.DTL.length << o.DTL.type << o.DTL.sub_type<<o.DTL.count;
-		int i, j;
+		uint32 i;
+		int j;
 		for (i = 0; i < o.DTL.count; i++)
 		{
 			for (j = 0; j < MAX_DTL_NODENAME_LEN+1; j++)
@@ -801,7 +803,7 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 			<< ", egress_inner_vtag=" << o.edgeVlanMapping.egress_inner_vlantag << ")";
 	}
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_DTL)) {
-		int i, j;
+		uint32 i;
 		os << "(3: Designated Transport List: ";
 		for (i = 0; i < o.DTL.count; i++)
 		{

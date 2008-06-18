@@ -770,8 +770,8 @@ void SwitchCtrl_Session_SubnetUNI::getDTLString(String& dtlStr)
     if (DTL.count == 0 || DTL.count > MAX_DTL_LEN)
         return;
     bufCmd[0] = 0;
-    int i = 0; char hop[40];
-    for (i=0; i < DTL.count; i++)
+    char hop[40];
+    for (uint32 i=0; i < DTL.count; i++)
     {
         sprintf(hop, "nodename%d=%s,osrpltpid%d=%d,", i+1, (char*)DTL.hops[i].nodename, i+1, DTL.hops[i].linkid);
         strcat(bufCmd, hop);

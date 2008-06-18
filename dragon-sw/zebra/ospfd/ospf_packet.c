@@ -293,8 +293,8 @@ ospf_check_md5_digest (struct ospf_interface *oi, struct stream *s,
     {
       zlog_warn ("interface %s: ospf_check_md5 bad sequence %d (expect %d)",
 		 IF_NAME (oi),
-		 ntohl(ospfh->u.crypt.crypt_seqnum),
-		 ntohl(nbr->crypt_seqnum));
+		 (int)(ntohl(ospfh->u.crypt.crypt_seqnum)),
+		 (int)(ntohl(nbr->crypt_seqnum)));
       return 0;
     }
       
@@ -351,7 +351,7 @@ ospf_make_md5_digest (struct ospf_interface *oi, struct ospf_packet *op)
   else
     {
       ck = getdata (OSPF_IF_PARAM (oi, auth_crypt)->tail);
-      auth_key = ck->auth_key;
+      auth_key = (char*)ck->auth_key;
     }
 
   /* Generate a digest for the entire packet + our secret key. */
@@ -558,7 +558,7 @@ ospf_write_frags (int fd, struct ospf_packet *op, struct ip *iph,
           if (IS_DEBUG_OSPF_PACKET (type - 1, DETAIL))
             {
               zlog_debug ("-----------------IP Header Dump----------------------");
-              ospf_ip_header_dump (iph);
+              ospf_ip_header_dump ((struct stream*)iph);
               zlog_debug ("-----------------------------------------------------");
             }
         }
@@ -702,7 +702,7 @@ ospf_write (struct thread *thread)
       if (IS_DEBUG_OSPF_PACKET (type - 1, DETAIL))
 	{
 	  zlog_info ("-----------------------------------------------------");
-	  ospf_ip_header_dump (&iph);
+	  ospf_ip_header_dump ((struct stream*)&iph);
 	  stream_set_getp (op->s, 0);
 	  ospf_packet_dump (op->s);
 	}

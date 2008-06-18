@@ -446,7 +446,7 @@ void SwitchCtrl_Session_Force10E600::hook_getPortMapFromSnmpVars(vlanPortMap &vp
 {
     memset(&vpm, 0, sizeof(vlanPortMap));
     if (vars->val.bitstring ){
-        for (int i = 0; i < vars->val_len && i < MAX_VLAN_PORT_BYTES; i++) {
+        for (uint32 i = 0; i < vars->val_len && i < MAX_VLAN_PORT_BYTES; i++) {
             vpm.portbits[i] = vars->val.bitstring[i];
        }
     }

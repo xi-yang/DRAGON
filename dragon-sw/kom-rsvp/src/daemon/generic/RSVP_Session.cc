@@ -1412,7 +1412,7 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 		LOG(1)( Log::Process, "no PSB found -> ignoring PTEAR message" );
 		return;
 	}
-	ieee32float bandwidth = ((const TSpec &)(*psbIter)->getSENDER_TSPEC_Object()).get_r();
+	/* ieee32float bandwidth = ((const TSpec &)(*psbIter)->getSENDER_TSPEC_Object()).get_r(); */
 	LogicalInterfaceSet::ConstIterator lifIter = (*psbIter)->getOutLifSet().begin();
 	for ( ;lifIter != (*psbIter)->getOutLifSet().end(); ++lifIter ) {
 		const_cast<Message&>(msg).clearRSVP_HOP_Object(msg.getRSVP_HOP_Object());
@@ -1707,7 +1707,7 @@ void Session::processRESV( const Message& msg, Hop& nhop ) {
 	FlowDescriptorList::ConstIterator flowdescIter = flowDescriptorList.begin();
 	for ( ; flowdescIter != flowDescriptorList.end() ; ++flowdescIter ) {
 		LOG(2)( Log::Process, "processing flow descriptor", *flowdescIter );
-		ieee32float bandwidth = ((*flowdescIter).getFlowspec())? ((*flowdescIter).getFlowspec())->getEffectiveRate():0;
+		/* ieee32float bandwidth = ((*flowdescIter).getFlowspec())? ((*flowdescIter).getFlowspec())->getEffectiveRate():0; */
 		ERROR_SPEC_Object::ErrorCode result = processRESV_FDesc( *(*flowdescIter).getFlowspec(), (*flowdescIter).filterSpecList, msg, nhop );
 		if ( result != ERROR_SPEC_Object::Confirmation ) {
 			if ( msg.getMsgType() != Message::ResvTear ) {
@@ -1735,7 +1735,7 @@ void Session::processRERR( Message& msg, Hop& hop ) {
 	const FLOWSPEC_Object& flowspec = *msg.getFlowDescriptorList().front().getFlowspec();
 	const ERROR_SPEC_Object& error = msg.getERROR_SPEC_Object();
 	bool acFailure = (error.getCode() == ERROR_SPEC_Object::AdmissionControlFailure);
-	ieee32float bandwidth = flowspec.getEffectiveRate();
+	/* ieee32float bandwidth = flowspec.getEffectiveRate(); */
 
 	// find PHop and relevant PSBs
 	PHopSBKey key( hop, msg.getRSVP_HOP_Object().getLIH() );
@@ -1829,7 +1829,7 @@ bool Session::deregisterAPI( const NetAddress& address, uint16 port ) {
 		if ( psb->getAPI_Port() == port && psb->getAPI_Address() == address ) {
 			sessionDeleted = (RelationshipSession_PSB::followRelationship().size() == 1);
 			psb->sendTearMessage();
-			ieee32float bandwidth = psb->getSENDER_TSPEC_Object().get_r();
+			/* ieee32float bandwidth = psb->getSENDER_TSPEC_Object().get_r(); */
 			//@@@@hack
 			//if (outLif && outLif != RSVP_Global::rsvp->getApiLif()){
 			//	RSVP_Global::rsvp->getRoutingService().notifyOSPF(Message::PathTear, outLif->getAddress(), bandwidth	);

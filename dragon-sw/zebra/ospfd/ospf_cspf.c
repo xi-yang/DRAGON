@@ -163,7 +163,7 @@ build_CSPF_graph(struct ospf_area *area, list router_list, struct in_addr *CSPFv
   list te_link_lsa_list=NULL;
   struct ospf_lsa* te_lsa=NULL;
   listnode te_lsa_node;
-  u_int32_t bandwidth=1000; /*Suppose one wavelength capacity is 2.5G*/
+  /* u_int32_t bandwidth=1000; */ /*Suppose one wavelength capacity is 2.5G*/
   
   u_int8_t graphsize;
   int i, j, m;
@@ -350,7 +350,7 @@ ospf_cspf_calculate (struct ospf_area *area, struct in_addr source_ip, struct in
   int cost[100]; /*store the cost to each destination*/
   int source, dest;
   int i;
-  struct in_addr* router_ip;
+  /* struct in_addr* router_ip; */
   struct in_addr* local_if_ip;
   struct in_addr* remote_if_ip;
   u_int8_t graphsize;

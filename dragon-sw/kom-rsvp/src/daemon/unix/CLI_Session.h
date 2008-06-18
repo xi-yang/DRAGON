@@ -108,6 +108,7 @@ class CLICommandParser {
    * @param line a buffer to be parsed
    * @param length length of string in buffer
    */
+  virtual ~CLICommandParser() {};
   virtual void parseLine(const char *line, const int length) = 0;
   const char *getCommand() { return _command; }
   unsigned int getReadTimeout() { return _readTimeout; }

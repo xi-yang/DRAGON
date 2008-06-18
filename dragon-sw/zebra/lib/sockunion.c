@@ -567,7 +567,7 @@ sockunion_getsockname (int fd)
   memset (&name, 0, sizeof name);
   len = sizeof name;
 
-  ret = getsockname (fd, (struct sockaddr *)&name, &len);
+  ret = getsockname (fd, (struct sockaddr *)&name, (socklen_t*)&len);
   if (ret < 0)
     {
       zlog_warn ("Can't get local address and port by getsockname: %s",
@@ -621,7 +621,7 @@ sockunion_getpeername (int fd)
 
   memset (&name, 0, sizeof name);
   len = sizeof name;
-  ret = getpeername (fd, (struct sockaddr *)&name, &len);
+  ret = getpeername (fd, (struct sockaddr *)&name, (socklen_t*)&len);
   if (ret < 0)
     {
       zlog (NULL, LOG_WARNING, "Can't get remote address and port: %s",

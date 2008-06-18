@@ -97,11 +97,13 @@ static void upcall( const GenericUpcallParameter& upcallPara ) {
 	}
 }
 
+/*
 static void usage( const char* arg0 ) {
 	//cerr << "usage: " << arg0 << " session-addr port [RSVPD-host] [RSVPD-port]" << endl;
 	cerr << "usage: " << arg0 << " dest_control_addr dest_port" << endl;
 	exit(1);
 }
+*/
 
 int main( int argc, char** argv ) {
 	//if ( argc != 3 ) {
@@ -115,26 +117,26 @@ int main( int argc, char** argv ) {
 	CHECK( sigaction( SIGQUIT, &sa, NULL ) );  
 	CHECK( sigaction( SIGTERM, &sa, NULL ) );
 
-        uint8 prefix = 32;
+        /* uint8 prefix = 32; */
         String srcAddr = "1.1.1.5";
-        uint16 srcPort = 2000;
-        uint32 srcIfID = 1;
+        /* uint16 srcPort = 2000; */
+        /* uint32 srcIfID = 1; */
 
         String gsfcAddr1 = "10.1.50.10";
         String gsfcAddr2 = "10.1.32.10";
-        uint32 gsfcIfID = 102;
+        /* uint32 gsfcIfID = 102; */
 
         String iWSSAddr1 = "10.1.32.9";
         String iWSSAddr2 = "10.1.32.5";
 
         String arlgAddr1 = "10.1.32.6";
         String arlgAddr2 = "10.1.50.6";
-        uint32 arlgIfID = 9;
+        /* uint32 arlgIfID = 9; */
 
         String dstAddr = "1.1.1.6";
         uint16 dstPort = 3000;
-        uint32 dstIfID = 1;
-        uint32 rate = TSpec::R_Gig_E_OverFiber;
+        /* uint32 dstIfID = 1; */
+        /* uint32 rate = TSpec::R_Gig_E_OverFiber; */
 
         String rsvpdHost = "127.0.0.1";
         uint16 rsvpdPort = 0;

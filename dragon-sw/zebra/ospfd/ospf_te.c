@@ -1043,9 +1043,9 @@ show_vty_link_local_id (struct vty *vty, struct te_tlv_header *tlvh)
   struct te_tlv_link_local_id *top = (struct te_tlv_link_local_id*) tlvh;
 
   if (vty != NULL)
-    vty_out (vty, "  Link local identifier: 0x%x%s", ntohl (top->value), VTY_NEWLINE);
+    vty_out (vty, "  Link local identifier: 0x%x%s", (unsigned int)ntohl (top->value), VTY_NEWLINE);
   else
-    zlog_info ("    Link local identifier: 0x%x", ntohl (top->value));
+    zlog_info ("    Link local identifier: 0x%x", (unsigned int)ntohl (top->value));
 
   return TLV_SIZE (tlvh);
 }
@@ -1158,9 +1158,9 @@ show_vty_link_subtlv_max_bw (struct vty *vty, struct te_tlv_header *tlvh)
   ntohf (&top->value, &fval);
 
   if (vty != NULL)
-    vty_out (vty, "  Maximum Bandwidth: %.0lf (Bytes/sec)%s", fval, VTY_NEWLINE);
+    vty_out (vty, "  Maximum Bandwidth: %.0f (Bytes/sec)%s", fval, VTY_NEWLINE);
   else
-    zlog_info ("    Maximum Bandwidth: %.0lf (Bytes/sec)", fval);
+    zlog_info ("    Maximum Bandwidth: %.0f (Bytes/sec)", fval);
 
   return TLV_SIZE (tlvh);
 }
@@ -1175,9 +1175,9 @@ show_vty_link_subtlv_max_rsv_bw (struct vty *vty, struct te_tlv_header *tlvh)
   ntohf (&top->value, &fval);
 
   if (vty != NULL)
-    vty_out (vty, "  Maximum Reservable Bandwidth: %.0lf (Bytes/sec)%s", fval, VTY_NEWLINE);
+    vty_out (vty, "  Maximum Reservable Bandwidth: %.0f (Bytes/sec)%s", fval, VTY_NEWLINE);
   else
-    zlog_info ("    Maximum Reservable Bandwidth: %.0lf (Bytes/sec)", fval);
+    zlog_info ("    Maximum Reservable Bandwidth: %.0f (Bytes/sec)", fval);
 
   return TLV_SIZE (tlvh);
 }
@@ -1194,9 +1194,9 @@ show_vty_link_subtlv_unrsv_bw (struct vty *vty, struct te_tlv_header *tlvh)
     {
       ntohf (&top->value[i], &fval);
       if (vty != NULL)
-        vty_out (vty, "  Unreserved Bandwidth (pri %d): %.0lf (Bytes/sec)%s", i, fval, VTY_NEWLINE);
+        vty_out (vty, "  Unreserved Bandwidth (pri %d): %.0f (Bytes/sec)%s", i, fval, VTY_NEWLINE);
       else
-        zlog_info ("    Unreserved Bandwidth (pri %d): %.0lf (Bytes/sec)", i, fval);
+        zlog_info ("    Unreserved Bandwidth (pri %d): %.0f (Bytes/sec)", i, fval);
     }
 
   return TLV_SIZE (tlvh);
@@ -1223,10 +1223,10 @@ show_vty_link_subtlv_lcrmt_id (struct vty *vty, struct te_tlv_header *tlvh)
 
   top = (struct te_link_subtlv_link_lcrmt_id *) tlvh;
   if (vty != NULL){
-    vty_out (vty, "  Link local / remote id : 0x%x(%u) / 0x%x(%u) %s", ntohl (top->link_local_id),ntohl (top->link_local_id),ntohl (top->link_remote_id),  ntohl (top->link_remote_id), VTY_NEWLINE);
+    vty_out (vty, "  Link local / remote id : 0x%x(%u) / 0x%x(%u) %s", (unsigned int)ntohl (top->link_local_id), (unsigned int)ntohl (top->link_local_id), (unsigned int)ntohl (top->link_remote_id),  (unsigned int)ntohl (top->link_remote_id), VTY_NEWLINE);
     }   
   else
-    zlog_info ("  Link local / remote id : 0x%x / 0x%x", ntohl (top->link_local_id), ntohl (top->link_remote_id));
+    zlog_info ("  Link local / remote id : 0x%x / 0x%x", (unsigned int)ntohl (top->link_local_id), (unsigned int)ntohl (top->link_remote_id));
 
   return TLV_SIZE (tlvh);
 }
@@ -1274,9 +1274,9 @@ show_vty_link_subtlv_srlg (struct vty *vty, struct te_tlv_header *tlvh, int loca
 	  LIST_LOOP(top->srlg_list, v, node)
 	    {
 	      if (vty != NULL)
-	        vty_out (vty, "    #%d: %d%s", ++i, ntohl (*v), VTY_NEWLINE);
+	        vty_out (vty, "    #%d: %d%s", ++i, (unsigned int)ntohl (*v), VTY_NEWLINE);
 	      else
-	        zlog_info ("      #%d: %d", ++i, ntohl (*v));
+	        zlog_info ("      #%d: %d", ++i, (unsigned int)ntohl (*v));
 	    }
   }
   else
@@ -1285,9 +1285,9 @@ show_vty_link_subtlv_srlg (struct vty *vty, struct te_tlv_header *tlvh, int loca
 	for (i=0; i<n; i++)
 	{
 	      if (vty != NULL)
-	        vty_out (vty, "    #%d: %d%s", i+1, ntohl (*v), VTY_NEWLINE);
+	        vty_out (vty, "    #%d: %d%s", i+1, (unsigned int)ntohl (*v), VTY_NEWLINE);
 	      else
-	        zlog_info ("      #%d: %d", i, ntohl (*v));
+	        zlog_info ("      #%d: %d", i, (unsigned int)ntohl (*v));
 		v++;
 	}
   }
@@ -1304,9 +1304,9 @@ show_vty_link_subtlv_te_lambda (struct vty *vty, struct te_tlv_header *tlvh)
   p = frequency2wavelength(ntohl(top->frequency));
  
   if (vty != NULL)
-    vty_out (vty, "  DRAGON TE Lambda: %u (%s nm)%s", ntohl(top->frequency), p, VTY_NEWLINE);
+    vty_out (vty, "  DRAGON TE Lambda: %u (%s nm)%s", (unsigned int)ntohl(top->frequency), p, VTY_NEWLINE);
   else
-    zlog_info ("   DRAGON TE Lambda: %u (%s nm)", ntohl(top->frequency), p);
+    zlog_info ("   DRAGON TE Lambda: %u (%s nm)", (unsigned int)ntohl(top->frequency), p);
 
   return TLV_SIZE (tlvh);
 }
@@ -1317,9 +1317,9 @@ show_vty_link_subtlv_domain_id (struct vty *vty, struct te_tlv_header *tlvh)
   struct te_link_subtlv_link_domain_id *top = (struct te_link_subtlv_link_domain_id *) tlvh;
  
   if (vty != NULL)
-    vty_out (vty, "  DRAGON TE Domain ID: 0x%x%s", ntohl(top->domain_id),  VTY_NEWLINE);
+    vty_out (vty, "  DRAGON TE Domain ID: 0x%x%s", (unsigned int)ntohl(top->domain_id),  VTY_NEWLINE);
   else
-    zlog_info ("   DRAGON TE Domain ID: 0x%x.", ntohl(top->domain_id));
+    zlog_info ("   DRAGON TE Domain ID: 0x%x.", (unsigned int)ntohl(top->domain_id));
 
   return TLV_SIZE (tlvh);
 }
@@ -1345,7 +1345,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
     for (i = 0; i < LINK_MAX_PRIORITY; i++)
     {
            ntohf (&top->link_ifswcap_data.max_lsp_bw_at_priority[i], &fval);
-	    vty_out (vty, "  Max LSP Bandwidth %d: %.0lf (Bytes/sec) %s", i , fval, VTY_NEWLINE);
+	    vty_out (vty, "  Max LSP Bandwidth %d: %.0f (Bytes/sec) %s", i , fval, VTY_NEWLINE);
     }
   }
   else{
@@ -1353,7 +1353,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
     for (i = 0; i < LINK_MAX_PRIORITY; i++)
     {
            ntohf (&top->link_ifswcap_data.max_lsp_bw_at_priority[i], &fval);
-	   zlog_info ("  Max LSP Bandwidth %d: %.0lf (Bytes/sec)", i , fval);
+	   zlog_info ("  Max LSP Bandwidth %d: %.0f (Bytes/sec)", i , fval);
     }
   }
 
@@ -1364,13 +1364,13 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
   {
          ntohf (&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.min_lsp_bw, &fval);
 	  if (vty != NULL){
-	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec) %s", 
+	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec) %s", 
 	    				fval, VTY_NEWLINE);
 	    vty_out (vty, "                                      : Interface MTU: %d %s", 
 	    				ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu), VTY_NEWLINE);
 	  }
 	  else{
-	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec)",  fval);
+	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec)",  fval);
 	    zlog_info ("                                      : Interface MTU: %d", 
 	    				ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu));
 	  }
@@ -1379,13 +1379,13 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
   {
          ntohf (&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.min_lsp_bw, &fval);
 	  if (vty != NULL){
-	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec) %s", 
+	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec) %s", 
 	    				fval, VTY_NEWLINE);
 	    vty_out (vty, "                                      : Indication: %d %s", 
 	    				top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication, VTY_NEWLINE);
 	  }
 	  else{
-	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec)", 
+	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec)", 
 	    				fval);
 	    zlog_info ("                                      : Indication: %d", 
 	    				top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication);
@@ -1428,8 +1428,8 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
 			top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.node_name, ipv4_a, ipv4_b, VTY_NEWLINE);
 	    vty_out (vty, "      -> LogicalPort: %s, EgressLabel: %d, UpstreamLabel: %d%s", 
 			logical_port_number2string(ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.logical_port_number)),
-			ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_downstream), 
-			ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_upstream), VTY_NEWLINE);
+			(unsigned int)ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_downstream), 
+			(unsigned int)ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_upstream), VTY_NEWLINE);
 
             swcap = val2str(&str_val_conv_swcap, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.swcap_ext);
             enc = val2str(&str_val_conv_encoding, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.encoding_ext);
@@ -1469,7 +1469,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
     for (i = 0; i < LINK_MAX_PRIORITY; i++)
     {
            ntohf (f, &fval);
-	    vty_out (vty, "  Max LSP Bandwidth %d: %.0lf (Bytes/sec) %s", i , fval, VTY_NEWLINE);
+	    vty_out (vty, "  Max LSP Bandwidth %d: %.0f (Bytes/sec) %s", i , fval, VTY_NEWLINE);
 	    f++;
     }
   }
@@ -1478,7 +1478,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
     for (i = 0; i < LINK_MAX_PRIORITY; i++)
     {
            ntohf (f, &fval);
-	   zlog_info ("  Max LSP Bandwidth %d: %.0lf (Bytes/sec)", i , fval);
+	   zlog_info ("  Max LSP Bandwidth %d: %.0f (Bytes/sec)", i , fval);
 	   f++;
     }
   }
@@ -1490,7 +1490,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   	  f = (float *)v;
          ntohf (f, &fval);
 	  if (vty != NULL){
-	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec) %s", 
+	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec) %s", 
 	    				fval, VTY_NEWLINE);
 	    f++;
 	    dc = (u_int16_t *)f;
@@ -1498,7 +1498,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	    				ntohs(*dc), VTY_NEWLINE);
 	  }
 	  else{
-	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec)",  fval);
+	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec)",  fval);
 	    f++;
 	    dc = (u_int16_t *)f;
 	    zlog_info ("                                      : Interface MTU: %d", 
@@ -1510,7 +1510,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   	  f = (float *)v;
          ntohf (f, &fval);
 	  if (vty != NULL){
-	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec) %s", 
+	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec) %s", 
 	    				fval, VTY_NEWLINE);
 	    f++;
 	    v = (u_char *)f;
@@ -1518,7 +1518,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	    				*v, VTY_NEWLINE);
 	  }
 	  else{
-	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0lf (Bytes/sec)", 
+	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec)", 
 	    				fval);
 	    f++;
 	    v = (u_char *)f;
@@ -1559,7 +1559,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             vty_out (vty, "      -> UNI-N NodeName %s NodeID: %s, Data IP: %s%s", subnet_uni->node_name, ipv4_a, ipv4_b, VTY_NEWLINE);
             vty_out (vty, "      -> LogicalPort: %s, EgressLabel: %d, UpstreamLabel: %d%s",
 				logical_port_number2string(ntohl(subnet_uni->logical_port_number)),
-				ntohl(subnet_uni->egress_label_downstream), ntohl(subnet_uni->egress_label_upstream), VTY_NEWLINE);
+				(unsigned int)ntohl(subnet_uni->egress_label_downstream), (unsigned int)ntohl(subnet_uni->egress_label_upstream), VTY_NEWLINE);
 
             swcap = val2str(&str_val_conv_swcap, subnet_uni->swcap_ext);
             enc = val2str(&str_val_conv_encoding, subnet_uni->encoding_ext);
@@ -1817,19 +1817,19 @@ static void ospf_te_config_write (struct vty *vty)
 		}	
               
 	    	if (ntohs(oi->te_para.te_metric.header.type) != 0)
-		    	vty_out(vty, "       metric %d %s", ntohl(oi->te_para.te_metric.value), VTY_NEWLINE);
+		    	vty_out(vty, "       metric %d %s", (unsigned int)ntohl(oi->te_para.te_metric.value), VTY_NEWLINE);
 	    	if (ntohs(oi->te_para.max_bw.header.type) != 0)
 	    	{
 	    		ntohf(&oi->te_para.max_bw.value, &bw);
-		    	vty_out(vty, "       max-bw %.0lf %s", bw, VTY_NEWLINE);
+		    	vty_out(vty, "       max-bw %.0f %s", bw, VTY_NEWLINE);
 	    	}
 	    	if (ntohs(oi->te_para.max_rsv_bw.header.type) != 0)
 	    	{
 	    		ntohf(&oi->te_para.max_rsv_bw.value, &bw);
-		    	vty_out(vty, "       max-rsv-bw %.0lf %s", bw, VTY_NEWLINE);
+		    	vty_out(vty, "       max-rsv-bw %.0f %s", bw, VTY_NEWLINE);
 	    	}
 	    	if (ntohs(oi->te_para.rsc_clsclr.header.type) != 0)
-		    	vty_out(vty, "       color 0x%x %s", ntohl(oi->te_para.rsc_clsclr.value), VTY_NEWLINE);
+		    	vty_out(vty, "       color 0x%x %s", (unsigned int)ntohl(oi->te_para.rsc_clsclr.value), VTY_NEWLINE);
 
 	    	if (ntohs(oi->te_para.link_protype.header.type) != 0)
 	    	{
@@ -1840,7 +1840,7 @@ static void ospf_te_config_write (struct vty *vty)
 	    	if (ntohs(oi->te_para.link_srlg.header.type) != 0)
 	    	{
 			    LIST_LOOP(oi->te_para.link_srlg.srlg_list,v,node)
-		    		vty_out(vty, "       srlg add %d %s", ntohl(*v), VTY_NEWLINE);
+		    		vty_out(vty, "       srlg add %d %s", (unsigned int)ntohl(*v), VTY_NEWLINE);
 	    	}
 
 	    	if (ntohs(oi->te_para.link_ifswcap.header.type) != 0)
@@ -1852,7 +1852,7 @@ static void ospf_te_config_write (struct vty *vty)
 	  		for (i=0;i<8;i++){  		
 		    		ntohf(&oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i], &bw);
 		    		if (bw > 0)
-				    	vty_out(vty, "       max-lsp-bw %d %.0lf %s", i, bw, VTY_NEWLINE);
+				    	vty_out(vty, "       max-lsp-bw %d %.0f %s", i, bw, VTY_NEWLINE);
 	  		}
 	  		if (oi->te_para.link_ifswcap.link_ifswcap_data.switching_cap>=LINK_IFSWCAP_SUBTLV_SWCAP_PSC1 &&
 	  		     oi->te_para.link_ifswcap.link_ifswcap_data.switching_cap>=LINK_IFSWCAP_SUBTLV_SWCAP_PSC4)
@@ -1860,7 +1860,7 @@ static void ospf_te_config_write (struct vty *vty)
 	  			if (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu) > 0)
 	  			{
 		  		       ntohf(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.min_lsp_bw, &bw);
-		  			vty_out(vty, "       min-lsp-bw %.0lf mtu %d %s", 
+		  			vty_out(vty, "       min-lsp-bw %.0f mtu %d %s", 
 		  				              bw,
 		  				              ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu), 
 		  				              VTY_NEWLINE);
@@ -1871,7 +1871,7 @@ static void ospf_te_config_write (struct vty *vty)
 	  			if (oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication > 0)
 	  			{
 		  		       ntohf(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.min_lsp_bw, &bw);
-		  			vty_out(vty, "       min-lsp-bw %.0lf indication %d %s", 
+		  			vty_out(vty, "       min-lsp-bw %.0f indication %d %s", 
 		  				              bw,
 		  				              oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication, 
 		  				              VTY_NEWLINE);
@@ -1882,13 +1882,13 @@ static void ospf_te_config_write (struct vty *vty)
 		if (ntohs(oi->te_para.link_lcrmt_id.header.type) != 0)
 		{
 			if (ntohl(oi->te_para.link_lcrmt_id.link_remote_id)!=0)
-			    vty_out(vty, "		 remote-interface-id 0x%x(%u) %s", ntohl(oi->te_para.link_lcrmt_id.link_remote_id), ntohl(oi->te_para.link_lcrmt_id.link_remote_id), VTY_NEWLINE);
+			    vty_out(vty, "		 remote-interface-id 0x%x(%u) %s", (unsigned int)ntohl(oi->te_para.link_lcrmt_id.link_remote_id), (unsigned int)ntohl(oi->te_para.link_lcrmt_id.link_remote_id), VTY_NEWLINE);
 		}
 
 		if (ntohs(oi->te_para.link_te_lambda.header.type) != 0)
 		{
 			if (ntohl(oi->te_para.link_te_lambda.frequency)!=0)
-			    vty_out(vty, "		 DRAGON TE Lambda: frequency %d (%s nm)%s", ntohl(oi->te_para.link_te_lambda.frequency), frequency2wavelength(ntohl(oi->te_para.link_te_lambda.frequency)), VTY_NEWLINE);
+			    vty_out(vty, "		 DRAGON TE Lambda: frequency %d (%s nm)%s", (unsigned int)ntohl(oi->te_para.link_te_lambda.frequency), frequency2wavelength(ntohl(oi->te_para.link_te_lambda.frequency)), VTY_NEWLINE);
 		}
 			
 	    	vty_out(vty, "     exit %s", VTY_NEWLINE);

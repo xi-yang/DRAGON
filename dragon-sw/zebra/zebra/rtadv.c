@@ -979,7 +979,7 @@ rtadv_config_write (struct vty *vty, struct interface *ifp)
       rprefix = getdata (node);
       vty_out (vty, " ipv6 nd prefix-advertisement %s/%d %d %d",
 	       inet_ntop (AF_INET6, &rprefix->prefix.u.prefix6, 
-			  buf, INET6_ADDRSTRLEN),
+			  (char*)buf, INET6_ADDRSTRLEN),
 	       rprefix->prefix.prefixlen,
 	       rprefix->AdvValidLifetime,
 	       rprefix->AdvPreferredLifetime);

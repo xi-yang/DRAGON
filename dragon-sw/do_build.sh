@@ -106,7 +106,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring zebra...'
     cd ../zebra
-    $CONFIG_SHELL ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g
+    $CONFIG_SHELL ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g --disable-bgpd --disable-ripd --disable-ripngd --disable-ospf6d
     if test $? != 0; then
 	echo "dragon-sw: zebra configure error!"
 	exit 1
@@ -154,7 +154,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring zebra...'
     cd ../zebra
-    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g --disable-bgpd --disable-ripd --disable-ripngd --disable-ospf6d
     if test $? != 0; then
         echo "dragon-sw: zebra configure error!"
         exit 1
@@ -197,7 +197,7 @@ case `uname` in
     echo '' && \
         echo 'configuring zebra...'
     cd ../zebra
-    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g --disable-bgpd --disable-ripd --disable-ripngd --disable-ospf6d
     if test $? != 0; then
         echo "dragon-sw: zebra configure error!"
         exit 1

@@ -54,22 +54,23 @@ is_mandated_params_set_for_lsp(struct lsp *lsp)
 	return 1;
 }
 
-/*Obsolete header format*/
-static struct dmsg_header *
-build_dragon_msg_header (struct stream *s, u_int8_t msgtype, u_int32_t seqno) 
-{
-	struct dmsg_header dmsgh, *dmsgh_p;
-	
-	dmsgh.version = DRAGON_VERSION;
-	dmsgh.msgtype = msgtype;	/* create a topology */
-	dmsgh.seqno = htonl(seqno);
+///*Obsolete header format*/
+//static struct dmsg_header *
+//build_dragon_msg_header (struct stream *s, u_int8_t msgtype, u_int32_t seqno)
+//{
+//       struct dmsg_header dmsgh, *dmsgh_p;
+//
+//       dmsgh.version = DRAGON_VERSION;
+//       dmsgh.msgtype = msgtype;        /* create a topology */
+//       dmsgh.seqno = htonl(seqno);
+//
+//       stream_put (s, &dmsgh, sizeof (struct dmsg_header));
+//
+//       dmsgh_p = (struct dmsg_header *) STREAM_DATA (s);
+//
+//       return dmsgh_p;
+//}
 
-	stream_put (s, &dmsgh, sizeof (struct dmsg_header));
-
-	dmsgh_p = (struct dmsg_header *) STREAM_DATA (s);
-
-	return dmsgh_p; 
-}
 
 /*Instead we use the unified api_msg format*/
 static struct api_msg_header * 
@@ -560,8 +561,8 @@ dragon_recv_packet (int fd)
   memset (&from, 0, sizeof (struct sockaddr_in));
   fromlen = sizeof(amsgh) + ntohs(amsgh.length);
 
-  len = recvfrom (fd, &buff, DRAGON_MAX_PACKET_SIZE, 0, 
-		  (struct sockaddr *) &from, &fromlen);
+  len = recvfrom (fd, (char*)&buff, DRAGON_MAX_PACKET_SIZE, 0, 
+		  (struct sockaddr *) &from, (socklen_t*)&fromlen);
   if (len < 0) 
     {
       zlog_info ("recvfrom failed: %s", strerror (errno));
@@ -888,7 +889,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 				break;
 		}
 		read_len += DTLV_SIZE(tlvh);
-		tlvh = DTLV_HDR_NEXT(tlvh);
+		tlvh = (struct dragon_tlv_header*)DTLV_HDR_NEXT(tlvh);
 	}
 	
 	/* call RSVPD to set up the path */
@@ -984,7 +985,7 @@ dragon_read (struct thread *thread)
   amsgh = (struct api_msg_header *)STREAM_DATA(ibuf);
   if (ntohs(amsgh->length) != stream_get_endp(ibuf)-sizeof(struct api_msg_header))
   {
-  	zlog_warn("dragon_read: incorrect dragon msglen %d, actual %d", ntohs(amsgh->length), stream_get_endp(ibuf)-sizeof(struct api_msg_header));
+  	zlog_warn("dragon_read: incorrect dragon msglen %d, actual %d", (int)ntohs(amsgh->length), (int)stream_get_endp(ibuf)-sizeof(struct api_msg_header));
 	goto out;
   }
   if (API_MSG_CHKSUM(*amsgh) != amsgh->chksum)
@@ -994,12 +995,12 @@ dragon_read (struct thread *thread)
   }
   if (!IS_VALID_DRAGON_SEQNO(ntohl(amsgh->seqnum)))
   {
-	  zlog_warn("dragon_read: incorrect sequence number (%d)", ntohl(amsgh->seqnum) );
+	  zlog_warn("dragon_read: incorrect sequence number (%d)", (int)ntohl(amsgh->seqnum) );
 	  goto out;
   }
   if (ntohl(amsgh->seqnum) != lsp->seqno)
   {
-	  zlog_warn("dragon_read: this packet (seqno=%d) is not for this LSP (seqno=%d)", ntohl(amsgh->seqnum), lsp->seqno);
+	  zlog_warn("dragon_read: this packet (seqno=%d) is not for this LSP (seqno=%d)", (int)ntohl(amsgh->seqnum), lsp->seqno);
 	  goto out;
   }
 
@@ -1062,7 +1063,7 @@ dragon_write (struct thread *t)
 	lsp = packet->lsp;
 	ret = write(lsp->narb_fd, (void *)(STREAM_DATA(packet->s)), stream_get_endp(packet->s));
 	if (ret != stream_get_endp(packet->s))
-	  zlog_warn ("packet was sent incompletely: total %d, actual %d", stream_get_endp(packet->s), ret);
+	  zlog_warn ("packet was sent incompletely: total %d, actual %d", (int)stream_get_endp(packet->s), ret);
 
 	/* release packet */
 	dragon_packet_free(packet);
@@ -1110,6 +1111,8 @@ struct lsp* lsp_recycle(struct lsp* lsp)
 {
 	lsp->status = LSP_RECYCLE;
 	listnode_add(dmaster.recycled_lsp_list, lsp);
+
+	return lsp;
 }
 
 struct lsp* lsp_new()
