@@ -530,13 +530,17 @@ bool SwitchCtrl_Session_SMC10G8708::policeInputBandwidth(bool do_undo, uint32 in
 	    // this should not happen. make sure it is handled properly.
 	    if (prm->dragonIngressRate < SMC8708_MAX_BANDWIDTH) {
 	        if (prm->swIngressRate > ((uint32)committed_rate + SMC8708_MIN_BANDWIDTH))
-		    prm->swIngressRate -= (uint32)committed_rate;
+		    //prm->swIngressRate -= (uint32)committed_rate;
+		    prm->swIngressRate = prm->dragonIngressRate; 
 		else
 		    prm->swIngressRate=SMC8708_MIN_BANDWIDTH; // keep minimum bandwidth
 		
 		//swIngressRate should be euqal to sum of dragonIngressRate and SMC8708_MIN_BANDWIDTH
-		if (prm->swIngressRate < (prm->dragonIngressRate + SMC8708_MIN_BANDWIDTH)) {
-		    prm->swIngressRate = prm->dragonIngressRate + SMC8708_MIN_BANDWIDTH;
+		//if (prm->swIngressRate < (prm->dragonIngressRate + SMC8708_MIN_BANDWIDTH)) {
+		if (prm->swIngressRate < SMC8708_MIN_BANDWIDTH) 
+		{
+		    //prm->swIngressRate = prm->dragonIngressRate + SMC8708_MIN_BANDWIDTH;
+		    prm->swIngressRate = SMC8708_MIN_BANDWIDTH;
 		    //check not exceeding max vlaue
 		    if(prm->swIngressRate > SMC8708_MAX_BANDWIDTH)
 		        prm->swIngressRate = SMC8708_MAX_BANDWIDTH;
@@ -556,7 +560,6 @@ bool SwitchCtrl_Session_SMC10G8708::policeInputBandwidth(bool do_undo, uint32 in
 }
 
 bool SwitchCtrl_Session_SMC10G8708::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size){
-    LOG(3) (Log::MPLS, "Enter limitOutputBandwidth  port, rate-limit ", output_port,committed_rate);
     bool ret = true;
     portRateMap * prm;
     // get the portRateMap
@@ -571,29 +574,38 @@ bool SwitchCtrl_Session_SMC10G8708::limitOutputBandwidth(bool do_undo,  uint32 o
 	    prm->swEgressRate = outRate;		
 
 	// increase bandwidth for the port 
-	if (do_undo) {
+	if (do_undo) 
+        {
 	    prm->dragonEgressRate += (uint32)committed_rate;
 	    prm->swEgressRate += (uint32)committed_rate;
 	    // ensure max bandwidth is not over allowed max value
 	    if(prm->swEgressRate > SMC8708_MAX_BANDWIDTH)
 	        prm->swEgressRate = SMC8708_MAX_BANDWIDTH;
-	} else {
+            
+	} 
+        else 
+        {
 	  // decrease bandwidth from the port
-	    if (prm->dragonEgressRate > (uint32)committed_rate)
+             if (prm->dragonEgressRate > (uint32)committed_rate)
 	        prm->dragonEgressRate -= (uint32)committed_rate;
-	    else 	
+	    else 
 	        prm->dragonEgressRate = 0;
 	    // if dragon allocated bandwidth still over max bandwidth, don't reduce bw. 
 	    // this should not happen. make sure it is handled properly.
-	    if (prm->dragonEgressRate < SMC8708_MAX_BANDWIDTH) {
+	    if (prm->dragonEgressRate < SMC8708_MAX_BANDWIDTH) 
+            {
 	        if (prm->swEgressRate > ((uint32)committed_rate + SMC8708_MIN_BANDWIDTH))
-		    prm->swEgressRate -= (uint32)committed_rate;
+		    //prm->swEgressRate -= (uint32)committed_rate;
+		    prm->swEgressRate =  prm->dragonEgressRate;
 		else
 		    prm->swEgressRate=SMC8708_MIN_BANDWIDTH; // keep minimum bandwidth
 		
 		//swEgressRate should be euqal to sum of dragonEgressRate and SMC8708_MIN_BANDWIDTH
-		if (prm->swEgressRate < (prm->dragonEgressRate + SMC8708_MIN_BANDWIDTH)) {
-		    prm->swEgressRate = prm->dragonEgressRate + SMC8708_MIN_BANDWIDTH;
+		//if (prm->swEgressRate < (prm->dragonEgressRate + SMC8708_MIN_BANDWIDTH)) 
+		if (prm->swEgressRate < SMC8708_MIN_BANDWIDTH)
+                {
+		    //prm->swEgressRate = prm->dragonEgressRate + SMC8708_MIN_BANDWIDTH;
+		    prm->swEgressRate = SMC8708_MIN_BANDWIDTH;
 		    //check not exceeding max vlaue
 		    if (prm->swEgressRate > SMC8708_MAX_BANDWIDTH)
 		        prm->swEgressRate = SMC8708_MAX_BANDWIDTH;
@@ -933,21 +945,24 @@ void SwitchCtrl_Session_SMC10G8708::getPortIngressRateFromSnmpVars(netsnmp_varia
     LOG(3) (Log::MPLS, "Enter SwitchCtrl_Session_SMC10G8708::getPortIngressRateFromSnmpVars port, rate-limit(mb) ", (uint32)vars->name[vars->name_length - 1], *(vars->val.integer));
 
     //returned value is port ingress rate-limit
-    uint32 swIngressRate = *(vars->val.integer);
+    //uint32 swIngressRate = *(vars->val.integer);
+    uint32 ingressRate = *(vars->val.integer);
     //the last element is port number
     uint32 port = (uint32)vars->name[vars->name_length - 1];
     if (hasPortRateMap(port)) {
     	LOG(1) (Log::MPLS, "find existing portRateMap object and update data...");	   	
     	portRateMap* prm ;
     	prm = getPortRateMap(port);
-    	prm->swIngressRate = swIngressRate;
+    	prm->swIngressRate = ingressRate;
+        prm->dragonIngressRate = ingressRate;
     } else {
     	//first time read data from switch.
     	LOG(1) (Log::MPLS, "Create new portRateMap object and add to list...");	
     	portRateMap prm;
     	memset(&prm, 0, sizeof(portRateMap));
     	prm.port = port;
-    	prm.swIngressRate = swIngressRate;
+    	prm.swIngressRate = ingressRate;
+        prm.dragonIngressRate = ingressRate;
     	addPortRateMapToList(prm);   	
     }
 }
@@ -956,21 +971,26 @@ void SwitchCtrl_Session_SMC10G8708::getPortEgressRateFromSnmpVars(netsnmp_variab
     LOG(3) (Log::MPLS, "Enter SwitchCtrl_Session_SMC10G8708::getPortEgressRateFromSnmpVars port, rate-limit(mb) ", (uint32)vars->name[vars->name_length - 1], *(vars->val.integer));
     
     //returned value is port Egress rate-limit
-    uint32 swEgressRate = *(vars->val.integer);
+    //uint32 swEgressRate = *(vars->val.integer);
+    uint32 egressRate = *(vars->val.integer);
     //the last element is port number
     uint32 port = (uint32)vars->name[vars->name_length - 1];
     if (hasPortRateMap(port)) {
     	LOG(1) (Log::MPLS, "find existing portRateMap object and update data...");	
     	portRateMap* prm;
     	prm = getPortRateMap(port);
-    	prm->swEgressRate = swEgressRate;
+    	//prm->swEgressRate = swEgressRate;
+        prm->swEgressRate = egressRate;
+        prm->dragonEgressRate = egressRate;
     } else {
     	//first time read data from switch.
     	LOG(1) (Log::MPLS, "Create new portRateMap object and add to list...");	
     	portRateMap prm;
     	memset(&prm, 0, sizeof(portRateMap));
     	prm.port = port;
-    	prm.swEgressRate = swEgressRate;
+    	//prm.swEgressRate = swEgressRate;
+        prm.swEgressRate = egressRate;
+        prm.dragonEgressRate = egressRate;
     	addPortRateMapToList(prm);   	
     }
 }
