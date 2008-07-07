@@ -632,7 +632,7 @@ dragon_narb_topo_rsp_proc_ero(struct dragon_tlv_header *tlvh, u_int8_t *node_num
 }
 
 struct _EROAbstractNode_Para *
-dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, int* num_ero_hops, list ero_list)
+dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, u_int8_t* num_ero_hops, list ero_list)
 {
 	struct _EROAbstractNode_Para* hop, *lhop, *hop_s = NULL, * hop_d = NULL;
 	int num_ero_hops_ret = 0;
@@ -666,7 +666,7 @@ dragon_narb_override_ero(struct _EROAbstractNode_Para * ero_hops, int* num_ero_h
 	{
 		*hop = *hop_d;
 	}
-	*num_ero_hops = num_ero_hops_ret;
+	*num_ero_hops = (u_int8_t)num_ero_hops_ret;
 	XFREE(MTYPE_TMP, ero_hops);
 	return ero_hops_ret;
 }

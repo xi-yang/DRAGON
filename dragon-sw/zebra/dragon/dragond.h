@@ -228,7 +228,7 @@ struct api_msg_header
 #define LSP_OPT_ALT_PATHS  ((u_int32_t)(0x1000 << 16)) //returning alternate paths (ERO + subnetERO if any)
 
 /* NARB related variables used in DRAGON CLI only */
-extern int override_narb_ero_forced ;
+extern int override_narb_ero_forced;
 
 #ifdef roundup
 #  define ROUNDUP(val, gran)	roundup(val, gran)
