@@ -119,6 +119,7 @@ public class DragonCSA {
 				}else{
 					line += c;
 					if(regex.matcher(line).matches()){
+						if(log != null){ log.info(line); }
 						break;
 					}
 				}
@@ -493,7 +494,6 @@ public class DragonCSA {
 		String result = null;
 		
 		if(!this.localIdExists(localId)){
-			this.errorMsg = "Local ID does not exist";
 			return false;
 		}
 		
