@@ -303,7 +303,7 @@ enum BwEnc{
 	LSP_BW_FC0_266M		= 0x4BFDAD68,
 	LSP_BW_FC0_531M		= 0x4C7D3356,
 	LSP_BW_OC12			= 0x4C9450C0,
-	LSP_BW_Gig_E 			= 0x4CEE6B28,
+	LSP_BW_Gig_E 			= 0x4CFA56EA,	/*gige is mapped into 1050M (or STS21c)*/
 	LSP_BW_2Gig_E			= 0x4D6E6B28,
 	LSP_BW_3Gig_E			= 0x4DB2D05E,
 	LSP_BW_4Gig_E			= 0x4DEE6B28,
