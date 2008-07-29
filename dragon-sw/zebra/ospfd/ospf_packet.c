@@ -1943,6 +1943,8 @@ ospf_ls_upd (struct ip *iph, struct ospf_header *ospfh,
   while (listcount (mylsa_acks) > 0)
     ospf_ls_ack_send_list (oi, mylsa_acks, nbr->address.u.prefix4);
 
+  list_delete (mylsa_acks); /* mem leak fix by Xi Yang 07/29/2008 */
+
   if (listcount (mylsa_upds) > 0)
     ospf_opaque_self_originated_lsa_received (nbr, mylsa_upds);
 

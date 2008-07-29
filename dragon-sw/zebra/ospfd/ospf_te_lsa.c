@@ -551,7 +551,9 @@ ospf_te_lsa_parse (struct ospf_lsa *new)
 		/* Check if mandatory sub-tlvs are included in this link tlv */
 		if (new->tepara_ptr->p_link_type == NULL || new->tepara_ptr->p_link_id == NULL)
 		{
-		       zlog_info ("ospf_te_lsa_parse: This TE-LSA lacks some mandatory TE parameters.");
+			zlog_info ("ospf_te_lsa_parse: This TE-LSA lacks some mandatory TE parameters.");
+			if (new->tepara_ptr->p_link_ifswcap_list != NULL)
+				list_delete(new->tepara_ptr->p_link_ifswcap_list);
 			XFREE(MTYPE_OSPF_IF_PARAMS, new->tepara_ptr);
 			new->te_lsa_type = NOT_TE_LSA;
 			new->tepara_ptr = NULL;
@@ -560,6 +562,8 @@ ospf_te_lsa_parse (struct ospf_lsa *new)
 	else
 	{
 		zlog_info ("ospf_te_lsa_parse: Unrecognized TE-LSA due to incorrect TLV header info.");
+		if (new->tepara_ptr->p_link_ifswcap_list != NULL)
+			list_delete(new->tepara_ptr->p_link_ifswcap_list);
 		XFREE(MTYPE_OSPF_IF_PARAMS, new->tepara_ptr);
 		new->te_lsa_type = NOT_TE_LSA;
 		new->tepara_ptr = NULL;
