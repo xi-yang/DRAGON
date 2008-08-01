@@ -844,9 +844,13 @@ void MessageProcessor::sendResvErrMessage( uint8 errorFlags, uint8 errorCode, ui
 }
 
 void MessageProcessor::sendPathErrMessage( uint8 errorCode, uint16 errorValue ) {
-                       assert( currentMessage.getMsgType() == Message::Path
-                            || currentMessage.getMsgType() == Message::PathResv );
-	ERROR_SPEC_Object error( currentLif->getLocalAddress() ,0, errorCode, errorValue );
+	static NetAddress routerID;
+	if (routerID.rawAddress() == 0)
+		routerID = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()
+
+	assert( currentMessage.getMsgType() == Message::Path || currentMessage.getMsgType() == Message::PathResv );
+
+	ERROR_SPEC_Object error( routerID.rawAddress()==0?currentLif->getLocalAddress():routerID, 0, errorCode, errorValue );
 	NetAddress dest = currentMessage.getRSVP_HOP_Object().getAddress();
 	currentMessage.revertToError( error );
 #if defined(REFRESH_REDUCTION)
