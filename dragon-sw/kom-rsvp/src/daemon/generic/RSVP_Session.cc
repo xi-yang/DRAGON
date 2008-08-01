@@ -50,6 +50,8 @@
 
 // #define BETWEEN_APIS 1
 
+NetAddress Session::ospfRouterID;
+
 Session::Session( const SESSION_Object &session) : SESSION_Object(session),
 	style(None), rsbCount(0) {
 	LOG(2)( Log::Session, "new Session:", *this );
@@ -196,6 +198,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	SubnetUNI_Data subnetUniDataSrc, subnetUniDataDest;
 	String sName;
 
+	if (Session::ospfRouterID.rawAddress() == 0)
+		Session::ospfRouterID = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
 	if (!fromLocalAPI){
 		if (!RSVP_Global::rsvp->getRoutingService().findDataByInterface(hop.getLogicalInterface(), inRtId, inUnumIfID))
 			return false;
@@ -242,7 +246,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
        {
            if (explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::UNumIfID)
            {
-               if (explicitRoute->getAbstractNodeList().front().getAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress())
+               if (explicitRoute->getAbstractNodeList().front().getAddress() == Session::ospfRouterID)
                     inUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
            }
        }
@@ -257,7 +261,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			ifId = 0;
 		}
 		NetAddress hopAddr = explicitRoute->getAbstractNodeList().front().getAddress();
-		if (hopAddr != RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()) {
+		if (hopAddr != Session::ospfRouterID) {
 			outLif = RSVP_Global::rsvp->getRoutingService().findInterfaceByData(hopAddr, ifId); 
 			if (!outLif)
 			{
@@ -325,7 +329,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		if (!RSVP_Global::rsvp->getRoutingService().findDataByInterface(*outLif, outRtId, outUnumIfID))
 			return false;
 
-		phopLoopBackAddr = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+		phopLoopBackAddr = Session::ospfRouterID;
 		if (!outUnumIfID || ifId == 0) { //numbered interface
 			RSVP_HOP_TLV_SUB_Object t(outRtId);
 			tlv = t;
@@ -358,30 +362,30 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		//         there might be unreported error from OSPFD
 
 		//$$$$speical handling for source-destination colocated local-id provisioning
-		if (fromLocalAPI && RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() == getDestAddress()
+		if (fromLocalAPI && Session::ospfRouterID
 			&& (inUnumIfID >> 16) != LOCAL_ID_TYPE_NONE && (inUnumIfID >> 16) != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
 			&& (outUnumIfID >> 16) != LOCAL_ID_TYPE_NONE && (outUnumIfID >> 16) != LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) 
 		{
-			inRtId = outRtId = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+			inRtId = outRtId = Session::ospfRouterID;
 		}
 
 		//$$$$converting from the local id to true source subnet-if-id
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) 
 		{
-			inRtId = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+			inRtId = Session::ospfRouterID;
 			// LOCAL_ID_TYPE_SUBNET_UNI_SRC (31-16) | subnet-uni-id (15-8) | first_ts = ANY (7-0)
 			inUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_SRC << 16) | (inUnumIfID & 0xffff));
 		}
 		//$$$$converting from the local id to true destination subnet-if-id
 		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) 
 		{
-			outRtId = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+			outRtId = Session::ospfRouterID;
 			outUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_DEST << 16) | (outUnumIfID & 0xffff));
 		}
 		//$$$$converting from the local id to true destination subnet-if-id
 		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) 
 		{
-			outRtId = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+			outRtId = Session::ospfRouterID;
 			outUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_DEST << 16) | (outUnumIfID & 0xffff));
 		}
 
@@ -628,8 +632,9 @@ bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 	NetAddress address;
 
 	//if destination is reached, there is no need for nexthop route
-	NetAddress loopback =  RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
-	if (getDestAddress() == loopback)
+	if (Session::ospfRouterID.rawAddress() == 0)
+		Session::ospfRouterID =  RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+	if (getDestAddress() == Session::ospfRouterID)
 		return false;
 
 	//skip all local hops
@@ -647,7 +652,7 @@ bool Session::shouldReroute( const EXPLICIT_ROUTE_Object* ero ) {
 		default:
 			return false;
 		}
-		if (address != loopback) {
+		if (address != Session::ospfRouterID) {
 			outLif = (LogicalInterface*)RSVP_Global::rsvp->getRoutingService().findInterfaceByData(address, ifId); 
 			if (!outLif)
 			{
@@ -686,7 +691,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	uint32 phopLIH = msg.getRSVP_HOP_Object().getLIH();
 	bool Path_Refresh_Needed = false;
 
-	NetAddress loopback = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+	if (Session::ospfRouterID.rawAddress() == 0)
+		Session::ospfRouterID = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
 
 #if defined(WITH_API)
 /* OLD @@@@
@@ -696,7 +702,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 */
 	bool fromLocalAPI = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
 		&& (msg.getRSVP_HOP_Object().getAddress() == LogicalInterface::loopbackAddress
-		|| msg.getRSVP_HOP_Object().getAddress() == loopback
+		|| msg.getRSVP_HOP_Object().getAddress() == Session::ospfRouterID
 		|| RSVP_Global::rsvp->findInterfaceByAddress(msg.getRSVP_HOP_Object().getAddress())));
 #endif
 
@@ -713,9 +719,9 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	bool isDragonUniIngressClient = (&hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif()
 					&& dragonUni != NULL);
 	bool isDragonUniIngress = (&hop.getLogicalInterface() != RSVP_Global::rsvp->getApiLif()
-					&& dragonUni != NULL && dragonUni->getSrcTNA().addr.s_addr == loopback.rawAddress());
+					&& dragonUni != NULL && dragonUni->getSrcTNA().addr.s_addr == Session::ospfRouterID.rawAddress());
 	bool isDragonUniEgress = (&hop.getLogicalInterface() != RSVP_Global::rsvp->getApiLif()
-					&& dragonUni != NULL && dragonUni->getDestTNA().addr.s_addr == loopback.rawAddress());
+					&& dragonUni != NULL && dragonUni->getDestTNA().addr.s_addr == Session::ospfRouterID.rawAddress());
 	bool isDragonUniEgressClient = (!isDragonUniIngressClient && !isDragonUniIngress && !isDragonUniEgress && dragonUni != NULL
 		&& RSVP_Global::rsvp->getApiLif() != NULL && msg.getEXPLICIT_ROUTE_Object() == NULL);
 	if (isDragonUniIngress) fromLocalAPI  = true;
@@ -727,8 +733,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	bool isGeneralizedUniEgressClient = (RSVP_Global::rsvp->getApiLif() != NULL && generalizedUni != NULL	&& !isGeneralizedUniIngressClient); 
 
 
-	if (fromLocalAPI && !isDragonUniIngressClient && !isGeneralizedUniIngressClient &&  loopback.rawAddress() != msg.getSESSION_Object().getExtendedTunnelId()) {
-		LOG(4)(Log::Routing, "Routing Error: srcRouterID from API ", loopback, " does not match OSPF RouterID ", NetAddress(msg.getSESSION_Object().getExtendedTunnelId()));
+	if (fromLocalAPI && !isDragonUniIngressClient && !isGeneralizedUniIngressClient &&  Session::ospfRouterID.rawAddress() != msg.getSESSION_Object().getExtendedTunnelId()) {
+		LOG(4)(Log::Routing, "Routing Error: srcRouterID from API ", Session::ospfRouterID, " does not match OSPF RouterID ", NetAddress(msg.getSESSION_Object().getExtendedTunnelId()));
 		RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
 		return;
 	}
@@ -848,8 +854,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
              //Update SenderTemplate too!
 		//$$$$ Using loopback (OSPF RouterID, virtual), which works only if the route to routerID configured on source UNI-N
 		//$$$$$  via the control channel. This may be changed to the control channe (gre tunnel) address on this UNI.
-		senderTemplate.setSrcAddress(loopback);
-		(*uniSessionIter)->getSubnetUniSrc()->uni_cid_ipv4 = loopback.rawAddress();
+		senderTemplate.setSrcAddress(Session::ospfRouterID);
+		(*uniSessionIter)->getSubnetUniSrc()->uni_cid_ipv4 = Session::ospfRouterID.rawAddress();
 	}
 	// Xi2007<<
 	else { //regular RSVP (network) Path message
@@ -950,7 +956,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		}// End of if(isGeneralizedUniClient) ...
 
 		// add vlan Tag into suggestedLabel 
-		if (RSVP_Global::rsvp->getApiLif() != NULL && loopback == getDestAddress() 
+		if (RSVP_Global::rsvp->getApiLif() != NULL && Session::ospfRouterID == getDestAddress() 
 			&& explicitRoute != NULL && dragonUni == NULL)
 		{
 			AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
@@ -984,7 +990,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			destAddress = explicitRoute->getAbstractNodeList().front().getAddress();
 		}
 		else if (explicitRoute && RSVP_Global::rsvp->getRoutingService().findInterfaceByData(destAddress, 0) != NULL) {
-			destAddress = loopback;
+			destAddress = Session::ospfRouterID;
 			explicitRoute->pushFront(AbstractNode(false, destAddress, (uint8)32));
 		} else {
 			ERROR(2)( Log::Error, "Can't determine data interfaces!", *static_cast<SESSION_Object*>(this));
@@ -1003,9 +1009,9 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 #if defined(WITH_API)
 		if ( fromLocalAPI ) {
 			// message is from local API -> set sender address if not set
-			if (explicitRoute->getAbstractNodeList().front().getAddress() == loopback && loopback == getDestAddress())
+			if (explicitRoute->getAbstractNodeList().front().getAddress() == Session::ospfRouterID && Session::ospfRouterID == getDestAddress())
 			{ // the source-destination local-id co-located provisioning case ...
-				// will redo under 'if ( RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) || destAddress == loopback )'
+				// will redo under 'if ( RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) || destAddress == Session::ospfRouterID )'
 				defaultOutLif = RSVP::getApiLif();
 			}
 			else if (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4
@@ -1026,7 +1032,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			policyData = msg.getPolicyList().front();
 			if ( senderTemplate.getSrcAddress() == NetAddress(0) 
 				|| senderTemplate.getSrcAddress() == LogicalInterface::loopbackAddress 
-				|| senderTemplate.getSrcAddress() == loopback ) {
+				|| senderTemplate.getSrcAddress() == Session::ospfRouterID ) {
 				if (defaultOutLif) {
 					LOG(2)( Log::API, "default out interface is", defaultOutLif->getName() );
 					//senderTemplate.setSrcAddress( defaultOutLif->getLocalAddress() );
@@ -1065,7 +1071,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		}
 #endif
 
-		if ( RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) || destAddress == loopback )  {
+		if ( RSVP_Global::rsvp->findInterfaceByAddress( destAddress ) || destAddress == Session::ospfRouterID )  {
 			defaultOutLif = RSVP::getApiLif();
 			gateway = LogicalInterface::noGatewayAddress;
 			RtOutL.insert_unique( defaultOutLif );

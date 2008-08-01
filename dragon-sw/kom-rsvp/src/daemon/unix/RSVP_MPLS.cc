@@ -1086,7 +1086,9 @@ EXPLICIT_ROUTE_Object* MPLS::getExplicitRoute(NetAddress& dest) {
 	}
 
 	//destination is local
-	if (!er && RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() == dest) {
+	if (Session::ospfRouterID.rawAddress() == 0)
+		Session::ospfRouterID = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+	if (!er && Session::ospfRouterID == dest) {
 		er = new EXPLICIT_ROUTE_Object;
               er->pushFront(AbstractNode(false, dest, (uint8)32));
 	}
@@ -1126,7 +1128,10 @@ EXPLICIT_ROUTE_Object* MPLS::updateExplicitRoute( const NetAddress& dest, EXPLIC
 		}
 	}
 
-	if ((!er || er->getAbstractNodeList().empty()) && RSVP_Global::rsvp->getRoutingService().getLoopbackAddress() == dest) {
+	if (Session::ospfRouterID.rawAddress() == 0)
+		Session::ospfRouterID = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+
+	if ((!er || er->getAbstractNodeList().empty()) && Session::ospfRouterID == dest) {
 		er = new EXPLICIT_ROUTE_Object;
               er->pushFront(AbstractNode(false, dest, (uint8)32));
 	}

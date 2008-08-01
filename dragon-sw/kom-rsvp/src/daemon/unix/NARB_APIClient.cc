@@ -16,6 +16,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_RoutingService.h"
 #include "RSVP_ProtocolObjects.h"
 #include "RSVP_Message.h"
+#include "RSVP_Session.h"
 #include "NARB_APIClient.h"
 
 String NARB_APIClient::_host = "";
@@ -530,7 +531,7 @@ EXPLICIT_ROUTE_Object* NARB_APIClient::getExplicitRoute(const Message& msg, bool
     DRAGON_UNI_Object* uni = ((Message*)&msg)->getDRAGON_UNI_Object();
     DRAGON_EXT_INFO_Object* dragonExtInfo = ((Message*)&msg)->getDRAGON_EXT_INFO_Object();
 
-    NetAddress srcNetAddr = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+    NetAddress srcNetAddr = Session::ospfRouterID.rawAddress() == 0 ? RSVP_Global::rsvp->getRoutingService().getLoopbackAddress():Session::ospfRouterID;
     srcAddr = srcNetAddr.rawAddress();
     if (srcAddr == 0)
         return NULL;

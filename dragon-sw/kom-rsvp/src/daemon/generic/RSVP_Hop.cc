@@ -147,7 +147,9 @@ void Hop::processSrefresh( const Message& msg ) {
 					DRAGON_UNI_Object* dragonUni = (DRAGON_UNI_Object*)(*stateIter).sb.psb->getDRAGON_UNI_Object();
 					GENERALIZED_UNI_Object* generalizedUni = (GENERALIZED_UNI_Object*)(*stateIter).sb.psb->getGENERALIZED_UNI_Object();
 #if defined(WITH_API)
-					if ((*stateIter).sb.psb->getSession().getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()) {
+					if (Session::ospfRouterID.rawAddress() == 0)
+						Session::ospfRouterID = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+					if ((*stateIter).sb.psb->getSession().getDestAddress() == Session::ospfRouterID) {
 						if (dragonUni != NULL) {
 							const String egressChanName = (const char*)dragonUni->getEgressCtrlChannel().name;
 							if (egressChanName == "implicit")

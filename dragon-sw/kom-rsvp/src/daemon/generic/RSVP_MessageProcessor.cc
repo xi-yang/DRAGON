@@ -824,8 +824,11 @@ void MessageProcessor::sendResvErrMessage( uint8 errorFlags, uint8 errorCode, ui
 }
 
 void MessageProcessor::sendResvErrMessage( uint8 errorFlags, uint8 errorCode, uint16 errorValue, const FlowDescriptor& fd ) {
-	ERROR_SPEC_Object error( currentLif->getLocalAddress() ,errorFlags, errorCode, errorValue );
+	if (Session::ospfRouterID.rawAddress() == 0)
+		Session::ospfRouterID = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
+
 	assert( currentMessage.getMsgType() == Message::Resv );
+	ERROR_SPEC_Object error( Session::ospfRouterID.rawAddress()==0?currentLif->getLocalAddress():Session::ospfRouterID, errorFlags, errorCode, errorValue );
 	Message errorMsg( Message::ResvErr, 63, currentMessage.getSESSION_Object() );
 	errorMsg.setERROR_SPEC_Object( error );
 	if ( currentMessage.getSCOPE_Object() ) {
@@ -844,13 +847,11 @@ void MessageProcessor::sendResvErrMessage( uint8 errorFlags, uint8 errorCode, ui
 }
 
 void MessageProcessor::sendPathErrMessage( uint8 errorCode, uint16 errorValue ) {
-	static NetAddress routerID;
-	if (routerID.rawAddress() == 0)
-		routerID = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()
+	if (Session::ospfRouterID.rawAddress() == 0)
+		Session::ospfRouterID = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
 
 	assert( currentMessage.getMsgType() == Message::Path || currentMessage.getMsgType() == Message::PathResv );
-
-	ERROR_SPEC_Object error( routerID.rawAddress()==0?currentLif->getLocalAddress():routerID, 0, errorCode, errorValue );
+	ERROR_SPEC_Object error( Session::ospfRouterID.rawAddress()==0?currentLif->getLocalAddress():Session::ospfRouterID, 0, errorCode, errorValue );
 	NetAddress dest = currentMessage.getRSVP_HOP_Object().getAddress();
 	currentMessage.revertToError( error );
 #if defined(REFRESH_REDUCTION)

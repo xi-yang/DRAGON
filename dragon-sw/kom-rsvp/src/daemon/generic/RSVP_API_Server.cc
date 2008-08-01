@@ -41,6 +41,7 @@
 #include "RSVP_ProtocolObjects.h"
 #include "RSVP_TrafficControl.h"
 #include "RSVP_RoutingService.h"
+#include "RSVP_Session.h"
 
 //#if defined(NS2)
 //#include "RSVP_Wrapper.h"
@@ -135,8 +136,10 @@ void API_Server::processMessage( const Message& msg, MessageProcessor& mp) {
 		}
 	}
 
+	if (Session::ospfRouterID.rawAddress() == 0)
+		Session::ospfRouterID = RSVP_Global::rsvp->getRoutingService().getLoopbackAddress();
 	if (msg.getMsgType() == Message::InitAPI && (session.getDestAddress() == LogicalInterface::loopbackAddress 
-		|| session.getDestAddress() == RSVP_Global::rsvp->getRoutingService().getLoopbackAddress()))
+		|| session.getDestAddress() == Session::ospfRouterID))
 	{
 		//register default client API
 		ApiEntryList::ConstIterator iter1 = getApiList( session ).begin();

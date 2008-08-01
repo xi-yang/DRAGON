@@ -124,6 +124,8 @@ public:
 	SwitchCtrl_Session_SubnetUNI* getSubnetUniSrc() { return pSubnetUniSrc; }
 	SwitchCtrl_Session_SubnetUNI* getSubnetUniDest() { return pSubnetUniDest; }
 
+	static NetAddress ospfRouterID;
+
 	DECLARE_MEMORY_MACHINE_IN_CLASS(Session)
 };
 DECLARE_MEMORY_MACHINE_OUT_CLASS(Session, sessionMemMachine)
