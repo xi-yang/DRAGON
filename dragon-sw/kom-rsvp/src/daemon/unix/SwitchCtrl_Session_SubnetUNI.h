@@ -63,7 +63,7 @@ public:
 	SwitchCtrl_Session_SubnetUNI(const String& sName, const NetAddress& swAddr, bool isSrc=true): 
 		CLI_Session(sName, swAddr), RSVP_API(), isSource(isSrc) { internalInit(); }
 	virtual ~SwitchCtrl_Session_SubnetUNI();
-	void setLspName(const String& name) 
+	virtual void setLspName(const String& name) 
 	{ 
 		lspName = name; 
 		//Replace colon, semicolon and comma with dash
@@ -303,7 +303,6 @@ protected:
 
 	bool isSource; //true --> isSender == 1
 	RSVP_API::SessionId* uniSessionId;
-	String lspName;
 
 	//UNI Ctrl/TE parameters
 	SubnetUNI_Data subnetUniSrc; //not needed for destination UNI client

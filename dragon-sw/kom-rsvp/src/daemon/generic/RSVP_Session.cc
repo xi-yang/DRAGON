@@ -587,6 +587,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					return false;
 				}
 				else{
+					ssNew->setLspName(msg.getSESSION_ATTRIBUTE_Object().getSessionName());
 					RSVP_Global::switchController->addSession(ssNew);
 				}
 			}
