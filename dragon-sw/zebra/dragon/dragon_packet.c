@@ -1238,7 +1238,7 @@ void  rsvpUpcall(void* para)
 			}
 
 			break;
-			
+
 		case Resv:
 		case ResvConf:
 			/* Update the status of the LSP */
@@ -1293,7 +1293,9 @@ void  rsvpUpcall(void* para)
 			
 		case PathErr:
 		case ResvErr:
-			lsp->status = LSP_ERROR; 
+			lsp->status = LSP_ERROR;
+			if (p->errorSpecPara != NULL)
+				lsp->error_spec = *p->errorSpecPara;
 			break;
 		default:
 			break;

@@ -2122,8 +2122,10 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 				    value_to_string (&conv_gpid, lsp->common.LabelRequest_Para.data.gmpls.gPid));
 
 		zlog_info("Status: %s", value_to_string(&conv_lsp_status, lsp->status));
-
 	}
+
+	if (lsp->error_spec.errCode != 0)
+		vty_out(vty, "Error Spec: flags=%d, code=%d, value=%d %s", lsp->error_spec.errFlags, lsp->error_spec.errCode, lsp->error_spec.errValue, VTY_NEWLINE); 
 }
 
 DEFUN (dragon_show_lsp,
@@ -2167,10 +2169,10 @@ DEFUN (dragon_show_lsp,
                                           vty_out (vty, "%-12s", (lsp->common.SessionAttribute_Para)->sessionName);
                                         vty_out(vty, "%-11s", value_to_string(&conv_lsp_status, lsp->status));
                           }
-                        if (lsp->flag & LSP_FLAG_BIDIR)
-                                        vty_out(vty, "%-6s", "<=>");
-                        else
-                                        vty_out(vty, "%-6s", " =>");
+                          if (lsp->flag & LSP_FLAG_BIDIR)
+                              vty_out(vty, "%-6s", "<=>");
+                          else
+                              vty_out(vty, "%-6s", " =>");
                           vty_out (vty, "%-20s", inet_ntoa(lsp->common.Session_Para.srcAddr));
                           vty_out (vty, "%s%s", inet_ntoa(lsp->common.Session_Para.destAddr), VTY_NEWLINE);
                           vty_out (vty, "                             %-20d", lsp->common.Session_Para.srcPort );

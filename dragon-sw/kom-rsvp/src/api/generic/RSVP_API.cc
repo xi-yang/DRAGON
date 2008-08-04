@@ -230,6 +230,7 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 	} // if
 	if (upcall ) {
 		struct _rsvp_upcall_parameter zUpcallParam;
+		memset(&zUpcallParam, 0, sizeof(struct _rsvp_upcall_parameter));
 		zUpcallParam.code = msg.getMsgType();
 		zUpcallParam.destAddr.s_addr = key.getDestAddress().rawAddress();
 		zUpcallParam.destPort = key.getTunnelId();
@@ -267,6 +268,13 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 
 			SENDER_TEMPLATE_Object stm = SENDER_TEMPLATE_Object(msg.getSENDER_TEMPLATE_Object());
 			zUpcallParam.senderTemplate = (void*)&stm;
+		}
+		else if (msg.getMsgType()==Message::PathErr || msg.getMsgType()==Message::ResvErr)
+		{
+		   zUpcallParam.errorSpecPara = new (struct _Error_Spec_Para);
+		   zUpcallParam.errorSpecPara->errFlags = msg.getERROR_SPEC_Object().getFlags();
+		   zUpcallParam.errorSpecPara->errCode = msg.getERROR_SPEC_Object().getCode();
+		   zUpcallParam.errorSpecPara->errValue = msg.getERROR_SPEC_Object().getValue();
 		}
 
 		if(msg.getDRAGON_UNI_Object())

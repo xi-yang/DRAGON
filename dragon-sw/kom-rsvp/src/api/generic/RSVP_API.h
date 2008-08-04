@@ -59,6 +59,7 @@ struct _rsvp_upcall_parameter {
 	uint16 gPid;		//G-Pid
 	struct _Dragon_Uni_Para* dragonUniPara;
 	struct _Dragon_ExtInfo_Para* dragonExtInfoPara;
+	struct _Error_Spec_Para* errorSpecPara;
 	void* sendTSpec;  //Sender TSpec
 	void* adSpec;
 	void* session;	//RSVP_API::SessionId
@@ -169,6 +170,12 @@ struct _Dragon_ExtInfo_Para {
 	u_int16_t egress_vtag;
 	u_int32_t num_dlt_hops;
 	struct dtl_hop *dtl_hops;
+};
+
+struct _Error_Spec_Para {
+	u_int8_t errFlags;
+	u_int8_t errCode;
+	u_int16_t errValue;
 };
 
 struct _sessionParameters {

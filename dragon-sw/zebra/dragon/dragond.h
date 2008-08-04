@@ -505,6 +505,13 @@ struct _Dragon_ExtInfo_Para {
 	struct dtl_hop *subnet_dtl_hops;
 };
 
+
+struct _Error_Spec_Para {
+	u_int8_t errFlags;
+	u_int8_t errCode;
+	u_int16_t errValue;
+};
+
 struct _sessionParameters {
 	//Mandatory parameters
 	struct _LabelRequest_Para LabelRequest_Para;
@@ -550,6 +557,7 @@ struct _rsvp_upcall_parameter {
 	u_int16_t gPid;		//G-Pid
 	struct _Dragon_Uni_Para* dragonUniPara;
 	struct _Dragon_ExtInfo_Para* dragonExtInfoPara;
+	struct _Error_Spec_Para* errorSpecPara;
 	void* sendTSpec;  //Sender TSpec
 	void* adSpec;
 	void* session;	//RSVP_API::SessionId
@@ -612,8 +620,8 @@ struct lsp {
 	struct _sessionParameters common;
 	struct lsp_optional_constraints constraints;
 	struct lsp_dragon_para dragon;
+	struct _Error_Spec_Para error_spec;
 	struct thread *t_lsp_refresh;    /* LSP refresh thread */
-
 	int narb_fd; /* File descriptor (socket) to-from NARB */
 	struct thread *t_narb_read; /* LSP packet read thread (for NARB) */
 	u_int32_t seqno;  /* Unique sequence number for this LSP request */
