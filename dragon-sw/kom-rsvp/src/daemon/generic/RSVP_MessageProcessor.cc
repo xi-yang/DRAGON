@@ -938,6 +938,7 @@ void MessageProcessor::processDragonMonQuery(SESSION_Object& sessionObject, MON_
 	Message replyMsg( msgType, TTL, sessionObject);
 	DRAGON_EXT_INFO_Object* dragonExtInfo = new DRAGON_EXT_INFO_Object;
 	MON_Reply_Subobject monReply;
+	//memset (&monReply, 0, sizeof(MON_Reply_Subobject));
 	//$$$$ find and retrieve information from switchCtrlSession
 
 	//$$$$ dragonExtInfo->setMonReply()

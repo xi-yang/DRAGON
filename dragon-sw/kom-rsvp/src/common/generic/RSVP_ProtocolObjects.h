@@ -1050,11 +1050,12 @@ public:
 /////      DRAGON private Extension Information Object definitions   /////
 //////////////////////////////////////////////////////////////////////////
 
-#define DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID 1 //for both type and flag
-#define DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING 2 //for both type and flag
-#define DRAGON_EXT_SUBOBJ_DTL 4 
-#define DRAGON_EXT_SUBOBJ_MON_QUERY 8
-#define DRAGON_EXT_SUBOBJ_MON_REPLY 16
+#define DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID 0x0001 //for both type and flag
+#define DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING 0x0002 //for both type and flag
+#define DRAGON_EXT_SUBOBJ_DTL 0x0004
+#define DRAGON_EXT_SUBOBJ_MON_QUERY 0x0008
+#define DRAGON_EXT_SUBOBJ_MON_REPLY 0x0010
+#define DRAGON_EXT_SUBOBJ_MON_NODE_LIST 0x0020
 
 typedef struct  {
 	uint16 length;
@@ -1156,6 +1157,15 @@ typedef struct {
 
 #define MON_REPLY_BASE_SIZE (8+MAX_MON_NAME_LEN+sizeof(_Switch_Generic_Info))
 
+#define MAX_MON_NUM_NODES 20
+typedef struct {
+	uint16 length;
+	uint8 type;	//DRAGON_EXT_SUBOBJ_MON_NODE_LIST
+	uint8 sub_type; //0
+	uint32 count;
+	in_addr node_list[MAX_MON_NUM_NODES];
+} MON_NodeList_Suboject;
+
 /************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
 
 class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
@@ -1165,6 +1175,8 @@ class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 	DTL_Subobject DTL;
 	MON_Query_Subobject monQuery;
 	MON_Reply_Subobject monReply;
+	MON_NodeList_Suboject monNodeList;
+
 	REF_OBJECT_METHODS(DRAGON_EXT_INFO_Object)
 	friend ostream& operator<< ( ostream&, const DRAGON_EXT_INFO_Object& );
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_EXT_INFO_Object& );
@@ -1179,6 +1191,7 @@ class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 			assert (monReply.length != 0);
 			x += monReply.length; //Variable length
 		}
+		if (HasSubobj(DRAGON_EXT_SUBOBJ_MON_NODE_LIST)) x += (8+sizeof(in_addr)*monNodeList.count);
 		return x;
 	}
 public:
@@ -1275,6 +1288,21 @@ public:
 		}
 	}
 	MON_Reply_Subobject& getMonReply() { return monReply; }
+	bool AddMonNode(in_addr node_ip) {
+		if (!HasSubobj(DRAGON_EXT_SUBOBJ_MON_NODE_LIST)) {
+			SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_NODE_LIST);
+			memset(&monNodeList, 0, sizeof(MON_NodeList_Suboject));
+			monNodeList.length = 8;
+			monNodeList.type = DRAGON_EXT_SUBOBJ_MON_QUERY;
+			monNodeList.sub_type = 0;
+		}
+		if (monNodeList.count == MAX_MON_NUM_NODES)
+			return false;
+		monNodeList.length += sizeof(in_addr);
+		monNodeList.node_list[monNodeList.count].s_addr = node_ip.s_addr;
+		monNodeList.count++;
+	}
+	MON_NodeList_Suboject& getMonNode() { return monNodeList; }
 
 /************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
 

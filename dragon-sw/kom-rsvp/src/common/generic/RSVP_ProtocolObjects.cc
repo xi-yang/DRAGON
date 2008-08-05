@@ -813,6 +813,15 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 				}
 			}
 			break;
+		case DRAGON_EXT_SUBOBJ_MON_NODE_LIST:
+			memset(&monNodeList, 0, sizeof(MON_NodeList_Suboject));
+			monNodeList.length = tlvLength;
+			monNodeList.type = tlvType;
+			monNodeList.sub_type = tlvSubType;
+			buffer >> monNodeList.count;
+			for (i = 0; i < monNodeList.count; i++)
+				buffer >> monNodeList.node_list[i].s_addr;
+			break;
 /************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
 		default:
 			readLength += tlvLength;
@@ -903,6 +912,13 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 			}
 		}	
 	}
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_NODE_LIST)) {
+		buffer << o.monNodeList.length << o.monNodeList.type << o.monNodeList.sub_type << o.monNodeList.count;
+		uint32 i;
+		for (i = 0; i < o.monNodeList.count; i++)
+			buffer << o.monNodeList.node_list[i].s_addr;
+	}
+
 /************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
 
 	return buffer;
@@ -941,7 +957,7 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 		os << ")";
 	}
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_REPLY)) {
-		os << "(4: MonReply: gri=";
+		os << "(5: MonReply: gri=";
 		os << o.monReply.gri;
 		os << ", switch_ip=" << String( inet_ntoa(o.monReply.switch_info.switch_ip) ) << ", switch_port=" << o.monReply.switch_info.switch_port 
 			<< ", switch_type=" << o.monReply.switch_info.switch_type << ", access_type="  <<o.monReply.switch_info.access_type
@@ -958,6 +974,13 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 				os << ", ero_subnet_info_dest";
 		}
 		os << ", circuit_data_length=" << (o.monReply.length - MON_REPLY_BASE_SIZE);
+		os << ")";
+	}
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_NODE_LIST)) {
+		uint32 i;
+		os << "(5: MonNodeList: ";
+		for (i = 0; i < o.monNodeList.count; i++)
+			os << "-" << String( inet_ntoa(o.monNodeList.node_list[i]) ) << "-";
 		os << ")";
 	}
 /************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
