@@ -762,6 +762,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			monQuery.sub_type = tlvSubType;
 			for (j = 0; j < MAX_MON_NAME_LEN; j++)
 				buffer >> monQuery.gri[j];
+			readLength += tlvLength;
 			break;
 		case DRAGON_EXT_SUBOBJ_MON_REPLY:
 			memset(&monReply, 0, sizeof(MON_Reply_Subobject));
@@ -812,6 +813,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 						buffer >> monReply.circuit_info.eos_info[1].dtl_name[j];
 				}
 			}
+			readLength += tlvLength;
 			break;
 		case DRAGON_EXT_SUBOBJ_MON_NODE_LIST:
 			memset(&monNodeList, 0, sizeof(MON_NodeList_Suboject));
@@ -821,6 +823,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			buffer >> monNodeList.count;
 			for (i = 0; i < monNodeList.count; i++)
 				buffer >> monNodeList.node_list[i].s_addr;
+			readLength += tlvLength;
 			break;
 /************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
 		default:
