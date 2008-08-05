@@ -814,6 +814,8 @@ bool PSB::updateDRAGON_EXT_INFO_Object( DRAGON_EXT_INFO_Object* dragon_info) {
 		if (!dragon_info) {
 			dragonExtInfo->destroy();
 		} else {
+			if (Session::ospfRouterID.rawAddress() != 0)
+				dragonExtInfo->AddMonNode(Session::ospfRouterID.rawAddress());
 			return false;
 		}
 	} else if (!dragon_info) {
