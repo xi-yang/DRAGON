@@ -1288,7 +1288,7 @@ public:
 		}
 	}
 	MON_Reply_Subobject& getMonReply() { return monReply; }
-	bool AddMonNode(in_addr node_ip) {
+	bool AddMonNode(uint32 node_ip) {
 		if (!HasSubobj(DRAGON_EXT_SUBOBJ_MON_NODE_LIST)) {
 			SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_NODE_LIST);
 			memset(&monNodeList, 0, sizeof(MON_NodeList_Suboject));
@@ -1299,8 +1299,9 @@ public:
 		if (monNodeList.count == MAX_MON_NUM_NODES)
 			return false;
 		monNodeList.length += sizeof(in_addr);
-		monNodeList.node_list[monNodeList.count].s_addr = node_ip.s_addr;
+		monNodeList.node_list[monNodeList.count].s_addr = node_ip;
 		monNodeList.count++;
+		return true;
 	}
 	MON_NodeList_Suboject& getMonNode() { return monNodeList; }
 

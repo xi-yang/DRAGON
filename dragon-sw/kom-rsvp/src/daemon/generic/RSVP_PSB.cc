@@ -820,7 +820,11 @@ bool PSB::updateDRAGON_EXT_INFO_Object( DRAGON_EXT_INFO_Object* dragon_info) {
 		return false;
 	}
 	if (dragon_info)
+	{
 		dragonExtInfo = dragon_info->borrow();
+		if (Session::ospfRouterID.rawAddress() != 0)
+			dragonExtInfo->AddMonNode(Session::ospfRouterID.rawAddress());
+	}
 	else   
 		dragonExtInfo = NULL;
 	return true;
