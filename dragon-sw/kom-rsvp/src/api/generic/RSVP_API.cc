@@ -296,8 +296,12 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 		if(msg.getDRAGON_EXT_INFO_Object())
 		{
 		   zUpcallParam.dragonExtInfoPara = new (struct _Dragon_ExtInfo_Para);
-		   zUpcallParam.dragonExtInfoPara->ucid = msg.getDRAGON_EXT_INFO_Object()->getServiceConfirmationID().ucid;
-		   zUpcallParam.dragonExtInfoPara->seqnum = msg.getDRAGON_EXT_INFO_Object()->getServiceConfirmationID().seqnum;
+		   memset(zUpcallParam.dragonExtInfoPara, 0, sizeof(struct _Dragon_ExtInfo_Para));
+		   if (msg.getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID))
+		   {
+			   zUpcallParam.dragonExtInfoPara->ucid = msg.getDRAGON_EXT_INFO_Object()->getServiceConfirmationID().ucid;
+			   zUpcallParam.dragonExtInfoPara->seqnum = msg.getDRAGON_EXT_INFO_Object()->getServiceConfirmationID().seqnum;
+		   }
 		   zUpcallParam.dragonExtInfo = (void*)msg.getDRAGON_EXT_INFO_Object();
 		}
 		else

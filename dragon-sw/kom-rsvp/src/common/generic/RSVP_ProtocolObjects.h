@@ -1053,6 +1053,8 @@ public:
 #define DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID 1 //for both type and flag
 #define DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING 2 //for both type and flag
 #define DRAGON_EXT_SUBOBJ_DTL 4 
+#define DRAGON_EXT_SUBOBJ_MON_QUERY 8
+#define DRAGON_EXT_SUBOBJ_MON_REPLY 16
 
 typedef struct  {
 	uint16 length;
@@ -1085,16 +1087,82 @@ struct dtl_hop {
 typedef struct  {
 	uint16 length;
 	uint8 type;
-	uint8 sub_type;
+	uint8 sub_type; //0
 	uint32 count;
 	struct dtl_hop hops[MAX_DTL_LEN];
 } DTL_Subobject;
+
+/************** vvv Extension for DRAGON Monitoring vvv *****************/
+
+#define MAX_MON_NAME_LEN 128
+typedef struct {
+	uint16 length;
+	uint8 type;	//DRAGON_EXT_SUBOBJ_MON_QUERY
+	uint8 sub_type; //0
+	char gri[MAX_MON_NAME_LEN];
+} MON_Query_Subobject;
+
+struct _Switch_Generic_Info {
+	in_addr switch_ip;
+	uint32 switch_port;
+	uint16 switch_type;
+	uint16 access_type;
+};
+
+#define MON_SWITCH_OPTION_SUBNET 		0x0001
+#define MON_SWITCH_OPTION_SOURCE 		0x0002
+#define MON_SWITCH_OPTION_DESTINATION 	0x0004
+#define MON_SWITCH_OPTION_TUNNEL 		0x0008
+#define MON_SWITCH_OPTION_UNTAGGED 		0x0010
+#define MON_SWITCH_OPTION_DTL	 		0x0020
+
+#define MAX_MON_PORT_NUM 128
+struct _Switch_Ethernet {
+	uint16 vlan_ingress;
+	uint16 num_ports_ingress;
+	uint16 ports_ingress[MAX_MON_PORT_NUM];
+	uint16 vlan_egress;
+	uint16 num_ports_egress;
+	uint16 ports_egress[MAX_MON_PORT_NUM];
+	uint32 qos_options; //QoS parameters --> TBD
+};
+
+struct _Switch_EoS_Subnet {
+	uint8 subnet_id;
+	uint8 first_timeslot;
+	uint16 port;
+	float ethernet_bw;
+	char vcg_name[MAX_MON_NAME_LEN];
+	char eflow_in_name[MAX_MON_NAME_LEN]; //_unicast + _multicast for untagged!
+	char eflow_out_name[MAX_MON_NAME_LEN]; //_unicast + _multicast for untagged!
+	char snc_crs_name[MAX_MON_NAME_LEN];
+	char dtl_name[MAX_MON_NAME_LEN];
+};
+
+typedef struct {
+	uint16 length;
+	uint8 type;	//DRAGON_EXT_SUBOBJ_MON_REPLY
+	uint8 sub_type; // 1: Ethernet 2: EoS Subnet Src 3: Eos Subnet Dest 4: EoS Subnet Src&Dest
+	char gri[MAX_MON_NAME_LEN];
+	struct _Switch_Generic_Info switch_info;
+	uint32 switch_options;
+	union {
+		struct _Switch_Ethernet vlan_info;
+		struct _Switch_EoS_Subnet eos_info[2];
+	} circuit_info;
+} MON_Reply_Subobject;
+
+#define MON_REPLY_BASE_SIZE (8+MAX_MON_NAME_LEN+sizeof(_Switch_Generic_Info))
+
+/************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
 
 class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 	uint32 subobj_flags;
 	ServiceConfirmationID_Subobject serviceConfID;
 	EdgeVlanMapping_Subobject edgeVlanMapping;
 	DTL_Subobject DTL;
+	MON_Query_Subobject monQuery;
+	MON_Reply_Subobject monReply;
 	REF_OBJECT_METHODS(DRAGON_EXT_INFO_Object)
 	friend ostream& operator<< ( ostream&, const DRAGON_EXT_INFO_Object& );
 	friend ONetworkBuffer& operator<< ( ONetworkBuffer&, const DRAGON_EXT_INFO_Object& );
@@ -1104,6 +1172,11 @@ class DRAGON_EXT_INFO_Object : public RefObject<DRAGON_EXT_INFO_Object> {
 		if (HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) x += sizeof(ServiceConfirmationID_Subobject);
 		if (HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING)) x += sizeof(EdgeVlanMapping_Subobject);
 		if (HasSubobj(DRAGON_EXT_SUBOBJ_DTL)) x += (8 + sizeof(dtl_hop)*DTL.count);
+		if (HasSubobj(DRAGON_EXT_SUBOBJ_MON_QUERY)) x += sizeof(MON_Query_Subobject);
+		if (HasSubobj(DRAGON_EXT_SUBOBJ_MON_REPLY)) { 
+			assert (monReply.length != 0);
+			x += monReply.length; //Variable length
+		}
 		return x;
 	}
 public:
@@ -1153,6 +1226,51 @@ public:
 		memcpy(DTL.hops, dtl, sizeof(dtl_hop)*num_hops);
 	}
 	DTL_Subobject& getDTL() { return DTL; }
+
+/************** vvv Extension for DRAGON Monitoring vvv *****************/
+
+	void SetMonQuery(char* gri) {
+		SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_QUERY);
+		memset(&monQuery, 0, sizeof(MON_Query_Subobject));
+		monQuery.length = sizeof(MON_Query_Subobject);
+		monQuery.type = DRAGON_EXT_SUBOBJ_MON_QUERY;
+		monQuery.sub_type = 0;
+		strncpy(monQuery.gri, gri, MAX_MON_NAME_LEN-1);
+	}
+	MON_Query_Subobject& getMonQuery() { return monQuery; }
+	void SetMonReply(char* gri,  _Switch_Generic_Info* switch_info, uint32 switch_options, 
+	    _Switch_Ethernet* vlan_info=NULL, _Switch_EoS_Subnet* eos_subnet_src=NULL, _Switch_EoS_Subnet* eos_subnet_dest=NULL) {
+		SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_REPLY);
+		memset(&monReply, 0, sizeof(MON_Reply_Subobject));
+		monReply.length = MON_REPLY_BASE_SIZE;
+		monReply.type = DRAGON_EXT_SUBOBJ_MON_REPLY;
+		monReply.switch_options = switch_options;
+		if ((switch_options&MON_SWITCH_OPTION_SUBNET) ==0)	{ //Ethernet switch
+			assert(vlan_info != NULL);
+			monReply.length += sizeof(_Switch_Ethernet);
+			monReply.sub_type = 1;
+			monReply.circuit_info.vlan_info = * vlan_info;
+		}
+		else if ((switch_options&MON_SWITCH_OPTION_SOURCE) !=0 && (switch_options&MON_SWITCH_OPTION_DESTINATION) !=0)
+		{
+			assert(eos_subnet_src != NULL && eos_subnet_dest != NULL);
+			monReply.length += sizeof(_Switch_EoS_Subnet) * 2;
+			monReply.sub_type = 4;
+			monReply.circuit_info.eos_info[0] = *eos_subnet_src;
+			monReply.circuit_info.eos_info[1] = *eos_subnet_dest;
+		}
+		else {
+			_Switch_EoS_Subnet* eos_info = ((switch_options&MON_SWITCH_OPTION_SOURCE) !=0 ? eos_subnet_src : eos_subnet_dest);
+			assert (eos_info != NULL);
+			monReply.length += sizeof(_Switch_EoS_Subnet);
+			monReply.sub_type = ((switch_options&MON_SWITCH_OPTION_SOURCE) !=0 ? 2 : 3);
+			monReply.circuit_info.eos_info[0] = *eos_info;			
+		}
+	}
+	MON_Reply_Subobject& getMonReply() { return monReply; }
+
+/************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
+
 };
 extern inline DRAGON_EXT_INFO_Object::~DRAGON_EXT_INFO_Object() {}
 
