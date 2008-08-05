@@ -1303,7 +1303,7 @@ public:
 		monNodeList.count++;
 		return true;
 	}
-	MON_NodeList_Suboject& getMonNode() { return monNodeList; }
+	MON_NodeList_Suboject& getMonNodeList() { return monNodeList; }
 
 /************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
 
