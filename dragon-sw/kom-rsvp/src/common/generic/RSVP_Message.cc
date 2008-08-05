@@ -594,6 +594,11 @@ ostream& operator<< ( ostream& os, const Message& m ) {
 		case Message::Ack: os << "ACK"; break;
 		case Message::Srefresh: os << "SREFRESH"; break;
 #endif
+		case Message::AddLocalId: os << "DRAGON_AddLocalId"; break;
+		case Message::DeleteLocalId: os << "DRAGON_DeleteLocalId"; break;
+		case Message::RefreshLocalId: os << "DRAGON_RefreshLocalId"; break;
+		case Message::MonQuery: os << "DRAGON_MonQuery"; break;
+		case Message::MonReply: os << "DRAGON_MonReply"; break;
 		default: os << "UNKNOWN"; break;
 	}
 	os << " " << (uint32)m.getVersion() << " " << (uint32)m.getFlags()
@@ -935,6 +940,11 @@ ostream& operator<< ( ostream& os, const MessagePrintShort& m ) {
 		case Message::Ack: os << "ACK"; return os;
 		case Message::Srefresh: os << "SREFRESH"; return os;
 #endif
+		case Message::AddLocalId: os << "DRAGON_AddLocalId"; break;
+		case Message::DeleteLocalId: os << "DRAGON_DeleteLocalId"; break;
+		case Message::RefreshLocalId: os << "DRAGON_RefreshLocalId"; break;
+		case Message::MonQuery: os << "DRAGON_MonQuery"; break;
+		case Message::MonReply: os << "DRAGON_MonReply"; break;
 		default: os << "UNKNOWN"; break;
 	}
 	os << " for " << m.getSESSION_Object().getDestAddress()

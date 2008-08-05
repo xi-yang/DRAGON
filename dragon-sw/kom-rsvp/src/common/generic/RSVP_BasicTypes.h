@@ -211,6 +211,7 @@ public:
 extern inline ONetworkBuffer& operator<< ( ONetworkBuffer&, const PacketHeader& );
 class ONetworkBuffer : public NetworkBuffer {
 	friend inline ONetworkBuffer& operator<< ( ONetworkBuffer&, const ieee32float );
+	friend inline ONetworkBuffer& operator<< ( ONetworkBuffer&, const char );
 	friend inline ONetworkBuffer& operator<< ( ONetworkBuffer&, const uint8 );
 	friend inline ONetworkBuffer& operator<< ( ONetworkBuffer&, const uint16 );
 	friend inline ONetworkBuffer& operator<< ( ONetworkBuffer&, const uint32 );
@@ -227,6 +228,13 @@ public:
 DECLARE_MEMORY_MACHINE_OUT_CLASS(ONetworkBuffer, obufMemMachine)
 
 /************************ NetworkBuffer, etc *****************************/
+
+extern inline ONetworkBuffer& operator<< ( ONetworkBuffer& buf, const char data ) {
+																	assert( buf.size >= buf.getUsedSize() + sizeof(data) );
+	*buf.ptr = (uint8)data;
+	buf.ptr += sizeof(data);
+	return buf;
+}
 
 extern inline ONetworkBuffer& operator<< ( ONetworkBuffer& buf, const uint8 data ) {
 																	assert( buf.size >= buf.getUsedSize() + sizeof(data) );

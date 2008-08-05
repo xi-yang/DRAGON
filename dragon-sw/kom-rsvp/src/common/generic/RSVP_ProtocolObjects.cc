@@ -754,6 +754,63 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			SetSubobjFlag(DRAGON_EXT_SUBOBJ_DTL);
 			readLength += tlvLength;
 			break;
+/************** vvv Extension for DRAGON Monitoring vvv *****************/
+		case DRAGON_EXT_SUBOBJ_MON_QUERY:
+			memset(&monQuery, 0, sizeof(MON_Query_Subobject));
+			monQuery.length = tlvLength;
+			monQuery.type = tlvType;
+			monQuery.sub_type = tlvSubType;
+			for (j = 0; j < MAX_MON_NAME_LEN; j++)
+				buffer >> monQuery.gri[j];
+			break;
+		case DRAGON_EXT_SUBOBJ_MON_REPLY:
+			memset(&monReply, 0, sizeof(MON_Reply_Subobject));
+			monReply.length = tlvLength;
+			monReply.type = tlvType;
+			monReply.sub_type = tlvSubType;
+			for (j = 0; j < MAX_MON_NAME_LEN; j++)
+				buffer >> monReply.gri[j];
+			buffer >> monReply.switch_info.switch_ip.s_addr >> monReply.switch_info.switch_port 
+				>> monReply.switch_info.switch_type >> monReply.switch_info.access_type
+				>> monReply.switch_options;
+			if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) { // Ethernet Switch
+				buffer >> monReply.circuit_info.vlan_info.vlan_ingress >> monReply.circuit_info.vlan_info.num_ports_ingress;
+				for (j = 0; j < MAX_MON_PORT_NUM; j++)
+					buffer >> monReply.circuit_info.vlan_info.ports_ingress[j];
+				buffer >> monReply.circuit_info.vlan_info.vlan_egress >> monReply.circuit_info.vlan_info.num_ports_egress;
+				for (j = 0; j < MAX_MON_PORT_NUM; j++)
+					buffer >> monReply.circuit_info.vlan_info.ports_egress[j];
+			}
+			else { // EoS Subnet
+				buffer >> monReply.circuit_info.eos_info[0].subnet_id >> monReply.circuit_info.eos_info[0].first_timeslot 
+					>> monReply.circuit_info.eos_info[0].port >> monReply.circuit_info.eos_info[0].ethernet_bw;
+				for (j = 0; j < MAX_MON_NAME_LEN; j++)
+					buffer >> monReply.circuit_info.eos_info[0].vcg_name[j];
+				for (j = 0; j < MAX_MON_NAME_LEN; j++)
+					buffer >> monReply.circuit_info.eos_info[0].eflow_in_name[j];
+				for (j = 0; j < MAX_MON_NAME_LEN; j++)
+					buffer >> monReply.circuit_info.eos_info[0].eflow_out_name[j];
+				for (j = 0; j < MAX_MON_NAME_LEN; j++)
+					buffer >> monReply.circuit_info.eos_info[0].snc_crs_name[j];
+				for (j = 0; j < MAX_MON_NAME_LEN; j++)
+					buffer >> monReply.circuit_info.eos_info[0].dtl_name[j];
+				if ( (monReply.switch_options & MON_SWITCH_OPTION_SOURCE) != 0 && (monReply.switch_options & MON_SWITCH_OPTION_DESTINATION) != 0 ) {
+					buffer >> monReply.circuit_info.eos_info[1].subnet_id >> monReply.circuit_info.eos_info[1].first_timeslot 
+						>> monReply.circuit_info.eos_info[1].port >> monReply.circuit_info.eos_info[1].ethernet_bw;
+					for (j = 0; j < MAX_MON_NAME_LEN; j++)
+						buffer >> monReply.circuit_info.eos_info[1].vcg_name[j];
+					for (j = 0; j < MAX_MON_NAME_LEN; j++)
+						buffer >> monReply.circuit_info.eos_info[1].eflow_in_name[j];
+					for (j = 0; j < MAX_MON_NAME_LEN; j++)
+						buffer >> monReply.circuit_info.eos_info[1].eflow_out_name[j];
+					for (j = 0; j < MAX_MON_NAME_LEN; j++)
+						buffer >> monReply.circuit_info.eos_info[1].snc_crs_name[j];
+					for (j = 0; j < MAX_MON_NAME_LEN; j++)
+						buffer >> monReply.circuit_info.eos_info[1].dtl_name[j];
+				}
+			}
+			break;
+/************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
 		default:
 			readLength += tlvLength;
 			while( (tlvLength--) > 4 ) buffer >> tlvChar;
@@ -786,6 +843,62 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 			buffer << o.DTL.hops[i].linkid;
 		}
 	}
+
+/************** vvv Extension for DRAGON Monitoring vvv *****************/
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_QUERY)) {
+		int i;
+		buffer << o.monQuery.length << o.monQuery.type << o.monQuery.sub_type;
+		for (i = 0; i < MAX_MON_NAME_LEN; i++)
+			buffer << o.monQuery.gri[i];
+	}
+
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_REPLY)) {
+		int i;
+		buffer << o.monReply.length << o.monReply.type << o.monReply.sub_type;
+		for (i = 0; i < MAX_MON_NAME_LEN; i++)
+			buffer << o.monReply.gri[i];
+		buffer << o.monReply.switch_info.switch_ip.s_addr << o.monReply.switch_info.switch_port 
+			<< o.monReply.switch_info.switch_type << o.monReply.switch_info.access_type
+			<< o.monReply.switch_options;
+		if ((o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) { // Ethernet Switch
+			buffer << o.monReply.circuit_info.vlan_info.vlan_ingress << o.monReply.circuit_info.vlan_info.num_ports_ingress;
+			for (i = 0; i < MAX_MON_PORT_NUM; i++)
+				buffer << o.monReply.circuit_info.vlan_info.ports_ingress[i];
+			buffer << o.monReply.circuit_info.vlan_info.vlan_egress << o.monReply.circuit_info.vlan_info.num_ports_egress;
+			for (i = 0; i < MAX_MON_PORT_NUM; i++)
+				buffer << o.monReply.circuit_info.vlan_info.ports_egress[i];
+		}
+		else { // EoS Subnet
+			buffer << o.monReply.circuit_info.eos_info[0].subnet_id << o.monReply.circuit_info.eos_info[0].first_timeslot 
+				<< o.monReply.circuit_info.eos_info[0].port << o.monReply.circuit_info.eos_info[0].ethernet_bw;
+			for (i = 0; i < MAX_MON_NAME_LEN; i++)
+				buffer << o.monReply.circuit_info.eos_info[0].vcg_name[i];
+			for (i = 0; i < MAX_MON_NAME_LEN; i++)
+				buffer << o.monReply.circuit_info.eos_info[0].eflow_in_name[i];
+			for (i = 0; i < MAX_MON_NAME_LEN; i++)
+				buffer << o.monReply.circuit_info.eos_info[0].eflow_out_name[i];
+			for (i = 0; i < MAX_MON_NAME_LEN; i++)
+				buffer << o.monReply.circuit_info.eos_info[0].snc_crs_name[i];
+			for (i = 0; i < MAX_MON_NAME_LEN; i++)
+				buffer << o.monReply.circuit_info.eos_info[0].dtl_name[i];
+			if ( (o.monReply.switch_options & MON_SWITCH_OPTION_SOURCE) != 0 && (o.monReply.switch_options & MON_SWITCH_OPTION_DESTINATION) != 0 ) {
+				buffer << o.monReply.circuit_info.eos_info[1].subnet_id << o.monReply.circuit_info.eos_info[1].first_timeslot 
+					<< o.monReply.circuit_info.eos_info[1].port << o.monReply.circuit_info.eos_info[1].ethernet_bw;
+				for (i = 0; i < MAX_MON_NAME_LEN; i++)
+					buffer << o.monReply.circuit_info.eos_info[1].vcg_name[i];
+				for (i = 0; i < MAX_MON_NAME_LEN; i++)
+					buffer << o.monReply.circuit_info.eos_info[1].eflow_in_name[i];
+				for (i = 0; i < MAX_MON_NAME_LEN; i++)
+					buffer << o.monReply.circuit_info.eos_info[1].eflow_out_name[i];
+				for (i = 0; i < MAX_MON_NAME_LEN; i++)
+					buffer << o.monReply.circuit_info.eos_info[1].snc_crs_name[i];
+				for (i = 0; i < MAX_MON_NAME_LEN; i++)
+					buffer << o.monReply.circuit_info.eos_info[1].dtl_name[i];
+			}
+		}	
+	}
+/************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
+
 	return buffer;
 }
 
@@ -815,6 +928,30 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 		}
 		os << ")";
 	}
+/************** vvv Extension for DRAGON Monitoring vvv *****************/
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_QUERY)) {
+		os << "(4: MonQuery: gri=";
+		os << o.monQuery.gri;
+		os << ")";
+	}
+	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_REPLY)) {
+		os << "(4: MonReply: gri=";
+		os << o.monReply.gri;
+		os << ", switch_ip=" << String( inet_ntoa(o.monReply.switch_info.switch_ip) ) << ", switch_port=" << o.monReply.switch_info.switch_port 
+			<< ", switch_type=" << o.monReply.switch_info.switch_type << ", access_type="  <<o.monReply.switch_info.access_type
+			<< ", switch_options" << o.monReply.switch_options;
+		if ((o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0)
+			os << ", w/ ethernet_info";
+		else {
+			if ((o.monReply.switch_options & MON_SWITCH_OPTION_SOURCE) != 0)
+				os << ", eos_subnet_info_src";
+			if ((o.monReply.switch_options & MON_SWITCH_OPTION_SOURCE) != 0)
+				os << ", ero_subnet_info_dest";
+		}
+		os << ", circuit_data_length=" << (o.monReply.length - MON_REPLY_BASE_SIZE);
+		os << ")";
+	}
+/************** ^^^ Extension for DRAGON Monitoring ^^^ *****************/
 	os <<"]";
 	return os;
 }
