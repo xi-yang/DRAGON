@@ -346,7 +346,7 @@ RSVP_API::SessionId RSVP_API::createSession( const NetAddress& dest, uint16 tunn
 	return result;
 }
 
-//@@@@ hacked
+//$$$$ DRAGON
 void RSVP_API::addLocalId(uint16 type, uint16 value, uint16 tag)
 {
 	uint8 msgType = Message::AddLocalId;
@@ -357,7 +357,7 @@ void RSVP_API::addLocalId(uint16 type, uint16 value, uint16 tag)
 	apiLif->sendMessage( msg, NetAddress(0), apiLif->getLocalAddress() );
 }
 
-//@@@@ hacked
+//$$$$ DRAGON
 void RSVP_API::deleteLocalId(uint16 type, uint16 value, uint16 tag)
 {
 	uint8 msgType = Message::DeleteLocalId;
@@ -368,7 +368,7 @@ void RSVP_API::deleteLocalId(uint16 type, uint16 value, uint16 tag)
 	apiLif->sendMessage( msg, NetAddress(0), apiLif->getLocalAddress() );
 }
 
-//@@@@ hacked
+//$$$$ DRAGON
 void RSVP_API::refreshLocalId(uint16 type, uint16 value, uint16 tag)
 {
 	uint8 msgType = Message::RefreshLocalId;
@@ -377,6 +377,21 @@ void RSVP_API::refreshLocalId(uint16 type, uint16 value, uint16 tag)
 	Message msg( msgType, TTL, session);
 	msg.setRSVP_HOP_Object( *apiLif );
 	apiLif->sendMessage( msg, NetAddress(0), apiLif->getLocalAddress() );
+}
+
+//$$$$ DRAGON
+void RSVP_API::monitoringQuery(uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId, char* gri)
+{
+	uint8 msgType = Message::RefreshLocalId;
+	uint8 TTL = 1;
+	const NetAddress destAddr(destAddrIp);
+	SESSION_Object session(destAddr, (const uint16)tunnelId, (const uint32)extTunnelId);
+	Message msgQuery( msgType, TTL, session);
+	DRAGON_EXT_INFO_Object* dragonExtInfo = new DRAGON_EXT_INFO_Object;
+	dragonExtInfo->SetMonQuery(gri);
+	msgQuery.setDRAGON_EXT_INFO_Object(*dragonExtInfo);
+	apiLif->sendMessage( msgQuery, NetAddress(0), apiLif->getLocalAddress() );	
+	dragonExtInfo->destroy();
 }
 
 // the ip address in SENDER_TEMPLATE is set to 0, if no explicit one is given.
@@ -810,4 +825,8 @@ void zDeleteLocalId(void* api, uint16 type, uint16 value, uint16 tag)
 void zRefreshLocalId(void* api, uint16 type, uint16 value, uint16 tag)
 {
     ((RSVP_API *)api)->refreshLocalId(type, value, tag);
+}
+void zMonitoringQuery(void* api, uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId, char* gri)
+{
+	((RSVP_API *)api)->monitoringQuery(destAddrIp, tunnelId, extTunnelId, gri); //destIP, destPort, sourceIP, lspName
 }

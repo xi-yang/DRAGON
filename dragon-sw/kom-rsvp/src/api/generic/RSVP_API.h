@@ -270,12 +270,14 @@ public:
 	void sleep( TimeValue, const bool& endFlag = false );
 	void run( const bool& endFlag = false );
 	void changeRefreshTimeout( const TimeValue& ar ) { apiRefresh = ar; }
-       //@@@@ hacked
+       //$$$$ DRAGON
        void addLocalId(uint16 type, uint16 value, uint16 tag);
-       //@@@@ hacked
+       //$$$$ DRAGON
        void deleteLocalId(uint16 type, uint16 value, uint16 tag);
-       //@@@@ hacked
+       //$$$$ DRAGON
        void refreshLocalId(uint16 type, uint16 value, uint16 tag);
+       //$$$$ DRAGON
+	void monitoringQuery(uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId, char* gri);
 };
 
 //The following functions are called by outside C applications such as Zebra-OSPF-TE
@@ -290,6 +292,7 @@ extern "C" {
 	extern void zAddLocalId(void* api, uint16 type, uint16 value, uint16 tag);
 	extern void zDeleteLocalId(void* api, uint16 type, uint16 value, uint16 tag);
 	extern void zRefreshLocalId(void* api, uint16 type, uint16 value, uint16 tag);
+	extern void zMonitoringQuery(void* api, uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId, char* gri);
 }
 
 #endif /* _RSVP_API_h */
