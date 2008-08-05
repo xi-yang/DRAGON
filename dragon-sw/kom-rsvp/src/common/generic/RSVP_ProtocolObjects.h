@@ -1116,6 +1116,8 @@ struct _Switch_Generic_Info {
 #define MON_SWITCH_OPTION_UNTAGGED 		0x0010
 #define MON_SWITCH_OPTION_DTL	 		0x0020
 
+#define MON_SWITCH_OPTION_ERROR 			0x10000
+
 #define MAX_MON_PORT_NUM 128
 struct _Switch_Ethernet {
 	uint16 vlan_ingress;
@@ -1142,7 +1144,7 @@ struct _Switch_EoS_Subnet {
 typedef struct {
 	uint16 length;
 	uint8 type;	//DRAGON_EXT_SUBOBJ_MON_REPLY
-	uint8 sub_type; // 1: Ethernet 2: EoS Subnet Src 3: Eos Subnet Dest 4: EoS Subnet Src&Dest
+	uint8 sub_type; // 0: Error 1: Ethernet 2: EoS Subnet Src 3: Eos Subnet Dest 4: EoS Subnet Src&Dest
 	char gri[MAX_MON_NAME_LEN];
 	struct _Switch_Generic_Info switch_info;
 	uint32 switch_options;
@@ -1245,7 +1247,12 @@ public:
 		monReply.length = MON_REPLY_BASE_SIZE;
 		monReply.type = DRAGON_EXT_SUBOBJ_MON_REPLY;
 		monReply.switch_options = switch_options;
-		if ((switch_options&MON_SWITCH_OPTION_SUBNET) ==0)	{ //Ethernet switch
+		if ((switch_options&MON_SWITCH_OPTION_ERROR) != 0)
+		{
+			//monReply.length += 0;
+			monReply.sub_type = 0;
+		}
+		else if ((switch_options&MON_SWITCH_OPTION_SUBNET) ==0)	{ //Ethernet switch
 			assert(vlan_info != NULL);
 			monReply.length += sizeof(_Switch_Ethernet);
 			monReply.sub_type = 1;

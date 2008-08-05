@@ -120,6 +120,13 @@ void MessageProcessor::processMessage() {
             return;
 	}
 //Xi2007 <<
+//DRAGON Monitoring >>
+	if ( currentMessage.getMsgType() == Message::MonQuery) {
+		assert(currentMessage.getDRAGON_EXT_INFO_Object() != NULL && currentMessage.getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_MON_QUERY));
+		processDragonMonQuery(const_cast<SESSION_Object&>(currentMessage.getSESSION_Object()), currentMessage.getDRAGON_EXT_INFO_Object()->getMonQuery());
+		return;
+	}
+//DRAGON Monitoring <<
 #endif
 
 	if ( currentMessage.getMsgType() == Message::ResvConf ) {
@@ -882,7 +889,7 @@ void MessageProcessor::registerAPI( const SESSION_Object& session ) {
 	if ( currentSession ) currentSession->registerAPI();
 }
 
-//@@@@ Xi2007 >>
+// Xi2007 >>
 bool MessageProcessor::queryEnqueuedMessages( ) {
 	if ( !msgQueue)
 		return false;
@@ -921,6 +928,23 @@ bool MessageProcessor::queryEnqueuedMessages( ) {
 	return false;
 }
 
-//@@@@ Xi2007 <<
+// Xi2007 <<
+
+// DRAGON Monitoring >>
+void MessageProcessor::processDragonMonQuery(SESSION_Object& sessionObject, MON_Query_Subobject& monQuery)
+{
+	uint8 msgType = Message::MonReply;
+	uint8 TTL = 1;
+	Message replyMsg( msgType, TTL, sessionObject);
+	DRAGON_EXT_INFO_Object* dragonExtInfo = new DRAGON_EXT_INFO_Object;
+	MON_Reply_Subobject monReply;
+	//$$$$ find and retrieve information from switchCtrlSession
+
+	//$$$$ dragonExtInfo->setMonReply()
+	replyMsg.setDRAGON_EXT_INFO_Object(*dragonExtInfo);
+	RSVP::getApiServer().sendMessage(replyMsg);
+	dragonExtInfo->destroy();
+}
+// DRAGON Monitoring <<
 
 #endif

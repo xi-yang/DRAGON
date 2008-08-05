@@ -773,6 +773,9 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			buffer >> monReply.switch_info.switch_ip.s_addr >> monReply.switch_info.switch_port 
 				>> monReply.switch_info.switch_type >> monReply.switch_info.access_type
 				>> monReply.switch_options;
+			if ((monReply.switch_options & MON_SWITCH_OPTION_ERROR) != 0 ) { // Error
+				; //noop
+			}
 			if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) { // Ethernet Switch
 				buffer >> monReply.circuit_info.vlan_info.vlan_ingress >> monReply.circuit_info.vlan_info.num_ports_ingress;
 				for (j = 0; j < MAX_MON_PORT_NUM; j++)
@@ -860,7 +863,10 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 		buffer << o.monReply.switch_info.switch_ip.s_addr << o.monReply.switch_info.switch_port 
 			<< o.monReply.switch_info.switch_type << o.monReply.switch_info.access_type
 			<< o.monReply.switch_options;
-		if ((o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) { // Ethernet Switch
+		if ((o.monReply.switch_options & MON_SWITCH_OPTION_ERROR) != 0 ) { // Error
+			; // noop
+		}
+		else if ((o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) { // Ethernet Switch
 			buffer << o.monReply.circuit_info.vlan_info.vlan_ingress << o.monReply.circuit_info.vlan_info.num_ports_ingress;
 			for (i = 0; i < MAX_MON_PORT_NUM; i++)
 				buffer << o.monReply.circuit_info.vlan_info.ports_ingress[i];
@@ -940,8 +946,11 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 		os << ", switch_ip=" << String( inet_ntoa(o.monReply.switch_info.switch_ip) ) << ", switch_port=" << o.monReply.switch_info.switch_port 
 			<< ", switch_type=" << o.monReply.switch_info.switch_type << ", access_type="  <<o.monReply.switch_info.access_type
 			<< ", switch_options" << o.monReply.switch_options;
-		if ((o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0)
-			os << ", w/ ethernet_info";
+		if ((o.monReply.switch_options & MON_SWITCH_OPTION_ERROR) != 0 ) { // Error
+			os << ", query_error_code=" << (o.monReply.switch_options&0xffff);
+		}
+		else if ((o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0)
+			os << ", ethernet_info";
 		else {
 			if ((o.monReply.switch_options & MON_SWITCH_OPTION_SOURCE) != 0)
 				os << ", eos_subnet_info_src";

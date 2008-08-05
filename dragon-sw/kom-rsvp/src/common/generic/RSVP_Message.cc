@@ -856,11 +856,15 @@ void Message::checkStatus() const {
 	case Message::Ack:
 		break;
 #endif
-	//@@@@hacked
+
+	//$$$$ DRAGON Specific
 	case Message::AddLocalId:
 	case Message::DeleteLocalId:
 	case Message::RefreshLocalId:
+	case Message::MonQuery:
+	case Message::MonReply:
 		break;
+
 	default:
 		ERROR(2)( Log::Error, "ERROR in Message: unknown message type: ", (uint16)msgType );
 		status = Drop;

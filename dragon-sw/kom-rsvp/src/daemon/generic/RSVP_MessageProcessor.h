@@ -50,7 +50,7 @@ class LogicalInterfaceSet;
 
 typedef SortableList<PHopSB_Refresh,RSVP_HOP_Object> PHOP_RefreshList;
 
-//@@@@hack: Xi2007>>
+// hack: Xi2007>>
 class MessageEntry {
 
 	static ONetworkBuffer obuffer;
@@ -83,7 +83,7 @@ public:
 
 typedef SimpleList<MessageEntry*> MessageQueue;
 
-//@@@@hack: Xi2007<<
+//hack: Xi2007<<
 
 
 
@@ -118,9 +118,9 @@ class MessageProcessor {
 	bool B_Merge;
 	bool fullRefresh;
 
-//@@@@hack: Xi2007>>
+// Xi2007>>
 	MessageQueue* msgQueue;
-//@@@@hack: Xi2007<<
+// Xi2007<<
 
 public:
 #if defined(ONEPASS_RESERVATION)
@@ -189,10 +189,13 @@ public:
 	void sendResvErrMessage( uint8 errorFlags, uint8 errorCode, uint16 errorValue );
 	void sendPathErrMessage( uint8 errorCode, uint16 errorValue );
 
-//@@@@hack: Xi2007 for SubnetUNI>>
+// Xi2007 for SubnetUNI>>
 	bool queryEnqueuedMessages();
-//@@@@hack: Xi2007 for SubnetUNI<<
+// Xi2007 for SubnetUNI<<
 
+// DRAGON Monitoring >>
+	void processDragonMonQuery(SESSION_Object& sessionObject, MON_Query_Subobject& monQuery);
+// DRAGON Monitoring <<
 };
 
 #endif /* _RSVP_MessageProcessor_h_ */
