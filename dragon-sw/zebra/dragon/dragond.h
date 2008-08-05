@@ -767,6 +767,7 @@ extern void zInitRsvpResvRequest(void* api, struct _rsvp_upcall_parameter* upcal
 extern void zAddLocalId(void* api, u_int16_t type, u_int16_t value, u_int16_t tag);
 extern void zDeleteLocalId(void* api, u_int16_t type, u_int16_t value, u_int16_t tag);
 extern void zRefreshLocalId(void* api, u_int16_t type, u_int16_t value, u_int16_t tag);
-
+extern void zMonitoringQuery(void* api, u_int32_t destAddrIp, u_int16_t tunnelId, u_int32_t extTunnelId, char* gri);
+	
 #endif /* _ZEBRA_DRAGOND_H */
 
