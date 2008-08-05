@@ -1293,7 +1293,7 @@ public:
 			SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_NODE_LIST);
 			memset(&monNodeList, 0, sizeof(MON_NodeList_Suboject));
 			monNodeList.length = 8;
-			monNodeList.type = DRAGON_EXT_SUBOBJ_MON_QUERY;
+			monNodeList.type = DRAGON_EXT_SUBOBJ_MON_NODE_LIST;
 			monNodeList.sub_type = 0;
 		}
 		if (monNodeList.count == MAX_MON_NUM_NODES)
