@@ -272,6 +272,7 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 		else if (msg.getMsgType()==Message::PathErr || msg.getMsgType()==Message::ResvErr)
 		{
 		   zUpcallParam.errorSpecPara = new (struct _Error_Spec_Para); //mem leak
+		   zUpcallParam.errorSpecPara->nodeAddress.s_addr = msg.getERROR_SPEC_Object().getAddress().rawAddress();
 		   zUpcallParam.errorSpecPara->errFlags = msg.getERROR_SPEC_Object().getFlags();
 		   zUpcallParam.errorSpecPara->errCode = msg.getERROR_SPEC_Object().getCode();
 		   zUpcallParam.errorSpecPara->errValue = msg.getERROR_SPEC_Object().getValue();

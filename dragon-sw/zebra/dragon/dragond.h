@@ -509,6 +509,7 @@ struct _Dragon_ExtInfo_Para {
 
 
 struct _Error_Spec_Para {
+	in_addr nodeAddress;
 	u_int8_t errFlags;
 	u_int8_t errCode;
 	u_int16_t errValue;
