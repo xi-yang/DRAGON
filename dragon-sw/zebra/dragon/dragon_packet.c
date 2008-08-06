@@ -1250,6 +1250,15 @@ void  rsvpUpcall(void* para)
 				lsp->dragon.srcLocalId = lsp->common.DragonUni_Para->srcLocalId;
 				lsp->dragon.destLocalId = lsp->common.DragonUni_Para->destLocalId;
                      }
+                     /* update LSP baed on DRAGON_EXT_INFO Object */
+			if (p->dragonExtInfoPara && lsp->common.DragonExtInfo_Para) {
+				if (lsp->common.DragonExtInfo_Para->num_mon_nodes == 0)
+				{
+					lsp->common.DragonExtInfo_Para->num_mon_nodes = p->dragonExtInfoPara->num_mon_nodes;
+					lsp->common.DragonExtInfo_Para->mon_nodes = p->dragonExtInfoPara->mon_nodes; /* no allocation needed, memory reused */
+				}
+				lsp->common.DragonUni_Para = p->dragonUniPara;
+			}
 
 			if (lsp->narb_fd && (!(lsp->flag & LSP_FLAG_RECEIVER)))
 			{

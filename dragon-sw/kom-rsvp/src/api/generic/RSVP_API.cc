@@ -271,7 +271,7 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 		}
 		else if (msg.getMsgType()==Message::PathErr || msg.getMsgType()==Message::ResvErr)
 		{
-		   zUpcallParam.errorSpecPara = new (struct _Error_Spec_Para);
+		   zUpcallParam.errorSpecPara = new (struct _Error_Spec_Para); //mem leak
 		   zUpcallParam.errorSpecPara->errFlags = msg.getERROR_SPEC_Object().getFlags();
 		   zUpcallParam.errorSpecPara->errCode = msg.getERROR_SPEC_Object().getCode();
 		   zUpcallParam.errorSpecPara->errValue = msg.getERROR_SPEC_Object().getValue();
@@ -279,7 +279,7 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 
 		if(msg.getDRAGON_UNI_Object())
 		{
-		   zUpcallParam.dragonUniPara = new (struct _Dragon_Uni_Para);
+		   zUpcallParam.dragonUniPara = new (struct _Dragon_Uni_Para); //mem leak
 		   zUpcallParam.dragonUniPara->srcLocalId = msg.getDRAGON_UNI_Object()->getSrcTNA().local_id;
 		   zUpcallParam.dragonUniPara->destLocalId = msg.getDRAGON_UNI_Object()->getDestTNA().local_id;
 		   zUpcallParam.dragonUniPara->vlanTag = msg.getDRAGON_UNI_Object()->getVlanTag().vtag;
@@ -295,12 +295,18 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 
 		if(msg.getDRAGON_EXT_INFO_Object())
 		{
-		   zUpcallParam.dragonExtInfoPara = new (struct _Dragon_ExtInfo_Para);
+		   zUpcallParam.dragonExtInfoPara = new (struct _Dragon_ExtInfo_Para); //mem leak
 		   memset(zUpcallParam.dragonExtInfoPara, 0, sizeof(struct _Dragon_ExtInfo_Para));
 		   if (msg.getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID))
 		   {
 			   zUpcallParam.dragonExtInfoPara->ucid = msg.getDRAGON_EXT_INFO_Object()->getServiceConfirmationID().ucid;
 			   zUpcallParam.dragonExtInfoPara->seqnum = msg.getDRAGON_EXT_INFO_Object()->getServiceConfirmationID().seqnum;
+		   }
+		   if (msg.getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_MON_NODE_LIST))
+		   {
+			   zUpcallParam.dragonExtInfoPara->num_mon_nodes = msg.getDRAGON_EXT_INFO_Object()->getMonNodeList().count;
+			   zUpcallParam.dragonExtInfoPara->mon_nodes = new (struct in_addr)[msg.getDRAGON_EXT_INFO_Object()->getMonNodeList().count]; //mem reused by lsp->common->dragonExtInfoPara
+			   memcpy(zUpcallParam.dragonExtInfoPara->mon_nodes, msg.getDRAGON_EXT_INFO_Object()->getMonNodeList().node_list, sizeof(struct in_addr)*msg.getDRAGON_EXT_INFO_Object()->getMonNodeList().count);
 		   }
 		   zUpcallParam.dragonExtInfo = (void*)msg.getDRAGON_EXT_INFO_Object();
 		}
