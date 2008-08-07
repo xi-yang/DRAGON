@@ -1298,6 +1298,11 @@ public:
 		}
 		if (monNodeList.count == MAX_MON_NUM_NODES)
 			return false;
+		//loop check
+		for (int i = 0; i < monNodeList.count; i++)
+			if (monNodeList.node_list[i].s_addr == node_ip)
+				return false;
+		//add node
 		monNodeList.length += sizeof(in_addr);
 		monNodeList.node_list[monNodeList.count].s_addr = node_ip;
 		monNodeList.count++;
