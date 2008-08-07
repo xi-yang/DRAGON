@@ -1299,7 +1299,7 @@ public:
 		if (monNodeList.count == MAX_MON_NUM_NODES)
 			return false;
 		//loop check
-		int i;
+		uint32 i;
 		for (i = 0; i < monNodeList.count; i++)
 			if (monNodeList.node_list[i].s_addr == node_ip)
 				return false;

@@ -306,7 +306,7 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 		   if (msg.getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_MON_NODE_LIST))
 		   {
 			   zUpcallParam.dragonExtInfoPara->num_mon_nodes = msg.getDRAGON_EXT_INFO_Object()->getMonNodeList().count;
-			   zUpcallParam.dragonExtInfoPara->mon_nodes = new (struct in_addr)[msg.getDRAGON_EXT_INFO_Object()->getMonNodeList().count]; //mem reused by lsp->common->dragonExtInfoPara
+			   zUpcallParam.dragonExtInfoPara->mon_nodes = (struct in_addr*)(new char[sizeof(struct in_addr)*msg.getDRAGON_EXT_INFO_Object()->getMonNodeList().count]); //mem reused by lsp->common->dragonExtInfoPara
 			   memcpy(zUpcallParam.dragonExtInfoPara->mon_nodes, msg.getDRAGON_EXT_INFO_Object()->getMonNodeList().node_list, sizeof(struct in_addr)*msg.getDRAGON_EXT_INFO_Object()->getMonNodeList().count);
 		   }
 		   zUpcallParam.dragonExtInfo = (void*)msg.getDRAGON_EXT_INFO_Object();
