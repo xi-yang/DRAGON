@@ -1299,7 +1299,8 @@ public:
 		if (monNodeList.count == MAX_MON_NUM_NODES)
 			return false;
 		//loop check
-		for (int i = 0; i < monNodeList.count; i++)
+		int i;
+		for (i = 0; i < monNodeList.count; i++)
 			if (monNodeList.node_list[i].s_addr == node_ip)
 				return false;
 		//add node
