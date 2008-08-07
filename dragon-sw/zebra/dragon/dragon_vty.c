@@ -2089,6 +2089,11 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
               }
 
               vty_out(vty, "Status: %s %s", value_to_string(&conv_lsp_status, lsp->status), VTY_NEWLINE);
+		if (lsp->error_spec.errCode != 0)
+		{
+			vty_out(vty, "Error Spec: node=%s, flags=%d, code=%d, value=%d %s", inet_ntoa(lsp->error_spec.nodeAddress), lsp->error_spec.errFlags, lsp->error_spec.errCode, lsp->error_spec.errValue, VTY_NEWLINE); 
+		}
+
 	}
 	else
 	{
@@ -2122,13 +2127,12 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 				    value_to_string (&conv_gpid, lsp->common.LabelRequest_Para.data.gmpls.gPid));
 
 		zlog_info("Status: %s", value_to_string(&conv_lsp_status, lsp->status));
+		if (lsp->error_spec.errCode != 0)
+		{
+			zlog_info("Error Spec: node=%s, flags=%d, code=%d, value=%d", inet_ntoa(lsp->error_spec.nodeAddress), lsp->error_spec.errFlags, lsp->error_spec.errCode, lsp->error_spec.errValue); 
+		}
 	}
 
-	if (lsp->error_spec.errCode != 0)
-	{
-		int iflags = lsp->error_spec.errFlags, icode = lsp->error_spec.errCode, ivalue = lsp->error_spec.errValue;
-		vty_out(vty, "Error Spec: node=%s, flags=%d, code=%d, value=%d %s", inet_ntoa(lsp->error_spec.nodeAddress), iflags, icode, ivalue, VTY_NEWLINE); 
-	}
 }
 
 DEFUN (dragon_show_lsp,
