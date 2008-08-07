@@ -2125,7 +2125,10 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 	}
 
 	if (lsp->error_spec.errCode != 0)
-		vty_out(vty, "Error Spec: node=%s, flags=%d, code=%d, value=%d %s", inet_ntoa(lsp->error_spec.nodeAddress), lsp->error_spec.errFlags, lsp->error_spec.errCode, lsp->error_spec.errValue, VTY_NEWLINE); 
+	{
+		int iflags = lsp->error_spec.errFlags, icode = lsp->error_spec.errCode, ivalue = lsp->error_spec.errValue;
+		vty_out(vty, "Error Spec: node=%s, flags=%d, code=%d, value=%d %s", inet_ntoa(lsp->error_spec.nodeAddress), iflags, icode, ivalue, VTY_NEWLINE); 
+	}
 }
 
 DEFUN (dragon_show_lsp,
