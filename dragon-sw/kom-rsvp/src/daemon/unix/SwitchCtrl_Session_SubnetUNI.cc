@@ -1118,7 +1118,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName, bool tunnelMod
     cmdString += ":";
     cmdString += (const char*)ctag;
     cmdString += "::alias=";
-    cmdString += lspName;
+    cmdString += currentLspName;
     cmdString += ",pst=IS,suppttp=";
     cmdString += suppTtp;
     if (tunnelMode)
@@ -1468,7 +1468,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         }
         sprintf( bufCmd, "ent-snc-stspc:%s:%s-%d,%s:%s::name=%s-%d,type=dynamic,rmnode=%s,lep=gtp_nametype,alias=%s,%sconndir=bi_direction,meshrst=no,prtt=aps_vlsr_unprotected,pst=is;",
             (const char*)subnetUniSrc.node_name, gtpName.chars(), group+1, destTimeslotsStringArray[group].chars(), ctag, sncName.chars(), group+1, 
-                (const char*)subnetUniDest.node_name, lspName.chars(), dtl_cstr);
+                (const char*)subnetUniDest.node_name, currentLspName.chars(), dtl_cstr);
 
         if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
@@ -1720,7 +1720,7 @@ bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpNam
     for (group = 0; group < numGroups; group++)
     {
         sprintf( bufCmd, "ent-crs-stspc::fromendpoint=%s-%d,toendpoint=%s-%d:%s::name=%s-%d,fromtype=gtp,totype=gtp, alias=%s;",
-            gtpName.chars(), group+1, destGtpName.chars(), group+1, ctag, crsName.chars(), group+1, lspName.chars());
+            gtpName.chars(), group+1, destGtpName.chars(), group+1, ctag, crsName.chars(), group+1, currentLspName.chars());
 
         if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 

@@ -443,7 +443,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Ingress) for ", vlsr.switchID);
 				//Create SubnetUNI Session (as Source)
 				SwitchCtrl_Session_SubnetUNI::getSessionNameString(sName, subnetUniDataSrc.tna_ipv4, msg.getSESSION_ATTRIBUTE_Object().getSessionName(), getDestAddress().rawAddress(), true);
-				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(const_cast<String&>(sName), NetAddress(subnetUniDataSrc.uni_nid_ipv4), true));                       
+				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(const_cast<String&>(sName), NetAddress(subnetUniDataSrc.uni_nid_ipv4), true));
 				((SwitchCtrl_Session_SubnetUNI*)ssNew)->setLspName(msg.getSESSION_ATTRIBUTE_Object().getSessionName());
 				RSVP_Global::switchController->addSession(ssNew);
 				//Store SubnetUNI Session handle ...
@@ -591,7 +591,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					return false;
 				}
 				else{
-					ssNew->setLspName(msg.getSESSION_ATTRIBUTE_Object().getSessionName());
 					RSVP_Global::switchController->addSession(ssNew);
 				}
 			}

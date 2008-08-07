@@ -161,11 +161,6 @@ public:
 	bool isValidSession() const {return active;}
 	bool hasVLSRouteConflictonSwitch(struct _vlsr_route_& vlsr);
 
-	virtual void setLspName(const String& name) 
-	{ 
-		lspName = name; 
-	}
-
 	//VTAG mutral-exclusion feature --> Review
 	//bool resetVtagBitMask(uint8* bitmask); //reset bits corresponding to existing vlans
 
@@ -224,7 +219,7 @@ public:
 	virtual bool hook_createPortToIDRefTable(portRefIDList &convList) { return true; }
 protected:
 	String sessionName;
-	String lspName;
+	String currentLspName;
 	NetAddress switchInetAddr;
 	struct snmp_session* snmpSessionHandle;  //snmp_session is defined in net-snmp package 
 	bool active;	// Indicator: the session is active

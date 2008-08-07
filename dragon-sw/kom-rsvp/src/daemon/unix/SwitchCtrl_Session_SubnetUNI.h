@@ -63,11 +63,11 @@ public:
 	SwitchCtrl_Session_SubnetUNI(const String& sName, const NetAddress& swAddr, bool isSrc=true): 
 		CLI_Session(sName, swAddr), RSVP_API(), isSource(isSrc) { internalInit(); }
 	virtual ~SwitchCtrl_Session_SubnetUNI();
-	virtual void setLspName(const String& name) 
+	void setLspName(const String& name) 
 	{ 
-		lspName = name; 
+		currentLspName = name; 
 		//Replace colon, semicolon and comma with dash
-		lspName.replacechar(';', '-');	lspName.replacechar(':', '-');	lspName.replacechar(',', '-');
+		currentLspName.replacechar(';', '-');	currentLspName.replacechar(':', '-');	currentLspName.replacechar(',', '-');
 	}
 	bool isSourceClient() { return isSource; }
 	bool isSourceDestSame() { return (subnetUniSrc.uni_nid_ipv4 == subnetUniDest.uni_nid_ipv4); }
