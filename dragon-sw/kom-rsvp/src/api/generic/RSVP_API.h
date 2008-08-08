@@ -60,6 +60,7 @@ struct _rsvp_upcall_parameter {
 	struct _Dragon_Uni_Para* dragonUniPara;
 	struct _Dragon_ExtInfo_Para* dragonExtInfoPara;
 	struct _Error_Spec_Para* errorSpecPara;
+	MON_Reply_Subobject* monReplyPara;
 	void* sendTSpec;  //Sender TSpec
 	void* adSpec;
 	void* session;	//RSVP_API::SessionId

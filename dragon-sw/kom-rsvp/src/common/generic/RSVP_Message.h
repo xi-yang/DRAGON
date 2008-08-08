@@ -45,7 +45,7 @@ class Message {
 
 public:
 	enum Type { InitAPI = 0, Path = 1, Resv, PathErr, ResvErr, PathTear, ResvTear, ResvConf, Ack = 13, Srefresh = 15, Load = 126, PathResv = 127,
-				  RemoveAPI = 255, /*hacked*/ AddLocalId = 201, DeleteLocalId = 202, RefreshLocalId = 203, MonQuery = 204, MonReply = 205,};
+				  RemoveAPI = 255, /*DRAGON extension-->*/ AddLocalId = 201, DeleteLocalId = 202, RefreshLocalId = 203, MonQuery = 204, MonReply = 205,};
 	enum Flag { RefreshReduction = 0x01 };
 	enum Status { Correct, Drop, Reject };
 
