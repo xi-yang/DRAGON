@@ -1306,6 +1306,11 @@ void  rsvpUpcall(void* para)
 			if (p->errorSpecPara != NULL)
 				lsp->error_spec = *p->errorSpecPara;
 			break;
+		case MonReply: /* For monitoring service API */
+			/* search dmaster->mon_apiserver_list for apiserver matching ucid */
+			/* post object to  the mon_apiserver->writeQueue, and turn on write thread*/
+			/* mon_apiserver will rearrange / pack the information into the API message packet*/
+			return;
 		default:
 			break;
 	}

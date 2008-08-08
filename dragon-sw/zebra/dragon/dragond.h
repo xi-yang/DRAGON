@@ -367,7 +367,9 @@ enum _RSVP_MsgType {
 	Path = 1, 
 	Resv, PathErr, ResvErr, PathTear, ResvTear, 
 	ResvConf, Ack = 13, Srefresh = 15, Load = 126, 
-	PathResv = 127, RemoveAPI = 255,
+	PathResv = 127, 
+	MonQuery = 204, MonReply = 205,  /*DRAGON extension*/
+	RemoveAPI = 255,
 };
 
 
@@ -507,7 +509,6 @@ struct _Dragon_ExtInfo_Para {
 	struct in_addr *mon_nodes;
 };
 
-
 struct _Error_Spec_Para {
 	struct in_addr nodeAddress;
 	u_int8_t errFlags;
@@ -515,20 +516,63 @@ struct _Error_Spec_Para {
 	u_int16_t errValue;
 };
 
+struct _Switch_Generic_Info {
+	struct in_addr switch_ip;
+	u_int32_t switch_port;
+	u_int16_t switch_type;
+	u_int16_t access_type;
+};
+#define MAX_MON_PORT_NUM 128
+#define MAX_MON_NAME_LEN 128
+struct _Ethernet_Circuit_Info {
+	u_int16_t vlan_ingress;
+	u_int16_t num_ports_ingress;
+	u_int16_t ports_ingress[MAX_MON_PORT_NUM];
+	u_int16_t vlan_egress;
+	u_int16_t num_ports_egress;
+	u_int16_t ports_egress[MAX_MON_PORT_NUM];
+	u_int32_t qos_options; //QoS parameters --> TBD
+};
+struct _Subnet_Circuit_Info {
+	u_int8_t subnet_id;
+	u_int8_t first_timeslot;
+	u_int16_t port;
+	float ethernet_bw;
+	char vcg_name[MAX_MON_NAME_LEN];
+	char eflow_in_name[MAX_MON_NAME_LEN]; //_unicast + _multicast for untagged!
+	char eflow_out_name[MAX_MON_NAME_LEN]; //_unicast + _multicast for untagged!
+	char snc_crs_name[MAX_MON_NAME_LEN];
+	char dtl_name[MAX_MON_NAME_LEN];
+};
+struct _MON_Reply_Para {
+	u_int16_t length;
+	u_int8_t type;
+	u_int8_t sub_type;
+	u_int32_t ucid;
+	u_int32_t seqnum;
+	char gri[MAX_MON_NAME_LEN];
+	struct _Switch_Generic_Info switch_info;
+	u_int32_t switch_options;
+	union {
+		struct _Ethernet_Circuit_Info vlan_info;
+		struct _Subnet_Circuit_Info eos_info[2];
+	} circuit_info;
+};
+
 struct _sessionParameters {
-	//Mandatory parameters
+	/*Mandatory parameters*/
 	struct _LabelRequest_Para LabelRequest_Para;
 	struct _Session_Para Session_Para;
-	//Optional parameters
+	/*Optional parameters*/
 	struct _ADSpec_Para* ADSpec_Para;
 	struct _GenericTSpec_Para* GenericTSpec_Para;
 	struct _SonetTSpec_Para* SonetTSpec_Para;
 #define MAX_ERO_NUMBER	32
-	u_int8_t ERONodeNumber;	// 32 in Maximum
+	u_int8_t ERONodeNumber;	/* 32 in Maximum */
 	struct _EROAbstractNode_Para* EROAbstractNode_Para;
 	struct _Dragon_Uni_Para* DragonUni_Para;
 	struct _Dragon_ExtInfo_Para* DragonExtInfo_Para;
-	u_int8_t labelSetSize;	// 8 in maximum
+	u_int8_t labelSetSize;	/* 8 in maximum */
 #define MAX_LABEL_SET_SIZE	8
 	u_int32_t* labelSet;
 	struct _SessionAttribute_Para* SessionAttribute_Para;
@@ -548,27 +592,28 @@ u_int16_t destPort;
 	 && (X->common.Session_Para.destPort & 0xffff) !=  ANY_VTAG )
 
 struct _rsvp_upcall_parameter {
-	struct in_addr destAddr;	//tunnelAddress
-	struct in_addr srcAddr;	//extendedTunnelID
-	u_int16_t srcPort;	//lsp-id
-	u_int16_t destPort;	//tunnelID
-	const char* name;		//Name of the LSP
-	u_int32_t upstreamLabel;		//!=0 if bi-dir
-	u_int32_t bandwidth;	//bandwidth
-	u_int8_t lspEncodingType; //LSP encoding type
-	u_int8_t switchingType; // LSP switching type
-	u_int16_t gPid;		//G-Pid
+	struct in_addr destAddr;	/*tunnelAddress*/
+	struct in_addr srcAddr;	/*extendedTunnelID*/
+	u_int16_t srcPort;	/*lsp-id*/
+	u_int16_t destPort;	/*tunnelID*/
+	const char* name;		/*Name of the LSP*/
+	u_int32_t upstreamLabel;		/*!=0 if bi-dir*/
+	u_int32_t bandwidth;	/*bandwidth*/
+	u_int8_t lspEncodingType; /*LSP encoding type*/
+	u_int8_t switchingType; /* LSP switching type*/
+	u_int16_t gPid;		/*G-Pid*/
 	struct _Dragon_Uni_Para* dragonUniPara;
 	struct _Dragon_ExtInfo_Para* dragonExtInfoPara;
 	struct _Error_Spec_Para* errorSpecPara;
-	void* sendTSpec;  //Sender TSpec
+	struct _MON_Reply_Para* monReplyPara;
+	void* sendTSpec;  /*Sender TSpec*/
 	void* adSpec;
-	void* session;	//RSVP_API::SessionId
+	void* session;	/*RSVP_API::SessionId*/
 	void* senderTemplate;
 	void* dragonUni;
 	void* dragonExtInfo;
 	u_int32_t vlanTag;
-	u_int8_t code;			//error/success code
+	u_int8_t code;			/*error/success code*/
 };
 typedef void (*zUpcall)(void* para);
 
