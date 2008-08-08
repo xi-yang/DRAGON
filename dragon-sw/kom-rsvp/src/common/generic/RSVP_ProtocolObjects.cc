@@ -760,6 +760,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			monQuery.length = tlvLength;
 			monQuery.type = tlvType;
 			monQuery.sub_type = tlvSubType;
+			buffer >> monQuery.ucid >> monQuery.seqnum;
 			for (j = 0; j < MAX_MON_NAME_LEN; j++)
 				buffer >> monQuery.gri[j];
 			SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_QUERY);
@@ -770,6 +771,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			monReply.length = tlvLength;
 			monReply.type = tlvType;
 			monReply.sub_type = tlvSubType;
+			buffer >> monReply.ucid >> monReply.seqnum;
 			for (j = 0; j < MAX_MON_NAME_LEN; j++)
 				buffer >> monReply.gri[j];
 			buffer >> monReply.switch_info.switch_ip.s_addr >> monReply.switch_info.switch_port 
@@ -866,6 +868,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_QUERY)) {
 		int i;
 		buffer << o.monQuery.length << o.monQuery.type << o.monQuery.sub_type;
+		buffer << o.monQuery.ucid << o.monQuery.seqnum;
 		for (i = 0; i < MAX_MON_NAME_LEN; i++)
 			buffer << o.monQuery.gri[i];
 	}
@@ -873,6 +876,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_REPLY)) {
 		int i;
 		buffer << o.monReply.length << o.monReply.type << o.monReply.sub_type;
+		buffer << o.monReply.ucid << o.monReply.seqnum;
 		for (i = 0; i < MAX_MON_NAME_LEN; i++)
 			buffer << o.monReply.gri[i];
 		buffer << o.monReply.switch_info.switch_ip.s_addr << o.monReply.switch_info.switch_port 
@@ -958,13 +962,12 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 	}
 /************** vvv Extension for DRAGON Monitoring vvv *****************/
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_QUERY)) {
-		os << "(4: MonQuery: gri=";
-		os << o.monQuery.gri;
-		os << ")";
+		os << "(4: MonQuery: ucid=" << o.monQuery.ucid << ", seqnum" << o.monQuery.seqnum;
+		os  << ", gri=" << o.monQuery.gri << ")";
 	}
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_REPLY)) {
-		os << "(5: MonReply: gri=";
-		os << o.monReply.gri;
+		os << "(5: MonReply: ucid=" << o.monQuery.ucid << ", seqnum" << o.monQuery.seqnum;
+		os  << ", gri=" << o.monReply.gri;
 		os << ", switch_ip=" << String( inet_ntoa(o.monReply.switch_info.switch_ip) ) << ", switch_port=" << o.monReply.switch_info.switch_port 
 			<< ", switch_type=" << o.monReply.switch_info.switch_type << ", access_type="  <<o.monReply.switch_info.access_type
 			<< ", switch_options" << o.monReply.switch_options;

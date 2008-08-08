@@ -1145,9 +1145,6 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
     SwitchCtrlSessionList::Iterator it;
     bool foundSession = false;
 
-    monReply.type = DRAGON_EXT_SUBOBJ_MON_REPLY;
-    strncpy(monReply.gri, monQuery.gri, MAX_MON_NAME_LEN);
-
     if (strcmp(monQuery.gri, "none") == 0) {
         if (this->sessionList.size() == 0) {
              errCode = 1; //no switch control session
@@ -1177,7 +1174,7 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
                                      goto _error;
                                  }
                                  monReply.sub_type = 1; //Ethernet
-                                 monReply.length = MON_REPLY_BASE_SIZE + sizeof(struct _Switch_Ethernet);
+                                 monReply.length = MON_REPLY_BASE_SIZE + sizeof(struct _Ethernet_Circuit_Info);
                                  //$$$ get VLAN and ports from
                                  VLSR_Route& vlsrt = vlsrtList.front();
                                  SimpleList<uint32> portList;

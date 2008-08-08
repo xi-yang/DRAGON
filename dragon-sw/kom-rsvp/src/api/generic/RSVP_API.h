@@ -281,7 +281,7 @@ public:
        //$$$$ DRAGON
        void refreshLocalId(uint16 type, uint16 value, uint16 tag);
        //$$$$ DRAGON
-	void monitoringQuery(uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId, char* gri);
+	void monitoringQuery(uint32 ucid, uint32 seqnum, char* gri, uint32 destAddrIp=0, uint16 tunnelId=0, uint32 extTunnelId=0);
 };
 
 //The following functions are called by outside C applications such as Zebra-OSPF-TE

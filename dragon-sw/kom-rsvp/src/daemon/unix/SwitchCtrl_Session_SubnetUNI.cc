@@ -2273,7 +2273,7 @@ bool SwitchCtrl_Session_SubnetUNI::getMonSwitchInfo(MON_Reply_Subobject& monRepl
 
 bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monReply)
 {
-    _Switch_EoS_Subnet* eosInfo = NULL;
+    _Subnet_Circuit_Info* eosInfo = NULL;
     SubnetUNI_Data* subnetUniData = NULL;
     if (isSource)
     {

@@ -1100,6 +1100,8 @@ typedef struct {
 	uint16 length;
 	uint8 type;	//DRAGON_EXT_SUBOBJ_MON_QUERY
 	uint8 sub_type; //0
+	uint32 ucid;
+	uint32 seqnum;
 	char gri[MAX_MON_NAME_LEN];
 } MON_Query_Subobject;
 
@@ -1118,7 +1120,7 @@ struct _Switch_Generic_Info {
 #define MON_SWITCH_OPTION_ERROR 				0x10000
 
 #define MAX_MON_PORT_NUM 128
-struct _Switch_Ethernet {
+struct _Ethernet_Circuit_Info {
 	uint16 vlan_ingress;
 	uint16 num_ports_ingress;
 	uint16 ports_ingress[MAX_MON_PORT_NUM];
@@ -1128,7 +1130,7 @@ struct _Switch_Ethernet {
 	uint32 qos_options; //QoS parameters --> TBD
 };
 
-struct _Switch_EoS_Subnet {
+struct _Subnet_Circuit_Info {
 	uint8 subnet_id;
 	uint8 first_timeslot;
 	uint16 port;
@@ -1144,16 +1146,18 @@ typedef struct {
 	uint16 length;
 	uint8 type;	//DRAGON_EXT_SUBOBJ_MON_REPLY
 	uint8 sub_type; // 0: Error 1: Ethernet 2: EoS Subnet Src 3: Eos Subnet Dest 4: EoS Subnet Src&Dest
+	uint32 ucid;
+	uint32 seqnum;
 	char gri[MAX_MON_NAME_LEN];
 	struct _Switch_Generic_Info switch_info;
 	uint32 switch_options;
 	union {
-		struct _Switch_Ethernet vlan_info;
-		struct _Switch_EoS_Subnet eos_info[2];
+		struct _Ethernet_Circuit_Info vlan_info;
+		struct _Subnet_Circuit_Info eos_info[2];
 	} circuit_info;
 } MON_Reply_Subobject;
 
-#define MON_REPLY_BASE_SIZE (8+MAX_MON_NAME_LEN+sizeof(_Switch_Generic_Info))
+#define MON_REPLY_BASE_SIZE (16+MAX_MON_NAME_LEN+sizeof(_Switch_Generic_Info))
 
 #define MAX_MON_NUM_NODES 20
 typedef struct {
@@ -1242,22 +1246,26 @@ public:
 
 /************** vvv Extension for DRAGON Monitoring vvv *****************/
 
-	void SetMonQuery(char* gri) {
+	void SetMonQuery(uint32 ucid, uint32 seqnum, char* gri) {
 		SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_QUERY);
 		memset(&monQuery, 0, sizeof(MON_Query_Subobject));
 		monQuery.length = sizeof(MON_Query_Subobject);
 		monQuery.type = DRAGON_EXT_SUBOBJ_MON_QUERY;
 		monQuery.sub_type = 0;
+		monQuery.ucid = ucid;
+		monQuery.seqnum = seqnum;
 		strncpy(monQuery.gri, gri, MAX_MON_NAME_LEN-1);
 	}
 	MON_Query_Subobject& getMonQuery() { return monQuery; }
 	void SetMonReply(MON_Reply_Subobject& obj) { monReply = obj; }
-	void SetMonReply(char* gri,  _Switch_Generic_Info* switch_info, uint32 switch_options, 
-	    _Switch_Ethernet* vlan_info=NULL, _Switch_EoS_Subnet* eos_subnet_src=NULL, _Switch_EoS_Subnet* eos_subnet_dest=NULL) {
+	void SetMonReply(uint32 ucid, uint32 seqnum, char* gri,  _Switch_Generic_Info* switch_info, uint32 switch_options, 
+	    _Ethernet_Circuit_Info* vlan_info=NULL, _Subnet_Circuit_Info* eos_subnet_src=NULL, _Subnet_Circuit_Info* eos_subnet_dest=NULL) {
 		SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_REPLY);
 		memset(&monReply, 0, sizeof(MON_Reply_Subobject));
 		monReply.length = MON_REPLY_BASE_SIZE;
 		monReply.type = DRAGON_EXT_SUBOBJ_MON_REPLY;
+		monQuery.ucid = ucid;
+		monQuery.seqnum = seqnum;
 		monReply.switch_options = switch_options;
 		if ((switch_options&MON_SWITCH_OPTION_ERROR) != 0)
 		{
@@ -1266,22 +1274,22 @@ public:
 		}
 		else if ((switch_options&MON_SWITCH_OPTION_SUBNET) ==0)	{ //Ethernet switch
 			assert(vlan_info != NULL);
-			monReply.length += sizeof(_Switch_Ethernet);
+			monReply.length += sizeof(_Ethernet_Circuit_Info);
 			monReply.sub_type = 1;
 			monReply.circuit_info.vlan_info = * vlan_info;
 		}
 		else if ((switch_options&MON_SWITCH_OPTION_SOURCE) !=0 && (switch_options&MON_SWITCH_OPTION_DESTINATION) !=0)
 		{
 			assert(eos_subnet_src != NULL && eos_subnet_dest != NULL);
-			monReply.length += sizeof(_Switch_EoS_Subnet) * 2;
+			monReply.length += sizeof(_Subnet_Circuit_Info) * 2;
 			monReply.sub_type = 4;
 			monReply.circuit_info.eos_info[0] = *eos_subnet_src;
 			monReply.circuit_info.eos_info[1] = *eos_subnet_dest;
 		}
 		else {
-			_Switch_EoS_Subnet* eos_info = ((switch_options&MON_SWITCH_OPTION_SOURCE) !=0 ? eos_subnet_src : eos_subnet_dest);
+			_Subnet_Circuit_Info* eos_info = ((switch_options&MON_SWITCH_OPTION_SOURCE) !=0 ? eos_subnet_src : eos_subnet_dest);
 			assert (eos_info != NULL);
-			monReply.length += sizeof(_Switch_EoS_Subnet);
+			monReply.length += sizeof(_Subnet_Circuit_Info);
 			monReply.sub_type = ((switch_options&MON_SWITCH_OPTION_SOURCE) !=0 ? 2 : 3);
 			monReply.circuit_info.eos_info[0] = *eos_info;			
 		}

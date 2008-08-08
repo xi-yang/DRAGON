@@ -939,8 +939,14 @@ void MessageProcessor::processDragonMonQuery(SESSION_Object& sessionObject, MON_
 	DRAGON_EXT_INFO_Object* dragonExtInfo = new DRAGON_EXT_INFO_Object;
 	MON_Reply_Subobject monReply;
 	memset (&monReply, 0, sizeof(MON_Reply_Subobject));
+       monReply.type = DRAGON_EXT_SUBOBJ_MON_REPLY;
+	monReply.ucid = monQuery.ucid;
+	monReply.seqnum = monQuery.seqnum;
+       strncpy(monReply.gri, monQuery.gri, MAX_MON_NAME_LEN-1);
+
 	//$$$$ retrieve switch/circuit information
 	RSVP_Global::switchController->getMonitoringInfo(monQuery, monReply);
+
 	dragonExtInfo->SetMonReply(monReply);
 	replyMsg.setDRAGON_EXT_INFO_Object(*dragonExtInfo);
 	RSVP::getApiServer().sendMessage(replyMsg);

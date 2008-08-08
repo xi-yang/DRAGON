@@ -399,7 +399,7 @@ void RSVP_API::refreshLocalId(uint16 type, uint16 value, uint16 tag)
 }
 
 //$$$$ DRAGON
-void RSVP_API::monitoringQuery(uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId, char* gri)
+void RSVP_API::monitoringQuery(uint32 ucid, uint32 seqnum, char* gri, uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId)
 {
 	uint8 msgType = Message::RefreshLocalId;
 	uint8 TTL = 1;
@@ -407,7 +407,7 @@ void RSVP_API::monitoringQuery(uint32 destAddrIp, uint16 tunnelId, uint32 extTun
 	SESSION_Object session(destAddr, (const uint16)tunnelId, (const uint32)extTunnelId);
 	Message msgQuery( msgType, TTL, session);
 	DRAGON_EXT_INFO_Object* dragonExtInfo = new DRAGON_EXT_INFO_Object;
-	dragonExtInfo->SetMonQuery(gri);
+	dragonExtInfo->SetMonQuery(ucid, seqnum, gri);
 	msgQuery.setDRAGON_EXT_INFO_Object(*dragonExtInfo);
 	apiLif->sendMessage( msgQuery, NetAddress(0), apiLif->getLocalAddress() );	
 	dragonExtInfo->destroy();
@@ -845,7 +845,7 @@ void zRefreshLocalId(void* api, uint16 type, uint16 value, uint16 tag)
 {
     ((RSVP_API *)api)->refreshLocalId(type, value, tag);
 }
-void zMonitoringQuery(void* api, uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId, char* gri)
+void zMonitoringQuery(void* api, uint32 ucid, uint32 seqnum, char* gri, uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId)
 {
-	((RSVP_API *)api)->monitoringQuery(destAddrIp, tunnelId, extTunnelId, gri); //destIP, destPort, sourceIP, lspName
+	((RSVP_API *)api)->monitoringQuery(ucid, seqnum, gri, destAddrIp, tunnelId, extTunnelId); // last four argments: lspName, destIP, destPort, sourceIP
 }
