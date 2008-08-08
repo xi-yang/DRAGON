@@ -563,17 +563,13 @@ bool SwitchCtrl_Session::hasVLSRouteConflictonSwitch(VLSR_Route& vlsr)
 
 bool SwitchCtrl_Session::getMonSwitchInfo(MON_Reply_Subobject& monReply)
 {
+    monReply.switch_options = 0;
     if (switchInetAddr.rawAddress() == 0)
-        return false;
+        goto _error;
     monReply.switch_info.switch_ip.s_addr = switchInetAddr.rawAddress();
-    if (this->sessionName.leftequal("subnet-")) { //@@@@ move to subnetUniSwitchControlSession ?
-        monReply.switch_info.switch_type = CienaSubnet;
-        monReply.switch_info.access_type = CLI_TL1_TELNET;
-        sscanf(TL1_TELNET_PORT, "%d", &monReply.switch_info.switch_port);
-    }
-    else if (vendor == Illegal)
+    if (vendor == Illegal)
     {
-        return false;
+        goto _error;
     }
     else {
         monReply.switch_info.switch_type = (uint16)vendor;
@@ -600,10 +596,14 @@ bool SwitchCtrl_Session::getMonSwitchInfo(MON_Reply_Subobject& monReply)
                monReply.switch_info.switch_port = 0;
                break;
            default:
-                return false;
+                goto _error;
         }
     }
     return true;
+
+_error:
+    monReply.switch_options |= MON_SWITCH_OPTION_ERROR;
+    return false;
 }
 
 /////////////////////////////////////////////////////////////
@@ -1143,6 +1143,7 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
 {
     uint16 errCode = 0;
     SwitchCtrlSessionList::Iterator it;
+    bool foundSession = false;
 
     monReply.type = DRAGON_EXT_SUBOBJ_MON_REPLY;
     strncpy(monReply.gri, monQuery.gri, MAX_MON_NAME_LEN);
@@ -1158,6 +1159,7 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
         }				
         return;
     }
+
     for (it = sessionList.begin(); it != sessionList.end(); ++it) {
         if ((*it)->isMonSession(monQuery.gri)) {
              if( (*it)->getMonSwitchInfo(monReply)) {
@@ -1250,9 +1252,15 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
                   errCode = 3; //failed to retrieve switch info
                   goto _error;
              }
+             foundSession = true;
         }
     }
-    errCode = 2; //no switch control session matching the GRI
+    if (!foundSession) {
+        errCode = 2; //no switch control session matching the GRI
+        goto _error;
+    }
+
+    return;
 
 _error:
     monReply.sub_type = 0;

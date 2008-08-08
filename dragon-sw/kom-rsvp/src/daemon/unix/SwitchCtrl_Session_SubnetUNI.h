@@ -149,7 +149,7 @@ public:
 	bool createVCG(int vlanLow, int vlanHigh = 0, int vlanTrunk = 0)
 	{
 		//if (hasVCG_TL1(currentVCG)) return true;
-		if (vlanLow == ANY_VTAG) // tunnel mode with untagged EFLOW
+		if (vlanLow == ANY_VTAG) // tunnel mode
 			return createVCG_TL1(currentVCG);
 		if (!createVCG_TL1(currentVCG, false))
 			return false;
@@ -298,6 +298,11 @@ public:
 	virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars) { return; }
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port) { return false; }
 	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID) { return false; }
+
+	////// ---- For monitoring service API
+	virtual bool isMonSession(char* gri) { return (currentLspName == (const char*)gri); } // may only return false in EoS subnet control sessions
+	virtual bool getMonSwitchInfo(MON_Reply_Subobject& monReply);
+	virtual bool getMonCircuitInfo(MON_Reply_Subobject& monReply);
 
 protected:
 

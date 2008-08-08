@@ -2254,8 +2254,75 @@ bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
     return true;
 }
 
+//// For monitoring service API
 
-//@@@@ Xi2008 >>
+bool SwitchCtrl_Session_SubnetUNI::getMonSwitchInfo(MON_Reply_Subobject& monReply) {
+    monReply.switch_options = 0;
+    if (switchInetAddr.rawAddress() == 0)
+    {
+        monReply.switch_options |= MON_SWITCH_OPTION_ERROR;
+        return false;
+    }
+    monReply.switch_info.switch_ip.s_addr = switchInetAddr.rawAddress();
+    monReply.switch_info.switch_type = CienaSubnet;
+    monReply.switch_info.access_type = CLI_TL1_TELNET;
+    sscanf(TL1_TELNET_PORT, "%d", &monReply.switch_info.switch_port);
+    monReply.switch_options |= MON_SWITCH_OPTION_SUBNET;
+    return true;
+}
+
+bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monReply)
+{
+    _Switch_EoS_Subnet* eosInfo = NULL;
+    SubnetUNI_Data* subnetUniData = NULL;
+    if (isSource)
+    {
+        monReply.switch_options |= MON_SWITCH_OPTION_SOURCE;
+        eosInfo = &monReply.circuit_info.eos_info[0];
+        subnetUniData = &subnetUniSrc;
+    }
+    else 
+    {
+        monReply.switch_options |= MON_SWITCH_OPTION_DESTINATION;
+        if ((monReply.switch_options & MON_SWITCH_OPTION_SOURCE) == 0)
+            eosInfo = &monReply.circuit_info.eos_info[0];
+        else
+        {
+            eosInfo = &monReply.circuit_info.eos_info[1];
+            assert (!currentSNC.empty() || !currentCRS.empty());
+            if (currentCRS.empty())
+            {
+                monReply.switch_options |= MON_SWITCH_OPTION_SNC;
+                strncpy(eosInfo->snc_crs_name, currentSNC.chars(), MAX_MON_NAME_LEN-5);
+                char tail[4]; sprintf(tail, "-%d", numGroups > 0 ? numGroups : 1);
+                strcat(eosInfo->dtl_name, tail);
+            }
+            else
+            {
+                strncpy(eosInfo->snc_crs_name, currentCRS.chars(), MAX_MON_NAME_LEN-1);
+            }
+        }
+        subnetUniData = &subnetUniDest;
+    }
+    eosInfo->subnet_id = subnetUniData->subnet_id;
+    eosInfo->first_timeslot = subnetUniData->first_timeslot;
+    eosInfo->port = subnetUniData->logical_port;
+    eosInfo->ethernet_bw = subnetUniData->ethernet_bw;
+    strncpy(eosInfo->vcg_name, currentVCG.chars(), MAX_MON_NAME_LEN-20);
+    sprintf(eosInfo->eflow_in_name, "dcs_eflow_%s_in", currentVCG.chars());
+    sprintf(eosInfo->eflow_out_name, "dcs_eflow_%s_out", currentVCG.chars());
+    if (DTL.count > 0) 
+    {
+        monReply.switch_options |= MON_SWITCH_OPTION_DTL;
+        strncpy(eosInfo->dtl_name, currentSNC.chars(), MAX_MON_NAME_LEN-5);
+	 strcat(eosInfo->dtl_name, "-dtl");
+    }
+    return true;
+}
+
+//// For monitoring service API
+
+// Xi2008 >>
 
 PSB* psbArrayWaitingForStableSNC[NSIG_SNC_STABLE];
 
@@ -2292,5 +2359,5 @@ void sigfunc_snc_stable(int signo)
 	signal(signo, SIG_IGN);
 	SignalHandling::userSignal = true;
 }
-//@@@@ Xi2008 <<
+// Xi2008 <<
 
