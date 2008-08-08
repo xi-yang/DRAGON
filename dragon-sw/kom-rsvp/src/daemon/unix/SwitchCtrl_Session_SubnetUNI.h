@@ -303,6 +303,7 @@ protected:
 
 	bool isSource; //true --> isSender == 1
 	RSVP_API::SessionId* uniSessionId;
+	String currentLspName;
 
 	//UNI Ctrl/TE parameters
 	SubnetUNI_Data subnetUniSrc; //not needed for destination UNI client

@@ -22,6 +22,8 @@ enum CLISessionType {
 	CLI_SHELL = 4
 };
 
+#define SNMP_ONLY CLI_NONE
+
 extern char  progname[100];
 extern char  hostname[100];
 extern pid_t pid;

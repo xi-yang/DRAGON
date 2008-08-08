@@ -85,8 +85,6 @@ typedef SimpleList<MessageEntry*> MessageQueue;
 
 //hack: Xi2007<<
 
-
-
 class MessageProcessor {
 
 	// "status info" for currently processed message
@@ -194,6 +192,7 @@ public:
 // Xi2007 for SubnetUNI<<
 
 // DRAGON Monitoring >>
+	PHOP_RefreshList& getPhopRefreshList() { return phopRefreshList; }
 	void processDragonMonQuery(SESSION_Object& sessionObject, MON_Query_Subobject& monQuery);
 // DRAGON Monitoring <<
 };

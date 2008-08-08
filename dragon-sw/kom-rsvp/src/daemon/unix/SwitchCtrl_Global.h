@@ -14,6 +14,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_TimeValue.h"
 #include "RSVP_BaseTimer.h"
 #include "RSVP_IntServComponents.h"
+#include "RSVP_ProtocolObjects.h"
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/session_api.h>
@@ -57,6 +58,7 @@ enum SupportedVendor{
 	Catalyst6500 = 8,
 	HP5406 = 9,
 	SMC10G8708 = 10, //SMC 10G 8708 switch
+	CienaSubnet = 100,
 	Illegal = 0xffff,
 };
 
@@ -217,9 +219,14 @@ public:
 	virtual uint32 hook_convertPortInterfaceToID(uint32 id) { return id; }
 	virtual uint32 hook_convertPortIDToInterface(uint32 id) { return id; }
 	virtual bool hook_createPortToIDRefTable(portRefIDList &convList) { return true; }
+
+	//Monitoring service specific
+	virtual bool isMonSession(char* gri) { return true; } // may only return false in EoS subnet control sessions
+	virtual bool getMonSwitchInfo(MON_Reply_Subobject& monReply);
+	virtual bool getMonCircuitInfo(MON_Reply_Subobject& monReply) { return false; } // not to be called in Ethernet switch control session
+
 protected:
 	String sessionName;
-	String currentLspName;
 	NetAddress switchInetAddr;
 	struct snmp_session* snmpSessionHandle;  //snmp_session is defined in net-snmp package 
 	bool active;	// Indicator: the session is active
@@ -316,6 +323,9 @@ public:
 	uint32 getExclEntry(String session_name);
 	SONET_TSpec* addEosMapEntry(float bandwidth, String& spe, int ncc);
 	SONET_TSpec* getEosMapEntry(float bandwidth);
+
+	/*monitoring*/
+	void getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Reply_Subobject& monReply);
 
 protected:
 	SwitchCtrl_Global();

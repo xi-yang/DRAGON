@@ -13,12 +13,17 @@ To be incorporated into KOM-RSVP-TE package
 #include "SNMP_Session.h"
 #include "CLI_Session.h"
 #include "RSVP_RoutingService.h"
+#include "RSVP_MessageProcessor.h"
+#include "RSVP_PHopSB.h"
+#include "RSVP_PSB.h"
 #include "SwitchCtrl_Session_Force10E600.h"
 #include "SwitchCtrl_Session_RaptorER1010.h"
 #include "SwitchCtrl_Session_Catalyst3750.h"
 #include "SwitchCtrl_Session_Catalyst6500.h"
 #include "SwitchCtrl_Session_HP5406.h"
 #include "SwitchCtrl_Session_SMC10G8708.h"
+
+
 
 #ifdef Linux
 #include "SwitchCtrl_Session_Linux.h"
@@ -556,6 +561,51 @@ bool SwitchCtrl_Session::hasVLSRouteConflictonSwitch(VLSR_Route& vlsr)
     return false;
 }
 
+bool SwitchCtrl_Session::getMonSwitchInfo(MON_Reply_Subobject& monReply)
+{
+    if (switchInetAddr.rawAddress() == 0)
+        return false;
+    monReply.switch_info.switch_ip.s_addr = switchInetAddr.rawAddress();
+    if (this->sessionName.leftequal("subnet-")) { //@@@@ move to subnetUniSwitchControlSession ?
+        monReply.switch_info.switch_type = CienaSubnet;
+        monReply.switch_info.access_type = CLI_TL1_TELNET;
+        sscanf(TL1_TELNET_PORT, "%d", &monReply.switch_info.switch_port);
+    }
+    else if (vendor == Illegal)
+    {
+        return false;
+    }
+    else {
+        monReply.switch_info.switch_type = (uint16)vendor;
+        switch (vendor)
+        {
+           case AutoDetect: //case should not be present
+           case IntelES530:
+           case RFC2674:
+           case LambdaOptical:
+           case RaptorER1010:
+           case Catalyst3750:
+           case Catalyst6500:
+           case HP5406:
+           case SMC10G8708:
+               monReply.switch_info.access_type = SNMP_ONLY;
+               monReply.switch_info.switch_port = 161;
+               break;
+           case Force10E600:
+               monReply.switch_info.access_type = CLI_TELNET; //ssh?
+               sscanf(TELNET_PORT, "%d", &monReply.switch_info.switch_port);
+               break;
+           case LinuxSwitch:
+               monReply.switch_info.access_type = CLI_SHELL;
+               monReply.switch_info.switch_port = 0;
+               break;
+           default:
+                return false;
+        }
+    }
+    return true;
+}
+
 /////////////////////////////////////////////////////////////
 //////////////////SwitchCtrl_Global Implementation///////////////
 /////////////////////////////////////////////////////////////
@@ -1089,6 +1139,127 @@ SONET_TSpec* SwitchCtrl_Global::getEosMapEntry(float bandwidth)
     return addEosMapEntry(bandwidth, sts1, (int)ceilf(bandwidth/50.0));
 }
 
+void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Reply_Subobject& monReply)
+{
+    uint16 errCode = 0;
+    SwitchCtrlSessionList::Iterator it;
+
+    monReply.type = DRAGON_EXT_SUBOBJ_MON_REPLY;
+    strncpy(monReply.gri, monQuery.gri, MAX_MON_NAME_LEN);
+
+    if (strcmp(monQuery.gri, "none") == 0) {
+        if (this->sessionList.size() == 0) {
+             errCode = 1; //no switch control session
+             goto _error;
+        }
+        if (!sessionList.front()->getMonSwitchInfo(monReply)) {
+                  errCode = 3; //failed to retrieve switch info
+                  goto _error;
+        }				
+        return;
+    }
+    for (it = sessionList.begin(); it != sessionList.end(); ++it) {
+        if ((*it)->isMonSession(monQuery.gri)) {
+             if( (*it)->getMonSwitchInfo(monReply)) {
+                 if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) {
+                     //Ethernet switch --> get vlsr route PSB
+                     PHOP_RefreshList& phopRefreshList = RSVP_Global::messageProcessor->getPhopRefreshList();
+                     PHOP_RefreshList::Iterator phopIter = phopRefreshList.begin();
+                     while (phopIter != phopRefreshList.end()) {
+                         PSB_List::ConstIterator psbIter = (*phopIter).getPHopSB().getPSB_List().begin();
+                         while (psbIter != (*phopIter).getPHopSB().getPSB_List().end()) {
+                             if ( (*psbIter)->getSESSION_ATTRIBUTE_Object().getSessionName() == (const char*)monQuery.gri) {
+                                 VLSRRoute& vlsrtList = (*psbIter)->getVLSR_Route();
+                                 if (vlsrtList.size() != 1) {
+                                     errCode = 5;
+                                     goto _error;
+                                 }
+                                 monReply.sub_type = 1; //Ethernet
+                                 monReply.length = MON_REPLY_BASE_SIZE + sizeof(struct _Switch_Ethernet);
+                                 //$$$ get VLAN and ports from
+                                 VLSR_Route& vlsrt = vlsrtList.front();
+                                 SimpleList<uint32> portList;
+                                 SimpleList<uint32>::Iterator portIter;
+                                 int i;
+                                 switch (vlsrt.inPort >> 16) {
+                                     case LOCAL_ID_TYPE_PORT:
+                                         monReply.circuit_info.vlan_info.vlan_ingress = 0;
+                                         monReply.circuit_info.vlan_info.num_ports_ingress = 1;
+                                         monReply.circuit_info.vlan_info.ports_ingress[0] = (vlsrt.inPort & 0xffff);
+                                         break;
+                                     case LOCAL_ID_TYPE_GROUP:
+                                         monReply.circuit_info.vlan_info.vlan_ingress = 0;
+                                         getPortsByLocalId(portList, vlsrt.inPort);
+                                         monReply.circuit_info.vlan_info.num_ports_ingress = portList.size();
+                                         for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
+                                             monReply.circuit_info.vlan_info.ports_ingress[i] = ((*portIter) & 0xffff);
+                                         break;
+                                     case LOCAL_ID_TYPE_TAGGED_GROUP:
+                                         monReply.circuit_info.vlan_info.vlan_ingress = (vlsrt.inPort & 0xffff);
+                                         getPortsByLocalId(portList, vlsrt.inPort);
+                                         monReply.circuit_info.vlan_info.num_ports_ingress = portList.size();
+                                         for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
+                                             monReply.circuit_info.vlan_info.ports_ingress[i] = ((*portIter) & 0xffff);
+                                         break;
+                                     case LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL:
+                                         monReply.circuit_info.vlan_info.vlan_ingress = vlsrt.vlanTag;
+                                         monReply.circuit_info.vlan_info.num_ports_ingress = 1;
+                                         monReply.circuit_info.vlan_info.ports_ingress[0] = (vlsrt.inPort & 0xffff);
+                                         break;
+                                 }
+                                 switch (vlsrt.outPort >> 16) {
+                                     case LOCAL_ID_TYPE_PORT:
+                                         monReply.circuit_info.vlan_info.vlan_egress = 0;
+                                         monReply.circuit_info.vlan_info.num_ports_egress = 1;
+                                         monReply.circuit_info.vlan_info.ports_egress[0] = (vlsrt.outPort & 0xffff);
+                                         break;
+                                     case LOCAL_ID_TYPE_GROUP:
+                                         monReply.circuit_info.vlan_info.vlan_egress = 0;
+                                         getPortsByLocalId(portList, vlsrt.outPort);
+                                         monReply.circuit_info.vlan_info.num_ports_egress = portList.size();
+                                         for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
+                                             monReply.circuit_info.vlan_info.ports_egress[i] = ((*portIter) & 0xffff);
+                                         break;
+                                     case LOCAL_ID_TYPE_TAGGED_GROUP:
+                                         monReply.circuit_info.vlan_info.vlan_egress = (vlsrt.outPort & 0xffff);
+                                         getPortsByLocalId(portList, vlsrt.outPort);
+                                         monReply.circuit_info.vlan_info.num_ports_egress = portList.size();
+                                         for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
+                                             monReply.circuit_info.vlan_info.ports_egress[i] = ((*portIter) & 0xffff);
+                                         break;
+                                     case LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL:
+                                         monReply.circuit_info.vlan_info.vlan_egress = vlsrt.vlanTag;
+                                         monReply.circuit_info.vlan_info.num_ports_egress = 1;
+                                         monReply.circuit_info.vlan_info.ports_egress[0] = (vlsrt.outPort & 0xffff);
+                                         break;
+                                 }
+                             }
+                             ++psbIter;
+                         }
+                         ++phopIter;
+                     }
+                 }
+                 if (!(*it)->getMonCircuitInfo(monReply)) {
+                      errCode = 4; //failed to retrieve circuit info (subnetSwitchCtrlSession)
+                      goto _error;
+
+                 }
+                 return;
+             }
+             else {
+                  errCode = 3; //failed to retrieve switch info
+                  goto _error;
+             }
+        }
+    }
+    errCode = 2; //no switch control session matching the GRI
+
+_error:
+    monReply.sub_type = 0;
+    monReply.length = MON_REPLY_BASE_SIZE;
+    monReply.switch_options = (MON_SWITCH_OPTION_ERROR|errCode);
+    return;
+}
 
 
 //End of file : SwitchCtrl_Global.cc

@@ -1113,10 +1113,7 @@ struct _Switch_Generic_Info {
 #define MON_SWITCH_OPTION_SUBNET 			0x0001
 #define MON_SWITCH_OPTION_SOURCE 			0x0002
 #define MON_SWITCH_OPTION_DESTINATION 		0x0004
-#define MON_SWITCH_OPTION_TUNNEL 			0x0008
-#define MON_SWITCH_OPTION_SRC_UNTAGGED 		0x0010
-#define MON_SWITCH_OPTION_DEST_UNTAGGED 	0x0020
-#define MON_SWITCH_OPTION_DTL	 			0x0040
+#define MON_SWITCH_OPTION_DTL	 			0x0008
 #define MON_SWITCH_OPTION_ERROR 				0x10000
 
 #define MAX_MON_PORT_NUM 128
@@ -1253,6 +1250,7 @@ public:
 		strncpy(monQuery.gri, gri, MAX_MON_NAME_LEN-1);
 	}
 	MON_Query_Subobject& getMonQuery() { return monQuery; }
+	void SetMonReply(MON_Reply_Subobject& obj) { monReply = obj; }
 	void SetMonReply(char* gri,  _Switch_Generic_Info* switch_info, uint32 switch_options, 
 	    _Switch_Ethernet* vlan_info=NULL, _Switch_EoS_Subnet* eos_subnet_src=NULL, _Switch_EoS_Subnet* eos_subnet_dest=NULL) {
 		SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_REPLY);

@@ -938,10 +938,10 @@ void MessageProcessor::processDragonMonQuery(SESSION_Object& sessionObject, MON_
 	Message replyMsg( msgType, TTL, sessionObject);
 	DRAGON_EXT_INFO_Object* dragonExtInfo = new DRAGON_EXT_INFO_Object;
 	MON_Reply_Subobject monReply;
-	//memset (&monReply, 0, sizeof(MON_Reply_Subobject));
-	//$$$$ find and retrieve information from switchCtrlSession
-
-	//$$$$ dragonExtInfo->setMonReply()
+	memset (&monReply, 0, sizeof(MON_Reply_Subobject));
+	//$$$$ retrieve switch information
+	RSVP_Global::switchController->getMonitoringInfo(monQuery, monReply);
+	dragonExtInfo->SetMonReply(monReply);
 	replyMsg.setDRAGON_EXT_INFO_Object(*dragonExtInfo);
 	RSVP::getApiServer().sendMessage(replyMsg);
 	dragonExtInfo->destroy();
