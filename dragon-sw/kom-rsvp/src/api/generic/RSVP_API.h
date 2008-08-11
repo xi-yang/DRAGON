@@ -296,7 +296,7 @@ extern "C" {
 	extern void zAddLocalId(void* api, uint16 type, uint16 value, uint16 tag);
 	extern void zDeleteLocalId(void* api, uint16 type, uint16 value, uint16 tag);
 	extern void zRefreshLocalId(void* api, uint16 type, uint16 value, uint16 tag);
-	extern void zMonitoringQuery(void* api, uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId, char* gri);
+	extern void zMonitoringQuery(void* api, uint32 ucid, uint32 seqnum, char* gri, uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId);
 }
 
 #endif /* _RSVP_API_h */

@@ -44,6 +44,19 @@ struct mon_api_msg
   char* body;
 };
 
+#define MON_API_MSGTYPE_SWITCH 	0x01 /* Monitoring information for switch */
+#define MON_API_MSGTYPE_CIRCUIT	0x02 /* Monitoring information for circuit */
+
+#define MON_API_ACTION_RTRV 	0x01 /* Information retrieval/query */
+#define MON_API_ACTION_DATA 	0x02 /* Reply with information data */
+#define MON_API_ACTION_ACK 	0x03 /* Reply with acknowledgement */
+#define MON_API_ACTION_ERROR 	0x04 /* Reply with error code */
+
+#define MON_TLV_GRI 			0x01
+#define MON_TLV_SWITCH_INFO 	0x02
+#define MON_TLV_CIRCUIT_INFO 	0x03
+#define MON_TLV_ERROR			0x05
+
 struct mon_api_msg* mon_api_msg_new(u_int8_t type, u_int8_t action, u_int16_t length, u_int32_t ucid, u_int32_t seqnum, u_int32_t options, void* body);
 void mon_api_msg_free(struct mon_api_msg* msg);
 struct mon_api_msg* mon_api_msg_read(int fd);
@@ -60,7 +73,8 @@ int mon_apiserver_serv_sock_family (unsigned short port, int family);
 int mon_apiserver_accept (struct thread *thread);
 int mon_apiserver_read (struct thread *thread);
 int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg *msg);
-int mon_apiserver_sync_write (struct thread *thread);
-int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int32_t seqnr, struct _MON_Reply_Para* reply);
+int mon_apiserver_write (struct thread *thread);
+int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_int8_t action, struct _MON_Reply_Para* reply);
+struct lsp* dragon_find_lsp_by_griname(char* name);
 
 #endif

@@ -515,7 +515,7 @@ struct _Error_Spec_Para {
 	u_int8_t errCode;
 	u_int16_t errValue;
 };
-
+ 	
 struct _Switch_Generic_Info {
 	struct in_addr switch_ip;
 	u_int32_t switch_port;
@@ -558,6 +558,7 @@ struct _MON_Reply_Para {
 		struct _Subnet_Circuit_Info eos_info[2];
 	} circuit_info;
 };
+#define MON_REPLY_BASE_SIZE (16+MAX_MON_NAME_LEN+sizeof(struct _Switch_Generic_Info))
 
 struct _sessionParameters {
 	/*Mandatory parameters*/
@@ -817,7 +818,7 @@ extern void zInitRsvpResvRequest(void* api, struct _rsvp_upcall_parameter* upcal
 extern void zAddLocalId(void* api, u_int16_t type, u_int16_t value, u_int16_t tag);
 extern void zDeleteLocalId(void* api, u_int16_t type, u_int16_t value, u_int16_t tag);
 extern void zRefreshLocalId(void* api, u_int16_t type, u_int16_t value, u_int16_t tag);
-extern void zMonitoringQuery(void* api, u_int32_t destAddrIp, u_int16_t tunnelId, u_int32_t extTunnelId, char* gri);
+extern void zMonitoringQuery(void* api, u_int32_t ucid, u_int32_t seqnum, char* gri, u_int32_t destAddrIp, u_int16_t tunnelId, u_int32_t extTunnelId);
 	
 #endif /* _ZEBRA_DRAGOND_H */
 

@@ -339,7 +339,7 @@ int mon_apiserver_accept (struct thread *thread)
 
   /* And add read threads for new connection */
   /* Keep hearing on socket for further connections. */
-  thread_add_read (master, mon_apiserver_read, apiserv, new_sync_sock);
+  apiserv->t_sync_read = thread_add_read (master, mon_apiserver_read, apiserv, new_sync_sock);
 
   return 0;
 }
@@ -380,27 +380,210 @@ int mon_apiserver_read (struct thread *thread)
   rc = mon_apiserver_handle_msg (apiserv, msg);
 
   /* Prepare for next message, add read thread. */
-  thread_add_read (master, mon_apiserver_read, apiserv, fd);
+  apiserv->t_sync_read = thread_add_read (master, mon_apiserver_read, apiserv, fd);
 
   mon_api_msg_free (msg);
 
 out:
   return rc;
-
 }
 
 int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg *msg)
 {
+  int rc = 0;
+  struct dragon_tlv_header* tlv;
+  char* lsp_gri;
+  struct lsp* lsp;
+  assert(msg);
 
+  /* Call corresponding message handler function. */
+  switch (msg->header.type)
+    {
+    case MON_API_MSGTYPE_SWITCH:
+        switch (msg->header.action)
+          {
+          case MON_API_ACTION_RTRV:
+            zMonitoringQuery(dmaster.api, ntohl(msg->header.ucid), ntohl(msg->header.seqnum), "none", 0, 0, 0);
+            rc = 0;
+            break;
+          default:
+            zlog_warn ("mon_apiserver_handle_msg (type %d): Unknown API message action: %d", msg->header.type, msg->header.action);
+            rc = -1;
+          }
+        break;
+    case MON_API_MSGTYPE_CIRCUIT:
+        switch (msg->header.action)
+          {
+          case MON_API_ACTION_RTRV:
+            tlv = (struct dragon_tlv_header*)msg->body;
+            if (ntohs(tlv->type) != MON_TLV_GRI || htons(tlv->length) != MAX_MON_NAME_LEN)
+            	{
+                zlog_warn ("mon_apiserver_handle_msg (type %d): Invalid TLV in message body: %d", msg->header.type, ntohs(tlv->type));
+                return -1;
+            	}
+            lsp_gri = (char*)(tlv+1);
+            lsp = dragon_find_lsp_by_griname(lsp_gri);
+            if (lsp == NULL)
+            	{
+                zlog_warn ("mon_apiserver_handle_msg: No such LSP circuit found: %s", lsp_gri);
+                return -1;
+            	}
+            zMonitoringQuery(dmaster.api, ntohl(msg->header.ucid), ntohl(msg->header.seqnum), lsp_gri, 
+                lsp->common.Session_Para.destAddr.s_addr, lsp->common.Session_Para.destPort, lsp->common.Session_Para.srcAddr.s_addr);
+            rc = 0;
+            break;
+          default:
+            zlog_warn ("mon_apiserver_handle_msg (type %d): Unknown API message action: %d", msg->header.type, msg->header.action);
+            rc = -1;
+          }
+      break;
+    default:
+      zlog_warn ("mon_apiserver_handle_msg: Unknown API message type: %d", msg->header.type);
+      rc = -1;
+    }
+
+  return rc;
 }
 
-int mon_apiserver_sync_write (struct thread *thread)
+int mon_apiserver_write (struct thread *thread)
 {
+  struct mon_apiserver *apiserv;
+  struct mon_api_msg *msg;
+  listnode node;
+  int fd;
+  int rc = -1;
 
+  apiserv = THREAD_ARG (thread);
+  assert (apiserv);
+  fd = THREAD_FD (thread);
+
+  apiserv->t_sync_write = NULL;
+
+  if (fd != apiserv->fd_sync)
+    {
+      zlog_warn ("mon_apiserver_write: Unknown fd=%d", fd);
+      goto out;
+    }
+
+  if (listcount(apiserv->out_fifo) == 0)
+    return 0;
+
+  LIST_LOOP(apiserv->out_fifo, msg, node)
+    {
+      if (msg)
+      	 {
+      	   rc = mon_api_msg_write(fd, msg);
+          mon_api_msg_free(msg);
+          if (rc < 0)
+            {
+              zlog_warn("ospf_apiserver_sync_write: write failed on fd=%d", fd);
+              goto out;
+            }
+      	 }
+    }
+  list_delete_all_node(apiserv->out_fifo);
+
+ out:
+
+  if (rc < 0)
+  {
+      /* Perform cleanup and disconnect with peer */
+      mon_apiserver_free (apiserv);
+    }
+
+  return rc;
 }
 
-int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int32_t seqnum, struct _MON_Reply_Para* reply)
+int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_int8_t action, struct _MON_Reply_Para* reply)
 {
+  static char buf[DRAGON_MAX_PACKET_SIZE];
+  struct mon_api_msg* msg;
+  struct dragon_tlv_header* tlv = (struct dragon_tlv_header*)buf;
+  u_int16_t bodylen = 0;
 
+  /*assemble reply tlv's into buffer */
+  /* switch_info tlv */
+  tlv->type = htons(MON_TLV_SWITCH_INFO);
+  tlv->length = htons(sizeof(struct _Switch_Generic_Info));
+  bodylen += sizeof(struct dragon_tlv_header);
+  memcpy(((char*)tlv) + bodylen, &reply->switch_info, sizeof(struct _Switch_Generic_Info));
+  bodylen += sizeof(struct _Switch_Generic_Info);
+  switch (type)
+    {
+      case MON_API_MSGTYPE_SWITCH:
+	 switch (action)
+          {
+          case MON_API_ACTION_DATA:
+            ; /*noop*/
+            break;
+          case MON_API_ACTION_ERROR:
+            tlv = (struct dragon_tlv_header*)(buf + bodylen);
+            tlv->type = htons(MON_TLV_ERROR);
+            bodylen += sizeof(struct dragon_tlv_header);	
+            tlv->length = htons(sizeof(u_int32_t));
+            bodylen += sizeof(u_int32_t);
+            *(u_int32_t*)(((char*)tlv) + bodylen) = (reply->switch_options& 0xffff);
+            break;
+          default:
+            zlog_warn("mon_apiserver_send_reply (message type %d): Unkown action %d for apiserver(ucid=%x)", type, action, apiserv->ucid);
+            return -1;
+          }
+        break;
+      case MON_API_MSGTYPE_CIRCUIT:
+	 switch (action)
+          {
+          case MON_API_ACTION_DATA:
+            tlv = (struct dragon_tlv_header*)(buf + bodylen);
+            tlv->type = htons(MON_TLV_CIRCUIT_INFO);
+            bodylen += sizeof(struct dragon_tlv_header);	
+            tlv->length = htons(reply->length - MON_REPLY_BASE_SIZE);
+            bodylen += reply->length - MON_REPLY_BASE_SIZE;
+            memcpy(((char*)tlv) + bodylen, &reply->circuit_info, reply->length - MON_REPLY_BASE_SIZE);
+            break;
+          case MON_API_ACTION_ERROR:
+            tlv = (struct dragon_tlv_header*)(buf + bodylen);
+            tlv->type = htons(MON_TLV_ERROR);
+            bodylen += sizeof(struct dragon_tlv_header);	
+            tlv->length = htons(sizeof(u_int32_t));
+            bodylen += sizeof(u_int32_t);
+            *(u_int32_t*)(((char*)tlv) + bodylen) = (reply->switch_options& 0xffff);
+            break;
+          default:
+            zlog_warn("mon_apiserver_send_reply (message type %d): Unkown action %d for apiserver(ucid=%x)", type, action, apiserv->ucid);
+            return -1;	  	
+          }
+        break;
+      default:
+        zlog_warn("mon_apiserver_send_reply: Unkown message type %d for apiserver(ucid=%x)", type, apiserv->ucid);
+        return -1;	  	
+    }
+
+  msg = mon_api_msg_new(type, action, bodylen, apiserv->ucid, reply->seqnum, reply->switch_options, buf);
+  if (!msg)  
+    {
+      zlog_warn("mon_apiserver_send_reply: failed to assemble replying message for apiserver(ucid=%x)", apiserv->ucid);
+      return -1;
+    }
+  apiserv->t_sync_write = thread_add_write (master, mon_apiserver_write, apiserv, apiserv->fd_sync);
+
+  return 0;
 }
 
+struct lsp* dragon_find_lsp_by_griname(char* name)
+{
+  struct lsp *lsp, *find=NULL;
+  listnode node;
+
+  if (dmaster.dragon_lsp_table)
+    {
+      LIST_LOOP(dmaster.dragon_lsp_table,lsp,node)
+        {
+          if (strncmp(lsp->common.SessionAttribute_Para->sessionName, name, MAX_MON_NAME_LEN) == 0) 
+            {
+              find = lsp;
+              break;
+            }
+        }
+    }
+  return find;
+}
