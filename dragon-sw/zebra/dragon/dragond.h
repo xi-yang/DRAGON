@@ -727,6 +727,8 @@ struct dragon_master {
 	/* Global RSVP API handle */
 	void *api; 
 
+	/* Monitoring apierver list */
+	list mon_apiserver_list;
 };
 
 /* Structure for localID */

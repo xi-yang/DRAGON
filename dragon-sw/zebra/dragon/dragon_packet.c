@@ -39,6 +39,8 @@
 #include "linklist.h"
 #include "log.h"
 #include "dragon/dragond.h"
+#include "dragon_mon_apiserver.h"
+
 
 extern u_int32_t narb_extra_options;
 extern void dragon_upcall_callback(int, struct lsp*);
