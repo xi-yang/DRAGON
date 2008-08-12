@@ -1113,10 +1113,13 @@ struct _Switch_Generic_Info {
 };
 
 #define MON_SWITCH_OPTION_SUBNET 			0x0001
-#define MON_SWITCH_OPTION_SOURCE 			0x0002
-#define MON_SWITCH_OPTION_DESTINATION 		0x0004
-#define MON_SWITCH_OPTION_SNC	 			0x0008
-#define MON_SWITCH_OPTION_DTL	 			0x0010
+#define MON_SWITCH_OPTION_SUBNET_SRC 		0x0002
+#define MON_SWITCH_OPTION_SUBNET_DEST		0x0004
+#define MON_SWITCH_OPTION_SUBNET_SNC		0x0008
+#define MON_SWITCH_OPTION_SUBNET_DTL		0x0010
+#define MON_SWITCH_OPTION_SUBNET_TUNNEL	0x0020
+//#define MON_SWITCH_OPTION_CIRCUIT_SRC		0x1000
+//#define MON_SWITCH_OPTION_CIRCUIT_DEST		0x2000
 #define MON_SWITCH_OPTION_ERROR 				0x10000
 
 #define MAX_MON_PORT_NUM 128
@@ -1145,7 +1148,7 @@ struct _Subnet_Circuit_Info {
 typedef struct {
 	uint16 length;
 	uint8 type;	//DRAGON_EXT_SUBOBJ_MON_REPLY
-	uint8 sub_type; // 0: Error 1: Ethernet 2: EoS Subnet Src 3: Eos Subnet Dest 4: EoS Subnet Src&Dest
+	uint8 sub_type; // 0: Error 1: Ethernet 2: EoS Subnet Src 3: Eos Subnet Dest 4: EoS Subnet Src&Dest 5: EoS subnet transit
 	uint32 ucid;
 	uint32 seqnum;
 	char gri[MAX_MON_NAME_LEN];
@@ -1278,7 +1281,7 @@ public:
 			monReply.sub_type = 1;
 			monReply.circuit_info.vlan_info = * vlan_info;
 		}
-		else if ((switch_options&MON_SWITCH_OPTION_SOURCE) !=0 && (switch_options&MON_SWITCH_OPTION_DESTINATION) !=0)
+		else if ((switch_options&MON_SWITCH_OPTION_SUBNET_SRC) !=0 && (switch_options&MON_SWITCH_OPTION_SUBNET_DEST) !=0)
 		{
 			assert(eos_subnet_src != NULL && eos_subnet_dest != NULL);
 			monReply.length += sizeof(_Subnet_Circuit_Info) * 2;
@@ -1287,10 +1290,10 @@ public:
 			monReply.circuit_info.eos_info[1] = *eos_subnet_dest;
 		}
 		else {
-			_Subnet_Circuit_Info* eos_info = ((switch_options&MON_SWITCH_OPTION_SOURCE) !=0 ? eos_subnet_src : eos_subnet_dest);
+			_Subnet_Circuit_Info* eos_info = ((switch_options&MON_SWITCH_OPTION_SUBNET_SRC) !=0 ? eos_subnet_src : eos_subnet_dest);
 			assert (eos_info != NULL);
 			monReply.length += sizeof(_Subnet_Circuit_Info);
-			monReply.sub_type = ((switch_options&MON_SWITCH_OPTION_SOURCE) !=0 ? 2 : 3);
+			monReply.sub_type = ((switch_options&MON_SWITCH_OPTION_SUBNET_SRC) !=0 ? 2 : 3);
 			monReply.circuit_info.eos_info[0] = *eos_info;			
 		}
 	}

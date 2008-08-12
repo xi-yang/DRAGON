@@ -281,6 +281,8 @@ public:
 		ssName += mainSessionName;
 	}
 
+	static bool IsSubnetTransitERO(const EXPLICIT_ROUTE_Object * explicitRoute);
+
 	bool isResourceHeld() { return resourceHeld; }
 	void setResourceHeld(bool hold) { resourceHeld = hold; }
 
@@ -318,6 +320,7 @@ protected:
 	uint8 uniState; //Message::Type 
 
 	bool resourceHeld;
+	bool isTunnelMode;
 
 	uint32 ctagNum;
 	String currentVCG;

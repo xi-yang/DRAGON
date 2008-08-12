@@ -930,6 +930,20 @@ bool MessageProcessor::queryEnqueuedMessages( ) {
 
 // Xi2007 <<
 
+PSB* MessageProcessor::getPSBbyLSPName(const char* name)
+{
+	PHOP_RefreshList::Iterator phopIter = phopRefreshList.begin();
+	while (phopIter != phopRefreshList.end()) {
+		PSB_List::ConstIterator psbIter = (*phopIter).getPHopSB().getPSB_List().begin();
+		while (psbIter != (*phopIter).getPHopSB().getPSB_List().end()) {
+			if ( (*psbIter)->getSESSION_ATTRIBUTE_Object().getSessionName() == name)
+				return *psbIter;
+		}
+	}
+	return NULL;
+
+}
+
 // DRAGON Monitoring >>
 void MessageProcessor::processDragonMonQuery(SESSION_Object& sessionObject, MON_Query_Subobject& monQuery)
 {

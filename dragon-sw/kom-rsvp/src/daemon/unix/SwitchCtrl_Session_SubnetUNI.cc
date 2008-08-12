@@ -32,6 +32,7 @@ void SwitchCtrl_Session_SubnetUNI::internalInit ()
     numGroups = 0;
     ptpCatUnit = CATUNIT_UNKNOWN;
     resourceHeld = false;
+    isTunnelMode = false;
     memset(&DTL, 0, sizeof(DTL_Subobject));
 }
 
@@ -1123,6 +1124,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName, bool tunnelMod
     cmdString += suppTtp;
     if (tunnelMode)
     {
+        isTunnelMode = true;
         cmdString += ",crctype=CRC_32,,,framingmode=GFP,tunnelpeertype=ETTP,tunnelpeername=";
         cmdString += tunnelPeerName;
     }
@@ -2277,14 +2279,14 @@ bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monRep
     SubnetUNI_Data* subnetUniData = NULL;
     if (isSource)
     {
-        monReply.switch_options |= MON_SWITCH_OPTION_SOURCE;
+        monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_SRC;
         eosInfo = &monReply.circuit_info.eos_info[0];
         subnetUniData = &subnetUniSrc;
     }
     else 
     {
-        monReply.switch_options |= MON_SWITCH_OPTION_DESTINATION;
-        if ((monReply.switch_options & MON_SWITCH_OPTION_SOURCE) == 0)
+        monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_DEST;
+        if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) == 0)
             eosInfo = &monReply.circuit_info.eos_info[0];
         else
         {
@@ -2292,7 +2294,7 @@ bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monRep
             assert (!currentSNC.empty() || !currentCRS.empty());
             if (currentCRS.empty())
             {
-                monReply.switch_options |= MON_SWITCH_OPTION_SNC;
+                monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_SNC;
                 strncpy(eosInfo->snc_crs_name, currentSNC.chars(), MAX_MON_NAME_LEN-5);
                 char tail[4]; sprintf(tail, "-%d", numGroups > 0 ? numGroups : 1);
                 strcat(eosInfo->dtl_name, tail);
@@ -2309,11 +2311,22 @@ bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monRep
     eosInfo->port = subnetUniData->logical_port;
     eosInfo->ethernet_bw = subnetUniData->ethernet_bw;
     strncpy(eosInfo->vcg_name, currentVCG.chars(), MAX_MON_NAME_LEN-20);
-    sprintf(eosInfo->eflow_in_name, "dcs_eflow_%s_in", currentVCG.chars());
-    sprintf(eosInfo->eflow_out_name, "dcs_eflow_%s_out", currentVCG.chars());
+    if (isTunnelMode)
+    {
+        monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_TUNNEL;
+        String omport, ettp;
+        getCienaLogicalPortString(omport, ettp, subnetUniData->logical_port);
+        sprintf(eosInfo->eflow_in_name, "%s_%s", ettp.chars(), currentVCG.chars());
+        sprintf(eosInfo->eflow_out_name, "%s_%s", currentVCG.chars(), ettp.chars());
+    }
+    else
+    {
+        sprintf(eosInfo->eflow_in_name, "dcs_eflow_%s_in", currentVCG.chars());
+        sprintf(eosInfo->eflow_out_name, "dcs_eflow_%s_out", currentVCG.chars());
+    }
     if (DTL.count > 0) 
     {
-        monReply.switch_options |= MON_SWITCH_OPTION_DTL;
+        monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_DTL;
         strncpy(eosInfo->dtl_name, currentSNC.chars(), MAX_MON_NAME_LEN-5);
 	 strcat(eosInfo->dtl_name, "-dtl");
     }
@@ -2360,4 +2373,22 @@ void sigfunc_snc_stable(int signo)
 	SignalHandling::userSignal = true;
 }
 // Xi2008 <<
+
+bool SwitchCtrl_Session_SubnetUNI::IsSubnetTransitERO(const EXPLICIT_ROUTE_Object * explicitRoute)
+{
+    bool isIPv4Only = true;
+    AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
+    for ( ; iter !=  explicitRoute->getAbstractNodeList().end(); ++iter) {
+        AbstractNode& node = const_cast<AbstractNode&>(*iter);
+        if (node.getType() == AbstractNode::UNumIfID) {
+            if(isIPv4Only && (node.getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
+                return true;
+	     else
+                return false;
+        }
+        if (node.getType() != AbstractNode::IPv4)
+            isIPv4Only = false;
+    }
+    return false;
+}
 

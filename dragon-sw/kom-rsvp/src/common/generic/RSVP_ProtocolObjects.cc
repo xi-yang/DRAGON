@@ -801,7 +801,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 					buffer >> monReply.circuit_info.eos_info[0].snc_crs_name[j];
 				for (j = 0; j < MAX_MON_NAME_LEN; j++)
 					buffer >> monReply.circuit_info.eos_info[0].dtl_name[j];
-				if ( (monReply.switch_options & MON_SWITCH_OPTION_SOURCE) != 0 && (monReply.switch_options & MON_SWITCH_OPTION_DESTINATION) != 0 ) {
+				if ( (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) != 0 && (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) != 0 ) {
 					buffer >> monReply.circuit_info.eos_info[1].subnet_id >> monReply.circuit_info.eos_info[1].first_timeslot 
 						>> monReply.circuit_info.eos_info[1].port >> monReply.circuit_info.eos_info[1].ethernet_bw;
 					for (j = 0; j < MAX_MON_NAME_LEN; j++)
@@ -906,7 +906,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 				buffer << o.monReply.circuit_info.eos_info[0].snc_crs_name[i];
 			for (i = 0; i < MAX_MON_NAME_LEN; i++)
 				buffer << o.monReply.circuit_info.eos_info[0].dtl_name[i];
-			if ( (o.monReply.switch_options & MON_SWITCH_OPTION_SOURCE) != 0 && (o.monReply.switch_options & MON_SWITCH_OPTION_DESTINATION) != 0 ) {
+			if ( (o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) != 0 && (o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) != 0 ) {
 				buffer << o.monReply.circuit_info.eos_info[1].subnet_id << o.monReply.circuit_info.eos_info[1].first_timeslot 
 					<< o.monReply.circuit_info.eos_info[1].port << o.monReply.circuit_info.eos_info[1].ethernet_bw;
 				for (i = 0; i < MAX_MON_NAME_LEN; i++)
@@ -977,9 +977,9 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 		else if ((o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0)
 			os << ", ethernet_info";
 		else {
-			if ((o.monReply.switch_options & MON_SWITCH_OPTION_SOURCE) != 0)
+			if ((o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) != 0)
 				os << ", eos_subnet_info_src";
-			if ((o.monReply.switch_options & MON_SWITCH_OPTION_SOURCE) != 0)
+			if ((o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) != 0)
 				os << ", ero_subnet_info_dest";
 		}
 		os << ", circuit_data_length=" << (o.monReply.length - MON_REPLY_BASE_SIZE);

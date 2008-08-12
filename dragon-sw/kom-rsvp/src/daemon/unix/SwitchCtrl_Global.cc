@@ -1144,6 +1144,7 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
     uint16 errCode = 0;
     SwitchCtrlSessionList::Iterator it;
     bool foundSession = false;
+    PSB* psb = NULL;
 
     if (strcmp(monQuery.gri, "none") == 0) {
         if (this->sessionList.size() == 0) {
@@ -1157,115 +1158,125 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
         return;
     }
 
+    psb = RSVP_Global::messageProcessor->getPSBbyLSPName((const char*)monQuery.gri);
+    if (psb == NULL) {
+        errCode = 2; //no rsvp session
+        goto _error;
+    }
+	
     for (it = sessionList.begin(); it != sessionList.end(); ++it) {
         if ((*it)->isMonSession(monQuery.gri)) {
-             if( (*it)->getMonSwitchInfo(monReply)) {
-                 if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) {
-                     //Ethernet switch --> get vlsr route PSB
-                     PHOP_RefreshList& phopRefreshList = RSVP_Global::messageProcessor->getPhopRefreshList();
-                     PHOP_RefreshList::Iterator phopIter = phopRefreshList.begin();
-                     while (phopIter != phopRefreshList.end()) {
-                         PSB_List::ConstIterator psbIter = (*phopIter).getPHopSB().getPSB_List().begin();
-                         while (psbIter != (*phopIter).getPHopSB().getPSB_List().end()) {
-                             if ( (*psbIter)->getSESSION_ATTRIBUTE_Object().getSessionName() == (const char*)monQuery.gri) {
-                                 VLSRRoute& vlsrtList = (*psbIter)->getVLSR_Route();
-                                 if (vlsrtList.size() != 1) {
-                                     errCode = 5;
-                                     goto _error;
-                                 }
-                                 monReply.sub_type = 1; //Ethernet
-                                 monReply.length = MON_REPLY_BASE_SIZE + sizeof(struct _Ethernet_Circuit_Info);
-                                 //$$$ get VLAN and ports from
-                                 VLSR_Route& vlsrt = vlsrtList.front();
-                                 SimpleList<uint32> portList;
-                                 SimpleList<uint32>::Iterator portIter;
-                                 int i;
-                                 switch (vlsrt.inPort >> 16) {
-                                     case LOCAL_ID_TYPE_PORT:
-                                         monReply.circuit_info.vlan_info.vlan_ingress = 0;
-                                         monReply.circuit_info.vlan_info.num_ports_ingress = 1;
-                                         monReply.circuit_info.vlan_info.ports_ingress[0] = (vlsrt.inPort & 0xffff);
-                                         break;
-                                     case LOCAL_ID_TYPE_GROUP:
-                                         monReply.circuit_info.vlan_info.vlan_ingress = 0;
-                                         getPortsByLocalId(portList, vlsrt.inPort);
-                                         monReply.circuit_info.vlan_info.num_ports_ingress = portList.size();
-                                         for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
-                                             monReply.circuit_info.vlan_info.ports_ingress[i] = ((*portIter) & 0xffff);
-                                         break;
-                                     case LOCAL_ID_TYPE_TAGGED_GROUP:
-                                         monReply.circuit_info.vlan_info.vlan_ingress = (vlsrt.inPort & 0xffff);
-                                         getPortsByLocalId(portList, vlsrt.inPort);
-                                         monReply.circuit_info.vlan_info.num_ports_ingress = portList.size();
-                                         for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
-                                             monReply.circuit_info.vlan_info.ports_ingress[i] = ((*portIter) & 0xffff);
-                                         break;
-                                     case LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL:
-                                         monReply.circuit_info.vlan_info.vlan_ingress = vlsrt.vlanTag;
-                                         monReply.circuit_info.vlan_info.num_ports_ingress = 1;
-                                         monReply.circuit_info.vlan_info.ports_ingress[0] = (vlsrt.inPort & 0xffff);
-                                         break;
-                                 }
-                                 switch (vlsrt.outPort >> 16) {
-                                     case LOCAL_ID_TYPE_PORT:
-                                         monReply.circuit_info.vlan_info.vlan_egress = 0;
-                                         monReply.circuit_info.vlan_info.num_ports_egress = 1;
-                                         monReply.circuit_info.vlan_info.ports_egress[0] = (vlsrt.outPort & 0xffff);
-                                         break;
-                                     case LOCAL_ID_TYPE_GROUP:
-                                         monReply.circuit_info.vlan_info.vlan_egress = 0;
-                                         getPortsByLocalId(portList, vlsrt.outPort);
-                                         monReply.circuit_info.vlan_info.num_ports_egress = portList.size();
-                                         for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
-                                             monReply.circuit_info.vlan_info.ports_egress[i] = ((*portIter) & 0xffff);
-                                         break;
-                                     case LOCAL_ID_TYPE_TAGGED_GROUP:
-                                         monReply.circuit_info.vlan_info.vlan_egress = (vlsrt.outPort & 0xffff);
-                                         getPortsByLocalId(portList, vlsrt.outPort);
-                                         monReply.circuit_info.vlan_info.num_ports_egress = portList.size();
-                                         for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
-                                             monReply.circuit_info.vlan_info.ports_egress[i] = ((*portIter) & 0xffff);
-                                         break;
-                                     case LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL:
-                                         monReply.circuit_info.vlan_info.vlan_egress = vlsrt.vlanTag;
-                                         monReply.circuit_info.vlan_info.num_ports_egress = 1;
-                                         monReply.circuit_info.vlan_info.ports_egress[0] = (vlsrt.outPort & 0xffff);
-                                         break;
-                                 }
-                             }
-                             ++psbIter;
-                         }
-                         ++phopIter;
-                     }
-                 }
-                 if (!(*it)->getMonCircuitInfo(monReply)) {
-                      errCode = 4; //failed to retrieve circuit info (subnetSwitchCtrlSession)
-                      goto _error;
-
-                 }
-                 return;
+            if( (*it)->getMonSwitchInfo(monReply)) {
+                if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) {
+                    //ethernet switch vlsr --> get vlsr route PSB
+                    if (psb != NULL) {
+                        VLSRRoute& vlsrtList = psb->getVLSR_Route();
+                        if (vlsrtList.size() != 1) {
+                            errCode = 5; // incorrect vlsr route information
+                            goto _error;
+                        }
+                        monReply.sub_type = 1; //Ethernet
+                        monReply.length = MON_REPLY_BASE_SIZE + sizeof(struct _Ethernet_Circuit_Info);
+                        //$$$ get VLAN and ports from
+                        VLSR_Route& vlsrt = vlsrtList.front();
+                        SimpleList<uint32> portList;
+                        SimpleList<uint32>::Iterator portIter;
+                        int i;
+                        switch (vlsrt.inPort >> 16) {
+                            case LOCAL_ID_TYPE_PORT:
+                                monReply.circuit_info.vlan_info.vlan_ingress = 0;
+                                monReply.circuit_info.vlan_info.num_ports_ingress = 1;
+                                monReply.circuit_info.vlan_info.ports_ingress[0] = (vlsrt.inPort & 0xffff);
+                                break;
+                            case LOCAL_ID_TYPE_GROUP:
+                                monReply.circuit_info.vlan_info.vlan_ingress = 0;
+                                getPortsByLocalId(portList, vlsrt.inPort);
+                                monReply.circuit_info.vlan_info.num_ports_ingress = portList.size();
+                                for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
+                                    monReply.circuit_info.vlan_info.ports_ingress[i] = ((*portIter) & 0xffff);
+                                break;
+                            case LOCAL_ID_TYPE_TAGGED_GROUP:
+                                monReply.circuit_info.vlan_info.vlan_ingress = (vlsrt.inPort & 0xffff);
+                                getPortsByLocalId(portList, vlsrt.inPort);
+                                monReply.circuit_info.vlan_info.num_ports_ingress = portList.size();
+                                for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
+                                    monReply.circuit_info.vlan_info.ports_ingress[i] = ((*portIter) & 0xffff);
+                                break;
+                            case LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL:
+                                monReply.circuit_info.vlan_info.vlan_ingress = vlsrt.vlanTag;
+                                monReply.circuit_info.vlan_info.num_ports_ingress = 1;
+                                monReply.circuit_info.vlan_info.ports_ingress[0] = (vlsrt.inPort & 0xffff);
+                                break;
+                        }
+                        switch (vlsrt.outPort >> 16) {
+                            case LOCAL_ID_TYPE_PORT:
+                                monReply.circuit_info.vlan_info.vlan_egress = 0;
+                                monReply.circuit_info.vlan_info.num_ports_egress = 1;
+                                monReply.circuit_info.vlan_info.ports_egress[0] = (vlsrt.outPort & 0xffff);
+                                break;
+                            case LOCAL_ID_TYPE_GROUP:
+                                monReply.circuit_info.vlan_info.vlan_egress = 0;
+                                getPortsByLocalId(portList, vlsrt.outPort);
+                                monReply.circuit_info.vlan_info.num_ports_egress = portList.size();
+                                for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
+                                    monReply.circuit_info.vlan_info.ports_egress[i] = ((*portIter) & 0xffff);
+                                break;
+                            case LOCAL_ID_TYPE_TAGGED_GROUP:
+                                monReply.circuit_info.vlan_info.vlan_egress = (vlsrt.outPort & 0xffff);
+                                getPortsByLocalId(portList, vlsrt.outPort);
+                                monReply.circuit_info.vlan_info.num_ports_egress = portList.size();
+                                for (portIter = portList.begin(), i = 0; portIter != portList.end(); ++portIter, ++i)
+                                    monReply.circuit_info.vlan_info.ports_egress[i] = ((*portIter) & 0xffff);
+                                break;
+                            case LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL:
+                                monReply.circuit_info.vlan_info.vlan_egress = vlsrt.vlanTag;
+                                monReply.circuit_info.vlan_info.num_ports_egress = 1;
+                                monReply.circuit_info.vlan_info.ports_egress[0] = (vlsrt.outPort & 0xffff);
+                                break;
+                        }
+                    }
+                }
+            }
+             /* never reached -- > no switch control session for transit vlsr
+             else if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) == 0 && (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) == 0) {
+                  // subnet transit vlsr
+                 monReply.sub_type = 5; // EoS subnet transit
+                 monReply.length = MON_REPLY_BASE_SIZE;
              }
-             else {
-                  errCode = 3; //failed to retrieve switch info
-                  goto _error;
+             */
+            else if (!(*it)->getMonCircuitInfo(monReply)) { //edge-control subnet vlsr
+                errCode = 4; //failed to retrieve circuit info (subnetSwitchCtrlSession)
+                goto _error;
              }
-             foundSession = true;
+             return;
         }
+        else {
+              errCode = 3; //failed to retrieve switch info
+              goto _error;
+         }
+         foundSession = true;
     }
     if (!foundSession) {
-        errCode = 2; //no switch control session matching the GRI
+        //first judging whether this is a Subnet transit vlsr
+        VLSRRoute& vlsrtList = psb->getVLSR_Route();
+        if (vlsrtList.size() == 0 && SwitchCtrl_Session_SubnetUNI::IsSubnetTransitERO(psb->getEXPLICIT_ROUTE_Object())) {
+             monReply.switch_options |= MON_SWITCH_OPTION_SUBNET;
+             monReply.length = MON_REPLY_BASE_SIZE;
+             return;
+        }
+        // otherwise error!
+        errCode = 1; //no switch control session matching the GRI
         goto _error;
     }
 
-    return;
+    return; // normal return
 
-_error:
+  _error:
     monReply.sub_type = 0;
     monReply.length = MON_REPLY_BASE_SIZE;
     monReply.switch_options = (MON_SWITCH_OPTION_ERROR|errCode);
     return;
 }
-
 
 //End of file : SwitchCtrl_Global.cc
 
