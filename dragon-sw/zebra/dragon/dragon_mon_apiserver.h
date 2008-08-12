@@ -44,8 +44,8 @@ struct mon_api_msg
   char* body;
 };
 
-#define MON_API_MSGTYPE_SWITCH 	0x01 /* Monitoring information for switch */
-#define MON_API_MSGTYPE_CIRCUIT	0x02 /* Monitoring information for circuit */
+#define MON_API_MSGTYPE_SWITCH 	0x10 /* Monitoring information for switch */
+#define MON_API_MSGTYPE_CIRCUIT	0x20 /* Monitoring information for circuit */
 
 #define MON_API_ACTION_RTRV 	0x01 /* Information retrieval/query */
 #define MON_API_ACTION_DATA 	0x02 /* Reply with information data */
@@ -55,7 +55,17 @@ struct mon_api_msg
 #define MON_TLV_GRI 			0x01
 #define MON_TLV_SWITCH_INFO 	0x02
 #define MON_TLV_CIRCUIT_INFO 	0x03
-#define MON_TLV_ERROR			0x05
+#define MON_TLV_ERROR			0x0f
+
+#define MON_SWITCH_OPTION_SUBNET 			0x0001
+#define MON_SWITCH_OPTION_SUBNET_SRC 		0x0002
+#define MON_SWITCH_OPTION_SUBNET_DEST		0x0004
+#define MON_SWITCH_OPTION_SUBNET_SNC		0x0008
+#define MON_SWITCH_OPTION_SUBNET_DTL		0x0010
+#define MON_SWITCH_OPTION_SUBNET_TUNNEL	0x0020
+#define MON_SWITCH_OPTION_CIRCUIT_SRC		0x1000
+#define MON_SWITCH_OPTION_CIRCUIT_DEST		0x2000
+#define MON_SWITCH_OPTION_ERROR 				0x10000
 
 struct mon_api_msg* mon_api_msg_new(u_int8_t type, u_int8_t action, u_int16_t length, u_int32_t ucid, u_int32_t seqnum, u_int32_t options, void* body);
 void mon_api_msg_free(struct mon_api_msg* msg);
