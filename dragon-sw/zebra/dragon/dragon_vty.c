@@ -2692,6 +2692,32 @@ DEFUN (dragon_set_local_id_group_refresh,
     return CMD_WARNING;
 }
 
+DEFUN (dragon_set_monitoring_api,
+       dragon_set_monitoring_api_cmd,
+       "set monitoring-api (on|off)",
+       SET_STR
+       "Monitoring service API\n"
+       "On/enabled\n"
+       "Off/disabled\n")
+{
+  int ret;
+  if (strcmp(argv[0], "on") == 0)
+    {
+      ret = mon_apiserver_init();
+      if (ret < 0)
+        {
+          vty_out(vty, "mon_apiserver_init failed, returning code: %d %s", ret, VTY_NEWLINE);
+          return CMD_WARNING;
+        }
+    }
+  else
+    {
+      mon_apiserver_term();
+    }
+
+  return CMD_WARNING;
+}
+
 void
 dragon_supp_vty_init ()
 {
@@ -2736,6 +2762,8 @@ dragon_supp_vty_init ()
   install_element(CONFIG_NODE, &dragon_show_ucid_cmd);
   install_element(VIEW_NODE, &dragon_set_narb_extra_options_cmd);
   install_element(CONFIG_NODE, &dragon_set_narb_extra_options_cmd);
+  install_element(VIEW_NODE, &dragon_set_monitoring_api_cmd);
+  install_element(CONFIG_NODE, &dragon_set_monitoring_api_cmd);
   
   install_element(CONFIG_NODE, &dragon_set_pce_para_cmd);
   install_element(CONFIG_NODE, &dragon_set_pce_para_ip_cmd);

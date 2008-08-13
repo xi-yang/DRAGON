@@ -201,11 +201,17 @@ int mon_apiserver_init (void)
   int fd;
   int rc = -1;
 
-  /* Create new socket for synchronous messages. */
+  if ( dmaster.mon_apiserver_list != NULL )
+    goto out;
+
+  /* Create new socket to accept API conections. */
   fd = mon_apiserver_serv_sock_family (MON_APISERVER_PORT, AF_INET);
 
   if (fd < 0)
-    goto out;
+    {
+      rc = -2;
+      goto out;
+    }
 
   /* Schedule new thread that handles accepted connections. */
   thread_add_read (master, mon_apiserver_accept, NULL, fd);
@@ -761,7 +767,7 @@ void mon_apiserver_send_error(struct mon_apiserver* apiserv, u_int8_t type, u_in
 {
   char buf[8];
   struct mon_api_msg * msg;
-  struct dragon_tlv_header* tlv = buf;
+  struct dragon_tlv_header* tlv = (struct dragon_tlv_header*)buf;
   tlv->type = htons(MON_TLV_ERROR);
   tlv->length = htons(4);
   msg = mon_api_msg_new(type, MON_API_ACTION_ERROR, 8, apiserv->ucid, seqnum, 0, buf);

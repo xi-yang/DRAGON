@@ -298,7 +298,7 @@ main (int argc, char **argv)
     /*DRAGON_XML_PORT defined in ast_master/ast_master.h*/
     xml_serv_sock (vty_addr, DRAGON_XML_PORT, DRAGON_XML_PATH); 
   }
-  
+
   /* Fetch next active thread. */
   while (thread_fetch (master, &thread))
     thread_call (&thread);
