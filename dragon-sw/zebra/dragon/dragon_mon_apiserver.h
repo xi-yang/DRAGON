@@ -44,8 +44,12 @@ struct mon_api_msg
   char* body;
 };
 
-#define MON_API_MSGTYPE_SWITCH 	0x10 /* Monitoring information for switch */
-#define MON_API_MSGTYPE_CIRCUIT	0x20 /* Monitoring information for circuit */
+#define MON_API_MSGTYPE_LSPLIST		0x01 /*A list of LSP names */
+#define MON_API_MSGTYPE_LSPSTATUS	0x02 /* LSP circuit status */
+#define MON_API_MSGTYPE_LSPERO		0x03 /* LSP ERO (and Subnet ERO if any) */
+#define MON_API_MSGTYPE_NODELIST		0x04 /* Control plane (VLSR) node list */
+#define MON_API_MSGTYPE_SWITCH 		0x10 /* Monitoring information for switch */
+#define MON_API_MSGTYPE_CIRCUIT		0x20 /* Monitoring information for circuit */
 
 #define MON_API_ACTION_RTRV 	0x01 /* Information retrieval/query */
 #define MON_API_ACTION_DATA 	0x02 /* Reply with information data */
@@ -55,6 +59,9 @@ struct mon_api_msg
 #define MON_TLV_GRI 			0x01
 #define MON_TLV_SWITCH_INFO 	0x02
 #define MON_TLV_CIRCUIT_INFO 	0x03
+#define MON_TLV_NODE_LIST 		0x04
+#define MON_TLV_LSP_STATUS 	0x05
+#define MON_TLV_LSP_ERO	 	0x06
 #define MON_TLV_ERROR			0x0f
 
 #define MON_SWITCH_OPTION_SUBNET 			0x0001
@@ -85,6 +92,7 @@ int mon_apiserver_read (struct thread *thread);
 int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg *msg);
 int mon_apiserver_write (struct thread *thread);
 int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_int8_t action, struct _MON_Reply_Para* reply);
+void mon_apiserver_send_error(struct mon_apiserver* apiserv, u_int8_t type, u_int32_t seqnum, u_int32_t err_code);
 struct lsp* dragon_find_lsp_by_griname(char* name);
 
 #endif

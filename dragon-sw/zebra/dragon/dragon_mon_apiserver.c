@@ -390,15 +390,85 @@ out:
 
 int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg *msg)
 {
+  char buf[DRAGON_MAX_PACKET_SIZE];
   int rc = 0;
   struct dragon_tlv_header* tlv;
   char* lsp_gri;
   struct lsp* lsp;
+  struct in_addr * addr;
+  int i;
+  struct mon_api_msg* rmsg;
+
   assert(msg);
+
+  if (apiserv->ucid == 0)
+    apiserv->ucid = ntohl(msg->header.ucid);
+  else if (apiserv->ucid != ntohl(msg->header.ucid))
+    {
+      rc = 0x0000000f; /* error_code TBD */
+      goto _error;
+    }
 
   /* Call corresponding message handler function. */
   switch (msg->header.type)
     {
+      case MON_API_MSGTYPE_LSPLIST:
+        break;
+
+      case MON_API_MSGTYPE_LSPSTATUS:
+        break;
+
+      case MON_API_MSGTYPE_LSPERO:
+        break;
+
+      case MON_API_MSGTYPE_NODELIST:
+        switch (msg->header.action)
+          {
+          case MON_API_ACTION_RTRV:
+            tlv = (struct dragon_tlv_header*)msg->body;
+            if (ntohs(tlv->type) != MON_TLV_GRI || htons(tlv->length) != MAX_MON_NAME_LEN)
+            	{
+                zlog_warn ("mon_apiserver_handle_msg (type %d): Invalid TLV in message body: %d", msg->header.type, ntohs(tlv->type));
+                rc = -1;
+                goto _error;
+
+            	}
+            lsp_gri = (char*)(tlv+1);
+            lsp = dragon_find_lsp_by_griname(lsp_gri);
+            if (lsp == NULL)
+            	{
+                zlog_warn ("mon_apiserver_handle_msg: No such LSP circuit found: %s", lsp_gri);
+                rc = -2;
+                goto _error;
+            	}
+            if (lsp->common.DragonExtInfo_Para == NULL || lsp->common.DragonExtInfo_Para->num_mon_nodes == 0)
+              {
+                zlog_warn ("mon_apiserver_handle_msg (type %d): The LSP '%s' has no node list", msg->header.type, lsp_gri);
+                rc = -3;
+                goto _error;
+              }
+            else
+              {
+                tlv = (struct dragon_tlv_header*)buf;
+                tlv->type = htons(MON_TLV_NODE_LIST);
+                tlv->length = htons(lsp->common.DragonExtInfo_Para->num_mon_nodes*sizeof(struct in_addr));
+                addr = (struct in_addr*)(buf + sizeof(struct dragon_tlv_header));
+                for (i = 0; i < lsp->common.DragonExtInfo_Para->num_mon_nodes; i++, addr++)
+                    addr->s_addr = lsp->common.DragonExtInfo_Para->mon_nodes[i].s_addr;
+                rmsg = mon_api_msg_new(MON_TLV_NODE_LIST, MON_API_ACTION_DATA, sizeof(struct in_addr)+ntohs(tlv->length), 
+                    apiserv->ucid, ntohl(msg->header.seqnum), 0, tlv);
+                listnode_add(apiserv->out_fifo, msg);
+                apiserv->t_sync_write = thread_add_write (master, mon_apiserver_write, apiserv, apiserv->fd_sync);
+              }
+            rc = 0;
+            break;
+          default:
+            zlog_warn ("mon_apiserver_handle_msg (type %d): Unknown API message action: %d", msg->header.type, msg->header.action);
+            rc = -4;
+            goto _error;
+          }        
+        break;
+
     case MON_API_MSGTYPE_SWITCH:
         switch (msg->header.action)
           {
@@ -408,9 +478,11 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             break;
           default:
             zlog_warn ("mon_apiserver_handle_msg (type %d): Unknown API message action: %d", msg->header.type, msg->header.action);
-            rc = -1;
+            rc = -5;
+            goto _error;
           }
         break;
+
     case MON_API_MSGTYPE_CIRCUIT:
         switch (msg->header.action)
           {
@@ -419,14 +491,16 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             if (ntohs(tlv->type) != MON_TLV_GRI || htons(tlv->length) != MAX_MON_NAME_LEN)
             	{
                 zlog_warn ("mon_apiserver_handle_msg (type %d): Invalid TLV in message body: %d", msg->header.type, ntohs(tlv->type));
-                return -1;
+                rc = -5;
+                goto _error;
             	}
             lsp_gri = (char*)(tlv+1);
             lsp = dragon_find_lsp_by_griname(lsp_gri);
             if (lsp == NULL)
             	{
                 zlog_warn ("mon_apiserver_handle_msg: No such LSP circuit found: %s", lsp_gri);
-                return -1;
+                rc = -6;
+                goto _error;
             	}
             zMonitoringQuery(dmaster.api, ntohl(msg->header.ucid), ntohl(msg->header.seqnum), lsp_gri, 
                 lsp->common.Session_Para.destAddr.s_addr, lsp->common.Session_Para.destPort, lsp->common.Session_Para.srcAddr.s_addr);
@@ -434,14 +508,20 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             break;
           default:
             zlog_warn ("mon_apiserver_handle_msg (type %d): Unknown API message action: %d", msg->header.type, msg->header.action);
-            rc = -1;
+            rc = -7;
+            goto _error;
           }
       break;
     default:
       zlog_warn ("mon_apiserver_handle_msg: Unknown API message type: %d", msg->header.type);
-      rc = -1;
+      rc = -8;
+      goto _error;
     }
 
+   return rc; /*normal return*/
+
+ _error:
+  mon_apiserver_send_error(apiserv, msg->header.type, ntohl(msg->header.seqnum), (u_int32_t)rc); /* tmp: error_code TDB */   
   return rc;
 }
 
@@ -529,6 +609,7 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
             return -1;
           }
         break;
+
       case MON_API_MSGTYPE_CIRCUIT:
 	 switch (action)
           {
@@ -553,6 +634,7 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
             return -1;	  	
           }
         break;
+
       default:
         zlog_warn("mon_apiserver_send_reply: Unkown message type %d for apiserver(ucid=%x)", type, apiserv->ucid);
         return -1;	  	
@@ -564,9 +646,23 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
       zlog_warn("mon_apiserver_send_reply: failed to assemble replying message for apiserver(ucid=%x)", apiserv->ucid);
       return -1;
     }
+  listnode_add(apiserv->out_fifo, msg);
   apiserv->t_sync_write = thread_add_write (master, mon_apiserver_write, apiserv, apiserv->fd_sync);
 
   return 0;
+}
+
+void mon_apiserver_send_error(struct mon_apiserver* apiserv, u_int8_t type, u_int32_t seqnum, u_int32_t err_code)
+{
+  char buf[8];
+  struct mon_api_msg * msg;
+  struct dragon_tlv_header* tlv = buf;
+  tlv->type = htons(MON_TLV_ERROR);
+  tlv->length = htons(4);
+  msg = mon_api_msg_new(type, MON_API_ACTION_ERROR, 8, apiserv->ucid, seqnum, 0, buf);
+
+  listnode_add(apiserv->out_fifo, msg);
+  apiserv->t_sync_write = thread_add_write (master, mon_apiserver_write, apiserv, apiserv->fd_sync);
 }
 
 struct lsp* dragon_find_lsp_by_griname(char* name)

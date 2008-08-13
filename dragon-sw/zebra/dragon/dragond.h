@@ -559,6 +559,13 @@ struct _MON_Reply_Para {
 	} circuit_info;
 };
 #define MON_REPLY_BASE_SIZE (16+MAX_MON_NAME_LEN+sizeof(struct _Switch_Generic_Info))
+#define MON_REPLY_SUBTYPE_ETHERNET 			0x0001
+#define MON_REPLY_SUBTYPE_SUBNET_SRC			0x0002
+#define MON_REPLY_SUBTYPE_SUBNET_DEST		0x0003
+#define MON_REPLY_SUBTYPE_SUBNET_SRCDEST	0x0004
+#define MON_REPLY_SUBTYPE_SUBNET_TRANSIT	0x0005
+#define MON_REPLY_SUBTYPE_ERROR 				0x000f
+
 
 struct _sessionParameters {
 	/*Mandatory parameters*/
