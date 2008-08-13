@@ -62,6 +62,7 @@ struct mon_api_msg
 #define MON_TLV_NODE_LIST 		0x04
 #define MON_TLV_LSP_STATUS 	0x05
 #define MON_TLV_LSP_ERO	 	0x06
+#define MON_TLV_SUBNET_ERO	0x07
 #define MON_TLV_ERROR			0x0f
 
 #define MON_SWITCH_OPTION_SUBNET 			0x0001

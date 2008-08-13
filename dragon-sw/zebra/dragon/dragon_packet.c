@@ -1328,7 +1328,7 @@ void  rsvpUpcall(void* para)
 					if ((p->monReplyPara->switch_options & MON_SWITCH_OPTION_ERROR) == 0)
 						action = MON_API_ACTION_DATA;
 					else
-						type = MON_API_ACTION_ERROR;					
+						action = MON_API_ACTION_ERROR;					
 					mon_apiserver_send_reply(apiserv, type, action, p->monReplyPara);
 					return;
 				}

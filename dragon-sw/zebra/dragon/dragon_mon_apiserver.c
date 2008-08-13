@@ -392,11 +392,13 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
 {
   char buf[DRAGON_MAX_PACKET_SIZE];
   int rc = 0;
+  int i, len;
   struct dragon_tlv_header* tlv;
   char* lsp_gri;
   struct lsp* lsp;
   struct in_addr * addr;
-  int i;
+  struct _EROAbstractNode_Para *hop;
+  listnode node;
   struct mon_api_msg* rmsg;
 
   assert(msg);
@@ -413,12 +415,115 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
   switch (msg->header.type)
     {
       case MON_API_MSGTYPE_LSPLIST:
+        switch (msg->header.action)
+          {
+          case MON_API_ACTION_RTRV:
+            if (ntohs(msg->header.length) != 0)
+            	{
+                zlog_warn ("mon_apiserver_handle_msg (type %d): Invalid message body -- has to be empty.", msg->header.type);
+                rc = -1;
+                goto _error;
+            	}
+            len = 0;
+            LIST_LOOP(dmaster.dragon_lsp_table, lsp, node)
+              {
+                if (!lsp->common.SessionAttribute_Para)
+                    continue;
+                tlv = (struct dragon_tlv_header*)(buf+len);
+                tlv->type = htons(MON_TLV_GRI);
+                tlv->length = htons(MAX_MON_NAME_LEN);
+                len += sizeof(struct dragon_tlv_header);
+                strncpy(buf+len, lsp->common.SessionAttribute_Para->sessionName, MAX_MON_NAME_LEN-1);
+                len += MAX_MON_NAME_LEN;
+              }
+            rmsg = mon_api_msg_new(MON_API_MSGTYPE_LSPLIST, MON_API_ACTION_DATA, len, apiserv->ucid, ntohl(msg->header.seqnum), 0, buf);
+            MON_APISERVER_POST_MESSAGE(apiserv, rmsg);
+            rc = 0;
+            break;
+          default:
+            zlog_warn ("mon_apiserver_handle_msg (type %d): Unknown API message action: %d", msg->header.type, msg->header.action);
+            rc = -4;
+            goto _error;
+          }        
         break;
 
       case MON_API_MSGTYPE_LSPSTATUS:
+            tlv = (struct dragon_tlv_header*)msg->body;
+            if (ntohs(tlv->type) != MON_TLV_GRI || htons(tlv->length) != MAX_MON_NAME_LEN)
+            	{
+                zlog_warn ("mon_apiserver_handle_msg (type %d): Invalid TLV in message body: %d", msg->header.type, ntohs(tlv->type));
+                rc = -5;
+                goto _error;
+
+            	}
+            lsp_gri = (char*)(tlv+1);
+            lsp = dragon_find_lsp_by_griname(lsp_gri);
+            if (lsp == NULL)
+            	{
+                zlog_warn ("mon_apiserver_handle_msg: No such LSP circuit found: %s", lsp_gri);
+                rc = -6;
+                goto _error;
+            	}
+            len = 0;
+            tlv = (struct dragon_tlv_header*)buf;
+            tlv->type = htons(MON_TLV_LSP_STATUS);
+            tlv->length = htons(sizeof(u_int32_t));
+            len += sizeof(struct dragon_tlv_header);
+            *(u_int32_t*)(buf+len) = lsp->status;
+            len += sizeof(u_int32_t);
+            rmsg = mon_api_msg_new(MON_API_MSGTYPE_LSPSTATUS, MON_API_ACTION_DATA, len, apiserv->ucid, ntohl(msg->header.seqnum), 0, buf);
+            MON_APISERVER_POST_MESSAGE(apiserv, rmsg);
+            rc = 0;
         break;
 
       case MON_API_MSGTYPE_LSPERO:
+            tlv = (struct dragon_tlv_header*)msg->body;
+            if (ntohs(tlv->type) != MON_TLV_GRI || htons(tlv->length) != MAX_MON_NAME_LEN)
+            	{
+                zlog_warn ("mon_apiserver_handle_msg (type %d): Invalid TLV in message body: %d", msg->header.type, ntohs(tlv->type));
+                rc = -7;
+                goto _error;
+
+            	}
+            lsp_gri = (char*)(tlv+1);
+            lsp = dragon_find_lsp_by_griname(lsp_gri);
+            if (lsp == NULL)
+            	{
+                zlog_warn ("mon_apiserver_handle_msg: No such LSP circuit found: %s", lsp_gri);
+                rc = -8;
+                goto _error;
+            	}
+            if (lsp->common.ERONodeNumber == 0 || lsp->common.EROAbstractNode_Para == NULL)
+              {
+                zlog_warn ("mon_apiserver_handle_msg (type %d): The LSP '%s' has no ERO", msg->header.type, lsp_gri);
+                rc = -9;
+                goto _error;
+              }
+            else
+              {
+                len = 0;
+                tlv = (struct dragon_tlv_header*)buf;
+                /* packing regular LSP ERO TLV*/
+                tlv->type = htons(MON_TLV_LSP_ERO);
+                tlv->length = htons(lsp->common.ERONodeNumber*sizeof(struct _EROAbstractNode_Para));
+                len = sizeof(struct dragon_tlv_header);
+                memcpy(buf+len, lsp->common.EROAbstractNode_Para, lsp->common.ERONodeNumber*sizeof(struct _EROAbstractNode_Para));
+                len += lsp->common.ERONodeNumber*sizeof(struct _EROAbstractNode_Para);
+                /* packing Subnet ERO TLV if available*/
+                if (lsp->dragon.subnet_ero != NULL && listcount(lsp->dragon.subnet_ero) > 0)
+                  {
+                    tlv = (struct dragon_tlv_header*)(buf+len);
+                    tlv->type = htons(MON_TLV_SUBNET_ERO);
+                    len = sizeof(struct dragon_tlv_header);
+                    LIST_LOOP(lsp->dragon.subnet_ero, hop, node)
+                      {
+                        *(struct _EROAbstractNode_Para*)(buf+len) = *hop;
+                        len += sizeof(struct _EROAbstractNode_Para);
+                      }
+                  }
+                rmsg = mon_api_msg_new(MON_API_MSGTYPE_LSPERO, MON_API_ACTION_DATA, len, apiserv->ucid, ntohl(msg->header.seqnum), 0, buf);
+                MON_APISERVER_POST_MESSAGE(apiserv, rmsg);
+              }
         break;
 
       case MON_API_MSGTYPE_NODELIST:
@@ -429,7 +534,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             if (ntohs(tlv->type) != MON_TLV_GRI || htons(tlv->length) != MAX_MON_NAME_LEN)
             	{
                 zlog_warn ("mon_apiserver_handle_msg (type %d): Invalid TLV in message body: %d", msg->header.type, ntohs(tlv->type));
-                rc = -1;
+                rc = -10;
                 goto _error;
 
             	}
@@ -438,32 +543,33 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             if (lsp == NULL)
             	{
                 zlog_warn ("mon_apiserver_handle_msg: No such LSP circuit found: %s", lsp_gri);
-                rc = -2;
+                rc = -11;
                 goto _error;
             	}
             if (lsp->common.DragonExtInfo_Para == NULL || lsp->common.DragonExtInfo_Para->num_mon_nodes == 0)
               {
                 zlog_warn ("mon_apiserver_handle_msg (type %d): The LSP '%s' has no node list", msg->header.type, lsp_gri);
-                rc = -3;
+                rc = -12;
                 goto _error;
               }
             else
               {
+                len = 0;
                 tlv = (struct dragon_tlv_header*)buf;
                 tlv->type = htons(MON_TLV_NODE_LIST);
                 tlv->length = htons(lsp->common.DragonExtInfo_Para->num_mon_nodes*sizeof(struct in_addr));
-                addr = (struct in_addr*)(buf + sizeof(struct dragon_tlv_header));
-                for (i = 0; i < lsp->common.DragonExtInfo_Para->num_mon_nodes; i++, addr++)
+                len += sizeof(struct dragon_tlv_header);
+                addr = (struct in_addr*)(buf + len);
+                for (i = 0; i < lsp->common.DragonExtInfo_Para->num_mon_nodes; i++, addr++, len+= sizeof(struct in_addr))
                     addr->s_addr = lsp->common.DragonExtInfo_Para->mon_nodes[i].s_addr;
-                rmsg = mon_api_msg_new(MON_TLV_NODE_LIST, MON_API_ACTION_DATA, sizeof(struct in_addr)+ntohs(tlv->length), 
-                    apiserv->ucid, ntohl(msg->header.seqnum), 0, tlv);
-                MON_APISERVER_POST_MESSAGE(apiserv, msg);
+                rmsg = mon_api_msg_new(MON_API_MSGTYPE_NODELIST, MON_API_ACTION_DATA, len, apiserv->ucid, ntohl(msg->header.seqnum), 0, tlv);
+                MON_APISERVER_POST_MESSAGE(apiserv, rmsg);
               }
             rc = 0;
             break;
           default:
             zlog_warn ("mon_apiserver_handle_msg (type %d): Unknown API message action: %d", msg->header.type, msg->header.action);
-            rc = -4;
+            rc = -13;
             goto _error;
           }        
         break;
@@ -477,7 +583,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             break;
           default:
             zlog_warn ("mon_apiserver_handle_msg (type %d): Unknown API message action: %d", msg->header.type, msg->header.action);
-            rc = -5;
+            rc = -14;
             goto _error;
           }
         break;
@@ -490,7 +596,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             if (ntohs(tlv->type) != MON_TLV_GRI || htons(tlv->length) != MAX_MON_NAME_LEN)
             	{
                 zlog_warn ("mon_apiserver_handle_msg (type %d): Invalid TLV in message body: %d", msg->header.type, ntohs(tlv->type));
-                rc = -5;
+                rc = -15;
                 goto _error;
             	}
             lsp_gri = (char*)(tlv+1);
@@ -498,7 +604,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             if (lsp == NULL)
             	{
                 zlog_warn ("mon_apiserver_handle_msg: No such LSP circuit found: %s", lsp_gri);
-                rc = -6;
+                rc = -16;
                 goto _error;
             	}
             zMonitoringQuery(dmaster.api, ntohl(msg->header.ucid), ntohl(msg->header.seqnum), lsp_gri, 
@@ -507,13 +613,13 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             break;
           default:
             zlog_warn ("mon_apiserver_handle_msg (type %d): Unknown API message action: %d", msg->header.type, msg->header.action);
-            rc = -7;
+            rc = -17;
             goto _error;
           }
       break;
     default:
       zlog_warn ("mon_apiserver_handle_msg: Unknown API message type: %d", msg->header.type);
-      rc = -8;
+      rc = -18;
       goto _error;
     }
 
