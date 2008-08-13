@@ -79,7 +79,9 @@ void mon_api_msg_free(struct mon_api_msg* msg);
 struct mon_api_msg* mon_api_msg_read(int fd);
 int mon_api_msg_write(int fd, struct mon_api_msg* msg);
 
-struct ospf_apiserver;
+#define MON_APISERVER_POST_MESSAGE(S, M) \
+                listnode_add(S->out_fifo, M); \
+                S->t_sync_write = thread_add_write (master, mon_apiserver_write, S, S->fd_sync);
 
 unsigned short mon_apiserver_getport (void);
 int mon_apiserver_init (void);

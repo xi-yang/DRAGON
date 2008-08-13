@@ -457,8 +457,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
                     addr->s_addr = lsp->common.DragonExtInfo_Para->mon_nodes[i].s_addr;
                 rmsg = mon_api_msg_new(MON_TLV_NODE_LIST, MON_API_ACTION_DATA, sizeof(struct in_addr)+ntohs(tlv->length), 
                     apiserv->ucid, ntohl(msg->header.seqnum), 0, tlv);
-                listnode_add(apiserv->out_fifo, msg);
-                apiserv->t_sync_write = thread_add_write (master, mon_apiserver_write, apiserv, apiserv->fd_sync);
+                MON_APISERVER_POST_MESSAGE(apiserv, msg);
               }
             rc = 0;
             break;
@@ -646,8 +645,8 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
       zlog_warn("mon_apiserver_send_reply: failed to assemble replying message for apiserver(ucid=%x)", apiserv->ucid);
       return -1;
     }
-  listnode_add(apiserv->out_fifo, msg);
-  apiserv->t_sync_write = thread_add_write (master, mon_apiserver_write, apiserv, apiserv->fd_sync);
+
+  MON_APISERVER_POST_MESSAGE(apiserv, msg);
 
   return 0;
 }
@@ -661,8 +660,7 @@ void mon_apiserver_send_error(struct mon_apiserver* apiserv, u_int8_t type, u_in
   tlv->length = htons(4);
   msg = mon_api_msg_new(type, MON_API_ACTION_ERROR, 8, apiserv->ucid, seqnum, 0, buf);
 
-  listnode_add(apiserv->out_fifo, msg);
-  apiserv->t_sync_write = thread_add_write (master, mon_apiserver_write, apiserv, apiserv->fd_sync);
+  MON_APISERVER_POST_MESSAGE(apiserv, msg);
 }
 
 struct lsp* dragon_find_lsp_by_griname(char* name)
