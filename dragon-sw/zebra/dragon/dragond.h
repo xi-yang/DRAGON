@@ -735,7 +735,9 @@ struct dragon_master {
 	/* Global RSVP API handle */
 	void *api; 
 
-	/* Monitoring apierver list */
+	/* Monitoring apiserver accept_fd */
+	int mon_apiserver_fd;
+	/* Monitoring apiserver list */
 	list mon_apiserver_list;
 };
 

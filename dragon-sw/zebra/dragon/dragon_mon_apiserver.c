@@ -78,10 +78,10 @@ struct mon_api_msg * mon_api_msg_read (int fd)
       return NULL;
     }
 
-  /* Checksum verifycation */
+  /* Checksum vierification */
   if (hdr.chksum != MON_API_MSG_CHKSUM(hdr))
     {
-      zlog_warn ("mon_msg_read: MON_API_MSG_CHKSUM verifycation failed");
+      zlog_warn ("mon_msg_read: MON_API_MSG_CHKSUM verification failed");
       return NULL;
     }
 
@@ -193,6 +193,7 @@ int mon_apiserver_serv_sock_family (unsigned short port, int family)
       close (accept_sock);	/* Close socket */
       return rc;
     }
+
   return accept_sock;
 }
 
@@ -212,6 +213,8 @@ int mon_apiserver_init (void)
       rc = -2;
       goto out;
     }
+  /* keep record of the opened accept socket */
+  dmaster.mon_apiserver_fd = fd;
 
   /* Schedule new thread that handles accepted connections. */
   thread_add_read (master, mon_apiserver_accept, NULL, fd);
@@ -229,6 +232,9 @@ void mon_apiserver_term (void)
 {
   listnode node;
 
+  if (dmaster.mon_apiserver_fd <= 0)
+    return;
+
   /* Free all client instances */
   for (node = listhead (dmaster.mon_apiserver_list); node; nextnode (node))
     {
@@ -240,6 +246,9 @@ void mon_apiserver_term (void)
   /* Free client list itself */
   list_delete (dmaster.mon_apiserver_list);
   dmaster.mon_apiserver_list = NULL;
+  /* Closing accept socket */
+  close(dmaster.mon_apiserver_fd);
+  dmaster.mon_apiserver_fd = 0;
 }
 
 struct mon_apiserver *mon_apiserver_new (int fd)
