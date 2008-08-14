@@ -3,6 +3,7 @@
 Cisco (vendor) Catalyst 3750 (model) Control Module source file SwitchCtrl_Session_Catalyst3750.cc
 Created by Ajay Todimala, 2007
 Modified by Xi Yang, 05/2007
+Note: This code also support Catalyst 3560
 To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/

@@ -2,6 +2,7 @@
 
 Cisco (vendor) Catalyst 6500 (model) Control Module source file SwitchCtrl_Session_Catalyst6500.cc
 Created by Ajay Todimala, 2007
+Modified by Xi Yan, 2008
 To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/
