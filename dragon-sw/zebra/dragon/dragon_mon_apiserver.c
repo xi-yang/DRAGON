@@ -202,7 +202,7 @@ int mon_apiserver_init (void)
   int fd;
   int rc = -1;
 
-  if ( dmaster.mon_apiserver_list != NULL )
+  if (dmaster.mon_apiserver_fd >= 0)
     goto out;
 
   /* Create new socket to accept API conections. */
@@ -232,7 +232,7 @@ void mon_apiserver_term (void)
 {
   listnode node;
 
-  if (dmaster.mon_apiserver_fd <= 0)
+  if (dmaster.mon_apiserver_fd < 0)
     return;
 
   /* Free all client instances */
@@ -248,7 +248,7 @@ void mon_apiserver_term (void)
   dmaster.mon_apiserver_list = NULL;
   /* Closing accept socket */
   close(dmaster.mon_apiserver_fd);
-  dmaster.mon_apiserver_fd = 0;
+  dmaster.mon_apiserver_fd = -1;
 }
 
 struct mon_apiserver *mon_apiserver_new (int fd)
