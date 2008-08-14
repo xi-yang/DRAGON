@@ -62,11 +62,11 @@ public:
 		MESSAGE_ID = 23,
 		MESSAGE_ID_ACK = 24,
 		MESSAGE_ID_LIST = 25,
+#endif
 		UPSTREAM_LABEL = 35,
 		LABEL_SET = 36,
 		SUGGESTED_LABEL = 129,
 		SESSION_ATTRIBUTE = 207,
-#endif
 #if defined(ONEPASS_RESERVATION)
 		DUPLEX = 208,								// uses one of the reserved value
 #endif

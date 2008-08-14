@@ -66,7 +66,7 @@ ieee32float_p yy_float;
 "mpls"			return MPLS_C;
 "nompls"		return NOMPLS;
 "label_hash"		return LABEL_HASH;
-"explicit_route"	return EXPLICIT_ROUTE;
+"explicit_route"	return EXPLICIT_ROUTE_;
 "list_alloc"		return LIST_ALLOC;
 "sb_alloc"		return SB_ALLOC;
 "slots"			return SLOTS;
@@ -85,7 +85,7 @@ ieee32float_p yy_float;
 
 [0-9]+\:[0-9]+		{ yy_string = yytext; return INTEGER_RANGE; }
 
-upstream\-label\=[0-9]+	{ yy_string = yytext; return UPSTREAM_LABEL; }
+upstream\-label\=[0-9]+	{ yy_string = yytext; return UPSTREAM_LABEL_; }
 
 [A-Za-z0-9\-\+]+	{ yy_string = yytext; return STRING; }
 
