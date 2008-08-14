@@ -736,7 +736,7 @@ struct dragon_master {
 	void *api; 
 
 	/* Monitoring apiserver accept_fd */
-	int mon_apiserver_fd;
+	struct thread *t_mon_accept;
 	/* Monitoring apiserver list */
 	list mon_apiserver_list;
 };

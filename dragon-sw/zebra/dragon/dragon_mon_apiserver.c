@@ -202,7 +202,7 @@ int mon_apiserver_init (void)
   int fd;
   int rc = -1;
 
-  if (dmaster.mon_apiserver_fd >= 0)
+  if (dmaster.t_mon_accept != NULL)
     goto out;
 
   /* Create new socket to accept API conections. */
@@ -213,11 +213,9 @@ int mon_apiserver_init (void)
       rc = -2;
       goto out;
     }
-  /* keep record of the opened accept socket */
-  dmaster.mon_apiserver_fd = fd;
 
   /* Schedule new thread that handles accepted connections. */
-  thread_add_read (master, mon_apiserver_accept, NULL, fd);
+  dmaster.t_mon_accept = thread_add_read (master, mon_apiserver_accept, NULL, fd);
 
   /* Initialize list that keeps track of all connections. */
   dmaster.mon_apiserver_list = list_new ();
@@ -232,7 +230,7 @@ void mon_apiserver_term (void)
 {
   listnode node;
 
-  if (dmaster.mon_apiserver_fd < 0)
+  if (dmaster.t_mon_accept == NULL)
     return;
 
   /* Free all client instances */
@@ -247,8 +245,8 @@ void mon_apiserver_term (void)
   list_delete (dmaster.mon_apiserver_list);
   dmaster.mon_apiserver_list = NULL;
   /* Closing accept socket */
-  close(dmaster.mon_apiserver_fd);
-  dmaster.mon_apiserver_fd = -1;
+  thread_cancel(dmaster.t_mon_accept);
+  dmaster.t_mon_accept = NULL;
 }
 
 struct mon_apiserver *mon_apiserver_new (int fd)
@@ -320,7 +318,7 @@ int mon_apiserver_accept (struct thread *thread)
   accept_sock = THREAD_FD (thread);
 
   /* Keep hearing on socket for further connections. */
-  thread_add_read (master, mon_apiserver_accept, apiserv, accept_sock);
+  dmaster.t_mon_accept = thread_add_read (master, mon_apiserver_accept, apiserv, accept_sock);
 
   memset (&su, 0, sizeof (union sockunion));
   /* Accept connection for synchronous messages */

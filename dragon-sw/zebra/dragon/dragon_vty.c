@@ -2262,7 +2262,7 @@ dragon_master_init()
 
   dmaster.t_rsvp_read = thread_add_read (master, dragon_rsvp_read, NULL, dmaster.rsvp_fd);
 
-  dmaster.mon_apiserver_fd = -1;
+  dmaster.t_mon_accept = NULL;
   dmaster.mon_apiserver_list = NULL;
 
   default_session.Session_Para.destAddr.s_addr = 0x100007f; /* "127.0.0.1" */
