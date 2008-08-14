@@ -245,6 +245,7 @@ void mon_apiserver_term (void)
   list_delete (dmaster.mon_apiserver_list);
   dmaster.mon_apiserver_list = NULL;
   /* Closing accept socket */
+  close (THREAD_FD (dmaster.t_mon_accept));
   thread_cancel(dmaster.t_mon_accept);
   dmaster.t_mon_accept = NULL;
 }
