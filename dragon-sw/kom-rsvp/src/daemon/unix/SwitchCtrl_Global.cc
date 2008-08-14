@@ -16,6 +16,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_MessageProcessor.h"
 #include "RSVP_PHopSB.h"
 #include "RSVP_PSB.h"
+#include "RSVP_Session.h"
 #include "SwitchCtrl_Session_Force10E600.h"
 #include "SwitchCtrl_Session_RaptorER1010.h"
 #include "SwitchCtrl_Session_Catalyst3750.h"
@@ -1175,7 +1176,7 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
                             errCode = 5; // incorrect vlsr route information
                             goto _error;
                         }
-                        monReply.sub_type = 1; //Ethernet
+                        monReply.sub_type = MON_REPLY_SUBTYPE_ETHERNET; //Ethernet
                         monReply.length = MON_REPLY_BASE_SIZE + sizeof(struct _Ethernet_Circuit_Info);
                         //$$$ get VLAN and ports from
                         VLSR_Route& vlsrt = vlsrtList.front();
@@ -1237,13 +1238,6 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
                     }
                 }
             }
-             /* never reached -- > no switch control session for transit vlsr
-             else if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) == 0 && (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) == 0) {
-                  // subnet transit vlsr
-                 monReply.sub_type = 5; // EoS subnet transit
-                 monReply.length = MON_REPLY_BASE_SIZE;
-             }
-             */
             else if (!(*it)->getMonCircuitInfo(monReply)) { //edge-control subnet vlsr
                 errCode = 4; //failed to retrieve circuit info (subnetSwitchCtrlSession)
                 goto _error;
@@ -1261,18 +1255,34 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
         VLSRRoute& vlsrtList = psb->getVLSR_Route();
         if (vlsrtList.size() == 0 && SwitchCtrl_Session_SubnetUNI::IsSubnetTransitERO(psb->getEXPLICIT_ROUTE_Object())) {
              monReply.switch_options |= MON_SWITCH_OPTION_SUBNET;
+             monReply.sub_type = MON_REPLY_SUBTYPE_SUBNET_TRANSIT;
              monReply.length = MON_REPLY_BASE_SIZE;
-             return;
         }
-        // otherwise error!
-        errCode = 1; //no switch control session matching the GRI
-        goto _error;
+        else {// otherwise error!
+            errCode = 1; //no switch control session matching the GRI
+            goto _error;
+        }
+    }
+
+    //flags whether the VLSR is source or/and destination node.
+    if (psb->getSession().getDestAddress() == Session::ospfRouterID)
+         monReply.switch_options |= MON_SWITCH_OPTION_CIRCUIT_SRC;
+    if (psb->getSrcAddress() == Session::ospfRouterID)
+         monReply.switch_options |= MON_SWITCH_OPTION_CIRCUIT_DEST;
+	
+    if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET)) {
+        if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) && (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST))
+            monReply.sub_type = MON_REPLY_SUBTYPE_SUBNET_SRCDEST;
+        else if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC))
+            monReply.sub_type = MON_REPLY_SUBTYPE_SUBNET_SRC;
+        else if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST))
+            monReply.sub_type = MON_REPLY_SUBTYPE_SUBNET_DEST;
     }
 
     return; // normal return
 
   _error:
-    monReply.sub_type = 0;
+    monReply.sub_type = MON_REPLY_SUBTYPE_ERROR;
     monReply.length = MON_REPLY_BASE_SIZE;
     monReply.switch_options = (MON_SWITCH_OPTION_ERROR|errCode);
     return;
