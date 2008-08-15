@@ -2693,9 +2693,9 @@ DEFUN (dragon_set_local_id_group_refresh,
     return CMD_WARNING;
 }
 
-DEFUN (dragon_set_monitoring_api,
-       dragon_set_monitoring_api_cmd,
-       "set monitoring-api (on|off)",
+DEFUN (dragon_set_mon_apiserver,
+       dragon_set_mon_apiserver_cmd,
+       "set mon-apiserver (on|off)",
        SET_STR
        "Monitoring service API\n"
        "On/enabled\n"
@@ -2715,6 +2715,22 @@ DEFUN (dragon_set_monitoring_api,
     {
       mon_apiserver_term();
     }
+
+  return CMD_WARNING;
+}
+
+DEFUN (dragon_show_mon_apiserver,
+       dragon_show_mon_apiserver_cmd,
+       "show mon-apiserver",
+       SHOW_STR
+       "Monitoring service API status\n")
+{
+  char onoff[4];
+  if (dmaster.t_mon_accept)
+      strcpy(onoff, "on");
+  else
+      strcpy(onoff, "off");
+  vty_out(vty, "\t> Monitoring API server is turned %s.%s", onoff, VTY_NEWLINE);
 
   return CMD_WARNING;
 }
@@ -2739,6 +2755,7 @@ dragon_supp_vty_init ()
   install_element(VIEW_NODE, &dragon_commit_lsp_default_cmd);
   install_element(VIEW_NODE, &dragon_delete_lsp_cmd);
   install_element(VIEW_NODE, &dragon_show_narb_extra_options_cmd);
+  install_element(VIEW_NODE, &dragon_show_mon_apiserver_cmd);
 
   registered_local_ids = list_new();
   install_element(VIEW_NODE, &dragon_show_local_id_cmd);
@@ -2763,8 +2780,8 @@ dragon_supp_vty_init ()
   install_element(CONFIG_NODE, &dragon_show_ucid_cmd);
   install_element(VIEW_NODE, &dragon_set_narb_extra_options_cmd);
   install_element(CONFIG_NODE, &dragon_set_narb_extra_options_cmd);
-  install_element(VIEW_NODE, &dragon_set_monitoring_api_cmd);
-  install_element(CONFIG_NODE, &dragon_set_monitoring_api_cmd);
+  install_element(VIEW_NODE, &dragon_set_mon_apiserver_cmd);
+  install_element(CONFIG_NODE, &dragon_set_mon_apiserver_cmd);
   
   install_element(CONFIG_NODE, &dragon_set_pce_para_cmd);
   install_element(CONFIG_NODE, &dragon_set_pce_para_ip_cmd);
