@@ -43,7 +43,7 @@ case "$target" in
     rsvpconf=`echo "--enable-switch-cli-access --disable-altq"`
   ;;
   cleanup)
-    cd kom-rsvp
+    cd zebra
     if test -f Makefile; then
       if test -e /etc/debian_version; then
         make clean
@@ -51,7 +51,7 @@ case "$target" in
         gmake clean
       fi
     fi
-    cd ../zebra
+    cd ../kom-rsvp
     if test -f Makefile; then
       if test -e /etc/debian_version; then
         make clean
