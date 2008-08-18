@@ -34,7 +34,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = dragon$(EXEEXT)
+bin_PROGRAMS = dragon$(EXEEXT) mon_apiclient$(EXEEXT)
 subdir = dragon
 DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -55,6 +55,12 @@ dragon_OBJECTS = $(am_dragon_OBJECTS)
 am__DEPENDENCIES_1 =
 dragon_DEPENDENCIES = ../ast_master/libastb.a ../lib/libzebra.a \
 	$(am__DEPENDENCIES_1)
+am_mon_apiclient_OBJECTS = dragon_app.$(OBJEXT) dragon_vty.$(OBJEXT) \
+	dragon_packet.$(OBJEXT) dragon_xml.$(OBJEXT) \
+	dragon_mon_apiserver.$(OBJEXT) dragon_mon_apiclient.$(OBJEXT)
+mon_apiclient_OBJECTS = $(am_mon_apiclient_OBJECTS)
+mon_apiclient_DEPENDENCIES = ../ast_master/libastb.a ../lib/libzebra.a \
+	$(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -62,8 +68,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(dragon_SOURCES)
-DIST_SOURCES = $(dragon_SOURCES)
+SOURCES = $(dragon_SOURCES) $(mon_apiclient_SOURCES)
+DIST_SOURCES = $(dragon_SOURCES) $(mon_apiclient_SOURCES)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -201,6 +207,8 @@ INSTALL_SDATA = @INSTALL@ -m 600
 dragon_SOURCES = ../ast_master/dragon_app.c dragon_main.c dragon_vty.c dragon_packet.c dragon_xml.c dragon_mon_apiserver.c
 noinst_HEADERS = dragond.h
 dragon_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP $(XML_LIBS) -lxml2
+mon_apiclient_SOURCES = ../ast_master/dragon_app.c dragon_vty.c dragon_packet.c dragon_xml.c dragon_mon_apiserver.c dragon_mon_apiclient.c
+mon_apiclient_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP $(XML_LIBS) -lxml2
 sysconf_DATA = dragon.conf.sample
 RC_SCRIPT = dragon.sh
 all: all-am
@@ -262,6 +270,9 @@ clean-binPROGRAMS:
 dragon$(EXEEXT): $(dragon_OBJECTS) $(dragon_DEPENDENCIES) 
 	@rm -f dragon$(EXEEXT)
 	$(LINK) $(dragon_OBJECTS) $(dragon_LDADD) $(LIBS)
+mon_apiclient$(EXEEXT): $(mon_apiclient_OBJECTS) $(mon_apiclient_DEPENDENCIES) 
+	@rm -f mon_apiclient$(EXEEXT)
+	$(LINK) $(mon_apiclient_OBJECTS) $(mon_apiclient_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -271,6 +282,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_app.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_mon_apiclient.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_mon_apiserver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_packet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dragon_vty.Po@am__quote@
