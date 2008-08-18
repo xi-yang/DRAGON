@@ -26,8 +26,7 @@
 #define DEBUG
 
 /* DRAGON version number */
-#define DRAGON_VERSION 	1
-#define IS_VALID_DRAGON_VERSION(X) (X==DRAGON_VERSION)
+#define DRAGON_VERSION 	"1.19"
 
 /* VTY port number. */
 #define DRAGON_VTY_PORT          2611
@@ -531,7 +530,7 @@ struct _Ethernet_Circuit_Info {
 	u_int16_t vlan_egress;
 	u_int16_t num_ports_egress;
 	u_int16_t ports_egress[MAX_MON_PORT_NUM];
-	u_int32_t qos_options; //QoS parameters --> TBD
+	u_int32_t qos_options; /*QoS parameters --> TBD*/
 };
 struct _Subnet_Circuit_Info {
 	u_int8_t subnet_id;
@@ -539,8 +538,8 @@ struct _Subnet_Circuit_Info {
 	u_int16_t port;
 	float ethernet_bw;
 	char vcg_name[MAX_MON_NAME_LEN];
-	char eflow_in_name[MAX_MON_NAME_LEN]; //_unicast + _multicast for untagged!
-	char eflow_out_name[MAX_MON_NAME_LEN]; //_unicast + _multicast for untagged!
+	char eflow_in_name[MAX_MON_NAME_LEN]; /*_unicast + _multicast for untagged!*/
+	char eflow_out_name[MAX_MON_NAME_LEN]; /*_unicast + _multicast for untagged!*/
 	char snc_crs_name[MAX_MON_NAME_LEN];
 	char dtl_name[MAX_MON_NAME_LEN];
 };

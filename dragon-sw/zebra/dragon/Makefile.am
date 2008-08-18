@@ -12,11 +12,14 @@ LIBS = @LIBS@ @CURSES@ @LIBPAM@
 
 INSTALL_SDATA=@INSTALL@ -m 600
 
-bin_PROGRAMS = dragon
+bin_PROGRAMS = dragon mon_apiclient
 
 dragon_SOURCES = ../ast_master/dragon_app.c dragon_main.c dragon_vty.c dragon_packet.c dragon_xml.c dragon_mon_apiserver.c
 noinst_HEADERS = dragond.h
 dragon_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP $(XML_LIBS) -lxml2
+
+mon_apiclient_SOURCES = ../ast_master/dragon_app.c dragon_vty.c dragon_packet.c dragon_xml.c dragon_mon_apiserver.c dragon_mon_apiclient.c
+mon_apiclient_LDADD = ../ast_master/libastb.a ../lib/libzebra.a -L$(RSVP_LIB) -lc -lstdc++ -lRSVP $(XML_LIBS) -lxml2
 
 sysconf_DATA = dragon.conf.sample
 

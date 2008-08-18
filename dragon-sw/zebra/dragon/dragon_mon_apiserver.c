@@ -206,7 +206,7 @@ int mon_apiserver_init (void)
     goto out;
 
   /* Create new socket to accept API conections. */
-  fd = mon_apiserver_serv_sock_family (MON_APISERVER_PORT, AF_INET);
+  fd = mon_apiserver_serv_sock_family (mon_apiserver_getport(), AF_INET);
 
   if (fd < 0)
     {

@@ -44,7 +44,7 @@
 char config_current[] = DRAGON_DEFAULT_CONFIG;
 char config_default[] = SYSCONFDIR DRAGON_DEFAULT_CONFIG;
 
-/* OSPFd options. */
+/* DRAGONd options. */
 struct option longopts[] = 
 {
   { "daemon",      no_argument,       NULL, 'd'},
