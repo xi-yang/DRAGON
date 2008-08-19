@@ -128,7 +128,7 @@ int mon_api_msg_write (int fd, struct mon_api_msg *msg)
 
   /* Make contiguous memory buffer for message */
   memcpy (buf, &msg->header, sizeof (struct mon_api_msg_header));
-  memcpy(buf, msg->body, ntohs (msg->header.length));
+  memcpy(buf+sizeof (struct mon_api_msg_header), msg->body, ntohs (msg->header.length));
   wlen = writen (fd, (char*)buf, l);
   if (wlen < 0)
     {
