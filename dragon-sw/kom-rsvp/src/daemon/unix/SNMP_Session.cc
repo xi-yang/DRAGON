@@ -115,6 +115,8 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
 
 bool SNMP_Session::setVLANPVID(uint32 port, uint32 vlanID)
 {
+        LOG(4)( Log::MPLS, "VLSR: SNMP: setting PVID", vlanID, "on port", port);
+
 	struct snmp_pdu *pdu;
 	struct snmp_pdu *response;
 	oid anOID[MAX_OID_LEN];
@@ -271,6 +273,8 @@ bool SNMP_Session::setVLANPort(uint8* portbits, int bitlen, uint32 vlanID)
 
 bool SNMP_Session::hook_createVLAN(const uint32 vlanID)
 {
+    LOG(4)( Log::MPLS, "VLSR: SNMP: creating VLAN ID", vlanID, ", VLAN creation enabled=", vlanCreation_enabled);
+
     if (!vlanCreation_enabled)
         return false;
 
@@ -295,6 +299,42 @@ bool SNMP_Session::hook_createVLAN(const uint32 vlanID)
 
     status = snmp_add_var(pdu, anOID, anOID_len, type, value);
 
+    /*
+     *  Dell PowerConnect switches require a bit more coaxing to create a new VLAN
+     */ 
+    if (String("PowerConnect 5224") == venderSystemDescription ||
+	String("Ethernet Switch") == venderSystemDescription ||
+	String("Neyland 24T") == venderSystemDescription ||
+	String("Ethernet Routing Switch") == venderSystemDescription) {
+      tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.1";
+      sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
+      status = read_objid(oid_str, anOID, &anOID_len);
+      type='s'; 
+      strcpy(value, "");
+      status = snmp_add_var(pdu, anOID, anOID_len, type, value);
+      
+      tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
+      sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
+      status = read_objid(oid_str, anOID, &anOID_len);
+      type='x'; 
+      strcpy(value, "00000000");
+      status = snmp_add_var(pdu, anOID, anOID_len, type, value);
+      
+      tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.3";
+      sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
+      status = read_objid(oid_str, anOID, &anOID_len);
+      type='x'; 
+      strcpy(value, "00000000");
+      status = snmp_add_var(pdu, anOID, anOID_len, type, value);
+      
+      tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
+      sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
+      status = read_objid(oid_str, anOID, &anOID_len);
+      type='x'; 
+      strcpy(value, "00000000");
+      status = snmp_add_var(pdu, anOID, anOID_len, type, value);
+    }
+
     // Send the Request out. 
     status = snmp_synch_response(snmpSessionHandle, pdu, &response);
 
@@ -303,7 +343,7 @@ bool SNMP_Session::hook_createVLAN(const uint32 vlanID)
     }
     else {
         if (status == STAT_SUCCESS){
-        LOG(4)( Log::MPLS, "VLSR: SNMP: Setting VLAN PVID", switchInetAddr, "failed. Reason : ", snmp_errstring(response->errstat));
+	  LOG(4)( Log::MPLS, "VLSR: SNMP: Create VLAN on", switchInetAddr, "failed. Reason: ", snmp_errstring(response->errstat));
         }
         else
       	    snmp_sess_perror("snmpset", snmpSessionHandle);
@@ -324,6 +364,8 @@ bool SNMP_Session::hook_createVLAN(const uint32 vlanID)
 
 bool SNMP_Session::hook_removeVLAN(const uint32 vlanID)
 {
+    LOG(4)( Log::MPLS, "VLSR: SNMP: removing VLAN ID", vlanID, ", VLAN deletion enabled=", vlanCreation_enabled);
+
     if (!vlanCreation_enabled)
         return false;
 
@@ -356,7 +398,7 @@ bool SNMP_Session::hook_removeVLAN(const uint32 vlanID)
     }
     else {
         if (status == STAT_SUCCESS){
-        LOG(4)( Log::MPLS, "VLSR: SNMP: Setting VLAN PVID", switchInetAddr, "failed. Reason : ", snmp_errstring(response->errstat));
+	  LOG(4)( Log::MPLS, "VLSR: SNMP: Remove VLAN on", switchInetAddr, "failed. Reason: ", snmp_errstring(response->errstat));
         }
         else
       	    snmp_sess_perror("snmpset", snmpSessionHandle);

@@ -476,10 +476,10 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
                                    if (!(*sessionIter)->verifyVLAN(vlan))
                                     {
-        					LOG(5)( Log::MPLS, "VLSR: Cannot verify VLAN Tag(ID). ", vlan, " on Switch: ", ethSw, 
+        					LOG(5)( Log::MPLS, "VLSR: Cannot verify VLAN ID", vlan, "on Switch:", ethSw, 
                                                         " >>> Creating a new VLAN...");
                                           if (!(*sessionIter)->createVLAN(vlan)) {
-                					LOG(5)( Log::MPLS, "VLSR: Creating a new VLAN ID:", vlan, " on Switch: ", ethSw, " has failed!" );
+                					LOG(5)( Log::MPLS, "VLSR: Creating a new VLAN ID:", vlan, "on Switch:", ethSw, " has failed!" );
                 					noError = false;
                                           }
                                     }
