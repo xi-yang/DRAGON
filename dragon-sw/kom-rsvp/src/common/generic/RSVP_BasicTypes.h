@@ -185,6 +185,7 @@ public:
 extern inline INetworkBuffer& operator>> ( INetworkBuffer&, PacketHeader& );
 class INetworkBuffer : public NetworkBuffer {
 	friend inline INetworkBuffer& operator>> ( INetworkBuffer&, ieee32float& );
+	friend inline INetworkBuffer& operator>> ( INetworkBuffer&, char& );
 	friend inline INetworkBuffer& operator>> ( INetworkBuffer&, uint8& );
 	friend inline INetworkBuffer& operator>> ( INetworkBuffer&, uint16& );
 	friend inline INetworkBuffer& operator>> ( INetworkBuffer&, uint32& );
@@ -280,6 +281,13 @@ extern inline ONetworkBuffer& operator<< ( ONetworkBuffer& buf, const Buffer& bu
 
 extern inline ostream& operator<< ( ostream& os, const ONetworkBuffer& b ) {
 	b.dump( os, b.getUsedSize() ); return os;
+}
+
+extern inline INetworkBuffer& operator>> ( INetworkBuffer& buf, char& data ) {
+																	assert( buf.getRemainingSize() >= sizeof(data) );
+	data = (char)*buf.ptr;
+	buf.ptr += sizeof(data);
+	return buf;
 }
 
 extern inline INetworkBuffer& operator>> ( INetworkBuffer& buf, uint8& data ) {

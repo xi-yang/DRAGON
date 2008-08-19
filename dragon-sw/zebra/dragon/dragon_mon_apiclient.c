@@ -168,6 +168,7 @@ void msg_display(struct mon_api_msg* msg)
   u_int32_t code;
   int bodylen, tlvlen, i;
 
+  printf("\n  Response from monitroing API server:\n");
   printf("\t> Message type ");
   switch (msg->header.type)
     {
@@ -286,11 +287,11 @@ void msg_display(struct mon_api_msg* msg)
           break;
         case MON_TLV_LSP_STATUS:
           code = ntohl(*(u_int32_t*)(tlv + 1));
-          printf("\t\t>>LSP Status: %d\n)", code);
+          printf("\t\t>>LSP Status: %x\n)", code);
           break;
         case MON_TLV_ERROR:
           code = ntohl(*(u_int32_t*)(tlv + 1));
-          printf("\t\t>>Error Code: %d\n)", code);
+          printf("\t\t>>Error Code: %x\n)", code);
           break;
         default:
           printf("UNKNOWN TLV type %d\n", ntohs(tlv->type));          
@@ -329,7 +330,7 @@ NSF DRAGON gateway daemon.\n\n\
 -e, --lspero <gri>     LSP ERO information\n\
 -h, --help         Display this help and exit\n\
 -l, --lsplist      Switch information\n\
--l, --nodelist      LSP node list\n\
+-n, --nodelist      LSP node list\n\
 -s, --switch      Switch information\n\    
 -t, --lspstatus <gri>     LSP status\n\
 -v, --version    Print program version\n\
@@ -404,7 +405,7 @@ main (int argc, char **argv)
           break;
         default:
           usage (progname, 1);
-          break;
+          exit(2);
         }
     }
 
