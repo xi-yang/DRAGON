@@ -194,7 +194,7 @@ void msg_display(struct mon_api_msg* msg)
     }
 
   printf("\t> Action ");
-  switch (msg->header.type)
+  switch (msg->header.action)
     {
     case MON_API_ACTION_DATA:
       printf("MON_API_ACTION_DATA\n");
