@@ -780,7 +780,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			if ((monReply.switch_options & MON_SWITCH_OPTION_ERROR) != 0 ) { // Error
 				; //noop
 			}
-			if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) { // Ethernet Switch
+			else if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) { // Ethernet Switch
 				buffer >> monReply.circuit_info.vlan_info.vlan_ingress >> monReply.circuit_info.vlan_info.num_ports_ingress;
 				for (j = 0; j < MAX_MON_PORT_NUM; j++)
 					buffer >> monReply.circuit_info.vlan_info.ports_ingress[j];
@@ -970,7 +970,7 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 		os  << ", gri=" << o.monReply.gri;
 		os << ", switch_ip=" << String( inet_ntoa(o.monReply.switch_info.switch_ip) ) << ", switch_port=" << o.monReply.switch_info.switch_port 
 			<< ", switch_type=" << o.monReply.switch_info.switch_type << ", access_type="  <<o.monReply.switch_info.access_type
-			<< ", switch_options" << o.monReply.switch_options;
+			<< ", switch_options=" << o.monReply.switch_options;
 		if ((o.monReply.switch_options & MON_SWITCH_OPTION_ERROR) != 0 ) { // Error
 			os << ", query_error_code=" << (o.monReply.switch_options&0xffff);
 		}
