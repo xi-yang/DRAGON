@@ -1199,9 +1199,37 @@ void  rsvpUpcall(void* para)
 	struct lsp *lsp = NULL;
 	int lsp_deleted = 0;
 
-	lsp = dragon_find_lsp_by_rsvpupcallparam(p);
-	if (!lsp)
+	if (p->code == MonReply) /* For monitoring service API */
 	{
+		struct mon_apiserver* apiserv;
+		listnode node;
+		u_int8_t type;                   
+		u_int8_t action;
+
+		/* search dmaster->mon_apiserver_list for apiserver matching ucid */
+                 LIST_LOOP(dmaster.mon_apiserver_list, apiserv, node)
+		{         
+			assert(apiserv && p->monReplyPara);
+			if (apiserv->ucid == p->monReplyPara->ucid)
+			{
+				if (p->monReplyPara->switch_options == 0 && p->monReplyPara->length == MON_REPLY_BASE_SIZE)
+					type = MON_API_MSGTYPE_SWITCH;
+				else
+					type = MON_API_MSGTYPE_CIRCUIT;
+				if ((p->monReplyPara->switch_options & MON_SWITCH_OPTION_ERROR) == 0)
+					action = MON_API_ACTION_DATA;
+				else
+					action = MON_API_ACTION_ERROR;					
+				mon_apiserver_send_reply(apiserv, type, action, p->monReplyPara);
+				return;
+			}
+		}
+		zlog_warn("Unable to find a Moitoring API server instance for this MonReply upcall.");
+		return;
+	}
+
+	lsp = dragon_find_lsp_by_rsvpupcallparam(p);
+	if (!lsp) {
 		zlog_warn("Unable to find LSP for this RSVP upcall.");
 		if (p->code==Path)
 			rsvpupcall_register_lsp(p);
@@ -1308,34 +1336,7 @@ void  rsvpUpcall(void* para)
 			if (p->errorSpecPara != NULL)
 				lsp->error_spec = *p->errorSpecPara;
 			break;
-		case MonReply: /* For monitoring service API */
-		{
-			struct mon_apiserver* apiserv;
-			listnode node;
-			u_int8_t type;                   
-			u_int8_t action;
 
-			/* search dmaster->mon_apiserver_list for apiserver matching ucid */
-                     LIST_LOOP(dmaster.mon_apiserver_list, apiserv, node)
-			{         
-				assert(apiserv && p->monReplyPara);
-				if (apiserv->ucid == p->monReplyPara->ucid)
-				{
-					if (p->monReplyPara->switch_options == 0 && p->monReplyPara->length == MON_REPLY_BASE_SIZE)
-						type = MON_API_MSGTYPE_SWITCH;
-					else
-						type = MON_API_MSGTYPE_CIRCUIT;
-					if ((p->monReplyPara->switch_options & MON_SWITCH_OPTION_ERROR) == 0)
-						action = MON_API_ACTION_DATA;
-					else
-						action = MON_API_ACTION_ERROR;					
-					mon_apiserver_send_reply(apiserv, type, action, p->monReplyPara);
-					return;
-				}
-			}
-			zlog_warn("Unable to find a Moitoring API server instance for this MonReply upcall.");
-			return;
-		}
 		default:
 			break;
 	}
