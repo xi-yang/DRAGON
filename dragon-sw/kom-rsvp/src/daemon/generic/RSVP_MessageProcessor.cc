@@ -85,21 +85,36 @@ MessageProcessor::~MessageProcessor() {
 	}
 }
 
-//@@@@ Xi2008 >>
+//$$$$ Xi2008 for subnet control only >>
 extern pid_t pid_verifySNCStateWorkingState;
-//@@@@ Xi2008 <<
+//$$$$ Xi2008 <<
 
 void MessageProcessor::processMessage() {
 
 #if defined(WITH_API)
 	// fix hop information, if message is from API client -> avoid confusion with onepass messages
 	if ( currentLif == RSVP_Global::rsvp->getApiLif() ) {
+
+		//$$$$ DRAGON Monitoring >>
+		if ( currentMessage.getMsgType() == Message::MonQuery) {
+			assert(currentMessage.getDRAGON_EXT_INFO_Object() != NULL && currentMessage.getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_MON_QUERY));
+			processDragonMonQuery(const_cast<SESSION_Object&>(currentMessage.getSESSION_Object()), currentMessage.getDRAGON_EXT_INFO_Object()->getMonQuery());
+			return;
+		}
+		//$$$$ DRAGON Monitoring <<
+
 		const_cast<RSVP_HOP_Object&>(currentMessage.getRSVP_HOP_Object()).setAddress( currentHeader.getSrcAddress() );
 	}
+	//$$$$ Xi2007 >>
 	else if ( currentLif == RSVP_Global::rsvp->getApiUniClientLif() ) {
 		const_cast<RSVP_HOP_Object&>(currentMessage.getRSVP_HOP_Object()).setAddress( currentHeader.getSrcAddress() );
 		const_cast<RSVP_HOP_Object&>(currentMessage.getRSVP_HOP_Object()).setLIH( RSVP_Global::rsvp->getApiUniClientLif()->getLIH() );
+		SwitchCtrl_Session_SubnetUNI_List::Iterator it = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->begin();
+		for (; it != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end(); ++it)
+			(*it)->receiveAndProcessMessage(currentMessage); //Only one of them should own the message...Polling and checking inside
+		return;
 	}
+	//$$$$ Xi2007 <<
 	if ( currentMessage.getMsgType() == Message::InitAPI || currentMessage.getMsgType() == Message::RemoveAPI ) {
 		RSVP::getApiServer().processMessage( currentMessage, *this );
 		return;
@@ -111,22 +126,6 @@ void MessageProcessor::processMessage() {
 		delete lid;
 		return;
 	}
-//Xi2007 >>
-	if ( currentLif == RSVP_Global::rsvp->getApiUniClientLif() ) {
-            SwitchCtrl_Session_SubnetUNI_List::Iterator it = SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->begin();
-            for (; it != SwitchCtrl_Session_SubnetUNI::subnetUniApiClientList->end(); ++it) {
-                (*it)->receiveAndProcessMessage(currentMessage); //Only one of them should own the message...Polling and checking inside
-            }
-            return;
-	}
-//Xi2007 <<
-//DRAGON Monitoring >>
-	if ( currentMessage.getMsgType() == Message::MonQuery) {
-		assert(currentMessage.getDRAGON_EXT_INFO_Object() != NULL && currentMessage.getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_MON_QUERY));
-		processDragonMonQuery(const_cast<SESSION_Object&>(currentMessage.getSESSION_Object()), currentMessage.getDRAGON_EXT_INFO_Object()->getMonQuery());
-		return;
-	}
-//DRAGON Monitoring <<
 #endif
 
 	if ( currentMessage.getMsgType() == Message::ResvConf ) {
@@ -250,12 +249,12 @@ void MessageProcessor::processMessage() {
 		fullRefresh = false;
 		currentSession->processRESV( currentMessage, *sendingHop );
 		refreshReservations();
-		//@@@@ Xi2008 >>
+		//$$$$ Xi2008 for subnet control only >>
 		//This is a diverged child process, it comes here only for sending out delayed RESV messages
 		if (pid_verifySNCStateWorkingState == 0) {
 			exit(0);
 		}
-		//@@@@ Xi2008 <<
+		//$$$$ Xi2008 <<
 		finishAndSendConfirmMsg();
 		fullRefresh = true;
 	}	break;
@@ -277,12 +276,12 @@ void MessageProcessor::processMessage() {
 		fullRefresh = false;
 		currentSession->processRERR( currentMessage, *sendingHop );
 		refreshReservations();
-		//@@@@ Xi2008 >>
+		//$$$$ Xi2008 for subnet control only>>
 		//This is a diverged child process, it comes here only for sending out delayed RESV messages
 		if (pid_verifySNCStateWorkingState == 0) {
 			exit(0);
 		}
-		//@@@@ Xi2008 <<
+		//$$$$ Xi2008 <<
 		B_Merge = true;
 		fullRefresh = true;
 		break;
