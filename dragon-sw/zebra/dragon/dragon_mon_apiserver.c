@@ -778,6 +778,7 @@ void mon_apiserver_send_error(struct mon_apiserver* apiserv, u_int8_t type, u_in
   struct dragon_tlv_header* tlv = (struct dragon_tlv_header*)buf;
   tlv->type = htons(MON_TLV_ERROR);
   tlv->length = htons(4);
+  *(u_int32_t*)(tlv+1) = err_code;
   msg = mon_api_msg_new(type, MON_API_ACTION_ERROR, 8, apiserv->ucid, seqnum, 0, buf);
 
   MON_APISERVER_POST_MESSAGE(apiserv, msg);
