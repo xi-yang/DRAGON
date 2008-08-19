@@ -401,7 +401,7 @@ void RSVP_API::refreshLocalId(uint16 type, uint16 value, uint16 tag)
 //$$$$ DRAGON
 void RSVP_API::monitoringQuery(uint32 ucid, uint32 seqnum, char* gri, uint32 destAddrIp, uint16 tunnelId, uint32 extTunnelId)
 {
-	uint8 msgType = Message::RefreshLocalId;
+	uint8 msgType = Message::MonQuery;
 	uint8 TTL = 1;
 	const NetAddress destAddr(destAddrIp);
 	SESSION_Object session(destAddr, (const uint16)tunnelId, (const uint32)extTunnelId);
