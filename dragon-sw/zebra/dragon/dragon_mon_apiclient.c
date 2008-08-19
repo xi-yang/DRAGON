@@ -304,9 +304,13 @@ void msg_display(struct mon_api_msg* msg)
 /* DRAGON MON_APIClient options. */
 struct option longopts[] = 
 {
-  { "switch",     no_argument,       NULL, 's'},
   { "circuit",     required_argument,       NULL, 'c'},
+  { "lspero",     required_argument,       NULL, 'e'},
   { "help",        no_argument,       NULL, 'h'},
+  { "lsplist",     no_argument,       NULL, 'l'},
+  { "nodelist",     required_argument,       NULL, 'n'},
+  { "switch",     no_argument,       NULL, 's'},
+  { "lspstatus",     required_argument,       NULL, 't'},
   { "version",     no_argument,       NULL, 'v'},
   { 0 }
 };
@@ -321,9 +325,13 @@ usage (char *progname, int status)
     {    
       printf ("Usage : %s [OPTION...]\n\
 NSF DRAGON gateway daemon.\n\n\
--s, --switch      Switch information\n\    
--c, --circuit      Switch information\n\
+-c, --circuit <gri>     Circuit information\n\
+-e, --lspero <gri>     LSP ERO information\n\
 -h, --help         Display this help and exit\n\
+-l, --lsplist      Switch information\n\
+-l, --nodelist      LSP node list\n\
+-s, --switch      Switch information\n\    
+-t, --lspstatus <gri>     LSP status\n\
 -v, --version    Print program version\n\
 \n", progname);
     }
@@ -354,7 +362,7 @@ main (int argc, char **argv)
     {
       int opt;
 
-      opt = getopt_long (argc, argv, "sc:hv", longopts, 0);
+      opt = getopt_long (argc, argv, "c:e:hln:st:v", longopts, 0);
     
       if (opt == EOF)
         break;
