@@ -510,3 +510,20 @@ main (int argc, char **argv)
   return 0;
 }
 
+
+/************* Compile without libRSVP *************/
+
+void* zInitRsvpApiInstance() {return NULL;}
+void zInitRsvpPathRequest(void* api, struct _sessionParameters* para, u_int8_t isSender) {}
+void zTearRsvpPathRequest(void *api, struct _sessionParameters* para) {}
+void zTearRsvpResvRequest(void* api, struct _sessionParameters* para) {}
+int zGetApiFileDesc(void *api) {return 0;}
+void zApiReceiveAndProcess(void *api, zUpcall upcall) {}
+void zInitRsvpResvRequest(void* api, struct _rsvp_upcall_parameter* upcallPara) {}
+void zAddLocalId(void* api, u_int16_t type, u_int16_t value, u_int16_t tag) {}
+void zDeleteLocalId(void* api, u_int16_t type, u_int16_t value, u_int16_t tag) {}
+void zRefreshLocalId(void* api, u_int16_t type, u_int16_t value, u_int16_t tag) {}
+void zMonitoringQuery(void* api, u_int32_t ucid, u_int32_t seqnum, char* gri, u_int32_t destAddrIp, u_int16_t tunnelId, u_int32_t extTunnelId) {}
+
+/************* Compile without libRSVP *************/
+
