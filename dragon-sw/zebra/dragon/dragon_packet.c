@@ -1207,7 +1207,7 @@ void  rsvpUpcall(void* para)
 		u_int8_t action;
 
 		/* search dmaster->mon_apiserver_list for apiserver matching ucid */
-                 LIST_LOOP(dmaster.mon_apiserver_list, apiserv, node)
+		LIST_LOOP(dmaster.mon_apiserver_list, apiserv, node)
 		{         
 			assert(apiserv && p->monReplyPara);
 			if (apiserv->ucid == p->monReplyPara->ucid)

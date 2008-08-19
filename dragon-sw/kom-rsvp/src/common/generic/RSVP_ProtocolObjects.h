@@ -1267,7 +1267,7 @@ public:
 		strncpy(monQuery.gri, gri, MAX_MON_NAME_LEN-1);
 	}
 	MON_Query_Subobject& getMonQuery() { return monQuery; }
-	void SetMonReply(MON_Reply_Subobject& obj) { monReply = obj; }
+	void SetMonReply(MON_Reply_Subobject& obj) { SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_REPLY); monReply = obj; }
 	void SetMonReply(uint32 ucid, uint32 seqnum, char* gri,  _Switch_Generic_Info* switch_info, uint32 switch_options, 
 	    _Ethernet_Circuit_Info* vlan_info=NULL, _Subnet_Circuit_Info* eos_subnet_src=NULL, _Subnet_Circuit_Info* eos_subnet_dest=NULL) {
 		SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_REPLY);
