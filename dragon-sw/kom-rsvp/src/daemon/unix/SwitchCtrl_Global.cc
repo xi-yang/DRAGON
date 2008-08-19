@@ -1137,7 +1137,7 @@ SONET_TSpec* SwitchCtrl_Global::getEosMapEntry(float bandwidth)
 
     //add additional mapping entries.
     String sts1("sts-1");
-    return addEosMapEntry(bandwidth, sts1, (int)ceilf(bandwidth/50.0));
+    return addEosMapEntry(bandwidth, sts1, (int)ceilf(bandwidth/49.536));
 }
 
 void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Reply_Subobject& monReply)

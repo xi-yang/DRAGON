@@ -262,7 +262,7 @@ public:
 	                ts_count = 1; ts++;
 	                for ( ;  HAS_TIMESLOT(ts_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
 	                    ts_count++;
-	                if (ts_count >= bw/50.0)
+	                if (ts_count >= bw/49.536)
 	                {
 	                    return (ts-ts_count);
 	                }
