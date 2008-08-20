@@ -1185,6 +1185,7 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
                   errCode = 3; //failed to retrieve switch info
                   goto _error;
         }				
+        monReply.length = MON_REPLY_BASE_SIZE;
         return;
     }
 
