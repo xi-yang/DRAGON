@@ -21,6 +21,8 @@ To be incorporated into GNU Zebra  - DRAGON extension
 /*not used here*/
 struct dragon_master dmaster;
 struct thread_master *master;
+char* mon_host = "localhost";
+extern int MON_APISERVER_PORT;
 
 u_int32_t get_ucid()
 {
@@ -148,7 +150,7 @@ void display_ero_para(struct _EROAbstractNode_Para* hop)
       printf("IPv4 -- %s\n", inet_ntoa(hop->data.ip4.addr));
       break;
     case UNumIfID:
-      printf("UnNumbered -- rotuerID %s, interfaceID %x\n", inet_ntoa(hop->data.uNumIfID.routerID), hop->data.uNumIfID.interfaceID);
+      printf("UnNumbered -- rotuerID %s, interfaceID 0x%x\n", inet_ntoa(hop->data.uNumIfID.routerID), hop->data.uNumIfID.interfaceID);
       break;
     default:
       printf("Unsupported type %d\n", hop->type);
@@ -262,7 +264,7 @@ void msg_display(struct mon_api_msg* msg)
             
           break;
         case MON_TLV_NODE_LIST:
-          printf("\t\t>>NodeList: )");
+          printf("\t\t>>NodeList: ");
           for (i = 0, addr = (struct in_addr*)(tlv + 1); i < ntohs(tlv->length)/4; i++, addr++)
             {
               printf("-%s-", inet_ntoa(*addr));
@@ -286,12 +288,12 @@ void msg_display(struct mon_api_msg* msg)
           printf("\n");
           break;
         case MON_TLV_LSP_STATUS:
-          code = ntohl(*(u_int32_t*)(tlv + 1));
-          printf("\t\t>>LSP Status: %x\n)", code);
+          code = *(u_int32_t*)(tlv + 1);
+          printf("\t\t>>LSP Status: 0x%x\n)", code);
           break;
         case MON_TLV_ERROR:
-          code = ntohl(*(u_int32_t*)(tlv + 1));
-          printf("\t\t>>Error Code: %x\n)", code);
+          code = *(u_int32_t*)(tlv + 1);
+          printf("\t\t>>Error Code: 0x%x\n)", code);
           break;
         default:
           printf("UNKNOWN TLV type %d\n", ntohs(tlv->type));          
@@ -313,6 +315,8 @@ struct option longopts[] =
   { "switch",     no_argument,       NULL, 's'},
   { "lspstatus",     required_argument,       NULL, 't'},
   { "version",     no_argument,       NULL, 'v'},
+  { "host",     required_argument,       NULL, 'H'},
+  { "port",     required_argument,       NULL, 'P'},
   { 0 }
 };
 
@@ -334,6 +338,8 @@ NSF DRAGON gateway daemon.\n\n\
 -s, --switch      Switch information\n\    
 -t, --lspstatus <gri>     LSP status\n\
 -v, --version    Print program version\n\
+-H, --host <name>     Host name\n\
+-v, --port <number>  Port number\n\
 \n", progname);
     }
   exit (status);
@@ -363,7 +369,7 @@ main (int argc, char **argv)
     {
       int opt;
 
-      opt = getopt_long (argc, argv, "c:e:hln:st:v", longopts, 0);
+      opt = getopt_long (argc, argv, "c:e:hln:st:vH:P:", longopts, 0);
     
       if (opt == EOF)
         break;
@@ -403,13 +409,19 @@ main (int argc, char **argv)
           printf ("Extended from GNU Zebra -- Copyright 1996-2001\n");
           exit (0);
           break;
+        case 'H':
+          mon_host = optarg;
+          break;
+        case 'P':
+          sscanf(optarg, "%d", &MON_APISERVER_PORT);
+          break;
         default:
           usage (progname, 1);
           exit(2);
         }
     }
 
-  sock =  mon_apiclient_connect("localhost", mon_apiserver_getport());
+  sock =  mon_apiclient_connect(mon_host, mon_apiserver_getport());
   if (sock < 0)
     {
       printf( "mon_apiclient_connect() failed\n");
