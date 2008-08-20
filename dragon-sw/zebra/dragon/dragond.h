@@ -23,7 +23,8 @@
 #ifndef _ZEBRA_DRAGOND_H
 #define _ZEBRA_DRAGOND_H
 
-#define DEBUG
+/* uncommenting this will make the DRAGON_LSP_REFRESH_INTERVAL much higher */
+/* #define DEBUG */
 
 /* DRAGON version number */
 #define DRAGON_VERSION 	"1.19"

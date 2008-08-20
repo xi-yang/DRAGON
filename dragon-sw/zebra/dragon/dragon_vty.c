@@ -988,7 +988,8 @@ DEFUN (dragon_set_lsp_name,
 	  }
   if (find)
   {
-  	zlog_info("Another LSP with the same name already exists.\n");
+  	vty_out(vty, "Another LSP with the same name already exists.\n");
+  	zlog_info("Another LSP with the same name already exists.");
 	return CMD_WARNING;
   }
   if (strlen(argv[0]))
@@ -1242,7 +1243,7 @@ DEFUN (dragon_set_lsp_ip,
     if (find)
     {
   	vty_out(vty, "Another LSP with the same session parameters already exists.");
-    	zlog_info("Another LSP with the same session parameters already exists.\n");
+    	zlog_info("Another LSP with the same session parameters already exists.");
   	return CMD_WARNING;
     }
     
@@ -1806,20 +1807,22 @@ DEFUN (dragon_commit_lsp_sender,
 	}
 	lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_SUBNET_DTL;
   }
+
+  zlog_info("Committing LSP %s (sender/source node)", (lsp->common.SessionAttribute_Para)->sessionName);
   
   if (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr && lsp->common.Session_Para.srcAddr.s_addr != 0
   	&& !((lsp->dragon.srcLocalId >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID || (lsp->dragon.destLocalId >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID))
   {
   	  struct _EROAbstractNode_Para *srcLocalId, *destLocalId;
-	  /* NARB is not required for srouce and destination co-located local ID provisioning, unless one of the local-ids is subnet-interface */
+	  /* NARB is not required for source and destination co-located local ID provisioning, unless one of the local-ids is subnet-interface */
 	  if (lsp->dragon.srcLocalId>>16 == LOCAL_ID_TYPE_NONE || lsp->dragon.destLocalId>>16 == LOCAL_ID_TYPE_NONE)
 	  {
-		  vty_out (vty, "### Both source and destation must use true local ID for srouce and destination co-located provisioning.%s", VTY_NEWLINE);
+		  vty_out (vty, "### Both source and destation must use true local ID for source and destination co-located provisioning.%s", VTY_NEWLINE);
 		  return CMD_WARNING;
 	  }
 	  if ( lsp->uni_mode == 1 )
 	  {
-		  vty_out (vty, "### UNI mode is not supported in srouce and destination co-located provisioning.%s", VTY_NEWLINE);
+		  vty_out (vty, "### UNI mode is not supported in source and destination co-located provisioning.%s", VTY_NEWLINE);
 		  return CMD_WARNING;          
 	  }
 	  /* create and add localId subobjects to ERO*/
@@ -1839,6 +1842,8 @@ DEFUN (dragon_commit_lsp_sender,
 	  destLocalId->data.uNumIfID.interfaceID = lsp->dragon.destLocalId;
 	  destLocalId->isLoose = 0;
 	  /* call RSVPD to set up the path */
+	  zlog_info("Initiating RSVP path request for LSP %s (source and destination co-located provisioning mode)",
+		    (lsp->common.SessionAttribute_Para)->sessionName);
 	  zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
   }
   else if (dmaster.module[MODULE_NARB_INTRA].ip_addr.s_addr == 0 || dmaster.module[MODULE_NARB_INTRA].port==0)
@@ -1852,6 +1857,8 @@ DEFUN (dragon_commit_lsp_sender,
         	return CMD_WARNING;
          }
 	  /* call RSVPD to set up the path */
+	  zlog_info("Initiating RSVP path request for LSP %s (no NARB address/port configured, sending PATH without ERO)",
+		    (lsp->common.SessionAttribute_Para)->sessionName);
 	  zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
   }
   else{
@@ -1878,6 +1885,7 @@ DEFUN (dragon_commit_lsp_sender,
 	  DRAGON_TIMER_ON (lsp->t_lsp_refresh, dragon_lsp_refresh_timer, lsp, DRAGON_LSP_REFRESH_INTERVAL);
 
 	  /* Write packet to socket */
+          zlog_info("Sending topology create message to NARB");
 	  DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
   }
   /* Set commit flag */
@@ -1933,6 +1941,8 @@ DEFUN (dragon_commit_lsp_receiver,
 	return CMD_WARNING;
   }
 
+  zlog_info("Committing LSP %s (receiver/destination node)", (lsp->common.SessionAttribute_Para)->sessionName);
+
   /* call RSVPD to set up the path */
   zInitRsvpPathRequest(dmaster.api, &lsp->common, 0);
 
@@ -1979,24 +1989,29 @@ DEFUN (dragon_delete_lsp,
   if ((lsp->status == LSP_COMMIT || lsp->status == LSP_IS || lsp->status == LSP_ERROR) && 
   	(!(lsp->flag & LSP_FLAG_RECEIVER)) && (!(lsp->flag & LSP_FLAG_REG_BY_RSVP)) && lsp->narb_fd>0)
   {
-	/* Construct topology create message */
+	/* Construct topology remove message */
 	new = dragon_topology_remove_msg_new(lsp);
 
 	/* Put packet into fifo */
 	dragon_fifo_push(dmaster.dragon_packet_fifo, new);
 
 	/* Write packet to socket */
+	zlog_info("Sending topology removal message to NARB");
 	DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
 	/* Set DELETE flag */
 	lsp->status = LSP_DELETE;
   }
   else if ((lsp->status == LSP_IS || lsp->status == LSP_ERROR) && (lsp->flag & LSP_FLAG_RECEIVER))
   {
+        zlog_info("Initiating RSVP path tear request for LSP %s",
+		  (lsp->common.SessionAttribute_Para)->sessionName);
 	zTearRsvpPathRequest(dmaster.api, &lsp->common);
 	lsp->status = LSP_LISTEN;  	
   }
   else{
 	DRAGON_TIMER_OFF(lsp->t_lsp_refresh);
+        zlog_info("Initiating RSVP path tear request for LSP %s",
+		  (lsp->common.SessionAttribute_Para)->sessionName);
 	zTearRsvpPathRequest(dmaster.api, &lsp->common);
 	listnode_delete(dmaster.dragon_lsp_table, lsp);
 	lsp_recycle(lsp);
@@ -2252,6 +2267,7 @@ dragon_master_init()
   dmaster.t_write = NULL;
 
   /* Init RSVP API instance (socket connection to RSVPD) */
+  zlog_info("Initializing socket connect to RSVP daemon API");
   dmaster.api = zInitRsvpApiInstance();
   dmaster.rsvp_fd = zGetApiFileDesc(dmaster.api);
   if (!dmaster.rsvp_fd)

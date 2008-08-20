@@ -143,7 +143,7 @@ build_dragon_tlv_ero (char *buf, struct lsp *lsp)
 			((struct AbstractNode_IPv4 *)p)->resvd = 0;
 			p+=sizeof(struct AbstractNode_IPv4);
 			length += sizeof(struct AbstractNode_IPv4);
-			
+
 		}
 		else if (eroNodePara->type == UNumIfID)
 		{
@@ -303,6 +303,8 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   struct dragon_fifo_elt *packet;
   int msglen;
   u_int32_t narb_extra_options_mask = 0;
+
+  zlog_info("Creating path computation request message for NARB");
 
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
@@ -472,6 +474,8 @@ dragon_topology_confirm_msg_new(struct lsp *lsp)
   char ero_buf[DRAGON_MAX_PACKET_SIZE];
   int ero_len = build_dragon_tlv_ero(ero_buf, lsp);
 
+  zlog_info("Creating topology confirmation message for NARB");
+
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
   s = packet->s;
@@ -499,6 +503,8 @@ dragon_topology_remove_msg_new(struct lsp *lsp)
   char ero_buf[DRAGON_MAX_PACKET_SIZE];
   int ero_len = build_dragon_tlv_ero(ero_buf, lsp);
   
+  zlog_info("Creating topology removal message for NARB");
+
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
   s = packet->s;
@@ -529,6 +535,9 @@ dragon_lsp_refresh_timer(struct thread *t)
    */
    if (lsp->status == LSP_COMMIT)
    {
+           zlog_info("LSP %s still in commit state (no response from NARB), retrying", 
+		     (lsp->common.SessionAttribute_Para)->sessionName);
+
 	   /* Construct topology create message */
 	   new = dragon_topology_create_msg_new(lsp);
 	   
@@ -539,6 +548,7 @@ dragon_lsp_refresh_timer(struct thread *t)
 	   DRAGON_TIMER_ON (lsp->t_lsp_refresh, dragon_lsp_refresh_timer, lsp, DRAGON_LSP_REFRESH_INTERVAL);
 	   
 	   /* Write packet to socket */
+           zlog_info("Sending topology create message to NARB");
 	   DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
    	
    }
@@ -588,6 +598,8 @@ dragon_narb_topo_rsp_proc_ero(struct dragon_tlv_header *tlvh, u_int8_t *node_num
 	u_int8_t i = 0;
  	char *p = (char*)((char *)tlvh + DTLV_HDR_SIZE);
 
+	zlog_info("Explicit Route Object (ERO) returned from NARB:");
+	char addr[20];
 	node = XMALLOC(MTYPE_OSPF_DRAGON, sizeof(struct _EROAbstractNode_Para)*MAX_ERO_NUMBER);
 	while (read_len < DTLV_BODY_SIZE(tlvh))
 	{
@@ -602,6 +614,8 @@ dragon_narb_topo_rsp_proc_ero(struct dragon_tlv_header *tlvh, u_int8_t *node_num
 				read_len += sizeof(struct AbstractNode_IPv4);
 				p+=sizeof(struct AbstractNode_IPv4);
 				i++;
+				inet_ntop(AF_INET, &node_ipv4->addr, addr, 20);
+				zlog_info("HOP-TYPE [%s]: %s [IPv4]", (node_ipv4->typeOrLoose & (1<<7)) == 0?"strict":"loose", addr);
 				break;
 
 			case UNumIfID:
@@ -613,6 +627,8 @@ dragon_narb_topo_rsp_proc_ero(struct dragon_tlv_header *tlvh, u_int8_t *node_num
 				read_len += sizeof(struct AbstractNode_UnNumIfID);
 				p+=sizeof(struct AbstractNode_UnNumIfID);
 				i++;
+				inet_ntop(AF_INET, &node_un->routerID, addr, 20);
+				zlog_info("HOP-TYPE [%s]: %s [UNumIfID]", (node_un->typeOrLoose & (1<<7)) == 0?"strict":"loose", addr);
 				break;
 
 			case AS:
@@ -722,6 +738,8 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 	u_int32_t read_len;
 	struct lsp *lsp = NULL;
 	struct _EROAbstractNode_Para *srcLocalId=NULL, *destLocalId=NULL;
+
+	zlog_info("Received path computation response message from NARB");
 
 	/* Look for the corresponding LSP request according to the sequence number */
 	if (!(lsp = dragon_find_lsp_by_seqno(ntohl(amsgh->seqnum))))
@@ -895,6 +913,8 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 	}
 	
 	/* call RSVPD to set up the path */
+	zlog_info("Initiating RSVP path request for LSP %s (with ERO)",
+                    (lsp->common.SessionAttribute_Para)->sessionName);
 	zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
 
 	return;
@@ -910,6 +930,8 @@ dragon_narb_socket_init()
 	int fd;
 	int ret;
 	static u_int16_t NARB_TCP_PORT = 2609;
+
+	zlog_info("Initializing socket connection to NARB server");
 	
 	fd = socket (AF_INET, SOCK_STREAM, 0);
 	if (fd < 0)
@@ -1014,11 +1036,15 @@ dragon_read (struct thread *thread)
 
 	case DMSG_NARB_TOPO_REJECT: /* Request is rejected by the NARB */
 		/*process_narb_topo_rej();*/
+                zlog_info("NARB failed to return path computation result!");
 		break;
 
 	case DMSG_NARB_TOPO_DELETE_CONF: /* Topology removal request is being confirmed by the NARB */
-		if (lsp->status==LSP_DELETE && dmaster.api)
+	        if (lsp->status==LSP_DELETE && dmaster.api) {
+		        zlog_info("Initiating RSVP path tear request for LSP %s",
+				  (lsp->common.SessionAttribute_Para)->sessionName);
 			zTearRsvpPathRequest(dmaster.api, &lsp->common);
+		}
 		if (lsp->narb_fd > 0){
 			close(lsp->narb_fd);
 			lsp->narb_fd = 0;
@@ -1165,6 +1191,8 @@ void rsvpupcall_register_lsp(struct _rsvp_upcall_parameter* p)
 	lsp->common.LabelRequest_Para.data.gmpls.switchingType = p->switchingType;
 	lsp->common.LabelRequest_Para.data.gmpls.gPid = p->gPid;
 	listnode_add(dmaster.dragon_lsp_table, lsp);	
+	zlog_info("Register API in RSVPD for LSP %s",
+		  (lsp->common.SessionAttribute_Para)->sessionName);
 	zInitRsvpPathRequest(dmaster.api, &lsp->common, 0); /* register this api in RSVPD */
 	if (p->code == Path){
 		zInitRsvpResvRequest(dmaster.api, p);
@@ -1253,6 +1281,8 @@ void  rsvpUpcall(void* para)
 				&& lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr) )
 			{
 				/* send RESV message to RSVPD to set up the path */
+			        zlog_info("Send RESV message to RSVPD for LSP %s",
+					  (lsp->common.SessionAttribute_Para)->sessionName);
 				zInitRsvpResvRequest(dmaster.api, para);
 				if (lsp->status == LSP_LISTEN && (lsp->flag & LSP_FLAG_RECEIVER)) /* otherwise: src-dest colocated w/ local-id --> stay in commit status */
 					lsp->status = LSP_IS;
@@ -1298,6 +1328,7 @@ void  rsvpUpcall(void* para)
 				dragon_fifo_push(dmaster.dragon_packet_fifo, new);
 
 				/* Write packet to socket */
+				zlog_info("Sending topology confirmation message to NARB");
 				DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
 			}
 			break;
@@ -1322,6 +1353,7 @@ void  rsvpUpcall(void* para)
 					dragon_fifo_push(dmaster.dragon_packet_fifo, new);
 
 					/* Write packet to socket */
+					zlog_info("Sending topology removal message to NARB");
 					DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
 				}
 				lsp->status = LSP_EDIT; 
