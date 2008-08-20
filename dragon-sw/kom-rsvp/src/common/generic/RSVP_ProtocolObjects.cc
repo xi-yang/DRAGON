@@ -780,40 +780,42 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			if ((monReply.switch_options & MON_SWITCH_OPTION_ERROR) != 0 ) { // Error
 				; //noop
 			}
-			else if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) { // Ethernet Switch
-				buffer >> monReply.circuit_info.vlan_info.vlan_ingress >> monReply.circuit_info.vlan_info.num_ports_ingress;
-				for (j = 0; j < MAX_MON_PORT_NUM; j++)
-					buffer >> monReply.circuit_info.vlan_info.ports_ingress[j];
-				buffer >> monReply.circuit_info.vlan_info.vlan_egress >> monReply.circuit_info.vlan_info.num_ports_egress;
-				for (j = 0; j < MAX_MON_PORT_NUM; j++)
-					buffer >> monReply.circuit_info.vlan_info.ports_egress[j];
-			}
-			else { // EoS Subnet
-				buffer >> monReply.circuit_info.eos_info[0].subnet_id >> monReply.circuit_info.eos_info[0].first_timeslot 
-					>> monReply.circuit_info.eos_info[0].port >> monReply.circuit_info.eos_info[0].ethernet_bw;
-				for (j = 0; j < MAX_MON_NAME_LEN; j++)
-					buffer >> monReply.circuit_info.eos_info[0].vcg_name[j];
-				for (j = 0; j < MAX_MON_NAME_LEN; j++)
-					buffer >> monReply.circuit_info.eos_info[0].eflow_in_name[j];
-				for (j = 0; j < MAX_MON_NAME_LEN; j++)
-					buffer >> monReply.circuit_info.eos_info[0].eflow_out_name[j];
-				for (j = 0; j < MAX_MON_NAME_LEN; j++)
-					buffer >> monReply.circuit_info.eos_info[0].snc_crs_name[j];
-				for (j = 0; j < MAX_MON_NAME_LEN; j++)
-					buffer >> monReply.circuit_info.eos_info[0].dtl_name[j];
-				if ( (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) != 0 && (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) != 0 ) {
-					buffer >> monReply.circuit_info.eos_info[1].subnet_id >> monReply.circuit_info.eos_info[1].first_timeslot 
-						>> monReply.circuit_info.eos_info[1].port >> monReply.circuit_info.eos_info[1].ethernet_bw;
+			else if (monReply.length > MON_REPLY_BASE_SIZE) {
+				if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) { // Ethernet Switch
+					buffer >> monReply.circuit_info.vlan_info.vlan_ingress >> monReply.circuit_info.vlan_info.num_ports_ingress;
+					for (j = 0; j < MAX_MON_PORT_NUM; j++)
+						buffer >> monReply.circuit_info.vlan_info.ports_ingress[j];
+					buffer >> monReply.circuit_info.vlan_info.vlan_egress >> monReply.circuit_info.vlan_info.num_ports_egress;
+					for (j = 0; j < MAX_MON_PORT_NUM; j++)
+						buffer >> monReply.circuit_info.vlan_info.ports_egress[j];
+				}
+				else { // EoS Subnet
+					buffer >> monReply.circuit_info.eos_info[0].subnet_id >> monReply.circuit_info.eos_info[0].first_timeslot 
+						>> monReply.circuit_info.eos_info[0].port >> monReply.circuit_info.eos_info[0].ethernet_bw;
 					for (j = 0; j < MAX_MON_NAME_LEN; j++)
-						buffer >> monReply.circuit_info.eos_info[1].vcg_name[j];
+						buffer >> monReply.circuit_info.eos_info[0].vcg_name[j];
 					for (j = 0; j < MAX_MON_NAME_LEN; j++)
-						buffer >> monReply.circuit_info.eos_info[1].eflow_in_name[j];
+						buffer >> monReply.circuit_info.eos_info[0].eflow_in_name[j];
 					for (j = 0; j < MAX_MON_NAME_LEN; j++)
-						buffer >> monReply.circuit_info.eos_info[1].eflow_out_name[j];
+						buffer >> monReply.circuit_info.eos_info[0].eflow_out_name[j];
 					for (j = 0; j < MAX_MON_NAME_LEN; j++)
-						buffer >> monReply.circuit_info.eos_info[1].snc_crs_name[j];
+						buffer >> monReply.circuit_info.eos_info[0].snc_crs_name[j];
 					for (j = 0; j < MAX_MON_NAME_LEN; j++)
-						buffer >> monReply.circuit_info.eos_info[1].dtl_name[j];
+						buffer >> monReply.circuit_info.eos_info[0].dtl_name[j];
+					if ( (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) != 0 && (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) != 0 ) {
+						buffer >> monReply.circuit_info.eos_info[1].subnet_id >> monReply.circuit_info.eos_info[1].first_timeslot 
+							>> monReply.circuit_info.eos_info[1].port >> monReply.circuit_info.eos_info[1].ethernet_bw;
+						for (j = 0; j < MAX_MON_NAME_LEN; j++)
+							buffer >> monReply.circuit_info.eos_info[1].vcg_name[j];
+						for (j = 0; j < MAX_MON_NAME_LEN; j++)
+							buffer >> monReply.circuit_info.eos_info[1].eflow_in_name[j];
+						for (j = 0; j < MAX_MON_NAME_LEN; j++)
+							buffer >> monReply.circuit_info.eos_info[1].eflow_out_name[j];
+						for (j = 0; j < MAX_MON_NAME_LEN; j++)
+							buffer >> monReply.circuit_info.eos_info[1].snc_crs_name[j];
+						for (j = 0; j < MAX_MON_NAME_LEN; j++)
+							buffer >> monReply.circuit_info.eos_info[1].dtl_name[j];
+					}
 				}
 			}
 			SetSubobjFlag(DRAGON_EXT_SUBOBJ_MON_REPLY);
