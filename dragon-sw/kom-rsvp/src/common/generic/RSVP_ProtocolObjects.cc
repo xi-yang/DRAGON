@@ -788,6 +788,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 					buffer >> monReply.circuit_info.vlan_info.vlan_egress >> monReply.circuit_info.vlan_info.num_ports_egress;
 					for (j = 0; j < MAX_MON_PORT_NUM; j++)
 						buffer >> monReply.circuit_info.vlan_info.ports_egress[j];
+					buffer >> monReply.circuit_info.vlan_info.qos_options;
 				}
 				else { // EoS Subnet
 					buffer >> monReply.circuit_info.eos_info[0].subnet_id >> monReply.circuit_info.eos_info[0].first_timeslot 
@@ -889,12 +890,13 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 		}
 		else if (o.monReply.length > MON_REPLY_BASE_SIZE) {
 			if ((o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET) == 0) { // Ethernet Switch
-			buffer << o.monReply.circuit_info.vlan_info.vlan_ingress << o.monReply.circuit_info.vlan_info.num_ports_ingress;
-			for (i = 0; i < MAX_MON_PORT_NUM; i++)
-				buffer << o.monReply.circuit_info.vlan_info.ports_ingress[i];
-			buffer << o.monReply.circuit_info.vlan_info.vlan_egress << o.monReply.circuit_info.vlan_info.num_ports_egress;
-			for (i = 0; i < MAX_MON_PORT_NUM; i++)
-				buffer << o.monReply.circuit_info.vlan_info.ports_egress[i];
+				buffer << o.monReply.circuit_info.vlan_info.vlan_ingress << o.monReply.circuit_info.vlan_info.num_ports_ingress;
+				for (i = 0; i < MAX_MON_PORT_NUM; i++)
+					buffer << o.monReply.circuit_info.vlan_info.ports_ingress[i];
+				buffer << o.monReply.circuit_info.vlan_info.vlan_egress << o.monReply.circuit_info.vlan_info.num_ports_egress;
+				for (i = 0; i < MAX_MON_PORT_NUM; i++)
+					buffer << o.monReply.circuit_info.vlan_info.ports_egress[i];
+				buffer << o.monReply.circuit_info.vlan_info.qos_options;
 			}
 			else { // EoS Subnet
 				buffer << o.monReply.circuit_info.eos_info[0].subnet_id << o.monReply.circuit_info.eos_info[0].first_timeslot 

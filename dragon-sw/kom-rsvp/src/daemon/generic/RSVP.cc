@@ -421,7 +421,9 @@ void RSVP::removeHop( HopKey& key ) {
 
 PSB* RSVP::getPSBbyLSPName(const char* name) {
 	PSB *psb = NULL;
-	SESSION_Object session(0, 0, 0);
+	uint32 dest_ip = ;
+	NetAddress dest(dest_ip);
+	SESSION_Object session(dest, 0, 0);
 	SessionHash::HashBucket::Iterator sessionIter = sessionHash->lower_bound( &session );
 	for ( ; sessionIter != sessionHash->getHashBucket(&session).end(); ++sessionIter ) {
 		if ((psb = (*sessionIter)->getPSBbyLSPName(name)) != NULL)
