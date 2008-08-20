@@ -1189,7 +1189,7 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
         return;
     }
 
-    psb = RSVP_Global::messageProcessor->getPSBbyLSPName((const char*)monQuery.gri);
+    psb = RSVP_Global::rsvp->getPSBbyLSPName((const char*)monQuery.gri);
     if (psb == NULL) {
         errCode = 2; //no rsvp session
         goto _error;

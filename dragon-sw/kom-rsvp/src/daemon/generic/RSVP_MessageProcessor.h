@@ -192,8 +192,6 @@ public:
 // Xi2007 for SubnetUNI<<
 
 // DRAGON Monitoring >>
-	PHOP_RefreshList& getPhopRefreshList() { return phopRefreshList; }
-       PSB* getPSBbyLSPName(const char* name);
 	void processDragonMonQuery(SESSION_Object& sessionObject, MON_Query_Subobject& monQuery);
 // DRAGON Monitoring <<
 };

@@ -126,6 +126,8 @@ public:
 
 	static NetAddress ospfRouterID;
 
+	PSB* getPSBbyLSPName(const char* name);
+
 	DECLARE_MEMORY_MACHINE_IN_CLASS(Session)
 };
 DECLARE_MEMORY_MACHINE_OUT_CLASS(Session, sessionMemMachine)

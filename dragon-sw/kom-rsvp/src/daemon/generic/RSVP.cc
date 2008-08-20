@@ -419,6 +419,17 @@ void RSVP::removeHop( HopKey& key ) {
 	}
 }
 
+PSB* RSVP::getPSBbyLSPName(const char* name) {
+	PSB *psb = NULL;
+	SESSION_Object session(0, 0, 0);
+	SessionHash::HashBucket::Iterator sessionIter = sessionHash->lower_bound( &session );
+	for ( ; sessionIter != sessionHash->getHashBucket(&session).end(); ++sessionIter ) {
+		if ((psb = (*sessionIter)->getPSBbyLSPName(name)) != NULL)
+			break;
+	}
+	return psb;
+}
+
 inline void RSVP::increaseSessionCount() {
 #if defined(RSVP_STATS) 
 	currentSessionCount += 1;
@@ -459,3 +470,4 @@ inline void RSVP::resetStats() {
 	currentReservationCount = 0;
 #endif
 }
+

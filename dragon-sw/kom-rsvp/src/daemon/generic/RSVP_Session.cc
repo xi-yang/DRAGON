@@ -1871,4 +1871,12 @@ void Session::registerAPI() {
 		}
 	}
 }
+
+PSB* Session::getPSBbyLSPName(const char* name) {
+	PSB_List::Iterator psbIter = RelationshipSession_PSB::followRelationship().begin();
+	for (; psbIter != RelationshipSession_PSB::followRelationship().end(); ++psbIter ) {
+		if ( (*psbIter)->getSESSION_ATTRIBUTE_Object().getSessionName() == name)
+			return *psbIter;
+	}
+}
 #endif

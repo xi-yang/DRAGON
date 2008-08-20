@@ -130,6 +130,8 @@ public:
 	void removeHop( HopKey& );
 	MPLS& getMPLS() { return *mpls; }
 
+	PSB* getPSBbyLSPName(const char* name);
+
 #if defined(WITH_API)
 	static API_Server& getApiServer() { assert(apiServer); return *apiServer; }
 	static const LogicalInterface* getApiLif() { assert(apiServer); return RSVP_Global::rsvp->lifArray[0]; }
