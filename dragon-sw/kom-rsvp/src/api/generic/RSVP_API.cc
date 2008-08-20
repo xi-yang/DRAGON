@@ -220,15 +220,18 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 			// DRAGON extension
 			case Message::AddLocalId:
 			case Message::DeleteLocalId:
-                     case Message::MonQuery:
-                     case Message::MonReply:
+			case Message::MonQuery:
+			case Message::MonReply:
+				upcallPara.generalInfo = NULL;
 				break;
 			default:
 				FATAL(2)( Log::Fatal, "FATAL INTERNAL ERROR: daemon sent unknown message with type:", msg.getMsgType() );
 				abortProcess();
 		} // switch
-		(*iter)->upcall( upcallPara, (*iter)->clientData ); //upcall to sendapi, etc.
-		delete upcallPara.generalInfo;
+		if (upcallPara.generalInfo != NULL) {
+			(*iter)->upcall( upcallPara, (*iter)->clientData ); //upcall to sendapi, etc.
+			delete upcallPara.generalInfo;
+		}
 	} // if
 	if (upcall ) {
 		struct _rsvp_upcall_parameter zUpcallParam;
