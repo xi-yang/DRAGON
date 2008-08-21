@@ -1240,7 +1240,7 @@ void  rsvpUpcall(void* para)
 			assert(apiserv && p->monReplyPara);
 			if (apiserv->ucid == p->monReplyPara->ucid)
 			{
-				if ((p->monReplyPara->switch_options & MON_SWITCH_OPTION_SUBNET) == 0 && p->monReplyPara->length == MON_REPLY_BASE_SIZE)
+				if (p->monReplyPara->switch_options == 0 && p->monReplyPara->length == MON_REPLY_BASE_SIZE)
 					type = MON_API_MSGTYPE_SWITCH;
 				else
 					type = MON_API_MSGTYPE_CIRCUIT;
