@@ -415,6 +415,13 @@ main (int argc, char **argv)
         case 'c':
           is_query_circuit = 1;
           gri = optarg;
+          p = strstr(optarg, ",");
+          if (!p)
+            {
+              printf ("Wrong arguments: -c takes two arguments <GRI,Dest_IPv4>. Note they are separated by comma.\n");
+            }
+          *p = 0; p++;
+          inet_aton(p, &dest_ip);
           break;
         case 'e':
           is_query_lspero = 1;
@@ -436,13 +443,6 @@ main (int argc, char **argv)
         case 'i':
           is_query_lspinfo = 1;
           gri = optarg;
-          p = strstr(optarg, ",");
-          if (!p)
-            {
-              printf ("Wrong arguments: -c takes two arguments <GRI,Dest_IPv4>. Note they are separated by comma.\n");
-            }
-          *p = 0; p++;
-          inet_aton(p, &dest_ip);
           break;
 	 case 'v':
           printf ("%s version %s\n", progname, DRAGON_VERSION);
