@@ -44,8 +44,17 @@ struct mon_api_msg
   char* body;
 };
 
+struct _MON_LSP_Info
+{
+  struct in_addr source;
+  struct in_addr destination;
+  u_int16_t lsp_id;
+  u_int16_t tunnel_id;
+  u_int32_t status;
+};
+
 #define MON_API_MSGTYPE_LSPLIST		0x01 /*A list of LSP names */
-#define MON_API_MSGTYPE_LSPSTATUS	0x02 /* LSP circuit status */
+#define MON_API_MSGTYPE_LSPINFO		0x02 /* LSP info at source VLSR */
 #define MON_API_MSGTYPE_LSPERO		0x03 /* LSP ERO (and Subnet ERO if any) */
 #define MON_API_MSGTYPE_NODELIST		0x04 /* Control plane (VLSR) node list */
 #define MON_API_MSGTYPE_SWITCH 		0x10 /* Monitoring information for switch */
@@ -60,7 +69,7 @@ struct mon_api_msg
 #define MON_TLV_SWITCH_INFO 	0x02
 #define MON_TLV_CIRCUIT_INFO 	0x03
 #define MON_TLV_NODE_LIST 		0x04
-#define MON_TLV_LSP_STATUS 	0x05
+#define MON_TLV_LSP_INFO     	0x05
 #define MON_TLV_LSP_ERO	 	0x06
 #define MON_TLV_SUBNET_ERO	0x07
 #define MON_TLV_ERROR			0x0f

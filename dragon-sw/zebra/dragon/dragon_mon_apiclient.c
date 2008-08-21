@@ -120,7 +120,7 @@ int mon_apiclient_send_query (int fd, u_int8_t type, char* gri)
 }
 
 #define query_switch_lsplist(FD) mon_apiclient_send_query(FD, MON_API_MSGTYPE_LSPLIST, NULL)
-#define query_lsp_status(FD, GRI) mon_apiclient_send_query(FD, MON_API_MSGTYPE_LSPSTATUS, GRI)
+#define query_lsp_info(FD, GRI) mon_apiclient_send_query(FD, MON_API_MSGTYPE_LSPINFO, GRI)
 #define query_lsp_ero(FD, GRI) mon_apiclient_send_query(FD, MON_API_MSGTYPE_LSPERO, GRI)
 #define query_lsp_nodelist(FD, GRI) mon_apiclient_send_query(FD, MON_API_MSGTYPE_NODELIST, GRI)
 #define query_switch_info(FD) mon_apiclient_send_query(FD, MON_API_MSGTYPE_SWITCH, NULL)
@@ -165,9 +165,10 @@ void msg_display(struct mon_api_msg* msg)
   struct _Ethernet_Circuit_Info* circuit_info_ethernet;
   struct _Subnet_Circuit_Info* circuit_info_subnet;
   struct _EROAbstractNode_Para* ero_para;
+  struct _MON_LSP_Info* lsp_info;
   struct dragon_tlv_header* tlv;
   struct in_addr *addr;
-  u_int32_t code;
+  u_int32_t errcode;
   int bodylen, tlvlen, i;
 
   printf("\n  Response from monitroing API server:\n");
@@ -186,8 +187,8 @@ void msg_display(struct mon_api_msg* msg)
     case MON_API_MSGTYPE_LSPERO: 
       printf("MON_API_MSGTYPE_LSPERO\n");
       break;
-    case MON_API_MSGTYPE_LSPSTATUS: 
-      printf("MON_API_MSGTYPE_LSPSTATUS\n");
+    case MON_API_MSGTYPE_LSPINFO: 
+      printf("MON_API_MSGTYPE_LSPINFO\n");
       break;
     case MON_API_MSGTYPE_NODELIST:
       printf("MON_API_MSGTYPE_NODELIST\n");
@@ -287,13 +288,13 @@ void msg_display(struct mon_api_msg* msg)
             }
           printf("\n");
           break;
-        case MON_TLV_LSP_STATUS:
-          code = *(u_int32_t*)(tlv + 1);
-          printf("\t\t>>LSP Status: 0x%x\n)", code);
+        case MON_TLV_LSP_INFO:
+          lsp_info = (struct _MON_LSP_Info*)(tlv + 1);
+          printf("\t\t>>LSP Info: src_ip=%s, lsp_id=%d, dest_ip=%s, tunnel_id=%d, status=0x%x\n)", inet_ntoa(lsp_info->source),  lsp_info->lsp_id, inet_ntoa(lsp_info->source), lsp_info->tunnel_id, lsp_info->status);
           break;
         case MON_TLV_ERROR:
-          code = *(u_int32_t*)(tlv + 1);
-          printf("\t\t>>Error Code: 0x%x\n)", code);
+          errcode = *(u_int32_t*)(tlv + 1);
+          printf("\t\t>>Error Code: 0x%x\n)", errcode);
           break;
         default:
           printf("UNKNOWN TLV type %d\n", ntohs(tlv->type));          
@@ -504,16 +505,16 @@ main (int argc, char **argv)
     }
   else if (is_query_lspstatus)
     {
-      ret = query_lsp_status(sock, gri);
+      ret = query_lsp_info(sock, gri);
       if (ret != 0)
         {
-          printf( "query_lsp_status() failed\n");
+          printf( "query_lsp_info() failed\n");
           exit(3);
         }
       rmsg = mon_api_msg_read(sock);
       if (rmsg == NULL)
         {
-          printf( "query_lsp_status() failed\n");
+          printf( "query_lsp_info() failed\n");
           exit(4);
         }
     }

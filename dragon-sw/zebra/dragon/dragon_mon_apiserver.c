@@ -412,6 +412,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
   struct lsp* lsp;
   struct in_addr * addr;
   struct _EROAbstractNode_Para *hop;
+  struct _MON_LSP_Info * lsp_info;
   listnode node;
   struct mon_api_msg* rmsg;
 
@@ -461,7 +462,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
           }        
         break;
 
-      case MON_API_MSGTYPE_LSPSTATUS:
+      case MON_API_MSGTYPE_LSPINFO:
             tlv = (struct dragon_tlv_header*)msg->body;
             if (ntohs(tlv->type) != MON_TLV_GRI || htons(tlv->length) != MAX_MON_NAME_LEN)
             	{
@@ -480,12 +481,17 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             	}
             len = 0;
             tlv = (struct dragon_tlv_header*)buf;
-            tlv->type = htons(MON_TLV_LSP_STATUS);
-            tlv->length = htons(sizeof(u_int32_t));
+            tlv->type = htons(MON_TLV_LSP_INFO);
+            tlv->length = htons(sizeof(struct _MON_LSP_Info));
             len += sizeof(struct dragon_tlv_header);
-            *(u_int32_t*)(buf+len) = lsp->status;
-            len += sizeof(u_int32_t);
-            rmsg = mon_api_msg_new(MON_API_MSGTYPE_LSPSTATUS, MON_API_ACTION_DATA, len, apiserv->ucid, ntohl(msg->header.seqnum), 0, buf);
+            lsp_info = (struct _MON_LSP_Info*)(buf+len);
+            lsp_info->source.s_addr = lsp->common.Session_Para.srcAddr.s_addr;
+            lsp_info->destination.s_addr = lsp->common.Session_Para.destAddr.s_addr;
+            lsp_info->lsp_id = lsp->common.Session_Para.srcPort;
+            lsp_info->tunnel_id = lsp->common.Session_Para.destPort;
+            lsp_info->status = lsp->status;
+            len += sizeof(struct _MON_LSP_Info);
+            rmsg = mon_api_msg_new(MON_API_MSGTYPE_LSPINFO, MON_API_ACTION_DATA, len, apiserv->ucid, ntohl(msg->header.seqnum), 0, buf);
             MON_APISERVER_POST_MESSAGE(apiserv, rmsg);
             rc = 0;
         break;
