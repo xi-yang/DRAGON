@@ -2387,12 +2387,14 @@ void sigfunc_snc_stable(int signo)
 
 bool SwitchCtrl_Session_SubnetUNI::IsSubnetTransitERO(const EXPLICIT_ROUTE_Object * explicitRoute)
 {
-    bool isIPv4Only = true;
+    if (!explicitRoute || explicitRoute->getAbstractNodeList().size() < 2)
+        return false;
+    bool isIPv4Only = (explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::IPv4);
     AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
     for ( ; iter !=  explicitRoute->getAbstractNodeList().end(); ++iter) {
         AbstractNode& node = const_cast<AbstractNode&>(*iter);
         if (node.getType() == AbstractNode::UNumIfID) {
-            if(isIPv4Only && (node.getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
+            if(isIPv4Only && ((node.getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST || (node.getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_IF_ID))
                 return true;
 	     else
                 return false;
