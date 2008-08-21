@@ -1266,19 +1266,17 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
                                 break;
                         }
                     }
-                }
-            }
-            else if (!(*it)->getMonCircuitInfo(monReply)) { //edge-control subnet vlsr
-                errCode = 4; //failed to retrieve circuit info (subnetSwitchCtrlSession)
+                } else if (!(*it)->getMonCircuitInfo(monReply)) { //edge-control subnet vlsr
+                    errCode = 4; //failed to retrieve circuit info (subnetSwitchCtrlSession)
+                    goto _error;
+                 }
+            } else {
+                errCode = 3; //failed to retrieve switch info
                 goto _error;
-             }
-             return;
-        }
-        else {
-              errCode = 3; //failed to retrieve switch info
-              goto _error;
-         }
-         foundSession = true;
+            }
+            return;
+        }        
+        foundSession = true;
     }
     if (!foundSession) {
         //first judging whether this is a Subnet transit vlsr
