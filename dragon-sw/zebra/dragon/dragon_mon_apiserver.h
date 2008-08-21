@@ -83,6 +83,7 @@ struct _MON_LSP_Info
 #define MON_SWITCH_OPTION_SUBNET_TUNNEL	0x0020
 #define MON_SWITCH_OPTION_CIRCUIT_SRC		0x1000
 #define MON_SWITCH_OPTION_CIRCUIT_DEST		0x2000
+#define MON_SWITCH_OPTION_SUBNET_TRANSIT	0x8000
 #define MON_SWITCH_OPTION_ERROR 				0x10000
 
 struct mon_api_msg* mon_api_msg_new(u_int8_t type, u_int8_t action, u_int16_t length, u_int32_t ucid, u_int32_t seqnum, u_int32_t options, void* body);

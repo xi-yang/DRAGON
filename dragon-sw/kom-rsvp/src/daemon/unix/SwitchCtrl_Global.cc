@@ -1284,7 +1284,7 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
         //first judging whether this is a Subnet transit vlsr
         VLSRRoute& vlsrtList = psb->getVLSR_Route();
         if (vlsrtList.size() == 0 && SwitchCtrl_Session_SubnetUNI::IsSubnetTransitERO(psb->getEXPLICIT_ROUTE_Object())) {
-             monReply.switch_options |= MON_SWITCH_OPTION_SUBNET;
+             monReply.switch_options |= (MON_SWITCH_OPTION_SUBNET|MON_SWITCH_OPTION_SUBNET_TRANSIT);
              monReply.sub_type = MON_REPLY_SUBTYPE_SUBNET_TRANSIT;
              monReply.length = MON_REPLY_BASE_SIZE;
         }
