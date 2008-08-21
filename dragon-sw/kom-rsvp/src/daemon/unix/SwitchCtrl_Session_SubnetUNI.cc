@@ -2269,7 +2269,7 @@ bool SwitchCtrl_Session_SubnetUNI::getMonSwitchInfo(MON_Reply_Subobject& monRepl
     monReply.switch_info.switch_type = CienaSubnet;
     monReply.switch_info.access_type = CLI_TL1_TELNET;
     sscanf(TL1_TELNET_PORT, "%d", &monReply.switch_info.switch_port);
-    monReply.switch_options |= MON_SWITCH_OPTION_SUBNET;
+    monReply.switch_options |= MON_SWITCH_OPTION_SUBNET;	
     return true;
 }
 
@@ -2277,32 +2277,25 @@ bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monRep
 {
     _Subnet_Circuit_Info* eosInfo = NULL;
     SubnetUNI_Data* subnetUniData = NULL;
+    assert(monReply.length == MON_REPLY_BASE_SIZE);
     if (isSource)
     {
         monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_SRC;
-        eosInfo = &monReply.circuit_info.eos_info[0];
+        monReply.length += sizeof(struct _Subnet_Circuit_Info);
+        if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) != 0)
+            monReply.circuit_info.eos_info[1] = monReply.circuit_info.eos_info[0];
+        eosInfo = &monReply.circuit_info.eos_info[0];			
         subnetUniData = &subnetUniSrc;
     }
     else 
     {
         monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_DEST;
+        monReply.length += sizeof(struct _Subnet_Circuit_Info);
         if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) == 0)
             eosInfo = &monReply.circuit_info.eos_info[0];
         else
         {
             eosInfo = &monReply.circuit_info.eos_info[1];
-            assert (!currentSNC.empty() || !currentCRS.empty());
-            if (currentCRS.empty())
-            {
-                monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_SNC;
-                strncpy(eosInfo->snc_crs_name, currentSNC.chars(), MAX_MON_NAME_LEN-5);
-                char tail[4]; sprintf(tail, "-%d", numGroups > 0 ? numGroups : 1);
-                strcat(eosInfo->dtl_name, tail);
-            }
-            else
-            {
-                strncpy(eosInfo->snc_crs_name, currentCRS.chars(), MAX_MON_NAME_LEN-1);
-            }
         }
         subnetUniData = &subnetUniDest;
     }
@@ -2311,6 +2304,7 @@ bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monRep
     eosInfo->port = subnetUniData->logical_port;
     eosInfo->ethernet_bw = subnetUniData->ethernet_bw;
     strncpy(eosInfo->vcg_name, currentVCG.chars(), MAX_MON_NAME_LEN-20);
+
     if (isTunnelMode)
     {
         monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_TUNNEL;
@@ -2324,6 +2318,23 @@ bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monRep
         sprintf(eosInfo->eflow_in_name, "dcs_eflow_%s_in", currentVCG.chars());
         sprintf(eosInfo->eflow_out_name, "dcs_eflow_%s_out", currentVCG.chars());
     }
+
+    if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) != 0 && (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) != 0)
+    {
+        assert (!currentSNC.empty() || !currentCRS.empty());
+        if (currentCRS.empty())
+        {
+            monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_SNC;
+            strncpy(eosInfo->snc_crs_name, currentSNC.chars(), MAX_MON_NAME_LEN-5);
+            char tail[4]; sprintf(tail, "-%d", numGroups > 0 ? numGroups : 1);
+            strcat(eosInfo->dtl_name, tail);
+        }
+        else
+        {
+            strncpy(eosInfo->snc_crs_name, currentCRS.chars(), MAX_MON_NAME_LEN-1);
+        }            
+    }
+
     if (DTL.count > 0) 
     {
         monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_DTL;

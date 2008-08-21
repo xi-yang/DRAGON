@@ -1176,6 +1176,7 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
     bool foundSession = false;
     PSB* psb = NULL;
 
+    monReply.length = MON_REPLY_BASE_SIZE;
     if (strcmp(monQuery.gri, "none") == 0) {
         if (this->sessionList.size() == 0) {
              errCode = 1; //no switch control session
@@ -1185,7 +1186,6 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
                   errCode = 3; //failed to retrieve switch info
                   goto _error;
         }				
-        monReply.length = MON_REPLY_BASE_SIZE;
         return;
     }
 
