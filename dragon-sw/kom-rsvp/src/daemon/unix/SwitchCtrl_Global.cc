@@ -1169,7 +1169,7 @@ SONET_TSpec* SwitchCtrl_Global::getEosMapEntry(float bandwidth)
     return addEosMapEntry(bandwidth, sts1, (int)ceilf(bandwidth/49.536));
 }
 
-void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Reply_Subobject& monReply)
+void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Reply_Subobject& monReply, uint32 destIp)
 {
     uint16 errCode = 0;
     SwitchCtrlSessionList::Iterator it;
@@ -1189,7 +1189,7 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
         return;
     }
 
-    psb = RSVP_Global::rsvp->getPSBbyLSPName((const char*)monQuery.gri);
+    psb = RSVP_Global::rsvp->getPSBbyLSPName((const char*)monQuery.gri, destIp);
     if (psb == NULL) {
         errCode = 2; //no rsvp session
         goto _error;

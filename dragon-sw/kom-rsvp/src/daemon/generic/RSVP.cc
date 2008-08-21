@@ -419,10 +419,9 @@ void RSVP::removeHop( HopKey& key ) {
 	}
 }
 
-PSB* RSVP::getPSBbyLSPName(const char* name) {
+PSB* RSVP::getPSBbyLSPName(const char* name, uint32 destIp) {
 	PSB *psb = NULL;
-	uint32 dest_ip = ;
-	NetAddress dest(dest_ip);
+	NetAddress dest(destIp);
 	SESSION_Object session(dest, 0, 0);
 	SessionHash::HashBucket::Iterator sessionIter = sessionHash->lower_bound( &session );
 	for ( ; sessionIter != sessionHash->getHashBucket(&session).end(); ++sessionIter ) {

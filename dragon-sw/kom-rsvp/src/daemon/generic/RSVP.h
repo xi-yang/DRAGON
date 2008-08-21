@@ -130,7 +130,7 @@ public:
 	void removeHop( HopKey& );
 	MPLS& getMPLS() { return *mpls; }
 
-	PSB* getPSBbyLSPName(const char* name);
+	PSB* getPSBbyLSPName(const char* name, uint32 destIp);
 
 #if defined(WITH_API)
 	static API_Server& getApiServer() { assert(apiServer); return *apiServer; }

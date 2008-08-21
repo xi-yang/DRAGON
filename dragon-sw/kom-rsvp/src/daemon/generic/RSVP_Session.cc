@@ -1878,5 +1878,6 @@ PSB* Session::getPSBbyLSPName(const char* name) {
 		if ( (*psbIter)->getSESSION_ATTRIBUTE_Object().getSessionName() == name)
 			return *psbIter;
 	}
+	return NULL;
 }
 #endif

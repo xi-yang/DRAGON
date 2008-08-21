@@ -325,7 +325,7 @@ public:
 	SONET_TSpec* getEosMapEntry(float bandwidth);
 
 	/*monitoring*/
-	void getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Reply_Subobject& monReply);
+	void getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Reply_Subobject& monReplym, uint32 destIp = 0);
 
 protected:
 	SwitchCtrl_Global();
