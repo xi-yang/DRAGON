@@ -723,10 +723,10 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
           case MON_API_ACTION_ERROR:
             tlv = (struct dragon_tlv_header*)(buf + bodylen);
             tlv->type = htons(MON_TLV_ERROR);
-            bodylen += sizeof(struct dragon_tlv_header);	
             tlv->length = htons(sizeof(u_int32_t));
-            bodylen += sizeof(u_int32_t);
+            bodylen += sizeof(struct dragon_tlv_header);	
             *(u_int32_t*)(((char*)tlv) + bodylen) = (reply->switch_options& 0xffff);
+            bodylen += sizeof(u_int32_t);
             break;
           default:
             zlog_warn("mon_apiserver_send_reply (message type %d): Unkown action %d for apiserver(ucid=%x)", type, action, apiserv->ucid);
@@ -740,18 +740,18 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
           case MON_API_ACTION_DATA:
             tlv = (struct dragon_tlv_header*)(buf + bodylen);
             tlv->type = htons(MON_TLV_CIRCUIT_INFO);
-            bodylen += sizeof(struct dragon_tlv_header);	
             tlv->length = htons(reply->length - MON_REPLY_BASE_SIZE);
-            bodylen += reply->length - MON_REPLY_BASE_SIZE;
+            bodylen += sizeof(struct dragon_tlv_header);	
             memcpy(((char*)tlv) + bodylen, &reply->circuit_info, reply->length - MON_REPLY_BASE_SIZE);
+            bodylen += (reply->length - MON_REPLY_BASE_SIZE);
             break;
           case MON_API_ACTION_ERROR:
             tlv = (struct dragon_tlv_header*)(buf + bodylen);
             tlv->type = htons(MON_TLV_ERROR);
-            bodylen += sizeof(struct dragon_tlv_header);	
             tlv->length = htons(sizeof(u_int32_t));
-            bodylen += sizeof(u_int32_t);
+            bodylen += sizeof(struct dragon_tlv_header);	
             *(u_int32_t*)(((char*)tlv) + bodylen) = (reply->switch_options& 0xffff);
+            bodylen += sizeof(u_int32_t);
             break;
           default:
             zlog_warn("mon_apiserver_send_reply (message type %d): Unkown action %d for apiserver(ucid=%x)", type, action, apiserv->ucid);

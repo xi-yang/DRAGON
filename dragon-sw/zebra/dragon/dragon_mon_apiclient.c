@@ -321,7 +321,7 @@ void msg_display(struct mon_api_msg* msg)
           break;
         case MON_TLV_LSP_INFO:
           lsp_info = (struct _MON_LSP_Info*)(tlv + 1);
-          printf("\t\t>>LSP Info: src_ip=%s, lsp_id=%d, dest_ip=%s, tunnel_id=%d, status=0x%x\n)", inet_ntoa(lsp_info->source),  lsp_info->lsp_id, inet_ntoa(lsp_info->source), lsp_info->tunnel_id, lsp_info->status);
+          printf("\t\t>>LSP Info: src_ip=%s, lsp_id=%d, dest_ip=%s, tunnel_id=%d, status=0x%x\n)", inet_ntoa(lsp_info->source),  lsp_info->lsp_id, inet_ntoa(lsp_info->destination), lsp_info->tunnel_id, lsp_info->status);
           break;
         case MON_TLV_ERROR:
           errcode = *(u_int32_t*)(tlv + 1);
