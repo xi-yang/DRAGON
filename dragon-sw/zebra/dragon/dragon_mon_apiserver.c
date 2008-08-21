@@ -478,7 +478,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
                 zlog_warn ("mon_apiserver_handle_msg: No such LSP circuit found: %s", lsp_gri);
                 rc = -6;
                 goto _error;
-            	}
+            	}           
             len = 0;
             tlv = (struct dragon_tlv_header*)buf;
             tlv->type = htons(MON_TLV_LSP_INFO);
@@ -620,15 +620,14 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
                 goto _error;
             	}
             lsp_gri = (char*)(tlv+1);
-            lsp = dragon_find_lsp_by_griname(lsp_gri);
-            if (lsp == NULL)
+            tlv = (struct dragon_tlv_header*)(msg->body+sizeof(struct dragon_tlv_header) + MAX_MON_NAME_LEN);
+            if (ntohs(msg->header.length) <= sizeof(struct dragon_tlv_header) + MAX_MON_NAME_LEN || ntohs(tlv->type) != MON_TLV_IPv4_ADDR)
             	{
-                zlog_warn ("mon_apiserver_handle_msg: No such LSP circuit found: %s", lsp_gri);
+                zlog_warn ("mon_apiserver_handle_msg: In CircuitInfo query, no IPv4 TLV following the GRI: %s", lsp_gri);
                 rc = -16;
                 goto _error;
             	}
-            zMonitoringQuery(dmaster.api, ntohl(msg->header.ucid), ntohl(msg->header.seqnum), lsp_gri, 
-                lsp->common.Session_Para.destAddr.s_addr, lsp->common.Session_Para.destPort, lsp->common.Session_Para.srcAddr.s_addr);
+            zMonitoringQuery(dmaster.api, ntohl(msg->header.ucid), ntohl(msg->header.seqnum), lsp_gri, *(u_int32_t*)(tlv+1), 0, 0);
             rc = 0;
             break;
           default:

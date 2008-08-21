@@ -124,8 +124,39 @@ int mon_apiclient_send_query (int fd, u_int8_t type, char* gri)
 #define query_lsp_ero(FD, GRI) mon_apiclient_send_query(FD, MON_API_MSGTYPE_LSPERO, GRI)
 #define query_lsp_nodelist(FD, GRI) mon_apiclient_send_query(FD, MON_API_MSGTYPE_NODELIST, GRI)
 #define query_switch_info(FD) mon_apiclient_send_query(FD, MON_API_MSGTYPE_SWITCH, NULL)
-#define query_circuit_info(FD, GRI) mon_apiclient_send_query(FD, MON_API_MSGTYPE_CIRCUIT, GRI)
 
+
+int query_circuit_info (int fd, char* gri, struct in_addr dest)
+{
+  char body[4+MAX_MON_NAME_LEN+8];
+  int rc = 0;
+  u_int16_t bodylen = 0;
+  struct mon_api_msg* msg;
+  
+  assert(fd > 0);
+
+  if (!gri || dest.s_addr == 0)
+    return -1;
+
+  struct dragon_tlv_header* tlv = (struct dragon_tlv_header*)body;
+
+  tlv->type = htons(MON_TLV_GRI);
+  tlv->length = htons(MAX_MON_NAME_LEN);
+  bodylen += sizeof(struct dragon_tlv_header);
+  strncpy(body+bodylen, gri, MAX_MON_NAME_LEN+1);
+  bodylen += MAX_MON_NAME_LEN;
+  tlv = (struct dragon_tlv_header*)(body+bodylen);
+  tlv->type = htons(MON_TLV_IPv4_ADDR);
+  tlv->length = htons(sizeof(struct in_addr));
+  bodylen += sizeof(struct dragon_tlv_header);
+  memcpy(body+bodylen, &dest, sizeof(struct in_addr));
+  bodylen += sizeof(struct in_addr);  
+  msg = mon_api_msg_new(MON_API_MSGTYPE_CIRCUIT, MON_API_ACTION_RTRV, bodylen, get_ucid(), get_seqence_number(), 0, body);
+  assert(msg);
+
+  mon_api_msg_write(fd, msg);
+  return rc;
+}
 void display_subnet_circuit_info(struct _Subnet_Circuit_Info* circuit_info)
 {
   printf("\t\t>>Subnet Edge --> ID: %d", circuit_info->subnet_id);
@@ -331,13 +362,13 @@ usage (char *progname, int status)
     {    
       printf ("Usage : %s [OPTION...]\n\
 NSF DRAGON gateway daemon.\n\n\
--c, --circuit <gri>     Circuit information\n\
+-c, --circuit <gri,dest_ip>     Circuit information\n\
 -e, --lspero <gri>     LSP ERO information\n\
 -h, --help         Display this help and exit\n\
 -l, --lsplist      Switch information\n\
 -n, --nodelist      LSP node list\n\
 -s, --switch      Switch information\n\    
--t, --lspstatus <gri>     LSP status\n\
+-i, --lspinfo <gri>     LSP status\n\
 -v, --version    Print program version\n\
 -H, --host <name>     Host name\n\
 -v, --port <number>  Port number\n\
@@ -356,13 +387,15 @@ main (int argc, char **argv)
   int is_query_switch = 0;
   int is_query_circuit = 0;
   int is_query_lsplist = 0;
-  int is_query_lspstatus = 0;
+  int is_query_lspinfo = 0;
   int is_query_lspero = 0;
   int is_query_nodelist = 0;
   char* gri = NULL;
+  struct in_addr dest_ip;
   struct mon_api_msg* rmsg = NULL;
   int ret = 0;
-    
+  dest_ip.s_addr = 0;
+
   /* get program name */
   progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
 
@@ -370,7 +403,7 @@ main (int argc, char **argv)
     {
       int opt;
 
-      opt = getopt_long (argc, argv, "c:e:hln:st:vH:P:", longopts, 0);
+      opt = getopt_long (argc, argv, "c:e:hln:si:vH:P:", longopts, 0);
     
       if (opt == EOF)
         break;
@@ -400,9 +433,16 @@ main (int argc, char **argv)
         case 's':
           is_query_switch = 1;
           break;
-        case 't':
-          is_query_lspstatus = 1;
+        case 'i':
+          is_query_lspinfo = 1;
           gri = optarg;
+          p = strstr(optarg, ",");
+          if (!p)
+            {
+              printf ("Wrong arguments: -c takes two arguments <GRI,Dest_IPv4>. Note they are separated by comma.\n");
+            }
+          *p = 0; p++;
+          inet_aton(p, &dest_ip);
           break;
 	 case 'v':
           printf ("%s version %s\n", progname, DRAGON_VERSION);
@@ -430,7 +470,7 @@ main (int argc, char **argv)
     }
   if (is_query_circuit && gri)
     {
-      ret = query_circuit_info(sock, gri);
+      ret = query_circuit_info(sock, gri, dest_ip);
       if (ret != 0)
         {
           printf( "query_circuit() failed\n");
@@ -503,7 +543,7 @@ main (int argc, char **argv)
           exit(4);
         }
     }
-  else if (is_query_lspstatus)
+  else if (is_query_lspinfo)
     {
       ret = query_lsp_info(sock, gri);
       if (ret != 0)

@@ -72,6 +72,7 @@ struct _MON_LSP_Info
 #define MON_TLV_LSP_INFO     	0x05
 #define MON_TLV_LSP_ERO	 	0x06
 #define MON_TLV_SUBNET_ERO	0x07
+#define MON_TLV_IPv4_ADDR		0x08
 #define MON_TLV_ERROR			0x0f
 
 #define MON_SWITCH_OPTION_SUBNET 			0x0001
