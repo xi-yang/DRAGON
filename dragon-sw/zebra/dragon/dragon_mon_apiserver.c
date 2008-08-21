@@ -725,7 +725,7 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
             tlv->type = htons(MON_TLV_ERROR);
             tlv->length = htons(sizeof(u_int32_t));
             bodylen += sizeof(struct dragon_tlv_header);	
-            *(u_int32_t*)(((char*)tlv) + bodylen) = (reply->switch_options& 0xffff);
+            *(u_int32_t*)(buf+bodylen) = (reply->switch_options& 0xffff);
             bodylen += sizeof(u_int32_t);
             break;
           default:
@@ -742,7 +742,7 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
             tlv->type = htons(MON_TLV_CIRCUIT_INFO);
             tlv->length = htons(reply->length - MON_REPLY_BASE_SIZE);
             bodylen += sizeof(struct dragon_tlv_header);	
-            memcpy(((char*)tlv) + bodylen, &reply->circuit_info, reply->length - MON_REPLY_BASE_SIZE);
+            memcpy(buf + bodylen, &reply->circuit_info, reply->length - MON_REPLY_BASE_SIZE);
             bodylen += (reply->length - MON_REPLY_BASE_SIZE);
             break;
           case MON_API_ACTION_ERROR:
@@ -750,7 +750,7 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
             tlv->type = htons(MON_TLV_ERROR);
             tlv->length = htons(sizeof(u_int32_t));
             bodylen += sizeof(struct dragon_tlv_header);	
-            *(u_int32_t*)(((char*)tlv) + bodylen) = (reply->switch_options& 0xffff);
+            *(u_int32_t*)(buf + bodylen) = (reply->switch_options& 0xffff);
             bodylen += sizeof(u_int32_t);
             break;
           default:
