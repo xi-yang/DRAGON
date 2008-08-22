@@ -2277,7 +2277,6 @@ bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monRep
 {
     _Subnet_Circuit_Info* eosInfo = NULL;
     SubnetUNI_Data* subnetUniData = NULL;
-    assert(monReply.length == MON_REPLY_BASE_SIZE);
     if (isSource)
     {
         monReply.switch_options |= MON_SWITCH_OPTION_SUBNET_SRC;
