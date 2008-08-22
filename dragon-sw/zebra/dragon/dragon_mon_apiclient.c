@@ -210,17 +210,17 @@ void msg_display(struct mon_api_msg* msg)
       printf("MON_API_MSGTYPE_SWITCH\n");
       break;
     case MON_API_MSGTYPE_CIRCUIT:
-      printf("MON_API_MSGTYPE_CIRCUIT: ");
+      printf("MON_API_MSGTYPE_CIRCUIT\n");
       if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET == 0)
-          printf("Ethernet VLAN - ");
+          printf("\t\t>>Ethernet VLAN - ");
       else
-          printf("EoS Subnet Connection - ");
+          printf("\t\t>>EoS Subnet Connection - ");
       if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET_TRANSIT)
-          printf("Transit Node");
-      if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET_SRC);
-          printf("w/ Source Edge");
-      if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET_DEST);
-          printf("w/ Destination Edge");
+          printf(" Transit Node");
+      if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET_SRC)
+          printf(" w/ Source Edge");
+      if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET_DEST)
+          printf(" w/ Destination Edge");
       printf("\n");
       break;
     case MON_API_MSGTYPE_LSPLIST: 
