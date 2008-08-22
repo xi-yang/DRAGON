@@ -738,6 +738,8 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
 	 switch (action)
           {
           case MON_API_ACTION_DATA:
+            if ((reply->switch_options & MON_SWITCH_OPTION_SUBNET_TRANSIT) != 0 || reply->length == MON_REPLY_BASE_SIZE)
+                break;
             tlv = (struct dragon_tlv_header*)(buf + bodylen);
             tlv->type = htons(MON_TLV_CIRCUIT_INFO);
             tlv->length = htons(reply->length - MON_REPLY_BASE_SIZE);

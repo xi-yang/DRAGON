@@ -160,7 +160,7 @@ int query_circuit_info (int fd, char* gri, struct in_addr dest)
 void display_subnet_circuit_info(struct _Subnet_Circuit_Info* circuit_info)
 {
   printf("\t\t>>Subnet Edge --> ID: %d", circuit_info->subnet_id);
-  printf(", Port %x", circuit_info->port);
+  printf(", Port 0x%x", circuit_info->port);
   printf(", Ethernet Bandwidth %f", circuit_info->ethernet_bw);
   printf(", First Timeslot %x", circuit_info->first_timeslot);
   printf(", VCG: %s", circuit_info->vcg_name);
@@ -210,7 +210,18 @@ void msg_display(struct mon_api_msg* msg)
       printf("MON_API_MSGTYPE_SWITCH\n");
       break;
     case MON_API_MSGTYPE_CIRCUIT:
-      printf("MON_API_MSGTYPE_CIRCUIT\n");
+      printf("MON_API_MSGTYPE_CIRCUIT: ");
+      if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET == 0)
+          printf("Ethernet VLAN - ");
+      else
+          printf("EoS Subnet Connection - ");
+      if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET_TRANSIT)
+          printf("Transit Node");
+      if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET_SRC);
+          printf("w/ Source Edge");
+      if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET_DEST);
+          printf("w/ Destination Edge");
+      printf("\n");
       break;
     case MON_API_MSGTYPE_LSPLIST: 
       printf("MON_API_MSGTYPE_LSPLIST\n");
