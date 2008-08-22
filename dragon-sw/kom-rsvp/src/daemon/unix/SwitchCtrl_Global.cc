@@ -1176,6 +1176,7 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
     bool foundSession = false;
     PSB* psb = NULL;
 
+    monReply.switch_options = 0;
     monReply.length = MON_REPLY_BASE_SIZE;
     if (strcmp(monQuery.gri, "none") == 0) {
         if (this->sessionList.size() == 0) {

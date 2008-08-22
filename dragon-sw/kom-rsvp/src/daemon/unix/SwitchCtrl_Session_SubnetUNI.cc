@@ -2259,7 +2259,6 @@ bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
 //// For monitoring service API
 
 bool SwitchCtrl_Session_SubnetUNI::getMonSwitchInfo(MON_Reply_Subobject& monReply) {
-    monReply.switch_options = 0;
     if (switchInetAddr.rawAddress() == 0)
     {
         monReply.switch_options |= MON_SWITCH_OPTION_ERROR;
