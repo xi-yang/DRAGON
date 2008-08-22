@@ -806,6 +806,7 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 						buffer >> monReply.circuit_info.eos_info[0].dtl_name[j];
 					if ( (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) != 0 && (monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) != 0 ) {
 						buffer >> monReply.circuit_info.eos_info[1].subnet_id >> monReply.circuit_info.eos_info[1].first_timeslot 
+							>> monReply.circuit_info.eos_info[1].reserved[0] >> monReply.circuit_info.eos_info[1].reserved[1]
 							>> monReply.circuit_info.eos_info[1].port >> monReply.circuit_info.eos_info[1].ethernet_bw;
 						for (j = 0; j < MAX_MON_NAME_LEN; j++)
 							buffer >> monReply.circuit_info.eos_info[1].vcg_name[j];
@@ -901,6 +902,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 			}
 			else { // EoS Subnet
 				buffer << o.monReply.circuit_info.eos_info[0].subnet_id << o.monReply.circuit_info.eos_info[0].first_timeslot 
+					<< o.monReply.circuit_info.eos_info[0].reserved[1] << o.monReply.circuit_info.eos_info[0].reserved[1]
 					<< o.monReply.circuit_info.eos_info[0].port << o.monReply.circuit_info.eos_info[0].ethernet_bw;
 				for (i = 0; i < MAX_MON_NAME_LEN; i++)
 					buffer << o.monReply.circuit_info.eos_info[0].vcg_name[i];
@@ -914,7 +916,7 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 					buffer << o.monReply.circuit_info.eos_info[0].dtl_name[i];
 				if ( (o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET_SRC) != 0 && (o.monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) != 0 ) {
 					buffer << o.monReply.circuit_info.eos_info[1].subnet_id << o.monReply.circuit_info.eos_info[1].first_timeslot 
-						<< o.monReply.circuit_info.eos_info[0].reserved[0] << o.monReply.circuit_info.eos_info[0].reserved[1]
+						<< o.monReply.circuit_info.eos_info[1].reserved[0] << o.monReply.circuit_info.eos_info[1].reserved[1]
 						<< o.monReply.circuit_info.eos_info[1].port << o.monReply.circuit_info.eos_info[1].ethernet_bw;
 					for (i = 0; i < MAX_MON_NAME_LEN; i++)
 						buffer << o.monReply.circuit_info.eos_info[1].vcg_name[i];
