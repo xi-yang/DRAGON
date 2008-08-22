@@ -774,9 +774,9 @@ void DRAGON_EXT_INFO_Object::readFromBuffer(INetworkBuffer& buffer, uint16 len)
 			buffer >> monReply.ucid >> monReply.seqnum;
 			for (j = 0; j < MAX_MON_NAME_LEN; j++)
 				buffer >> monReply.gri[j];
-			buffer >> monReply.switch_info.switch_ip.s_addr >> monReply.switch_info.switch_port 
-				>> monReply.switch_info.switch_type >> monReply.switch_info.access_type
-				>> monReply.switch_options;
+			buffer >> monReply.switch_info.switch_ip[0].s_addr>> monReply.switch_info.switch_ip[1].s_addr 
+				>> monReply.switch_info.switch_port >> monReply.switch_info.switch_type 
+				>> monReply.switch_info.access_type	>> monReply.switch_options;
 			if ((monReply.switch_options & MON_SWITCH_OPTION_ERROR) != 0 ) { // Error
 				; //noop
 			}
@@ -884,9 +884,9 @@ ONetworkBuffer& operator<< ( ONetworkBuffer& buffer, const DRAGON_EXT_INFO_Objec
 		buffer << o.monReply.ucid << o.monReply.seqnum;
 		for (i = 0; i < MAX_MON_NAME_LEN; i++)
 			buffer << o.monReply.gri[i];
-		buffer << o.monReply.switch_info.switch_ip.s_addr << o.monReply.switch_info.switch_port 
-			<< o.monReply.switch_info.switch_type << o.monReply.switch_info.access_type
-			<< o.monReply.switch_options;
+		buffer << o.monReply.switch_info.switch_ip[0].s_addr << o.monReply.switch_info.switch_ip[1].s_addr 
+			<< o.monReply.switch_info.switch_port << o.monReply.switch_info.switch_type 
+			<< o.monReply.switch_info.access_type << o.monReply.switch_options;
 		if ((o.monReply.switch_options & MON_SWITCH_OPTION_ERROR) != 0 ) { // Error
 			; // noop
 		}
@@ -978,9 +978,9 @@ ostream& operator<< ( ostream& os, const DRAGON_EXT_INFO_Object& o ) {
 	if (o.HasSubobj(DRAGON_EXT_SUBOBJ_MON_REPLY)) {
 		os << "(5: MonReply: ucid=" << o.monQuery.ucid << ", seqnum=" << o.monQuery.seqnum;
 		os  << ", gri=" << o.monReply.gri;
-		os << ", switch_ip=" << String( inet_ntoa(o.monReply.switch_info.switch_ip) ) << ", switch_port=" << o.monReply.switch_info.switch_port 
-			<< ", switch_type=" << o.monReply.switch_info.switch_type << ", access_type="  <<o.monReply.switch_info.access_type
-			<< ", switch_options=" << o.monReply.switch_options;
+		os << ", switch_ip[0]=" << String( inet_ntoa(o.monReply.switch_info.switch_ip[0]) ) << ", switch_ip[1]=" << String( inet_ntoa(o.monReply.switch_info.switch_ip[1]) )
+			<< ", switch_port=" << o.monReply.switch_info.switch_port << ", switch_type=" << o.monReply.switch_info.switch_type 
+			<< ", access_type="  <<o.monReply.switch_info.access_type << ", switch_options=" << o.monReply.switch_options;
 		if ((o.monReply.switch_options & MON_SWITCH_OPTION_ERROR) != 0 ) { // Error
 			os << ", query_error_code=" << (o.monReply.switch_options&0xffff);
 		}

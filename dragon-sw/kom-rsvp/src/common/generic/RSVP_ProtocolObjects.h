@@ -1106,7 +1106,7 @@ typedef struct {
 } MON_Query_Subobject;
 
 struct _Switch_Generic_Info {
-	in_addr switch_ip;
+	in_addr switch_ip[2];
 	uint32 switch_port;
 	uint16 switch_type;
 	uint16 access_type;

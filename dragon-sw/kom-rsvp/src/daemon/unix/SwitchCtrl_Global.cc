@@ -582,10 +582,9 @@ bool SwitchCtrl_Session::hasVLSRouteConflictonSwitch(VLSR_Route& vlsr)
 
 bool SwitchCtrl_Session::getMonSwitchInfo(MON_Reply_Subobject& monReply)
 {
-    monReply.switch_options = 0;
     if (switchInetAddr.rawAddress() == 0)
         goto _error;
-    monReply.switch_info.switch_ip.s_addr = switchInetAddr.rawAddress();
+    monReply.switch_info.switch_ip[0].s_addr = switchInetAddr.rawAddress();
     if (vendor == Illegal)
     {
         goto _error;

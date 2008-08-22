@@ -2264,7 +2264,23 @@ bool SwitchCtrl_Session_SubnetUNI::getMonSwitchInfo(MON_Reply_Subobject& monRepl
         monReply.switch_options |= MON_SWITCH_OPTION_ERROR;
         return false;
     }
-    monReply.switch_info.switch_ip.s_addr = switchInetAddr.rawAddress();
+    if (monReply.switch_info.switch_ip[0].s_addr != 0)
+    {
+        if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) != 0)
+        {
+            monReply.switch_info.switch_ip[1].s_addr = monReply.switch_info.switch_ip[1].s_addr;
+            monReply.switch_info.switch_ip[0].s_addr = switchInetAddr.rawAddress();
+        }
+        else
+        {
+            monReply.switch_info.switch_ip[1].s_addr = switchInetAddr.rawAddress();
+        }
+    }
+    else
+    {
+        monReply.switch_info.switch_ip[0].s_addr = switchInetAddr.rawAddress();
+    }
+	
     monReply.switch_info.switch_type = CienaSubnet;
     monReply.switch_info.access_type = CLI_TL1_TELNET;
     sscanf(TL1_TELNET_PORT, "%d", &monReply.switch_info.switch_port);
