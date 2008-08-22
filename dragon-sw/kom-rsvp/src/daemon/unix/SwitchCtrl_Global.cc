@@ -1274,9 +1274,8 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
                 errCode = 3; //failed to retrieve switch info
                 goto _error;
             }
-            return;
+            foundSession = true;
         }        
-        foundSession = true;
     }
     if (!foundSession) {
         //first judging whether this is a Subnet transit vlsr

@@ -2720,6 +2720,11 @@ DEFUN (dragon_set_mon_apiserver,
   int ret;
   if (strcmp(argv[0], "on") == 0)
     {
+      if (dmaster.t_mon_accept)
+        {
+          vty_out(vty, "mon_apiserver has already been turned on ...%s", VTY_NEWLINE);
+          return CMD_SUCCESS;
+        }
       ret = mon_apiserver_init();
       if (ret < 0)
         {
@@ -2729,10 +2734,15 @@ DEFUN (dragon_set_mon_apiserver,
     }
   else
     {
+      if (!dmaster.t_mon_accept)
+        {
+          vty_out(vty, "mon_apiserver has already been turned off ...%s", VTY_NEWLINE);
+          return CMD_SUCCESS;
+        }
       mon_apiserver_term();
     }
 
-  return CMD_WARNING;
+  return CMD_SUCCESS;
 }
 
 DEFUN (dragon_show_mon_apiserver,
@@ -2748,7 +2758,7 @@ DEFUN (dragon_show_mon_apiserver,
       strcpy(onoff, "off");
   vty_out(vty, "\t> Monitoring API server is turned %s.%s", onoff, VTY_NEWLINE);
 
-  return CMD_WARNING;
+  return CMD_SUCCESS;
 }
 
 void
