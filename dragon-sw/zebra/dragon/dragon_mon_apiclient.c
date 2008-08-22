@@ -294,7 +294,11 @@ void msg_display(struct mon_api_msg* msg)
           break;
         case MON_TLV_SWITCH_INFO:
             switch_info = (struct _Switch_Generic_Info*)(tlv+1);
-            printf("\t\t>>Switch Info --> IP: %s", inet_ntoa(switch_info->switch_ip));
+            printf("\t\t>>Switch Info --> IP:");
+            if (switch_info->switch_ip[0].s_addr != 0)
+                printf(" Source: %s", inet_ntoa(switch_info->switch_ip[0]));
+            if (switch_info->switch_ip[1].s_addr != 0)
+                printf(" Destination: %s", inet_ntoa(switch_info->switch_ip[0]));
             printf(", Port: %d", switch_info->switch_port);
             printf(", Type: %d", switch_info->switch_type);
             printf(", Acess Type: %d\n ", switch_info->access_type);

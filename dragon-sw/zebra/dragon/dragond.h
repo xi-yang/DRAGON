@@ -517,7 +517,7 @@ struct _Error_Spec_Para {
 };
  	
 struct _Switch_Generic_Info {
-	struct in_addr switch_ip;
+	struct in_addr switch_ip[2];
 	u_int32_t switch_port;
 	u_int16_t switch_type;
 	u_int16_t access_type;
