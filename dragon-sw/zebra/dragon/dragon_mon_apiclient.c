@@ -157,14 +157,41 @@ int query_circuit_info (int fd, char* gri, struct in_addr dest)
   mon_api_msg_write(fd, msg);
   return rc;
 }
+
+static char* ciena_logical_port2string(u_int32_t logical_port)
+{
+    static char buf[20];
+    char shelf_alpha;
+    int bay, shelf, slot, subslot, port;
+
+    bay = (logical_port >> 24) + 1;
+    shelf = ((logical_port >> 16)&0xff);
+    slot = ((logical_port >> 12)&0x0f) + 1;
+    subslot = ((logical_port >> 8)&0x0f) + 1;
+    port = (logical_port&0xff) + 1;
+    switch (shelf)
+    {
+    case 2:
+        shelf_alpha = 'A';
+        break;
+    case 3:
+        shelf_alpha = 'C';
+        break;
+    default:
+        shelf_alpha = 'X';
+        break;
+    }
+    sprintf(buf, "%d-%c-%d-%d-%d", bay, shelf_alpha, slot, subslot, port);
+    return buf;
+}
 void display_subnet_circuit_info(struct _Subnet_Circuit_Info* circuit_info)
 {
   printf("\t\t>>Subnet Edge --> ID: %d", circuit_info->subnet_id);
-  printf(", Port 0x%x", circuit_info->port);
-  printf(", Ethernet Bandwidth %f", circuit_info->ethernet_bw);
-  printf(", First Timeslot %x", circuit_info->first_timeslot);
+  printf(", Port: %s", ciena_logical_port2string(circuit_info->port));
+  printf(", Ethernet Bandwidth: %.3f", circuit_info->ethernet_bw);
+  printf(", First Timeslot: %x", circuit_info->first_timeslot);
   printf(", VCG: %s", circuit_info->vcg_name);
-  printf(", EFLOW: %s - %s", circuit_info->eflow_in_name,  circuit_info->eflow_out_name);
+  printf(", EFLOW(s): %s -- %s", circuit_info->eflow_in_name,  circuit_info->eflow_out_name);
   if (strlen(circuit_info->snc_crs_name) > 0)
     printf(", SNC/CRS: %s", circuit_info->snc_crs_name);
   if (strlen(circuit_info->dtl_name) > 0)
@@ -186,7 +213,6 @@ void display_ero_para(struct _EROAbstractNode_Para* hop)
     default:
       printf("Unsupported type %d\n", hop->type);
     }
-
 }
 
 void msg_display(struct mon_api_msg* msg)
@@ -211,10 +237,10 @@ void msg_display(struct mon_api_msg* msg)
       break;
     case MON_API_MSGTYPE_CIRCUIT:
       printf("MON_API_MSGTYPE_CIRCUIT\n");
-      if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET == 0)
-          printf("\t\t>>Ethernet VLAN - ");
-      else
+      if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET)
           printf("\t\t>>EoS Subnet Connection - ");
+      else
+          printf("\t\t>>Ethernet VLAN - ");
       if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET_TRANSIT)
           printf(" Transit Node");
       if (ntohl(msg->header.options) & MON_SWITCH_OPTION_SUBNET_SRC)

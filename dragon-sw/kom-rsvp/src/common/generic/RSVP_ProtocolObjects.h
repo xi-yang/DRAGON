@@ -1137,7 +1137,8 @@ struct _Ethernet_Circuit_Info {
 struct _Subnet_Circuit_Info {
 	uint8 subnet_id;
 	uint8 first_timeslot;
-	uint16 port;
+	uint8 reserved[2];
+	uint32 port;
 	float ethernet_bw;
 	char vcg_name[MAX_MON_NAME_LEN];
 	char eflow_in_name[MAX_MON_NAME_LEN]; //_unicast + _multicast for untagged!
