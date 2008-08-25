@@ -2279,12 +2279,12 @@ bool SwitchCtrl_Session_SubnetUNI::getMonSwitchInfo(MON_Reply_Subobject& monRepl
     else
     {
         monReply.switch_info.switch_ip[0].s_addr = switchInetAddr.rawAddress();
+        monReply.switch_info.switch_type = CienaSubnet;
+        monReply.switch_info.access_type = CLI_TL1_TELNET;
+        sscanf(TL1_TELNET_PORT, "%d", &monReply.switch_info.switch_port);
+        monReply.switch_options |= MON_SWITCH_OPTION_SUBNET;
     }
 	
-    monReply.switch_info.switch_type = CienaSubnet;
-    monReply.switch_info.access_type = CLI_TL1_TELNET;
-    sscanf(TL1_TELNET_PORT, "%d", &monReply.switch_info.switch_port);
-    monReply.switch_options |= MON_SWITCH_OPTION_SUBNET;
     return true;
 }
 
