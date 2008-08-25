@@ -2346,7 +2346,7 @@ bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monRep
     {
         strncpy(eosInfo->snc_crs_name, currentCRS.chars(), MAX_MON_NAME_LEN-1);
     }
-    else 
+    else if (isSource)
         return false;
 
     if (DTL.count > 0) 
