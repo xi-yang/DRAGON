@@ -281,16 +281,12 @@ void RSVP_API::process( Message& msg , zUpcall upcall) {
 		   zUpcallParam.errorSpecPara->errFlags = msg.getERROR_SPEC_Object().getFlags();
 		   zUpcallParam.errorSpecPara->errCode = msg.getERROR_SPEC_Object().getCode();
 		   zUpcallParam.errorSpecPara->errValue = msg.getERROR_SPEC_Object().getValue();
-		    upcall(&zUpcallParam); //upcall to Zebra
-		    return;
-		}
+ 		}
 		else if (msg.getMsgType()==Message::MonReply)
 		{
 		    zUpcallParam.monReplyPara = new (MON_Reply_Subobject);
 		    *zUpcallParam.monReplyPara = msg.getDRAGON_EXT_INFO_Object()->getMonReply();
-		    upcall(&zUpcallParam); //upcall to Zebra  ?? API??
-		    return;
-		}
+ 		}
 
 		//common objects for PATH, RESV, PTEAR, RTEAR upcalls
 		if(msg.getDRAGON_UNI_Object())
