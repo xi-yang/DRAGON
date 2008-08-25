@@ -2268,7 +2268,7 @@ bool SwitchCtrl_Session_SubnetUNI::getMonSwitchInfo(MON_Reply_Subobject& monRepl
     {
         if ((monReply.switch_options & MON_SWITCH_OPTION_SUBNET_DEST) != 0)
         {
-            monReply.switch_info.switch_ip[1].s_addr = monReply.switch_info.switch_ip[1].s_addr;
+            monReply.switch_info.switch_ip[1].s_addr = monReply.switch_info.switch_ip[0].s_addr;
             monReply.switch_info.switch_ip[0].s_addr = switchInetAddr.rawAddress();
         }
         else
