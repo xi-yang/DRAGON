@@ -2317,6 +2317,8 @@ bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monRep
     eosInfo->first_timeslot = subnetUniData->first_timeslot;
     eosInfo->port = ntohl(subnetUniData->logical_port);
     eosInfo->ethernet_bw = subnetUniData->ethernet_bw;
+    if (currentVCG.empty())
+        return false;
     strncpy(eosInfo->vcg_name, currentVCG.chars(), MAX_MON_NAME_LEN-20);
 
     if (isTunnelMode)
@@ -2343,7 +2345,9 @@ bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monRep
     else if (!currentCRS.empty())
     {
         strncpy(eosInfo->snc_crs_name, currentCRS.chars(), MAX_MON_NAME_LEN-1);
-    }            
+    }
+    else 
+        return false;
 
     if (DTL.count > 0) 
     {
