@@ -250,8 +250,8 @@ void MessageProcessor::processMessage() {
 		currentSession->processRESV( currentMessage, *sendingHop );
 		refreshReservations();
 		//$$$$ Xi2008 for subnet control only >>
-		//This is a diverged child process, it comes here only for sending out delayed RESV messages
 		if (pid_verifySNCStateWorkingState == 0) {
+			//This is a diverged child process, it comes here only for sending out delayed RESV messages and then aborts
 			exit(0);
 		}
 		//$$$$ Xi2008 <<
@@ -392,8 +392,12 @@ void MessageProcessor::refreshReservations() {
 			//$$$$ DRAGON specific
 			if (currentMessage.getDRAGON_UNI_Object())
 				resvMsg->setUNI_Object(*currentMessage.getDRAGON_UNI_Object());
+			else if ((*psbIter)->getDRAGON_UNI_Object())
+				resvMsg->setUNI_Object(*(DRAGON_UNI_Object*)(*psbIter)->getDRAGON_UNI_Object());
 			if (currentMessage.getDRAGON_EXT_INFO_Object())
 				resvMsg->setDRAGON_EXT_INFO_Object(*currentMessage.getDRAGON_EXT_INFO_Object());
+			else if ((*psbIter)->getDRAGON_EXT_INFO_Object())
+				resvMsg->setDRAGON_EXT_INFO_Object(*(DRAGON_EXT_INFO_Object*)(*psbIter)->getDRAGON_EXT_INFO_Object());
 			
 			//$$$$ Always return the suggested LABEL_Object in RESV messaage (important for VLSR--Movaz interop)
 			if ( (*psbIter)->hasSUGGESTED_LABEL_Object() ) {
