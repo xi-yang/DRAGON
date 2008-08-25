@@ -61,9 +61,12 @@ struct _MON_LSP_Info
 #define MON_API_MSGTYPE_CIRCUIT		0x20 /* Monitoring information for circuit */
 
 #define MON_API_ACTION_RTRV 	0x01 /* Information retrieval/query */
-#define MON_API_ACTION_DATA 	0x02 /* Reply with information data */
-#define MON_API_ACTION_ACK 	0x03 /* Reply with acknowledgement */
-#define MON_API_ACTION_ERROR 	0x04 /* Reply with error code */
+#define MON_API_ACTION_INSERT 	0x02 /* Insersion/Addition/Provisioning */
+#define MON_API_ACTION_DELETE	0x03 /* Deleteon/Removal */
+#define MON_API_ACTION_UPDATE	0x04 /* Uptate */
+#define MON_API_ACTION_ACK 	0x05 /* Reply with acknowledgement */
+#define MON_API_ACTION_DATA 	0x06 /* Reply/Ack with information data */
+#define MON_API_ACTION_ERROR 	0x07 /* Reply with error code */
 
 #define MON_TLV_GRI 			0x01
 #define MON_TLV_SWITCH_INFO 	0x02
