@@ -1098,8 +1098,59 @@ int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req
 
 
   /*set ero*/
+  for (i = 0; i < num_lsp_ero_nodes; i++)
+    {
+        struct _EROAbstractNode_Para* hop = lsp_ero+i;
+        strcpy(argv[0], hop->isLoose? "loose":"strict"); 
+        if (hop->type == IPv4)
+          {
+            argc = 2;
+            strcpy(argv[1], inet_ntoa(hop->data.ip4.addr));
+          }
+        else if (hop->type == UNumIfID)
+          {
+            argc = 3;
+            strcpy(argv[1], inet_ntoa(hop->data.uNumIfID.routerID));
+            sprintf(argv[2], "%d", hop->data.uNumIfID.interfaceID);
+          }
+        else
+          {
+            zlog_warn("mon_apiserver_lsp_commit: invalid ERO suboject type %d (lsp=%s, subobj#%d)", hop->type, lsp_gri, i+1);
+            continue;
+          }
+        rc = dragon_set_lsp_ero_hop(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+          {
+            zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_ero_hop (lsp=%s) failed on ERO subobj#", lsp_gri, i+1);
+            goto _quit;
+          }
+    }
 
   /*set subnet-ero*/
+  for (i = 0; i < num_subnet_ero_nodes; i++)
+    {
+        struct _EROAbstractNode_Para* hop = lsp_ero+i;
+        if (hop->type == IPv4)
+          {
+            argc = 1;
+            strcpy(argv[0], inet_ntoa(hop->data.ip4.addr));
+          }
+        else if (hop->type == UNumIfID)
+          {
+            argc = 2;
+            strcpy(argv[0], inet_ntoa(hop->data.uNumIfID.routerID));
+            sprintf(argv[1], "%d", hop->data.uNumIfID.interfaceID);
+          }
+        else
+          {
+            zlog_warn("mon_apiserver_lsp_commit: invalid SubnetERO suboject type %d (lsp=%s, subobj#%d)", hop->type, lsp_gri, i+1);
+            continue;
+          }
+        rc = dragon_set_lsp_subnet_ero_hop(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+          {
+            zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_subnet_ero_hop (lsp=%s) failed on SubnetERO subobj#", lsp_gri, i+1);
+            goto _quit;
+          }
+    }
 
   /*TODO: set pce module*/
   
