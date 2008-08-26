@@ -2711,9 +2711,9 @@ DEFUN (dragon_set_local_id_group_refresh,
 
 DEFUN (dragon_set_mon_apiserver,
        dragon_set_mon_apiserver_cmd,
-       "set mon-apiserver (on|off)",
+       "set apiserver (on|off)",
        SET_STR
-       "Monitoring service API\n"
+       "DRAGON service API\n"
        "On/enabled\n"
        "Off/disabled\n")
 {
@@ -2722,13 +2722,13 @@ DEFUN (dragon_set_mon_apiserver,
     {
       if (dmaster.t_mon_accept)
         {
-          vty_out(vty, "mon_apiserver has already been turned on ...%s", VTY_NEWLINE);
+          vty_out(vty, "dragon_apiserver has already been turned on ...%s", VTY_NEWLINE);
           return CMD_SUCCESS;
         }
       ret = mon_apiserver_init();
       if (ret < 0)
         {
-          vty_out(vty, "mon_apiserver_init failed, returning code: %d %s", ret, VTY_NEWLINE);
+          vty_out(vty, "dragon_apiserver_init failed, returning code: %d %s", ret, VTY_NEWLINE);
           return CMD_WARNING;
         }
     }
@@ -2736,7 +2736,7 @@ DEFUN (dragon_set_mon_apiserver,
     {
       if (!dmaster.t_mon_accept)
         {
-          vty_out(vty, "mon_apiserver has already been turned off ...%s", VTY_NEWLINE);
+          vty_out(vty, "dragon_apiserver_init has already been turned off ...%s", VTY_NEWLINE);
           return CMD_SUCCESS;
         }
       mon_apiserver_term();
@@ -2747,16 +2747,16 @@ DEFUN (dragon_set_mon_apiserver,
 
 DEFUN (dragon_show_mon_apiserver,
        dragon_show_mon_apiserver_cmd,
-       "show mon-apiserver",
+       "show apiserver",
        SHOW_STR
-       "Monitoring service API status\n")
+       "DRAGON service API status\n")
 {
   char onoff[4];
   if (dmaster.t_mon_accept)
       strcpy(onoff, "on");
   else
       strcpy(onoff, "off");
-  vty_out(vty, "\t> Monitoring API server is turned %s.%s", onoff, VTY_NEWLINE);
+  vty_out(vty, "\t> DRAGON API server is turned %s.%s", onoff, VTY_NEWLINE);
 
   return CMD_SUCCESS;
 }
