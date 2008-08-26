@@ -53,6 +53,28 @@ struct _MON_LSP_Info
   u_int32_t status;
 };
 
+struct _LSPService_Request
+{
+  struct in_addr source;
+  u_int32_t src_lclid;
+  struct in_addr destination;
+  u_int32_t dest_lclid;
+  u_int8_t  switching_type;
+  u_int8_t  encoding_type;
+  u_int16_t gpid;
+  float bandwidth;
+  u_int16_t vlan_tag;
+  u_int16_t subnet_vtag_ingress;
+  u_int16_t subnet_vtag_egress;
+  u_int8_t reserved[2];
+};
+
+struct _PCE_Spec 
+{
+    char module_name[16];
+    u_int32_t flags;
+};
+
 #define MON_API_MSGTYPE_LSPLIST		0x01 /*A list of LSP names */
 #define MON_API_MSGTYPE_LSPINFO		0x02 /* LSP info at source VLSR */
 #define MON_API_MSGTYPE_LSPERO		0x03 /* LSP ERO (and Subnet ERO if any) */
@@ -77,6 +99,8 @@ struct _MON_LSP_Info
 #define MON_TLV_LSP_ERO	 	0x06
 #define MON_TLV_SUBNET_ERO	0x07
 #define MON_TLV_IPv4_ADDR		0x08
+#define MON_TLV_LSP_REQUEST	0x09
+#define MON_TLV_PCE_SPEC		0x0a
 #define MON_TLV_ERROR			0x0f
 
 #define MON_SWITCH_OPTION_SUBNET 			0x0001
@@ -110,7 +134,11 @@ int mon_apiserver_read (struct thread *thread);
 int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg *msg);
 int mon_apiserver_write (struct thread *thread);
 int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_int8_t action, struct _MON_Reply_Para* reply);
+void mon_apiserver_send_ack(struct mon_apiserver* apiserv, u_int8_t type, u_int32_t seqnum);
 void mon_apiserver_send_error(struct mon_apiserver* apiserv, u_int8_t type, u_int32_t seqnum, u_int32_t err_code);
 struct lsp* dragon_find_lsp_by_griname(char* name);
+int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req, int num_lsp_ero_nodes, struct _EROAbstractNode_Para* lsp_ero, 
+    int num_subnet_ero_nodes, struct _EROAbstractNode_Para* subnet_ero, struct _PCE_Spec* pce_spec);
+int mon_apiserver_lsp_delete(char* lsp_gri);
 
 #endif

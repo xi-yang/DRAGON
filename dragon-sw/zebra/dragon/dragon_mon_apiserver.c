@@ -16,12 +16,14 @@ To be incorporated into GNU Zebra  - DRAGON extension
 #include "sockunion.h"
 #include "network.h"
 #include "log.h"
+#include "vty.h"
+#include "command.h"
 #include "dragond.h"
 #include "dragon_mon_apiserver.h"
 
 int MON_APISERVER_PORT = 2616;
 extern struct dragon_master dmaster;
-
+static struct vty* mon_apiserver_fake_vty = NULL;
 
 /* -----------------------------------------------------------
  * Functions for monitoring API messages
@@ -38,8 +40,18 @@ struct mon_api_msg* mon_api_msg_new(u_int8_t type, u_int8_t action, u_int16_t le
   msg->header.seqnum = htonl(seqnum);
   msg->header.options = htonl(options);
   msg->header.chksum = MON_API_MSG_CHKSUM(msg->header);
-  msg->body = XMALLOC(MTYPE_TMP, length);
-  memcpy(msg->body, body, length);
+  if (length > 0)
+    {
+      if (body == NULL) 
+        {
+          XFREE(MTYPE_TMP, msg);
+          return NULL;
+        }
+      msg->body = XMALLOC(MTYPE_TMP, length);
+      memcpy(msg->body, body, length);
+    }
+  else 
+      msg->body = NULL;
   return msg;
 }
 
@@ -128,7 +140,9 @@ int mon_api_msg_write (int fd, struct mon_api_msg *msg)
 
   /* Make contiguous memory buffer for message */
   memcpy (buf, &msg->header, sizeof (struct mon_api_msg_header));
-  memcpy(buf+sizeof (struct mon_api_msg_header), msg->body, ntohs (msg->header.length));
+  if (ntohs (msg->header.length) > 0)
+      memcpy(buf+sizeof (struct mon_api_msg_header), msg->body, ntohs (msg->header.length));
+
   wlen = writen (fd, (char*)buf, l);
   if (wlen < 0)
     {
@@ -407,14 +421,19 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
   char buf[DRAGON_MAX_PACKET_SIZE];
   int rc = 0;
   int i, len;
-  struct dragon_tlv_header* tlv;
-  char* lsp_gri;
-  struct lsp* lsp;
-  struct in_addr * addr;
-  struct _EROAbstractNode_Para *hop;
-  struct _MON_LSP_Info * lsp_info;
+  int num_lsp_ero_nodes = 0, num_subnet_ero_nodes = 0;
   listnode node;
-  struct mon_api_msg* rmsg;
+  struct dragon_tlv_header* tlv = NULL;
+  char* lsp_gri = NULL;
+  struct lsp* lsp = NULL;
+  struct in_addr * addr = NULL;
+  struct _EROAbstractNode_Para *hop = NULL;
+  struct _MON_LSP_Info * lsp_info = NULL;
+  struct _LSPService_Request* lsp_req = NULL;
+  struct _PCE_Spec* pce_spec = NULL;
+  struct _EROAbstractNode_Para* lsp_ero = NULL;
+  struct _EROAbstractNode_Para* subnet_ero = NULL;
+  struct mon_api_msg* rmsg = NULL;
 
   assert(msg);
 
@@ -636,9 +655,90 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             goto _error;
           }
       break;
+
+    case MON_API_MSGTYPE_LSPPROV:
+        switch (msg->header.action)
+          {
+          case MON_API_ACTION_INSERT:
+            len = ntohs(msg->header.length);
+            tlv = (struct dragon_tlv_header*)msg->body;
+            while(len > 0)
+              {
+                switch (ntohs(tlv->type))
+                  {
+                  case MON_TLV_GRI:
+                    lsp_gri = (char*)(tlv+1);
+                    break;
+                  case MON_TLV_LSP_REQUEST:
+                    lsp_req = (struct _LSPService_Request*)(tlv+1);
+                    break;
+                  case MON_TLV_PCE_SPEC:
+                    pce_spec = (struct _PCE_Spec*)(tlv+1);
+                    break;
+                  case MON_TLV_LSP_ERO:
+                    num_lsp_ero_nodes = ntohs(tlv->length)/sizeof(struct _EROAbstractNode_Para);
+                    lsp_ero = (struct _EROAbstractNode_Para*)(tlv+1);
+                    break;
+                  case MON_TLV_SUBNET_ERO:
+                    num_subnet_ero_nodes = ntohs(tlv->length)/sizeof(struct _EROAbstractNode_Para);
+                    subnet_ero = (struct _EROAbstractNode_Para*)(tlv+1);
+                    break;
+                  default:
+                    zlog_warn ("MON_API_MSGTYPE_LSPPROV (type %d): Unknown TLV %d in message body", msg->header.type, ntohs(tlv->type));
+                    rc = -18;
+                    goto _error;
+                  }
+                  tlv = (struct dragon_tlv_header*)(((char*)tlv) + sizeof(struct dragon_tlv_header) + ntohs(tlv->length));
+                  len -= (sizeof(struct dragon_tlv_header) + ntohs(tlv->length));
+              }
+            if (lsp_gri == NULL || lsp_req == NULL)
+              {
+                zlog_warn ("MON_API_MSGTYPE_LSPPROV (type %d) Set-Up: Mandatory GRI or LSPServiceRequest TLV is missing", msg->header.type);
+                rc = -19;
+                goto _error;
+              }
+            if (rc = mon_apiserver_lsp_commit(lsp_gri, lsp_req, num_lsp_ero_nodes, lsp_ero, num_subnet_ero_nodes, subnet_ero, pce_spec))
+              {
+                mon_apiserver_send_ack(apiserv, msg->header.type, ntohl(msg->header.seqnum));
+              }
+            else
+              {
+                zlog_warn ("MON_API_MSGTYPE_LSPPROV (type %d) Set-Up: mon_apiserver_lsp_commit() failed ", msg->header.type);
+                goto _error;
+              }           
+            break;
+          case MON_API_ACTION_DELETE:
+            tlv = (struct dragon_tlv_header*)msg->body;
+            if (ntohs(tlv->type) == MON_TLV_GRI)
+              {
+                lsp_gri = (char*)(tlv+1);
+                if (rc = mon_apiserver_lsp_delete(lsp_gri))
+                  {
+                    mon_apiserver_send_ack(apiserv, msg->header.type, ntohl(msg->header.seqnum));
+                  }
+                else
+                  {
+                    zlog_warn ("MON_API_MSGTYPE_LSPPROV (type %d) Set-Up: mon_apiserver_lsp_delete() failed ", msg->header.type);
+                    goto _error;
+                  }
+              }
+            else
+              {
+                zlog_warn ("MON_API_MSGTYPE_LSPPROV (type %d)  Tear-Down: Mandatory GRI is missing", msg->header.type);
+                rc = -19;
+                goto _error;
+              }
+            break;
+          default:
+            zlog_warn ("MON_API_MSGTYPE_LSPPROV (type %d): Unknown API message action: %d", msg->header.type, msg->header.action);
+            rc = -19;
+            goto _error;
+          }
+      break;        
+
     default:
       zlog_warn ("mon_apiserver_handle_msg: Unknown API message type: %d", msg->header.type);
-      rc = -18;
+      rc = -30;
       goto _error;
     }
 
@@ -778,6 +878,14 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
   return 0;
 }
 
+void mon_apiserver_send_ack(struct mon_apiserver* apiserv, u_int8_t type, u_int32_t seqnum)
+{
+  struct mon_api_msg * msg;
+  msg = mon_api_msg_new(type, MON_API_ACTION_ACK, 0, apiserv->ucid, seqnum, 0, NULL);
+
+  MON_APISERVER_POST_MESSAGE(apiserv, msg);
+}
+
 void mon_apiserver_send_error(struct mon_apiserver* apiserv, u_int8_t type, u_int32_t seqnum, u_int32_t err_code)
 {
   char buf[8];
@@ -808,4 +916,235 @@ struct lsp* dragon_find_lsp_by_griname(char* name)
         }
     }
   return find;
+}
+
+int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req, int num_lsp_ero_nodes, struct _EROAbstractNode_Para* lsp_ero, 
+    int num_subnet_ero_nodes, struct _EROAbstractNode_Para* subnet_ero, struct _PCE_Spec* pce_spec)
+{
+  int i, argc, rc = 0;
+  char* argv[7];
+  char buf[64*7];
+
+  assert(lsp_gri && lsp_req);
+  if (mon_apiserver_fake_vty == NULL)
+    {
+      mon_apiserver_fake_vty = vty_new();
+      mon_apiserver_fake_vty->type = VTY_FILE;
+      mon_apiserver_fake_vty->node = VIEW_NODE;
+    }
+  for (i = 0; i < 7; i++)
+    argv[i] = buf+64*i;
+  
+  /* edit lsp */
+  argc = 1;
+  strcpy(argv[0], lsp_gri);
+  rc = dragon_edit_lsp(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+  if (rc != 0)
+    {
+      zlog_warn("mon_apiserver_lsp_commit: edit lsp %s failed, the lsp may have existed", lsp_gri);
+      return rc;
+    }
+  
+  /* set source, destination and ports/local-ids */
+  argc = 6;
+  strcpy(argv[0], inet_ntoa(lsp_req->source));
+  switch (lsp_req->src_lclid >> 16)
+    {
+    case LOCAL_ID_TYPE_NONE:
+      strcpy(argv[1], "lsp-id");
+      break;
+    case LOCAL_ID_TYPE_PORT:
+      strcpy(argv[1], "port");
+      break;
+    case LOCAL_ID_TYPE_GROUP:
+      strcpy(argv[1], "group");
+      break;
+    case LOCAL_ID_TYPE_TAGGED_GROUP:
+      strcpy(argv[1], "tagged-group");
+      break;
+    default:
+      zlog_warn("mon_apiserver_lsp_commit: Unkown source local-id type %d for lsp %s", lsp_req->src_lclid, lsp_gri);
+      rc = -1;
+      goto _quit;
+    }
+  sprintf(argv[2], "%d", lsp_req->src_lclid&0xffff);
+  strcpy(argv[3], inet_ntoa(lsp_req->destination));
+  switch (lsp_req->dest_lclid >> 16)
+    {
+    case LOCAL_ID_TYPE_NONE:
+      strcpy(argv[4], "lsp-id");
+      break;
+    case LOCAL_ID_TYPE_PORT:
+      strcpy(argv[4], "port");
+      break;
+    case LOCAL_ID_TYPE_GROUP:
+      strcpy(argv[4], "group");
+      break;
+    case LOCAL_ID_TYPE_TAGGED_GROUP:
+      strcpy(argv[4], "tagged-group");
+      break;
+    default:
+      zlog_warn("mon_apiserver_lsp_commit: Unkown destination local-id type %d for lsp %s", lsp_req->dest_lclid, lsp_gri);
+      rc = -1;
+      goto _quit;
+    }
+  sprintf(argv[5], "%d", lsp_req->dest_lclid&0xffff);
+  rc = dragon_set_lsp_ip(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+  if (rc != 0)
+    {
+      zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_ip (lsp=%s) failed", lsp_gri);
+      goto _quit;
+    }
+
+  /* set bandwidth, switching type, encoding type, gpid */
+  argc = 4;
+  strcpy(argv[0], bandwidth_value_to_string(&conv_bandwidth, *(u_int32_t*)&lsp_req->bandwidth));
+  strcpy(argv[1], value_to_string(&conv_swcap, lsp_req->switching_type));
+  strcpy(argv[2], value_to_string(&conv_encoding, lsp_req->encoding_type));
+  strcpy(argv[3], value_to_string(&conv_gpid, lsp_req->gpid));
+  rc = dragon_set_lsp_sw(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+  if (rc != 0)
+    {
+      zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_sw (lsp=%s) failed", lsp_gri);
+      goto _quit;
+    }
+
+  /* set vtag */
+  argc = 1;
+  if (lsp_req->vlan_tag == ANY_VTAG)
+    {
+      strcpy(argv[0], "any");
+      rc = dragon_set_lsp_vtag(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+      if (rc != 0)
+        {
+          zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_vtag (vtag=any, lsp=%s) failed", lsp_gri);
+          goto _quit;
+        }
+    }
+  else if (lsp_req->vlan_tag > 0 && lsp_req->vlan_tag < 4096)
+    {
+      sprintf(argv[0], "%d", lsp_req->vlan_tag);
+      rc = dragon_set_lsp_vtag(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+      if (rc != 0)
+        {
+          zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_vtag (vtag=%d, lsp=%s) failed", lsp_req->vlan_tag, lsp_gri);
+          goto _quit;
+        }
+    }
+  else if (lsp_req->vlan_tag != 0)
+    {
+      zlog_warn("mon_apiserver_lsp_commit: invalide vtag value %d (lsp=%s) failed", lsp_req->vlan_tag, lsp_gri);
+      goto _quit;
+    }
+
+  /*set vtag subnet-ingress*/
+  argc = 2;
+  if (lsp_req->subnet_vtag_ingress== ANY_VTAG)
+    {
+      strcpy(argv[0], "subnet-ingress");
+      strcpy(argv[1], "any");
+      rc = dragon_set_lsp_vtag_subnet_edge(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+      if (rc != 0)
+        {
+          zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_vtag_subnet_edge (ingress-vtag=any, lsp=%s) failed", lsp_gri);
+          goto _quit;
+        }
+    }
+  else if (lsp_req->subnet_vtag_ingress > 0 && lsp_req->subnet_vtag_ingress < 4096)
+    {
+      strcpy(argv[0], "subnet-ingress");
+      sprintf(argv[1], "%d", lsp_req->subnet_vtag_ingress);
+      rc = dragon_set_lsp_vtag_subnet_edge(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+      if (rc != 0)
+        {
+          zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_vtag_subnet_edge (ingress-vtag=%d, lsp=%s) failed", lsp_req->subnet_vtag_ingress, lsp_gri);
+          goto _quit;
+        }
+    }
+  else if (lsp_req->subnet_vtag_ingress!= 0)
+    {
+      zlog_warn("mon_apiserver_lsp_commit: invalid dragon_set_lsp_vtag_subnet_edge vtag-ingress value %d (lsp=%s) failed", lsp_req->subnet_vtag_ingress, lsp_gri);
+      goto _quit;
+    }
+  /*set vtag subnet-egress*/
+  argc = 2;
+  if (lsp_req->subnet_vtag_egress == ANY_VTAG)
+    {
+      strcpy(argv[0], "subnet-egress");
+      strcpy(argv[1], "any");
+      rc = dragon_set_lsp_vtag_subnet_edge(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+      if (rc != 0)
+        {
+          zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_vtag_subnet_edge (egress-vtag=any, lsp=%s) failed", lsp_gri);
+          goto _quit;
+        }
+    }
+  else if (lsp_req->subnet_vtag_egress > 0 && lsp_req->subnet_vtag_egress < 4096)
+    {
+      strcpy(argv[0], "subnet-ingress");
+      sprintf(argv[1], "%d", lsp_req->subnet_vtag_egress);
+      rc = dragon_set_lsp_vtag_subnet_edge(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+      if (rc != 0)
+        {
+          zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_vtag_subnet_edge (egress-vtag=%d, lsp=%s) failed", lsp_req->subnet_vtag_egress, lsp_gri);
+          goto _quit;
+        }
+    }
+  else if (lsp_req->subnet_vtag_egress!= 0)
+    {
+      zlog_warn("mon_apiserver_lsp_commit: invalid dragon_set_lsp_vtag_subnet_edge vtag-ingress value %d (lsp=%s) failed", lsp_req->subnet_vtag_egress, lsp_gri);
+      goto _quit;
+    }
+
+
+  /*set ero*/
+
+  /*set subnet-ero*/
+
+  /*TODO: set pce module*/
+  
+  /*exit*/
+  strcpy(argv[0], "exit");
+  argv[1] = NULL;
+  argc = 1;
+  rc = config_exit(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+  if (rc != 0)
+    {
+      zlog_warn("mon_apiserver_lsp_commit: exit edit mode (lsp=%s) failed", lsp_gri);
+      goto _quit;
+    }
+
+  /*commit lsp*/
+  argc = 1;
+  strcpy(argv[0], lsp_gri);
+  rc = dragon_commit_lsp_sender(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+  if (rc != 0)
+    {
+      zlog_warn("mon_apiserver_lsp_commit: dragon_commit_lsp_sender (lsp=%s) failed", lsp_gri);
+      goto _quit;
+    }
+
+  return 0;
+
+ _quit:
+  mon_apiserver_lsp_delete(lsp_gri);
+  return rc;
+}
+
+int mon_apiserver_lsp_delete(char* lsp_gri)
+{
+  int argc;
+  char* argv[2];
+  
+  assert(lsp_gri);
+  if (mon_apiserver_fake_vty == NULL)
+    {
+      mon_apiserver_fake_vty = vty_new();
+      mon_apiserver_fake_vty->type = VTY_FILE;
+      mon_apiserver_fake_vty->node = VIEW_NODE;
+    }
+
+  argc = 1;
+  argv[0] = lsp_gri;
+  return dragon_delete_lsp(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
 }
