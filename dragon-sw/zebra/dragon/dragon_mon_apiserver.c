@@ -1129,8 +1129,9 @@ int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req
             continue;
           }
         rc = dragon_set_lsp_ero_hop(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+        if (rc != 0)
           {
-            zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_ero_hop (lsp=%s) failed on ERO subobj#", lsp_gri, i+1);
+            zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_ero_hop (lsp=%s) failed on ERO subobj#%d", lsp_gri, i+1);
             goto _quit;
           }
     }
@@ -1156,6 +1157,7 @@ int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req
             continue;
           }
         rc = dragon_set_lsp_subnet_ero_hop(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+        if (rc != 0)
           {
             zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_subnet_ero_hop (lsp=%s) failed on SubnetERO subobj#", lsp_gri, i+1);
             goto _quit;
