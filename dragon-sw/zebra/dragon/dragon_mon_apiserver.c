@@ -1016,11 +1016,10 @@ int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req
     }
 
   /* set vtag */
-  argc = 1;
   if (lsp_req->vlan_tag == ANY_VTAG)
     {
-      strcpy(argv[0], "any");
-      rc = dragon_set_lsp_vtag(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
+      argc = 0;
+      rc = dragon_set_lsp_vtag_default(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
       if (rc != 0)
         {
           zlog_warn("mon_apiserver_lsp_commit: dragon_set_lsp_vtag (vtag=any, lsp=%s) failed", lsp_gri);
@@ -1029,6 +1028,7 @@ int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req
     }
   else if (lsp_req->vlan_tag > 0 && lsp_req->vlan_tag < 4096)
     {
+      argc = 1;
       sprintf(argv[0], "%d", lsp_req->vlan_tag);
       rc = dragon_set_lsp_vtag(NULL, mon_apiserver_fake_vty, argc, (char**)argv);
       if (rc != 0)
