@@ -189,15 +189,15 @@ int setup_lsp(int fd, char* gri, struct in_addr src_ip, u_int32_t src_lid, struc
   lsp_req->dest_lclid = dest_lid;
   lsp_req->bandwidth = bandwidth;
   /*default testing values*/
-  lsp_req->switching_type = 2;
-  lsp_req->encoding_type = 1;
-  lsp_req->gpid = 2;
+  lsp_req->switching_type = 51;
+  lsp_req->encoding_type = 2;
+  lsp_req->gpid = 33;
   lsp_req->vlan_tag = ANY_VTAG;
   lsp_req->subnet_vtag_ingress = lsp_req->subnet_vtag_egress = 5000;
   bodylen += sizeof(struct _LSPService_Request);
 
   /*Optional ERO and SubnetERO TLVs for testing only*/
-
+  /*TBD*/
   
   msg = mon_api_msg_new(MON_API_MSGTYPE_LSPPROV, MON_API_ACTION_INSERT, bodylen, get_ucid(), get_seqence_number(), 0, body);
   assert(msg);

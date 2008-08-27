@@ -688,8 +688,8 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
                     rc = -18;
                     goto _error;
                   }
-                  tlv = (struct dragon_tlv_header*)(((char*)tlv) + sizeof(struct dragon_tlv_header) + ntohs(tlv->length));
                   len -= (sizeof(struct dragon_tlv_header) + ntohs(tlv->length));
+                  tlv = (struct dragon_tlv_header*)(((char*)tlv) + sizeof(struct dragon_tlv_header) + ntohs(tlv->length));
               }
             if (lsp_gri == NULL || lsp_req == NULL)
               {
