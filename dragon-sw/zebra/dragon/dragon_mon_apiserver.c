@@ -697,7 +697,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
                 rc = -19;
                 goto _error;
               }
-            if (rc = mon_apiserver_lsp_commit(lsp_gri, lsp_req, num_lsp_ero_nodes, lsp_ero, num_subnet_ero_nodes, subnet_ero, pce_spec))
+            if ((rc = mon_apiserver_lsp_commit(lsp_gri, lsp_req, num_lsp_ero_nodes, lsp_ero, num_subnet_ero_nodes, subnet_ero, pce_spec)) == 0)
               {
                 mon_apiserver_send_ack(apiserv, msg->header.type, ntohl(msg->header.seqnum));
               }
@@ -712,7 +712,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             if (ntohs(tlv->type) == MON_TLV_GRI)
               {
                 lsp_gri = (char*)(tlv+1);
-                if (rc = mon_apiserver_lsp_delete(lsp_gri))
+                if ((rc = mon_apiserver_lsp_delete(lsp_gri)) == 0)
                   {
                     mon_apiserver_send_ack(apiserv, msg->header.type, ntohl(msg->header.seqnum));
                   }

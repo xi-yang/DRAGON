@@ -187,7 +187,7 @@ int setup_lsp(int fd, char* gri, struct in_addr src_ip, u_int32_t src_lid, struc
   lsp_req->src_lclid = src_lid;
   lsp_req->destination.s_addr = dest_ip.s_addr;
   lsp_req->dest_lclid = dest_lid;
-  lsp_req->bandwidth = bandwidth;
+  lsp_req->bandwidth = bandwidth*1000000/8;
   /*default testing values*/
   lsp_req->switching_type = 51;
   lsp_req->encoding_type = 2;
