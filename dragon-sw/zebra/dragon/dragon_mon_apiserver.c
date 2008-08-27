@@ -1139,7 +1139,7 @@ int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req
   /*set subnet-ero*/
   for (i = 0; i < num_subnet_ero_nodes; i++)
     {
-        struct _EROAbstractNode_Para* hop = lsp_ero+i;
+        struct _EROAbstractNode_Para* hop = subnet_ero+i;
         if (hop->type == IPv4)
           {
             argc = 1;
