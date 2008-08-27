@@ -592,7 +592,9 @@ main (int argc, char **argv)
           break;
         case 'S':
           gri = buf; src = buf+100; dest = buf +150;
-          if (sscanf(optarg,"%s,%s:%d/%d,%s:%d/%d,%f", gri, src, &src_lid_type, &src_lid_value, dest, &dest_lid_type, &dest_lid_value, &bandwidth) != 8)
+          p = optarg;
+          while (*p) { if (*p == ','||*p == ':') *p = ' ';  p++; }
+          if (sscanf(optarg,"%s %s %d/%d %s %d/%d %f", gri, src, &src_lid_type, &src_lid_value, dest, &dest_lid_type, &dest_lid_value, &bandwidth) != 8)
             {
               printf ("# Wrong parameters for  -S (--setup) option\n");
               usage(progname, 1);
