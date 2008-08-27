@@ -139,7 +139,6 @@ int query_circuit_info (int fd, char* gri, struct in_addr dest)
     return -1;
 
   struct dragon_tlv_header* tlv = (struct dragon_tlv_header*)body;
-
   tlv->type = htons(MON_TLV_GRI);
   tlv->length = htons(MAX_MON_NAME_LEN);
   bodylen += sizeof(struct dragon_tlv_header);
@@ -154,6 +153,77 @@ int query_circuit_info (int fd, char* gri, struct in_addr dest)
   msg = mon_api_msg_new(MON_API_MSGTYPE_CIRCUIT, MON_API_ACTION_RTRV, bodylen, get_ucid(), get_seqence_number(), 0, body);
   assert(msg);
 
+  mon_api_msg_write(fd, msg);
+  return rc;
+}
+
+int setup_lsp(int fd, char* gri, struct in_addr src_ip, u_int32_t src_lid, struct in_addr dest_ip, u_int32_t dest_lid, float bandwidth)
+{
+  char body[512];
+  int rc = 0;
+  u_int16_t bodylen = 0;
+  struct mon_api_msg* msg;
+  struct _LSPService_Request* lsp_req;
+  
+  assert(fd > 0);
+
+  if (!gri || src_ip.s_addr == 0 || dest_ip.s_addr == 0 || src_lid == 0 || dest_lid == 0)
+    return -1;
+
+  struct dragon_tlv_header* tlv = (struct dragon_tlv_header*)body;
+  tlv->type = htons(MON_TLV_GRI);
+  tlv->length = htons(MAX_MON_NAME_LEN);
+  bodylen += sizeof(struct dragon_tlv_header);
+  strncpy(body+bodylen, gri, MAX_MON_NAME_LEN+1);
+  bodylen += MAX_MON_NAME_LEN;
+
+  tlv = (struct dragon_tlv_header*)(body+bodylen);
+  tlv->type = htons(MON_TLV_LSP_REQUEST);
+  tlv->length = htons(sizeof(struct _LSPService_Request));
+  bodylen += sizeof(struct dragon_tlv_header);
+  lsp_req = (struct _LSPService_Request*)(tlv+1);
+  memset(lsp_req, 0, sizeof(struct _LSPService_Request));
+  lsp_req->source.s_addr = src_ip.s_addr;
+  lsp_req->src_lclid = src_lid;
+  lsp_req->destination.s_addr = dest_ip.s_addr;
+  lsp_req->dest_lclid = dest_lid;
+  lsp_req->bandwidth = bandwidth;
+  /*default testing values*/
+  lsp_req->switching_type = 2;
+  lsp_req->encoding_type = 1;
+  lsp_req->gpid = 2;
+  lsp_req->vlan_tag = ANY_VTAG;
+  lsp_req->subnet_vtag_ingress = lsp_req->subnet_vtag_egress = 5000;
+  bodylen += sizeof(struct _LSPService_Request);
+
+  /*Optional ERO and SubnetERO TLVs for testing only*/
+
+  
+  msg = mon_api_msg_new(MON_API_MSGTYPE_LSPPROV, MON_API_ACTION_INSERT, bodylen, get_ucid(), get_seqence_number(), 0, body);
+  assert(msg);
+  mon_api_msg_write(fd, msg);
+  return rc;
+}
+
+int teardown_lsp(int fd, char* gri)
+{
+  char body[4+MAX_MON_NAME_LEN+8];
+  int rc = 0;
+  u_int16_t bodylen = 0;
+  struct mon_api_msg* msg;
+
+  if (!gri )
+    return -1;
+
+  struct dragon_tlv_header* tlv = (struct dragon_tlv_header*)body;
+  tlv->type = htons(MON_TLV_GRI);
+  tlv->length = htons(MAX_MON_NAME_LEN);
+  bodylen += sizeof(struct dragon_tlv_header);
+  strncpy(body+bodylen, gri, MAX_MON_NAME_LEN+1);
+  bodylen += MAX_MON_NAME_LEN;
+
+  msg = mon_api_msg_new(MON_API_MSGTYPE_LSPPROV, MON_API_ACTION_DELETE, bodylen, get_ucid(), get_seqence_number(), 0, body);
+  assert(msg);
   mon_api_msg_write(fd, msg);
   return rc;
 }
@@ -260,6 +330,9 @@ void msg_display(struct mon_api_msg* msg)
       break;
     case MON_API_MSGTYPE_NODELIST:
       printf("MON_API_MSGTYPE_NODELIST\n");
+      break;
+    case MON_API_MSGTYPE_LSPPROV:
+      printf("MON_API_MSGTYPE_LSPPROV\n");
       break;
     default:
       printf("UNKNOWN (%d)\n", msg->header.type);
@@ -395,6 +468,8 @@ struct option longopts[] =
   { "version",     no_argument,       NULL, 'v'},
   { "host",     required_argument,       NULL, 'H'},
   { "port",     required_argument,       NULL, 'P'},
+  { "setup",     required_argument,       NULL, 'S'},
+  { "teardown",     required_argument,       NULL, 'T'},
   { 0 }
 };
 
@@ -417,7 +492,9 @@ NSF DRAGON gateway daemon.\n\n\
 -i, --lspinfo <gri>     LSP status\n\
 -v, --version    Print program version\n\
 -H, --host <name>     Host name\n\
--v, --port <number>  Port number\n\
+-P, --port <number>  Port number\n\
+-S, --setup <gri,src_ip:lid-type/value,dest_ip:lid-type/value,bw>  LSP setup\n\
+-T, --teardown <gri>  LSP teardown\n\
 \n", progname);
     }
   exit (status);
@@ -429,18 +506,29 @@ main (int argc, char **argv)
 {
   char *p;
   char *progname;
+  char buf[200];
   int sock;
+  int ret = 0;
   int is_query_switch = 0;
   int is_query_circuit = 0;
   int is_query_lsplist = 0;
   int is_query_lspinfo = 0;
   int is_query_lspero = 0;
   int is_query_nodelist = 0;
+  int is_lsp_setup = 0;
+  int is_lsp_teardown = 0;
   char* gri = NULL;
+  char* src = NULL;
+  char* dest = NULL;
+  struct in_addr src_ip;
+  u_int32_t src_lid_type = 0;
+  u_int32_t src_lid_value = 0;
   struct in_addr dest_ip;
+  u_int32_t dest_lid_type = 0;
+  u_int32_t dest_lid_value = 0;
+  float bandwidth = 0;
   struct mon_api_msg* rmsg = NULL;
-  int ret = 0;
-  dest_ip.s_addr = 0;
+  src_ip.s_addr = dest_ip.s_addr = 0;
 
   /* get program name */
   progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
@@ -449,7 +537,7 @@ main (int argc, char **argv)
     {
       int opt;
 
-      opt = getopt_long (argc, argv, "c:e:hln:si:vH:P:", longopts, 0);
+      opt = getopt_long (argc, argv, "c:e:hln:si:vH:P:S:T:", longopts, 0);
     
       if (opt == EOF)
         break;
@@ -464,7 +552,7 @@ main (int argc, char **argv)
           p = strstr(optarg, ",");
           if (!p)
             {
-              printf ("Wrong arguments: -c takes two arguments <GRI,Dest_IPv4>. Note they are separated by comma.\n");
+              printf ("# Wrong arguments: -c takes two arguments <GRI,Dest_IPv4>. Note they are separated by comma.\n");
             }
           *p = 0; p++;
           inet_aton(p, &dest_ip);
@@ -501,6 +589,30 @@ main (int argc, char **argv)
           break;
         case 'P':
           sscanf(optarg, "%d", &MON_APISERVER_PORT);
+          break;
+        case 'S':
+          gri = buf; src = buf+100; dest = buf +150;
+          if (sscanf(optarg,"%s,%s:%d/%d,%s:%d/%d,%f", gri, src, &src_lid_type, &src_lid_value, dest, &dest_lid_type, &dest_lid_value, &bandwidth) != 8)
+            {
+              printf ("# Wrong parameters for  -S (--setup) option\n");
+              usage(progname, 1);
+              exit(1);
+            }
+          if (!inet_aton(src, &src_ip))
+            {
+              printf ("# Invalid source IP %s\n", src);
+              exit(1);
+            }
+          if (!inet_aton(dest, &dest_ip))
+            {
+              printf ("# Invalid source IP %s\n", src);
+              exit(1);
+            }
+          is_lsp_setup = 1;
+          break;
+        case 'T':
+          gri = optarg;
+          is_lsp_teardown = 1;
           break;
         default:
           usage (progname, 1);
@@ -604,6 +716,36 @@ main (int argc, char **argv)
           exit(4);
         }
     }
+  else if (is_lsp_setup)
+    {
+      ret = setup_lsp(sock, gri, src_ip, (src_lid_type << 16)|(src_lid_value&0xffff), dest_ip, (dest_lid_type << 16)|(dest_lid_value&0xffff), bandwidth);
+      if (ret != 0)
+        {
+          printf( "setup_lsp() failed\n");
+          exit(3);
+        }
+      rmsg = mon_api_msg_read(sock);
+      if (rmsg == NULL)
+        {
+          printf( "setup_lsp() failed\n");
+          exit(4);
+        }        
+    }
+  else if (is_lsp_teardown)
+    {
+      ret = teardown_lsp(sock, gri);
+      if (ret != 0)
+        {
+          printf( "teardown_lsp() failed\n");
+          exit(3);
+        }
+      rmsg = mon_api_msg_read(sock);
+      if (rmsg == NULL)
+        {
+          printf( "teardown_lsp() failed\n");
+          exit(4);
+        }
+ }
 
   msg_display(rmsg);
 

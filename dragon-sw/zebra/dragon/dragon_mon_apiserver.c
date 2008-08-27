@@ -1061,11 +1061,14 @@ int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req
           goto _quit;
         }
     }
+  /*
   else if (lsp_req->subnet_vtag_ingress!= 0)
     {
       zlog_warn("mon_apiserver_lsp_commit: invalid dragon_set_lsp_vtag_subnet_edge vtag-ingress value %d (lsp=%s) failed", lsp_req->subnet_vtag_ingress, lsp_gri);
       goto _quit;
     }
+  */
+
   /*set vtag subnet-egress*/
   argc = 2;
   if (lsp_req->subnet_vtag_egress == ANY_VTAG)
@@ -1090,12 +1093,13 @@ int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req
           goto _quit;
         }
     }
+  /*
   else if (lsp_req->subnet_vtag_egress!= 0)
     {
       zlog_warn("mon_apiserver_lsp_commit: invalid dragon_set_lsp_vtag_subnet_edge vtag-ingress value %d (lsp=%s) failed", lsp_req->subnet_vtag_egress, lsp_gri);
       goto _quit;
     }
-
+  */
 
   /*set ero*/
   for (i = 0; i < num_lsp_ero_nodes; i++)
