@@ -598,8 +598,8 @@ dragon_narb_topo_rsp_proc_ero(struct dragon_tlv_header *tlvh, u_int8_t *node_num
 	u_int8_t i = 0;
  	char *p = (char*)((char *)tlvh + DTLV_HDR_SIZE);
 
-	zlog_info("Explicit Route Object (ERO) returned from NARB:");
 	char addr[20];
+	zlog_info("Explicit Route Object (ERO) returned from NARB:");
 	node = XMALLOC(MTYPE_OSPF_DRAGON, sizeof(struct _EROAbstractNode_Para)*MAX_ERO_NUMBER);
 	while (read_len < DTLV_BODY_SIZE(tlvh))
 	{
