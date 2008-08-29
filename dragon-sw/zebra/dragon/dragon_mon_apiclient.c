@@ -132,13 +132,14 @@ int query_circuit_info (int fd, char* gri, struct in_addr dest)
   int rc = 0;
   u_int16_t bodylen = 0;
   struct mon_api_msg* msg;
+  struct dragon_tlv_header* tlv;
   
   assert(fd > 0);
 
   if (!gri || dest.s_addr == 0)
     return -1;
 
-  struct dragon_tlv_header* tlv = (struct dragon_tlv_header*)body;
+  tlv = (struct dragon_tlv_header*)body;
   tlv->type = htons(MON_TLV_GRI);
   tlv->length = htons(MAX_MON_NAME_LEN);
   bodylen += sizeof(struct dragon_tlv_header);
@@ -164,13 +165,14 @@ int setup_lsp(int fd, char* gri, struct in_addr src_ip, u_int32_t src_lid, struc
   u_int16_t bodylen = 0;
   struct mon_api_msg* msg;
   struct _LSPService_Request* lsp_req;
+  struct dragon_tlv_header* tlv;
   
   assert(fd > 0);
 
   if (!gri || src_ip.s_addr == 0 || dest_ip.s_addr == 0 || src_lid == 0 || dest_lid == 0)
     return -1;
 
-  struct dragon_tlv_header* tlv = (struct dragon_tlv_header*)body;
+  tlv = (struct dragon_tlv_header*)body;
   tlv->type = htons(MON_TLV_GRI);
   tlv->length = htons(MAX_MON_NAME_LEN);
   bodylen += sizeof(struct dragon_tlv_header);
@@ -211,11 +213,12 @@ int teardown_lsp(int fd, char* gri)
   int rc = 0;
   u_int16_t bodylen = 0;
   struct mon_api_msg* msg;
+  struct dragon_tlv_header* tlv;
 
   if (!gri )
     return -1;
 
-  struct dragon_tlv_header* tlv = (struct dragon_tlv_header*)body;
+  tlv = (struct dragon_tlv_header*)body;
   tlv->type = htons(MON_TLV_GRI);
   tlv->length = htons(MAX_MON_NAME_LEN);
   bodylen += sizeof(struct dragon_tlv_header);
