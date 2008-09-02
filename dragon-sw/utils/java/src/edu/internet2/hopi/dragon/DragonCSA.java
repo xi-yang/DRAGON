@@ -188,10 +188,20 @@ public class DragonCSA {
 			}
 			
 			/* Set VLAN tag */
-			if(lsp.getVTAG() == 0){
-				cmdResult += command("set vtag any");
-			}else if(lsp.getVTAG() != -1){
-				cmdResult += command("set vtag " + lsp.getVTAG());
+			int srcVtag = lsp.getSrcVtag();
+			int destVtag = lsp.getDstVtag();
+			String srcLocalIdType = lsp.getSrcLocalID().getType();
+			String destLocalIdType = lsp.getDstLocalID().getType();
+			if(DragonLocalID.SUBNET_INTERFACE.equals(srcLocalIdType) && 
+					DragonLocalID.SUBNET_INTERFACE.equals(destLocalIdType)){
+				cmdResult += command("set vtag subnet-ingress " + vtagToString(srcVtag));
+				cmdResult += command("set vtag subnet-egress " + vtagToString(destVtag));
+			}else{
+				if(srcVtag == DragonLSP.VTAG_ANY){
+					cmdResult += command("set vtag any");
+				}else if(srcVtag > 0){
+					cmdResult += command("set vtag " + lsp.getVTAG());
+				}
 			}
 			
 			/* Verify parameters set and commit lsp */
@@ -213,6 +223,19 @@ public class DragonCSA {
 		}
 		
 		return true;
+	}
+	
+	private String vtagToString(int vtag){
+		String result = "";
+		if(vtag == -1){
+			result = "tunnel-mode";
+		}else if(vtag == 0){
+			result = "untagged";
+		}else{
+			result = vtag + "";
+		}
+		
+		return result;
 	}
 	
 	/**

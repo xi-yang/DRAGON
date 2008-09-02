@@ -20,7 +20,8 @@ public class DragonLSP {
 	private String encoding;
 	private String swcap;
 	private String gpid;
-	private int vtag;
+	private int srcVtag;
+	private int dstVtag;
 	private String status;
 	private ArrayList<String> ero;
 	private ArrayList<String> subnetEro;
@@ -64,8 +65,8 @@ public class DragonLSP {
 	public static String GPID_ETHERNET = "ethernet";
 	public static String GPID_SDH = "sdh";
 	
-	public static int VTAG_ANY = 0;
-	public static int VTAG_NONE = -1;
+	public static int VTAG_ANY = -2;
+	public static int VTAG_NONE = -3;
 	
 	public static String STATUS_EDIT = "Edit";
 	public static String STATUS_COMMIT = "Commit";
@@ -83,7 +84,8 @@ public class DragonLSP {
 		this.dstIP = dstIP;
 		this.dstLocalID = dstLocalID;
 		this.bandwidth = bandwidth;
-		this.vtag = vtag;
+		this.dstVtag = vtag;
+		this.srcVtag = vtag;
 		this.encoding = DragonLSP.ENCODING_ETHERNET;
 		this.swcap = DragonLSP.SWCAP_L2SC;
 		this.gpid = DragonLSP.GPID_ETHERNET;
@@ -158,11 +160,11 @@ public class DragonLSP {
 	}
 	
 	public void setVTAG(int vtag){
-		this.vtag = vtag;
+		this.srcVtag = vtag;
 	}
 	
 	public int getVTAG(){
-		return this.vtag;
+		return this.srcVtag;
 	}
 	
 	public void setLSPName(String name){
@@ -271,6 +273,34 @@ public class DragonLSP {
 	private void generateLSPName(){
 		name = srcIP.getHostAddress() + ":" + srcLocalID.getNumber();
 		name += "->" + dstIP.getHostAddress() + ":" + dstLocalID.getNumber();
+	}
+
+	/**
+	 * @return the destVtag
+	 */
+	public int getDstVtag() {
+		return dstVtag;
+	}
+
+	/**
+	 * @param dstVtag the dstVtag to set
+	 */
+	public void setDstVtag(int dstVtag) {
+		this.dstVtag = dstVtag;
+	}
+
+	/**
+	 * @return the srcVtag
+	 */
+	public int getSrcVtag() {
+		return srcVtag;
+	}
+
+	/**
+	 * @param srcVtag the srcVtag to set
+	 */
+	public void setSrcVtag(int srcVtag) {
+		this.srcVtag = srcVtag;
 	}
 	
 	/* TODO: create verify bandwidth function */
