@@ -652,7 +652,10 @@ insert_gri(struct ospf_interface* oi, u_int32_t ucid, u_int32_t seqnum)
 	LIST_LOOP(oi->dragon_gri, gri, node)
 	{
 		if (time_now.tv_sec - gri->timestamp >= MAX_GRI_AGE)
+		{      
 			list_delete_node(oi->dragon_gri, node);
+			break;
+		}
 		if (gri->ucid == ucid && gri->seqnum == seqnum)
 			return;
 	}
@@ -674,7 +677,10 @@ delete_gri(struct ospf_interface* oi, u_int32_t ucid, u_int32_t seqnum)
 	LIST_LOOP(oi->dragon_gri, gri, node)
 	{
 		if (gri->ucid == ucid && gri->seqnum == seqnum)
+		{      
 			list_delete_node(oi->dragon_gri, node);
+			break;
+		}
 	}
 }
 
