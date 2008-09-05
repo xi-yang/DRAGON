@@ -675,7 +675,7 @@ bool SwitchCtrl_Global::static_connectSwitch(struct snmp_session* &sessionHandle
 {
         LOG(2)( Log::MPLS, "VLSR: establishing SNMP session with switch", switchAddr);
 	char str[128];
-	char* community = "dragon";
+	char* community = SWITCH_SNMP_COMMUNITY;
         snmp_session session;
 	 // Initialize a "session" that defines who we're going to talk to   
 	 snmp_sess_init(&session);

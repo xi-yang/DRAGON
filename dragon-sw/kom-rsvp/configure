@@ -1327,7 +1327,8 @@ Optional Packages:
  --with-force10-software-v6     add VLSR support for Force10 FTOS 6-2-1-x (disabled by default)
  --with-switch-vendor-model=X   set VLSR switch vendor model (prompt by default)
  --with-switch-ctrl-port=#      set VLSR control port (prompt by default)
- --with-switch-cli-type=X   set VLSR switch CLI type (prompt by default)
+ --with-switch-snmp-community=X set SNMP community string for switch control (prompt by default)
+ --with-switch-cli-type=X       set VLSR switch CLI type (prompt by default)
  --with-mpls=PATH		path to MPLS library (disabled by default)
  --with-mpls-includes=DIR	mpls include files are in non-standard DIR/mpls
  --with-ns2dir=DIR		ns2-allinone in DIR (disabled by default)
@@ -7431,6 +7432,43 @@ fi;
 echo setting VLSR switch control port to $with_switch_ctrl_port
 cat >>confdefs.h <<_ACEOF
 #define SWITCH_CTRL_PORT $with_switch_ctrl_port
+_ACEOF
+
+
+
+# Check whether --with-switch-snmp-community was given.
+if test "${with_switch_snmp_community+set}" = set; then
+  withval=$with_switch_snmp_community; with_switch_snmp_community=$withval
+else
+  with_switch_snmp_community="no"
+fi
+
+if test "$with_switch_snmp_community" = "no"; then
+	echo $ECHO_N "
+
+*** Setting the SNMP community string for controlling switch
+
+The VLSR can use SNMP to control VLAN/port mappings on managed
+Ethernet switches which support RFC2674 and other proprietary SNMP
+MIBs.  Besides IP reachability to the switch's management interface,
+an SNMP community string is also required to be configured on the
+switch along with the proper access rights (e.g. read/write
+capability).
+
+Providing the --with-switch-snmp-community=\"x\" parameter to ./configure
+will avoid this prompt.
+
+SNMP community string to use (Default: dragon): $ECHO_C"
+
+       read tmpinput <&7
+       if test "$tmpinput" = ""; then
+	  tmpinput="dragon"
+       fi
+       eval with_switch_snmp_community=\$tmpinput
+fi;
+echo setting SNMP community string for switch control to \"$with_switch_snmp_community\"
+cat >>confdefs.h <<_ACEOF
+#define SWITCH_SNMP_COMMUNITY "$with_switch_snmp_community"
 _ACEOF
 
 

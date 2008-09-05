@@ -648,6 +648,36 @@ fi;
 echo setting VLSR switch control port to $with_switch_ctrl_port
 AC_DEFINE_UNQUOTED(SWITCH_CTRL_PORT,$with_switch_ctrl_port)
 
+AC_ARG_WITH(switch-snmp-community,
+	[ --with-switch-snmp-community[=X] set SNMP community string for switch control (prompt by default)],
+	with_switch_snmp_community=$withval,
+	with_switch_snmp_community="no")
+if test "$with_switch_snmp_community" = "no"; then
+	echo $ECHO_N "
+
+*** Setting the SNMP community string for controlling switch
+
+The VLSR can use SNMP to control VLAN/port mappings on managed
+Ethernet switches which support RFC2674 and other proprietary SNMP
+MIBs.  Besides IP reachability to the switch's management interface,
+an SNMP community string is also required to be configured on the
+switch along with the proper access rights (e.g. read/write
+capability).
+
+Providing the --with-switch-snmp-community=\"x\" parameter to ./configure
+will avoid this prompt.
+
+SNMP community string to use (Default: dragon): $ECHO_C"
+
+       read tmpinput <&AS_ORIGINAL_STDIN_FD
+       if test "$tmpinput" = ""; then
+	  tmpinput="dragon"
+       fi
+       eval with_switch_snmp_community=\$tmpinput
+fi;
+echo setting SNMP community string for switch control to \"$with_switch_snmp_community\"
+AC_DEFINE_UNQUOTED(SWITCH_SNMP_COMMUNITY, "$with_switch_snmp_community")
+
 AC_ARG_ENABLE(switch-cli-access,
 	[ --enable-switch-cli-access	enable VLSR switch CLI access (disabled by default)],,
 	enable_switch_cli_access=no)
@@ -697,7 +727,7 @@ echo setting VLSR switch CLI type to $switch_cli_type
 AC_DEFINE_UNQUOTED(CLI_SESSION_TYPE,$switch_cli_type)
 
 AC_ARG_WITH(switch-cli-type,
-	[ --with-switch-cli-type[=X]   set VLSR switch CLI type (prompt by default)],
+	[ --with-switch-cli-type[=X]       set VLSR switch CLI type (prompt by default)],
 	with_switch_cli_type=$withval,
 	with_switch_cli_type="no")
 

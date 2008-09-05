@@ -176,6 +176,9 @@
    connectivity to the switch. */
 #define SWITCH_CTRL_PORT 255
 
+/* Define the default SNMP community string to control switch */
+#define SWITCH_SNMP_COMMUNITY "dragon"
+
 /* Define a flag to indicator that the VLSR switch is using Force10 App Software Version 6.2.1.x */
 #undef FORCE10_SOFTWARE_V6
 
