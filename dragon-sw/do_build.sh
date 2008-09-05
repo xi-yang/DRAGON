@@ -38,7 +38,7 @@ case "$target" in
     rsvpconf="--enable-switch-cli-access --with-switch-vendor-model=AutoDetect --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY"
   ;;
   vlsr-linux|VLSR-LINUX)
-    rsvpconf="--enable-switch-cli-access --with-switch-vendor-model=LinuxSwitch --with-switch-ctrl-port=1"
+    rsvpconf="--enable-switch-cli-access --with-switch-vendor-model=LinuxSwitch --with-switch-ctrl-port=1 --with-switch-snmp-community=$SNMP_COMMUNITY"
   ;;
   vlsr-verbose|VLSR-VERBOSE|vlsr-interactive|VLSR-INTERACTIVE)
     rsvpconf="--enable-switch-cli-access"
