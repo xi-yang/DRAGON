@@ -11,6 +11,124 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_Catalyst3750.h"
 #include "RSVP_Log.h"
 
+bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    int n;
+    uint32 port,slot, shelf;
+    char portName[100], vlanNum[100], action[100];
+    char append[20];
+    int committed_rate_int = (int)committed_rate;
+
+    if (committed_rate_int < 1 || !preAction())
+        return false;
+
+    port=(input_port)&0xff;
+    slot=(input_port>>8)&0xf;
+    shelf = (input_port>>12)&0xf;
+    sprintf(portName, "gi%d/%d/%d",shelf, slot, port); //@@@@ not used??
+
+    sprintf(vlanNum, "%d", vlan_id);
+    sprintf(action, "%srate-limit input %d", do_undo? "": "no ", committed_rate_int);
+
+    if (burst_size <= 0) burst_size = 500000;
+    sprintf(append, " %d", burst_size);
+    strcat(action, append);
+
+    if (peak_burst_size <= 0) peak_burst_size = burst_size;
+    sprintf(append, " %d", peak_burst_size);
+    strcat(action, append);
+    strcat(action, "conform-action transmit exceed-action drop");
+
+    // enter interface/port configuration mode 
+    DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, CISCO_ERROR_PROMPT, 1, 10)) ;
+    DIE_IF_EQUAL(n, 2);
+    DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;      
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, CISCO_ERROR_PROMPT, 1, 10)) ;
+    DIE_IF_EQUAL(n, 2);
+    DIE_IF_NEGATIVE(n = writeShell( "end\n", 5));
+    DIE_IF_NEGATIVE(n = readShell( SWITCH_PROMPT, NULL, 1, 10));
+
+    if (!postAction())
+        return false;
+    return true;
+}
+
+bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    int n;
+    uint32 port,slot, shelf;
+    char portName[100], vlanNum[100], action[100];
+    char append[20];
+    int committed_rate_int = (int)committed_rate;
+
+    if (committed_rate_int < 1 || !preAction())
+        return false;
+
+    port=(output_port)&0xff;
+    slot=(output_port>>8)&0xf;
+    shelf = (output_port>>12)&0xf;
+    sprintf(portName, "gi%d/%d/%d",shelf, slot, port); //@@@@ not used??
+
+    sprintf(vlanNum, "%d", vlan_id);
+    sprintf(action, "%srate-limit output %d", do_undo? "": "no ", committed_rate_int);
+
+    if (burst_size <= 0) burst_size = 500000;
+    sprintf(append, " %d", burst_size);
+    strcat(action, append);
+
+    if (peak_burst_size <= 0) peak_burst_size = burst_size;
+    sprintf(append, " %d", peak_burst_size);
+    strcat(action, append);
+    strcat(action, "conform-action transmit exceed-action drop");
+
+    // enter interface/port configuration mode 
+    DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, CISCO_ERROR_PROMPT, 1, 10)) ;
+    DIE_IF_EQUAL(n, 2);
+    DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;      
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, CISCO_ERROR_PROMPT, 1, 10)) ;
+    DIE_IF_EQUAL(n, 2);
+    DIE_IF_NEGATIVE(n = writeShell( "end\n", 5));
+    DIE_IF_NEGATIVE(n = readShell( SWITCH_PROMPT, NULL, 1, 10));
+
+    if (!postAction())
+        return false;
+    return true;
+
+}
+
+bool SwitchCtrl_Session_Catalyst3750::connectSwitch()
+{
+    if (SwitchCtrl_Session::connectSwitch() == false)
+        return false;
+    return cliSession.connectSwitch();
+}
+
+void SwitchCtrl_Session_Catalyst3750::disconnectSwitch()
+{
+    cliSession.disconnectSwitch();
+    SwitchCtrl_Session::disconnectSwitch();
+}
+
 bool SwitchCtrl_Session_Catalyst3750::PortTrunkingOn(uint32 port)
 {
 
