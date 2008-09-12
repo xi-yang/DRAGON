@@ -56,7 +56,7 @@ bool SwitchCtrl_Session::connectSwitch()
     	return false;
     }
 
-    LOG(2)( Log::MPLS, "VLSR: Successfully connected to switch: ", switchInetAddr);
+    LOG(2)( Log::MPLS, "VLSR: Successfully connected to switch (via SNMP): ", switchInetAddr);
     active = true;
     return true;
 }

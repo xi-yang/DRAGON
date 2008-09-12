@@ -20,7 +20,6 @@ To be incorporated into KOM-RSVP-TE package
 
 class SwitchCtrl_Session_Catalyst3750: public SNMP_Session
 {
-	
 public:
 	SwitchCtrl_Session_Catalyst3750(): SNMP_Session() { rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; }
 	SwitchCtrl_Session_Catalyst3750(const RSVP_String& sName, const NetAddress& swAddr): SNMP_Session(sName, swAddr) 
