@@ -89,8 +89,7 @@ bool CLI_Session::connectSwitch() { return connectSwitch("ogin: "); }
 
 bool CLI_Session::connectSwitch(const char *loginString, CLISessionType cliType)
 {
-    bool ret  = engage(loginString, cliType);
-    return ret & SwitchCtrl_Session::connectSwitch();
+    return engage(loginString, cliType);
 }
 
 void CLI_Session::disconnectSwitch() 
