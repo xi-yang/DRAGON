@@ -53,7 +53,7 @@ public:
 	SwitchCtrl_Session_Catalyst3750(): SNMP_Session() { rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; }
 	SwitchCtrl_Session_Catalyst3750(const RSVP_String& sName, const NetAddress& swAddr): SNMP_Session(sName, swAddr), cliSession(sName, swAddr) 
 		{ rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0;}
-	virtual ~SwitchCtrl_Session_Catalyst3750() { }
+	virtual ~SwitchCtrl_Session_Catalyst3750() { this->disconnectSwitch(); }
 
 
 	///////////------QoS Functions ------/////////

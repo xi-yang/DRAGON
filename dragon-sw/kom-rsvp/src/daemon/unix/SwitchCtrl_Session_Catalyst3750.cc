@@ -173,8 +173,8 @@ bool SwitchCtrl_Session_Catalyst3750::connectSwitch()
 
 void SwitchCtrl_Session_Catalyst3750::disconnectSwitch()
 {
-    cliSession.disconnectSwitch();
-    SwitchCtrl_Session::disconnectSwitch();
+    cliSession.disengage();
+    //done by ~SwitchCtrl_Session() --> SwitchCtrl_Session::disconnectSwitch();
 }
 
 bool SwitchCtrl_Session_Catalyst3750::PortTrunkingOn(uint32 port)
