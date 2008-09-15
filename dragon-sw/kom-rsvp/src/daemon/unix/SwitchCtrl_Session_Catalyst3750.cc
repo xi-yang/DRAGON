@@ -11,6 +11,36 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_Catalyst3750.h"
 #include "RSVP_Log.h"
 
+bool SwitchCtrl_Session_Catalyst3750_CLI::preAction()
+{
+    if (!active || vendor!=Catalyst3750|| !pipeAlive())
+        return false;
+    int n;
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( ">", "#", 1, 10)) ;
+    if (n == 1)
+    {
+        DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    }
+    DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    return true;
+}
+
+bool SwitchCtrl_Session_Catalyst3750_CLI::postAction()
+{
+    if (fdout < 0 || fdin < 0)
+        return false;
+    DIE_IF_NEGATIVE(writeShell("end\n", 5));
+    readShell(SWITCH_PROMPT, NULL, 1, 10);
+    return true;
+}
+
+
 bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     int n;
@@ -39,19 +69,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
     strcat(action, append);
     strcat(action, "conform-action transmit exceed-action drop");
 
-    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( ">", "#", 1, 10)) ;
-    if (n == 1)
-    {
-        DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
-        DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-    }
     // enter interface/port configuration mode 
-    DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
     DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
@@ -97,19 +115,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  ui
     strcat(action, append);
     strcat(action, "conform-action transmit exceed-action drop");
 
-    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( ">", "#", 1, 10)) ;
-    if (n == 1)
-    {
-        DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
-        DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-    }
     // enter interface/port configuration mode 
-    DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
     DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
@@ -725,6 +731,8 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createVLAN(const uint32 vlanID)
     if (!active) //not initialized or session has been disconnected
         return false;
 
+    //@@@@ remove this logic?
+    // Create a rows in the vtpVlanEditTable for the new VLAN using SNMP request
     String tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
     sprintf(oid_str, "%s", tag_oid_str.chars());
     strcpy(value, "2");
@@ -797,6 +805,7 @@ bool SwitchCtrl_Session_Catalyst3750::hook_removeVLAN(const uint32 vlanID)
     if (!active) //not initialized or session has been disconnected
         return false;
 
+    //@@@@ remove this logic?
     // Create a rows in the vtpVlanEditTable for the new VLAN using SNMP request
     String tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
     sprintf(oid_str, "%s", tag_oid_str.chars());

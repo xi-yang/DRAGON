@@ -28,6 +28,8 @@ public:
 	SwitchCtrl_Session_Catalyst3750_CLI(const String& sName, const NetAddress& swAddr): CLI_Session(sName, swAddr) { }
 	virtual ~SwitchCtrl_Session_Catalyst3750_CLI() { }
 
+	virtual bool preAction();
+	virtual bool postAction();
 	///////////------QoS Functions ------/////////
 	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
