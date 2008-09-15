@@ -40,7 +40,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::postAction()
     return true;
 }
 
-
+//committed_rate in bit/second, burst_size in bytes
 bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     int n;
@@ -58,13 +58,17 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
     sprintf(portName, "gi%d/%d/%d",shelf, slot, port); //@@@@ not used??
 
     sprintf(vlanNum, "%d", vlan_id);
+    committed_rate_int *= 1000000;
     sprintf(action, "%srate-limit input %d", do_undo? "": "no ", committed_rate_int);
 
-    if (burst_size <= 0) burst_size = 500000;
+    if (burst_size < 500) 
+        burst_size = 500000;
+    else
+        burst_size *= 1000;
     sprintf(append, " %d", burst_size);
     strcat(action, append);
 
-    if (peak_burst_size <= 0) peak_burst_size = burst_size;
+    if (peak_burst_size <= 500) peak_burst_size = burst_size;
     sprintf(append, " %d", peak_burst_size);
     strcat(action, append);
     strcat(action, " conform-action transmit exceed-action drop");
@@ -107,13 +111,17 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  ui
     sprintf(portName, "gi%d/%d/%d",shelf, slot, port); //@@@@ not used??
 
     sprintf(vlanNum, "%d", vlan_id);
+    committed_rate_int *= 1000000;
     sprintf(action, "%srate-limit output %d", do_undo? "": "no ", committed_rate_int);
 
-    if (burst_size <= 0) burst_size = 500000;
+    if (burst_size < 500) 
+        burst_size = 500000;
+    else
+        burst_size *= 1000;
     sprintf(append, " %d", burst_size);
     strcat(action, append);
 
-    if (peak_burst_size <= 0) peak_burst_size = burst_size;
+    if (peak_burst_size <= 500) peak_burst_size = burst_size;
     sprintf(append, " %d", peak_burst_size);
     strcat(action, append);
     strcat(action, " conform-action transmit exceed-action drop");
