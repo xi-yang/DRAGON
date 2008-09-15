@@ -67,7 +67,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
     if (peak_burst_size <= 0) peak_burst_size = burst_size;
     sprintf(append, " %d", peak_burst_size);
     strcat(action, append);
-    strcat(action, "conform-action transmit exceed-action drop");
+    strcat(action, " conform-action transmit exceed-action drop");
 
     // enter interface/port configuration mode 
     DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
@@ -75,12 +75,15 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, CISCO_ERROR_PROMPT, 1, 10)) ;
     DIE_IF_EQUAL(n, 2);
-    DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
+    if (do_undo)
+        DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;      
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, CISCO_ERROR_PROMPT, 1, 10)) ;
     DIE_IF_EQUAL(n, 2);
+    if (!do_undo)
+        DIE_IF_NEGATIVE(n= writeShell( "shutdown\n", 5)) ;
 
     if (!postAction())
         return false;
@@ -113,7 +116,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  ui
     if (peak_burst_size <= 0) peak_burst_size = burst_size;
     sprintf(append, " %d", peak_burst_size);
     strcat(action, append);
-    strcat(action, "conform-action transmit exceed-action drop");
+    strcat(action, " conform-action transmit exceed-action drop");
 
     // enter interface/port configuration mode 
     DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
@@ -121,12 +124,15 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  ui
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, CISCO_ERROR_PROMPT, 1, 10)) ;
     DIE_IF_EQUAL(n, 2);
-    DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
+    if (do_undo)
+        DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;      
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, CISCO_ERROR_PROMPT, 1, 10)) ;
     DIE_IF_EQUAL(n, 2);
+    if (!do_undo)
+        DIE_IF_NEGATIVE(n= writeShell( "shutdown\n", 5)) ;
 
     if (!postAction())
         return false;
