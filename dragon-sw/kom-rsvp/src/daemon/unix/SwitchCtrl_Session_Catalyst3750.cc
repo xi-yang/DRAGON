@@ -138,7 +138,8 @@ bool SwitchCtrl_Session_Catalyst3750::connectSwitch()
 {
     if (SwitchCtrl_Session::connectSwitch() == false)
         return false;
-    cliSession.vendor = vendor;
+    cliSession.active = this->active;
+    cliSession.vendor = this->vendor;
     return cliSession.engage("Username:");
 }
 
