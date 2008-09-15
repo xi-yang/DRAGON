@@ -89,7 +89,8 @@ bool CLI_Session::connectSwitch() { return connectSwitch("ogin: "); }
 
 bool CLI_Session::connectSwitch(const char *loginString, CLISessionType cliType)
 {
-    return engage(loginString, cliType);
+    bool ret  = engage(loginString, cliType);
+    return ret & SwitchCtrl_Session::connectSwitch();
 }
 
 void CLI_Session::disconnectSwitch() 
@@ -119,7 +120,7 @@ bool CLI_Session::engage(const char *loginString, CLISessionType cliType)
     if (pipeAlive())
         return true;
 
-    if (CLI_SESSION_TYPE == CLI_NONE && cliType == CLI_NONE)
+    if (CLI_SESSION_TYPE == CLI_NONE &&cliType == CLI_NONE)
         return false;
 
     // we need pipes to communicate between the programs 

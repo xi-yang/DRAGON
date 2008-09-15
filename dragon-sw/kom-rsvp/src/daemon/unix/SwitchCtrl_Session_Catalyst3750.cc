@@ -132,7 +132,7 @@ bool SwitchCtrl_Session_Catalyst3750::connectSwitch()
 {
     if (SwitchCtrl_Session::connectSwitch() == false)
         return false;
-    return cliSession.connectSwitch("Username:");
+    return cliSession.engage("Username:");
 }
 
 void SwitchCtrl_Session_Catalyst3750::disconnectSwitch()
