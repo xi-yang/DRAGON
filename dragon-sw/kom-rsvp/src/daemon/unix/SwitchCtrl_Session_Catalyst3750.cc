@@ -17,7 +17,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::preAction()
         return false;
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( ">", "#", 1, 10)) ;
+    DIE_IF_NEGATIVE(n= readShell( ">", "#", true, 1, 10)) ;
     if (n == 1)
     {
         DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
