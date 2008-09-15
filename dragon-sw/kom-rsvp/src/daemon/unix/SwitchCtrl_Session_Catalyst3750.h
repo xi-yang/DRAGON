@@ -44,6 +44,7 @@ public:
        virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars) { }
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port) { return false;}
 	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID) { return false;}
+	friend class SwitchCtrl_Session_Catalyst3750;
 };
 
 class SwitchCtrl_Session_Catalyst3750: public SNMP_Session
@@ -51,7 +52,7 @@ class SwitchCtrl_Session_Catalyst3750: public SNMP_Session
 public:
 	SwitchCtrl_Session_Catalyst3750(): SNMP_Session() { rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; }
 	SwitchCtrl_Session_Catalyst3750(const RSVP_String& sName, const NetAddress& swAddr): SNMP_Session(sName, swAddr), cliSession(sName, swAddr) 
-		{ rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; }
+		{ rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; cliSession.vendor = vendor; }
 	virtual ~SwitchCtrl_Session_Catalyst3750() { }
 
 
