@@ -39,9 +39,17 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
     strcat(action, append);
     strcat(action, "conform-action transmit exceed-action drop");
 
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( ">", "#", 1, 10)) ;
+    if (n == 1)
+    {
+        DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    }
     // enter interface/port configuration mode 
-    DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
@@ -55,8 +63,6 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, CISCO_ERROR_PROMPT, 1, 10)) ;
     DIE_IF_EQUAL(n, 2);
-    DIE_IF_NEGATIVE(n = writeShell( "end\n", 5));
-    DIE_IF_NEGATIVE(n = readShell( SWITCH_PROMPT, NULL, 1, 10));
 
     if (!postAction())
         return false;
@@ -91,9 +97,17 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  ui
     strcat(action, append);
     strcat(action, "conform-action transmit exceed-action drop");
 
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( ">", "#", 1, 10)) ;
+    if (n == 1)
+    {
+        DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    }
     // enter interface/port configuration mode 
-    DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
@@ -107,8 +121,6 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  ui
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, CISCO_ERROR_PROMPT, 1, 10)) ;
     DIE_IF_EQUAL(n, 2);
-    DIE_IF_NEGATIVE(n = writeShell( "end\n", 5));
-    DIE_IF_NEGATIVE(n = readShell( SWITCH_PROMPT, NULL, 1, 10));
 
     if (!postAction())
         return false;
