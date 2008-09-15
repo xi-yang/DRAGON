@@ -66,13 +66,17 @@ Session::Session( const SESSION_Object &session) : SESSION_Object(session),
 Session::~Session() {
 	LOG(2)( Log::Session, "delete Session:", *this );
 	RSVP_Global::rsvp->removeSession( iterFromRSVP );
-	RSVP_Global::rsvp->getMPLS().deleteExplicitRouteBySession((long)this); //@@@@ use pointer address as unique ID (DRAGON)
+	RSVP_Global::rsvp->getMPLS().deleteExplicitRouteBySession((long)this); //$$$$ use pointer address as unique ID (DRAGON)
+
 	if (narbClient)
 		delete narbClient;
+
 	if (pSubnetUniSrc)
 		delete pSubnetUniSrc;
 	if (pSubnetUniDest)
 		delete pSubnetUniDest;
+
+	RSVP_Global::switchController->removeRsvpSessionReference(this); 
 }
 
 void Session::deleteAll() {
@@ -597,6 +601,10 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			else {
 				ssNew = (*sessionIter);
 			}
+
+			if (!ssNew)
+				ssNew->addRsvpSessionReference(this); // Add this RSVP_Session into a reference list in SwitchControl session (reference for deleteion)
+			
 			if (!ssNew || !ssNew->readVLANFromSwitch()) { //Read/Synchronize to Ethernet switch
 			       //syncWithSwitch ... !
 				LOG(2)( Log::MPLS, "VLSR: Cannot read from Ethernet switch : ", vlsr.switchID);

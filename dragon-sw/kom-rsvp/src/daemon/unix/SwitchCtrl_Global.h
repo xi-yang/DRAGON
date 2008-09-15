@@ -62,6 +62,8 @@ enum SupportedVendor{
 	Illegal = 0xffff,
 };
 
+typedef SimpleList<Session*> RsvpSessionList;
+
 struct vlanPortMap{
     uint32 vid;
     union {
@@ -171,6 +173,10 @@ public:
 	virtual bool getSwitchVendorInfo();
 	virtual bool refresh() { return true; }
 
+	virtual void addRsvpSessionReference(Session* rsvpSession);
+	virtual bool removeRsvpSessionReference(Session* rsvpSession);
+	virtual bool isRsvpSessionRefListEmpty () { return rsvpSessionRefList.empty(); }
+
 	//////////// RFC2674 compatible functions that use SNMP GET////////////
 	virtual bool isVLANEmpty(const uint32 vlanID); // RFC2674
 	virtual const uint32 findEmptyVLAN(); // RFC2674
@@ -243,6 +249,8 @@ protected:
 	vlanRefIDList vlanRefIdConvList;	// Mapping table btwn vendor's private VLAN interface ID and regular VLAN ID.
 	portRefIDList portRefIdConvList;		// Mapping table btwn vendor's private Port interface ID and regular Port ID.
 
+	RsvpSessionList rsvpSessionRefList;
+
        //Add ports in the port mask portListNew into VLAN.
        bool setVLANPort(uint32 portListNew, uint32 vlanID);
 
@@ -299,6 +307,7 @@ public:
 	SwitchCtrlSessionList& getSessionList() { return sessionList; }
 	bool refreshSessions();
 	void startRefreshTimer();
+	void removeRsvpSessionReference(Session* session);
 
 	/*called by object functions  in SwitchCtrl_Session*/
 	static bool static_connectSwitch(struct snmp_session* &session, NetAddress &switchAddress);

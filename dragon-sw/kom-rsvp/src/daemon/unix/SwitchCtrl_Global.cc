@@ -89,6 +89,31 @@ bool SwitchCtrl_Session::getSwitchVendorInfo()
     return ret;
 }
 
+void SwitchCtrl_Session::addRsvpSessionReference(Session* rsvpSession)
+{
+    RsvpSessionList::Iterator it;
+    for (it = rsvpSessionRefList.begin(); it != rsvpSessionRefList.end(); ++it)
+    {
+        if ((*it) == rsvpSession)
+            return;
+    }
+    rsvpSessionRefList.push_back(rsvpSession);
+}
+
+bool SwitchCtrl_Session::removeRsvpSessionReference(Session* rsvpSession)
+{
+    RsvpSessionList::Iterator it;
+    for (it = rsvpSessionRefList.begin(); it != rsvpSessionRefList.end(); ++it)
+    {
+        if ((*it) == rsvpSession)
+        {
+            it = rsvpSessionRefList.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
 //VTAG mutral-exclusion feature --> Review
 /*
 bool SwitchCtrl_Session::resetVtagBitMask(uint8* bitmask)
@@ -997,9 +1022,21 @@ void SwitchCtrl_Global::removeSession(SwitchCtrl_Session* addSS)
 			return;
 		}
 	}
-	return;
 }
 
+void SwitchCtrl_Global::removeRsvpSessionReference(Session* session)
+{
+	SwitchCtrlSessionList::Iterator iter = sessionList.begin();
+	for (; iter != sessionList.end(); ++iter ) {
+		(*iter)->removeRsvpSessionReference(session);
+		if ((*iter)->isRsvpSessionRefListEmpty()) {
+			delete (*iter);
+			removeSession((*iter));
+			return;
+		}
+	}
+}
+	
 void SwitchCtrl_Global::processLocalIdMessage(uint8 msgType, LocalId& lid)
 {
     switch(msgType)
@@ -1316,4 +1353,5 @@ void SwitchCtrl_Global::getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Rep
 }
 
 //End of file : SwitchCtrl_Global.cc
+
 
