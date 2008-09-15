@@ -166,15 +166,15 @@ bool SwitchCtrl_Session_Catalyst3750::connectSwitch()
 {
     if (SwitchCtrl_Session::connectSwitch() == false)
         return false;
-    cliSession.active = this->active;
     cliSession.vendor = this->vendor;
+    cliSession.active = true;
     return cliSession.engage("Username:");
 }
 
 void SwitchCtrl_Session_Catalyst3750::disconnectSwitch()
 {
     cliSession.disengage();
-    //done by ~SwitchCtrl_Session() --> SwitchCtrl_Session::disconnectSwitch();
+    cliSession.active = false;
 }
 
 bool SwitchCtrl_Session_Catalyst3750::PortTrunkingOn(uint32 port)

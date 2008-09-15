@@ -55,6 +55,7 @@ public:
 		{ rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0;}
 	virtual ~SwitchCtrl_Session_Catalyst3750() { this->disconnectSwitch(); }
 
+	virtual bool refresh() { return cliSession.refresh(); }
 
 	///////////------QoS Functions ------/////////
 	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0)
