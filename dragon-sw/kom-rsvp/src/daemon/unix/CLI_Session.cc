@@ -87,9 +87,9 @@ void sigfunct(int signo)
 
 bool CLI_Session::connectSwitch() { return connectSwitch("ogin: "); }
 
-bool CLI_Session::connectSwitch(const char *loginString, CLISessionType cliType)
+bool CLI_Session::connectSwitch(const char *loginString)
 {
-    bool ret  = engage(loginString, cliType);
+    bool ret  = engage(loginString);
     return ret & SwitchCtrl_Session::connectSwitch();
 }
 
@@ -99,7 +99,7 @@ void CLI_Session::disconnectSwitch()
     SwitchCtrl_Session::disconnectSwitch();
 }
 
-bool CLI_Session::engage(const char *loginString, CLISessionType cliType)
+bool CLI_Session::engage(const char *loginString)
 {
     int fdpipe[2][2], fderr, err, n;
     char port_str[8];
@@ -120,7 +120,7 @@ bool CLI_Session::engage(const char *loginString, CLISessionType cliType)
     if (pipeAlive())
         return true;
 
-    if (CLI_SESSION_TYPE == CLI_NONE &&cliType == CLI_NONE)
+    if (CLI_SESSION_TYPE == CLI_NONE)
         return false;
 
     // we need pipes to communicate between the programs 
@@ -170,7 +170,7 @@ bool CLI_Session::engage(const char *loginString, CLISessionType cliType)
         close(fdpipe[1][1]);
 
         // exec CLI session application
-        if (CLI_SESSION_TYPE == CLI_TELNET || cliType == CLI_TELNET) {
+        if (CLI_SESSION_TYPE == CLI_TELNET) {
            if (cli_port > 0)
              sprintf(port_str, "%d", cli_port);
            else
@@ -186,7 +186,7 @@ bool CLI_Session::engage(const char *loginString, CLISessionType cliType)
            close(2);
            dup(fderr);
            err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);
-        } else if (CLI_SESSION_TYPE == CLI_SSH || cliType == CLI_SSH) {
+        } else if (CLI_SESSION_TYPE == CLI_SSH) {
            char spawn_cmd[128];
            if (cli_port > 0)
              sprintf(port_str, "%d", cli_port);
@@ -199,7 +199,7 @@ bool CLI_Session::engage(const char *loginString, CLISessionType cliType)
            close(2);
            dup(fderr);
            err_exit("%s: execl(%s) failed: errno=%d\n", progname, SSH_EXEC, err);            
-        } else if (CLI_SESSION_TYPE == CLI_TL1_TELNET || cliType == CLI_TL1_TELNET) {
+        } else if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
            if (cli_port > 0)
              sprintf(port_str, "%d", cli_port);
            else
@@ -210,7 +210,7 @@ bool CLI_Session::engage(const char *loginString, CLISessionType cliType)
            close(2);
            dup(fderr);
            err_exit("%s: execl(%s) failed: errno=%d\n", progname, TELNET_EXEC, err);           
-        } else if (CLI_SESSION_TYPE == CLI_SHELL  || cliType == CLI_SHELL) {
+        } else if (CLI_SESSION_TYPE == CLI_SHELL) {
            char spawn_cmd[128];
            sprintf(spawn_cmd, "spawn %s", SHELL_EXEC);
            execl(EXPECT_PATH, "expect", "-c", spawn_cmd, "-c", "interact", (char*)NULL);
@@ -239,7 +239,7 @@ bool CLI_Session::engage(const char *loginString, CLISessionType cliType)
     fdin = fdpipe[1][0];
     fdout = fdpipe[0][1];
 
-    if (CLI_SESSION_TYPE == CLI_TELNET  || cliType == CLI_TELNET) {
+    if (CLI_SESSION_TYPE == CLI_TELNET) {
      // wait for login prompt 
      n = readShell((const char*) loginString, TELNET_PROMPT, true, 1, 15);
      if (n != 1) {
@@ -256,7 +256,7 @@ bool CLI_Session::engage(const char *loginString, CLISessionType cliType)
      if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 30)) < 0) goto _telnet_dead;
     } 
-    else if (CLI_SESSION_TYPE == CLI_SSH  || cliType == CLI_SSH) {
+    else if (CLI_SESSION_TYPE == CLI_SSH) {
      if ((n = readShell( "The authenticity", CLI_USERNAME, 1, 15)) < 0) {
        if (got_alarm == 0)
          err_msg("%s: connection to host '%s' failed\n", progname, hostname);
@@ -272,7 +272,7 @@ bool CLI_Session::engage(const char *loginString, CLISessionType cliType)
      if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
     }
-    else if (CLI_SESSION_TYPE == CLI_TL1_TELNET  || cliType == CLI_TL1_TELNET) {
+    else if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
      // wait for login prompt 
      n = readShell(SWITCH_PROMPT, TELNET_PROMPT, 1, 15);
      if (n != 1) {
@@ -296,7 +296,7 @@ bool CLI_Session::engage(const char *loginString, CLISessionType cliType)
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 5)) < 0) goto _telnet_dead;
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 5)) < 0) goto _telnet_dead;
     }
-    else if (CLI_SESSION_TYPE == CLI_SHELL  || cliType == CLI_SHELL) {
+    else if (CLI_SESSION_TYPE == CLI_SHELL) {
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
     }
 

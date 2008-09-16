@@ -58,11 +58,11 @@ public:
 
 	void setPort(int port) { cli_port = port; }
 	virtual bool connectSwitch();
-	virtual bool connectSwitch(const char *loginString, CLISessionType cliType = CLI_NONE);
+	virtual bool connectSwitch(const char *loginString);
 	virtual void disconnectSwitch();
 	virtual bool refresh(); //to be called by RSVP_SREFRESH !!!
 
-	bool engage(const char *loginString = "ogin: ", CLISessionType cliType = CLI_NONE);
+	bool engage(const char *loginString = "ogin: ");
 	void disengage(const char *exitString = "exit\n");
 	void closePipe();
 	void stop();
