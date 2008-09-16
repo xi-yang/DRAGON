@@ -568,7 +568,7 @@ public:
 		RROIndicatedRoutingLoops = 7,
 		NonRSVPCapableRouterPresent = 8,
 		MPLSLabelAllocationFailure = 9,
-		UnsupportedL3PID = 10
+		UnsupportedL3PID = 10,
 	};
 	enum NotifyError {
 		RROtooLargeForMTU = 1,
@@ -576,7 +576,9 @@ public:
 		TunnelLocallyRepaired = 3,
 		SwitchSessionFailed = 9,
 		SubnetUNISessionFailed = 10,
-		InvalidUNIObject = 11
+		InvalidUNIObject = 11,
+		RSVPSwitchConnectFailure = 12,
+		RSVPSwitchSNMPFailure = 13
 	};
 private:
 	NetAddress nodeAddress;

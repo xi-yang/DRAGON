@@ -58,7 +58,10 @@ typedef struct _vlsr_route_{
 	NetAddress switchID;
 	uint32 inPort;
 	uint32 outPort;
-	uint32 vlanTag;
+	union {
+		uint32 vlanTag;
+		uint32 errCode;
+	};
 	float bandwidth;
 }VLSR_Route;
 typedef SimpleList<VLSR_Route> VLSRRoute;

@@ -431,6 +431,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
                             LOG(1)( Log::MPLS, "prcessERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataSrc from OSPFd.");
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
+				vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::SubnetUNISessionFailed);
 				vLSRoute.push_back(vlsr);
 				return false;
 			}
@@ -495,6 +496,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 	                            LOG(1)( Log::MPLS, "prcessERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
+					vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::SubnetUNISessionFailed);
 					vLSRoute.push_back(vlsr);                    
 					return false;
 				}
@@ -527,6 +529,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 	                            LOG(1)( Log::MPLS, "prcessERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
+					vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::SubnetUNISessionFailed);
 					vLSRoute.push_back(vlsr);                    
 					return false;
 				}
@@ -586,12 +589,18 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
                             ssNew = RSVP_Global::switchController->createSession(vlsr.switchID);
                             if (!ssNew) {
                                    LOG(1)( Log::MPLS, "Failed to create VLSR SwitchCtrl Session: Unknown switch Vendor/Model -- verify switch-ip is correct in ospfd.conf");
+					memset(&vlsr, 0, sizeof(VLSR_Route)); 
+					vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::SwitchSessionFailed);
+					vLSRoute.push_back(vlsr);                    
         				return false;
                             }
 
 				if (!ssNew->connectSwitch()){
 					LOG(2)( Log::MPLS, "VLSR: Cannot connect to Ethernet switch : ", vlsr.switchID);
 					delete(ssNew);
+					memset(&vlsr, 0, sizeof(VLSR_Route)); 
+					vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::RSVPSwitchConnectFailure);
+					vLSRoute.push_back(vlsr);                    
 					return false;
 				}
 				else{
@@ -608,6 +617,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			if (!ssNew || !ssNew->readVLANFromSwitch()) { //Read/Synchronize to Ethernet switch
 			       //syncWithSwitch ... !
 				LOG(2)( Log::MPLS, "VLSR: Cannot read from Ethernet switch : ", vlsr.switchID);
+				memset(&vlsr, 0, sizeof(VLSR_Route)); 
+				vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::RSVPSwitchSNMPFailure);
+				vLSRoute.push_back(vlsr);                    
 				return false;
 			}
 
@@ -616,6 +628,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			if (!foundSession && ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
                             LOG(1)( Log::MPLS, "prcessERO: hasVLSRouteConflictonSwitch returned true.");
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
+				vlsr.errCode = (ERROR_SPEC_Object::RoutingProblem << 16 | ERROR_SPEC_Object::MPLSLabelAllocationFailure);
 				vLSRoute.push_back(vlsr);                    
 				return false;
 			}
@@ -800,14 +813,16 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			if (vLSRoute.size() > 0) {
 				VLSR_Route& vlsr = vLSRoute.back();
 				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID.rawAddress() == 0) {
-					RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
+					if (vlsr.errCode == 0)
+						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
+					else
+						RSVP_Global::messageProcessor->sendPathErrMessage( (vlsr.errCode >> 16)&0xff, vlsr.errCode&0xffff);
 					vLSRoute.pop_back();
 					LOG(1)(Log::MPLS, "MPLS: Cannot find VLSR route... Possible reason: conflicts with existing VLAN or edge port PVID.");
 					return;
 				}				
 			}
-			// @@@@ handle errors like 'cannot connect to switch' and return PERR
-			LOG(2)(Log::MPLS, "MPLS: Internal error in the ERO :", explicitRoute->getAbstractNodeList().front().getAddress());
+			LOG(2)(Log::MPLS, "MPLS: Excusable internal error in the ERO (PATH processing continued):", explicitRoute->getAbstractNodeList().front().getAddress());
 			explicitRoute = NULL;
 		}
 		if (explicitRoute && explicitRoute->getAbstractNodeList().empty()) {
@@ -843,6 +858,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			}
 		}
 		if (!defaultOutLif) {
+			LOG(1)(Log::Routing, "MPLS: cannot find default outgoing interface for UNI client (PATH processing stopped)!");
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
 			return;
 		}
@@ -878,7 +894,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					RSVP_Global::rsvp->getRoutingService().disableOspfSocket();
 			}
 			if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()) {
-				LOG(1)(Log::Routing, "Error: cannot open a socket connection to local OSPFd!");
+				LOG(1)(Log::Routing, "Error: cannot open a socket connection to local OSPFd (PATH processing stopped)!");
 				RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
 				return;
 			}
@@ -935,7 +951,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					if (!explicitRoute && hasReceivedExplicitRoute) //Should recompute ERO via NARB but failed
 					{
 						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
-						LOG(1)(Log::MPLS, "MPLS: Tried recomputing ERO (invalid or loose hops). Request ERO from NARB failed...");
+						LOG(1)(Log::MPLS, "MPLS: Tried recomputing ERO (invalid or loose hops). Request ERO from NARB failed (PATH processing stopped)!");
 						return;
 					}
 					else if (!explicitRoute)//explicit routing using OSPFd
@@ -982,13 +998,16 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			if (vLSRoute.size() > 0) {
 				VLSR_Route& vlsr = vLSRoute.back();
 				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID.rawAddress() == 0) {
-					RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
+					if (vlsr.errCode == 0)
+						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
+					else
+						RSVP_Global::messageProcessor->sendPathErrMessage( (vlsr.errCode >> 16)&0xff, vlsr.errCode&0xffff);
 					vLSRoute.pop_back();
-					LOG(1)(Log::MPLS, "MPLS: Cannot find VLSRRoute: (possibly VLSR route conflicts with existing VLAN or edge port PVID)...");
+					LOG(1)(Log::MPLS, "MPLS: Cannot find VLSRRoute: (possibly VLSR route conflicts with existing VLAN or edge port PVID... PATH processing stopped)!");
 					return;
 				}				
 			}
-			LOG(2)(Log::MPLS, "MPLS: Internal error in the ERO :", explicitRoute->getAbstractNodeList().front().getAddress());
+			LOG(2)(Log::MPLS, "MPLS: Excusable internal error in the ERO (PATH processing continued):", explicitRoute->getAbstractNodeList().front().getAddress());
 			explicitRoute = NULL;
 		}
 
@@ -1000,7 +1019,7 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			destAddress = Session::ospfRouterID;
 			explicitRoute->pushFront(AbstractNode(false, destAddress, (uint8)32));
 		} else {
-			ERROR(2)( Log::Error, "Can't determine data interfaces!", *static_cast<SESSION_Object*>(this));
+			ERROR(2)( Log::Error, "MPLS: Can't determine data interfaces (PATH processing stopped)!", *static_cast<SESSION_Object*>(this));
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
 			return;
 		}
