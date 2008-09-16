@@ -813,12 +813,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			if (vLSRoute.size() > 0) {
 				VLSR_Route& vlsr = vLSRoute.back();
 				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID.rawAddress() == 0) {
+					LOG(1)(Log::MPLS, "MPLS: Cannot find VLSR route... Possible reason: conflicts with existing VLAN or edge port PVID.");
 					if (vlsr.errCode == 0)
 						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
 					else
 						RSVP_Global::messageProcessor->sendPathErrMessage( (vlsr.errCode >> 16)&0xff, vlsr.errCode&0xffff);
 					vLSRoute.pop_back();
-					LOG(1)(Log::MPLS, "MPLS: Cannot find VLSR route... Possible reason: conflicts with existing VLAN or edge port PVID.");
 					return;
 				}				
 			}
@@ -950,8 +950,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 					if (!explicitRoute && hasReceivedExplicitRoute) //Should recompute ERO via NARB but failed
 					{
-						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
 						LOG(1)(Log::MPLS, "MPLS: Tried recomputing ERO (invalid or loose hops). Request ERO from NARB failed (PATH processing stopped)!");
+						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
 						return;
 					}
 					else if (!explicitRoute)//explicit routing using OSPFd
@@ -998,12 +998,12 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			if (vLSRoute.size() > 0) {
 				VLSR_Route& vlsr = vLSRoute.back();
 				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID.rawAddress() == 0) {
+					LOG(1)(Log::MPLS, "MPLS: Cannot find VLSRRoute: (possibly VLSR route conflicts with existing VLAN or edge port PVID... PATH processing stopped)!");
 					if (vlsr.errCode == 0)
 						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
 					else
 						RSVP_Global::messageProcessor->sendPathErrMessage( (vlsr.errCode >> 16)&0xff, vlsr.errCode&0xffff);
 					vLSRoute.pop_back();
-					LOG(1)(Log::MPLS, "MPLS: Cannot find VLSRRoute: (possibly VLSR route conflicts with existing VLAN or edge port PVID... PATH processing stopped)!");
 					return;
 				}				
 			}
