@@ -31,8 +31,14 @@ case "$target" in
   vlsr-cat3750|vlsr-catalyst3750|VLSR-CATALYST3750|VLSR-Catalyst3750)
     rsvpconf="--with-switch-vendor-model=Catalyst3750 --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY --enable-switch-port-shutdown"
   ;;
+  vlsr-cat3750-qos|vlsr-catalyst3750-qos|VLSR-CATALYST3750-QOS|VLSR-Catalyst3750-QoS)
+    rsvpconf="--enable-switch-cli-access --with-switch-vendor-model=Catalyst3750 --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY --enable-switch-port-shutdown"
+  ;;
   vlsr-cat6500|vlsr-catalyst6500|VLSR-CATALYST6500|VLSR-Catalyst6500)
     rsvpconf="--with-switch-vendor-model=Catalyst6500 --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY --enable-switch-port-shutdown"
+  ;;
+  vlsr-cat6500-qos|vlsr-catalyst6500-qos|VLSR-CATALYST6500-QOS|VLSR-Catalyst6500-QoS)
+    rsvpconf="--enable-switch-cli-access --with-switch-vendor-model=Catalyst6500 --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY --enable-switch-port-shutdown"
   ;;
   vlsr-subnet|VLSR-SUBNET)
     rsvpconf="--enable-switch-cli-access --with-switch-vendor-model=AutoDetect --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY"

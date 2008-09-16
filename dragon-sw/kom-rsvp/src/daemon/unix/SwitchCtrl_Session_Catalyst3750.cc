@@ -166,15 +166,42 @@ bool SwitchCtrl_Session_Catalyst3750::connectSwitch()
 {
     if (SwitchCtrl_Session::connectSwitch() == false)
         return false;
-    cliSession.vendor = this->vendor;
-    cliSession.active = true;
-    return cliSession.engage("Username:");
+
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        cliSession.vendor = this->vendor;
+        cliSession.active = true;
+        return cliSession.engage("Username:");
+    }
+
+    return true;
 }
 
 void SwitchCtrl_Session_Catalyst3750::disconnectSwitch()
 {
-    cliSession.disengage();
-    cliSession.active = false;
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        cliSession.disengage();
+        cliSession.active = false;
+    }
+}
+
+bool SwitchCtrl_Session_Catalyst3750::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        return cliSession.policeInputBandwidth(do_undo, input_port, vlan_id, committed_rate, burst_size, peak_rate, peak_burst_size); 
+    }
+    return false;
+}
+
+bool SwitchCtrl_Session_Catalyst3750::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        return cliSession.limitOutputBandwidth(do_undo, output_port, vlan_id, committed_rate, burst_size, peak_rate, peak_burst_size);
+    }
+    return false;
 }
 
 bool SwitchCtrl_Session_Catalyst3750::PortTrunkingOn(uint32 port)
