@@ -178,10 +178,10 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::limitOutputBandwidth(bool do_undo,  ui
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     
         // enter interface vlan configuration mode 
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
