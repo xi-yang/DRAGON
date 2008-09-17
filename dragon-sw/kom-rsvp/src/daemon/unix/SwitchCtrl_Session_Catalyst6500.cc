@@ -130,9 +130,9 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::limitOutputBandwidth(bool do_undo,  ui
         else
             burst_size *= 1000;
         if (peak_burst_size <= 500) 
-            peak_burst_size = burst_size+1000;
+            peak_burst_size = burst_size;
         sprintf(action, "police %d %d %d conform-action transmit exceed-action drop violate-action drop", 
-    		committed_rate_int, burst_size, peak_burst_size -burst_size); //excess burst size = peak_burst_size -burst_size
+    		committed_rate_int, burst_size, peak_burst_size); //excess burst size = peak_burst_size -burst_size
         DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( policyMapName, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
@@ -244,7 +244,7 @@ bool SwitchCtrl_Session_Catalyst6500::connectSwitch()
     {
         cliSession.vendor = this->vendor;
         cliSession.active = true;
-        LOG(1)( Log::MPLS, "VLSR: CLI connecting to Catalyst6500 Switch....");
+        LOG(2)( Log::MPLS, "VLSR: CLI connecting to Catalyst6500 Switch: ", switchInetAddr);
         return cliSession.engage("Username:");
     }
 
@@ -255,7 +255,7 @@ void SwitchCtrl_Session_Catalyst6500::disconnectSwitch()
 {
     if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {
-        LOG(1)( Log::MPLS, "VLSR: CLI disconnecting from Catalyst6500 Switch....");
+        LOG(2)( Log::MPLS, "VLSR: CLI disconnecting from Catalyst6500 Switch: ", switchInetAddr);
         cliSession.disengage();
         cliSession.active = false;
     }

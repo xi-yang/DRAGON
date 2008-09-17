@@ -177,7 +177,7 @@ bool SwitchCtrl_Session_Catalyst3750::connectSwitch()
     {
         cliSession.vendor = this->vendor;
         cliSession.active = true;
-        LOG(1)( Log::MPLS, "VLSR: CLI connecting to Catalyst3750 Switch....");
+        LOG(2)( Log::MPLS, "VLSR: CLI connecting to Catalyst3750 Switch: ", switchInetAddr);
         return cliSession.engage("Username:");
     }
 
@@ -188,7 +188,7 @@ void SwitchCtrl_Session_Catalyst3750::disconnectSwitch()
 {
     if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {
-        LOG(1)( Log::MPLS, "VLSR: CLI disconnecting from Catalyst3750 Switch....");
+        LOG(2)( Log::MPLS, "VLSR: CLI disconnecting from Catalyst3750 Switch: ", switchInetAddr);
         cliSession.disengage();
         cliSession.active = false;
     }
