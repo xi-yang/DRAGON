@@ -10,6 +10,275 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_Catalyst6500.h"
 #include "RSVP_Log.h"
 
+bool SwitchCtrl_Session_Catalyst6500_CLI::preAction()
+{
+    if (!active || vendor!=Catalyst6500|| !pipeAlive())
+        return false;
+    int n;
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( ">", "#", true, 1, 10)) ;
+    if (n == 1)
+    {
+        DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    }   
+    DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "mls qos\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    return true;
+}
+
+bool SwitchCtrl_Session_Catalyst6500_CLI::postAction()
+{
+    if (fdout < 0 || fdin < 0)
+        return false;
+    DIE_IF_NEGATIVE(writeShell("end\n", 5));
+    readShell(SWITCH_PROMPT, NULL, 1, 10);
+    return true;
+}
+
+//committed_rate in bit/second, burst_size in bytes
+bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    int n;
+    uint32 port,slot, shelf;
+    char portName[50];
+    int committed_rate_int = (int)committed_rate;
+
+    if (committed_rate_int < 1 || !preAction())
+        return false;
+
+    if (do_undo)
+    {
+	    port=(input_port)&0xff;
+	    slot=(input_port>>8)&0xf;
+	    shelf = (input_port>>12)&0xf;
+           if (shelf == 0)
+               sprintf(portName, "gi%d/%d",shelf, slot, port);
+           else
+               sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
+
+	    // enter interface/port configuration mode 
+            DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10);
+            if (n ==2) // try port again as TenGigE interface
+            {
+                readShell( SWITCH_PROMPT, NULL, 1, 10);
+                if (shelf == 0)
+                    sprintf(portName, "te%d/%d",shelf, slot, port);
+                else
+                    sprintf(portName, "te%d/%d/%d",shelf, slot, port);
+                DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
+                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+                DIE_IF_EQUAL(n, 2);
+           }
+	    DIE_IF_NEGATIVE(n= writeShell( "mls qos vlan-based\n", 5)) ;
+	    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+	    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+	    DIE_IF_EQUAL(n, 2);
+
+           // policy only created and applied to VLAN in limitOutputBandwidth()
+
+    }
+    else
+    {
+        ; //NOOP
+    }
+
+    // end
+    if (!postAction())
+        return false;
+    return true;
+}
+
+bool SwitchCtrl_Session_Catalyst6500_CLI::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    int n;
+    uint32 port,slot, shelf;
+    char portName[50], vlanNum[10], action[100], policyMapName[100];
+    char append[20];
+    int committed_rate_int = (int)committed_rate;
+
+    if (committed_rate_int < 1 || !preAction())
+        return false;
+
+    port=(output_port)&0xff;
+    slot=(output_port>>8)&0xf;
+    shelf = (output_port>>12)&0xf;
+    if (shelf == 0)
+        sprintf(portName, "gi%d/%d",shelf, slot, port);
+    else
+        sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
+
+    // create or delete policy
+    sprintf(vlanNum, "%d", vlan_id);
+    sprintf(policyMapName, "policy-map-vlan%d", vlan_id);
+    if (do_undo)
+    {
+        committed_rate_int *= 1000000;
+        if (burst_size < 500) 
+            burst_size = 500000;
+        else
+            burst_size *= 1000;
+        if (peak_burst_size <= 500) 
+            peak_burst_size = burst_size+1000;
+        sprintf(action, "police %d %d %d conform-action transmit exceed-action drop violate-action drop", 
+    		committed_rate_int, burst_size, peak_burst_size -burst_size); //excess burst size = peak_burst_size -burst_size
+        DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( policyMapName, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "class class-default\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        // return to configure root
+        DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+
+        // enter interface port configuration mode 
+        DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10);
+        if (n ==2) // try port again as TenGigE interface
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            if (shelf == 0)
+                sprintf(portName, "te%d/%d",shelf, slot, port);
+            else
+                sprintf(portName, "te%d/%d/%d",shelf, slot, port);
+            DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            DIE_IF_EQUAL(n, 2);
+        }
+        DIE_IF_NEGATIVE(n= writeShell( "mls qos vlan-based\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+    
+        // enter interface vlan configuration mode 
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+
+        // apply policy
+        DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "service-policy input ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( policyMapName, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "service-policy output ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( policyMapName, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+
+    }
+    else
+    {
+        DIE_IF_NEGATIVE(n= writeShell( "no policy-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( policyMapName, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+
+        /*????
+        // enter interface vlan configuration mode 
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        // no shutdown
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "shutdown\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        */
+    }
+
+    //end
+    if (!postAction())
+        return false;
+    return true;
+}
+
+bool SwitchCtrl_Session_Catalyst6500::connectSwitch()
+{
+    if (SwitchCtrl_Session::connectSwitch() == false)
+        return false;
+
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        cliSession.vendor = this->vendor;
+        cliSession.active = true;
+        LOG(1)( Log::MPLS, "VLSR: CLI connecting to Catalyst6500 Switch....");
+        return cliSession.engage("Username:");
+    }
+
+    return true;
+}
+
+void SwitchCtrl_Session_Catalyst6500::disconnectSwitch()
+{
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        LOG(1)( Log::MPLS, "VLSR: CLI disconnecting from Catalyst6500 Switch....");
+        cliSession.disengage();
+        cliSession.active = false;
+    }
+}
+
+bool SwitchCtrl_Session_Catalyst6500::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        return cliSession.policeInputBandwidth(do_undo, input_port, vlan_id, committed_rate, burst_size, peak_rate, peak_burst_size); 
+    }
+    return false;
+}
+
+bool SwitchCtrl_Session_Catalyst6500::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        return cliSession.limitOutputBandwidth(do_undo, output_port, vlan_id, committed_rate, burst_size, peak_rate, peak_burst_size);
+    }
+    return false;
+}
+
 bool SwitchCtrl_Session_Catalyst6500::PortTrunkingOn(uint32 port)
 {
 

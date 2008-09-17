@@ -10,8 +10,8 @@ To be incorporated into KOM-RSVP-TE package
 #ifndef SWITCHCTRL_SESSION_CATALYST3750_H_
 #define SWITCHCTRL_SESSION_CATALYST3750_H_
 
-#include "CLI_Session.h"
 #include "SNMP_Session.h"
+#include "CLI_Session.h"
 
 #define CATALYST3750_MIN_VLAN_ID 1
 #define CATALYST3750_MAX_VLAN_ID 4094
@@ -19,7 +19,9 @@ To be incorporated into KOM-RSVP-TE package
 #define CATALYST3750_MAX_PORT_ID 2048
 #define CATALYST_VLAN_BITLEN		4096
 
+#ifndef CISCO_ERROR_PROMPT 
 #define CISCO_ERROR_PROMPT "% "
+#endif
 
 class SwitchCtrl_Session_Catalyst3750_CLI: public CLI_Session
 {
@@ -56,14 +58,14 @@ public:
 	virtual ~SwitchCtrl_Session_Catalyst3750() { this->disconnectSwitch(); }
 
 	virtual bool refresh() { return cliSession.refresh(); }
+	virtual bool connectSwitch();
+	virtual void disconnectSwitch();
 
 	///////////------QoS Functions ------/////////
 	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 
 	////////-----Vendor/Model specific hook functions------//////
-	virtual bool connectSwitch();
-	virtual void disconnectSwitch();
 	virtual bool hook_createVLAN(const uint32 vlanID);
 	virtual bool hook_removeVLAN(const uint32 vlanID);
 	virtual bool hook_isVLANEmpty(const vlanPortMap &vpm);

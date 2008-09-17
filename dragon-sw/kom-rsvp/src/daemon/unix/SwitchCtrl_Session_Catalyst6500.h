@@ -11,12 +11,44 @@ To be incorporated into KOM-RSVP-TE package
 #define SWITCHCTRL_SESSION_CATALYST6500_H_
 
 #include "SNMP_Session.h"
+#include "CLI_Session.h"
 
 #define CATALYST6500_MIN_VLAN_ID 1
 #define CATALYST6500_MAX_VLAN_ID 4094
 #define CATALYST6500_MIN_PORT_ID 0
 #define CATALYST6500_MAX_PORT_ID 2048
 #define CATALYST_VLAN_BITLEN		4096
+
+
+#ifndef CISCO_ERROR_PROMPT 
+#define CISCO_ERROR_PROMPT "% "
+#endif
+
+class SwitchCtrl_Session_Catalyst6500_CLI: public CLI_Session
+{
+public:
+	SwitchCtrl_Session_Catalyst6500_CLI(): CLI_Session() { }	
+	SwitchCtrl_Session_Catalyst6500_CLI(const String& sName, const NetAddress& swAddr): CLI_Session(sName, swAddr) { }
+	virtual ~SwitchCtrl_Session_Catalyst6500_CLI() { }
+
+	virtual bool preAction();
+	virtual bool postAction();
+	///////////------QoS Functions ------/////////
+	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+
+	//Vendor/Model specific hook functions --> not used (for compile only)
+	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID)  { return false;}
+	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID)  { return false;}
+	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID)  { return false;}
+	virtual bool hook_createVLAN(const uint32 vlanID) { return false;}
+	virtual bool hook_removeVLAN(const uint32 vlanID) { return false;}
+	virtual bool hook_isVLANEmpty(const vlanPortMap &vpm) { return false;}
+       virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars) { }
+	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port) { return false;}
+	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID) { return false;}
+	friend class SwitchCtrl_Session_Catalyst6500;
+};
 
 class SwitchCtrl_Session_Catalyst6500: public SNMP_Session
 {
@@ -27,10 +59,13 @@ public:
 		{ rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; }
 	virtual ~SwitchCtrl_Session_Catalyst6500() { }
 
+	virtual bool refresh() { return cliSession.refresh(); }
+	virtual bool connectSwitch();
+	virtual void disconnectSwitch();
 
 	///////////------QoS Functions ------/////////
-	//virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
-	//virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 
 	////////-----Vendor/Model specific hook functions------//////
 	virtual bool hook_createVLAN(const uint32 vlanID);
@@ -77,6 +112,7 @@ private:
 	bool readTrunkPortVlanMap(portVlanMapList &);
 	bool readVlanPortMapListALLFromPortVlanMapList(vlanPortMapList &, portVlanMapList &);
 
+	SwitchCtrl_Session_Catalyst6500_CLI cliSession;
 };
 
 
