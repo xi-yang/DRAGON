@@ -55,7 +55,7 @@ class SwitchCtrl_Session_Catalyst6500: public SNMP_Session
 	
 public:
 	SwitchCtrl_Session_Catalyst6500(): SNMP_Session() { rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; }
-	SwitchCtrl_Session_Catalyst6500(const RSVP_String& sName, const NetAddress& swAddr): SNMP_Session(sName, swAddr) 
+	SwitchCtrl_Session_Catalyst6500(const RSVP_String& sName, const NetAddress& swAddr): SNMP_Session(sName, swAddr), cliSession(sName, swAddr)
 		{ rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; }
 	virtual ~SwitchCtrl_Session_Catalyst6500() { }
 
