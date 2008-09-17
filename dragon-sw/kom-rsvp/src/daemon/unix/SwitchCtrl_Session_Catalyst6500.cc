@@ -58,7 +58,7 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
 	    slot=(input_port>>8)&0xf;
 	    shelf = (input_port>>12)&0xf;
            if (shelf == 0)
-               sprintf(portName, "gi%d/%d",shelf, slot, port);
+               sprintf(portName, "gi%d/%d", slot, port);
            else
                sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
 
@@ -71,7 +71,7 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
             {
                 readShell( SWITCH_PROMPT, NULL, 1, 10);
                 if (shelf == 0)
-                    sprintf(portName, "te%d/%d",shelf, slot, port);
+                    sprintf(portName, "te%d/%d", slot, port);
                 else
                     sprintf(portName, "te%d/%d/%d",shelf, slot, port);
                 DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
@@ -115,7 +115,7 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::limitOutputBandwidth(bool do_undo,  ui
     slot=(output_port>>8)&0xf;
     shelf = (output_port>>12)&0xf;
     if (shelf == 0)
-        sprintf(portName, "gi%d/%d",shelf, slot, port);
+        sprintf(portName, "gi%d/%d", slot, port);
     else
         sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
 
@@ -163,7 +163,7 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::limitOutputBandwidth(bool do_undo,  ui
         {
             readShell( SWITCH_PROMPT, NULL, 1, 10);
             if (shelf == 0)
-                sprintf(portName, "te%d/%d",shelf, slot, port);
+                sprintf(portName, "te%d/%d", slot, port);
             else
                 sprintf(portName, "te%d/%d/%d",shelf, slot, port);
             DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
