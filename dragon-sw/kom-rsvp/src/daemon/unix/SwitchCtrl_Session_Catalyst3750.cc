@@ -266,7 +266,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  ui
         // configure vlan-level policy
         DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
@@ -285,7 +285,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  ui
         // enter interface vlan configuration mode 
         DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
