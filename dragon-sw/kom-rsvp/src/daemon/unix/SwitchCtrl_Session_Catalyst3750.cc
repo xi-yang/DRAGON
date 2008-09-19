@@ -62,7 +62,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
     else
         sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
     sprintf(vlanNum, "%d", vlan_id);
-    sprintf(portClassMap, "class-map-if-%d", vlan_id);
+    sprintf(portPolicyMap, "policy-map-if-%d", vlan_id);
     sprintf(vlanPolicyMap, "policy-map-vlan-%d", vlan_id);
     if (do_undo)
     {
@@ -93,6 +93,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         // create interface class-map for the port
+        sprintf(portClassMap, "class-map-if-%s", portName);
         DIE_IF_NEGATIVE(n= writeShell( "class-map match-all ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
@@ -106,7 +107,6 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
         // add the class-map into port-level policy-map
-        sprintf(portPolicyMap, "policy-map-if-%s", portName);
         committed_rate_int *= 1000000;
         if (burst_size < 500) 
             burst_size = 500000;
@@ -201,7 +201,6 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
         // remove input port policy-map
-        sprintf(portPolicyMap, "policy-map-if-%s", portName);
         DIE_IF_NEGATIVE(n= writeShell( "no policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
@@ -209,6 +208,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
         // remove input port class-map
+        sprintf(portClassMap, "class-map-if-%s", portName);
         DIE_IF_NEGATIVE(n= writeShell( "no class-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
