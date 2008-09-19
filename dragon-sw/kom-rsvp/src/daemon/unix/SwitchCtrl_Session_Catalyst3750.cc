@@ -3,6 +3,7 @@
 Cisco (vendor) Catalyst 3750 (model) Control Module source file SwitchCtrl_Session_Catalyst3750.cc
 Created by Ajay Todimala, 2007
 Modified by Xi Yang, 05/2007
+QoS feature added by Xi Yang, 09/2008
 Note: This code also support Catalyst 3560
 To be incorporated into KOM-RSVP-TE package
 
@@ -28,6 +29,8 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::preAction()
     }
     DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "mls qos\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     return true;
 }
 
@@ -44,61 +47,131 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::postAction()
 bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     int n;
-    char portName[50], vlanNum[10], action[100];
-    char append[20];
+    char portName[50], vlanNum[10], action[50], portClassMap[50], portPolicyMap[50];
     int committed_rate_int = (int)committed_rate;
 
     if (committed_rate_int < 1 || !preAction())
         return false;
 
-    /*
     uint32 port,slot, shelf;
     port=(input_port)&0xff;
     slot=(input_port>>8)&0xf;
     shelf = (input_port>>12)&0xf;
-    sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
-    */
-
-    sprintf(vlanNum, "%d", vlan_id);
-
-    committed_rate_int *= 1000000;
-    sprintf(action, "%srate-limit input %d", do_undo? "": "no ", committed_rate_int);
-
-    if (burst_size < 500) 
-        burst_size = 500000;
+    if (shelf == 0)
+        sprintf(portName, "gi%d/%d", slot, port);
     else
-        burst_size *= 1000;
-    sprintf(append, " %d", burst_size);
-    strcat(action, append);
-
-    if (peak_burst_size <= 500) peak_burst_size = burst_size;
-    sprintf(append, " %d", peak_burst_size);
-    strcat(action, append);
-    strcat(action, " conform-action transmit exceed-action drop");
-
-    // enter interface/port configuration mode 
-    DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
-    DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
-    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-    DIE_IF_EQUAL(n, 2);
+        sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
+    sprintf(vlanNum, "%d", vlan_id);
     if (do_undo)
     {
-        DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
+        // enter interface port configuration mode
+        DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10);
+        if (n ==2) // try port again as TenGigE interface
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            if (shelf == 0)
+                sprintf(portName, "te%d/%d", slot, port);
+            else
+                sprintf(portName, "te%d/%d/%d",shelf, slot, port);
+            DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            DIE_IF_EQUAL(n, 2);
+        }
+        // enable mls qos vlan-based for the port
+        DIE_IF_NEGATIVE(n= writeShell( "mls qos vlan-based\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        // create interface class-map for the port
+        sprintf(portClassMap, "class-map-if-%s", portName);
+        DIE_IF_NEGATIVE(n= writeShell( "class-map match-all ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "match input-interface ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        // add the class-map into policy-map for the port
+        sprintf(portPolicyMap, "policy-map-if-%s", portName);
+        committed_rate_int *= 1000000;
+        if (burst_size < 500) 
+            burst_size = 500000;
+        else
+            burst_size *= 1000;
+        sprintf(action, "police %d %d exceed-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
+        DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
     }
-    DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;      
-    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-    DIE_IF_EQUAL(n, 2);
-    if (!do_undo)
+    else
     {
-        DIE_IF_NEGATIVE(n= writeShell( "shutdown\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        // enter interface port configuration mode
+        DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10);
+        if (n ==2) // try port again as TenGigE interface
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            if (shelf == 0)
+                sprintf(portName, "te%d/%d", slot, port);
+            else
+                sprintf(portName, "te%d/%d/%d",shelf, slot, port);
+            DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            DIE_IF_EQUAL(n, 2);
+        }
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;        
+        // remove input port policy-map
+        sprintf(portPolicyMap, "policy-map-if-%s", portName);
+        DIE_IF_NEGATIVE(n= writeShell( "no policy-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        // remove input port class-map
+        sprintf(portPolicyMap, "class-map-if-%s", portName);
+        DIE_IF_NEGATIVE(n= writeShell( "no class-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
     }
 
+    // end
     if (!postAction())
         return false;
     return true;
@@ -107,65 +180,172 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
 bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     int n;
-    char portName[50], vlanNum[10], action[100];
-    char append[20];
+    char portName[50], vlanNum[10], action[50], portClassMap[50], portPolicyMap[50], vlanPolicyMap[50];
     int committed_rate_int = (int)committed_rate;
 
     if (committed_rate_int < 1 || !preAction())
         return false;
 
-    /*
     uint32 port,slot, shelf;
     port=(output_port)&0xff;
     slot=(output_port>>8)&0xf;
     shelf = (output_port>>12)&0xf;
-    sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
-    */
-
-    sprintf(vlanNum, "%d", vlan_id);
-
-    committed_rate_int *= 1000000;
-    sprintf(action, "%srate-limit output %d", do_undo? "": "no ", committed_rate_int);
-
-    if (burst_size < 500) 
-        burst_size = 500000;
+    if (shelf == 0)
+        sprintf(portName, "gi%d/%d", slot, port);
     else
-        burst_size *= 1000;
-    sprintf(append, " %d", burst_size);
-    strcat(action, append);
-
-    if (peak_burst_size <= 500) peak_burst_size = burst_size;
-    sprintf(append, " %d", peak_burst_size);
-    strcat(action, append);
-    strcat(action, " conform-action transmit exceed-action drop");
-
-    // enter interface/port configuration mode 
-    DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
-    DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
-    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-    DIE_IF_EQUAL(n, 2);
+        sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
+    sprintf(vlanNum, "%d", vlan_id);
+    sprintf(vlanPolicyMap, "policy-map-vlan-%d", vlan_id);
     if (do_undo)
     {
+        // enter interface port configuration mode
+        DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10);
+        if (n ==2) // try port again as TenGigE interface
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            if (shelf == 0)
+                sprintf(portName, "te%d/%d", slot, port);
+            else
+                sprintf(portName, "te%d/%d/%d",shelf, slot, port);
+            DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            DIE_IF_EQUAL(n, 2);
+        }
+        // enable mls qos vlan-based for the port
+        DIE_IF_NEGATIVE(n= writeShell( "mls qos vlan-based\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        // create interface class-map for the port
+        sprintf(portClassMap, "class-map-if-%s", portName);
+        DIE_IF_NEGATIVE(n= writeShell( "class-map match-all ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "match input-interface ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        // add the class-map into policy-map for the port
+        sprintf(portPolicyMap, "policy-map-if-%s", portName);
+        committed_rate_int *= 1000000;
+        if (burst_size < 500) 
+            burst_size = 500000;
+        else
+            burst_size *= 1000;
+        sprintf(action, "police %d %d exceed-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
+        DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        // configure vlan-level policy
+        DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "set dscp 7\n ", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "service-policy ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        // enter interface vlan configuration mode 
+        DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        // apply vlan-level policy map
         DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "service-policy input ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
     }
-    DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;      
-    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-    DIE_IF_EQUAL(n, 2);
-    if (!do_undo)
+    else
     {
-        DIE_IF_NEGATIVE(n= writeShell( "shutdown\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        // enter interface port configuration mode
+        DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10);
+        if (n ==2) // try port again as TenGigE interface
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            if (shelf == 0)
+                sprintf(portName, "te%d/%d", slot, port);
+            else
+                sprintf(portName, "te%d/%d/%d",shelf, slot, port);
+            DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            DIE_IF_EQUAL(n, 2);
+        }
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;        
+        // remove vlan-level policy map
+        DIE_IF_NEGATIVE(n= writeShell( "no policy-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        // remove output port class map
+        DIE_IF_NEGATIVE(n= writeShell( "no class-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
     }
 
+    // end
     if (!postAction())
         return false;
     return true;
-
 }
 
 bool SwitchCtrl_Session_Catalyst3750::connectSwitch()

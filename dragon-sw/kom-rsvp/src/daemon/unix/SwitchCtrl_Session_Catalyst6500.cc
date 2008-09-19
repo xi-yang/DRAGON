@@ -3,6 +3,7 @@
 Cisco (vendor) Catalyst 6500 (model) Control Module source file SwitchCtrl_Session_Catalyst6500.cc
 Created by Ajay Todimala, 2007
 Modified by Xi Yan, 2008
+QoS feature added by Xi Yang, 09/2008
 To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/
@@ -214,7 +215,7 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::limitOutputBandwidth(bool do_undo,  ui
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
 
-        /*????
+        /*??? shutdown vlan ???
         // enter interface vlan configuration mode 
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
@@ -222,7 +223,6 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::limitOutputBandwidth(bool do_undo,  ui
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-        // no shutdown
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "shutdown\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
