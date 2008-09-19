@@ -105,7 +105,8 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
-        // add the class-map into policy-map for the port
+        // add the class-map into port-level policy-map
+        sprintf(portPolicyMap, "policy-map-if-%s", portName);
         committed_rate_int *= 1000000;
         if (burst_size < 500) 
             burst_size = 500000;
