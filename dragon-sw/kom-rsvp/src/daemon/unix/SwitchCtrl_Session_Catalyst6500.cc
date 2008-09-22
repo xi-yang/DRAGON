@@ -48,7 +48,6 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
     int n;
     uint32 port,slot, shelf;
     char portName[50], vlanNum[10], action[100], policyMapName[100];
-    char append[20];
     int committed_rate_int = (int)committed_rate;
 
     if (committed_rate_int < 1 || !preAction())
@@ -101,7 +100,7 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10);
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10));
         if (n ==2) // try port again as TenGigE interface
         {
             readShell( SWITCH_PROMPT, NULL, 1, 10);

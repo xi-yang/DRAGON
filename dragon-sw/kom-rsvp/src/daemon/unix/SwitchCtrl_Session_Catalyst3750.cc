@@ -70,7 +70,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10);
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10));
         if (n ==2) // try port again as TenGigE interface
         {
             readShell( SWITCH_PROMPT, NULL, 1, 10);
@@ -79,11 +79,23 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
             else
                 sprintf(portName, "te%d/%d/%d",shelf, slot, port);
             DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
-            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
+            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try TenGigE interface
             DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-            DIE_IF_EQUAL(n, 2);
+            DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10));
+            if (n ==2) // try port again as FastE interface
+            {
+                readShell( SWITCH_PROMPT, NULL, 1, 10);
+                if (shelf == 0)
+                    sprintf(portName, "fa%d/%d", slot, port);
+                else
+                    sprintf(portName, "fa%d/%d/%d",shelf, slot, port);
+                DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try FastE interface
+                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+                DIE_IF_EQUAL(n, 2);
+            }
         }
         // enable mls qos vlan-based for the port
         DIE_IF_NEGATIVE(n= writeShell( "mls qos vlan-based\n", 5)) ;
@@ -182,7 +194,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10);
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10));
         if (n ==2) // try port again as TenGigE interface
         {
             readShell( SWITCH_PROMPT, NULL, 1, 10);
@@ -194,8 +206,20 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
             DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
             DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
             DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-            DIE_IF_EQUAL(n, 2);
+            if (n ==2) // try port again as FastE interface
+            {
+                readShell( SWITCH_PROMPT, NULL, 1, 10);
+                if (shelf == 0)
+                    sprintf(portName, "fa%d/%d", slot, port);
+                else
+                    sprintf(portName, "fa%d/%d/%d",shelf, slot, port);
+                DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try FastE interface
+                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+                DIE_IF_EQUAL(n, 2);
+            }
         }
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;        
@@ -1177,6 +1201,13 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
             				    LOG(2) (Log::Error, "Illegal Port ID: ", tmp_port_id);
         				    }
                                 }
+                                /*
+                                The switch card/slot with a mixture of gigabitEthernet and fastEthernet has two gigabitEthernet ports gi1/0/1 and gi1/0/2, 
+                                followed by fa1/0/1 through fa1/0/24. They are coded as port number 1 through 26 in the SNMP MIB. So when assigning 
+                                port number in ospfd,conf (interface switch-port) or on DRAGON CLI, use the following rule:
+                                --  1/0/1 and 1/0/2 for gi1/0/1 and gi1/0/2, and
+                                --  1/0/3, 1/0/4 бн 1/0/K+2 for fa1/0/1, fa1/0/2 ...  fa1/0/K.
+                                */
                                 else if (sscanf(ref_str, "FastEthernet%d/%d/%d", &tmp_mod_id, &tmp_slot_id, &tmp_port_id) == 3) {
     				      if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
 	                                    ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | ((tmp_port_id+2)&0xff));
