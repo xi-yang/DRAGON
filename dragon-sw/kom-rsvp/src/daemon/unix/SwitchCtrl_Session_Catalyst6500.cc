@@ -47,64 +47,6 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
 {
     int n;
     uint32 port,slot, shelf;
-    char portName[50];
-    int committed_rate_int = (int)committed_rate;
-
-    if (committed_rate_int < 1 || !preAction())
-        return false;
-
-    if (do_undo)
-    {
-	    port=(input_port)&0xff;
-	    slot=(input_port>>8)&0xf;
-	    shelf = (input_port>>12)&0xf;
-           if (shelf == 0)
-               sprintf(portName, "gi%d/%d", slot, port);
-           else
-               sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
-
-	    // enter interface/port configuration mode 
-            DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
-            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
-            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-            n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10);
-            if (n ==2) // try port again as TenGigE interface
-            {
-                readShell( SWITCH_PROMPT, NULL, 1, 10);
-                if (shelf == 0)
-                    sprintf(portName, "te%d/%d", slot, port);
-                else
-                    sprintf(portName, "te%d/%d/%d",shelf, slot, port);
-                DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
-                DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
-                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-                DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-                DIE_IF_EQUAL(n, 2);
-           }
-	    DIE_IF_NEGATIVE(n= writeShell( "mls qos vlan-based\n", 5)) ;
-	    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-	    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-	    DIE_IF_EQUAL(n, 2);
-
-           // policy only created and applied to VLAN in limitOutputBandwidth()
-
-    }
-    else
-    {
-        ; //NOOP
-    }
-
-    // end
-    if (!postAction())
-        return false;
-    return true;
-}
-
-bool SwitchCtrl_Session_Catalyst6500_CLI::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
-{
-    int n;
-    uint32 port,slot, shelf;
     char portName[50], vlanNum[10], action[100], policyMapName[100];
     char append[20];
     int committed_rate_int = (int)committed_rate;
@@ -112,9 +54,9 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::limitOutputBandwidth(bool do_undo,  ui
     if (committed_rate_int < 1 || !preAction())
         return false;
 
-    port=(output_port)&0xff;
-    slot=(output_port>>8)&0xf;
-    shelf = (output_port>>12)&0xf;
+    port=(input_port)&0xff;
+    slot=(input_port>>8)&0xf;
+    shelf = (input_port>>12)&0xf;
     if (shelf == 0)
         sprintf(portName, "gi%d/%d", slot, port);
     else
@@ -229,7 +171,58 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::limitOutputBandwidth(bool do_undo,  ui
         */
     }
 
-    //end
+/*
+    if (do_undo)
+    {
+	    port=(input_port)&0xff;
+	    slot=(input_port>>8)&0xf;
+	    shelf = (input_port>>12)&0xf;
+           if (shelf == 0)
+               sprintf(portName, "gi%d/%d", slot, port);
+           else
+               sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
+
+	    // enter interface/port configuration mode 
+            DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10);
+            if (n ==2) // try port again as TenGigE interface
+            {
+                readShell( SWITCH_PROMPT, NULL, 1, 10);
+                if (shelf == 0)
+                    sprintf(portName, "te%d/%d", slot, port);
+                else
+                    sprintf(portName, "te%d/%d/%d",shelf, slot, port);
+                DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
+                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+                DIE_IF_EQUAL(n, 2);
+           }
+	    DIE_IF_NEGATIVE(n= writeShell( "mls qos vlan-based\n", 5)) ;
+	    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+	    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+	    DIE_IF_EQUAL(n, 2);
+
+           // policy only created and applied to VLAN in limitOutputBandwidth()
+
+    }
+    else
+    {
+        ; //NOOP
+    }
+*/
+
+    // end
+    if (!postAction())
+        return false;
+    return true;
+}
+
+bool SwitchCtrl_Session_Catalyst6500_CLI::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
     if (!postAction())
         return false;
     return true;

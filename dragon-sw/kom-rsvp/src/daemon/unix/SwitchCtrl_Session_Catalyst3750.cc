@@ -231,6 +231,32 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
 
 bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
+    int n;
+    char portName[50], vlanNum[10], action[50], portClassMap[50], portPolicyMap[50], vlanPolicyMap[50];
+    int committed_rate_int = (int)committed_rate;
+    if (committed_rate_int < 1 || !preAction())
+        return false;
+
+    sprintf(vlanPolicyMap, "policy-map-vlan-%d", vlan_id);
+    if (do_undo)
+    {
+        // enter interface port configuration mode
+        DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "class class-default\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "set dscp 7\n ", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+    }
+
     if (!postAction())
         return false;
     return true;
