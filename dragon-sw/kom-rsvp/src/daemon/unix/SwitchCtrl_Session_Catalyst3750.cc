@@ -232,7 +232,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
 bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     int n;
-    char portName[50], vlanNum[10], action[50], portClassMap[50], portPolicyMap[50], vlanPolicyMap[50];
+    char vlanPolicyMap[50];
     int committed_rate_int = (int)committed_rate;
     if (committed_rate_int < 1 || !preAction())
         return false;
