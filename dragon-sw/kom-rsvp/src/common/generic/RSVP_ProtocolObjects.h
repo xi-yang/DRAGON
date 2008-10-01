@@ -569,6 +569,7 @@ public:
 		NonRSVPCapableRouterPresent = 8,
 		MPLSLabelAllocationFailure = 9,
 		UnsupportedL3PID = 10,
+		ControlChannelUnconfigured = 101,
 	};
 	enum NotifyError {
 		RROtooLargeForMTU = 1,

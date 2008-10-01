@@ -1262,6 +1262,8 @@ search_psb:
 		}
 		else if (&hop.getLogicalInterface() != RSVP::getApiLif()){
 			LOG(3)( Log::MPLS, "##Warning## MPLS disabled on hop interface ", hop, " -> make sure you have configured this control channel interface in RSVPD.conf...");
+			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::ControlChannelUnconfigured );
+			return;
 		}
             
 		cPSB->updateLABEL_REQUEST_Object(msg.getLABEL_REQUEST_Object());
