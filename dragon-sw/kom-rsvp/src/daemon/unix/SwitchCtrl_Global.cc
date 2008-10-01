@@ -698,27 +698,32 @@ bool SwitchCtrl_Global::refreshSessions()
 }
 bool SwitchCtrl_Global::static_connectSwitch(struct snmp_session* &sessionHandle, NetAddress& switchAddr)
 {
-        LOG(2)( Log::MPLS, "VLSR: establishing SNMP session with switch", switchAddr);
-	char str[128];
-	char* community = SWITCH_SNMP_COMMUNITY;
-        snmp_session session;
-	 // Initialize a "session" that defines who we're going to talk to   
-	 snmp_sess_init(&session);
-	 // set up defaults   
-	 strcpy(str, convertAddressToString(switchAddr).chars());
-	 session.peername = str;  
-	 // set the SNMP version number   
-	 session.version = SNMP_VERSION_1;  
-	 // set the SNMPv1 community name used for authentication   
-	 session.community = (u_char*)community;  
-	 session.community_len = strlen((const char*)session.community);  
-	 // Open the session   
-	 if (!(sessionHandle = snmp_open(&session))){
-		snmp_perror("snmp_open");
-		LOG(1)( Log::MPLS, "VLSR: snmp_open failed");
-		return false; 
-	 }
-	return true;
+    LOG(2)( Log::MPLS, "VLSR: establishing SNMP session with switch", switchAddr);
+    char str[128];
+    char* community = SWITCH_SNMP_COMMUNITY;
+    snmp_session session;
+    // Initialize a "session" that defines who we're going to talk to   
+    snmp_sess_init(&session);
+
+    // set up defaults   
+    strcpy(str, convertAddressToString(switchAddr).chars());
+    //@@@@special patch for non-standard SNMP port (161 by default)
+    //strcat(str, ":3161");
+    //session.remote_port = 3161;  
+    session.peername = str;  
+    // set the SNMP version number   
+    session.version = SNMP_VERSION_1;  
+    // set the SNMPv1 community name used for authentication   
+    session.community = (u_char*)community;  
+    session.community_len = strlen((const char*)session.community);  
+
+    // Open the session   
+    if (!(sessionHandle = snmp_open(&session))){
+        snmp_perror("snmp_open");
+        LOG(1)( Log::MPLS, "VLSR: snmp_open failed");
+        return false; 
+    }
+    return true;
 }
 
 void SwitchCtrl_Global::static_disconnectSwitch(struct snmp_session* &sessionHandle) 

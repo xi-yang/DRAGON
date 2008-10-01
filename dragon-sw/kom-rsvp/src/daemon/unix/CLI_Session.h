@@ -35,15 +35,15 @@ extern int    got_alarm;
 #define READ_STOP (-3)
 
 #define TELNET_EXEC     "/usr/bin/telnet"
-#define TELNET_PORT     "23"
+#define TELNET_PORT     "23" //@@@@ change here for non-standard TELNET port
 #define TELNET_PROMPT   "telnet> "
 
 #define SSH_EXEC     "/usr/bin/ssh"
-#define SSH_PORT     "22"
+#define SSH_PORT     "22" //@@@@ change here for non-standard SSH port
 
 #define SHELL_EXEC     "/bin/sh"
 
-#define TL1_TELNET_PORT     "10201"
+#define TL1_TELNET_PORT     "10201"  //@@@@ change here for non-Ciena TL1 port
 
 #define IFCONFIG_PATH     "/sbin/ifconfig"
 
