@@ -1035,8 +1035,8 @@ void SwitchCtrl_Global::removeRsvpSessionReference(Session* session)
 	for (; iter != sessionList.end(); ++iter ) {
 		(*iter)->removeRsvpSessionReference(session);
 		if ((*iter)->isRsvpSessionRefListEmpty()) {
-			delete (*iter);
 			removeSession((*iter));
+			delete (*iter);
 			return;
 		}
 	}
