@@ -65,7 +65,7 @@ void SwitchCtrl_Session::disconnectSwitch()
 { 
     if (snmp_enabled)
         SwitchCtrl_Global::static_disconnectSwitch(snmpSessionHandle); 
-    RSVP_Global::switchController->removeSession(this);
+    //RSVP_Global::switchController->removeSession(this);
 }
 
 bool SwitchCtrl_Session::getSwitchVendorInfo()
