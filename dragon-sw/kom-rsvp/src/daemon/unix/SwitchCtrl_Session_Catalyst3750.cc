@@ -736,8 +736,8 @@ bool SwitchCtrl_Session_Catalyst3750::movePortToVLANAsTagged(uint32 port, uint32
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
         vars = response->variables;
-	hook_getVlanMapFromSnmpVars(vlanmap, vars);
-    	snmp_free_pdu(response);
+	 hook_getVlanMapFromSnmpVars(vlanmap, vars);
+    	 snmp_free_pdu(response);
     }
     else {
        if (status == STAT_SUCCESS){
@@ -750,14 +750,13 @@ bool SwitchCtrl_Session_Catalyst3750::movePortToVLANAsTagged(uint32 port, uint32
     }
    
     uint8 mask=((1<<(7-(vlanID%8)))) & 0xFF;
-    vlanmap.vlanbits[vlanID/8] |= mask;
+    vlanmap.vlanbits[vlanID/8 - ((uint32)(vlanID-1)/1024)*128] |= mask;
 
     // Set the vlan mapping for the port
     sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
-    int j=((vlanID-1)/1024)*128;
     value[0] = 0;
     for (i = 0; i < 128; i++) {
-        snprintf(oct, 3, "%.2x", vlanmap.vlanbits[i+j]);
+        snprintf(oct, 3, "%.2x", vlanmap.vlanbits[i]);
 	strcat(value,oct);
     }
     type='x';
@@ -861,15 +860,14 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
     }
    
     mask=(~(1<<(7-(vlanID%8)))) & 0xFF;
-    vlanmap.vlanbits[vlanID/8] &= mask;
+    vlanmap.vlanbits[vlanID/8 - ((uint32)(vlanID-1)/1024)*128] &= mask;
 
     // Set the vlan mapping for the port
     sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
-    j=((vlanID-1)/1024)*128;
     value[0] = 0;
     for (i = 0; i < 128; i++) {
-        snprintf(oct, 3, "%.2x", vlanmap.vlanbits[i+j]);
-	strcat(value,oct);
+        snprintf(oct, 3, "%.2x", vlanmap.vlanbits[i]);
+        strcat(value,oct);
     }
     type='x';
 
