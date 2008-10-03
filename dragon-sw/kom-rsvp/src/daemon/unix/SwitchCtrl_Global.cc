@@ -1024,6 +1024,7 @@ void SwitchCtrl_Global::removeSession(SwitchCtrl_Session* addSS)
 	for (; iter != sessionList.end(); ++iter ) {
 		if ((*(*iter))==(*addSS)) {
 			sessionList.erase(iter);
+			delete (*iter);
 			return;
 		}
 	}
@@ -1036,7 +1037,6 @@ void SwitchCtrl_Global::removeRsvpSessionReference(Session* session)
 		(*iter)->removeRsvpSessionReference(session);
 		if ((*iter)->isRsvpSessionRefListEmpty()) {
 			removeSession((*iter));
-			delete (*iter);
 			return;
 		}
 	}
