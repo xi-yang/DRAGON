@@ -1023,8 +1023,8 @@ void SwitchCtrl_Global::removeSession(SwitchCtrl_Session* addSS)
 	SwitchCtrlSessionList::Iterator iter = sessionList.begin();
 	for (; iter != sessionList.end(); ++iter ) {
 		if ((*(*iter))==(*addSS)) {
-			sessionList.erase(iter);
 			delete (*iter);
+			sessionList.erase(iter);
 			return;
 		}
 	}
