@@ -801,7 +801,7 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
     oid anOID[MAX_OID_LEN];
     size_t anOID_len = MAX_OID_LEN;
     char type, value[500], oid_str[128], oct[3];
-    int status, i, j;
+    int status, i;
     uint32 port_id;
     portVlanMap vlanmap;
     uint8 mask;

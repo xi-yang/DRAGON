@@ -611,7 +611,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				ssNew = (*sessionIter);
 			}
 
-			if (!ssNew)
+			if (ssNew)
 				ssNew->addRsvpSessionReference(this); // Add this RSVP_Session into a reference list in SwitchControl session (reference for deleteion)
 			
 			if (!ssNew || !ssNew->readVLANFromSwitch()) { //Read/Synchronize to Ethernet switch
