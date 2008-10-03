@@ -115,7 +115,13 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
             if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
             DIE_IF_EQUAL(n, 2);
         }
+        // set mls qos to 'vlan based' for the port
         DIE_IF_NEGATIVE(n= writeShell( "mls qos vlan-based\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        // set mtu to 9216 for the port
+        DIE_IF_NEGATIVE(n= writeShell( "mtu 9216\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
@@ -129,7 +135,11 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
-
+        // set mtu to 9216 for the vlan interface
+        DIE_IF_NEGATIVE(n= writeShell( "mtu 9216\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
         // apply policy
         DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
@@ -149,27 +159,21 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
     }
     else
     {
+        // remove policy-map
         DIE_IF_NEGATIVE(n= writeShell( "no policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( policyMapName, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
-
-        /*??? shutdown vlan ???
-        // enter interface vlan configuration mode 
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+        // remove interface vlan
+        DIE_IF_NEGATIVE(n= writeShell( "no interface vlan ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
-        DIE_IF_NEGATIVE(n= writeShell( "shutdown\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        */
     }
-
 
     // end
     if (!postAction())
