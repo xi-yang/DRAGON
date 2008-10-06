@@ -1859,7 +1859,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, OMPortString, " concatentation type has been found.\n", bufCmd);
+        LOG(3)(Log::MPLS, OMPortString, " concatenation type has been found.\n", bufCmd);
         ret = ReadShellPattern(bufCmd, "Virtual 50MBPS", "Virtual 150MBPS", "OSPFCOST", NULL, 5);
         if (ret == 1)
             funcRet = CATUNIT_50MBPS;
@@ -1870,7 +1870,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
     }
     else if (ret == 2) 
     {
-        LOG(3)(Log::MPLS, OMPortString, " concatentation type checking has been denied.\n", bufCmd);
+        LOG(3)(Log::MPLS, OMPortString, " concatenation type checking has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return funcRet;
     }
@@ -1880,7 +1880,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
 _out:
     if (CATUNIT_UNKNOWN == funcRet)
     {
-        LOG(3)(Log::MPLS, OMPortString, " concatentation type checking via TL1_TELNET failed...\n", bufCmd);
+        LOG(3)(Log::MPLS, OMPortString, " concatenation type checking via TL1_TELNET failed...\n", bufCmd);
     }
     return funcRet;
 }
