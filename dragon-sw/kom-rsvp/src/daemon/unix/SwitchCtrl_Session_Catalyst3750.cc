@@ -1482,8 +1482,10 @@ bool SwitchCtrl_Session_Catalyst3750::readVlanPortMapListALLFromPortVlanMapList(
 			vlanPortMapList::Iterator vpmListIter = vpmList.begin();
 			while (vpmListIter != vpmList.end())
 			{
-			    if ((*vpmListIter).vid == vlanId)
-			    (*vpmListIter).portbits[port/8] = (*vpmListIter).portbits[port/8] + (uint8) exponentOf2((double)(port%8)-1);
+			    if ((*vpmListIter).vid == vlanId) {
+				    port = convertUnifiedPort2Catalyst3750(port);
+				    SetPortBit((*vpmListIter).portbits, port-1);
+			    	}
 			    ++vpmListIter;
 			}
 		}
