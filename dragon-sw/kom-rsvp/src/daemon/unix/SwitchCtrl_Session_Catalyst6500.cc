@@ -938,7 +938,7 @@ bool SwitchCtrl_Session_Catalyst6500::hook_isVLANEmpty(const vlanPortMap &vpm)
 {
     uint8 portbits[MAX_VLAN_PORT_BYTES];
     memset(portbits, 0, MAX_VLAN_PORT_BYTES);
-    return (memcmp(vpm.portbits, portbits, 128) == 0);
+    return (memcmp(vpm.portbits, portbits, MAX_VLAN_PORT_BYTES) == 0);
 }
 
 void SwitchCtrl_Session_Catalyst6500::hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars)
