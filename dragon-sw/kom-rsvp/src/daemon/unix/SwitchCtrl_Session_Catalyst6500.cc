@@ -938,7 +938,7 @@ bool SwitchCtrl_Session_Catalyst6500::hook_isVLANEmpty(const vlanPortMap &vpm)
 {
     uint8 portbits[MAX_VLAN_PORT_BYTES];
     memset(portbits, 0, MAX_VLAN_PORT_BYTES);
-    return (memcmp(vpm.portbits, portbits, MAX_VLAN_PORT_BYTES) == 0);
+    return (memcmp(vpm.portbits, portbits, 128) == 0);
 }
 
 void SwitchCtrl_Session_Catalyst6500::hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars)
@@ -1339,8 +1339,11 @@ bool SwitchCtrl_Session_Catalyst6500::readVlanPortMapListALLFromPortVlanMapList(
 			vlanPortMapList::Iterator vpmListIter = vpmList.begin();
 			while (vpmListIter != vpmList.end())
 			{
-			    if ((*vpmListIter).vid == vlanId)
-			    (*vpmListIter).portbits[port/8] = (*vpmListIter).portbits[port/8] + (uint8) exponentOf2((double)(port%8)-1);
+			    if ((*vpmListIter).vid == vlanId) {
+				    port = convertUnifiedPort2Catalyst6500(port);
+				    SetPortBit((*vpmListIter).portbits, port-1);
+				    //(*vpmListIter).portbits[port/8] = (*vpmListIter).portbits[port/8] + (uint8) exponentOf2((double)(port%8)-1);
+			    	}
 			    ++vpmListIter;
 			}
 		}
