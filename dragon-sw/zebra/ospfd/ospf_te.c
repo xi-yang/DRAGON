@@ -1405,7 +1405,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
 	    u_char* v = top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask;
 	    if (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version)  & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z) {
 		  z_len = ZBUFSIZE;
-		  uncompress(z_buffer, z_len, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) - 4);
+		  uncompress(z_buffer, &z_len, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (uLongf)ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) - 4);
 		  v = z_buffer;
     	    }
 
@@ -1454,7 +1454,8 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 {
   const char* swcap = "Unknown";
   const char* enc  = "Unknown";
-  int i, n;
+  int i;
+  uLongf n;
   float fval, *f;
   u_char *v;
   u_int16_t *dc;
@@ -1537,7 +1538,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	  if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_VLAN_BASIC)) {
 	    if (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z) {
 		n = ZBUFSIZE;
-		uncompress(z_buffer, (uLongf*)&n, v+4, ntohs(*(u_int16_t*)(v)));
+		uncompress(z_buffer, &n, v+4, (uLongf)ntohs(*(u_int16_t*)(v)));
 		v = z_buffer;
     	    }
 	    else 
