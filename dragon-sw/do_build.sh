@@ -96,7 +96,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring kom-rsvp...'
     cd kom-rsvp
-    $CONFIG_SHELL ./configure --prefix=$PREFIX --disable-java-api --disable-altq --with-snmp=$SNMP_PATH $rsvpconf CFLAG=-g CPPFLAG=-g
+    $CONFIG_SHELL ./configure --prefix=$PREFIX --disable-java-api --disable-altq --with-snmp=$SNMP_PATH $rsvpconf CFLAGS=-g CPPFLAGS=-g
     if test $? != 0; then
 	echo "dragon-sw: kom-rsvp configure error!"
 	exit 1
@@ -113,7 +113,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring zebra...'
     cd ../zebra
-    $CONFIG_SHELL ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g
+    $CONFIG_SHELL ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAGS=-g CPPFLAGS=-g
     if test $? != 0; then
 	echo "dragon-sw: zebra configure error!"
 	exit 1
@@ -139,7 +139,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring kom-rsvp...'
     cd kom-rsvp
-    ./configure --prefix=$PREFIX --disable-java-api --disable-altq --with-snmp=$SNMP_PATH $rsvpconf CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --disable-java-api --disable-altq --with-snmp=$SNMP_PATH $rsvpconf CFLAGS=-g CPPFLAGS=-g
     if test $? != 0; then
 	echo "dragon-sw: kom-rsvp configure error!"
 	exit 1
@@ -161,7 +161,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring zebra...'
     cd ../zebra
-    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAGS="-g -m32-bit" CPPFLAGS="-g -m32-bit"
     if test $? != 0; then
         echo "dragon-sw: zebra configure error!"
         exit 1
@@ -187,7 +187,7 @@ case `uname` in
     echo '' && \
         echo 'configuring kom-rsvp...'
     cd kom-rsvp
-    ./configure --prefix=$PREFIX --disable-java-api --disable-altq --with-snmp=$SNMP_PATH --disable-cbq --disable-traffgen $rsvpconf CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --disable-java-api --disable-altq --with-snmp=$SNMP_PATH --disable-cbq --disable-traffgen $rsvpconf CFLAGS=-g CPPFLAGS=-g
     if test $? != 0; then
         echo "dragon-sw: kom-rsvp configure error!"
         exit 1
@@ -204,7 +204,7 @@ case `uname` in
     echo '' && \
         echo 'configuring zebra...'
     cd ../zebra
-    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAG=-g CPPFLAG=-g
+    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAGS=-g CPPFLAGS=-g
     if test $? != 0; then
         echo "dragon-sw: zebra configure error!"
         exit 1
