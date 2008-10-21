@@ -419,7 +419,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
 		{
-			LOG(1)( Log::MPLS, "prcessERO: Invalid inUnumIfID type LOCAL_ID_TYPE_SUBNET_UNI_DEST.");
+			LOG(1)( Log::MPLS, "processERO: Invalid inUnumIfID type LOCAL_ID_TYPE_SUBNET_UNI_DEST.");
 			memset(&vlsr, 0, sizeof(VLSR_Route)); 
 			vLSRoute.push_back(vlsr);                    
 			return false;
@@ -429,7 +429,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			memset(&subnetUniDataSrc, 0, sizeof(subnetUniDataSrc));
 			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(inRtId, (uint8)(inUnumIfID >> 8), subnetUniDataSrc) ) {
 				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
-                            LOG(1)( Log::MPLS, "prcessERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataSrc from OSPFd.");
+                            LOG(1)( Log::MPLS, "processERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataSrc from OSPFd.");
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::SubnetUNISessionFailed);
 				vLSRoute.push_back(vlsr);
@@ -495,7 +495,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				memset(&subnetUniDataDest, 0, sizeof(subnetUniDataDest));
 				if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(destUniDataIf, destUniId, subnetUniDataDest) ) {
 					//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
-	                            LOG(1)( Log::MPLS, "prcessERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
+	                            LOG(1)( Log::MPLS, "processERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
 					vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::SubnetUNISessionFailed);
 					vLSRoute.push_back(vlsr);                    
@@ -517,7 +517,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		//creating destination G_UNI client session
 		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
 		{
-			LOG(1)( Log::MPLS, "prcessERO: Invalid outUnumIfID type LOCAL_ID_TYPE_SUBNET_UNI_SRC.");
+			LOG(1)( Log::MPLS, "processERO: Invalid outUnumIfID type LOCAL_ID_TYPE_SUBNET_UNI_SRC.");
 			memset(&vlsr, 0, sizeof(VLSR_Route)); 
 			vLSRoute.push_back(vlsr);                    
 			return false;
@@ -528,7 +528,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				memset(&subnetUniDataDest, 0, sizeof(subnetUniDataDest));
 				if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(outRtId, (uint8)(outUnumIfID>>8), subnetUniDataDest) ) {
 					//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
-	                            LOG(1)( Log::MPLS, "prcessERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
+	                            LOG(1)( Log::MPLS, "processERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
 					vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::SubnetUNISessionFailed);
 					vLSRoute.push_back(vlsr);                    
@@ -628,7 +628,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			//Check for VLAN/ports availability based on vlsr (vlsr_route)... (First PATH message only)
 			//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 			if (!foundSession && ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
-                            LOG(1)( Log::MPLS, "prcessERO: hasVLSRouteConflictonSwitch returned true.");
+                            LOG(1)( Log::MPLS, "processERO: hasVLSRouteConflictonSwitch returned true.");
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vlsr.errCode = (ERROR_SPEC_Object::RoutingProblem << 16 | ERROR_SPEC_Object::MPLSLabelAllocationFailure);
 				vLSRoute.push_back(vlsr);                    
