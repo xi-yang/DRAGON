@@ -161,7 +161,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring zebra...'
     cd ../zebra
-    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAGS="-g -m32-bit" CPPFLAGS="-g -m32-bit"
+    ./configure --prefix=$PREFIX --enable-dragon $zebraconf CFLAGS=-g CPPFLAGS=-g
     if test $? != 0; then
         echo "dragon-sw: zebra configure error!"
         exit 1
