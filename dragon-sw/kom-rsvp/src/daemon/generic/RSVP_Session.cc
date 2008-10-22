@@ -71,10 +71,14 @@ Session::~Session() {
 	if (narbClient)
 		delete narbClient;
 
-	if (pSubnetUniSrc)
+	if (pSubnetUniSrc) {
+		pSubnetUniSrc->removeRsvpSessionReference(this);
 		delete pSubnetUniSrc;
-	if (pSubnetUniDest)
-		delete pSubnetUniDest;
+	}
+	if (pSubnetUniDest) {
+		pSubnetUniDest->removeRsvpSessionReference(this);
+		delete pSubnetUniDest; 
+	}
 
 	RSVP_Global::switchController->removeRsvpSessionReference(this); 
 }
