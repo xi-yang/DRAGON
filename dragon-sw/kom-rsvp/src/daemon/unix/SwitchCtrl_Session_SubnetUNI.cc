@@ -957,7 +957,7 @@ _out:
 }
 
 //dlt-elow::myeflow1:myctag;
-bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasUntaggedMulticast)
+bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasIngressUntaggedMulticast, bool hasEgressUntaggedMulticast)
 {
     int ret = 0;
 
@@ -994,7 +994,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasUnt
     {
         LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW has been deleted successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-        if (!hasUntaggedMulticast)
+        if (!hasIngressUntaggedMulticast&&!hasEgressUntaggedMulticast)
             return true;
         //otherwise continue to delete other eflows
     }
@@ -1007,7 +1007,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasUnt
     else 
         goto _out;
 
-    if (hasUntaggedMulticast)
+    if (hasIngressUntaggedMulticast)
     {
         sprintf(bufCmd, "dlt-eflow::dcs_eflow_%s_in_multicast:%d;", vcgName.chars(), getNewCtag());
        
@@ -1030,7 +1030,10 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasUnt
         }
         else 
             goto _out;
+    }
 
+    if (hasEgressUntaggedMulticast)
+    {
         sprintf(bufCmd, "dlt-eflow::dcs_eflow_%s_out_multicast:%d;", vcgName.chars(), getNewCtag());
     
         if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
@@ -1053,7 +1056,6 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasUnt
         else 
             goto _out;
     }
-
 
 _out:
         LOG(3)(Log::MPLS, vcgName, " EFLOWs deletion via TL1_TELNET failed...\n", bufCmd);

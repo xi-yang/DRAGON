@@ -125,7 +125,7 @@ public:
 
 	bool hasEFLOW_TL1(String& vcgName, bool ingress = true, bool untaggedMulticast = false);
 	bool createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh = 0, int vlanTrunk = 0);
-	bool deleteEFLOWs_TL1(String& vcgName, bool hasUntaggedMulticast = false);
+	bool deleteEFLOWs_TL1(String& vcgName, bool hasIngressUntaggedMulticast = false, bool hasEgressUntaggedMulticast = false);
 	bool hasVCG_TL1(String& vcgName);
 	bool createVCG_TL1(String& vcgName, bool tunnelMode = true);
 	bool deleteVCG_TL1(String& vcgName);
@@ -161,8 +161,9 @@ public:
 	{
 		if (hasEFLOW_TL1(currentVCG))
 		{
-			bool hasUntaggedMulticast = hasEFLOW_TL1(currentVCG, true, true);
-			deleteEFLOWs_TL1(currentVCG, hasUntaggedMulticast);
+			bool hasIngressUntaggedMulticast = hasEFLOW_TL1(currentVCG, true, true);
+			bool hasEgressUntaggedMulticast = hasEFLOW_TL1(currentVCG, false, true);
+			deleteEFLOWs_TL1(currentVCG, hasIngressUntaggedMulticast, hasEgressUntaggedMulticast);
 		}
 		return deleteVCG_TL1(currentVCG);
 	}
