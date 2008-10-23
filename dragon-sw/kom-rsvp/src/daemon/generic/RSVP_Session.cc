@@ -73,14 +73,14 @@ Session::~Session() {
 
 	if (pSubnetUniSrc) {
 		pSubnetUniSrc->removeRsvpSessionReference(this);
-		delete pSubnetUniSrc;
+		RSVP_Global::switchController->removeSession(pSubnetUniSrc); //delete pSubnetUniSrc inside
 	}
 	if (pSubnetUniDest) {
 		pSubnetUniDest->removeRsvpSessionReference(this);
-		delete pSubnetUniDest; 
+		RSVP_Global::switchController->removeSession(pSubnetUniDest); //delete pSubnetUniDest inside
 	}
 
-	RSVP_Global::switchController->removeRsvpSessionReference(this); 
+	RSVP_Global::switchController->removeRsvpSessionReference(this); //noop for subnetUNI sessions
 }
 
 void Session::deleteAll() {

@@ -1006,23 +1006,23 @@ void SwitchCtrl_Global::readPreservedLocalIds()
 }
     
 //One unique session per switch
-bool SwitchCtrl_Global::addSession(SwitchCtrl_Session* addSS)
+bool SwitchCtrl_Global::addSession(SwitchCtrl_Session* scSS)
 {
 	SwitchCtrlSessionList::Iterator iter = sessionList.begin();
 	for (; iter != sessionList.end(); ++iter ) {
-		if ((*(*iter))==(*addSS))
+		if ((*(*iter))==(*scSS))
 			return false;
 	}
 	//adding new session
-	sessionList.push_front(addSS);
+	sessionList.push_front(scSS);
 	return  true;
 }
 
-void SwitchCtrl_Global::removeSession(SwitchCtrl_Session* addSS)
+void SwitchCtrl_Global::removeSession(SwitchCtrl_Session* scSS)
 {
 	SwitchCtrlSessionList::Iterator iter = sessionList.begin();
 	for (; iter != sessionList.end(); ++iter ) {
-		if ((*(*iter))==(*addSS)) {
+		if ((*(*iter))==(*scSS)) {
 			delete (*iter);
 			sessionList.erase(iter);
 			return;
