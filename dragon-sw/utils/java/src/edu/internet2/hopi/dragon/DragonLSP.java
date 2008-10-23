@@ -22,6 +22,7 @@ public class DragonLSP {
 	private String gpid;
 	private int srcVtag;
 	private int dstVtag;
+	private int e2eVtag;
 	private String status;
 	private ArrayList<String> ero;
 	private ArrayList<String> subnetEro;
@@ -159,12 +160,12 @@ public class DragonLSP {
 		return this.gpid;
 	}
 	
-	public void setVTAG(int vtag){
-		this.srcVtag = vtag;
+	public void setE2EVtag(int vtag){
+		this.e2eVtag = vtag;
 	}
 	
-	public int getVTAG(){
-		return this.srcVtag;
+	public int getE2EVtag(){
+		return this.e2eVtag;
 	}
 	
 	public void setLSPName(String name){

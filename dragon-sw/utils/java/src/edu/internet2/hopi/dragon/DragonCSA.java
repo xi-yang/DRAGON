@@ -190,18 +190,25 @@ public class DragonCSA {
 			/* Set VLAN tag */
 			int srcVtag = lsp.getSrcVtag();
 			int destVtag = lsp.getDstVtag();
+			int e2eVtag = lsp.getE2EVtag();
 			String srcLocalIdType = lsp.getSrcLocalID().getType();
 			String destLocalIdType = lsp.getDstLocalID().getType();
 			if(DragonLocalID.SUBNET_INTERFACE.equals(srcLocalIdType) && 
 					DragonLocalID.SUBNET_INTERFACE.equals(destLocalIdType)){
 				cmdResult += command("set vtag subnet-ingress " + vtagToString(srcVtag));
 				cmdResult += command("set vtag subnet-egress " + vtagToString(destVtag));
-			}else{
-				if(srcVtag == DragonLSP.VTAG_ANY){
+			}else if(e2eVtag > 0){
+				cmdResult += command("set vtag " + e2eVtag);
+			}else if(srcVtag > 0){
+				cmdResult += command("set vtag " + srcVtag);
+			}else if(srcVtag > 0){
+				cmdResult += command("set vtag " + srcVtag);
+			}else if(destVtag > 0){
+				cmdResult += command("set vtag " + destVtag);
+			}else if(srcVtag == DragonLSP.VTAG_ANY){
 					cmdResult += command("set vtag any");
-				}else if(srcVtag > 0){
-					cmdResult += command("set vtag " + lsp.getVTAG());
-				}
+			}else if(destVtag == DragonLSP.VTAG_ANY){
+					cmdResult += command("set vtag any");
 			}
 			
 			/* Verify parameters set and commit lsp */
@@ -329,6 +336,8 @@ public class DragonCSA {
 					swcap = swcap.substring(0, swcap.length() -1);
 				}else if(token.matches("G-Pid")){ /*Get gpid */
 					gpid = st.nextToken();
+				}else if(token.matches("Subnet")){
+					st.nextToken(); //discard stray Ingress/Egress token
 				}else if(token.matches("Ingress")){ /*Get source local ID */
 					/* Clear unimportant fields */
 					for(int i = 0; i < 3; i++){st.nextToken();}

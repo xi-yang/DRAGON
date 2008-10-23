@@ -92,7 +92,7 @@ public class UNIClient {
 													lsp.getDstIP(), 
 													lsp.getDstLocalID().getTypeAsGMPLS(), 
 													lsp.getDstLocalID().getNumber(), 
-													lsp.getVTAG(), 
+													lsp.getE2EVtag(), 
 													"implicit", "implicit");
 		
 		RSVPSessionAttribute sessionAttribute = new RSVPSessionAttribute(7, 7, 0, sessionName); //default 7 priorities
