@@ -2133,7 +2133,10 @@ bool SwitchCtrl_Session_SubnetUNI::hasSNCInStableWorkingState()
             LOG(3)(Log::MPLS, "verifySNCInStableWorkingState found SNC#", -ret, " in error or unstable state.\n");
             return false;
         }
-        //else ret > 0 --> neither working or error wait more
+        else //ret > 0 --> neither working or error wait 10 more seconds
+        {
+            LOG(5)(Log::MPLS, "verifySNCInStableWorkingState return ", ret, "...  will continue polling after ", interval, " seconds. \n");
+        }
     }
 
     LOG(1)(Log::MPLS, "verifySNCInStableWorkingState failed to confirm that all SNCs are in stable working state after 60 seconds.\n");
