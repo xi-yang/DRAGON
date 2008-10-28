@@ -77,7 +77,12 @@ public:
 	}
 	//Backward compatibility with general SwitchCtrl_Session operations
 	virtual bool connectSwitch() { return CLI_Session::engage(); }
-	virtual void disconnectSwitch() { CLI_Session::disengage(NULL); return; }
+	virtual void disconnectSwitch() 
+	{
+		char canc_user[50];
+		sprintf (canc_user, "canc-user::%s:%d;", CLI_USERNAME, getNewCtag());
+		CLI_Session::disengage(canc_user);
+	}
 	virtual bool refresh() { return true; } //NOP
 	
 	//Preparing UNI parameters
