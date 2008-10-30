@@ -1074,7 +1074,7 @@ void SwitchCtrl_Session_Catalyst3750::hook_getPortMapFromSnmpVars(vlanPortMap &v
 
 bool SwitchCtrl_Session_Catalyst3750::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 {
-    port = convertUnifiedPort2Catalyst3750(port);
+    //port = convertUnifiedPort2Catalyst3750(port);
     return HasPortBit(vpm.portbits, port-1);
 }
 
