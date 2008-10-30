@@ -1067,7 +1067,8 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createPortToIDRefTable(portRefIDList 
                                 tmp_slot_id = 0; 
                                 if (sscanf(ref_str, "GigabitEthernet%d/0/%d", &tmp_slot_id, &tmp_port_id) == 2) {
                                   if (tmp_port_id>=CATALYST6500_MIN_PORT_ID && tmp_port_id<= CATALYST6500_MAX_PORT_ID ) {
-	                                   tmp_port_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET);
+	                                   ref_id.port_bit = (tmp_slot_id&0xf)*128 + (tmp_port_id&0xff);
+	                                   tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET);
 	                                   ref_id.port_id = ((tmp_shelf_id&0xf) << 12) | ((tmp_slot_id&0xf)<<8) | (tmp_port_id&0xff);
                                         	portRefIdConvList.push_back(ref_id);
         				    } else {
@@ -1076,7 +1077,8 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createPortToIDRefTable(portRefIDList 
                                 }
                                 else if (sscanf(ref_str, "GigabitEthernet%d/%d", &tmp_slot_id, &tmp_port_id) == 2) {
     				      if (tmp_port_id>=CATALYST6500_MIN_PORT_ID && tmp_port_id<= CATALYST6500_MAX_PORT_ID ) {
-	                                   tmp_port_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET);
+	                                   ref_id.port_bit = (tmp_slot_id&0xf)*128 + (tmp_port_id&0xff);
+	                                   tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET);
 	                                   ref_id.port_id = ((tmp_shelf_id&0xf) << 12) | ((tmp_slot_id&0xf)<<8) | (tmp_port_id&0xff);
 	                                   portRefIdConvList.push_back(ref_id);
         				    } else {
@@ -1085,7 +1087,8 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createPortToIDRefTable(portRefIDList 
                                 }
                                 else if (sscanf(ref_str, "TenGigabitEthernet%d/0/%d", &tmp_slot_id, &tmp_port_id) == 2) {
     				      if (tmp_port_id>=CATALYST6500_MIN_PORT_ID && tmp_port_id<= CATALYST6500_MAX_PORT_ID ) {
-	                                   tmp_port_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET);
+	                                   ref_id.port_bit = (tmp_slot_id&0xf)*128 + (tmp_port_id&0xff);
+	                                   tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET);
 	                                   ref_id.port_id = ((tmp_shelf_id&0xf) << 12) | ((tmp_slot_id&0xf)<<8) | (tmp_port_id&0xff);
 	                                   portRefIdConvList.push_back(ref_id);
         				    } else {
@@ -1094,7 +1097,8 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createPortToIDRefTable(portRefIDList 
                                 }
                                 else if (sscanf(ref_str, "TenGigabitEthernet%d/%d", &tmp_slot_id, &tmp_port_id) == 2) {
     				      if (tmp_port_id>=CATALYST6500_MIN_PORT_ID && tmp_port_id<= CATALYST6500_MAX_PORT_ID ) {
-	                                   tmp_port_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET);
+	                                   ref_id.port_bit = (tmp_slot_id&0xf)*128 + (tmp_port_id&0xff);
+	                                   tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET);
 	                                   ref_id.port_id = ((tmp_shelf_id&0xf) << 12) | ((tmp_slot_id&0xf)<<8) | (tmp_port_id&0xff);
 	                                   portRefIdConvList.push_back(ref_id);
         				    } else {

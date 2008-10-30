@@ -94,6 +94,7 @@ typedef SimpleList<portVlanMap> portVlanMapList;
 struct portRefID{
     uint32 ref_id;
     uint32 port_id;
+    uint32 port_bit;
 };
 typedef SimpleList<portRefID> portRefIDList;
 

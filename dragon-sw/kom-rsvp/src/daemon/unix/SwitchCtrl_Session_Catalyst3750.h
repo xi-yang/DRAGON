@@ -111,8 +111,31 @@ private:
 	bool readVlanPortMapListALLFromPortVlanMapList(vlanPortMapList &, portVlanMapList &);
 
 	SwitchCtrl_Session_Catalyst3750_CLI cliSession;
+
+	uint32 convertUnifiedPort2Catalyst3750(uint32 port)
+	{
+	    portRefIDList::Iterator it;
+	    for (it = portRefIdConvList.begin(); it != portRefIdConvList.end(); ++it)
+	    {
+	        if ((*it).port_id == port)
+	            return (*it).port_bit;
+	    }
+	    return 0;
+	}
+
+	uint32 convertCatalyst37502UnifiedPort(uint32 port)
+	{
+	    portRefIDList::Iterator it;
+	    for (it = portRefIdConvList.begin(); it != portRefIdConvList.end(); ++it)
+	    {
+	        if ((*it).port_bit == port)
+	            return (*it).port_id;
+	    }
+	    return 0;
+	}
 };
 
+/*
 inline uint32 convertUnifiedPort2Catalyst3750(uint32 port)
 {
 	return (((port>>8)&0xf)*128 + (port&0xff)); // only slot and port parts (w/o chasis/shelf)
@@ -121,5 +144,6 @@ inline uint32 convertCatalyst37502UnifiedPort(uint32 port)
 {
 	return (((((port-1)/128)&0xf)<<8) | ((port-1)%128 + 1));
 }
+*/
 
 #endif /*SWITCHCTRL_SESSION_CATALYST3750_H_*/

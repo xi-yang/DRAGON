@@ -1151,9 +1151,9 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
     int status;
     bool running = true;
     size_t rootlen;
-    uint32 tmp_port_id = 100000; 
-    uint32 tmp_slot_id = 100000; 
-    uint32 tmp_mod_id = 100000; 
+    uint32 tmp_port_id = 0; 
+    uint32 tmp_slot_id = 0; 
+    uint32 tmp_mod_id = 0; 
 
     if (!snmpEnabled())
         return false;
@@ -1183,10 +1183,11 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
                                     ref_str[0] = 0;
                             if (ref_str[0] != 0) {
                                 ref_id.ref_id = (int)vars->name[vars->name_length - 1];
-                                tmp_port_id = 100000; tmp_mod_id = 100000; 
+                                tmp_port_id = 0;tmp_slot_id = 0; tmp_mod_id = 0; 
                                 if (sscanf(ref_str, "GigabitEthernet%d/%d/%d", &tmp_mod_id, &tmp_slot_id, &tmp_port_id) == 3) {
 	                                if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
-	                                      tmp_port_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET);
+	                                      ref_id.port_bit = (tmp_slot_id&0xf)*128 + (tmp_port_id&0xff);
+	                                      tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET);
 	                                      ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
 	                                      portRefIdConvList.push_back(ref_id);
 	      				    } else {
@@ -1195,7 +1196,8 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
                                 }
                                 else if (sscanf(ref_str, "GigabitEthernet%d/%d", &tmp_slot_id, &tmp_port_id) == 2) {
 	                                if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
-	                                      tmp_port_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET);
+	                                      ref_id.port_bit = (tmp_slot_id&0xf)*128 + (tmp_port_id&0xff);
+	                                      tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET);
 	                                      ref_id.port_id = (((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
 	                                      portRefIdConvList.push_back(ref_id);
         				    } else {
@@ -1204,7 +1206,8 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
                                 }
                                 else if (sscanf(ref_str, "TenGigabitEthernet%d/%d/%d", &tmp_mod_id, &tmp_slot_id, &tmp_port_id) == 3) {
 	                                if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
-	                                      tmp_port_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET);
+	                                      ref_id.port_bit = (tmp_slot_id&0xf)*128 + (tmp_port_id&0xff);
+	                                      tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET);
 	                                      ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
 	                                      portRefIdConvList.push_back(ref_id);
         				    } else {
@@ -1213,7 +1216,8 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
                                 }
                                 else if (sscanf(ref_str, "TenGigabitEthernet%d/%d", &tmp_slot_id, &tmp_port_id) == 2) {
 	                                if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
-	                                      tmp_port_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET);
+	                                      ref_id.port_bit = (tmp_slot_id&0xf)*128 + (tmp_port_id&0xff);
+	                                      tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET);
 	                                      ref_id.port_id = (((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
 	                                      portRefIdConvList.push_back(ref_id);
         				    } else {
@@ -1229,9 +1233,9 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
                                 */
                                 else if (sscanf(ref_str, "FastEthernet%d/%d/%d", &tmp_mod_id, &tmp_slot_id, &tmp_port_id) == 3) {
     				      if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
-	                                    tmp_port_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_FASTETH_OFFSET);
-	                                    //ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | ((tmp_port_id+2)&0xff));
-	                                    ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
+	                                    ref_id.port_bit = (tmp_slot_id&0xf)*128 + ((tmp_port_id+2)&0xff);
+	                                    tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_FASTETH_OFFSET);
+	                                    ref_id.port_id = (((tmp_mod_id&0xf) << 12) | (((tmp_slot_id+2)&0xf) << 8) | (tmp_port_id&0xff));
 	                                    portRefIdConvList.push_back(ref_id);
         				    } else {
             				    LOG(2) (Log::Error, "Illegal Port ID: ", tmp_port_id);
@@ -1239,9 +1243,9 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
                                 }								
                                 else if (sscanf(ref_str, "FastEthernet%d/%d", &tmp_slot_id, &tmp_port_id) == 2) {
     				      if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
-	                                    tmp_port_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_FASTETH_OFFSET);
-	                                    //ref_id.port_id = (((tmp_slot_id&0xf) << 8) | ((tmp_port_id+2)&0xff));
-	                                    ref_id.port_id = (((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
+	                                    ref_id.port_bit = (tmp_slot_id&0xf)*128 + ((tmp_port_id+2)&0xff);
+	                                    tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_FASTETH_OFFSET);
+	                                    ref_id.port_id = (((tmp_slot_id&0xf) << 8) | ((tmp_port_id+2)&0xff));
 	                                    portRefIdConvList.push_back(ref_id);
         				    } else {
             				    LOG(2) (Log::Error, "Illegal Port ID: ", tmp_port_id);
