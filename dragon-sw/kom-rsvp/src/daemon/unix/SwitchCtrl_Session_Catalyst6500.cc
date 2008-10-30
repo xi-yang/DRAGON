@@ -550,6 +550,11 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
 
     port_id = hook_convertPortIDToInterface(port);
     port_bit = convertUnifiedPort2Catalyst6500(port);
+    if (port_bit == 0)
+    {
+        LOG(2)( Log::MPLS, "VLSR: SNMP: Unknown port ", port);
+        return false;
+    }
 
     String tag_oid_str = ".1.3.6.1.4.1.9.9.68.1.2.2.1.2";
     sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
@@ -627,6 +632,12 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged(uint32 port, uint32
     // Get the current vlan mapping for the port
     port_id = hook_convertPortIDToInterface(port);
     port_bit = convertUnifiedPort2Catalyst6500(port);
+    if (port_bit == 0)
+    {
+        LOG(2)( Log::MPLS, "VLSR: SNMP: Unknown port ", port);
+        return false;
+    }
+
     sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
     status = read_objid(oid_str, anOID, &anOID_len);
 
@@ -714,6 +725,11 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
     	return false; //don't touch the control port!
 	
     port_id = hook_convertPortIDToInterface(port);
+    if (port_id == 0)
+    {
+        LOG(2)( Log::MPLS, "VLSR: SNMP: Unknown port ", port);
+        return false;
+    }
 
     // We only need the remove the port if the port is Trunkport	
     if (!isPortTrunking(port)) {
@@ -955,6 +971,8 @@ void SwitchCtrl_Session_Catalyst6500::hook_getPortMapFromSnmpVars(vlanPortMap &v
 bool SwitchCtrl_Session_Catalyst6500::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 {
     uint32 port_bit = convertUnifiedPort2Catalyst6500(port);
+    if (port_bit == 0)
+        return false;
     return HasPortBit(vpm.portbits, port_bit-1);
 }
 
@@ -973,7 +991,8 @@ bool SwitchCtrl_Session_Catalyst6500::hook_getPortListbyVLAN(PortList& portList,
         {
             port = bit+1;
             port = convertCatalyst65002UnifiedPort(port);
-            portList.push_back(port);
+            if (port != 0)
+                portList.push_back(port);
         }
     }
 
@@ -1332,8 +1351,8 @@ bool SwitchCtrl_Session_Catalyst6500::readVlanPortMapListALLFromPortVlanMapList(
     {
 	portId = (*pvmListIter).pid;
 	uint32 port_id = hook_convertPortInterfaceToID(portId);
-	uint32 port = convertUnifiedPort2Catalyst6500(port_id);
-	if (port == 0) {
+	uint32 port_bit = convertUnifiedPort2Catalyst6500(port_id);
+	if (port_bit == 0) {
 		++pvmListIter;
 		continue;
 	}
@@ -1350,7 +1369,7 @@ bool SwitchCtrl_Session_Catalyst6500::readVlanPortMapListALLFromPortVlanMapList(
 			{
 			    if ((*vpmListIter).vid == vlanId) {
 				    //port = convertUnifiedPort2Catalyst6500(port);
-				    SetPortBit((*vpmListIter).portbits, port-1);
+				    SetPortBit((*vpmListIter).portbits, port_bit-1);
 				    //(*vpmListIter).portbits[port/8] = (*vpmListIter).portbits[port/8] + (uint8) exponentOf2((double)(port%8)-1);
 			    	}
 			    ++vpmListIter;
