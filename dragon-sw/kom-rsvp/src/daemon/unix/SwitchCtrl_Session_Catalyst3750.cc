@@ -1495,7 +1495,7 @@ bool SwitchCtrl_Session_Catalyst3750::readVlanPortMapListALLFromPortVlanMapList(
 			while (vpmListIter != vpmList.end())
 			{
 			    if ((*vpmListIter).vid == vlanId) {
-				    port = convertUnifiedPort2Catalyst3750(port);
+				    //port = convertUnifiedPort2Catalyst3750(port);
 				    SetPortBit((*vpmListIter).portbits, port-1);
 			    	}
 			    ++vpmListIter;

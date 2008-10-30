@@ -954,7 +954,7 @@ void SwitchCtrl_Session_Catalyst6500::hook_getPortMapFromSnmpVars(vlanPortMap &v
 
 bool SwitchCtrl_Session_Catalyst6500::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 {
-    port = convertUnifiedPort2Catalyst6500(port);
+    //port = convertUnifiedPort2Catalyst6500(port);
     return HasPortBit(vpm.portbits, port-1);
 }
 
@@ -1331,7 +1331,8 @@ bool SwitchCtrl_Session_Catalyst6500::readVlanPortMapListALLFromPortVlanMapList(
     while (pvmListIter != pvmList.end()) 
     {
 	portId = (*pvmListIter).pid;
-	uint32 port = hook_convertPortInterfaceToID(portId);
+	uint32 port_id = hook_convertPortInterfaceToID(portId);
+	uint32 port = convertUnifiedPort2Catalyst6500(port_id);
 	if (port == 0) {
 		++pvmListIter;
 		continue;
@@ -1348,7 +1349,7 @@ bool SwitchCtrl_Session_Catalyst6500::readVlanPortMapListALLFromPortVlanMapList(
 			while (vpmListIter != vpmList.end())
 			{
 			    if ((*vpmListIter).vid == vlanId) {
-				    port = convertUnifiedPort2Catalyst6500(port);
+				    //port = convertUnifiedPort2Catalyst6500(port);
 				    SetPortBit((*vpmListIter).portbits, port-1);
 				    //(*vpmListIter).portbits[port/8] = (*vpmListIter).portbits[port/8] + (uint8) exponentOf2((double)(port%8)-1);
 			    	}
