@@ -196,6 +196,15 @@ void ConfigFileReader::addSlot(String slot_type, uint16 slot_num) {
 	else if (slot_type == "te") {
 		se.slot_type = SLOT_TYPE_TENGIGE;
 	}
+	else if (slot_type == "gi+") {
+		se.slot_type = SLOT_TYPE_GIGE_OFFSET;
+	}
+	else if (slot_type == "te+") {
+		se.slot_type = SLOT_TYPE_TENGIGE_OFFSET;
+	}
+	else if (slot_type == "fa+") {
+		se.slot_type = SLOT_TYPE_FASTETH_OFFSET;
+	}
 	else
 		return;
 	se.slot_num = slot_num;

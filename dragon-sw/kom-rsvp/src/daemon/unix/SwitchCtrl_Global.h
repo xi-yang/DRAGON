@@ -271,6 +271,9 @@ typedef SimpleList<SwitchCtrl_Session*> SwitchCtrlSessionList;
 #define		SLOT_TYPE_ILLEGAL 0
 #define		SLOT_TYPE_GIGE 1
 #define		SLOT_TYPE_TENGIGE 2
+#define		SLOT_TYPE_GIGE_OFFSET 3
+#define		SLOT_TYPE_TENGIGE_OFFSET 4
+#define		SLOT_TYPE_FASTETH_OFFSET 5
 struct slot_entry {
 	uint16 slot_type;
 	uint16 slot_num;
@@ -328,6 +331,7 @@ public:
 	/*RSVPD.conf*/
 	void addSlotEntry(slot_entry &se) { slotList.push_back(se); }
 	uint16 getSlotType(uint16 slot_num);
+	uint16 getSlotOffset(uint16 slot_type);
 	void addExclEntry(sw_layer_excl_name_entry &ee) { exclList.push_back(ee); }
 	uint32 getExclEntry(String session_name);
 	SONET_TSpec* addEosMapEntry(float bandwidth, String& spe, int ncc);

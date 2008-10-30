@@ -1141,6 +1141,17 @@ uint16 SwitchCtrl_Global::getSlotType(uint16 slot_num)
     //return SLOT_TYPE_ILLEGAL;
 }
 
+uint16 SwitchCtrl_Global::getSlotOffset(uint16 slot_type)
+{
+    SimpleList<slot_entry>::Iterator it = slotList.begin();
+    for (; it != slotList.end(); ++it) {
+        if ((*it).slot_type == slot_type)
+            return (*it).slot_num;
+    }
+
+    return 0;
+}
+
 uint32 SwitchCtrl_Global::getExclEntry(String session_name)
 {
     uint32 excl_options = 0;	
