@@ -538,7 +538,7 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
     bool ret = true;
     vlanPortMap * vpmAll = NULL, *vpmUntagged = NULL;
     char type, value[300], oid_str[128];
-    uint32 port_id;
+    uint32 port_id, port_bit;
 
     if ((!active) || port==SWITCH_CTRL_PORT || vlanID<CATALYST6500_MIN_VLAN_ID || vlanID>CATALYST6500_MAX_VLAN_ID) 
     	return false; //don't touch the control port!
@@ -549,7 +549,7 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
     PortStaticAccessOn(port);
 
     port_id = hook_convertPortIDToInterface(port);
-    port = convertUnifiedPort2Catalyst6500(port);
+    port_bit = convertUnifiedPort2Catalyst6500(port);
 
     String tag_oid_str = ".1.3.6.1.4.1.9.9.68.1.2.2.1.2";
     sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
@@ -567,11 +567,11 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
         if (vpmUntagged)
             //vpmUntagged->ports&=mask;
-            ResetBit(vpmUntagged->portbits, port-1);
+            ResetBit(vpmUntagged->portbits, port_bit-1);
         vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
         if (vpmAll)
     	    //vpmAll->ports&=mask;
-            ResetBit(vpmAll->portbits, port-1);
+            ResetBit(vpmAll->portbits, port_bit-1);
 
         //Set original ports back to their "tagged" or "untagged" states
         if (vpmUntagged) setVlanPortMapById(vlanPortMapListUntagged, old_vlan, &vpmUntagged->portbits[0]); 
@@ -582,12 +582,12 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
 
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged) { //bit==1 means port is untagged
-        SetPortBit(vpmUntagged->portbits, port-1);
+        SetPortBit(vpmUntagged->portbits, port_bit-1);
         setVlanPortMapById(vlanPortMapListUntagged, vlanID, &vpmUntagged->portbits[0]); 
     }
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
-       SetPortBit(vpmAll->portbits, port-1);
+       SetPortBit(vpmAll->portbits, port_bit-1);
         setVlanPortMapById(vlanPortMapListAll, vlanID, &vpmAll->portbits[0]); 
     }
     else
@@ -609,7 +609,7 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged(uint32 port, uint32
     char type, value[500], oid_str[128], oct[3];
     int status, i;
     portVlanMap vlanmap;
-    uint32 port_id;
+    uint32 port_id, port_bit;
     String tag_oid_str[4] = { ".1.3.6.1.4.1.9.9.46.1.6.1.1.4", ".1.3.6.1.4.1.9.9.46.1.6.1.1.17", \
     				".1.3.6.1.4.1.9.9.46.1.6.1.1.18", ".1.3.6.1.4.1.9.9.46.1.6.1.1.19"};
 
@@ -626,7 +626,7 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged(uint32 port, uint32
         
     // Get the current vlan mapping for the port
     port_id = hook_convertPortIDToInterface(port);
-    port = convertUnifiedPort2Catalyst6500(port);
+    port_bit = convertUnifiedPort2Catalyst6500(port);
     sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
     status = read_objid(oid_str, anOID, &anOID_len);
 
@@ -671,14 +671,14 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged(uint32 port, uint32
    
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
-        SetBit(vpmAll->portbits, port-1);
+        SetBit(vpmAll->portbits, port_bit-1);
     } else
         return false;
 
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged) {
          //bit==0 means port is untagged
-        ResetBit(vpmUntagged->portbits, port-1);
+        ResetBit(vpmUntagged->portbits, port_bit-1);
     }
     else
         return false;
@@ -704,7 +704,7 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
     size_t anOID_len = MAX_OID_LEN;
     char type, value[500], oid_str[128], oct[3];
     int status, i;
-    uint32 port_id;
+    uint32 port_id, port_bit;
     portVlanMap vlanmap;
     uint8 mask;
     String tag_oid_str[4] = { ".1.3.6.1.4.1.9.9.46.1.6.1.1.4", ".1.3.6.1.4.1.9.9.46.1.6.1.1.17", \
@@ -780,15 +780,15 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
 
 _update_vpm:
 
-    port = convertUnifiedPort2Catalyst6500(port);
+    port_bit = convertUnifiedPort2Catalyst6500(port);
     if (vlanID>=CATALYST6500_MIN_VLAN_ID && vlanID<=CATALYST6500_MAX_VLAN_ID) {
        vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
        if (vpmAll) {
-          ResetBit(vpmAll->portbits, port-1);
+          ResetBit(vpmAll->portbits, port_bit-1);
           vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
           if (vpmUntagged) {
              //bit==1 means port is untagged
-             SetBit(vpmUntagged->portbits, port-1);
+             SetBit(vpmUntagged->portbits, port_bit-1);
       	  }
     	  else
             return false;
@@ -954,8 +954,8 @@ void SwitchCtrl_Session_Catalyst6500::hook_getPortMapFromSnmpVars(vlanPortMap &v
 
 bool SwitchCtrl_Session_Catalyst6500::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 {
-    //port = convertUnifiedPort2Catalyst6500(port);
-    return HasPortBit(vpm.portbits, port-1);
+    uint32 port_bit = convertUnifiedPort2Catalyst6500(port);
+    return HasPortBit(vpm.portbits, port_bit-1);
 }
 
 bool SwitchCtrl_Session_Catalyst6500::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
