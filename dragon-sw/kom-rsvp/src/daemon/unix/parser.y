@@ -226,7 +226,8 @@ ip_address:
 %%
 
 extern void yyerror(const char *s) {
-	cerr << s << " in config file: " << configfile << " in line " << yylineno << endl;
+	cerr << s << " in config file: " << configfile << " on line " << yylineno << endl;
+	ERROR(5)( Log::Error, s, "in config file:", configfile, "on line", yylineno );
 	fatalError = true;
 }
 

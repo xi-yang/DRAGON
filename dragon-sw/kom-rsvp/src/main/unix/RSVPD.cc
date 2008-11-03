@@ -161,6 +161,7 @@ int main( int argc, char** argv ) {
 		rsvp->main();
 	} else {
 		cerr << "RSVP init not OK ... possible errors in RSVPD.conf" << endl;
+	        ERROR(1)( Log::Error, "RSVP init not OK ... possible errors in RSVPD.conf" );
 	}
 	delete rsvp;
 	delete controller;
