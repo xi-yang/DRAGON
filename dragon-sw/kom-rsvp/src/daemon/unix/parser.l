@@ -90,7 +90,7 @@ upstream\-label\=[0-9]+	{ yy_string = yytext; return UPSTREAM_LABEL_; }
 [A-Za-z0-9\-\+]+	{ yy_string = yytext; return STRING; }
 
 [ \t\n]+	;	/* ignore whitespace */
-#.+\n		;	/* ignore comment: from '#' to end of line */
+#.*\n		;	/* ignore comment: from '#' to end of line */
 .		yyerror("Unknown character");
 
 %%
