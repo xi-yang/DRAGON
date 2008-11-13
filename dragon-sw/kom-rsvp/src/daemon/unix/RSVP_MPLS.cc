@@ -537,9 +537,9 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
                                           if ( (*iter).outPort != (*iter).inPort
                                             ||
-                                            (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+                                            !((((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
                                             && (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
-                                            && ((*iter).inPort & 0xffff) == ((*iter).outPort & 0xffff) )
+                                            && ((*iter).inPort & 0xffff) == ((*iter).outPort & 0xffff)) )
                                           {
                                               portList.clear();
                                               uint32 outPort = (*iter).outPort;
@@ -935,9 +935,9 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
                                       if ( (*iter).outPort != (*iter).inPort 
                                         || 
-                                        (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+                                        ! ((((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
                                         && (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
-                                        && ((*iter).inPort & 0xffff) == ((*iter).outPort & 0xffff) )
+                                        && ((*iter).inPort & 0xffff) == ((*iter).outPort & 0xffff)) )
                                       {
                                           portList.clear();
                                           uint32 outPort = (*iter).outPort;
