@@ -534,54 +534,60 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true, ucid, seqnum); //true == deduct
                                                 portList.pop_front();
                                           }
-                                          portList.clear();
-                                          //taggedPorts = 0;
-                                          uint32 outPort = (*iter).outPort;
-                                          if ((outPort >> 16) == LOCAL_ID_TYPE_NONE)
-                                              portList.push_back(outPort);
-                                          else if ((outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
-                                              portList.push_back(outPort & 0xffff);
-                                          else {
-                                              DRAGON_UNI_Object* uni = (DRAGON_UNI_Object*)psb.getDRAGON_UNI_Object();
-                                              if (uni && uni->getDestTNA().local_id == UNI_AUTO_TAGGED_LCLID)
-                                                  outPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getEgressCtrlChannel().name);
-                                              SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
-                                          }
-                                          if (outPort == ((LOCAL_ID_TYPE_TAGGED_GROUP << 16) | 0)) //NULL local-ID
+
+                                          if ( (*iter).outPort != (*iter).inPort
+                                            ||
+                                            (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+                                            && (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+                                            && ((*iter).inPort & 0xffff) == ((*iter).outPort & 0xffff) )
                                           {
                                               portList.clear();
-                                          }
-                                          else if (portList.size() == 0){
-        					      LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort);
-                                                noError = false;
-                                          }
-                                          while (portList.size()) {
-                                                 uint32 port = portList.front();
-                                                 LOG(4)(Log::MPLS, "VLSR: Moving egress port#",  GetSwitchPortString(port), " to VLAN #", vlan);
-                                                 if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
-                                                        (*sessionIter)->movePortToVLANAsTagged(port, vlan);
-                                                 	//Up to 32 ports supported. Only default RFC2674 switch switch (e.g. Dell, Intel) use this.
-                                                        taggedPorts |= (1<<(32-port));
-                                                    }
-                                                 else
-                                                        (*sessionIter)->movePortToVLANAsUntagged(port, vlan);
+                                              uint32 outPort = (*iter).outPort;
+                                              if ((outPort >> 16) == LOCAL_ID_TYPE_NONE)
+                                                  portList.push_back(outPort);
+                                              else if ((outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+                                                  portList.push_back(outPort & 0xffff);
+                                              else {
+                                                  DRAGON_UNI_Object* uni = (DRAGON_UNI_Object*)psb.getDRAGON_UNI_Object();
+                                                  if (uni && uni->getDestTNA().local_id == UNI_AUTO_TAGGED_LCLID)
+                                                      outPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getEgressCtrlChannel().name);
+                                                  SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
+                                              }
+                                              if (outPort == ((LOCAL_ID_TYPE_TAGGED_GROUP << 16) | 0)) //NULL local-ID
+                                              {
+                                                  portList.clear();
+                                              }
+                                              else if (portList.size() == 0){
+            					      LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort);
+                                                    noError = false;
+                                              }
+                                              while (portList.size()) {
+                                                     uint32 port = portList.front();
+                                                     LOG(4)(Log::MPLS, "VLSR: Moving egress port#",  GetSwitchPortString(port), " to VLAN #", vlan);
+                                                     if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
+                                                            (*sessionIter)->movePortToVLANAsTagged(port, vlan);
+                                                     	//Up to 32 ports supported. Only default RFC2674 switch switch (e.g. Dell, Intel) use this.
+                                                            taggedPorts |= (1<<(32-port));
+                                                        }
+                                                     else
+                                                            (*sessionIter)->movePortToVLANAsUntagged(port, vlan);
 
-                                                 LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlan);
-							//Perform rate policing and limitation on the port, which is both input and output port
-							//as the VLAN is duplex.
-                                                (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);  //$$$$ To be moved into bindUpstreamInAndOut
-                                                 (*sessionIter)->limitOutputBandwidth(true, port, vlan,  (*iter).bandwidth);
+                                                     LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlan);
+    							//Perform rate policing and limitation on the port, which is both input and output port
+    							//as the VLAN is duplex.
+                                                    (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);  //$$$$ To be moved into bindUpstreamInAndOut
+                                                     (*sessionIter)->limitOutputBandwidth(true, port, vlan,  (*iter).bandwidth);
 
-							//deduct bandwidth from the link associated with the port
-							u_int32_t ucid = 0, seqnum = 0;
-							if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
-								ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
-								seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
-							}
-							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true, ucid, seqnum); //true == deduct
-                                                portList.pop_front();
-                                          }
-										  
+    							//deduct bandwidth from the link associated with the port
+    							u_int32_t ucid = 0, seqnum = 0;
+    							if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+    								ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+    								seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+    							}
+    							RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, true, ucid, seqnum); //true == deduct
+                                                    portList.pop_front();
+                                              }
+                                          }			  
                                           if (taggedPorts != 0)
                                             {
                                                  //Set vlan ports to be "tagged" 
@@ -926,73 +932,82 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
                                             portList.pop_front();
                                       }
-                                      portList.clear();
-                                      uint32 outPort = (*iter).outPort;
-                                      if ((outPort >> 16) == LOCAL_ID_TYPE_NONE)
-                                         portList.push_back(outPort);
-                                      else if ((outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
-                                          portList.push_back(outPort & 0xffff);
-                                      else
-                                      {
-                                          DRAGON_UNI_Object* uni = (DRAGON_UNI_Object*)psb.getDRAGON_UNI_Object();
-                                          if (uni && uni->getDestTNA().local_id == UNI_AUTO_TAGGED_LCLID)
-                                              outPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getEgressCtrlChannel().name);
-                                          SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
-                                      }
-                                      if (outPort == ((LOCAL_ID_TYPE_TAGGED_GROUP << 16) | 0)) //NULL local-ID
+
+                                      if ( (*iter).outPort != (*iter).inPort 
+                                        || 
+                                        (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+                                        && (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP)
+                                        && ((*iter).inPort & 0xffff) == ((*iter).outPort & 0xffff) )
                                       {
                                           portList.clear();
-                                      }
-                                      else if (portList.size() == 0){
-    					      LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort );
-                                         //continue;
-                                      }
-                                      while (portList.size()) {
-                                            uint32 port = portList.front();
-                                            vlanID = (*iter).vlanTag;
-                                            if (vlanID ==0)
-                                                vlanID = (*sessionIter)->getActiveVlanId(port);
-                                            if (vlanID != 0) {
-                                                (*sessionIter)->removePortFromVLAN(port, vlanID);
-       						LOG(4)(Log::MPLS, "VLSR: Removing egress port#",  GetSwitchPortString(port), "from VLAN #", vlanID);
-                                            }
-                                            else {
-    						       LOG(1)(Log::MPLS, "VLSR: Cannot identify the VLAN  (for egress port) to be operated.");
-                                            }
+                                          uint32 outPort = (*iter).outPort;
+                                          if ((outPort >> 16) == LOCAL_ID_TYPE_NONE)
+                                             portList.push_back(outPort);
+                                          else if ((outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+                                              portList.push_back(outPort & 0xffff);
+                                          else
+                                          {
+                                              DRAGON_UNI_Object* uni = (DRAGON_UNI_Object*)psb.getDRAGON_UNI_Object();
+                                              if (uni && uni->getDestTNA().local_id == UNI_AUTO_TAGGED_LCLID)
+                                                  outPort = RSVP_Global::rsvp->getLocalIdByIfName((char*)uni->getEgressCtrlChannel().name);
+                                              SwitchCtrl_Global::getPortsByLocalId(portList, outPort);
+                                          }
+                                          if (outPort == ((LOCAL_ID_TYPE_TAGGED_GROUP << 16) | 0)) //NULL local-ID
+                                          {
+                                              portList.clear();
+                                          }
+                                          else if (portList.size() == 0){
+        					      LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort );
+                                             //continue;
+                                          }
+                                          while (portList.size()) {
+                                                uint32 port = portList.front();
+                                                vlanID = (*iter).vlanTag;
+                                                if (vlanID ==0)
+                                                    vlanID = (*sessionIter)->getActiveVlanId(port);
+                                                if (vlanID != 0) {
+                                                    (*sessionIter)->removePortFromVLAN(port, vlanID);
+           						LOG(4)(Log::MPLS, "VLSR: Removing egress port#",  GetSwitchPortString(port), "from VLAN #", vlanID);
+                                                }
+                                                else {
+        						       LOG(1)(Log::MPLS, "VLSR: Cannot identify the VLAN  (for egress port) to be operated.");
+                                                }
 
-                                            if (vlanID !=  0) {
-                                                //increase the bandwidth by the amount taken by the removed LSP
-							u_int32_t ucid = 0, seqnum = 0;
-							if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
-								ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
-								seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
-							}
-                                                RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false, ucid, seqnum); //false == increase
+                                                if (vlanID !=  0) {
+                                                    //increase the bandwidth by the amount taken by the removed LSP
+    							u_int32_t ucid = 0, seqnum = 0;
+    							if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+    								ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+    								seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+    							}
+                                                    RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF(port, (*iter).bandwidth, false, ucid, seqnum); //false == increase
 
-                                                //Undo rate policing and limitation on the port, which is both input and output port
-                                                //as the VLAN is duplex.
-                                                LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlanID);
-                                                (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth);//$$$$ To be moved into deleteUpstreamInLabel
-                                                (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);
-                                            }
-                                            portList.pop_front();
+                                                    //Undo rate policing and limitation on the port, which is both input and output port
+                                                    //as the VLAN is duplex.
+                                                    LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlanID);
+                                                    (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth);//$$$$ To be moved into deleteUpstreamInLabel
+                                                    (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);
+                                                }
+                                                portList.pop_front();
+                                          }
                                       }
 
-                                    if ((*iter).vlanTag != 0)// && !(*sessionIter)->VLANHasTaggedPort((*iter).vlanTag))
-                                    {
-                                        //restore the VTAG that has been released from removing the VLAN.
-                                        if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) //$$$$ To be moved into deleteUpstreamInLabel
+                                      if ((*iter).vlanTag != 0)// && !(*sessionIter)->VLANHasTaggedPort((*iter).vlanTag))
+                                      {
+                                          //restore the VTAG that has been released from removing the VLAN.
+                                          if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) //$$$$ To be moved into deleteUpstreamInLabel
 	                                        RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort & 0xffff, (*iter).vlanTag, false); //false == release
-                                        if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
+                                          if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
 	                                        RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort & 0xffff, (*iter).vlanTag, false); //false == release
- 					}
+                                      }
 
-                                   if ((*sessionIter)->isVLANEmpty(vlanID)) {
-                                        if (!(*sessionIter)->removeVLAN(vlanID)) {
-                                            LOG(2)(Log::MPLS, "VLSR: Failed to remove the empty VLAN: ",  vlanID);
-                                        }
-                                   }
- 					break;
+                                     if ((*sessionIter)->isVLANEmpty(vlanID)) {
+                                          if (!(*sessionIter)->removeVLAN(vlanID)) {
+                                              LOG(2)(Log::MPLS, "VLSR: Failed to remove the empty VLAN: ",  vlanID);
+                                          }
+                                     }
+
+ 					  break;
                         }
 			}
 			iter = psb.getVLSR_Route().erase(iter);
