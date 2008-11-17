@@ -181,7 +181,7 @@ public:
 	//////////// RFC2674 compatible functions that use SNMP GET////////////
 	virtual bool isVLANEmpty(const uint32 vlanID); // RFC2674
 	virtual const uint32 findEmptyVLAN(); // RFC2674
-	virtual uint32 getVLANbyPort(uint32 port); // RFC2674
+	virtual uint32 getVLANbyPort(uint32 port, , bool countVlan1=true); // RFC2674
 	virtual uint32 getVLANListbyPort(uint32 port, SimpleList<uint32> &vlan_list); // RFC2674
 	virtual uint32 getVLANbyUntaggedPort(uint32 port); // RFC2674
 	virtual void readVlanPortMapBranch(const char* oid_str, vlanPortMapList &vpmList); // RFC2674

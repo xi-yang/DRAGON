@@ -1005,6 +1005,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                           if (!(*sessionIter)->removeVLAN(vlanID)) {
                                               LOG(2)(Log::MPLS, "VLSR: Failed to remove the empty VLAN: ",  vlanID);
                                           }
+                                          LOG(2)(Log::MPLS, "VLSR: Removed the empty VLAN: ",  vlanID);
                                      }
 
  					  break;

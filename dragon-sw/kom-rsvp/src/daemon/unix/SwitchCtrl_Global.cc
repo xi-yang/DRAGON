@@ -326,9 +326,11 @@ bool SwitchCtrl_Session::readVLANFromSwitch()
     return ret;
 }
 
-uint32 SwitchCtrl_Session::getVLANbyPort(uint32 port){
+uint32 SwitchCtrl_Session::getVLANbyPort(uint32 port, bool countVlan1){
     vlanPortMapList::Iterator iter;
     for (iter = vlanPortMapListAll.begin(); iter != vlanPortMapListAll.end(); ++iter) {
+        if (!countVlan1 && (*iter).vid == 1)
+            continue;
         if (hook_hasPortinVlanPortMap(*iter, port))
             return (*iter).vid;
     }

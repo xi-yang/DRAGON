@@ -200,7 +200,7 @@ bool SwitchCtrl_Session_Force10E600::deleteVLANPort_ShellScript(uint32 portID, u
     sprintf(vlanNum, "%d", vlanID);
 
 #ifdef ENABLE_SWITCH_PORT_SHUTDOWN
-    if (getVLANbyPort(portID) == 0) {
+    if (getVLANbyPort(portID, false) == 0) { // countVlan1 = false
         DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
         DIE_IF_NEGATIVE(n = writeShell( portName, 5));
         DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
