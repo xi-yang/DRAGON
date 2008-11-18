@@ -55,7 +55,7 @@ static String yy_swLayer;
 %token TIMER SESSION_HASH API_HASH ID_HASH_SEND ID_HASH_RECV LIST_ALLOC SB_ALLOC
 %token EXPLICIT_ROUTE_ MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH LOCAL_ID UPSTREAM_LABEL_ INTEGER_RANGE
 %token NARB SLOTS EXCLUDE NARB_EXTRA_OPTIONS NARB_VTAGS_ALLOWED
-%token EOS_MAP
+%token EOS_MAP VLAN_OPTIONS
 %%
 
 program:
@@ -84,9 +84,10 @@ command:
 	| NARB narb_host narb_port	 	{ }
 	| SLOTS if_type slot			{ }
 	| EXCLUDE sw_layer excl_name		{ }
-	| NARB_EXTRA_OPTIONS option_name	{ }
+	| NARB_EXTRA_OPTIONS narb_option	{ }
 	| NARB_VTAGS_ALLOWED vtags		{ }
 	| EOS_MAP bandwidth STRING INTEGER	{ cfr->addEoSMap(yy_string, yy_int); }
+	| VLAN_OPTIONS vlan_option		{ }
 	;
 
 /*** Addtions by Xi Yang ***/
@@ -111,8 +112,8 @@ excl_name:
 	excl_name STRING { cfr->addLayerExclusion(yy_swLayer, yy_string); }
 	| STRING	 { cfr->addLayerExclusion(yy_swLayer, yy_string); }
 	;
-option_name:
-	option_name STRING { cfr->setNarbExtraOption(yy_string); }
+narb_option:
+	narb_option STRING { cfr->setNarbExtraOption(yy_string); }
 	| STRING	 { cfr->setNarbExtraOption(yy_string); }
 	;
 vtags:
@@ -120,6 +121,10 @@ vtags:
 	| vtags INTEGER_RANGE { cfr->setAllowedVtagRange(yy_string); }
 	| INTEGER { cfr->setAllowedVtag(yy_int); }
 	| INTEGER_RANGE { cfr->setAllowedVtagRange(yy_string); }
+	;
+vlan_option:
+	vlan_option STRING { cfr->setSwitchVlanOption(yy_string); }
+	| STRING	{ cfr->setSwitchVlanOption(yy_string); }
 	;
 /*** END: Addtions by Xi Yang ***/
 

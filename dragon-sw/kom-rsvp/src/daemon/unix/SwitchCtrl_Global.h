@@ -280,11 +280,15 @@ struct slot_entry {
 	uint16 slot_num;
 };
 
-/*manual configured exclusion of certain switching layers from routing computation based on session_name matching*/
-#define		SW_EXCL_L_1 0x0010
-#define		SW_EXCL_TDM 0x0020
-#define		SW_EXCL_L_2 0x0040
-#define		SW_EXCL_L_3 0x0080
+//manual configured exclusion of certain switching layers from routing computation based on session_name matching
+#define	SW_EXCL_L_1 0x0010
+#define	SW_EXCL_TDM 0x0020
+#define	SW_EXCL_L_2 0x0040
+#define	SW_EXCL_L_3 0x0080
+
+//switch VLAN operation options
+#define	SW_VLAN_CONFLICT_CHECK_BYPASS 0x80000
+
 struct sw_layer_excl_name_entry {
 	uint32 sw_layer;
 	char excl_name[16]; 
@@ -337,6 +341,8 @@ public:
 	uint32 getExclEntry(String session_name);
 	SONET_TSpec* addEosMapEntry(float bandwidth, String& spe, int ncc);
 	SONET_TSpec* getEosMapEntry(float bandwidth);
+	void setSwitchVlanOption(uint32 option) { switchVlanOptions |= option; }
+	bool hasSwitchVlanOption(uint32 option) { return ((switchVlanOptions&option) != 0); }
 
 	/*monitoring*/
 	void getMonitoringInfo(MON_Query_Subobject& monQuery, MON_Reply_Subobject& monReplym, uint32 destIp = 0);
@@ -351,6 +357,7 @@ private:
 	SimpleList<slot_entry> slotList;
 	SimpleList<sw_layer_excl_name_entry> exclList;
 	SimpleList<eos_map_entry> eosMapList;
+	uint32 switchVlanOptions;
 };
 
 class sessionsRefreshTimer: public BaseTimer {

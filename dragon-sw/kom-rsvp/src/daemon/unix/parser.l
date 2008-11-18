@@ -75,6 +75,7 @@ ieee32float_p yy_float;
 "narb_extra_options"	return NARB_EXTRA_OPTIONS;
 "narb_vtags_allowed"	return NARB_VTAGS_ALLOWED;
 "eos_map"		return EOS_MAP;
+"switch_vlan_options"	return VLAN_OPTIONS;
 
 [0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?	{ yy_string = yytext; return IP_ADDRESS; }
 

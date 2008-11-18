@@ -226,8 +226,9 @@ void ConfigFileReader::addLayerExclusion(String sw_layer, String excl_name)
 	else if (sw_layer == "l-3"){
 		ee.sw_layer = SW_EXCL_L_3;
 	}
-	else
+	else {
 		return;
+	}
 	strncpy(ee.excl_name, excl_name.chars(), 15);
         RSVP_Global::switchController->addExclEntry(ee);
 }
@@ -255,7 +256,14 @@ void ConfigFileReader::addEoSMap(String spe, int ncc)
 {
 	RSVP_Global::switchController->addEosMapEntry(this->bandwidth, spe, ncc);    
 }
-    
+
+void ConfigFileReader::setSwitchVlanOption(String sw_vlan_option)
+{
+	if (sw_vlan_option == "bypass-conflict-check") {
+		RSVP_Global::switchController->setSwitchVlanOption(SW_VLAN_CONFLICT_CHECK_BYPASS);
+	}
+}
+
 void ConfigFileReader::cleanup() {
 	interfaceName = "";
 	localId = "";

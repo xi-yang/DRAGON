@@ -574,6 +574,9 @@ bool SwitchCtrl_Session::adjustVLANbyLocalId(uint32 vlanID, uint32 lclID, uint32
 
 bool SwitchCtrl_Session::hasVLSRouteConflictonSwitch(VLSR_Route& vlsr)
 {
+    if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_CONFLICT_CHECK_BYPASS))
+        return false;
+
     PortList portList;
     PortList::Iterator itPort;
     vlanPortMapList::Iterator iter = vlanPortMapListAll.begin();
@@ -673,6 +676,7 @@ SwitchCtrl_Global::SwitchCtrl_Global()
 	}
 
 	sessionsRefresher = NULL;
+	switchVlanOptions = 0;
 }
 
 SwitchCtrl_Global::~SwitchCtrl_Global() {

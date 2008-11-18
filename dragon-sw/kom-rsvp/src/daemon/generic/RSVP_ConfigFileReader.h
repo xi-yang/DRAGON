@@ -100,6 +100,7 @@ public:
 	void setAllowedVtag(int vtag);
 	void setAllowedVtagRange(String vtag_range);
 	void addEoSMap(String spe, int ncc);
+	void setSwitchVlanOption(String sw_vlan_option);
 };
 
 #endif /* _RSVP_ConfigFileReader_h_ */
