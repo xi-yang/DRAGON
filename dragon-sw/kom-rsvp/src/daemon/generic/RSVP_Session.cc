@@ -631,9 +631,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
 			//Check for VLAN/ports availability based on vlsr (vlsr_route)... (First PATH message only)
 			//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
-			//$$TODO: When there is an existing session for another circuit, the check will be by-passed, which should not.
-			//$$$$$$$: removed '!foundSession' clause and raise a flag in Session.
-			if (!foundSession && ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
+			if (ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
                             LOG(1)( Log::MPLS, "processERO: hasVLSRouteConflictonSwitch returned true.");
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vlsr.errCode = (ERROR_SPEC_Object::RoutingProblem << 16 | ERROR_SPEC_Object::MPLSLabelAllocationFailure);
