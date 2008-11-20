@@ -1804,6 +1804,9 @@ bool SwitchCtrl_Session_SubnetUNI::deleteCRS_TL1(String& crsName)
             goto _out;
     }
 
+    //sleep one second to let finish status change for cross-connect 
+    sleep(1);
+
     return true;
 
 _out:
