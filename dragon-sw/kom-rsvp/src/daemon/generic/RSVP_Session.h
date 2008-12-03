@@ -68,6 +68,9 @@ class Session :	public RelationshipSession_PSB,
 	//Uni- or Bi-dir
 	bool biDir;
 
+	//vlan conflict checking swith
+	bool shouldCheckVlanConflict;
+
 	//NARB client
 	NARB_APIClient* narbClient;
 

@@ -59,6 +59,7 @@ Session::Session( const SESSION_Object &session) : SESSION_Object(session),
 	inLif = NULL;
 	gw = LogicalInterface::noGatewayAddress;
 	biDir = false;
+	shouldCheckVlanConflict = true;
 	narbClient = NULL;
 	pSubnetUniSrc = pSubnetUniDest = NULL;
 }
@@ -631,13 +632,15 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
 			//Check for VLAN/ports availability based on vlsr (vlsr_route)... (First PATH message only)
 			//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
-			if (ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
+			if (shouldCheckVlanConflict && ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
                             LOG(1)( Log::MPLS, "processERO: hasVLSRouteConflictonSwitch returned true.");
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vlsr.errCode = (ERROR_SPEC_Object::RoutingProblem << 16 | ERROR_SPEC_Object::MPLSLabelAllocationFailure);
 				vLSRoute.push_back(vlsr);
 				return false;
 			}
+			//The above checking is performed only once per session
+			shouldCheckVlanConflict = false;
 
 			vLSRoute.push_back(vlsr);                    
 		}
