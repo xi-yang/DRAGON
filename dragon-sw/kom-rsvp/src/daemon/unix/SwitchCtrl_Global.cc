@@ -574,6 +574,13 @@ bool SwitchCtrl_Session::adjustVLANbyLocalId(uint32 vlanID, uint32 lclID, uint32
 
 bool SwitchCtrl_Session::hasVLSRouteConflictonSwitch(VLSR_Route& vlsr)
 {
+    //this checking is performed only once per session
+    if (conflictCheck_done)
+        return false;
+    else
+        conflictCheck_done = true;
+
+    //bypass the checking if disabled in RSVPD.conf
     if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_CONFLICT_CHECK_BYPASS))
         return false;
 

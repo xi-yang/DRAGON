@@ -127,6 +127,7 @@ public:
 		rfc2674_compatible = true;
 		snmp_enabled = true;
 		vlanCreation_enabled = true;
+		conflictCheck_done = false;
 		vendor = Illegal;
 		setSupportedVendorOidString();
 	}
@@ -136,6 +137,7 @@ public:
 		rfc2674_compatible = true;
 		snmp_enabled = true;
 		vlanCreation_enabled = true;
+		conflictCheck_done = false;
 		vendor = Illegal;
 		setSupportedVendorOidString();
 	}
@@ -149,6 +151,7 @@ public:
 		snmpSessionHandle = s.snmpSessionHandle; 
 		active = s.active;
 		rfc2674_compatible = s.rfc2674_compatible;
+		conflictCheck_done = s.	conflictCheck_done;
 		vendor = s.vendor;
 		return *this;
 	}
@@ -240,6 +243,7 @@ protected:
 	bool rfc2674_compatible;	// Flag indicating whether the VLSR/switch is SNMP MIB-QBridge compatible
 	bool snmp_enabled;
 	bool vlanCreation_enabled;
+	bool conflictCheck_done;
 	uint32 vendor;	//vendor/model ID
 
 	String venderSystemDescription;
