@@ -1095,10 +1095,8 @@ DEFUN (dragon_set_lsp_ip,
     struct in_addr ip_src, ip_dst;
     u_int16_t type_src, type_dest;
     int port_src, port_dest;
-    struct lsp *l;
     struct local_id * lid = NULL;
     listnode node;
-    u_int8_t find = 0;
     
     inet_aton(argv[0], &ip_src);
     if (strcmp(argv[1], "port") == 0)
@@ -1228,23 +1226,6 @@ DEFUN (dragon_set_lsp_ip,
             lsp->dragon.lspVtag = port_src;
         else  if (type_dest  == LOCAL_ID_TYPE_TAGGED_GROUP)
             lsp->dragon.lspVtag = port_dest;
-    }
-    
-    /* Check if there is another LSP with the same session parameter */
-    find = 0;
-    if (dmaster.dragon_lsp_table)
-  	  LIST_LOOP(dmaster.dragon_lsp_table, l , node)
-  	  {
-  		if (lsp!=l && LSP_SAME_SESSION(lsp, l))
-  		{
-  			find = 1;
-  		}
-  	  }
-    if (find)
-    {
-  	vty_out(vty, "Another LSP with the same session parameters already exists.");
-    	zlog_info("Another LSP with the same session parameters already exists.");
-  	return CMD_WARNING;
     }
     
     if (lsp->common.DragonUni_Para) {
@@ -1732,7 +1713,7 @@ DEFUN (dragon_commit_lsp_sender,
        "This node is an RSVP sender\n")
 {
   struct listnode *node;
-  struct lsp *lsp = NULL;
+  struct lsp *lsp = NULL, *lsp2 = NULL;
   struct dragon_fifo_elt *new;
   int found;
   
@@ -1764,6 +1745,18 @@ DEFUN (dragon_commit_lsp_sender,
   	vty_out (vty, "LSP \"%s\" could not be committed... %s", (lsp->common.SessionAttribute_Para)->sessionName,  VTY_NEWLINE);
 	return CMD_WARNING;
   }
+
+  /* Check if there is another non-subnet-interface LSP with the same session parameter */
+  if ((lsp->dragon.destLocalId >> 16) != LOCAL_ID_TYPE_SUBNET_IF_ID && dmaster.dragon_lsp_table)
+      LIST_LOOP(dmaster.dragon_lsp_table, lsp2 , node)
+      {
+          if (lsp!=lsp2 && LSP_SAME_SESSION(lsp, lsp2))
+          {
+              vty_out(vty, "Cannot commit: another non-subnet-interface LSP with the same session parameters already exists!");
+              zlog_info("Cannot commit: another non-subnet-interface LSP with the same session parameters already exists!");
+              return CMD_WARNING;
+          }
+      }
 
   if ((lsp->dragon.srcLocalId >> 16)  == LOCAL_ID_TYPE_TAGGED_GROUP 
       && (lsp->dragon.srcLocalId & 0xffff) != lsp->dragon.lspVtag 
