@@ -104,6 +104,7 @@ case `uname` in
 
     echo '' && \
 	echo 'making kom-rsvp...'
+    gmake depend
     gmake
     if test $? != 0; then
 	echo "dragon-sw: kom-rsvp GNU make error!"
@@ -149,8 +150,10 @@ case `uname` in
 	echo 'making kom-rsvp...'
     # Debian systems install GNU make as 'make' not 'gmake'
     if test -e /etc/debian_version; then
+	make depend
 	make
     else
+	gmake depend
 	gmake
     fi
     if test $? != 0; then
@@ -195,6 +198,7 @@ case `uname` in
 
     echo '' && \
         echo 'making kom-rsvp...'
+    gmake depend
     gmake
     if test $? != 0; then
         echo "dragon-sw: kom-rsvp gmake error!"
