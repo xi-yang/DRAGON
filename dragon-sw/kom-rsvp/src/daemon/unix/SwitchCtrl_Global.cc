@@ -683,11 +683,13 @@ SwitchCtrl_Global::SwitchCtrl_Global()
 SwitchCtrl_Global::~SwitchCtrl_Global() {
 	if (sessionsRefresher)
 		delete sessionsRefresher;
+	/* disconnectSwitch is called in ~SwitchCtrl_Session. No need to remove this list manually.
 	SwitchCtrlSessionList::Iterator sessionIter = sessionList.begin();
 	for ( ; sessionIter != sessionList.end(); ++sessionIter){
 		(*sessionIter)->disconnectSwitch();
 		sessionList.erase(sessionIter);
 	}
+	*/
 }
 
 void SwitchCtrl_Global::startRefreshTimer() {
