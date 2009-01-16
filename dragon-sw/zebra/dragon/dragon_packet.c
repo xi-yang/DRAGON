@@ -535,21 +535,27 @@ dragon_lsp_refresh_timer(struct thread *t)
    */
    if (lsp->status == LSP_COMMIT)
    {
-           zlog_info("LSP %s still in commit state (no response from NARB), retrying", 
-		     (lsp->common.SessionAttribute_Para)->sessionName);
+       if (lsp->common.ERONodeNumber == 0)
+       {
+            zlog_info("LSP %s still in commit state (no response from NARB (No Route?)), retrying", 
+                (lsp->common.SessionAttribute_Para)->sessionName);
+       }
+       else 
+            zlog_info("LSP %s still in commit state (no response from RSVD (RERR?)), retrying", 
+                (lsp->common.SessionAttribute_Para)->sessionName);
 
-	   /* Construct topology create message */
-	   new = dragon_topology_create_msg_new(lsp);
-	   
-	   /* Put packet into fifo */
-	   dragon_fifo_push(dmaster.dragon_packet_fifo, new);
-	   
-	   /* Start LSP refresh timer */
-	   DRAGON_TIMER_ON (lsp->t_lsp_refresh, dragon_lsp_refresh_timer, lsp, DRAGON_LSP_REFRESH_INTERVAL);
-	   
-	   /* Write packet to socket */
-           zlog_info("Sending topology create message to NARB");
-	   DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
+        /* Construct topology create message */
+        new = dragon_topology_create_msg_new(lsp);
+        
+        /* Put packet into fifo */
+        dragon_fifo_push(dmaster.dragon_packet_fifo, new);
+        
+        /* Start LSP refresh timer */
+        DRAGON_TIMER_ON (lsp->t_lsp_refresh, dragon_lsp_refresh_timer, lsp, DRAGON_LSP_REFRESH_INTERVAL);
+        
+        /* Write packet to socket */
+        zlog_info("Sending topology create message to NARB");
+        DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
    	
    }
    return 0;
