@@ -259,6 +259,7 @@ void RSVP::statsHandlerReset( RSVP* This ) {
 #endif
 
 extern const char* VersionString();
+extern const char* DragonVersionString();
 
 int RSVP::main() {
 #if !defined(NS2)
@@ -268,6 +269,8 @@ int RSVP::main() {
 #endif
 
 	FATAL(2)( Log::Fatal, "RSVPD running -", VersionString() );
+
+	FATAL(2)( Log::Fatal, "DRGON KOM-RSVP -", DragonVersionString() );
 
 	while (!endFlag) {
 		 //@@@@ Xi2007 >>
