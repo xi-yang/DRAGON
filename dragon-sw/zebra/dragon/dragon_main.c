@@ -287,7 +287,7 @@ main (int argc, char **argv)
   pid_output (pid_file);
 
   /* Print banner. */
-  zlog (NULL, LOG_INFO, "DRAGONd (%s) starts", ZEBRA_VERSION);
+  zlog (NULL, LOG_INFO, "DRAGONd (%s) starts\n", dragon_version_string());
 
   /* Create VTY socket */
   vty_serv_sock (vty_addr,

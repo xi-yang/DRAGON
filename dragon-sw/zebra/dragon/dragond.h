@@ -785,6 +785,7 @@ extern struct string_value_conversion conv_rsvp_event;
 extern struct string_value_conversion conv_lsp_status;
 extern struct host host;
 
+extern const char* dragon_version_string();
 extern int dragon_master_init();
 extern void dragon_supp_vty_init ();
 extern int is_mandated_params_set_for_lsp(struct lsp *lsp);

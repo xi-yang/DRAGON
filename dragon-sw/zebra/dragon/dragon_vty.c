@@ -553,6 +553,18 @@ dragon_execute_command (char *command, int argc, char *arg1, char *arg2, int fd)
   return 0;
 }
 
+
+DEFUN (dragon_show_version,
+       dragon_show_version_cmd,
+       "show versions",
+       "Show Version\n"
+       "Revision and Last Change Date\n"
+       )
+{
+  vty_out(vty, "%s%s", dragon_version_string(), VTY_NEWLINE);
+  return CMD_SUCCESS;
+}
+
 DEFUN (dragon_set_pce_para,
        dragon_set_pce_para_cmd,
        "configure pce ip-address A.B.C.D port <0-65535>",
