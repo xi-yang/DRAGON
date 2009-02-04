@@ -556,7 +556,7 @@ dragon_execute_command (char *command, int argc, char *arg1, char *arg2, int fd)
 
 DEFUN (dragon_show_version,
        dragon_show_version_cmd,
-       "show versions",
+       "show version",
        "Show Version\n"
        "Revision and Last Change Date\n"
        )
@@ -2779,6 +2779,7 @@ dragon_supp_vty_init ()
   install_element(VIEW_NODE, &dragon_set_narb_para_ip_cmd);
   install_element(VIEW_NODE, &dragon_show_module_status_cmd);
   install_element(VIEW_NODE, &dragon_edit_lsp_cmd);
+  install_element(VIEW_NODE, &dragon_show_version_cmd);
   install_element(VIEW_NODE, &dragon_show_lsp_cmd);
   install_element(VIEW_NODE, &dragon_show_lsp_all_cmd);
   install_element(VIEW_NODE, &dragon_commit_lsp_sender_cmd);
