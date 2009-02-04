@@ -3221,7 +3221,6 @@ dragon_cmd_init ( int (*dragon_config_write_func)(struct vty *vty))
   install_default(VIEW_NODE);
   
   /* Each node's basic commands. */
-  install_element (VIEW_NODE, &show_version_cmd);
   install_element (CONFIG_NODE, &hostname_cmd);
   install_element (CONFIG_NODE, &no_hostname_cmd);
   install_element (CONFIG_NODE, &password_cmd);
