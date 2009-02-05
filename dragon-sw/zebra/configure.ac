@@ -837,7 +837,7 @@ AC_TRY_COMPILE([#include <netinet/in.h>
 dnl --------------------------
 dnl check structure in6_pktinfo
 dnl --------------------------
-AC_MSG_CHECKING(whether struct in_pktinfo exist)
+AC_MSG_CHECKING(whether struct in6_pktinfo exist)
 AC_TRY_COMPILE([#include <netinet/in.h>
 ],[struct in6_pktinfo ac_x;],
 [AC_MSG_RESULT(yes)
