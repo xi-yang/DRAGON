@@ -270,7 +270,7 @@ int RSVP::main() {
 
 	FATAL(2)( Log::Fatal, "RSVPD running -", VersionString() );
 
-	FATAL(2)( Log::Fatal, "DRGON kom-rsvp -", DragonVersionString() );
+	FATAL(2)( Log::Fatal, "DRAGON kom-rsvp -", DragonVersionString() );
 
 	while (!endFlag) {
 		 //@@@@ Xi2007 >>
