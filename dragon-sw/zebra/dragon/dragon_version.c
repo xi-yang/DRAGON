@@ -11,3 +11,4 @@ const char* dragon_version_string() {
     dvString[strlen(dvString) - 2] = '\000';
     return dvString;
 }
+

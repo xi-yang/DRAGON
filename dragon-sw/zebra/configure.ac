@@ -834,6 +834,16 @@ AC_TRY_COMPILE([#include <netinet/in.h>
  AC_DEFINE(HAVE_INPKTINFO,,in_pktinfo)],
  AC_MSG_RESULT(no))
 
+dnl --------------------------
+dnl check structure in6_pktinfo
+dnl --------------------------
+AC_MSG_CHECKING(whether struct in_pktinfo exist)
+AC_TRY_COMPILE([#include <netinet/in.h>
+],[struct in6_pktinfo ac_x;],
+[AC_MSG_RESULT(yes)
+ AC_DEFINE(HAVE_IN6PKTINFO,,in6_pktinfo)],
+ AC_MSG_RESULT(no))
+
 dnl --------------------------------------
 dnl checking for getrusage struct and call
 dnl --------------------------------------

@@ -205,6 +205,16 @@ struct in_pktinfo
 };
 #endif
 
+/*  Linux2.6.25 wraps 'struct in6_pktinfo' definition in a way that cannot be 
+     included for compile on IPv6 enabled hosts. */
+#if defined (GNU_LINUX) && ! defined (HAVE_IN6PKTINFO)
+struct in6_pktinfo
+  { 
+    struct in6_addr ipi6_addr;  /* src/dst IPv6 address */
+    unsigned int ipi6_ifindex;  /* send/recv interface index */
+  };
+#endif
+
 /* For old definition. */
 #ifndef IN6_ARE_ADDR_EQUAL
 #define IN6_ARE_ADDR_EQUAL IN6_IS_ADDR_EQUAL

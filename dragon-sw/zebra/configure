@@ -8901,7 +8901,6 @@ echo "${ECHO_T}no" >&6; }
 fi
 rm -f conftest*
 
-
 { echo "$as_me:$LINENO: checking whether struct in_pktinfo exist" >&5
 echo $ECHO_N "checking whether struct in_pktinfo exist... $ECHO_C" >&6; }
 cat >conftest.$ac_ext <<_ACEOF
