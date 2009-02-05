@@ -51,6 +51,9 @@
 /* Define to 1 if you have the `if_nametoindex' function. */
 #undef HAVE_IF_NAMETOINDEX
 
+/* in6_pktinfo */
+#undef HAVE_IN6PKTINFO
+
 /* in6_aliasreq */
 #undef HAVE_IN6_ALIASREQ
 
