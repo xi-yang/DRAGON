@@ -104,7 +104,16 @@ set_linkparams_link_header (struct ospf_interface *oi)
 	  SET_LINK_PARAMS_LINK_HEADER_TLV(link_protype)
 	  
 	  /* TE_LINK_SUBTLV_IFSWCAP */
-	  SET_LINK_PARAMS_LINK_HEADER_TLV(link_ifswcap)
+	  /*SET_LINK_PARAMS_LINK_HEADER_TLV(link_ifswcap)*/
+	  if (para->link_ifswcap_list && listcount(para->link_ifswcap_list) > 0)
+  	  {
+		struct te_link_subtlv_link_ifswcap *ifswcap;
+		listnode node;
+		LIST_LOOP(para->link_ifswcap_list, ifswcap, node)
+		{
+			length += TLV_SIZE (&ifswcap->header);
+		}
+  	  }
 
 	  /* TE_LINK_SUBTLV_IFSWCAP */
 	  SET_LINK_PARAMS_LINK_HEADER_TLV(link_srlg)
@@ -156,7 +165,7 @@ FUNC_BUILD_LINK_SUBTLV(unrsv_bw)
 FUNC_BUILD_LINK_SUBTLV(rsc_clsclr)
 FUNC_BUILD_LINK_SUBTLV(link_lcrmt_id)
 FUNC_BUILD_LINK_SUBTLV(link_protype)
-/* FUNC_BUILD_LINK_SUBTLV(link_ifswcap) */
+/* FUNC_BUILD_LINK_SUBTLV(link_ifswcap_list) */
 FUNC_BUILD_LINK_SUBTLV(link_te_lambda)
 
 static int swcap_len_adjustment = 0;
@@ -219,7 +228,7 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 				assert(z_len <= sizeof(struct link_ifswcap_specific_vlan) - 4);
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version |= htons(IFSWCAP_SPECIFIC_VLAN_COMPRESS_Z);
 				lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(z_len + 4);
-				
+
 				/* Do not copy back to the oi->te_para, where the vlan tag mask remain uncompressed !*/
 				/*memcpy(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_buffer, z_len);*/
                 
@@ -251,6 +260,31 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 	return; 
 }
 
+static void 
+build_link_subtlv_link_ifswcap_list (struct stream *s, struct ospf_interface* oi, struct te_tlv_header *tlvh_s)
+{
+  listnode node;
+  struct te_link_subtlv_link_ifswcap *swcap;
+  u_int32_t padding = 0;
+
+  LIST_LOOP(oi->te_para.link_ifswcap_list, swcap, node)
+  {
+    build_link_subtlv_link_ifswcap(s, swcap);
+    /* adjact header link TLV after compression */
+    if ( (ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) &&
+    	(ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC) )
+    {
+    	/* adjusting Link TLV length and including padding size for 4-byte alignment */
+    	tlvh_s->length = htons(ntohs(tlvh_s->length) + swcap_len_adjustment);
+    	if ((s->putp % 4) != 0)
+    		stream_put(s, &padding, 4-(s->putp % 4));
+    	if ((ntohs(tlvh_s->length) % 4) != 0)
+    		tlvh_s->length = htons(ntohs(tlvh_s->length) + 4-(ntohs(tlvh_s->length) % 4));
+    }
+  }
+
+  return;
+}
 
 /* The follow definitions are for calling functions defined above */
 #define BUILD_LINK_SUBTLV(X)  build_link_subtlv_ ## X  (s, &oi->te_para. X)
@@ -316,10 +350,9 @@ ospf_te_area_lsa_link_body_set (struct stream *s, struct ospf_interface *oi)
    * granularity changes in topology.
    */
   struct te_tlv_header *tlvh_s;
-  u_int32_t padding = 0;
 
   set_linkparams_link_header (oi);
-  tlvh_s = (struct te_tlv_header *)(s->data + s->putp); /* pointing to the TE Link sub-TLV header in stream*/
+  tlvh_s = (struct te_tlv_header *)(s->data + s->putp); /* pointing to the TE Link TLV header in stream*/
   build_tlv_header (s, &oi->te_para.link.header);
 
   BUILD_LINK_SUBTLV(link_type);
@@ -336,19 +369,7 @@ ospf_te_area_lsa_link_body_set (struct stream *s, struct ospf_interface *oi)
   {
 	BUILD_LINK_SUBTLV(link_lcrmt_id);
 	BUILD_LINK_SUBTLV(link_protype);
-	BUILD_LINK_SUBTLV(link_ifswcap);
-	/* adjact header link TLV after compression */
-	if ( (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) &&
-		(ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC) )
-	{
-		/* adjusting Link TLV length and including padding size for 4-byte alignment */
-		tlvh_s->length = htons(ntohs(tlvh_s->length) + swcap_len_adjustment);
-		if ((s->putp % 4) != 0)
-			stream_put(s, &padding, 4-(s->putp % 4));
-		if ((ntohs(tlvh_s->length) % 4) != 0)
-			tlvh_s->length = htons(ntohs(tlvh_s->length) + 4-(ntohs(tlvh_s->length) % 4));
-	}
-	BUILD_LINK_SUBTLV(link_srlg);
+	build_link_subtlv_link_ifswcap_list(s, oi, tlvh_s);
 	BUILD_LINK_SUBTLV(link_te_lambda);
 	build_dragon_gri_tlv(s, oi->dragon_gri);
   }

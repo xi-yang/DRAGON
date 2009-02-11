@@ -419,7 +419,8 @@ struct te_area_lsa_para
   struct te_link_subtlv_rsc_clsclr rsc_clsclr;
   struct te_link_subtlv_link_lcrmt_id link_lcrmt_id;
   struct te_link_subtlv_link_protype  link_protype;
-  struct te_link_subtlv_link_ifswcap link_ifswcap;
+  list   link_ifswcap_list;  /*$$$$ Support multiple ISCDs in one LSA*/ 
+  /* struct te_link_subtlv_link_ifswcap link_ifswcap; */
   struct te_link_subtlv_link_srlg	link_srlg;   /* length is variable */
   struct te_link_subtlv_link_te_lambda	 link_te_lambda;  
 };

@@ -751,31 +751,42 @@ set_linkparams_te_lambda (struct te_link_subtlv_link_te_lambda *para, u_int32_t 
 
 
 /* We should read interface switching capability from the kernel*/ /*XXX*/
-static void
-set_linkparams_ifsw_cap1 (struct te_link_subtlv_link_ifswcap *para, u_char swcap, u_char enc)
+static struct te_link_subtlv_link_ifswcap *
+set_linkparams_ifsw_cap1 (list *swcap_list, u_char swcap, u_char enc)
 {
   int base_length = 36;
+  struct te_link_subtlv_link_ifswcap* ifswcap;
+  listnode node;
 
-  if (ntohs( para->header.type) == 0)
-	 para->header.type   = htons (TE_LINK_SUBTLV_LINK_IFSWCAP);
+  if (*swcap_list == NULL)
+	*swcap_list = list_new();
+  else LIST_LOOP(*swcap_list, ifswcap, node)
+  {
+	if (ntohs(ifswcap->header.type) != 0 && ifswcap->link_ifswcap_data.switching_cap == swcap && ifswcap->link_ifswcap_data.encoding == enc)
+		return ifswcap;
+  }
+  ifswcap = XMALLOC(MTYPE_TMP, sizeof(struct te_link_subtlv_link_ifswcap));
+  ifswcap->header.type   = htons (TE_LINK_SUBTLV_LINK_IFSWCAP);
   if ( swcap >= LINK_IFSWCAP_SUBTLV_SWCAP_PSC1 && 
   	 swcap <= LINK_IFSWCAP_SUBTLV_SWCAP_PSC4 )
   {
-  	 para->header.length = htons(base_length + sizeof(struct link_ifswcap_specific_psc));
+  	 ifswcap->header.length = htons(base_length + sizeof(struct link_ifswcap_specific_psc));
   }
   else if ( swcap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM)
   {
-  	 para->header.length = htons(base_length + sizeof(struct link_ifswcap_specific_tdm));
+  	 ifswcap->header.length = htons(base_length + sizeof(struct link_ifswcap_specific_tdm));
   }
   else if ( swcap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
   {
-  	 para->header.length = htons(base_length); /* + sizeof(struct link_ifswcap_specific_vlan));*/
+  	 ifswcap->header.length = htons(base_length); /* + sizeof(struct link_ifswcap_specific_vlan));*/
   }
   else
-  	 para->header.length = htons(base_length);
-   para->link_ifswcap_data.switching_cap = swcap;
-   para->link_ifswcap_data.encoding = enc;
-  return;
+  	 ifswcap->header.length = htons(base_length);
+   ifswcap->link_ifswcap_data.switching_cap = swcap;
+   ifswcap->link_ifswcap_data.encoding = enc;
+   listnode_add(*swcap_list, ifswcap);
+
+  return ifswcap;
 }
 
 static void
@@ -810,8 +821,9 @@ ospf_te_set_default_link_para (struct ospf_interface *oi)
 static void 
 ospf_te_set_configed_link_para(struct ospf_interface *oi, struct ospf_te_config_para *conf)
 {
-	struct te_area_lsa_para *old_para = &oi->te_para;
+	struct te_area_lsa_para *old_para = &oi->te_para; /*config in actual ospf_interface structure*/
 	u_int32_t *v = NULL;
+	struct te_link_subtlv_link_ifswcap* swcap, *old_swcap;
 	struct listnode *node;
 	
 	if (ntohs (conf->te_para.te_metric.header.type) != 0)
@@ -828,8 +840,28 @@ ospf_te_set_configed_link_para(struct ospf_interface *oi, struct ospf_te_config_
 	{
 		if (ntohs (conf->te_para.link_protype.header.type) != 0)
 			memcpy(&old_para->link_protype, &conf->te_para.link_protype, sizeof(struct te_link_subtlv_link_protype));
-		if (ntohs (conf->te_para.link_ifswcap.header.type) != 0)
-			memcpy(&old_para->link_ifswcap, &conf->te_para.link_ifswcap, sizeof(struct te_link_subtlv_link_ifswcap));
+
+		if (conf->te_para.link_ifswcap_list != NULL && listcount(conf->te_para.link_ifswcap_list) > 0)
+		{
+			if (old_para->link_ifswcap_list)
+			{
+				LIST_LOOP(old_para->link_ifswcap_list, swcap, node)
+				{
+					XFREE(MTYPE_TMP, swcap);
+				}
+				list_delete_all_node(old_para->link_ifswcap_list);
+			}
+			else
+				old_para->link_ifswcap_list = list_new();
+
+			LIST_LOOP(conf->te_para.link_ifswcap_list, swcap, node)
+			{
+				old_swcap = XMALLOC(MTYPE_TMP, sizeof(struct te_link_subtlv_link_ifswcap));
+				memcpy(old_swcap, swcap, sizeof(struct te_link_subtlv_link_ifswcap));
+				listnode_add(old_para->link_ifswcap_list, old_swcap);
+			}
+		}
+
 		if (ntohs(conf->te_para.link_lcrmt_id.header.type) != 0 &&
 		     ntohs(old_para->link_lcrmt_id.header.type) != 0)
 			old_para->link_lcrmt_id.link_remote_id = conf->te_para.link_lcrmt_id.link_remote_id;
@@ -850,7 +882,7 @@ ospf_te_set_configed_link_para(struct ospf_interface *oi, struct ospf_te_config_
 }
 
 /*------------------------------------------------------------------------*
- * Followings are callback functions against generic Opaque-LSAs handling.
+ * Followings are callback functions for generic Opaque-LSAs handling.
  *------------------------------------------------------------------------*/
 
 void
@@ -1381,8 +1413,9 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
 	    				ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu));
 	  }
   }
-  else if (top->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM)
-  {
+  else if (top->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
+  	&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) == 0)
+  { /*$$$$ TODO: */
          ntohf (&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.min_lsp_bw, &fval);
 	  if (vty != NULL){
 	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec) %s", 
@@ -1774,6 +1807,7 @@ static void ospf_te_config_write (struct vty *vty)
   struct ospf *ospf;
   struct ospf_interface *oi;
   struct listnode *node, *node1, *node2;
+  struct te_link_subtlv_link_ifswcap *swcap; 
   u_int32_t *v = NULL;
   const char *p = NULL;
   float bw;
@@ -1850,41 +1884,50 @@ static void ospf_te_config_write (struct vty *vty)
 		    		vty_out(vty, "       srlg add %d %s", (unsigned int)ntohl(*v), VTY_NEWLINE);
 	    	}
 
-	    	if (ntohs(oi->te_para.link_ifswcap.header.type) != 0)
-	    	{
-	    		p = val2str(&str_val_conv_swcap, oi->te_para.link_ifswcap.link_ifswcap_data.switching_cap);
-		    	vty_out(vty, "       swcap %s", p);
-	    		p = val2str(&str_val_conv_encoding, oi->te_para.link_ifswcap.link_ifswcap_data.encoding);
-		    	vty_out(vty, "  encoding %s %s", p, VTY_NEWLINE);
-	  		for (i=0;i<8;i++){  		
-		    		ntohf(&oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i], &bw);
-		    		if (bw > 0)
-				    	vty_out(vty, "       max-lsp-bw %d %.0f %s", i, bw, VTY_NEWLINE);
-	  		}
-	  		if (oi->te_para.link_ifswcap.link_ifswcap_data.switching_cap>=LINK_IFSWCAP_SUBTLV_SWCAP_PSC1 &&
-	  		     oi->te_para.link_ifswcap.link_ifswcap_data.switching_cap>=LINK_IFSWCAP_SUBTLV_SWCAP_PSC4)
-	  		{
-	  			if (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu) > 0)
-	  			{
-		  		       ntohf(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.min_lsp_bw, &bw);
-		  			vty_out(vty, "       min-lsp-bw %.0f mtu %d %s", 
-		  				              bw,
-		  				              ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu), 
-		  				              VTY_NEWLINE);
-	  			}
-	  		}
-	  		else if (oi->te_para.link_ifswcap.link_ifswcap_data.switching_cap==LINK_IFSWCAP_SUBTLV_SWCAP_TDM)
-	  		{
-	  			if (oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication > 0)
-	  			{
-		  		       ntohf(&oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.min_lsp_bw, &bw);
-		  			vty_out(vty, "       min-lsp-bw %.0f indication %d %s", 
-		  				              bw,
-		  				              oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication, 
-		  				              VTY_NEWLINE);
-	  			}
-	  		}
-	    	}
+		if (oi->te_para.link_ifswcap_list)
+		{
+			int nISCD = 0;
+			LIST_LOOP(oi->te_para.link_ifswcap_list, swcap, node)
+			{
+			    	if (ntohs(swcap->header.type) != 0)
+			    	{
+			    		nISCD++;
+			    		if (nISCD > 1)
+						vty_out(vty, "IfSwCapDescr #%d", nISCD);
+			    		p = val2str(&str_val_conv_swcap, swcap->link_ifswcap_data.switching_cap);
+				    	vty_out(vty, "       swcap %s", p);
+			    		p = val2str(&str_val_conv_encoding, swcap->link_ifswcap_data.encoding);
+				    	vty_out(vty, "  encoding %s %s", p, VTY_NEWLINE);
+			  		for (i=0;i<8;i++){  		
+				    		ntohf(&swcap->link_ifswcap_data.max_lsp_bw_at_priority[i], &bw);
+				    		if (bw > 0)
+						    	vty_out(vty, "       max-lsp-bw %d %.0f %s", i, bw, VTY_NEWLINE);
+			  		}
+			  		if (swcap->link_ifswcap_data.switching_cap>=LINK_IFSWCAP_SUBTLV_SWCAP_PSC1 &&
+			  		     swcap->link_ifswcap_data.switching_cap>=LINK_IFSWCAP_SUBTLV_SWCAP_PSC4)
+			  		{
+			  			if (ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu) > 0)
+			  			{
+				  		       ntohf(&swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.min_lsp_bw, &bw);
+				  			vty_out(vty, "       min-lsp-bw %.0f mtu %d %s", 
+				  				              bw,
+				  				              ntohs(swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu), 
+				  				              VTY_NEWLINE);
+			  			}
+			  		}
+			  		else if (swcap->link_ifswcap_data.switching_cap==LINK_IFSWCAP_SUBTLV_SWCAP_TDM)
+			  		{
+			  			if (swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication > 0)
+			  			{
+				  		       ntohf(&swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.min_lsp_bw, &bw);
+				  			vty_out(vty, "       min-lsp-bw %.0f indication %d %s", 
+				  				              bw, swcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication, 
+				  				              VTY_NEWLINE);
+			  			}
+			  		}
+			    	}
+			}
+		}
 
 		if (ntohs(oi->te_para.link_lcrmt_id.header.type) != 0)
 		{
@@ -2421,7 +2464,7 @@ DEFUN (ospf_te_interface_ifsw_cap1,
       return CMD_WARNING;
    }
 
-  set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap, swcap, encoding);
+  set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, swcap, encoding);
   return CMD_SUCCESS;
 }
 
@@ -2434,6 +2477,8 @@ DEFUN (ospf_te_interface_ifsw_cap2,
 {
   int priority;
   float bw;
+  struct te_link_subtlv_link_ifswcap* ifswcap;
+  listnode node;
 
   if (sscanf (argv[0], "%d", &priority) != 1)
     {
@@ -2447,7 +2492,11 @@ DEFUN (ospf_te_interface_ifsw_cap2,
       return CMD_WARNING;
     }
 
-  htonf (&bw, &te_config.te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[priority]);
+  LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
+    {
+	htonf (&bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[priority]);
+    }
+
   return CMD_SUCCESS;
 }
 
@@ -2461,6 +2510,8 @@ DEFUN (ospf_te_interface_ifsw_cap3a,
 {
   u_int32_t mtu;
   float bw;
+  struct te_link_subtlv_link_ifswcap* ifswcap;
+  listnode node;
 
   if (sscanf (argv[0], "%g", &bw) != 1)
     {
@@ -2472,8 +2523,16 @@ DEFUN (ospf_te_interface_ifsw_cap3a,
       vty_out (vty, "ospf_te_link_ifsw_cap3a: fscanf: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
-  htonf (&bw, &te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.min_lsp_bw);
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu = htons(mtu);
+
+  LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
+    {
+       if (ifswcap->header.type != 0 && ifswcap->link_ifswcap_data.switching_cap >= LINK_IFSWCAP_SUBTLV_SWCAP_PSC1
+	   	&& ifswcap->link_ifswcap_data.switching_cap <= LINK_IFSWCAP_SUBTLV_SWCAP_PSC4)
+      	{
+		htonf (&bw, &ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.min_lsp_bw);
+		ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_psc.mtu = htons(mtu);
+      	}
+    }
 
   return CMD_SUCCESS;
 }
@@ -2488,6 +2547,8 @@ DEFUN (ospf_te_interface_ifsw_cap3b,
 {
   int indication;
   float bw;
+  struct te_link_subtlv_link_ifswcap* ifswcap;
+  listnode node;
 
   if (sscanf (argv[0], "%g", &bw) != 1)
     {
@@ -2499,8 +2560,16 @@ DEFUN (ospf_te_interface_ifsw_cap3b,
       vty_out (vty, "ospf_te_link_ifsw_cap3b: fscanf: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
-  htonf (&bw, &te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.min_lsp_bw);
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication = indication;
+
+  LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
+    {
+       if (ifswcap->header.type != 0 && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM)
+      	{
+		htonf (&bw, &ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.min_lsp_bw);
+		ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication = indication;
+      	}
+    }
+
   return CMD_SUCCESS;
 }
 
@@ -2512,48 +2581,68 @@ DEFUN (ospf_te_interface_ifsw_cap4,
        "Tagged VLAN ID in the range [1, 4095]\n")
 {
   u_int32_t vlan, vlan1, vlan2;
+  listnode node;
+  struct te_link_subtlv_link_ifswcap *ifswcap;
+  struct te_link_subtlv_link_ifswcap *ifswcap_vlan = NULL;
+  int has_subnet_iscd = 0;
 
-  if  (te_config.te_para.link_ifswcap.link_ifswcap_data.switching_cap != LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
+  LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
     {
-      vty_out (vty, "ospf_te_interface_ifsw_cap4: no 'vlan' command on non-L2SC link.%s", VTY_NEWLINE);
-      return CMD_WARNING;
+	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
+		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+		has_subnet_iscd = 1;
+	if (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC
+		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) != 0)
+	{
+		ifswcap_vlan = ifswcap;
+		break;
+	}
     }
-  	
+  if (!ifswcap_vlan && has_subnet_iscd == 1)
+  {
+	ifswcap_vlan = XMALLOC(MTYPE_TMP, sizeof(struct te_link_subtlv_link_ifswcap));
+	listnode_add(te_config.te_para.link_ifswcap_list, ifswcap_vlan);
+  }
+  else if (!ifswcap_vlan)
+  {
+	vty_out (vty, "ospf_te_interface_ifsw_cap4 (vlan): invalid command, no L2SC switch capability descriptor defiend. %s", VTY_NEWLINE);
+	return CMD_WARNING;
+  }
+
   if (sscanf (argv[0], "%d", &vlan1) != 1)
-    {
-      vty_out (vty, "ospf_te_interface_ifsw_cap4: fscanf vlan1: %s%s", strerror (errno), VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-
-  te_config.te_para.link_ifswcap.header.length = htons(36 + sizeof(struct link_ifswcap_specific_vlan));
-
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(sizeof(struct link_ifswcap_specific_vlan));
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version = htons(IFSWCAP_SPECIFIC_VLAN_BASIC | IFSWCAP_SPECIFIC_VLAN_ALLOC);
-
+  {
+  	vty_out (vty, "ospf_te_interface_ifsw_cap4: fscanf vlan1: %s%s", strerror (errno), VTY_NEWLINE);
+  	return CMD_WARNING;
+  }
+  ifswcap_vlan->header.length = htons(36 + sizeof(struct link_ifswcap_specific_vlan));
+  ifswcap_vlan->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length = htons(sizeof(struct link_ifswcap_specific_vlan));
+  ifswcap_vlan->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version = htons(IFSWCAP_SPECIFIC_VLAN_BASIC | IFSWCAP_SPECIFIC_VLAN_ALLOC);
+  
   if (argc == 1) 
-    {
-	SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan1);
-    }
+  {
+  	SET_VLAN(ifswcap_vlan->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan1);
+  }
   else if (argc == 2 ) 
-    {
-	  if (sscanf (argv[1], "%d", &vlan2) != 1)
-	    {
-	      vty_out (vty, "ospf_te_interface_ifsw_cap4: fscanf vlan2: %s%s", strerror (errno), VTY_NEWLINE);
-	      return CMD_WARNING;
-	    }
-	  else if (vlan2 < vlan1)
-	    {
-	      vty_out (vty, "ospf_te_interface_ifsw_cap4: VLAN ID2 < ID1%s", VTY_NEWLINE);
-	      return CMD_WARNING;
-	    }
-	  for(vlan = vlan1; vlan <= vlan2; vlan++)
-	      SET_VLAN(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan);
-    }
+  {
+  	if (sscanf (argv[1], "%d", &vlan2) != 1)
+  	{
+  		vty_out (vty, "ospf_te_interface_ifsw_cap4: fscanf vlan2: %s%s", strerror (errno), VTY_NEWLINE);
+  		return CMD_WARNING;
+  	}
+  	else if (vlan2 < vlan1)
+  	{
+  		vty_out (vty, "ospf_te_interface_ifsw_cap4: VLAN ID2 < ID1%s", VTY_NEWLINE);
+  		return CMD_WARNING;
+  	}
+  	for(vlan = vlan1; vlan <= vlan2; vlan++)
+  		SET_VLAN(ifswcap_vlan->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vlan);
+  }
   else
-    {
-        vty_out (vty, "ospf_te_interface_ifsw_cap4: invalid command%s", VTY_NEWLINE);
-	 return CMD_WARNING;
-    }
+  {
+  	vty_out (vty, "ospf_te_interface_ifsw_cap4: invalid command%s", VTY_NEWLINE);
+  	return CMD_WARNING;
+  }
+
   return CMD_SUCCESS;
 }
 
@@ -2563,7 +2652,6 @@ ALIAS (ospf_te_interface_ifsw_cap4,
        "Assign this port/IP to a tagged VLAN\n"
        "Tagged VLAN ID1 in the range [1, 4094]\n"
        "Tagged VLAN ID2 in the range [2, 4095]\n");
-
 
 DEFUN (ospf_te_interface_ifsw_cap5,
        ospf_te_interface_ifsw_cap5_cmd,
@@ -2586,55 +2674,50 @@ DEFUN (ospf_te_interface_ifsw_cap5,
        "Egress label (32 bits)\n")
 {
   u_int32_t uni_id, tna_ip, uni_n_ip, data_if, data_port, egress_label, egress_label_upstream;
+  struct te_link_subtlv_link_ifswcap *ifswcap;
 
-  if  (te_config.te_para.link_ifswcap.link_ifswcap_data.switching_cap != LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
-    {
-      vty_out (vty, "ospf_te_interface_ifsw_cap5: no 'subnet-uni' command on non-L2SC link.%s", VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-  	
+  ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_TDM, LINK_IFSWCAP_SUBTLV_ENC_SONETSDH);
+  ifswcap->header.length = htons(36 + sizeof(struct link_ifswcap_specific_subnet_uni)); /* the default length is 36 + sizeof(struct link_ifswcap_specific_tdm */
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.length = htons(sizeof(struct link_ifswcap_specific_subnet_uni));
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version = htons(IFSWCAP_SPECIFIC_SUBNET_UNI);
+
   if (argc != 9) 
-    {
-      vty_out (vty, "ospf_te_interface_ifsw_cap5: only %d parameters present%s (needing eight)", argc, VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-
-  te_config.te_para.link_ifswcap.header.length = htons(36 + sizeof(struct link_ifswcap_specific_subnet_uni)); /*reassign length...*/
-
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.length = htons(sizeof(struct link_ifswcap_specific_subnet_uni));
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version = htons(IFSWCAP_SPECIFIC_SUBNET_UNI);
+  {
+	vty_out (vty, "ospf_te_interface_ifsw_cap5: only %d parameters present%s (needing eight)", argc, VTY_NEWLINE);
+	return CMD_WARNING;
+  }
 
   if (sscanf (argv[0], "%d", &uni_id) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap5: fscanf uni_id: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id = (u_int8_t)uni_id;
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id = (u_int8_t)uni_id;
 
-  strncpy(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.node_name, argv[1], 14);
+  strncpy(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.node_name, argv[1], 14);
 
   if (inet_aton (argv[2], (struct in_addr*)&tna_ip) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap5: inet_aton tna_ip: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.tna_ipv4 = tna_ip;
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.tna_ipv4 = tna_ip;
 
   if (inet_aton (argv[3], (struct in_addr*)&uni_n_ip) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap5: inet_aton uni_n_ip: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.nid_ipv4 = uni_n_ip;
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.nid_ipv4 = uni_n_ip;
 
-  strncpy(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.control_channel, argv[4], 11);
+  strncpy(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.control_channel, argv[4], 11);
 
   if (inet_aton (argv[5], (struct in_addr*)&data_if) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap5: inet_aton data_if: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.data_ipv4 = data_if;
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.data_ipv4 = data_if;
 
   data_port = logical_port_string2number((const char*)argv[6]);
   if (data_port == 0)
@@ -2642,25 +2725,26 @@ DEFUN (ospf_te_interface_ifsw_cap5,
       vty_out (vty, "ospf_te_interface_ifsw_cap5: unacceptable data_port: %s%s", argv[6], VTY_NEWLINE);
       return CMD_WARNING;
     }
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.logical_port_number = htonl(data_port);
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.logical_port_number = htonl(data_port);
   
   if (sscanf (argv[7], "%d", &egress_label) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap5: fscanf egress_label: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_downstream = htonl(egress_label);
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_downstream = htonl(egress_label);
   
   if (sscanf (argv[8], "%d", &egress_label_upstream) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap5: fscanf egress_label_upstream: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_upstream = htonl(egress_label_upstream);
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.egress_label_upstream = htonl(egress_label_upstream);
   
   return CMD_SUCCESS;
 }
 
+/*$$$$ To be implied by or merged into ospf_te_interface_ifsw_cap5 */
 DEFUN (ospf_te_interface_ifsw_cap6,
        ospf_te_interface_ifsw_cap6_cmd,
        "subnet-uni swcap-ext (l2sc|tdm|lsc|fsc) encoding-ext (packet|ethernet|pdh|sdh|dwrapper|lambda|fiber|fchannel)",
@@ -2680,13 +2764,25 @@ DEFUN (ospf_te_interface_ifsw_cap6,
        "Fiber\n")
 {
   u_char swcap = 0, encoding = 0;
+  int base_length = 36;
+  struct te_link_subtlv_link_ifswcap* ifswcap;
+  listnode node;
+  int has_subnet_iscd = 0;
 
-  if ( te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version != htons(IFSWCAP_SPECIFIC_SUBNET_UNI) )
+  LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
+    {
+	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM &&  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version == htons(IFSWCAP_SPECIFIC_SUBNET_UNI))
+	{
+		has_subnet_iscd = 1;
+		break;
+	}
+    }
+  if (has_subnet_iscd == 0)
   {
       vty_out (vty, "subnet-uni <1-65535> node-name NAME tna-ipv4 ... must be defined first ... %s", VTY_NEWLINE);
       return CMD_ERR_INCOMPLETE;
   }
-  
+
   swcap = str2val(&str_val_conv_swcap, argv[0]);
   if (swcap == 0)
   {
@@ -2700,8 +2796,9 @@ DEFUN (ospf_te_interface_ifsw_cap6,
       return CMD_WARNING;
   }
 
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.swcap_ext = swcap;
-  te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.encoding_ext = encoding;
+  /* set swcap type other than TDM / SDH */
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.swcap_ext = swcap;
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.encoding_ext = encoding;
 
   return CMD_SUCCESS;
 }
@@ -2713,8 +2810,24 @@ DEFUN (ospf_te_interface_ifsw_cap7,
        "TimeSlot ID in the range [1, 192]\n")
 {
   u_int32_t ts, ts1, ts2;
+  struct te_link_subtlv_link_ifswcap* ifswcap;
+  listnode node;
+  int has_subnet_iscd = 0;
+  LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
+    {
+	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+	{
+		has_subnet_iscd = 1;
+		break;
+	}
+    }
+  if (has_subnet_iscd == 0)
+  {
+      vty_out (vty, "'subnet-uni <1-65535>' ... and 'subnet-uni swcap-ext'... must be defined first ... %s", VTY_NEWLINE);
+      return CMD_ERR_INCOMPLETE;
+  }
 
-  if ( te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version != htons(IFSWCAP_SPECIFIC_SUBNET_UNI) )
+  if (ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version != htons(IFSWCAP_SPECIFIC_SUBNET_UNI) )
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap7: 'timeslot' command must follow 'subnet-uni' command.%s", VTY_NEWLINE);
       return CMD_ERR_INCOMPLETE;
@@ -2728,7 +2841,7 @@ DEFUN (ospf_te_interface_ifsw_cap7,
 
   if (argc == 1) 
     {
-	SET_TIMESLOT(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, ts1);
+	SET_TIMESLOT(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, ts1);
     }
   else if (argc == 2 ) 
     {
@@ -2743,7 +2856,7 @@ DEFUN (ospf_te_interface_ifsw_cap7,
 	      return CMD_WARNING;
 	    }
 	  for(ts = ts1; ts <= ts2; ts++)
-	      SET_TIMESLOT(te_config.te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, ts);
+	      SET_TIMESLOT(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, ts);
     }
   else
     {
@@ -2780,36 +2893,21 @@ DEFUN (show_ospf_te_router,
   return CMD_SUCCESS;
 }
 
-/*@@@@ UNI hacks ==> Obsolete*/
-/*
-DEFUN (ospf_te_uni_loopback,
-       ospf_te_uni_loopback_cmd,
-       "loopback A.B.C.D",
-       "Assign UNI client loopback address\n"
-       "IP address A.B.C.D\n")
-{
-  if (argc != 1 || ! inet_aton(argv[0], &te_config.uni_loopback)) {
-      vty_out (vty, "Please specify the UNI loopback address by A.B.C.D%s", VTY_NEWLINE);
-      return CMD_WARNING;
-  }
-  return CMD_SUCCESS;
-}
-*/
-
 static void
 show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 {
   int i;
   char data_ip_address[20];
   char switch_ip_address[20];
+  struct te_link_subtlv_link_ifswcap* ifswcap;
+  listnode node;
 
   if (INTERFACE_MPLS_ENABLED(oi)
   &&  (! if_is_loopback (oi->ifp) && if_is_up (oi->ifp) && ospf_oi_count (oi->ifp) > 0))
     {
-      vty_out (vty, "-- OSPF-TE link parameters for %s --%s",
-               inet_ntoa(oi->address->u.prefix4), VTY_NEWLINE);
-	if (oi->vlsr_if.data_ip.s_addr != 0)
-	{
+	  vty_out (vty, "-- OSPF-TE link parameters for %s --%s", inet_ntoa(oi->address->u.prefix4), VTY_NEWLINE);
+	  if (oi->vlsr_if.data_ip.s_addr != 0)
+	  {
 		if (oi->vlsr_if.protocol == VLSR_PROTO_SNMP)
 			vty_out(vty, "Protocol type is SNMP, ");
 		else if (oi->vlsr_if.protocol == VLSR_PROTO_TL1)
@@ -2825,28 +2923,7 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
                   }
 		  else
 			vty_out(vty, "Data interface is numbered, IP = %s,  ",  inet_ntoa (oi->vlsr_if.data_ip));
-			if (oi->te_para.link_ifswcap.link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC) {
-			  	if (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) {
-				  vty_out(vty, "Assigned VLAN tags:");
-				  for (i = 1; i <= MAX_VLAN_NUM; i++)
-				  	if (HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, i))
-					    vty_out(vty, " %d", i);
-				  vty_out(vty, "%s", VTY_NEWLINE);
-			  	}
-				else
-				  vty_out(vty, "No VLAN tag assigned %s", VTY_NEWLINE);
-
-			  	if (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_ALLOC) {
-				  vty_out(vty, "VLAN tags in use (allocated):");
-				  for (i = 1; i <= MAX_VLAN_NUM; i++)
-				  	if (HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc, i))
-					    vty_out(vty, " %d", i);
-				  vty_out(vty, "%s", VTY_NEWLINE);
-			  	}
-				else
-				  vty_out(vty, "No VLAN tag in use (allocated) %s", VTY_NEWLINE);
-			}
-	}
+	  }
 	  else
 	  {
 		  if (oi->vlsr_if.protocol == VLSR_PROTO_SNMP)
@@ -2892,8 +2969,13 @@ show_ospf_te_link_sub_detail (struct vty *vty, struct ospf_interface *oi)
 	          show_vty_link_subtlv_lcrmt_id(vty, &oi->te_para.link_lcrmt_id.header);
       	   if (ntohs(oi->te_para.link_protype.header.type)!=0)
 	          show_vty_link_subtlv_protection_type(vty, &oi->te_para.link_protype.header);
-      	   if (ntohs(oi->te_para.link_ifswcap.header.type)!=0)
-	          show_vty_link_subtlv_ifsw_cap_local(vty, &oi->te_para.link_ifswcap.header);
+      	   if (oi->te_para.link_ifswcap_list !=NULL)
+	   {
+		LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap, node)
+		{
+	          show_vty_link_subtlv_ifsw_cap_local(vty, &ifswcap->header);
+		}	
+	   }
       	   if (ntohs(oi->te_para.link_srlg.header.type)!=0)
 	          show_vty_link_subtlv_srlg(vty, &oi->te_para.link_srlg.header, 1);
       	   if (ntohs(oi->te_para.link_te_lambda.header.type)!=0)

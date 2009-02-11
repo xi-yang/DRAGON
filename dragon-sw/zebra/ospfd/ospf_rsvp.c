@@ -430,8 +430,9 @@ void
 ospf_hold_vtag(u_int32_t port, u_int32_t vtag, u_int8_t hold_flag)
 {
 	struct ospf_interface *oi;
-	struct listnode *node1, *node2;
+	struct listnode *node1, *node2, *node3;
 	struct ospf *ospf;
+	struct te_link_subtlv_link_ifswcap *ifswcap;
 	int updated = 0;
 	
 	if (om->ospf)
@@ -439,18 +440,21 @@ ospf_hold_vtag(u_int32_t port, u_int32_t vtag, u_int8_t hold_flag)
 	{
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
-			if (oi && INTERFACE_MPLS_ENABLED(oi) && oi->vlsr_if.switch_port == port) {
-				if (hold_flag == 1 && HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
+			if (oi && INTERFACE_MPLS_ENABLED(oi) && oi->vlsr_if.switch_port == port && oi->te_para.link_ifswcap_list != NULL) {
+				LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap, node3)
 				{
-					RESET_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag);
-					SET_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc, vtag);
-					updated = 1;
-				}
-				else if (hold_flag == 0 && !HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
-				{
-					SET_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag);
-					RESET_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc, vtag);
-					updated = 1;
+					if (hold_flag == 1 && HAS_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
+					{
+						RESET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag);
+						SET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc, vtag);
+						updated = 1;
+					}
+					else if (hold_flag == 0 && !HAS_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
+					{
+						SET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag);
+						RESET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc, vtag);
+						updated = 1;
+					}
 				}
 				if (updated && oi->t_te_area_lsa_link_self)
 				{
@@ -467,6 +471,8 @@ static int hold_bandwidth(struct ospf_interface *oi, float bandwidth, u_int32_t 
 	u_int8_t i;
 	static float zero_bw = 0;
 	float unrsv_bw;
+	struct listnode *node;
+	struct te_link_subtlv_link_ifswcap *ifswcap;
 
 	for (i=0; i<8; i++)
 	{
@@ -475,8 +481,12 @@ static int hold_bandwidth(struct ospf_interface *oi, float bandwidth, u_int32_t 
 		if (unrsv_bw < 0)
 			unrsv_bw = zero_bw;
 		set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
-		htonf(&unrsv_bw, &oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i]);
-		if (ucid != 0 && seqnum != 0)
+
+		if (oi->te_para.link_ifswcap_list != NULL) 
+			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap, node)
+				htonf(&unrsv_bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[i]);
+
+		if (ucid != 0 && seqnum != 0)			
 			insert_gri(oi, ucid, seqnum);
 	}
 	return 1;
@@ -487,6 +497,8 @@ static int release_bandwidth(struct ospf_interface *oi, float bandwidth, u_int32
 	u_int8_t i;
 	float max_rsv_bw;
 	float unrsv_bw;
+	struct listnode *node;
+	struct te_link_subtlv_link_ifswcap *ifswcap;
 
 	ntohf(&oi->te_para.max_rsv_bw.value, &max_rsv_bw);
 	for (i=0; i<8; i++)
@@ -496,7 +508,9 @@ static int release_bandwidth(struct ospf_interface *oi, float bandwidth, u_int32
 		if (unrsv_bw > max_rsv_bw)
 			unrsv_bw = max_rsv_bw;
 		set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
-		htonf(&unrsv_bw, &oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i]);
+		if (oi->te_para.link_ifswcap_list != NULL) 
+			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap, node)
+				htonf(&unrsv_bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[i]);
 		if (ucid != 0 && seqnum != 0)
 			delete_gri(oi, ucid, seqnum);
 	}
@@ -508,8 +522,9 @@ void
 ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag, u_int32_t ucid, u_int32_t seqnum)
 {
 	struct ospf_interface *oi;
-	struct listnode *node1, *node2;
+	struct listnode *node1, *node2, *node3;
 	struct ospf *ospf;
+	struct te_link_subtlv_link_ifswcap *ifswcap_subnet;
 	int updated = 0;
 
 	if (bw == 0)
@@ -522,10 +537,19 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag, u_int32_t ucid
 	{
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
+			ifswcap_subnet = NULL;
+			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_subnet, node3)
+			{
+				if ((ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+					break;
+				ifswcap_subnet = NULL;
+			}
+			/* the interface contains a subnet_uni ISCD if ifswcap_subne != NULL*/
+
 			if (oi && INTERFACE_MPLS_ENABLED(oi) && (oi->vlsr_if.switch_port == port
 				|| ( ( (port>>16) == 0x10 || (port>>16) == 0x11 ) 
-					&& ( ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0
-					&& ( oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) ) ) ) {
+					&& ifswcap_subnet != NULL 
+					&& (ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) ) ) ) {
 				if (hold_flag == 1)
 				{
 					updated = hold_bandwidth(oi, bw, ucid, seqnum);
@@ -550,6 +574,7 @@ ospf_hold_timeslots(u_int32_t port, list ts_list, u_int8_t hold_flag)
 	struct ospf_interface *oi;
 	struct listnode *node1, *node2, *node3;
 	struct ospf *ospf;
+	struct te_link_subtlv_link_ifswcap *ifswcap_subnet;
 	int updated = 0;
 	u_int8_t* ts;
 
@@ -558,19 +583,28 @@ ospf_hold_timeslots(u_int32_t port, list ts_list, u_int8_t hold_flag)
 	{
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
-			if ( ( (port>>16) == 0x10 || (port>>16) == 0x11 ) 
-					&& ( ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0
-					&& ( oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) ) {
+			ifswcap_subnet = NULL;
+			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_subnet, node3)
+			{
+				if ((ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+					break;
+				ifswcap_subnet = NULL;
+			}
+			/* the interface contains a subnet_uni ISCD if ifswcap_subne != NULL*/
+
+			if ( ( (port>>16) == 0x10 || (port>>16) == 0x11 )
+					&& ifswcap_subnet != NULL
+					&& ( ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) ) {
 				if (hold_flag == 1)
 				{
 					LIST_LOOP(ts_list, ts, node3)
-						RESET_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, *ts);						
+						RESET_VLAN(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, *ts);						
 					updated = 1;
 				}
 				else 
 				{
 					LIST_LOOP(ts_list, ts, node3)
-						SET_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, *ts);						
+						SET_VLAN(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, *ts);						
 					updated = 1;
 				}
 				if (updated && oi->t_te_area_lsa_link_self)
@@ -588,7 +622,8 @@ void
 ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t inPort, u_int32_t outPort, int fd)
 {
 	struct ospf_interface *oi, *in_oi = NULL, *out_oi = NULL;
-	struct listnode *node1, *node2;
+	struct listnode *node1, *node2, *node3;
+	struct te_link_subtlv_link_ifswcap *ifswcap_subnet;
 	struct ospf *ospf;
 	struct stream *s;
 	u_int8_t length = 0;
@@ -621,17 +656,26 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		{
 			if (ospf->oiflist)
 			LIST_LOOP(ospf->oiflist, oi, node2){
+				ifswcap_subnet = NULL;
+				LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_subnet, node3)
+				{
+					if ((ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+						break;
+					ifswcap_subnet = NULL;
+				}
 				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(inRtId->s_addr)
-                                && (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
-        			    && HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
+				    && ifswcap_subnet != NULL
+				    && (ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
+				    && HAS_VLAN(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
         			    	/*TODO @@@@ if !HAS_VLAN --> should return empty vlsr_route */
 				        inPort &= 0xffff0000;
                                     inPort |= oi->vlsr_if.switch_port;
 					 in_oi = oi;
                                }
 				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(outRtId->s_addr)
-                                && (ntohs(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
-      			           && HAS_VLAN(oi->te_para.link_ifswcap.link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
+				    && ifswcap_subnet != NULL
+				    && (ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
+				    && HAS_VLAN(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
         			    	/*TODO @@@@ if !HAS_VLAN --> should return empty vlsr_route */
 				        outPort &= 0xffff0000;
                                     outPort |= oi->vlsr_if.switch_port;
@@ -827,8 +871,9 @@ void
 ospf_rsvp_notify(u_int8_t msgtype, struct in_addr * ctrlIP, float *bandwidth, int fd)
 {
 	struct ospf_interface *oi = NULL, *in_oi;
-	struct listnode *node1, *node2;
+	struct listnode *node1, *node2, *node3;
 	struct ospf *ospf;
+	struct te_link_subtlv_link_ifswcap *ifswcap;
 	u_int8_t i;
 	static float zero_bw = 0;
 	float max_rsv_bw;
@@ -856,7 +901,9 @@ ospf_rsvp_notify(u_int8_t msgtype, struct in_addr * ctrlIP, float *bandwidth, in
 					if (unrsv_bw < 0)
 						unrsv_bw = zero_bw;
 					set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
-					htonf(&unrsv_bw, &oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i]);
+					if (oi->te_para.link_ifswcap_list != NULL)
+						LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap, node3)
+							htonf(&unrsv_bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[i]);
 				}
 				if (oi->t_te_area_lsa_link_self)
 				{
@@ -874,7 +921,9 @@ ospf_rsvp_notify(u_int8_t msgtype, struct in_addr * ctrlIP, float *bandwidth, in
 					if (unrsv_bw > max_rsv_bw)
 						unrsv_bw = max_rsv_bw;
 					set_linkparams_unrsv_bw(&oi->te_para.unrsv_bw, i, &unrsv_bw);
-					htonf(&unrsv_bw, &oi->te_para.link_ifswcap.link_ifswcap_data.max_lsp_bw_at_priority[i]);
+					if (oi->te_para.link_ifswcap_list != NULL)
+						LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap, node3)
+							htonf(&unrsv_bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[i]);
 				}
 				if (oi->t_te_area_lsa_link_self)
 				{
