@@ -67,16 +67,16 @@ enum OspfRsvpMessage {
 	OspfResv = 2,
 	OspfPathTear = 5,
 	OspfResvTear = 6,
-	GetExplicitRouteByOSPF = 128,	//Get explicit route from OSPF
-	FindInterfaceByData = 129,		//Find control logical interface by data plane IP / interface ID
-	FindDataByInterface = 130,			//Find data plane IP / interface ID by control logical interface
-	FindOutLifByOSPF = 131, 		//Find outgoing control logical interface by next hop data plane IP / interface ID
-	GetVLSRRoutebyOSPF = 132,		//Get VLSR route
-	GetLoopbackAddress = 133,		// Get its loopback address
-	HoldVtagbyOSPF = 134,		// Hold or release a VLAN Tag
-	HoldBandwidthbyOSPF = 135, 		// Hold or release a portion of bandwidth
-	GetSubnetUNIDataByOSPF = 136,	// Get Subnet UNI data associated with a OSPF interface
-	HoldTimeslotsbyOSPF = 137,		// Hold or release timeslots
+	GetExplicitRouteByOSPF = 128,	/*Get explicit route from OSPF*/
+	FindInterfaceByData = 129,		/*Find control logical interface by data plane IP / interface ID*/
+	FindDataByInterface = 130,			/*Find data plane IP / interface ID by control logical interface*/
+	FindOutLifByOSPF = 131, 		/*Find outgoing control logical interface by next hop data plane IP / interface ID*/
+	GetVLSRRoutebyOSPF = 132,		/*Get VLSR route*/
+	GetLoopbackAddress = 133,		/* Get its loopback address*/
+	HoldVtagbyOSPF = 134,		/* Hold or release a VLAN Tag*/
+	HoldBandwidthbyOSPF = 135, 		/* Hold or release a portion of bandwidth*/
+	GetSubnetUNIDataByOSPF = 136,	/* Get Subnet UNI data associated with a OSPF interface*/
+	HoldTimeslotsbyOSPF = 137,		/* Hold or release timeslots*/
 };
 
 
@@ -540,7 +540,7 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag, u_int32_t ucid
 			ifswcap_subnet = NULL;
 			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_subnet, node3)
 			{
-				if ((ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+				if (ifswcap_subnet->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && (ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
 					break;
 				ifswcap_subnet = NULL;
 			}
@@ -586,7 +586,7 @@ ospf_hold_timeslots(u_int32_t port, list ts_list, u_int8_t hold_flag)
 			ifswcap_subnet = NULL;
 			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_subnet, node3)
 			{
-				if ((ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+				if (ifswcap_subnet->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && (ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
 					break;
 				ifswcap_subnet = NULL;
 			}
@@ -659,12 +659,12 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 				ifswcap_subnet = NULL;
 				LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_subnet, node3)
 				{
-					if ((ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+					if (ifswcap_subnet->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && (ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
 						break;
 					ifswcap_subnet = NULL;
 				}
 				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(inRtId->s_addr)
-				    && ifswcap_subnet != NULL
+				    && ifswcap_subnet != NULL && ifswcap_subnet->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC
 				    && (ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
 				    && HAS_VLAN(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
         			    	/*TODO @@@@ if !HAS_VLAN --> should return empty vlsr_route */
@@ -673,7 +673,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 					 in_oi = oi;
                                }
 				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(outRtId->s_addr)
-				    && ifswcap_subnet != NULL
+				    && ifswcap_subnet != NULL && ifswcap_subnet->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC
 				    && (ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
 				    && HAS_VLAN(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
         			    	/*TODO @@@@ if !HAS_VLAN --> should return empty vlsr_route */
@@ -732,7 +732,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 	}
 
        if ( (inPort >> 16) == 0x4 && (outPort >> 16) == 0x4
-          //&& ((inPort & 0xffff) != 0) && ((outPort & 0xffff) != 0) 
+          /*&& ((inPort & 0xffff) != 0) && ((outPort & 0xffff) != 0) */
           && (inPort != outPort ) && in_oi && out_oi && in_oi->vlsr_if.switch_ip.s_addr!=0)
         {
 		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
@@ -748,7 +748,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
         }
 	else if (in_oi && out_oi && in_oi->vlsr_if.switch_ip.s_addr!=0 && out_oi->vlsr_if.switch_ip.s_addr!=0 &&
 		in_oi->vlsr_if.switch_ip.s_addr == out_oi->vlsr_if.switch_ip.s_addr &&
-		//in_oi->vlsr_if.switch_port != 0 && out_oi->vlsr_if.switch_port != 0 &&
+		/*in_oi->vlsr_if.switch_port != 0 && out_oi->vlsr_if.switch_port != 0 &&*/
 		in_oi->vlsr_if.switch_port != out_oi->vlsr_if.switch_port)
 	{
 		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
@@ -763,7 +763,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		write (fd, STREAM_DATA(s), length);
 	}
 	else if (outPort != 0 && in_oi && in_oi->vlsr_if.switch_ip.s_addr!=0 
-		//&& in_oi->vlsr_if.switch_port != 0
+		/*&& in_oi->vlsr_if.switch_port != 0*/
 		)
        {
 		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
@@ -786,7 +786,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		write (fd, STREAM_DATA(s), length);             
        }
 	else if (inPort != 0 && out_oi && out_oi->vlsr_if.switch_ip.s_addr!=0 
-		//&& out_oi->vlsr_if.switch_port != 0
+		/*&& out_oi->vlsr_if.switch_port != 0*/
 		)
        {
 		length = sizeof(u_int8_t)*2 + sizeof(struct in_addr) + sizeof(u_int32_t)*3;
@@ -980,13 +980,13 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int8_t uni_id, int fd)
 	if (area)
 	  {
 		LSDB_LOOP (area->te_lsdb->db, rn, lsa)
-		{ //matching the data_if with either a te link local if addr or a link's originating end's loopback
+		{ /*matching the data_if with either a te link local if addr or a link's originating end's loopback*/
 		  if (lsa->tepara_ptr && lsa->tepara_ptr->p_lclif_ipaddr && 
 		  	(lsa->tepara_ptr->p_lclif_ipaddr->value.s_addr == data_if->s_addr ||lsa->data->adv_router.s_addr == data_if->s_addr))
 		   {
 		   	LIST_LOOP(lsa->tepara_ptr->p_link_ifswcap_list, ifswcap, node)
 	   		{
-	   			if (ifswcap && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC
+	   			if (ifswcap && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM
 				    && ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) == IFSWCAP_SPECIFIC_SUBNET_UNI 
 				    && ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == uni_id)
    				{
