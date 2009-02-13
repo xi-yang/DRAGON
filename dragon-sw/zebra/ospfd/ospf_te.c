@@ -2600,8 +2600,7 @@ DEFUN (ospf_te_interface_ifsw_cap4,
     }
   if (!ifswcap_vlan && has_subnet_iscd == 1)
   {
-	ifswcap_vlan = XMALLOC(MTYPE_TMP, sizeof(struct te_link_subtlv_link_ifswcap));
-	listnode_add(te_config.te_para.link_ifswcap_list, ifswcap_vlan);
+	ifswcap_vlan = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_L2SC, LINK_IFSWCAP_SUBTLV_ENC_ETH);
   }
   else if (!ifswcap_vlan)
   {
