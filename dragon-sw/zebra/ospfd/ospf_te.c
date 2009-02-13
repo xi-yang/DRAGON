@@ -766,6 +766,7 @@ set_linkparams_ifsw_cap1 (list *swcap_list, u_char swcap, u_char enc)
 		return ifswcap;
   }
   ifswcap = XMALLOC(MTYPE_TMP, sizeof(struct te_link_subtlv_link_ifswcap));
+  memset(ifswcap, 0, sizeof(struct te_link_subtlv_link_ifswcap));
   ifswcap->header.type   = htons (TE_LINK_SUBTLV_LINK_IFSWCAP);
   if ( swcap >= LINK_IFSWCAP_SUBTLV_SWCAP_PSC1 && 
   	 swcap <= LINK_IFSWCAP_SUBTLV_SWCAP_PSC4 )
