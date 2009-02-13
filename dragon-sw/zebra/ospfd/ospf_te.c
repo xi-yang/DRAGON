@@ -1548,7 +1548,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   }
   else if (strncmp(swcap, "tdm", 3) == 0)
   {
-         if (ntohs(te_tlv_header->length) == 44) {
+         if (ntohs(tlvh->length) == 44) {
              f = (float *)v;
              ntohf (f, &fval);
              if (vty != NULL){
