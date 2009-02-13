@@ -1548,24 +1548,44 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   }
   else if (strncmp(swcap, "tdm", 3) == 0)
   {
-  	  f = (float *)v;
-         ntohf (f, &fval);
-	  if (vty != NULL){
-	    vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec) %s", 
-	    				fval, VTY_NEWLINE);
-	    f++;
-	    v = (u_char *)f;
-	    vty_out (vty, "                                      : Indication: %d %s", 
-	    				*v, VTY_NEWLINE);
-	  }
-	  else{
-	    zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec)", 
-	    				fval);
-	    f++;
-	    v = (u_char *)f;
-	    zlog_info ("                                      : Indication: %d", 
-	    				*v);
-	  }
+         if (ntohs(te_tlv_header->length) == 44) {
+             f = (float *)v;
+             ntohf (f, &fval);
+             if (vty != NULL){
+                 vty_out (vty, "  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec) %s", fval, VTY_NEWLINE);
+                 f++;
+                 v = (u_char *)f;
+                 vty_out (vty, "                                      : Indication: %d %s", *v, VTY_NEWLINE);
+             }
+             else{
+                 zlog_info ("  --specific information-- : Minimum LSP Bandwidth: %.0f (Bytes/sec)", fval);
+                 f++;
+                 v = (u_char *)f;
+                 zlog_info ("                                      : Indication: %d", *v);
+             }
+       }
+	else if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_SUBNET_UNI)) {
+            subnet_uni = (struct link_ifswcap_specific_subnet_uni *)v;
+            strcpy (ipv4, inet_ntoa (*(struct in_addr*)&subnet_uni->tna_ipv4));
+            strcpy (ipv4_a, inet_ntoa (*(struct in_addr*)&subnet_uni->nid_ipv4));
+            strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&subnet_uni->data_ipv4));
+            vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
+            vty_out (vty, "      -> Subnet-UNI ID: %d TNA-IPv4 %s via ControlChannel %s%s", 
+				subnet_uni->subnet_uni_id, ipv4, subnet_uni->control_channel, VTY_NEWLINE);
+            vty_out (vty, "      -> UNI-N NodeName %s NodeID: %s, Data IP: %s%s", subnet_uni->node_name, ipv4_a, ipv4_b, VTY_NEWLINE);
+            vty_out (vty, "      -> LogicalPort: %s, EgressLabel: %d, UpstreamLabel: %d%s",
+				logical_port_number2string(ntohl(subnet_uni->logical_port_number)),
+				(unsigned int)ntohl(subnet_uni->egress_label_downstream), (unsigned int)ntohl(subnet_uni->egress_label_upstream), VTY_NEWLINE);
+
+            swcap = val2str(&str_val_conv_swcap, subnet_uni->swcap_ext);
+            enc = val2str(&str_val_conv_encoding, subnet_uni->encoding_ext);
+            vty_out (vty, "      -> Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
+            vty_out (vty, "      -> Available TimeSlots:");
+            for (i = 1; i <= MAX_TIMESLOTS_NUM; i++)
+                if (HAS_TIMESLOT(subnet_uni->timeslot_bitmask, i)) vty_out (vty, " %d", i);
+            vty_out (vty, "%s", VTY_NEWLINE);
+	}
+
   }
   else if (strncmp(swcap, "l2sc", 4) == 0)
   {
@@ -1588,27 +1608,6 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	    for (i = 1; i <= MAX_VLAN_NUM; i++)
 		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
 	    vty_out (vty, "%s", VTY_NEWLINE);
-	}
-	else if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_SUBNET_UNI)) {
-	    subnet_uni = (struct link_ifswcap_specific_subnet_uni *)v;
-            strcpy (ipv4, inet_ntoa (*(struct in_addr*)&subnet_uni->tna_ipv4));
-            strcpy (ipv4_a, inet_ntoa (*(struct in_addr*)&subnet_uni->nid_ipv4));
-            strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&subnet_uni->data_ipv4));
-            vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
-            vty_out (vty, "      -> Subnet-UNI ID: %d TNA-IPv4 %s via ControlChannel %s%s", 
-				subnet_uni->subnet_uni_id, ipv4, subnet_uni->control_channel, VTY_NEWLINE);
-            vty_out (vty, "      -> UNI-N NodeName %s NodeID: %s, Data IP: %s%s", subnet_uni->node_name, ipv4_a, ipv4_b, VTY_NEWLINE);
-            vty_out (vty, "      -> LogicalPort: %s, EgressLabel: %d, UpstreamLabel: %d%s",
-				logical_port_number2string(ntohl(subnet_uni->logical_port_number)),
-				(unsigned int)ntohl(subnet_uni->egress_label_downstream), (unsigned int)ntohl(subnet_uni->egress_label_upstream), VTY_NEWLINE);
-
-            swcap = val2str(&str_val_conv_swcap, subnet_uni->swcap_ext);
-            enc = val2str(&str_val_conv_encoding, subnet_uni->encoding_ext);
-            vty_out (vty, "      -> Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
-            vty_out (vty, "      -> Available TimeSlots:");
-            for (i = 1; i <= MAX_TIMESLOTS_NUM; i++)
-                if (HAS_TIMESLOT(subnet_uni->timeslot_bitmask, i)) vty_out (vty, " %d", i);
-            vty_out (vty, "%s", VTY_NEWLINE);
 	}
   }
 
