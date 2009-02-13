@@ -2591,8 +2591,7 @@ DEFUN (ospf_te_interface_ifsw_cap4,
 	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
 		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
 		has_subnet_iscd = 1;
-	if (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC
-		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) != 0)
+	if (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_ETH)
 	{
 		ifswcap_vlan = ifswcap;
 		break;

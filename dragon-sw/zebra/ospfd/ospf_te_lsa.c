@@ -215,7 +215,15 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 		}
 		else if (lp->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM)
 		{
-			stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm, sizeof(struct link_ifswcap_specific_tdm));
+			if (ntohs(lp->header.length) == STD_ISCD_LENGTH)
+			{
+				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm, sizeof(struct link_ifswcap_specific_tdm));
+			}
+			else if (ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) 
+			{ /*Subnet UNI info process*/
+				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni,  sizeof(struct link_ifswcap_specific_subnet_uni));
+			}
+
 		}
 		else if (lp->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
 		{
@@ -250,10 +258,6 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 				/*stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, sizeof(struct link_ifswcap_specific_vlan));*/
 				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan, ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length));
 			    }
-			}
-			else if (ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) 
-			{ /*Subnet UNI info process*/
-				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni,  sizeof(struct link_ifswcap_specific_subnet_uni));
 			}
 		}
 	} 
