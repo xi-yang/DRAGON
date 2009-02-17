@@ -1415,7 +1415,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
 	  }
   }
   else if (top->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
-  	&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) == 0)
+  	&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI))
   {
 	if (ntohs(tlvh->length) == STD_ISCD_LENGTH) { 
            ntohf (&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.min_lsp_bw, &fval);
