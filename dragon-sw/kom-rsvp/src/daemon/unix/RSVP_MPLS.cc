@@ -274,6 +274,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 				      || !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).switchID.rawAddress() & 0xffff) == (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()& 0xffff)) {
 
 					SimpleList<uint8> ts_list;
+					int vlanLow = -1, vlanTrunk = -1;
 					//UNI session error will fail the RSVP session
 					switch (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState()) {
 					case Message::PathErr:
@@ -315,7 +316,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                }	
 							                                
 			                                //create VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC OR LOCAL_ID_TYPE_SUBNET_UNI_DEST
-			                                int vlanLow = 0;
+			                                vlanLow = 0;
 			                                if (psb.getDRAGON_EXT_INFO_Object())
 			                                {
 			                                    if (!psb.getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING))
@@ -325,7 +326,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                    else if (!((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
 			                                        vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().egress_outer_vlantag;
 			                                }
-			                                int vlanTrunk = (*iter).vlanTag;
+			                                vlanTrunk = (*iter).vlanTag;
 			                                if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->createVCG(vlanLow, 0, vlanTrunk)) {
 			                                    (*sessionIter)->disconnectSwitch();
 			                                    goto _Exit_Error_Subnet;
@@ -415,6 +416,11 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
 							if (ts_list.size() > 0)
 								RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, true);
+		                                   // Update vlan tag if applicable
+							if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanLow, true); //tue == hold
+							if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanTrunk != vlanLow)
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanTrunk, true); //tue == hold
 							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->setResourceHeld(true);
 						}
 						if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST ) {
@@ -429,6 +435,11 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
 							if (ts_list.size() > 0)
 								RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).outPort, ts_list, true);
+		                                   // Update vlan tag if applicable
+							if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanLow, true); //tue == hold
+							if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanTrunk != vlanLow)
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanTrunk, true); //tue == hold
 							((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->setResourceHeld(true);
 						}
 						noError = true;
@@ -596,9 +607,9 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 							//remove the VTAG that is taken by the LSP
 							LOG(4)(Log::MPLS, "VLSR: Set tagged ports:",  taggedPorts, " in VLAN #", vlan);
 							if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)   //$$$$ To be moved into bindUpstreamInAndOut
-								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort & 0xffff, (*iter).vlanTag, true); //false == hold
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort & 0xffff, (*iter).vlanTag, true); //true == hold
 							if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
-								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort & 0xffff, (*iter).vlanTag, true); //false == hold
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort & 0xffff, (*iter).vlanTag, true); //true == hold
                                           }
 					}
 					else{
@@ -752,6 +763,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 				 //@@@@ >>Xi2007<<
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ){
 					SimpleList<uint8> ts_list;
+					int vlanLow = -1, vlanTrunk = -1;                    
 					if(((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).switchID.rawAddress() >> 16) == (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()& 0xffff)
 						|| !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).switchID.rawAddress() & 0xffff) == (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()& 0xffff)) {
 
@@ -770,45 +782,61 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 								return;
 							}
 
-						    if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
-
-						        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
-						            //delete CRS for Source == Destination
-						            if( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasCRS() )
-						                noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteCRS() && noErr;
-						        }
-						        else {
-						            //delete SNC
-						            if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSNC() )
-						                noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC() && noErr;
-						        }
-						            
-						        //delete GTP (for SNC: source only; for CRS: both source and dest interfaces)
-						        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasGTP())
-						            noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP() && noErr;
-
-							//delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC
-							if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasVCG())
-								noErr == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG() && noErr;
-
-							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() != Message::InitAPI)
-								((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
-
-							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isResourceHeld()) {
-								// Update ingress link bandwidth
-								u_int32_t ucid = 0, seqnum = 0;
-								if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
-									ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
-									seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
-								}
-								RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false, ucid, seqnum); //false == increase
-								// Update time slots
-								((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
-								if (ts_list.size() > 0)
-									RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
+							vlanLow = 0;
+							if (psb.getDRAGON_EXT_INFO_Object())
+							{
+								if (!psb.getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING))
+									vlanLow = (*iter).vlanTag;
+								else if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
+									vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().ingress_outer_vlantag;
+								else if (!((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
+									vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().egress_outer_vlantag;
 							}
+							vlanTrunk = (*iter).vlanTag;
 
-							(*sessionIter)->disconnectSwitch();
+							if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
+        						        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
+        						            //delete CRS for Source == Destination
+        						            if( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasCRS() )
+        						                noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteCRS() && noErr;
+        						        }
+        						        else {
+        						            //delete SNC
+        						            if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSNC() )
+        						                noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteSNC() && noErr;
+        						        }
+        						            
+        						        //delete GTP (for SNC: source only; for CRS: both source and dest interfaces)
+        						        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasGTP())
+        						            noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP() && noErr;
+
+        							//delete VCG for LOCAL_ID_TYPE_SUBNET_UNI_SRC
+        							if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasVCG())
+        								noErr == ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteVCG() && noErr;
+
+        							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() != Message::InitAPI)
+        								((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->releaseRsvpPath();
+
+        							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isResourceHeld()) {
+        								// Update ingress link bandwidth
+        								u_int32_t ucid = 0, seqnum = 0;
+        								if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+        									ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+        									seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+        								}
+        								RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false, ucid, seqnum); //false == increase
+        								// Update time slots
+        								((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
+        								if (ts_list.size() > 0)
+        									RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).inPort, ts_list, false);
+        								// Update vlan tag if applicable
+        								if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
+        									RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanLow, false); //false == release
+        								if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanTrunk != vlanLow)
+        									RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanTrunk, false); //false == release
+        							}
+
+        							(*sessionIter)->disconnectSwitch();
 						    }
 						    else if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
 						                //delete GTP (for SNC: source only; for CRS: both source and dest interfaces)
@@ -866,6 +894,11 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 									((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getTimeslots(ts_list);
 									if (ts_list.size() > 0)
 										RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).outPort, ts_list, false);
+									// Update vlan tag if applicable
+									if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
+										RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanLow, false); //false == release
+									if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanTrunk != vlanLow)
+										RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanTrunk, false); //false == release
 								}
 						    }
 

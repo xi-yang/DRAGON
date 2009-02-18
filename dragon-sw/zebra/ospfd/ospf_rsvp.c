@@ -432,35 +432,82 @@ ospf_hold_vtag(u_int32_t port, u_int32_t vtag, u_int8_t hold_flag)
 	struct ospf_interface *oi;
 	struct listnode *node1, *node2, *node3;
 	struct ospf *ospf;
-	struct te_link_subtlv_link_ifswcap *ifswcap;
-	int updated = 0;
+	struct te_link_subtlv_link_ifswcap *ifswcap0, *ifswcap=NULL;
+	int updated = 0, found_subnet_iscd = 0;
+	int i;
 	
 	if (om->ospf)
 	LIST_LOOP(om->ospf, ospf, node1)
 	{
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
-			if (oi && INTERFACE_MPLS_ENABLED(oi) && oi->vlsr_if.switch_port == port && oi->te_para.link_ifswcap_list != NULL) {
-				LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap, node3)
+			if (!oi || !INTERFACE_MPLS_ENABLED(oi) || oi->te_para.link_ifswcap_list == NULL)
+				continue;
+			if (oi->vlsr_if.switch_port == port) {
+				LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap0, node3)
 				{
-					if (hold_flag == 1 && HAS_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
-					{
-						RESET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag);
-						SET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc, vtag);
-						updated = 1;
-					}
-					else if (hold_flag == 0 && !HAS_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
-					{
-						SET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag);
-						RESET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc, vtag);
-						updated = 1;
-					}
+					if (ifswcap0->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC 
+						&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) != 0) {
+						ifswcap = ifswcap0;
+						break;
+					}						
 				}
-				if (updated && oi->t_te_area_lsa_link_self)
+				if (ifswcap != NULL)
+					break;
+			}
+			else if ( (port>>16) == 0x10 || (port>>16) == 0x11 ) {
+				LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap0, node3)
 				{
-					OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
-					OSPF_INTERFACE_TIMER_ON (oi->t_te_area_lsa_link_self, ospf_te_area_lsa_link_timer, OSPF_MIN_LS_INTERVAL);
+					if (ifswcap0->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC 
+						&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) != 0) {
+						ifswcap = ifswcap0;
+					}						
+					if (ifswcap0->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
+						&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0) {
+						found_subnet_iscd = 1;
+					}						
 				}
+				if (found_subnet_iscd == 1 && ifswcap != NULL)
+					break;
+				else {
+					ifswcap = NULL;
+					found_subnet_iscd = 0;
+				}
+			}
+		}
+		if (ifswcap != NULL) {
+			updated = 0;
+			if (found_subnet_iscd == 1 && (vtag == 0 || vtag == 0xffff) ) //oxffff == ANY_VTAG
+			{
+				if (hold_flag == 1) /*holding all allocable vtags for the subnetUNI interface*/
+				{
+					for (i = 0; i < MAX_VLAN_NUM/8; i++)
+						ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc[i] |=ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask[i];
+					memset(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, 0, MAX_VLAN_NUM/8);
+				}
+				else /*release all available vtags for the subnetUNI interface*/
+				{
+					for (i = 0; i < MAX_VLAN_NUM/8; i++)
+						ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask[i] |=ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc[i];
+					memset(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc, 0, MAX_VLAN_NUM/8);
+				}
+			}
+			else if (hold_flag == 1 && HAS_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
+			{
+				RESET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag);
+				SET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc, vtag);
+				updated = 1;
+			}
+			else if (hold_flag == 0 && !HAS_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag))
+			{
+				SET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, vtag);
+				RESET_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask_alloc, vtag);
+				updated = 1;
+			}
+			if (updated && oi->t_te_area_lsa_link_self)
+			{
+				OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
+				OSPF_INTERFACE_TIMER_ON (oi->t_te_area_lsa_link_self, ospf_te_area_lsa_link_timer, OSPF_MIN_LS_INTERVAL);
 			}
 		}
 	}

@@ -800,7 +800,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         sprintf(packetType, "pkttype=untagged_unicast,,");
     else if (vlanLow == ANY_VTAG)
         sprintf(packetType, "pkttype=all,,");
-    else if (vlanHigh < 4096 && vlanHigh > vlanLow)
+    else if (vlanHigh <= MAX_VLAN && vlanHigh > vlanLow)
         sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=%d&&%d,,priority=1&&8", vlanLow,vlanHigh);
     else
         sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=%d,,priority=1&&8", vlanLow);
@@ -808,7 +808,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     getCienaLogicalPortString(suppTtp, ettpName);
 
     // applying VLAN modification rule on ingress eflow
-    if (vlanLow > 0 && vlanLow < 4096 && vlanLow != vlanTrunk) 
+    if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanLow != vlanTrunk) 
     {
         sprintf(modificationRule, "tagstoremove=remove_outer,");
     }
@@ -816,7 +816,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     {
         sprintf(modificationRule, "tagstoremove=remove_none,");
     }
-    if (vlanTrunk > 0 && vlanTrunk < 4096 && vlanLow != vlanTrunk) 
+    if (vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanLow != vlanTrunk) 
     {
         sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_outer,outertagtype=0X8100,outervlanid=%d,", vlanTrunk);
     }
@@ -878,11 +878,11 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         sprintf(packetType, "pkttype=untagged_unicast,,");
     else if (vlanTrunk == ANY_VTAG)
         sprintf(packetType, "pkttype=all,,");
-    else if (vlanTrunk < 4096)
+    else if (vlanTrunk <= MAX_VLAN)
         sprintf(packetType, "pkttype=single_vlan_tag,outervlanidrange=%d,,priority=1&&8", vlanTrunk);
 
     // applying VLAN modification rule on egress eflow
-    if (vlanTrunk > 0 && vlanTrunk < 4096 && vlanLow != vlanTrunk)
+    if (vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanLow != vlanTrunk)
     {
         sprintf(modificationRule, "tagstoremove=remove_outer,");
     }
@@ -890,7 +890,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     {
         sprintf(modificationRule, "tagstoremove=remove_none,");
     }
-    if (vlanLow > 0 && vlanLow < 4096 && vlanLow != vlanTrunk) 
+    if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanLow != vlanTrunk) 
     {
         sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_outer,outertagtype=0X8100,outervlanid=%d,", vlanLow);
     }
