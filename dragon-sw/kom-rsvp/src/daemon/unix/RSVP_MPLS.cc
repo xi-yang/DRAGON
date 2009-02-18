@@ -896,9 +896,9 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 										RSVP_Global::rsvp->getRoutingService().holdTimeslotsbyOSPF((*iter).outPort, ts_list, false);
 									// Update vlan tag if applicable
 									if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
-										RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanLow, false); //false == release
+										RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanLow, false); //false == release
 									if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanTrunk != vlanLow)
-										RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanTrunk, false); //false == release
+										RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanTrunk, false); //false == release
 								}
 						    }
 
