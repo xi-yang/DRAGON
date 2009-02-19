@@ -1746,7 +1746,7 @@ ospf_te_show_bitmask(struct vty *vty, char* bitmask, int max_bits)
                 vty_out (vty, " %d", i);
                 i_start = i;
             }
-            if (i == MAX_TIMESLOTS_NUM)
+            if (i == max_bits)
             {
                 if (i - i_start >= 2) vty_out (vty, "-%d", i);
                 else if (i - i_start == 1) vty_out (vty, " %d", i);
@@ -1755,10 +1755,10 @@ ospf_te_show_bitmask(struct vty *vty, char* bitmask, int max_bits)
         }
         else
         {
-            if (i - i_start > 2)
-                vty_out (vty, "-%d", i-1);
-            else if (i - i_start == 2)
-                vty_out (vty, " %d", i-1);
+            if (i_end - i_start >= 2)
+                vty_out (vty, "-%d", i_end);
+            else if (i_end - i_start == 1)
+                vty_out (vty, " %d", i_end);
             i_end = 0;
         }
     }
