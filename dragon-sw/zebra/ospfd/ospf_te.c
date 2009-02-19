@@ -178,6 +178,9 @@ u_char z_buffer[ZBUFSIZE+1];
 static void ospf_te_register_vty (void);
 static void ospf_te_config_write (struct vty *vty);
 static void ospf_te_show_info (struct vty *vty, struct ospf_lsa *lsa);
+static void ospf_te_show_bitmask(struct vty *vty, char* bitmask, int max_bits);
+#define SHOW_TIMESLOTS(BMASK) ospf_te_show_bitmask(vty, BMASK, MAX_TIMESLOTS_NUM)
+#define SHOW_VLANS(BMASK) ospf_te_show_bitmask(vty, BMASK, MAX_VLAN_NUM)
 
 #ifndef _str2val_funcs_
 #define _str2val_funcs_
@@ -1450,8 +1453,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
             enc = val2str(&str_val_conv_encoding, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.encoding_ext);
             vty_out (vty, "      -> Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
             vty_out (vty, "      -> Available TimeSlots:");
-            for (i = 1; i <= MAX_TIMESLOTS_NUM; i++)
-                if (HAS_TIMESLOT(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, i)) vty_out (vty, " %d", i);
+            SHOW_TIMESLOTS(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask);
             vty_out (vty, "%s", VTY_NEWLINE);
 	}
   }
@@ -1468,14 +1470,12 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
     	    }
 
 	    vty_out (vty, "  -- L2SC specific information--%s    --> Available VLAN tag set:", VTY_NEWLINE);
-	    for (i = 1; i <= MAX_VLAN_NUM; i++)
-		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
+           SHOW_VLANS(v);
 	    vty_out (vty, "%s", VTY_NEWLINE);
 
 	    v += MAX_VLAN_NUM/8;
 	    vty_out (vty, "    --> Allocated VLAN tag set:");
-	    for (i = 1; i <= MAX_VLAN_NUM; i++)
-		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
+           SHOW_VLANS(v);
 	    vty_out (vty, "%s", VTY_NEWLINE);
 	}
   }
@@ -1580,8 +1580,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             enc = val2str(&str_val_conv_encoding, subnet_uni->encoding_ext);
             vty_out (vty, "      -> Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
             vty_out (vty, "      -> Available TimeSlots:");
-            for (i = 1; i <= MAX_TIMESLOTS_NUM; i++)
-                if (HAS_TIMESLOT(subnet_uni->timeslot_bitmask, i)) vty_out (vty, " %d", i);
+            SHOW_TIMESLOTS(subnet_uni->timeslot_bitmask);
             vty_out (vty, "%s", VTY_NEWLINE);
 	}
 
@@ -1598,14 +1597,12 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 		v += 4;
 
 	    vty_out (vty, "  -- L2SC specific information--%s    --> Available VLAN tag set:", VTY_NEWLINE);
-	    for (i = 1; i <= MAX_VLAN_NUM; i++)
-		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
+           SHOW_VLANS(v);
 	    vty_out (vty, "%s", VTY_NEWLINE);
 
 	    v += MAX_VLAN_NUM/8;
 	    vty_out (vty, "    --> Allocated VLAN tag set:");
-	    for (i = 1; i <= MAX_VLAN_NUM; i++)
-		if (HAS_VLAN(v, i)) vty_out (vty, " %d", i);
+           SHOW_VLANS(v);
 	    vty_out (vty, "%s", VTY_NEWLINE);
 	}
   }
@@ -1734,6 +1731,37 @@ ospf_te_show_info (struct vty *vty, struct ospf_lsa *lsa)
       }
     }
   return;
+}
+
+static void 
+ospf_te_show_bitmask(struct vty *vty, char* bitmask, int max_bits)
+{
+    int i, i_start, i_end;
+    for (i = 1, i_start = 1, i_end = 0; i <= max_bits; i++) 
+    {
+        if (HAS_TIMESLOT(bitmask, i)) /* or HAS_VLAN, the same */
+        {
+            if (i_end < i_start)
+            {
+                vty_out (vty, " %d", i);
+                i_start = i;
+            }
+            if (i == MAX_TIMESLOTS_NUM)
+            {
+                if (i - i_start >= 2) vty_out (vty, "-%d", i);
+                else if (i - i_start == 1) vty_out (vty, " %d", i);
+            }
+            i_end = i;
+        }
+        else
+        {
+            if (i - i_start > 2)
+                vty_out (vty, "-%d", i-1);
+            else if (i - i_start == 2)
+                vty_out (vty, " %d", i-1);
+            i_end = 0;
+        }
+    }
 }
 
 int
