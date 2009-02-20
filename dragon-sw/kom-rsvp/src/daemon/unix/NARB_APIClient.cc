@@ -319,7 +319,7 @@ static narb_api_msg_header* buildNarbApiMessage(uint16 msgType, uint32 src, uint
     struct msg_app2narb_request* msgbody1 = (struct msg_app2narb_request*)(buf + sizeof(struct narb_api_msg_header));
 
     //construct NARB API message
-    msgheader->type = htons(NARB_MSG_LSPQ);
+    msgheader->type = htons(MSG_APP_REQUEST);
     msgheader->ucid = htonl(ucid);
     msgheader->seqnum = htonl (seqnum);
     msgheader->tag = htonl(vtag);
