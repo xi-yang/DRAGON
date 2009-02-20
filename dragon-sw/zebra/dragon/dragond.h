@@ -55,18 +55,23 @@
 #define   MODULE_XML		8
 
 /* The following defines DRAGON message types */
-/* CLI/ASTDL to NARB message */
+/*App-NARB API message types*/
+#define MSG_APP_REQUEST 0x0001
+
+/* CLI/ASTDL to NARB TLV types*/
 #define DMSG_CLI_TO_NARB_BASE			0x01	/* 0x01 -- 0x1F */
 #define DMSG_CLI_TOPO_CREATE			DMSG_CLI_TO_NARB_BASE+1
-#define DMSG_CLI_TOPO_CONFIRM			DMSG_CLI_TO_NARB_BASE+2
-#define DMSG_CLI_TOPO_DELETE			DMSG_CLI_TO_NARB_BASE+3
 #define DMSG_CLI_TOPO_ERO				DMSG_CLI_TO_NARB_BASE+4
+#define DMSG_CLI_TOPO_CONFIRM			DMSG_CLI_TO_NARB_BASE+0x30
+#define DMSG_CLI_TOPO_DELETE			DMSG_CLI_TO_NARB_BASE+0x31
 
+/* NARB to CLI/ASTDL message types*/
 #define DMSG_NARB_TO_CLI_BASE			0x20	/* 0x20 -- 0x3F */
 #define DMSG_NARB_TOPO_RESPONSE		DMSG_NARB_TO_CLI_BASE+1
 #define DMSG_NARB_TOPO_REJECT			DMSG_NARB_TO_CLI_BASE+2
 #define DMSG_NARB_TOPO_DELETE_CONF	DMSG_NARB_TO_CLI_BASE+3
 
+/* Other message types*/
 #define DMSG_CLI_TO_RSVP_BASE			0x40	/* 0x40 -- 0x5F */
 #define DMSG_CLI_PATH_SETUP			DMSG_CLI_TO_RSVP_BASE+1
 
@@ -185,12 +190,6 @@ struct dragon_tlv_header
   u_int16_t	type;			/* DRAGON_TLV_XXX (see above) */
   u_int16_t	length;			/* Value portion only, in octets */
 };
-
-/*App-NARB API message types*/
-#define NARB_MSG_LSPQ 0x0001
-#define NARB_MSG_CTRL 0x0100
-#define NARB_MSG_ASTB 0x0200
-#define NARB_MSG_AAA 0x0300
 
 /*App-NARB API message header*/
 struct api_msg_header

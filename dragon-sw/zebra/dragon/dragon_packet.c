@@ -330,14 +330,14 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   msglen = 20; 
 
   if (lsp->dragon.lspVtag)
-      amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno, 
+      amsgh = build_api_msg_header(s, MSG_APP_REQUEST, msglen, dmaster.UCID, lsp->seqno, 
         LSP_OPT_STRICT | LSP_OPT_MRN | LSP_OPT_E2E_VTAG
         |((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) 
         | ((lsp->dragon.subnet_ero != NULL && listcount(lsp->dragon.subnet_ero) > 0) ? LSP_OPT_SUBNET_DTL : 0) 
         | (narb_extra_options & (~narb_extra_options_mask)), 
         lsp->dragon.lspVtag);
   else
-      amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, msglen, dmaster.UCID, lsp->seqno,
+      amsgh = build_api_msg_header(s, MSG_APP_REQUEST, msglen, dmaster.UCID, lsp->seqno,
         LSP_OPT_STRICT \
         | ((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL) 
         | ((lsp->dragon.subnet_ero != NULL && listcount(lsp->dragon.subnet_ero) > 0) ? LSP_OPT_SUBNET_DTL : 0)
@@ -481,7 +481,7 @@ dragon_topology_confirm_msg_new(struct lsp *lsp)
   s = packet->s;
   packet->lsp = lsp;
   
-  amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20 + ero_len, dmaster.UCID, lsp->seqno,
+  amsgh = build_api_msg_header(s, MSG_APP_REQUEST, 20 + ero_len, dmaster.UCID, lsp->seqno,
     LSP_OPT_STRICT|((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL)|narb_extra_options, lsp->dragon.lspVtag);
 
   /* Build TLVs */
@@ -510,7 +510,7 @@ dragon_topology_remove_msg_new(struct lsp *lsp)
   s = packet->s;
   packet->lsp = lsp;
   
-  amsgh = build_api_msg_header(s, NARB_MSG_LSPQ, 20 + ero_len, dmaster.UCID, lsp->seqno,
+  amsgh = build_api_msg_header(s, MSG_APP_REQUEST, 20 + ero_len, dmaster.UCID, lsp->seqno,
       LSP_OPT_STRICT|((lsp->flag & LSP_FLAG_BIDIR) == 0 ? 0: LSP_OPT_BIDIRECTIONAL)|narb_extra_options, lsp->dragon.lspVtag);
 
   /* Build TLVs */
