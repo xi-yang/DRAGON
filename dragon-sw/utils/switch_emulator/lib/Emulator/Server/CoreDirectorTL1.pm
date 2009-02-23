@@ -652,6 +652,15 @@ sub rtrv_snc_diag {
     } else {
 	$self->invalidCommand( $peer );
     }
+    my $z = <<END;
+   "$tl1[2],01/01/2001 01:01:01.001,STATUS=Snc administratively UNLOCKED,FAILURECAUSE=Unknown,NODE=WASH,LINK=0,RMTNODE=N/A,BUNDLEID=(Level=0,Location=0,Value=0)"
+   "$tl1[2],01/01/2001 01:01:01.001,STATUS=Snc moves to  CREATING state,FAILURECAUSE=Unknown,NODE=WASH,LINK=0,RMTNODE=N/A,BUNDLEID=(Level=0,Location=0,Value=0)"
+   "$tl1[2],01/01/2001 01:01:01.001,STATUS=Snc moves to STARTING state,FAILURECAUSE=Unknown,NODE=WASH,LINK=0,RMTNODE=N/A,BUNDLEID=(Level=0,Location=0,Value=0)"
+   "$tl1[2],01/01/2001 01:01:01.001,STATUS=Snc moves to WORKING state,FAILURECAUSE=Unknown,NODE=WASH,LINK=0,RMTNODE=N/A,BUNDLEID=(Level=0,Location=0,Value=0)"
+   "$tl1[2],01/01/2001 01:01:01.001,STATUS=Snc IC Path Defect Clear,FAILURECAUSE=Unknown,NODE=LocalNode,LINK=0,RMTNODE=N/A,BUNDLEID=(Level=0,Location=0,Value=0)"
+   "$tl1[2],01/01/2001 01:01:01.001,STATUS=SNC is not mesh Protected,FAILURECAUSE=Unknown,NODE=WASH,LINK=0,RMTNODE=Unknown,BUNDLEID=(Level=0,Location=0,Value=0)"
+END
+    $peer->socket->print($z);
 }
 
 sub rtrv_snc_stspc {
