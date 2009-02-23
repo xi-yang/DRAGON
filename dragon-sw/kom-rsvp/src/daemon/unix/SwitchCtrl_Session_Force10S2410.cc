@@ -22,6 +22,7 @@ bool SwitchCtrl_Session_Force10S2410::preAction()
     if (n == 1)
     {
         DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
@@ -47,7 +48,7 @@ bool SwitchCtrl_Session_Force10S2410::postAction()
 void SwitchCtrl_Session_Force10S2410::disconnectSwitch()
 {
     char logout[50];
-    sprintf (logout, "exit\nlogout\nn");
+    sprintf (logout, "exit\nlogout\ny");
     CLI_Session::disengage(logout);
 }
 
