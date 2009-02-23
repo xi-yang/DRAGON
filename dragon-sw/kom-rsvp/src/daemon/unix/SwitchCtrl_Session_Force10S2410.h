@@ -23,8 +23,8 @@ public:
 	SwitchCtrl_Session_Force10S2410(const String& sName, const NetAddress& swAddr): SwitchCtrl_Session_Force10E600(sName, swAddr) { }
 	virtual ~SwitchCtrl_Session_Force10S2410() { this->disconnectSwitch(); }
 	virtual void disconnectSwitch();
-	virtual bool SwitchCtrl_Session_Force10S2410::preAction();
-	virtual bool SwitchCtrl_Session_Force10S2410::postAction();
+	virtual bool preAction();
+	virtual bool postAction();
 
 	///////////------QoS Functions ------/////////
 	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0) 
