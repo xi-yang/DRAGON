@@ -10,6 +10,49 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP.h"
 #include "RSVP_Log.h"
 
+
+
+bool SwitchCtrl_Session_Force10S2410::preAction()
+{
+    if (!active || vendor!=Force10S2410|| !pipeAlive())
+        return false;
+    int n;
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( ">", "#", true, 1, 10)) ;
+    if (n == 1)
+    {
+        DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    }
+    DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    return true;
+}
+
+
+bool SwitchCtrl_Session_Force10S2410::postAction()
+{
+    if (fdout < 0 || fdin < 0)
+        return false;
+    int n;
+    do {
+        DIE_IF_NEGATIVE(writeShell("exit\n", 5));
+        n = readShell(FORCE10_ERROR_PROMPT2, SWITCH_PROMPT, 1, 10);
+    } while (n != 1);
+    return true;
+}
+
+void SwitchCtrl_Session_Force10S2410::disconnectSwitch()
+{
+    char logout[50];
+    sprintf (logout, "exit\nlogout\nn");
+    CLI_Session::disengage(logout);
+}
+
+
 bool SwitchCtrl_Session_Force10S2410::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 {
     uint32 bit;
@@ -254,6 +297,4 @@ bool SwitchCtrl_Session_Force10S2410::deleteVLANPort_ShellScript(uint32 portID, 
 }
 
 
-
-////////-------vendor specific hook procedures------////////////
 

@@ -21,7 +21,10 @@ class SwitchCtrl_Session_Force10S2410: public SwitchCtrl_Session_Force10E600
 public:
 	SwitchCtrl_Session_Force10S2410(): SwitchCtrl_Session_Force10E600() { }	
 	SwitchCtrl_Session_Force10S2410(const String& sName, const NetAddress& swAddr): SwitchCtrl_Session_Force10E600(sName, swAddr) { }
-	virtual ~SwitchCtrl_Session_Force10S2410() { }
+	virtual ~SwitchCtrl_Session_Force10S2410() { this->disconnectSwitch(); }
+	virtual void disconnectSwitch();
+	virtual bool SwitchCtrl_Session_Force10S2410::preAction();
+	virtual bool SwitchCtrl_Session_Force10S2410::postAction();
 
 	///////////------QoS Functions ------/////////
 	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0) 
@@ -34,6 +37,7 @@ public:
 	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
 	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID);
 	//virtual bool setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID) { return true; }
+
 
 	//Vendor/Model specific hook functions
 	virtual bool hook_createVLAN(const uint32 vlanID);
