@@ -22,6 +22,7 @@ use warnings;
 
 %COMMANDS = (
 	     'act-user'       => \&act_user,
+	     'canc-user'      => \&canc_user,
 	     'inh-msg-all'    => \&inh_msg_all,
 	     'dlt-crs-stspc'  => \&dlt_crs_stspc,
 	     'dlt-dtl'        => \&dlt_dtl,
@@ -45,6 +46,7 @@ use warnings;
 	     'rtrv-gtp'       => \&rtrv_gtp,
 	     'rtrv-ocn'       => \&rtrv_ocn,
 	     'rtrv-snc-stspc' => \&rtrv_snc_stspc,
+	     'rtrv-snc-diag'  => \&rtrv_snc_diag,
 	     'rtrv-vcg'       => \&rtrv_vcg,
 	     );
 
@@ -218,6 +220,21 @@ A  100000 REPT EVT SESSION
    !!! This is a private network. Any unauthorized access or use will lead to prosecution!!! */
 END
         $peer->socket->print($msg);
+    } else {
+	$self->invalidCommand( $peer );
+    }
+}
+
+sub canc_user {
+    my ( $self, $peer, $line ) = @_;
+    $self->log( 10, "canc_user: running function" );
+
+    # CANC-USER:[TID]:userid:CTAG;
+    my @tl1 = split(/:/, $line);
+    my $ctag = $tl1[3];
+    if (defined($ctag) and $ctag =~ /\d+/) {
+	my $msg = $self->commonResponse($ctag);
+	$peer->socket->print($msg);
     } else {
 	$self->invalidCommand( $peer );
     }
@@ -620,6 +637,21 @@ sub rtrv_ocn {
    "$tl1[2],ITYPE=SONET,RCVTRC=,TRC=,EXPTRC=,FMTSTRC=64_BYTE,ETRC=NO,DCC=NO,UCC=NO,LDCC=YES,XDCC=NO,ISCCMD=Unprotected,,,,PST=IS-NR,SST=ALM,FERFNC=YES,AISIA=YES,LOFIA=NO,LOSIA=NO,SDIA=NO,SFIA=NO,TIMSIA=YES,,,,,,,,,,,,,LOSDT=100,SDT=7,SDTC=8,SFT=4,SFTC=5,TSTMD=NONE,RATE=OC192,LMTYPE=UNKNOWN,FSSM=NO,TSSM=ST3E,RSSM=STU,TIMESLOTMAP=,NOACTP=0,UTILIZATION=0/192,PTYPE=None,LTYPE=Unprotected,PPPADMIN=LOCKED,PPPLINESTATE=PPP_NEGOTIATING,PPPPROTSTATE=NOT_INSERVICE,HDLCXSUM=16_BIT,CONFIGRATE=OC192,TRSCT=NO,SDCCTRNSP=NO,LDCCTRNSP=NO,DROPSIDE=YES,KBYTERESIL=NO,OSIENABLE=NO,,OSILAPDMODE=NETWORK,,OSILAPDPST=NULL,OSILAPDSST=NULL,OSRPLAPD=YES,MAXAPBSTS=,LWPCENABLED=YES,,TXCIRCID=,TXCIRCDESC=,RXCIRCID=,RXCIRCDESC=,SIGNALST=Normal,AU4ONLY=NO,LDCCRATE=576,ALS=NO,CONCATENATION=Virtual 50MBPS,MAPPING=AU3,MAXFRAMESIZE=9600 Bytes,PAUSEOFFWM=4,PAUSEONWM=12,,,OSPFHELLO=,OSPFDEAD=,OSPFMTU=,OSPFCOST="
 END
     $peer->socket->print($msg);
+}
+
+sub rtrv_snc_diag {
+    my ( $self, $peer, $line ) = @_;
+    $self->log( 10, "rtrv_snc_diag: running function" );
+
+    # RTRV-SNC-DIAG:[TID]:sncName:CTAG; 
+    my @tl1 = split(/:/, $line);
+    my $ctag = $tl1[3];
+    if (defined($ctag) and $ctag =~ /\d+/) {
+	my $msg = $self->commonResponse($ctag);
+	$peer->socket->print($msg);
+    } else {
+	$self->invalidCommand( $peer );
+    }
 }
 
 sub rtrv_snc_stspc {
