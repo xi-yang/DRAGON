@@ -46,6 +46,14 @@ public:
 	virtual uint32 hook_convertVLANInterfaceToID(uint32 id);
 	virtual uint32 hook_convertVLANIDToInterface(uint32 id);
 
+	 //interface to the force10_hack module 
+	virtual bool deleteVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool isTagged = false);
+	virtual bool addVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool isTagged = false);
+
+	///////////------QoS Functions ------/////////
+	virtual bool policeInputBandwidth_ShellScript(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+	virtual bool limitOutputBandwidth_ShellScript(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+
 	bool endWithShowVLAN(char* vlanNum) {
 		if (!postAction())
 			return false;
@@ -56,13 +64,6 @@ public:
 		return true;
 	}
 
-	 //interface to the force10_hack module 
-	bool deleteVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool isTagged = false);
-	bool addVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool isTagged = false);
-
-	///////////------QoS Functions ------/////////
-	virtual bool policeInputBandwidth_ShellScript(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
-	virtual bool limitOutputBandwidth_ShellScript(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 };
 
 

@@ -58,6 +58,7 @@ enum SupportedVendor{
 	Catalyst6500 = 8,
 	HP5406 = 9,
 	SMC10G8708 = 10, //SMC 10G 8708 switch
+	Force10S2410 = 11,
 	CienaSubnet = 100,
 	Illegal = 0xffff,
 };

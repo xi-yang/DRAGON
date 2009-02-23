@@ -23,7 +23,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_Catalyst6500.h"
 #include "SwitchCtrl_Session_HP5406.h"
 #include "SwitchCtrl_Session_SMC10G8708.h"
-
+#include "SwitchCtrl_Session_Force10S2410.h"
 
 
 #ifdef Linux
@@ -801,6 +801,9 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Lambda Optical Systems");
         } else if (venderSystemDescription.leftequal("Force10 Networks Real Time Operating System Software")) {
         	vendor = Force10E600;
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Force10");
+        } else if (venderSystemDescription.leftequal("20-port 10GE CX4 with 4-port 10GE XFP")) {
+        	vendor = Force10S2410;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Force10");
         } else if (venderSystemDescription.leftequal("Ether-Raptor")) {
         	vendor = RaptorER1010;
