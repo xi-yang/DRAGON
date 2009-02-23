@@ -637,7 +637,8 @@ bool SwitchCtrl_Session::getMonSwitchInfo(MON_Reply_Subobject& monReply)
                monReply.switch_info.switch_port = 161;
                break;
            case Force10E600:
-               monReply.switch_info.access_type = CLI_TELNET; //ssh?
+           case Force10S2410:
+               monReply.switch_info.access_type = CLI_SESSION_TYPE;
                sscanf(TELNET_PORT, "%d", &monReply.switch_info.switch_port);
                break;
            case LinuxSwitch:
@@ -863,6 +864,9 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
     switch(vendor_model) {
         case Force10E600:
             ssNew = new SwitchCtrl_Session_Force10E600("VLSR-Force10", switchAddr);
+            break;                                        
+        case Force10S2410:
+            ssNew = new SwitchCtrl_Session_Force10S2410("VLSR-Force10", switchAddr);
             break;                                        
         case RaptorER1010:
             ssNew = new SwitchCtrl_Session_RaptorER1010("VLSR-Raptor", switchAddr);
