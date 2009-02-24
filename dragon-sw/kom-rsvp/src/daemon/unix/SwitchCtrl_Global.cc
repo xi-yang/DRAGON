@@ -23,7 +23,6 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_Catalyst6500.h"
 #include "SwitchCtrl_Session_HP5406.h"
 #include "SwitchCtrl_Session_SMC10G8708.h"
-#include "SwitchCtrl_Session_Force10S2410.h"
 
 
 #ifdef Linux
@@ -633,11 +632,11 @@ bool SwitchCtrl_Session::getMonSwitchInfo(MON_Reply_Subobject& monReply)
            case Catalyst6500:
            case HP5406:
            case SMC10G8708:
+           case Force10S2410:
                monReply.switch_info.access_type = SNMP_ONLY;
                monReply.switch_info.switch_port = 161;
                break;
            case Force10E600:
-           case Force10S2410:
                monReply.switch_info.access_type = CLI_SESSION_TYPE;
                sscanf(TELNET_PORT, "%d", &monReply.switch_info.switch_port);
                break;
@@ -804,8 +803,8 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         	vendor = Force10E600;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Force10");
         } else if (venderSystemDescription.leftequal("20-port 10GE CX4 with 4-port 10GE XFP")) {
-        	vendor = Force10S2410;
-		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Force10");
+        	vendor = RFC2674; //Force10S2410 supports SNMP SET and is RFC2674 compatible!
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Force10 (S240)");
         } else if (venderSystemDescription.leftequal("Ether-Raptor")) {
         	vendor = RaptorER1010;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Raptor");
