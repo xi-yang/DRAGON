@@ -19,7 +19,7 @@ case "$target" in
   vlsr|VLSR|csa|CSA|narb|NARB|default)
     rsvpconf="--with-switch-vendor-model=AutoDetect --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY"
   ;;
-  vlsr-force10|VLSR-FORCE10)
+  vlsr-force10-v5|VLSR-FORCE10-V5)
     rsvpconf="--enable-switch-cli-access --with-switch-vendor-model=Force10E600 --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY --enable-switch-port-shutdown"
   ;;
   vlsr-force10-v6|VLSR-FORCE10-V6)
