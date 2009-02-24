@@ -632,7 +632,6 @@ bool SwitchCtrl_Session::getMonSwitchInfo(MON_Reply_Subobject& monReply)
            case Catalyst6500:
            case HP5406:
            case SMC10G8708:
-           case Force10S2410:
                monReply.switch_info.access_type = SNMP_ONLY;
                monReply.switch_info.switch_port = 161;
                break;
@@ -804,7 +803,7 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Force10");
         } else if (venderSystemDescription.leftequal("20-port 10GE CX4 with 4-port 10GE XFP")) {
         	vendor = RFC2674; //Force10S2410 supports SNMP SET and is RFC2674 compatible!
-		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Force10 (S240)");
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Force10 (S2410)");
         } else if (venderSystemDescription.leftequal("Ether-Raptor")) {
         	vendor = RaptorER1010;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Raptor");
@@ -863,9 +862,6 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
     switch(vendor_model) {
         case Force10E600:
             ssNew = new SwitchCtrl_Session_Force10E600("VLSR-Force10", switchAddr);
-            break;                                        
-        case Force10S2410:
-            ssNew = new SwitchCtrl_Session_Force10S2410("VLSR-Force10", switchAddr);
             break;                                        
         case RaptorER1010:
             ssNew = new SwitchCtrl_Session_RaptorER1010("VLSR-Raptor", switchAddr);
