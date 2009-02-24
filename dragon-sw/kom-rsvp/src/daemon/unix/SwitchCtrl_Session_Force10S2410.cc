@@ -22,12 +22,12 @@ bool SwitchCtrl_Session_Force10S2410::preAction()
     if (n == 1)
     {
         DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
+        //DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     }
-    DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     return true;
 }
@@ -203,10 +203,11 @@ bool SwitchCtrl_Session_Force10S2410::addVLANPort_ShellScript(uint32 portID, uin
 #endif
 
     // switchport command sets an interface to layer-2 mode 
+    /* @@@@
     DIE_IF_NEGATIVE(n = writeShell( "switchport\n", 5)) ;
     DIE_IF_NEGATIVE(n = readShell( SWITCH_PROMPT, FORCE10_ERROR_PROMPT2, 1, 10)) ;
     DIE_IF_EQUAL(n, 2);
-
+    */
     // exit interface configuration mode 
     DIE_IF_NEGATIVE(n = writeShell( "exit\n", 5)) ;
     DIE_IF_NEGATIVE(n = readShell( SWITCH_PROMPT, FORCE10_ERROR_PROMPT2, 1, 10)) ;

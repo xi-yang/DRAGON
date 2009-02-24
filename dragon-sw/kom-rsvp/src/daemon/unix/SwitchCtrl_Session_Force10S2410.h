@@ -43,7 +43,7 @@ public:
 	virtual bool hook_createVLAN(const uint32 vlanID);
 	//virtual bool hook_removeVLAN(const uint32 vlanID); //Call Force10E600
 	//virtual bool hook_isVLANEmpty(const vlanPortMap &vpm); //Call Force10E600
-       //virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars); //Call Force10E600
+    //virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars); //Call Force10E600
 	//virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port); //Call Force10E600
 	//virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID); //Call Force10E600
 	virtual uint32 hook_convertVLANInterfaceToID(uint32 id) { return id; }
