@@ -234,7 +234,7 @@ bool SwitchCtrl_Session_Force10S2410::addVLANPort_ShellScript(uint32 portID, uin
 
     if (!endWithShowVLAN(vlanNum))
         return false;
-    return true;
+    return postAction();
 }
 
 bool SwitchCtrl_Session_Force10S2410::deleteVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool isTagged)
@@ -294,7 +294,7 @@ bool SwitchCtrl_Session_Force10S2410::deleteVLANPort_ShellScript(uint32 portID, 
 
     if (!endWithShowVLAN(vlanNum))
         return false;
-    return true;
+    return postAction();
 }
 
 
