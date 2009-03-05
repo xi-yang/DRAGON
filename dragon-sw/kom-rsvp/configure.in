@@ -846,7 +846,7 @@ LIBS=
 AC_ARG_WITH(snmp,
 	[ --with-snmp[=DIR]		use SNMP in DIR (disabled by default)],
 	with_snmp=$withval,
-	with_snmp=no)
+	with_snmp=yes)
 if test "$BUILD_NS2" = "yes"; then with-snmp=no; fi
 if test "$with_snmp" = "yes"; then
 	with_snmp=/usr
