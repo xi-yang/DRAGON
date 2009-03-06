@@ -33,6 +33,9 @@
 #ifndef __USE_EXTERN_INLINES
 #define __USE_EXTERN_INLINES
 #endif
+#if __GNUC_PREREQ (4,2)
+#define __extern_inline extern __inline
+#endif
 #endif
 
 #include "RSVP_NetworkServiceDaemon.h"
