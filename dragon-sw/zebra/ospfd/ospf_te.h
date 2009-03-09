@@ -320,6 +320,9 @@ struct te_link_subtlv_link_ifswcap
 #define LINK_IFSWCAP_SUBTLV_ENC_FIBER		9
 #define LINK_IFSWCAP_SUBTLV_ENC_RESV3		10
 #define LINK_IFSWCAP_SUBTLV_ENC_FIBRCHNL		11
+#define LINK_IFSWCAP_SUBTLV_ENC_G709ODUK	12
+#define LINK_IFSWCAP_SUBTLV_ENC_G709OCH		13
+#define LINK_IFSWCAP_SUBTLV_ENC_ODU1_16		242 /*Ciena Slotted ODU1 (242: DRAGON assigned experimental)*/
 	u_char	encoding;
 
        u_char	reserved[2];
