@@ -22,7 +22,8 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::preAction()
     {
         DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
-        DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
+        if (strcmp(CLI_PASSWORD, "unknown") != 0)
+            DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     }   
