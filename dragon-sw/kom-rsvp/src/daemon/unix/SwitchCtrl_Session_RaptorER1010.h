@@ -10,6 +10,38 @@ To be incorporated into KOM-RSVP-TE package
 #define _SWITCHCTRL_SESSION_RAPTORER1010_H_
 
 #include "SNMP_Session.h"
+#include "CLI_Session.h"
+
+#ifndef RAPTOR_ERROR_PROMPT 
+#define RAPTOR_ERROR_PROMPT "% "
+#endif
+
+class SwitchCtrl_Session_RaptorER1010_CLI: public CLI_Session
+{
+public:
+	SwitchCtrl_Session_RaptorER1010_CLI(): CLI_Session() { }	
+	SwitchCtrl_Session_RaptorER1010_CLI(const String& sName, const NetAddress& swAddr): CLI_Session(sName, swAddr) { }
+	virtual ~SwitchCtrl_Session_RaptorER1010_CLI() { }
+
+	virtual bool preAction();
+	virtual bool postAction();
+	///////////------QoS Functions ------/////////
+	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+
+	//Vendor/Model specific hook functions --> not used (for compile only)
+	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID)  { return false;}
+	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID)  { return false;}
+	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID)  { return false;}
+	virtual bool hook_createVLAN(const uint32 vlanID) { return false;}
+	virtual bool hook_removeVLAN(const uint32 vlanID) { return false;}
+	virtual bool hook_isVLANEmpty(const vlanPortMap &vpm) { return false;}
+       virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars) { }
+	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port) { return false;}
+	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID) { return false;}
+	friend class SwitchCtrl_Session_RaptorER1010;
+};
+
 
 class SwitchCtrl_Session_RaptorER1010: public SNMP_Session
 {

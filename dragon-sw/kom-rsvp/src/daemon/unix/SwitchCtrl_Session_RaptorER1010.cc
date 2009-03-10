@@ -9,6 +9,167 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_RaptorER1010.h"
 #include "RSVP_Log.h"
 
+bool SwitchCtrl_Session_RaptorER1010_CLI::preAction()
+{
+    if (!active || vendor!=RaptorER1010 || !pipeAlive())
+        return false;
+    int n;
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( ">", "#", true, 1, 10)) ;
+    if (n == 1)
+    {
+        DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    }
+    DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    return true;
+}
+
+bool SwitchCtrl_Session_RaptorER1010_CLI::postAction()
+{
+    if (fdout < 0 || fdin < 0)
+        return false;
+    int n;
+    do {
+        DIE_IF_NEGATIVE(writeShell("exit\n", 5));
+        n = readShell(RAPTOR_ERROR_PROMPT, SWITCH_PROMPT, 1, 10);
+    } while (n != 1);
+    return true;
+}
+
+//committed_rate in bit/second, burst_size in bytes
+bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    int n;
+    char portName[50], vlanNum[10], action[50], vlanClassMap[50],  vlanPolicyMap[50];
+    int committed_rate_int = (int)committed_rate;
+
+    if (committed_rate_int < 1 || !preAction())
+        return false;
+
+    uint32 port,slot, shelf;
+    port=(input_port)&0xff;
+    slot=(input_port>>8)&0xf;
+    shelf = (input_port>>12)&0xf;
+    sprintf(portName, "%d/%d/%d",shelf, slot, port);
+    sprintf(vlanNum, "%d", vlan_id);
+    sprintf(vlanClassMap, "class-map-vlan-%d", vlan_id);
+    sprintf(vlanPolicyMap, "policy-map-vlan-%d", vlan_id);
+    if (do_undo)
+    {
+        // create vlan class-map for the port
+        DIE_IF_NEGATIVE(n= writeShell( "class-map match-all ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "match vlan ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+
+        // create vlan-level inbound polilcy-map and add the class-map into vlan policy-map
+        committed_rate_int *= 1000000;
+        if (burst_size < 500) 
+            burst_size = 500000;
+        else
+            burst_size *= 1000;
+        sprintf(action, "police-simple %d %d conform-action transmit violate-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
+        DIE_IF_NEGATIVE(n= writeShell( "policy-map in ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+
+        // enter interface
+        DIE_IF_NEGATIVE(n= writeShell( "interface  ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+
+        // set mtu to 9216 for the interface
+        DIE_IF_NEGATIVE(n= writeShell( "mtu 9216\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        
+        // apply vlan-level policy map on the interface
+        DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "service-policy in ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+    }
+    else
+    {
+        // remove service-policy from interface
+        DIE_IF_NEGATIVE(n= writeShell( "no service-policy in ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ; // try port as GigE interface
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10));
+        // remove vlan-level policy map
+        DIE_IF_NEGATIVE(n= writeShell( "no policy-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+        // remove input vlan class-map
+        DIE_IF_NEGATIVE(n= writeShell( "no class-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        DIE_IF_EQUAL(n, 2);
+    }
+
+    // end
+    if (!postAction())
+        return false;
+    return true;
+}
+
+bool SwitchCtrl_Session_RaptorER1010_CLI::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    if (!postAction())
+        return false;
+    return true;
+}
+
+
+////////////////////////////////////////////////
+
+
+
+
 bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 {
     bool ret = true;
