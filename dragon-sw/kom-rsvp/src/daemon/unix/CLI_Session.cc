@@ -255,6 +255,11 @@ bool CLI_Session::engage(const char *loginString)
      if (strcmp(CLI_PASSWORD, "unknown") != 0)
          if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
      if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
+     //a special case for RaptorER1010 CLI
+     if (SWITCH_VENDOR_MODEL == RaptorER1010 && strcmp(CLI_PASSWORD, "unknown") == 0) {
+         if ((n = readShell( "Accept (y/n)?", NULL, 1, 10)) < 0) goto _telnet_dead;
+         if ((n = writeShell("y\n", 5)) < 0) goto _telnet_dead;
+     }
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 30)) < 0) goto _telnet_dead;
     } 
     else if (CLI_SESSION_TYPE == CLI_SSH) {
