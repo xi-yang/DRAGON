@@ -379,7 +379,7 @@ void SwitchCtrl_Session_SMC1G8848::hook_getPortMapFromSnmpVars(vlanPortMap &vpm,
     vpm.vid = (uint32)vars->name[vars->name_length - 1];
     LOG(2) (Log::MPLS, "SwitchCtrl_Session_SMC1G8848::hook_getPortMapFromSnmpVars  vpm.vid= ", vpm.vid);   
     if (vars->val.bitstring ){
-        for (int i = 0; i < vars->val_len && i < SMC_VLAN_BITLEN/8; i++) {
+        for (uint32 i = 0; i < vars->val_len && i < SMC_VLAN_BITLEN/8; i++) {
             vpm.portbits[i] = vars->val.bitstring[i];
             //LOG(3) (Log::MPLS, "SwitchCtrl_Session_SMC1G8848::hook_getPortMapFromSnmpVars  n, portbit= ", i,vpm.portbits[i]  );   
        }
