@@ -23,6 +23,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_Catalyst6500.h"
 #include "SwitchCtrl_Session_HP5406.h"
 #include "SwitchCtrl_Session_SMC10G8708.h"
+#include "SwitchCtrl_Session_SMC1G8848.h"
 
 
 #ifdef Linux
@@ -631,6 +632,7 @@ bool SwitchCtrl_Session::getMonSwitchInfo(MON_Reply_Subobject& monReply)
            case Catalyst3750: //SNMP+CLI
            case Catalyst6500: //SNMP+CLI
            case HP5406: //SNMP+CLI
+           case SMC1G8848:
            case SMC10G8708:
                monReply.switch_info.access_type = SNMP_ONLY;
                monReply.switch_info.switch_port = 161;
@@ -822,6 +824,10 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
 	} else if (String("8*10GE L2 Switch") == venderSystemDescription) {  // SMC 8 ports 10G Ethernet switch
         	vendor = SMC10G8708;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is SMC 8708");
+        } else if (venderSystemDescription.leftequal("24/48 port 10/100/1000 Stackable Managed Switch with 2 X 10G uplinks")) {
+		// SMC 8848 Ethernet switch
+		vendor = SMC1G8848;  
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is SMC 8848");
         } else {
         	vendor = Illegal;
 		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", venderSystemDescription);
@@ -877,6 +883,9 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
             break;
         case SMC10G8708:
             ssNew = new SwitchCtrl_Session_SMC10G8708("VLSR-SMC-10G8708", switchAddr);
+            break;
+        case SMC1G8848:
+            ssNew = new SwitchCtrl_Session_SMC1G8848("VLSR-SMC-8848", switchAddr);
             break;
 #ifdef Linux
         case LinuxSwitch:

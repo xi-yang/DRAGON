@@ -58,6 +58,7 @@ enum SupportedVendor{
 	Catalyst6500 = 8,
 	HP5406 = 9,
 	SMC10G8708 = 10, //SMC 10G 8708 switch
+	SMC1G8848 = 11,  //SMC 1G 8848 switch
 	CienaSubnet = 100,
 	Illegal = 0xffff,
 };
@@ -262,6 +263,7 @@ protected:
 		supportedVendorOidString[RaptorER1010] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
 		supportedVendorOidString[HP5406] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
 		supportedVendorOidString[SMC10G8708] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
+		supportedVendorOidString[SMC1G8848] = ".1.3.6.1.2.1.17.7.1.4.3.1.2";
 	}
 };
 
