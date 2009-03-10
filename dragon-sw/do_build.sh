@@ -28,8 +28,11 @@ case "$target" in
   vlsr-raptor|VLSR-RAPTOR)
     rsvpconf="--with-switch-vendor-model=RaptorER1010 --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY"
   ;;
+  vlsr-raptor-qos|VLSR-RAPTOR-QOS)
+    rsvpconf="--enable-switch-cli-access --with-switch-vendor-model=RaptorER1010 --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY --enable-switch-port-shutdown"
+  ;;
   vlsr-cat3750|vlsr-catalyst3750|VLSR-CATALYST3750|VLSR-Catalyst3750)
-    rsvpconf="--with-switch-vendor-model=Catalyst3750 --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY --enable-switch-port-shutdown"
+    rsvpconf="--with-switch-vendor-model=Catalyst3750 --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY"
   ;;
   vlsr-cat3750-qos|vlsr-catalyst3750-qos|VLSR-CATALYST3750-QOS|VLSR-Catalyst3750-QoS)
     rsvpconf="--enable-switch-cli-access --with-switch-vendor-model=Catalyst3750 --with-switch-ctrl-port=255 --with-switch-snmp-community=$SNMP_COMMUNITY --enable-switch-port-shutdown"
