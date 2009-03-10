@@ -177,7 +177,7 @@ bool SwitchCtrl_Session_RaptorER1010::connectSwitch()
         cliSession.vendor = this->vendor;
         cliSession.active = true;
         LOG(2)( Log::MPLS, "VLSR: CLI connecting to RaptorER1010 Switch: ", switchInetAddr);
-        return cliSession.engage("Username:");
+        return cliSession.engage("User:");
     }
 
     return true;
