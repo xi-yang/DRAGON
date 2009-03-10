@@ -627,10 +627,10 @@ bool SwitchCtrl_Session::getMonSwitchInfo(MON_Reply_Subobject& monReply)
            case IntelES530:
            case RFC2674:
            case LambdaOptical:
-           case RaptorER1010:
-           case Catalyst3750:
-           case Catalyst6500:
-           case HP5406:
+           case RaptorER1010: //SNMP+CLI
+           case Catalyst3750: //SNMP+CLI
+           case Catalyst6500: //SNMP+CLI
+           case HP5406: //SNMP+CLI
            case SMC10G8708:
                monReply.switch_info.access_type = SNMP_ONLY;
                monReply.switch_info.switch_port = 161;

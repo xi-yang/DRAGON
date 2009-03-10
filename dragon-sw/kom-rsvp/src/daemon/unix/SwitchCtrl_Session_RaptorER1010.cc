@@ -167,8 +167,50 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::limitOutputBandwidth(bool do_undo,  ui
 
 ////////////////////////////////////////////////
 
+bool SwitchCtrl_Session_RaptorER1010::connectSwitch()
+{
+    if (SwitchCtrl_Session::connectSwitch() == false)
+        return false;
+
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        cliSession.vendor = this->vendor;
+        cliSession.active = true;
+        LOG(2)( Log::MPLS, "VLSR: CLI connecting to RaptorER1010 Switch: ", switchInetAddr);
+        return cliSession.engage("Username:");
+    }
+
+    return true;
+}
+
+void SwitchCtrl_Session_RaptorER1010::disconnectSwitch()
+{
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        LOG(2)( Log::MPLS, "VLSR: CLI disconnecting from RaptorER1010 Switch: ", switchInetAddr);
+        cliSession.disengage();
+        cliSession.active = false;
+    }
+}
 
 
+bool SwitchCtrl_Session_RaptorER1010::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        return cliSession.policeInputBandwidth(do_undo, input_port, vlan_id, committed_rate, burst_size, peak_rate, peak_burst_size); 
+    }
+    return false;
+}
+
+bool SwitchCtrl_Session_RaptorER1010::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+{
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        return cliSession.limitOutputBandwidth(do_undo, output_port, vlan_id, committed_rate, burst_size, peak_rate, peak_burst_size);
+    }
+    return false;
+}
 
 bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 {

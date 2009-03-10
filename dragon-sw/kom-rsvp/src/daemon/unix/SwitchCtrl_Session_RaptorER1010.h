@@ -52,6 +52,10 @@ public:
 		{ rfc2674_compatible = snmp_enabled = true; activeVlanId = 0; untaggedPortBit_reverse = true; }
 	virtual ~SwitchCtrl_Session_RaptorER1010() { }
 
+	virtual bool refresh() { return cliSession.refresh(); }
+	virtual bool connectSwitch();
+	virtual void disconnectSwitch();
+
 	////////// Below are vendor specific functions/////////
 	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID);
 	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
@@ -61,8 +65,8 @@ public:
 	virtual uint32 getActiveVlanId(uint32 port) { if (activeVlanId > 0) return activeVlanId; return getVLANbyUntaggedPort(port); }
 
 	///////////------QoS Functions ------/////////
-	//virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
-	//virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 
 	////////-----Vendor/Model specific hook functions------//////
 	virtual bool hook_isVLANEmpty(const vlanPortMap &vpm);
@@ -74,6 +78,8 @@ public:
 
 private:
 	uint16 activeVlanId; 
+
+	SwitchCtrl_Session_RaptorER1010_CLI cliSession;
 };
 
 #define RAPTOR_VLAN_BITLEN		48
