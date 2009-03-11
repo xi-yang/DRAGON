@@ -66,7 +66,7 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( "class-map match-all ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", "This Diffserv class already exists.", true, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= readShell( "classmap)#", "This Diffserv class already exists.", true, 1, 10)) ;
         if (n == 2) 
         { // the class-map already exists
             readShell( SWITCH_PROMPT, NULL, 1, 10);
@@ -92,7 +92,7 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
             DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
             DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
             DIE_IF_NEGATIVE(n= writeShell( " in\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( "#", "This Diffserv class already exists.", true, 1, 10)) ;
+            DIE_IF_NEGATIVE(n= readShell( "policy-map)#", "This Diffserv class already exists.", true, 1, 10)) ;
             if (n == 2) 
             { // the policy-map already exists
                 readShell( SWITCH_PROMPT, NULL, 1, 10);
