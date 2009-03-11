@@ -79,11 +79,11 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
 
         // create vlan-level inbound polilcy-map and add the class-map into vlan policy-map
-        committed_rate_int *= 1000000;
-        if (burst_size < 500) 
-            burst_size = 500000;
-        else
-            burst_size *= 1000;
+        committed_rate_int *= 1000; // in Kbps
+        if (burst_size < 32) // 1/4 of the max burst size
+            burst_size = 32; // in KB
+        else if (burst_size > 128) //max burst size 
+            burst_size *= 128;  // in KB
         sprintf(action, "police-simple %d %d conform-action transmit violate-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
         DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
