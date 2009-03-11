@@ -85,9 +85,9 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
         else
             burst_size *= 1000;
         sprintf(action, "police-simple %d %d conform-action transmit violate-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
-        DIE_IF_NEGATIVE(n= writeShell( "policy-map in ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( " in\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
@@ -102,6 +102,8 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
 
