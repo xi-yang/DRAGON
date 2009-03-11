@@ -88,25 +88,29 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( " in\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-        DIE_IF_EQUAL(n, 2);
-        DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-        DIE_IF_EQUAL(n, 2);
-        DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-        DIE_IF_EQUAL(n, 2);
-        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-
+        DIE_IF_NEGATIVE(n= readShell( "#", "A Diffserv policy with this name already exists.", true, 1, 10)) ;
+        if (n == 2) 
+        { // the policy-map already exists
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+        }
+        else 
+        { // the policy-map is created
+            DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            DIE_IF_EQUAL(n, 2);
+            DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            DIE_IF_EQUAL(n, 2);
+            DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+            DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        }
         // enter interface
         DIE_IF_NEGATIVE(n= writeShell( "interface  ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ;
