@@ -46,7 +46,7 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::postAction()
 bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     int n;
-    char portName[50], vlanNum[10], action[50], vlanClassMap[50],  vlanPolicyMap[50];
+    char portName[50], vlanNum[10], action[100], vlanClassMap[50],  vlanPolicyMap[50];
     int committed_rate_int = (int)committed_rate;
 
     if (committed_rate_int < 1 || !preAction())
