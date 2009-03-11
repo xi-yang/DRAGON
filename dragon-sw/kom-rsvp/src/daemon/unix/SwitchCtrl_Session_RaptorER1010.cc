@@ -66,50 +66,55 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( "class-map match-all ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-        DIE_IF_EQUAL(n, 2);
-        DIE_IF_NEGATIVE(n= writeShell( "match vlan ", 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-        DIE_IF_EQUAL(n, 2);
-        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-
-        // create vlan-level inbound polilcy-map and add the class-map into vlan policy-map
-        committed_rate_int *= 1000; // in Kbps
-        if (burst_size < 32) // 1/4 of the max burst size
-            burst_size = 32; // in KB
-        else if (burst_size > 128) //max burst size 
-            burst_size *= 128;  // in KB
-        sprintf(action, "police-simple %d %d conform-action transmit violate-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
-        DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( " in\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", "A Diffserv policy with this name already exists.", true, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= readShell( "#", "This Diffserv class already exists.", true, 1, 10)) ;
         if (n == 2) 
-        { // the policy-map already exists
+        { // the class-map already exists
             readShell( SWITCH_PROMPT, NULL, 1, 10);
         }
         else 
-        { // the policy-map is created
-            DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
-            DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
-            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
-            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-            DIE_IF_EQUAL(n, 2);
-            DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
+        { // the class-map is created
+            DIE_IF_NEGATIVE(n= writeShell( "match vlan ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
             DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
             DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
             if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
             DIE_IF_EQUAL(n, 2);
             DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
             DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-            DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+
+            // create vlan-level inbound polilcy-map and add the class-map into vlan policy-map
+            committed_rate_int *= 1000; // in Kbps
+            if (burst_size < 32) // 1/4 of the max burst size
+                burst_size = 32; // in KB
+            else if (burst_size > 128) //max burst size 
+                burst_size *= 128;  // in KB
+            sprintf(action, "police-simple %d %d conform-action transmit violate-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
+            DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( " in\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", "This Diffserv class already exists.", true, 1, 10)) ;
+            if (n == 2) 
+            { // the policy-map already exists
+                readShell( SWITCH_PROMPT, NULL, 1, 10);
+            }
+            else 
+            { // the policy-map is created
+                DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+                DIE_IF_EQUAL(n, 2);
+                DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+                DIE_IF_EQUAL(n, 2);
+                DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+                DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+            }
         }
         // enter interface
         DIE_IF_NEGATIVE(n= writeShell( "interface  ", 5)) ;
