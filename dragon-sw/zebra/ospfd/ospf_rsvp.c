@@ -584,6 +584,9 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag, u_int32_t ucid
 	{
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
+			if (!INTERFACE_MPLS_ENABLED(oi) || oi->te_para.link_ifswcap_list == NULL)
+				continue;
+
 			ifswcap_subnet = NULL;
 			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_subnet, node3)
 			{
@@ -630,6 +633,9 @@ ospf_hold_timeslots(u_int32_t port, list ts_list, u_int8_t hold_flag)
 	{
 		if (ospf->oiflist)
 		LIST_LOOP(ospf->oiflist, oi, node2){
+			if (!INTERFACE_MPLS_ENABLED(oi) || oi->te_para.link_ifswcap_list == NULL)
+				continue;
+
 			ifswcap_subnet = NULL;
 			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_subnet, node3)
 			{
@@ -703,6 +709,9 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		{
 			if (ospf->oiflist)
 			LIST_LOOP(ospf->oiflist, oi, node2){
+			if (!INTERFACE_MPLS_ENABLED(oi) || oi->te_para.link_ifswcap_list == NULL)
+				continue;
+
 				ifswcap_subnet = NULL;
 				LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_subnet, node3)
 				{
