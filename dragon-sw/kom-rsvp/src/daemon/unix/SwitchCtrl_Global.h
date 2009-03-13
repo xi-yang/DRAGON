@@ -243,7 +243,7 @@ protected:
 	bool vlanCreation_enabled;
 	uint32 vendor;	//vendor/model ID
 
-	String venderSystemDescription;
+	String vendorSystemDescription;
 	String supportedVendorOidString[MAX_VENDOR+1];
 
 	vlanPortMapList vlanPortMapListAll;	// List of VLANs with a map of contained untagged and tagged ports

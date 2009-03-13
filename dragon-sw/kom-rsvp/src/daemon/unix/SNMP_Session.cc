@@ -73,7 +73,7 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
        else
             return false;
           //no need of setVLANPVID for PowerConnect 5224
-	if (vendor == RFC2674 && venderSystemDescription !="PowerConnect 5224"){
+	if (vendor == RFC2674 && vendorSystemDescription !="PowerConnect 5224"){
 		ret&=setVLANPVID(port, vlanID); //Set pvid
 	}
 
@@ -99,7 +99,7 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
         if (vendor == RFC2674) {
             if (vpmUntagged)
                 ret&=setVLANPortTag(vpmUntagged->ports, vlanID); //make THIS port tagged
-            if (venderSystemDescription =="PowerConnect 5224") //@@@@
+            if (vendorSystemDescription =="PowerConnect 5224") //@@@@
                 ret&=setVLANPVID(port, 1); //Set pvid to default vlan ID;
     	}
     	if (vpmAll)
@@ -303,10 +303,10 @@ bool SNMP_Session::hook_createVLAN(const uint32 vlanID)
      *  Dell PowerConnect 5224/5324/6024 switches require a bit more coaxing to create a new VLAN
      *  NOTE: The Dell PowerConnect 6224 does not require these extra SNMP SETs..
      */ 
-    if (String("PowerConnect 5224") == venderSystemDescription ||
-	String("Ethernet Switch") == venderSystemDescription ||
-	String("Neyland 24T") == venderSystemDescription ||
-	String("Ethernet Routing Switch") == venderSystemDescription) {
+    if (String("PowerConnect 5224") == vendorSystemDescription ||
+	String("Ethernet Switch") == vendorSystemDescription ||
+	String("Neyland 24T") == vendorSystemDescription ||
+	String("Ethernet Routing Switch") == vendorSystemDescription) {
       tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.1";
       sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
       status = read_objid(oid_str, anOID, &anOID_len);

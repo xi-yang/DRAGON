@@ -74,7 +74,7 @@ bool SwitchCtrl_Session::getSwitchVendorInfo()
     if (!snmp_enabled)
         return ret;
 
-    ret = SwitchCtrl_Global::static_getSwitchVendorInfo(snmpSessionHandle, vendor, venderSystemDescription); 
+    ret = SwitchCtrl_Global::static_getSwitchVendorInfo(snmpSessionHandle, vendor, vendorSystemDescription); 
     switch (vendor) {
     case RFC2674:
     case IntelES530:
@@ -315,9 +315,9 @@ bool SwitchCtrl_Session::readVLANFromSwitch()
      *
      *  This does not seem to be a problem with the Dell PowerConnect 6224.
      */ 
-    if (String("Ethernet Switch") == venderSystemDescription ||
-        String("Neyland 24T") == venderSystemDescription ||
-        String("Ethernet Routing Switch") == venderSystemDescription) {
+    if (String("Ethernet Switch") == vendorSystemDescription ||
+        String("Neyland 24T") == vendorSystemDescription ||
+        String("Ethernet Routing Switch") == vendorSystemDescription) {
       if (vlanPortMapListAll.size() == 0 || vlanPortMapListUntagged.size() == 0)
 	ret = true;
     }
@@ -743,7 +743,7 @@ void SwitchCtrl_Global::static_disconnectSwitch(struct snmp_session* &sessionHan
     snmp_close(sessionHandle);
 }
 
-bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &sessionHandle, uint32 &vendor, String &venderSystemDescription) 
+bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &sessionHandle, uint32 &vendor, String &vendorSystemDescription) 
 {
     struct snmp_pdu *pdu;
     struct snmp_pdu *response;
@@ -779,63 +779,63 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         strncpy(vname, (const char*)response->variables->val.string, res_str_len);
         vname[res_str_len] = 0;
 
-        venderSystemDescription = vname;
+        vendorSystemDescription = vname;
         snmp_free_pdu(response);
-        if (String("PowerConnect 5224") == venderSystemDescription) {
+        if (String("PowerConnect 5224") == vendorSystemDescription) {
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 5224");
-        } else if (String("Intel(R) Express 530T Switch ") == venderSystemDescription) {
+        } else if (String("Intel(R) Express 530T Switch ") == vendorSystemDescription) {
         	vendor = IntelES530;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Intel Express 530T");
-        } else if (String("Ethernet Switch") == venderSystemDescription) {  // Dell PowerConnect 5324 running 1.0.0.xx SW
+        } else if (String("Ethernet Switch") == vendorSystemDescription) {  // Dell PowerConnect 5324 running 1.0.0.xx SW
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 5324 (1.0.x.x firmware)");
-        } else if (String("Neyland 24T") == venderSystemDescription) {  // Dell PowerConnect 5324 running 2.0.0.xx SW
+        } else if (String("Neyland 24T") == vendorSystemDescription) {  // Dell PowerConnect 5324 running 2.0.0.xx SW
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 5324 (2.0.x.x firmware)");
-        } else if (String("Ethernet Routing Switch") == venderSystemDescription) {  // Dell PowerConnect 6024/6024F
+        } else if (String("Ethernet Routing Switch") == vendorSystemDescription) {  // Dell PowerConnect 6024/6024F
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 6024/6024F");
-        } else if (venderSystemDescription.leftequal("Dell 24 Port Gigabit Ethernet, 2.1.1.4, VxWorks5.5.1")) {  // Dell PowerConnect 6224 running 2.1.1.4
+        } else if (vendorSystemDescription.leftequal("Dell 24 Port Gigabit Ethernet, 2.1.1.4, VxWorks5.5.1")) {  // Dell PowerConnect 6224 running 2.1.1.4
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 6224 (2.1.1.4 firmware)");
-        } else if (venderSystemDescription.leftequal("Summit1") || venderSystemDescription.leftequal("Summit5")) {
+        } else if (vendorSystemDescription.leftequal("Summit1") || vendorSystemDescription.leftequal("Summit5")) {
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Extreme Summit");
-        } else if (venderSystemDescription.leftequal("Spectra")) {
+        } else if (vendorSystemDescription.leftequal("Spectra")) {
         	vendor = LambdaOptical;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Lambda Optical Systems");
-        } else if (venderSystemDescription.leftequal("Force10 Networks Real Time Operating System Software")) {
+        } else if (vendorSystemDescription.leftequal("Force10 Networks Real Time Operating System Software")) {
         	vendor = Force10E600;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Force10");
-        } else if (venderSystemDescription.leftequal("20-port 10GE CX4 with 4-port 10GE XFP")) {
+        } else if (vendorSystemDescription.leftequal("20-port 10GE CX4 with 4-port 10GE XFP")) {
         	vendor = RFC2674; //Force10S2410 supports SNMP SET and is RFC2674 compatible!
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Force10 (S2410)");
-        } else if (venderSystemDescription.leftequal("Ether-Raptor")) {
+        } else if (vendorSystemDescription.leftequal("Ether-Raptor")) {
         	vendor = RaptorER1010;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Raptor");
-	} else if (venderSystemDescription.leftequal("Cisco IOS Software, C3750 Software")) {
+	} else if (vendorSystemDescription.leftequal("Cisco IOS Software, C3750 Software")) {
         	vendor = Catalyst3750;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Cisco 3750");
-	} else if (venderSystemDescription.leftequal("Cisco Internetwork Operating System Software") || 
-		   venderSystemDescription.leftequal("Cisco IOS Software,")) {
+	} else if (vendorSystemDescription.leftequal("Cisco Internetwork Operating System Software") || 
+		   vendorSystemDescription.leftequal("Cisco IOS Software,")) {
 	        // Originally, the Catalyst 65xx switches used the same code as Catalyst 3750 
 		// Now the 65xx use different module than 3750
         	vendor = Catalyst6500;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Cisco 65xx");
-        } else if (venderSystemDescription.leftequal("ProCurve J8697A Switch 5406zl")) {
+        } else if (vendorSystemDescription.leftequal("ProCurve J8697A Switch 5406zl")) {
         	vendor = HP5406;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is HP ProCurve 5406");
-	} else if (String("8*10GE L2 Switch") == venderSystemDescription) {  // SMC 8 ports 10G Ethernet switch
+	} else if (String("8*10GE L2 Switch") == vendorSystemDescription) {  // SMC 8 ports 10G Ethernet switch
         	vendor = SMC10G8708;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is SMC 8708");
-        } else if (venderSystemDescription.leftequal("24/48 port 10/100/1000 Stackable Managed Switch with 2 X 10G uplinks")) {
+        } else if (vendorSystemDescription.leftequal("24/48 port 10/100/1000 Stackable Managed Switch with 2 X 10G uplinks")) {
 		// SMC 8848 Ethernet switch
 		vendor = SMC1G8848;  
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is SMC 8848");
         } else {
         	vendor = Illegal;
-		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", venderSystemDescription);
+		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", vendorSystemDescription);
          	return false;
         }
     } else {
