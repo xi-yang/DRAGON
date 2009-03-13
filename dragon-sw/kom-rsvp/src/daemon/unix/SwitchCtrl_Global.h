@@ -49,7 +49,7 @@ Notes:
 enum SupportedVendor{
 	AutoDetect = 0,
 	IntelES530 = 1, //Intel ES-530 Express Fast Ethernet Switch
-	RFC2674 = 2,	// Dell 5200/5300 Series GigE Switch
+	RFC2674 = 2,	// Dell 5224/5324/6024/6024F/6224 Series GigE Switch, among many others
 	LambdaOptical = 3,
 	Force10E600 = 4,
 	RaptorER1010 = 5,

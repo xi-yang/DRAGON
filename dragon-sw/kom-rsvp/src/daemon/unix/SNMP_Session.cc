@@ -300,7 +300,8 @@ bool SNMP_Session::hook_createVLAN(const uint32 vlanID)
     status = snmp_add_var(pdu, anOID, anOID_len, type, value);
 
     /*
-     *  Dell PowerConnect switches require a bit more coaxing to create a new VLAN
+     *  Dell PowerConnect 5224/5324/6024 switches require a bit more coaxing to create a new VLAN
+     *  NOTE: The Dell PowerConnect 6224 does not require these extra SNMP SETs..
      */ 
     if (String("PowerConnect 5224") == venderSystemDescription ||
 	String("Ethernet Switch") == venderSystemDescription ||

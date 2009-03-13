@@ -312,6 +312,8 @@ bool SwitchCtrl_Session::readVLANFromSwitch()
      *  Dell PowerConnect 5324/6024/6024F do not show VLAN 1 in the RFC2674 MIB,
      *  so if VLAN 1 is the only VLAN configured, *.size() == 0 above,
      *  but return true anyways to prevent the VLSR from disconnecting..
+     *
+     *  This does not seem to be a problem with the Dell PowerConnect 6224.
      */ 
     if (String("Ethernet Switch") == venderSystemDescription ||
         String("Neyland 24T") == venderSystemDescription ||
@@ -794,6 +796,9 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         } else if (String("Ethernet Routing Switch") == venderSystemDescription) {  // Dell PowerConnect 6024/6024F
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 6024/6024F");
+        } else if (venderSystemDescription.leftequal("Dell 24 Port Gigabit Ethernet, 2.1.1.4, VxWorks5.5.1")) {  // Dell PowerConnect 6224 running 2.1.1.4
+        	vendor = RFC2674;
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 6224 (2.1.1.4 firmware)");
         } else if (venderSystemDescription.leftequal("Summit1") || venderSystemDescription.leftequal("Summit5")) {
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Extreme Summit");
