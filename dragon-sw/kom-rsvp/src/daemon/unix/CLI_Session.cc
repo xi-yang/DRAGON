@@ -320,8 +320,10 @@ void CLI_Session::disengage(const char *exitString)
 {
     int n;
     if (pipeAlive()) {
-        if (exitString != NULL && (n = writeShell(exitString, 5)) >= 0)
-          n = readShell(SWITCH_PROMPT, NULL, 1, 10);
+        if (exitString != NULL && (n = writeShell(exitString, 5)) >= 0) {
+          if (vendor != JuniperEX3200)
+              n = readShell(SWITCH_PROMPT, NULL, 1, 10);
+        }
     }
 
     closePipe();
