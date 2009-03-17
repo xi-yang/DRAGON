@@ -93,5 +93,5 @@ inline uint32 Bit2PortForce10(uint32 bit)
 #endif
 }
 
-#endif //ifndef _CLI_SESSION_H_
+#endif //ifndef _SwitchCtrl_Session_Force10E600_H_
 

@@ -135,15 +135,5 @@ private:
 	}
 };
 
-/*
-inline uint32 convertUnifiedPort2Catalyst3750(uint32 port)
-{
-	return (((port>>8)&0xf)*128 + (port&0xff)); // only slot and port parts (w/o chasis/shelf)
-}
-inline uint32 convertCatalyst37502UnifiedPort(uint32 port)
-{
-	return (((((port-1)/128)&0xf)<<8) | ((port-1)%128 + 1));
-}
-*/
 
 #endif /*SWITCHCTRL_SESSION_CATALYST3750_H_*/

@@ -77,8 +77,9 @@ protected:
 	int fdout;
 
 	inline bool pipeAlive();
-	int readShell(const char *text1, const char *text2, int verbose, int timeout);
+	int readShellBuffer(char* buffer, const char *text1, const char *text2, const bool matchAnyWhere, int verbose, int timeout);
 	int readShell(const char *text1, const char *text2, const bool matchAnyWhere, int verbose, int timeout);
+	int readShell(const char *text1, const char *text2, int verbose, int timeout);
 	int ReadShellPattern(char *buf, char *pattern1, char *pattern2, char *readuntil,  char *readstop, int timeout);
 	int writeShell(const char *text, int timeout, bool echo_back = false);
 	virtual bool isSwitchPrompt(char *p, int len);

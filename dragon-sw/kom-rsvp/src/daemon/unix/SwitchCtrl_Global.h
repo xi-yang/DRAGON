@@ -59,6 +59,7 @@ enum SupportedVendor{
 	HP5406 = 9,
 	SMC10G8708 = 10, //SMC 10G 8708 switch
 	SMC1G8848 = 11,  //SMC 1G 8848 switch
+	JuniperEX3200 = 12,
 	CienaSubnet = 100,
 	Illegal = 0xffff,
 };
@@ -223,7 +224,7 @@ public:
 	virtual uint32 hook_convertVLANIDToInterface(uint32 id) { return id; }
 	virtual bool hook_createVlanInterfaceToIDRefTable(vlanRefIDList &convList) { return true; }
 
-	//Cisco Catalyst need conversion between Port ID and port reference ID  
+	//Cisco Catalyst, Juniper EX etc need conversion between Port ID and port reference ID  
 	virtual uint32 hook_convertPortInterfaceToID(uint32 id) { return id; }
 	virtual uint32 hook_convertPortIDToInterface(uint32 id) { return id; }
 	virtual bool hook_createPortToIDRefTable(portRefIDList &convList) { return true; }

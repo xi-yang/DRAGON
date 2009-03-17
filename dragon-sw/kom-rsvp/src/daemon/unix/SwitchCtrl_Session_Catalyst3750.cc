@@ -1213,7 +1213,7 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
 	                                      ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
 	                                      portRefIdConvList.push_back(ref_id);
 	      				    } else {
-	          				LOG(2) (Log::Error, "Illegal VLAN ID ", tmp_port_id);
+	          				LOG(2) (Log::Error, "Illegal Port ID ", tmp_port_id);
 	      				    }
                                 }
                                 else if (sscanf(ref_str, "GigabitEthernet%d/%d", &tmp_slot_id, &tmp_port_id) == 2) {

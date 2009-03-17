@@ -375,6 +375,9 @@ bool CLI_Session::pipeAlive()
   if ((n = writeShell(CLI_SESSION_TYPE == CLI_TL1_TELNET? ";" : "\n", 2)) < 0 || pipe_broken) 
   	return false;
 
+  if (vendor == JuniperEX3200) //JUNOScript in non-interactive mode
+       return true;
+
   if ((n = readShell (SWITCH_PROMPT, NULL, 0, 3)) < 0  || pipe_broken) 
   	return false;
 
@@ -387,7 +390,7 @@ bool CLI_Session::isSwitchPrompt(char *p, int len)
   int n, found = 0;
 
   for(n = 0; n < len; n++) {
-    if ( p[n] == '>' || p[n] =='#' || p[n] == '$' || (CLI_SESSION_TYPE == CLI_TL1_TELNET && p[n] == ';') ) {
+    if ( p[n] == '>' || p[n] =='#' || p[n] == '$' || p[n] == '%' ||  (CLI_SESSION_TYPE == CLI_TL1_TELNET && p[n] == ';') ) {
       found = 1;
       break;
     }
@@ -401,13 +404,9 @@ bool CLI_Session::isSwitchPrompt(char *p, int len)
 // or when the beginning of a line equals to 'text2' (and then return 2), 
 // if 'show' is non zero we display the information to the screen         
 // (using 'stdout').                                                      
-int CLI_Session::readShell(const char *text1, const char *text2, int verbose, int timeout) {
-	return readShell(text1, text2, false, verbose, timeout);
-}
 
-int CLI_Session::readShell(const char *text1, const char *text2, const bool matchAnyWhere, int verbose, int timeout)
+int CLI_Session::readShellBuffer(char* buffer, const char *text1, const char *text2, const bool matchAnyWhere, int verbose, int timeout)
 {
-  char line[LINELEN+1];
   int n, len1, len2, count = 0, m, err;
 
   if (fdin < 0)
@@ -429,63 +428,73 @@ int CLI_Session::readShell(const char *text1, const char *text2, const bool matc
 	stop();
 	err_exit("%s: too long line!\n", progname);
       }
-      m = read(fdin, &line[n], 1);
-      line[n+1] = 0;
+      m = read(fdin, &buffer[n], 1);
+      buffer[n+1] = 0;
       if (m != 1) {
 	err = errno;
 	alarm(0); // disable alarm
 	return(-1);
       }
 ///////// debug info ////////
-      if (verbose) fputc(0xff & (int)line[n], stdout);
+      if (verbose) fputc(0xff & (int)buffer[n], stdout);
 ///////// debug info ////////
-      if (line[n] == '\r') continue;
+      if (buffer[n] == '\r') continue;
       if (text1 == SWITCH_PROMPT) {
-	if (isSwitchPrompt(line, n+1)) {
+	if (isSwitchPrompt(buffer, n+1)) {
 	  // we found the keyword we were searching for
 	  alarm(0); // disable alarm
 	  return(1);
 	}
       }
       else if (n >= len1-1) {
-      	char *matchPtr = strstr(line, text1);
-	if (matchPtr != 0 && (matchAnyWhere || matchPtr == line)) {
+      	char *matchPtr = strstr(buffer, text1);
+	if (matchPtr != 0 && (matchAnyWhere || matchPtr == buffer)) {
 	  // we found the keyword we were searching for 
 	  alarm(0); // disable alarm 
 	  return(1);
 	}
       }
       if (text2 == SWITCH_PROMPT) {
-	if (isSwitchPrompt(line, n+1)) {
+	if (isSwitchPrompt(buffer, n+1)) {
 	  // we found the keyword we were searching for 
 	  alarm(0); // disable alarm 
 	  return(2);
 	}
       }
       else if ((text2 != NULL) && (n >= len2-1)) {
-      	char *matchPtr = strstr(line, text2);
-	if (matchPtr != 0 && (matchAnyWhere || matchPtr == line)) {
+      	char *matchPtr = strstr(buffer, text2);
+	if (matchPtr != 0 && (matchAnyWhere || matchPtr == buffer)) {
 	  // we found the keyword we were searching for 
 	  alarm(0); // disable alarm 
 	  return(2);
 	}
       }
-      if (line[n] == '\n') break;
+      if (buffer[n] == '\n') break;
       n++;
     }
 ///////// debug info ////////
     if (!verbose) {
 ///////// debug info ////////
 //    if (verbose) {
-      line[++n] = '\0';
+      buffer[++n] = '\0';
       if (++count > 1) {
 	// the very first line of information is the remains of  
 	// a previously issued command and should be ignored.    
-	fputs(line, stdout);
+	fputs(buffer, stdout);
 	fflush(stdout);
       }
     }
   }
+}
+
+int CLI_Session::readShell(const char *text1, const char *text2, const bool matchAnyWhere, int verbose, int timeout)
+{
+    char line[LINELEN+1];
+    return readShellBuffer(line, text1, text2, matchAnyWhere, verbose, timeout);
+}
+
+int CLI_Session::readShell(const char *text1, const char *text2, int verbose, int timeout) {
+    return readShell(text1, text2, false, verbose, timeout);
 }
 
 // Read output until the string 'readuntil' is matched; return 1 (or 2) if the output contains pattern1 (or pattern2)
