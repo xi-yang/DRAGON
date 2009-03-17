@@ -59,7 +59,7 @@ bool JUNOScriptParser::loadAndVerifyScript(char* bufScript)
         return false;
 
     //pre-process the script to remove default name-space attribute (for xpath use)
-    char* ps = bufScript;
+    char* ps = xmlScript;
     while ((ps = strstr(ps, "xmlns=")) != NULL)
     {
         while(*ps != ' ' && *ps != '\t' && *ps != '>')
@@ -79,7 +79,7 @@ bool JUNOScriptParser::loadAndVerifyScript(char* bufScript)
 
     int i;
     char junos_ns[64];
-    if ((ps = strstr(bufScript, "xmlns:junos=\"")) != NULL)
+    if ((ps = strstr(xmlScript, "xmlns:junos=\"")) != NULL)
     {
         i = 0;
         ps += 13; 
