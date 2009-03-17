@@ -107,7 +107,7 @@ bool JUNOScriptLockReplyParser::isSuccessful()
         return false;
 
     xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc-reply/xnm:error/message", xpathCtx);
-    if (xpathObj == NULL || xpathObj->nodesetval == NULL)
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
         return true;
@@ -119,6 +119,7 @@ bool JUNOScriptLockReplyParser::isSuccessful()
         if (xpathObj) xmlXPathFreeObject(xpathObj);
         return true;
     }
+    //$$$$ handling "configuration database modified" ?
 
     if (xpathObj) xmlXPathFreeObject(xpathObj);
     return false;

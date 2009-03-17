@@ -359,6 +359,10 @@ bool CLI_Session::refresh()
         fdin = fdout = -1;
         return false;
     }
+
+  if (vendor == JuniperEX3200) //JUNOScript in non-interactive mode
+       return true;
+
     DIE_IF_NEGATIVE(n = writeShell("\n", 5));
     DIE_IF_NEGATIVE(n = readShell(SWITCH_PROMPT, NULL, 1, 10));
 
