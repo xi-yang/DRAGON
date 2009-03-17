@@ -641,8 +641,12 @@ bool SwitchCtrl_Session::getMonSwitchInfo(MON_Reply_Subobject& monReply)
                monReply.switch_info.switch_port = 161;
                break;
            case Force10E600:
+           case JuniperEX3200:
                monReply.switch_info.access_type = CLI_SESSION_TYPE;
-               sscanf(TELNET_PORT, "%d", &monReply.switch_info.switch_port);
+               if (CLI_SESSION_TYPE == CLI_TELNET)
+                   sscanf(TELNET_PORT, "%d", &monReply.switch_info.switch_port);
+               else if (CLI_SESSION_TYPE == CLI_SSH)
+                   sscanf(SSH_PORT, "%d", &monReply.switch_info.switch_port);
                break;
            case LinuxSwitch:
                monReply.switch_info.access_type = CLI_SHELL;
@@ -834,6 +838,10 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
 		// SMC 8848 Ethernet switch
 		vendor = SMC1G8848;  
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is SMC 8848");
+        } else if (vendorSystemDescription.leftequal("Juniper Networks, Inc. ex3200")) {
+		// SMC 8848 Ethernet switch
+		vendor = JuniperEX3200;  
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Juniper EX3200");
         } else {
         	vendor = Illegal;
 		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", vendorSystemDescription);
