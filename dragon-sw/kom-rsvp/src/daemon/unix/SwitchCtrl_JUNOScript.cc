@@ -39,22 +39,14 @@ static char * jsDeleteVlan = "<rpc>\
     if (S != NULL && S->nodeNr > 0)  \
         for (N=S->nodeTab[0]; N != NULL; N=N->next)
 
-#define START_XPATH(D, X) \
-    xpathCtx =  xmlXPathNewContext(D);\
-    if(xpathCtx == NULL)  \
-        return X
-
-#define FREE_XPATH_EXIT(X) \
-    if (xpathObj) xmlXPathFreeObject(xpathObj);\
-    if (xpathCtx) xmlXPathFreeContext(xpathCtx); \
-    return X
-
 
 //////////////////////////////////////////////////////////////////////////////
 
 
 JUNOScriptParser::~JUNOScriptParser() 
 { 
+    if (xpathCtx != NULL)
+       xmlXPathFreeContext(xpathCtx);
     if (xmlDoc != NULL)  
         xmlFreeDoc(xmlDoc);
 }
@@ -66,36 +58,70 @@ bool JUNOScriptParser::loadAndVerifyScript(char* bufScript)
     if (xmlScript == NULL)
         return false;
 
+    //pre-process the script to remove default name-space attribute (for xpath use)
+    char* ps = bufScript;
+    while ((ps = strstr(ps, "xmlns=")) != NULL)
+    {
+        while(*ps != ' ' && *ps != '\t' && *ps != '>')
+            *(ps++) = ' ';
+    }
+    
     xmlDoc = xmlReadMemory(xmlScript, strlen(xmlScript), "junoscript.xml", NULL, 0);
     if (xmlDoc == NULL) {
         //$$$$ Log::
         return false;
     }
+    xpathCtx =  xmlXPathNewContext(xmlDoc);
+    if(xpathCtx == NULL) {
+        //$$$$ Log::
+        return false;
+    }
+
+    int i;
+    char junos_ns[64];
+    if ((ps = strstr(bufScript, "xmlns:junos=\"")) != NULL)
+    {
+        i = 0;
+        ps += 13; 
+        while(*ps != ' ' && *ps != '\t' && *ps != '\"')
+            junos_ns[i++] = *(ps++);
+        junos_ns[i] = '\0';
+        if (xmlXPathRegisterNs(xpathCtx, (xmlChar*)"junos", (xmlChar*)junos_ns) != 0){
+            //$$$$ Log::
+            return false;
+        }
+    }  
+
+    if (xmlXPathRegisterNs(xpathCtx, (xmlChar*)"xnm", (xmlChar*)"http://xml.juniper.net/xnm/1.1/xnm") != 0){
+        //$$$$ Log::
+        return false;
+    }
+
     return true;
 }
 
 bool JUNOScriptLockReplyParser::isSuccessful()
 {
     errMessage = "";
-    if (xmlDoc == NULL)
+    if (xmlDoc == NULL || xpathCtx == NULL)
         return false;
-
-    xmlXPathContextPtr xpathCtx;
-    START_XPATH(xmlDoc, false);
 
     xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc-reply/xnm:error/message", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL)
     {
-        FREE_XPATH_EXIT(true);
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
     }
 
     errMessage = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]);
     if (errMessage.empty() || errMessage.leftequal("Configuration database is already open"))
     {
-        FREE_XPATH_EXIT(true);
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
     }
 
-    FREE_XPATH_EXIT(false);
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return false;
 }
 
 //<load-configuration-results>
@@ -105,26 +131,24 @@ bool JUNOScriptLockReplyParser::isSuccessful()
 bool JUNOScriptLoadReplyParser::isSuccessful()
 {
     errMessage = "";
-    if (xmlDoc == NULL)
+    if (xmlDoc == NULL || xpathCtx == NULL)
         return false;
 
-
-    xmlXPathContextPtr xpathCtx;
-    START_XPATH(xmlDoc, false);
-
     xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc-reply/load-configuration-results/load-error-count", xpathCtx);
-    if (xpathObj == NULL || xpathObj->nodesetval == NULL)
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
-        FREE_XPATH_EXIT(true);
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
     }
 
     int count;
     sscanf((const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]), "%d", &count);
     xmlXPathFreeObject(xpathObj);
     xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc-reply/load-configuration-results/xnm:error", xpathCtx);
-    if(xpathObj == NULL)
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
-        FREE_XPATH_EXIT(false);
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return false;
     }
 
     xmlNodePtr node;
@@ -146,52 +170,52 @@ bool JUNOScriptLoadReplyParser::isSuccessful()
         }
     }
 
-    FREE_XPATH_EXIT(false);
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return false;
 }
 
 bool JUNOScriptCommitReplyParser::isSuccessful()
 {
     errMessage = "";
-    if (xmlDoc == NULL)
+    if (xmlDoc == NULL || xpathCtx == NULL)
         return false;
 
-    xmlXPathContextPtr xpathCtx;
-    START_XPATH(xmlDoc, false);
-
     xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc-reply/commit-results/xnm:error/message", xpathCtx);
-    if (xpathObj == NULL || xpathObj->nodesetval == NULL)
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
-        FREE_XPATH_EXIT(true);
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
     }
 
     errMessage = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]);
-    FREE_XPATH_EXIT(false);
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return false;
 }
 
 
 bool JUNOScriptUnlockReplyParser::isSuccessful()
 {
     errMessage = "";
-    if (xmlDoc == NULL)
+    if (xmlDoc == NULL || xpathCtx == NULL)
         return false;
 
-    xmlXPathContextPtr xpathCtx =  xmlXPathNewContext(xmlDoc);
-    START_XPATH(xmlDoc, false);
-
     xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc-reply/xnm:error/message", xpathCtx);
-    if(xpathObj == NULL || xpathObj->nodesetval == NULL) 
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
-        FREE_XPATH_EXIT(true);
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
     }
 
     errMessage = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]);
 
     if (errMessage.leftequal("Configuration database is not open"))
     {
-        FREE_XPATH_EXIT(true);
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
     }
 
-    FREE_XPATH_EXIT(false);
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return false;
 }
 
 

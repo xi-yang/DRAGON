@@ -16,12 +16,13 @@ using namespace std;
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
 
 class JUNOScriptParser
 {
 public:
-    JUNOScriptParser(): xmlScript(NULL), xmlDoc(NULL) {}
-    JUNOScriptParser(char* buf): xmlScript(buf), xmlDoc(NULL) {}
+    JUNOScriptParser(): xmlScript(NULL), xmlDoc(NULL), xpathCtx(NULL) {}
+    JUNOScriptParser(char* buf): xmlScript(buf), xmlDoc(NULL), xpathCtx(NULL) {}
     virtual ~JUNOScriptParser();
     virtual bool isSuccessful() = 0;
 
@@ -31,6 +32,7 @@ public:
 protected:
     char* xmlScript;
     xmlDocPtr xmlDoc;
+    xmlXPathContextPtr xpathCtx;
     String errMessage;
 };
 
