@@ -330,6 +330,11 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_createVlanInterfaceToIDRefTable(vlan
                                 ref_id.ref_id = (int)vars->name[vars->name_length - 1];
                                 if (sscanf(ref_str, "dynamic_vlan_%d", &ref_id.vlan_id) == 1)
                                     vlanRefIdConvList.push_back(ref_id);
+                                else if (strncmp(ref_str, "default", 7) == 0)
+                                {
+                                    ref_id.vlan_id = 1;
+                                    vlanRefIdConvList.push_back(ref_id);
+                                }
                             }
                             if ((vars->type != SNMP_ENDOFMIBVIEW) &&
                                 (vars->type != SNMP_NOSUCHOBJECT) &&
