@@ -469,7 +469,10 @@ int CLI_Session::readShellBuffer(char* buffer, const char *text1, const char *te
 	  return(2);
 	}
       }
-      if (buffer[n] == '\n') break;
+      if (buffer[n] == '\n') {
+        buffer = buffer+n;
+        break;
+      }
       n++;
     }
 ///////// debug info ////////
@@ -489,7 +492,7 @@ int CLI_Session::readShellBuffer(char* buffer, const char *text1, const char *te
 
 int CLI_Session::readShell(const char *text1, const char *text2, const bool matchAnyWhere, int verbose, int timeout)
 {
-    char line[LINELEN+1];
+    static char line[LINELEN*2+1];
     return readShellBuffer(line, text1, text2, matchAnyWhere, verbose, timeout);
 }
 

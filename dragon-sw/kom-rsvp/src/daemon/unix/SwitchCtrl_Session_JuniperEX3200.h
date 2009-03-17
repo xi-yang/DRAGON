@@ -61,7 +61,7 @@ public:
 	//bool limitOutputBandwidth_JUNOScript(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 
 protected:
-	char bufScript[LINELEN+1];
+	char bufScript[LINELEN*3+1];
 
 	uint32 convertUnifiedPort2JuniperEXBit(uint32 port)
 	{
