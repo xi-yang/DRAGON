@@ -21,15 +21,15 @@ bool SwitchCtrl_Session_JuniperEX3200::connectSwitch()
     int n;
     if ((n = writeShell( "junoscript\n", 5)) < 0)
         goto _abort;
-    if ((n= readShell( "<!-- session start", NULL, 1, 10)) < 0)
+    if ((n= readShell( "<!-- session start", NULL, false, 1, 10)) < 0)
         goto _abort;
-    if ((n= readShell( "-->", NULL, 1, 10)) < 0)
+    if ((n= readShell( "-->", NULL, true, 1, 10)) < 0)
         goto _abort;
     if ((n = writeShell( "<?xml version=\"1.0\" encoding=\"us-ascii\"?> <junoscript version=\"1.0\" client=\"vlsr\" release=\"9.2R2\">\n", 5)) < 0)
         goto _abort;
-    if ((n= readShell( "<!-- user", NULL, 1, 10)) < 0)
+    if ((n= readShell( "<!-- user", NULL, false, 1, 10)) < 0)
         goto _abort;
-    if ((n= readShell( "-->", NULL, 1, 10)) < 0)
+    if ((n= readShell( "-->", NULL, true, 1, 10)) < 0)
         goto _abort;
 
     return true;
