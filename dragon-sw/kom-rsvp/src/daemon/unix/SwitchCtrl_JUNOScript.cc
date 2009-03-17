@@ -66,8 +66,8 @@ bool JUNOScriptParser::loadAndVerifyScript(char* bufScript)
     if (xmlScript == NULL)
         return false;
 
-    xmlDocPtr doc = xmlReadMemory(xmlScript, strlen(xmlScript), "junoscript.xml", NULL, 0);
-    if (doc == NULL) {
+    xmlDoc = xmlReadMemory(xmlScript, strlen(xmlScript), "junoscript.xml", NULL, 0);
+    if (xmlDoc == NULL) {
         //$$$$ Log::
         return false;
     }
