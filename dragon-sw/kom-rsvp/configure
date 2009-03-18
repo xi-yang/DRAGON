@@ -8298,7 +8298,7 @@ if test "$ac_cv_lib_crypto_SSLeay" = "no"; then
     new_libs="`echo ${LIBS} | sed -e 's/-lcrypto//g'`"
     LIBS="${new_libs}"
     new_snmp_lib="`echo ${SNMP_LIB} | sed -e 's/-lcrypto//g'`"
-    SNMP_LIB="${new_libs}"
+    SNMP_LIB="${new_snmp_lib}"
 fi
 
 SAVE_LIBS=$LIBS
