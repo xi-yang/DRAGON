@@ -49,184 +49,6 @@ const char *JUNOScriptVlanComposer::jsTemplate = "<rpc>\
     </load-configuration>\
 </rpc>";
 
-////////////////////////////////////////////////////////////////////////////
-
-JUNOScriptParser::~JUNOScriptParser() 
-{ 
-    if (xpathCtx != NULL)
-       xmlXPathFreeContext(xpathCtx);
-    if (xmlDoc != NULL)  
-        xmlFreeDoc(xmlDoc);
-}
-
-bool JUNOScriptParser::loadAndVerifyScript(char* bufScript)
-{
-    if (bufScript != NULL)
-        xmlScript = bufScript;
-    if (xmlScript == NULL)
-        return false;
-
-    //pre-process the script to remove default name-space attribute (for xpath use)
-    char* ps = xmlScript;
-    while ((ps = strstr(ps, "xmlns=")) != NULL)
-    {
-        while(*ps != ' ' && *ps != '\t' && *ps != '>')
-            *(ps++) = ' ';
-    }
-    
-    xmlDoc = xmlReadMemory(xmlScript, strlen(xmlScript), "junoscript.xml", NULL, 0);
-    if (xmlDoc == NULL) {
-        //$$$$ Log::
-        return false;
-    }
-    xpathCtx =  xmlXPathNewContext(xmlDoc);
-    if(xpathCtx == NULL) {
-        //$$$$ Log::
-        return false;
-    }
-
-    int i;
-    char junos_ns[64];
-    if ((ps = strstr(xmlScript, "xmlns:junos=\"")) != NULL)
-    {
-        i = 0;
-        ps += 13; 
-        while(*ps != ' ' && *ps != '\t' && *ps != '\"')
-            junos_ns[i++] = *(ps++);
-        junos_ns[i] = '\0';
-        if (xmlXPathRegisterNs(xpathCtx, (xmlChar*)"junos", (xmlChar*)junos_ns) != 0){
-            //$$$$ Log::
-            return false;
-        }
-    }  
-
-    if (xmlXPathRegisterNs(xpathCtx, (xmlChar*)"xnm", (xmlChar*)"http://xml.juniper.net/xnm/1.1/xnm") != 0){
-        //$$$$ Log::
-        return false;
-    }
-
-    return true;
-}
-
-bool JUNOScriptLockReplyParser::isSuccessful()
-{
-    errMessage = "";
-    if (xmlDoc == NULL || xpathCtx == NULL)
-        return false;
-
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc-reply/xnm:error/message", xpathCtx);
-    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
-    {
-        if (xpathObj) xmlXPathFreeObject(xpathObj);
-        return true;
-    }
-
-    errMessage = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]);
-    if (errMessage.empty() || errMessage.leftequal("Configuration database is already open"))
-    {
-        if (xpathObj) xmlXPathFreeObject(xpathObj);
-        return true;
-    }
-    //$$$$ handling "configuration database modified" ?
-
-    if (xpathObj) xmlXPathFreeObject(xpathObj);
-    return false;
-}
-
-//<load-configuration-results>
-//<load-success/>
-//</load-configuration-results>
-
-bool JUNOScriptLoadReplyParser::isSuccessful()
-{
-    errMessage = "";
-    if (xmlDoc == NULL || xpathCtx == NULL)
-        return false;
-
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc-reply/load-configuration-results/load-error-count", xpathCtx);
-    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
-    {
-        if (xpathObj) xmlXPathFreeObject(xpathObj);
-        return true;
-    }
-
-    int count;
-    sscanf((const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]), "%d", &count);
-    xmlXPathFreeObject(xpathObj);
-    xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc-reply/load-configuration-results/xnm:error", xpathCtx);
-    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
-    {
-        if (xpathObj) xmlXPathFreeObject(xpathObj);
-        return false;
-    }
-
-    xmlNodePtr node;
-    int i = 0;
-    char buf[10];
-    XML_LOOP_NODESET(xpathObj->nodesetval, node)
-    {
-        if (strstr((char*)node->name, "token") != NULL || strstr((char*)node->name, "edit-path") != NULL)
-        {
-            i++;
-            sprintf(buf, "Error(%d/%d): --@<", i, count);
-            errMessage += (const char*)xmlNodeGetContent(node);
-            errMessage += "> --: ";
-        }
-        if (strcasecmp((char*)node->name, "message") == 0)
-        {
-            errMessage += (const char*)xmlNodeGetContent(node);
-            errMessage += "\n";
-        }
-    }
-
-    if (xpathObj) xmlXPathFreeObject(xpathObj);
-    return false;
-}
-
-bool JUNOScriptCommitReplyParser::isSuccessful()
-{
-    errMessage = "";
-    if (xmlDoc == NULL || xpathCtx == NULL)
-        return false;
-
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc-reply/commit-results/xnm:error/message", xpathCtx);
-    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
-    {
-        if (xpathObj) xmlXPathFreeObject(xpathObj);
-        return true;
-    }
-
-    errMessage = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]);
-    if (xpathObj) xmlXPathFreeObject(xpathObj);
-    return false;
-}
-
-
-bool JUNOScriptUnlockReplyParser::isSuccessful()
-{
-    errMessage = "";
-    if (xmlDoc == NULL || xpathCtx == NULL)
-        return false;
-
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc-reply/xnm:error/message", xpathCtx);
-    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
-    {
-        if (xpathObj) xmlXPathFreeObject(xpathObj);
-        return true;
-    }
-
-    errMessage = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]);
-
-    if (errMessage.leftequal("Configuration database is not open"))
-    {
-        if (xpathObj) xmlXPathFreeObject(xpathObj);
-        return true;
-    }
-
-    if (xpathObj) xmlXPathFreeObject(xpathObj);
-    return false;
-}
-
 ///////////////////////////////////////////////////////////////////////
 
 
@@ -328,7 +150,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     sprintf(portName, "ge-%d/%d/%d", (portId & 0xf000)>>12, (portId & 0x0f00)>>8, portId&0xff);
     sprintf(vlanName, "dynamic_vlan_%d", vlanId);
 
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc/load-configuration/configuration/interfaces/name", xpathCtx);
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/name", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -338,7 +160,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)portName);
     //do not delete this node
 
-    xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc/load-configuration/configuration/interfaces/family/ethernet-switching/vlan/members", xpathCtx);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/family/ethernet-switching/vlan/members", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -349,7 +171,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     if (isToDelete)
         xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
 
-    xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc/load-configuration/configuration/interfaces/family/ethernet-switching/port-mode", xpathCtx);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/family/ethernet-switching/port-mode", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -372,10 +194,10 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
         xmlNodeSetContent(node1, (xmlChar*)vlanName);
         if (isToDelete)
             xmlNewProp(node1, (xmlChar*)"delete", (xmlChar*)"delete");
-        xmlAddNextSibling(xpathObj->nodesetval->nodeTab[0], node1);  // create //rpc/load-configuration/configuration/interfaces/family/ethernet-switching/native-vlan-id
+        xmlAddNextSibling(xpathObj->nodesetval->nodeTab[0], node1);  // create /rpc/load-configuration/configuration/interfaces/family/ethernet-switching/native-vlan-id
     }
     
-    xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc/load-configuration/configuration/vlans/vlan/name", xpathCtx);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/name", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -385,7 +207,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)vlanName);
     //do not delete this node
 
-    xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc/load-configuration/configuration/vlans/vlan/interface", xpathCtx);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/interface", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -415,7 +237,7 @@ bool JUNOScriptVlanComposer::setVlan(uint32 vlanId, bool isToDelete)
     char vlanName[32];
     sprintf(vlanName, "dynamic_vlan_%d", vlanId);
 
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"//rpc/load-configuration/configuration/vlans/vlan/name", xpathCtx);
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/name", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -443,3 +265,203 @@ bool JUNOScriptVlanComposer::setVlan(uint32 vlanId, bool isToDelete)
     if (xpathObj) xmlXPathFreeObject(xpathObj);
     return finishScript();
 }
+
+
+////////////////////////////////////////////////////////////////////////////
+
+JUNOScriptParser::~JUNOScriptParser() 
+{ 
+    if (xpathCtx != NULL)
+       xmlXPathFreeContext(xpathCtx);
+    if (xmlDoc != NULL)  
+        xmlFreeDoc(xmlDoc);
+}
+
+bool JUNOScriptParser::loadAndVerifyScript(char* bufScript)
+{
+    if (bufScript != NULL)
+        xmlScript = bufScript;
+    if (xmlScript == NULL)
+        return false;
+
+    //pre-process the script to remove default name-space attribute (for xpath use)
+    char* ps = xmlScript;
+    while ((ps = strstr(ps, "xmlns=")) != NULL)
+    {
+        while(*ps != ' ' && *ps != '\t' && *ps != '>')
+            *(ps++) = ' ';
+    }
+    
+    xmlDoc = xmlReadMemory(xmlScript, strlen(xmlScript), "junoscript.xml", NULL, 0);
+    if (xmlDoc == NULL) {
+        //$$$$ Log::
+        return false;
+    }
+    xpathCtx =  xmlXPathNewContext(xmlDoc);
+    if(xpathCtx == NULL) {
+        //$$$$ Log::
+        return false;
+    }
+
+    int i;
+    char junos_ns[64];
+    if ((ps = strstr(xmlScript, "xmlns:junos=\"")) != NULL)
+    {
+        i = 0;
+        ps += 13; 
+        while(*ps != ' ' && *ps != '\t' && *ps != '\"')
+            junos_ns[i++] = *(ps++);
+        junos_ns[i] = '\0';
+        if (xmlXPathRegisterNs(xpathCtx, (xmlChar*)"junos", (xmlChar*)junos_ns) != 0){
+            //$$$$ Log::
+            return false;
+        }
+    }  
+
+    if (xmlXPathRegisterNs(xpathCtx, (xmlChar*)"xnm", (xmlChar*)"http://xml.juniper.net/xnm/1.1/xnm") != 0){
+        //$$$$ Log::
+        return false;
+    }
+
+    return true;
+}
+
+bool JUNOScriptLockReplyParser::isSuccessful()
+{
+    errMessage = "";
+    if (xmlDoc == NULL || xpathCtx == NULL)
+        return false;
+
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/xnm:error/message", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
+    }
+
+    errMessage = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]);
+    if (errMessage.empty() || errMessage.leftequal("Configuration database is already open"))
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
+    }
+    //$$$$ handling "configuration database modified" ?
+
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return false;
+}
+
+//<load-configuration-results>
+//<load-success/>
+//</load-configuration-results>
+
+bool JUNOScriptLoadReplyParser::isSuccessful()
+{
+    errMessage = "";
+    if (xmlDoc == NULL || xpathCtx == NULL)
+        return false;
+
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/load-configuration-results/load-error-count", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
+    }
+
+    int count;
+    sscanf((const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]), "%d", &count);
+    xmlXPathFreeObject(xpathObj);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/load-configuration-results/xnm:error", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return false;
+    }
+
+    xmlNodePtr node;
+    int i = 0;
+    char buf[10];
+    XML_LOOP_NODESET(xpathObj->nodesetval, node)
+    {
+        if (strstr((char*)node->name, "token") != NULL || strstr((char*)node->name, "edit-path") != NULL)
+        {
+            i++;
+            sprintf(buf, "Error(%d/%d): --@<", i, count);
+            errMessage += (const char*)xmlNodeGetContent(node);
+            errMessage += "> --: ";
+        }
+        if (strcasecmp((char*)node->name, "message") == 0)
+        {
+            errMessage += (const char*)xmlNodeGetContent(node);
+            errMessage += "\n";
+        }
+    }
+
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return false;
+}
+
+bool JUNOScriptCommitReplyParser::isSuccessful()
+{
+    errMessage = "";
+    if (xmlDoc == NULL || xpathCtx == NULL)
+        return false;
+
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/commit-results/xnm:error/message", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
+    }
+
+    errMessage = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]);
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return false;
+}
+
+
+bool JUNOScriptUnlockReplyParser::isSuccessful()
+{
+    errMessage = "";
+    if (xmlDoc == NULL || xpathCtx == NULL)
+        return false;
+
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/xnm:error/message", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
+    }
+
+    errMessage = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]);
+
+    if (errMessage.leftequal("Configuration database is not open"))
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
+    }
+
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return false;
+}
+
+
+bool JUNOScriptRpcReplyParser::isSuccessful()
+{
+    errMessage = "";
+    if (xmlDoc == NULL || xpathCtx == NULL)
+        return false;
+
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/xnm:error/message |/rpc-reply/xnm:warning/message ", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return true;
+    }
+
+    errMessage = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]);
+
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return false;
+}
+

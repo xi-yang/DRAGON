@@ -68,6 +68,27 @@ bool SwitchCtrl_Session_JuniperEX3200::postAction()
     if (!active || vendor!=JuniperEX3200 || !pipeAlive())
         return false;
     int n;
+    DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>", 5)) ;
+    DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    JUNOScriptUnlockReplyParser unlockReplyParser(bufScript);
+    if (!unlockReplyParser.loadAndVerifyScript())
+    {
+        //$$$$LOG::
+        return false;
+    }
+    else if (!unlockReplyParser.isSuccessful())
+    {
+        //$$$$LOG::
+        return false;
+    }
+    return true;
+}
+
+bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
+{
+    if (!active || vendor!=JuniperEX3200 || !pipeAlive())
+        return false;
+    int n;
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><commit-configuration /></rpc>", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     JUNOScriptCommitReplyParser commitReplyParser(bufScript);
@@ -101,6 +122,34 @@ bool SwitchCtrl_Session_JuniperEX3200::movePortToVLANAsUntagged(uint32 port, uin
 {
     uint32 bit;
     bool ret = false;
+    vlanPortMap * vpmAll = NULL, *vpmUntagged = NULL;
+
+    if ((!active) || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
+        return ret; //don't touch the control port!
+
+    int old_vlan = getVLANbyUntaggedPort(port);
+    bit = convertUnifiedPort2JuniperEXBit(port);
+    assert(bit < MAX_VLAN_PORT_BYTES*8);
+    vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
+    if (vpmUntagged)
+        ResetPortBit(vpmUntagged->portbits, bit);
+    vpmAll = getVlanPortMapById(vlanPortMapListAll, old_vlan);
+    if (vpmAll)
+        ResetPortBit(vpmAll->portbits, bit);
+    if (old_vlan > 1) { //Remove untagged port from old VLAN
+        ret &= deleteVLANPort_JUNOScript(port, old_vlan, false);
+    }
+
+    bit = convertUnifiedPort2JuniperEXBit(port);
+    assert(bit < MAX_VLAN_PORT_BYTES*8);
+    vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
+    if (vpmUntagged)
+    SetPortBit(vpmUntagged->portbits, bit);
+    vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
+    if (vpmAll) {
+        SetPortBit(vpmAll->portbits, bit);
+        ret &= addVLANPort_JUNOScript(port, vlanID, false);
+    }
 
     return ret;
 }
@@ -109,7 +158,19 @@ bool SwitchCtrl_Session_JuniperEX3200::movePortToVLANAsTagged(uint32 port, uint3
 {
     uint32 bit;
     bool ret = false;
-    
+    vlanPortMap * vpmAll = NULL;
+
+    if ((!active) || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
+        return ret; //don't touch the control port!
+
+    bit = convertUnifiedPort2JuniperEXBit(port);
+    assert(bit < MAX_VLAN_PORT_BYTES*8);
+    vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
+    if (vpmAll) {
+       SetPortBit(vpmAll->portbits, bit);
+       ret&=addVLANPort_JUNOScript(port, vlanID, true);
+    }
+
     return ret;
 }
 
@@ -117,6 +178,26 @@ bool SwitchCtrl_Session_JuniperEX3200::removePortFromVLAN(uint32 port, uint32 vl
 {
     uint32 bit;
     bool ret = false;
+    vlanPortMap * vpmAll = NULL, *vpmUntagged = NULL;
+
+    if ((!active) || port==SWITCH_CTRL_PORT)
+    	return ret; //don't touch the control port!
+
+    if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN){
+        bit = convertUnifiedPort2JuniperEXBit(port);
+        assert(bit < MAX_VLAN_PORT_BYTES*8);
+        vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
+        if (vpmUntagged)
+            ResetPortBit(vpmUntagged->portbits, bit);
+        vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
+        if (vpmAll) {
+            ResetPortBit(vpmAll->portbits, bit);
+            ret &= deleteVLANPort_JUNOScript(port, vlanID, false);
+            //ret &= deleteVLANPort_JUNOScript(port, vlanID, true);
+        }
+    } else {
+        LOG(2) (Log::MPLS, "Trying to remove port from an invalid VLAN ", vlanID);
+    }
 
     return ret;
 }
@@ -125,27 +206,51 @@ bool SwitchCtrl_Session_JuniperEX3200::removePortFromVLAN(uint32 port, uint32 vl
 bool SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript(uint32 portID, uint32 vlanID, bool isTagged)
 {
     int n;
-    uint32 port_part,slot_part;
-    char portName[100], vlanNum[100];
-
     if (!preAction())
         return false;
+    bool ret = false;
+    JUNOScriptMovePortVlanComposer jsComposer(bufScript, LINELEN*3);
+    JUNOScriptRpcReplyParser jsParser(bufScript);
+    if (!(ret = jsComposer.setPortAndVlan(portID, vlanID, isTagged, false)))
+        goto _out;
+    DIE_IF_NEGATIVE(n = writeShell(jsComposer.getScript(), 5)) ;
+    DIE_IF_NEGATIVE(n = writeShell("\n", 5)) ;
 
+    DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (!(ret = jsParser.loadAndVerifyScript()))
+        goto _out;
+    else if (!(ret = jsParser.isSuccessful()))
+        goto _out;
 
-    return postAction();
+_out:
+    if (ret == false)
+        return postAction(); // without commit
+    return postActionWithCommit();
 }
 
 bool SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript(uint32 portID, uint32 vlanID, bool isTagged)
 {
     int n;
-    uint32 port_part,slot_part;
-    char portName[100], vlanNum[100];
-
     if (!preAction())
         return false;
+    bool ret = false;
+    JUNOScriptMovePortVlanComposer jsComposer(bufScript, LINELEN*3);
+    JUNOScriptRpcReplyParser jsParser(bufScript);
+    if (!(ret = jsComposer.setPortAndVlan(portID, vlanID, isTagged, true)))
+        goto _out;
+    DIE_IF_NEGATIVE(n = writeShell(jsComposer.getScript(), 5)) ;
+    DIE_IF_NEGATIVE(n = writeShell("\n", 5)) ;
 
+    DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (!(ret = jsParser.loadAndVerifyScript()))
+        goto _out;
+    else if (!(ret = jsParser.isSuccessful()))
+        goto _out;
 
-    return postAction();
+_out:
+    if (ret == false)
+        return postAction(); // without commit
+    return postActionWithCommit();
 }
 
 /////--------QoS Functions------/////
@@ -154,16 +259,18 @@ bool SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript(uint32 portID, 
 bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     int n;
-    uint32 port_part,slot_part;
-    char portName[100], vlanNum[100], action[100];
-    char append[20];
     int committed_rate_int = (int)committed_rate;
-
     if (committed_rate_int < 1 || !preAction())
         return false;
+    bool ret = false;
 
+    //$TODO:
 
-   return postAction();
+_out:
+    if (ret == false)
+        return postAction(); // without commit
+    return postActionWithCommit();
+
 }
 
 ////////-------vendor specific hook procedures------////////////
@@ -171,25 +278,53 @@ bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_u
 bool SwitchCtrl_Session_JuniperEX3200::hook_createVLAN(const uint32 vlanID)
 {
     int n;
-    char createVlan[20];
-
+    bool ret = false;
     DIE_IF_EQUAL(vlanID, 0);
     DIE_IF_EQUAL(preAction(), false);
 
-    
-    return postAction();
+    JUNOScriptVlanComposer jsComposer(bufScript, LINELEN*3);
+    JUNOScriptRpcReplyParser jsParser(bufScript);
+    if (!(ret = jsComposer.setVlan(vlanID, false)))
+        goto _out;
+    DIE_IF_NEGATIVE(n = writeShell(jsComposer.getScript(), 5)) ;
+    DIE_IF_NEGATIVE(n = writeShell("\n", 5)) ;
+
+    DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (!(ret = jsParser.loadAndVerifyScript()))
+        goto _out;
+    else if (!(ret = jsParser.isSuccessful()))
+        goto _out;
+
+_out:
+    if (ret == false)
+        return postAction(); // without commit
+    return postActionWithCommit();
 }
 
 bool SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN(const uint32 vlanID)
 {
     int n;
-    char createVlan[20];
-
+    bool ret = false;
     DIE_IF_EQUAL(vlanID, 0);
     DIE_IF_EQUAL(preAction(), false);
 
+    JUNOScriptVlanComposer jsComposer(bufScript, LINELEN*3);
+    JUNOScriptRpcReplyParser jsParser(bufScript);
+    if (!(ret = jsComposer.setVlan(vlanID, true)))
+        goto _out;
+    DIE_IF_NEGATIVE(n = writeShell(jsComposer.getScript(), 5)) ;
+    DIE_IF_NEGATIVE(n = writeShell("\n", 5)) ;
 
-    return postAction();  
+    DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (!(ret = jsParser.loadAndVerifyScript()))
+        goto _out;
+    else if (!(ret = jsParser.isSuccessful()))
+        goto _out;
+
+_out:
+    if (ret == false)
+        return postAction(); // without commit
+    return postActionWithCommit();
 }
 
 bool SwitchCtrl_Session_JuniperEX3200::hook_isVLANEmpty(const vlanPortMap &vpm)
