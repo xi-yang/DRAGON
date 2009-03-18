@@ -151,7 +151,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     sprintf(portName, "ge-%d/%d/%d", (portId & 0xf000)>>12, (portId & 0x0f00)>>8, portId&0xff);
     sprintf(vlanName, "dynamic_vlan_%d", vlanId);
 
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/name", xpathCtx);
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/interface/name", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -161,7 +161,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)portName);
     //do not delete this node
 
-    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/family/ethernet-switching/vlan/members", xpathCtx);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/unit/family/ethernet-switching/vlan/members", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -172,7 +172,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     if (isToDelete)
         xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
 
-    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/family/ethernet-switching/port-mode", xpathCtx);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/unit/family/ethernet-switching/port-mode", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
