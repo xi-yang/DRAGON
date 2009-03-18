@@ -61,7 +61,7 @@ public:
   public:
     ProcNetParser(SwitchCtrl_Session_Linux& session, unsigned int writeTimeout = 5,
 		  unsigned int readTimeout = 15) : 
-      CLICommandParser("cat /proc/net/dev\n", writeTimeout, readTimeout),
+      CLICommandParser((char*)"cat /proc/net/dev\n", writeTimeout, readTimeout),
       _session(session) 
       {
       _portNum = 1;
@@ -77,7 +77,7 @@ public:
   public:
     ProcNetVLANParser(SwitchCtrl_Session_Linux& session, 
 		  unsigned int writeTimeout = 5,
-		  unsigned int readTimeout = 15) : CLICommandParser("sudo cat /proc/net/vlan/config\n", writeTimeout, readTimeout), _session(session) {
+		  unsigned int readTimeout = 15) : CLICommandParser((char*)"sudo cat /proc/net/vlan/config\n", writeTimeout, readTimeout), _session(session) {
     }
     void parseLine(const char *line, const int length);
   private:
@@ -88,7 +88,7 @@ public:
   public:
     BrctlParser(SwitchCtrl_Session_Linux& session, unsigned int writeTimeout = 5,
 		unsigned int readTimeout = 15) : 
-      CLICommandParser("sudo brctl show\n", writeTimeout, readTimeout),
+      CLICommandParser((char*)"sudo brctl show\n", writeTimeout, readTimeout),
       _session(session) 
       {
 	_curVid = -1;

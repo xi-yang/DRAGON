@@ -1663,7 +1663,7 @@ int SwitchCtrl_Session_SubnetUNI::verifySNCInStableWorkingState_TL1(String& sncN
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            ret = ReadShellPattern(bufCmd, "Snc IC Path Defect Clear", NULL, ";", NULL, 5);
+            ret = ReadShellPattern(bufCmd, (char*)"Snc IC Path Defect Clear", NULL, (char*)";", NULL, 5);
             if (ret == 1)
             {
                 //making sure there is no 'Backoff Expiry' and 'STARTING' status after 'Snc IC Path Defect Clear'
@@ -1865,7 +1865,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
     if (ret == 1) 
     {
         LOG(3)(Log::MPLS, OMPortString, " concatenation type has been found.\n", bufCmd);
-        ret = ReadShellPattern(bufCmd, "Virtual 50MBPS", "Virtual 150MBPS", "OSPFCOST", NULL, 5);
+        ret = ReadShellPattern(bufCmd, (char*)"Virtual 50MBPS", (char*)"Virtual 150MBPS", (char*)"OSPFCOST", NULL, 5);
         if (ret == 1)
             funcRet = CATUNIT_50MBPS;
         else if (ret == 2)
@@ -1914,7 +1914,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, ui
     if (ret == 1) 
     {
         LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapOCN_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
-        ret = ReadShellPattern(bufCmd, NULL, NULL, ",NOACT", NULL, 5);
+        ret = ReadShellPattern(bufCmd, NULL, NULL, (char*)",NOACT", NULL, 5);
         if (ret == 0) {
             bufCmd[strlen(bufCmd) - 6] = 0;
             pstr = strstr(bufCmd, "TIMESLOTMAP=");
@@ -1976,7 +1976,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
         }
         else if (ret == 2)
         {
-            while ((ret = ReadShellPattern(bufCmd, (char*)OMPortString.chars(), "GROUPMEM=", "VCGFAILUREBASESEV=",  ";", 5)) != READ_STOP)
+            while ((ret = ReadShellPattern(bufCmd, (char*)OMPortString.chars(), (char*)"GROUPMEM=", (char*)"VCGFAILUREBASESEV=", (char*)";", 5)) != READ_STOP)
             { // if (ret == 3), we have reach the end, i.e., ";"...
                 if (ret == 1)
                 {
@@ -2182,7 +2182,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
         }
         else if (ret == 2)
         {
-            while ((ret = ReadShellPattern(bufCmd, "FROMENDPOINT=dcs_gtp_", fromEndPointPattern2, "MAXADMINWEIGHT=", ";", 5)) != READ_STOP)
+            while ((ret = ReadShellPattern(bufCmd, (char*)"FROMENDPOINT=dcs_gtp_", fromEndPointPattern2, (char*)"MAXADMINWEIGHT=", (char*)";", 5)) != READ_STOP)
             { // if (ret == 3), we have reach the end, i.e., ";"...
                 if (ret == 0) // this is an irrelevant SNC 
                     continue;

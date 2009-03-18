@@ -717,7 +717,7 @@ bool SwitchCtrl_Global::static_connectSwitch(struct snmp_session* &sessionHandle
 {
     LOG(2)( Log::MPLS, "VLSR: establishing SNMP session with switch", switchAddr);
     char str[128];
-    char* community = SWITCH_SNMP_COMMUNITY;
+    char* community = (char*)SWITCH_SNMP_COMMUNITY;
     snmp_session session;
     // Initialize a "session" that defines who we're going to talk to   
     snmp_sess_init(&session);
@@ -760,7 +760,7 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
     pdu = snmp_pdu_create(SNMP_MSG_GET);
 
     // vlan port list 
-    char* oid_str = "system.sysDescr.0";
+    char* oid_str = (char*)"system.sysDescr.0";
     if (!snmp_parse_oid(oid_str, anOID, &anOID_len)) {
         	snmp_perror(oid_str);
 		LOG(1)( Log::MPLS, "VLSR: snmp_get system.sysDescr.0 failed");
