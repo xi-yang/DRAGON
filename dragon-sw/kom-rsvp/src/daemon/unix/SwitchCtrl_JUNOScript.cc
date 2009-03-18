@@ -65,12 +65,12 @@ bool JUNOScriptComposer::initScriptDoc(const char* xmlBuf)
     freeScriptDoc();
     xmlDoc = xmlReadMemory((const char*)xmlBuf, strlen((const char*)xmlBuf), (const char*)"junoscript.xml", NULL, 0);
     if (xmlDoc == NULL) {
-        //$$$$ Log::
+        LOG(2)(Log::MPLS, "Error: JUNOScriptComposer::initScriptDoc() failed to parse memory: ", xmlBuf);
         return false;
     }
     xpathCtx =  xmlXPathNewContext(xmlDoc);
     if(xpathCtx == NULL) {
-        //$$$$ Log::
+        LOG(2)(Log::MPLS, "Error: JUNOScriptComposer::initScriptDoc() failed to create XPath context: ", xmlBuf);
         return false;
     }
     return true;
@@ -96,7 +96,7 @@ bool JUNOScriptComposer::makeScript()
     {
         if (scriptLenNew > scriptLen)
         {
-            //$$$$ LOG:: external buffer too small
+            LOG(1)(Log::MPLS, "Error: JUNOScriptComposer::makeScript(): external buffer too small!");
             scriptLenNew = scriptLen;
         }
         memcpy((char*)xmlScript, (char*)xmlScriptNew, scriptLenNew);
@@ -295,12 +295,12 @@ bool JUNOScriptParser::loadAndVerifyScript(char* bufScript)
     
     xmlDoc = xmlReadMemory(xmlScript, strlen(xmlScript), "junoscript.xml", NULL, 0);
     if (xmlDoc == NULL) {
-        //$$$$ Log::
+        LOG(2)(Log::MPLS, "Error: JUNOScriptComposer::initScriptDoc() failed to parse memory: ", xmlScript);
         return false;
     }
     xpathCtx =  xmlXPathNewContext(xmlDoc);
     if(xpathCtx == NULL) {
-        //$$$$ Log::
+        LOG(2)(Log::MPLS, "Error: JUNOScriptComposer::initScriptDoc() failed to create XPath context: ", xmlScript);
         return false;
     }
 
@@ -314,13 +314,13 @@ bool JUNOScriptParser::loadAndVerifyScript(char* bufScript)
             junos_ns[i++] = *(ps++);
         junos_ns[i] = '\0';
         if (xmlXPathRegisterNs(xpathCtx, (xmlChar*)"junos", (xmlChar*)junos_ns) != 0){
-            //$$$$ Log::
+            LOG(2)(Log::MPLS, "Error: JUNOScriptComposer failed to regiser namespace ", junos_ns);
             return false;
         }
     }  
 
     if (xmlXPathRegisterNs(xpathCtx, (xmlChar*)"xnm", (xmlChar*)"http://xml.juniper.net/xnm/1.1/xnm") != 0){
-        //$$$$ Log::
+        LOG(1)(Log::MPLS, "Error: JUNOScriptComposer failed to regiser namespace: http://xml.juniper.net/xnm/1.1/xnm");
         return false;
     }
 

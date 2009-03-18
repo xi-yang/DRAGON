@@ -225,8 +225,8 @@ bool SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript(uint32 portID, uin
 _out:
     if (ret == false)
     {
-        //$$$$ LOG::
-        return (false && postAction()); // without commit
+          LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript failed");
+          return (false && postAction()); // without commit
     }
     return postActionWithCommit();
 }
@@ -253,7 +253,7 @@ bool SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript(uint32 portID, 
 _out:
     if (ret == false)
     {
-        //$$$$ LOG::
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript failed");
         return (false && postAction()); // without commit
     }
 
@@ -276,7 +276,7 @@ bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_u
 _out:
     if (ret == false)
     {
-        //$$$$ LOG::
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript failed");
         return (false && postAction()); // without commit
     }
 
@@ -309,7 +309,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_createVLAN(const uint32 vlanID)
 _out:
     if (ret == false)
     {
-        //$$$$ LOG::
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::hook_createVLAN failed");
         return (false && postAction()); // without commit
     }
 
@@ -339,7 +339,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN(const uint32 vlanID)
 _out:
     if (ret == false)
     {
-        //$$$$ LOG::
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN failed");
         return (false && postAction()); // without commit
     }
 
