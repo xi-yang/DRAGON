@@ -855,7 +855,7 @@ if test "$with_snmp" = "yes"; then
            SNMP_LIB="$LDFLAGS $LIBS"
            AC_MSG_RESULT([enabled, found in /usr])
         elif test -e "/usr/local/include/net-snmp/net-snmp-config.h"; then
-           LDFLAGS="-L/usr/local/lib -lcrypto -lm -lnetsnmp"
+           LDFLAGS="-L/usr/local/lib -L/usr/lib -lcrypto -lm -lnetsnmp"
            SNMP_INCLUDE="-I/usr/local/include"
            SNMP_LIB="$LDFLAGS $LIBS"
            AC_MSG_RESULT([enabled, found in /usr/local])
@@ -866,7 +866,7 @@ if test "$with_snmp" = "yes"; then
 elif test "$with_snmp" != "no"; then
         AC_MSG_CHECKING(for net-snmp include files)
         if test -e "$with_snmp/include/net-snmp/net-snmp-config.h"; then
-           LDFLAGS="-L$with_snmp/lib -lcrypto -lm -lnetsnmp"
+           LDFLAGS="-L$with_snmp/lib -L/usr/lib -lcrypto -lm -lnetsnmp"
            SNMP_INCLUDE="-I$with_snmp/include"
            SNMP_LIB="$LDFLAGS $LIBS"
            AC_MSG_RESULT([enabled, found in $with_snmp])

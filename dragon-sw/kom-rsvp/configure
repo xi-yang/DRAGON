@@ -7979,7 +7979,7 @@ echo $ECHO_N "checking for net-snmp include files... $ECHO_C" >&6; }
            { echo "$as_me:$LINENO: result: enabled, found in /usr" >&5
 echo "${ECHO_T}enabled, found in /usr" >&6; }
         elif test -e "/usr/local/include/net-snmp/net-snmp-config.h"; then
-           LDFLAGS="-L/usr/local/lib -lcrypto -lm -lnetsnmp"
+           LDFLAGS="-L/usr/local/lib -L/usr/lib -lcrypto -lm -lnetsnmp"
            SNMP_INCLUDE="-I/usr/local/include"
            SNMP_LIB="$LDFLAGS $LIBS"
            { echo "$as_me:$LINENO: result: enabled, found in /usr/local" >&5
@@ -7997,7 +7997,7 @@ elif test "$with_snmp" != "no"; then
         { echo "$as_me:$LINENO: checking for net-snmp include files" >&5
 echo $ECHO_N "checking for net-snmp include files... $ECHO_C" >&6; }
         if test -e "$with_snmp/include/net-snmp/net-snmp-config.h"; then
-           LDFLAGS="-L$with_snmp/lib -lcrypto -lm -lnetsnmp"
+           LDFLAGS="-L$with_snmp/lib -L/usr/lib -lcrypto -lm -lnetsnmp"
            SNMP_INCLUDE="-I$with_snmp/include"
            SNMP_LIB="$LDFLAGS $LIBS"
            { echo "$as_me:$LINENO: result: enabled, found in $with_snmp" >&5
