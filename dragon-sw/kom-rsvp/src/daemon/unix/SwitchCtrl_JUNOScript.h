@@ -29,7 +29,7 @@ using namespace std;
 class JUNOScriptComposer
 {
 public:
-   JUNOScriptComposer(): xmlScript(NULL), xmlDoc(NULL), xpathCtx(NULL), isScriptBufInternal(true) { }
+   JUNOScriptComposer(): xmlScript(NULL), scriptLen(0), xmlDoc(NULL), xpathCtx(NULL), isScriptBufInternal(true) { }
    JUNOScriptComposer(char* buf, int len): xmlScript((xmlChar*)buf), scriptLen(len), xmlDoc(NULL), xpathCtx(NULL) , isScriptBufInternal(false) { }
     virtual ~JUNOScriptComposer();
     bool initScriptDoc(const char* xmlBuf);

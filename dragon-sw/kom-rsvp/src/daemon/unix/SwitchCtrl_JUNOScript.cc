@@ -62,7 +62,7 @@ JUNOScriptComposer::~JUNOScriptComposer()
 bool JUNOScriptComposer::initScriptDoc(const char* xmlBuf)
 {
     freeScriptDoc();
-    xmlDoc = xmlReadMemory((const char*)xmlScript, strlen((const char*)xmlScript), (const char*)"junoscript.xml", NULL, 0);
+    xmlDoc = xmlReadMemory((const char*)xmlBuf, strlen((const char*)xmlBuf), (const char*)"junoscript.xml", NULL, 0);
     if (xmlDoc == NULL) {
         //$$$$ Log::
         return false;
