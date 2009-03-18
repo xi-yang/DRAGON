@@ -17,7 +17,8 @@ const char *JUNOScriptMovePortVlanComposer::jsTemplate = "<rpc>\
          <interfaces>\
             <interface>\
 		<name>ge-0/0/1</name>\
-		<unit><name>0<name>\
+		<unit>\
+		  <name>0</name>\
 		  <family>\
 		      <ethernet-switching>\
 			    <port-mode>access</port-mode>\
