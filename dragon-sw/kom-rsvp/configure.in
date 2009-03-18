@@ -844,7 +844,7 @@ AC_SUBST(NS2_DIR)
 SAVE_LIBS=$LIBS
 LIBS=
 AC_ARG_WITH(snmp,
-	[ --with-snmp[=DIR]		use SNMP in DIR (disabled by default)],
+	[ --with-snmp[=DIR]		use SNMP in DIR (enabled by default)],
 	with_snmp=$withval,
 	with_snmp=yes)
 if test "$BUILD_NS2" = "yes"; then with-snmp=no; fi
@@ -877,6 +877,55 @@ else
 fi
 
 AC_SUBST(SNMP_INCLUDE)
+
+SAVE_LIBS=$LIBS
+LIBS=
+AC_ARG_WITH(libxml,
+	[ --with-libxml[=DIR]		use libxml in DIR (enabled by default)],
+	with_libxml=$withval,
+	with_libxml=yes)
+if test "$with_libxml" = "yes"; then
+	AC_MSG_CHECKING(for libxml2 include files)
+	if test -e "/usr/include/libxml2/libxml/parser.h"; then
+	   LDFLAGS="-L/usr/lib -lxml2"
+	   XML_INCLUDE="-I/usr/include/libxml2"
+	   XML_LIB="$LDFLAGS $LIBS"
+	   AC_MSG_RESULT([enabled, found in /usr])
+	elif test -e "/usr/local/include/libxml2/libxml/parser.h"; then
+	   LDFLAGS="-L/usr/local/lib -lxml2"
+	   XML_INCLUDE="-I/usr/local/include/libxml2"
+	   XML_LIB="$LDFLAGS $LIBS"
+	   AC_MSG_RESULT([enabled, found in /usr/local])
+	else
+	   AC_MSG_ERROR([not found, please make sure you have the libxml2 include files installed])
+	fi
+	AC_MSG_CHECKING(for libxml2)
+	AC_CHECK_LIB(xml2, xmlParseFile, HAVE_LIBXML=yes)
+	if test "${HAVE_LIBXML}" = ""; then
+	   AC_MSG_ERROR([cannot find the libxml2 library, cannot continue with build!])
+        fi
+elif test "$with_libxml" != "no"; then
+	AC_MSG_CHECKING(for libxml2 include files)
+	if test -e "/usr/include/libxml2/libxml/parser.h"; then
+	   LDFLAGS="-L$with_libxml/lib -lxml2"
+	   XML_INCLUDE="-I/usr/include/libxml2"
+	   XML_LIB="$LDFLAGS $LIBS"
+	   AC_MSG_RESULT([enabled, found in $with_libxml])
+	else
+	   AC_MSG_ERROR([not found, please make sure you have the libxml2 include files installed])
+	fi
+	AC_MSG_CHECKING(for libxml2)	
+	AC_CHECK_LIB(xml2, xmlParseFile, HAVE_LIBXML=yes)
+	if test "${HAVE_LIBXML}" = ""; then
+	   AC_MSG_ERROR([cannot find the libxml2 library, cannot continue with build!])
+        fi
+else
+	AC_MSG_ERROR([Sorry, the dragon-sw package cannot currently be built without libxml2])
+	XML_INCLUDE=""
+fi
+
+LDFLAGS=
+LIBS=$SAVE_LIBS
 
 AC_MSG_CHECKING(for crypto)
 AC_CHECK_LIB(crypto, SSLeay)
@@ -954,6 +1003,8 @@ if test "$BUILD_NS2" = "yes"; then
 	fi
 fi
 
+AC_SUBST(XML_INCLUDE)
+AC_SUBST(XML_LIB)
 AC_SUBST(DMALLOC_INCLUDE)
 AC_SUBST(DMALLOC_LIB)
 AC_SUBST(NEWMAT_INCLUDE)
