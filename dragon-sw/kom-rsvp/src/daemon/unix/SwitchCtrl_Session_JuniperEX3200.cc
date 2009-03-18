@@ -224,7 +224,7 @@ bool SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript(uint32 portID, uin
 
 _out:
     if (ret == false)
-        return postAction(); // without commit
+        return (false && postAction()); // without commit
     return postActionWithCommit();
 }
 
@@ -249,7 +249,7 @@ bool SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript(uint32 portID, 
 
 _out:
     if (ret == false)
-        return postAction(); // without commit
+        return (false && postAction()); // without commit
     return postActionWithCommit();
 }
 
@@ -268,7 +268,7 @@ bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_u
 
 _out:
     if (ret == false)
-        return postAction(); // without commit
+        return (false && postAction()); // without commit
     return postActionWithCommit();
 
 }
@@ -297,7 +297,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_createVLAN(const uint32 vlanID)
 
 _out:
     if (ret == false)
-        return postAction(); // without commit
+        return (false && postAction()); // without commit
     return postActionWithCommit();
 }
 
@@ -323,7 +323,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN(const uint32 vlanID)
 
 _out:
     if (ret == false)
-        return postAction(); // without commit
+        return (false && postAction()); // without commit
     return postActionWithCommit();
 }
 
