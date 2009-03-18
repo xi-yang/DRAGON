@@ -863,7 +863,7 @@ if test "$with_snmp" = "yes"; then
            AC_MSG_ERROR([not found, please make sure you have the net-snmp include files installed])
         fi
         AC_MSG_CHECKING(for net-snmp library)
-        AC_CHECK_LIB(snmp, snmp_sess_init, HAVE_LIBSNMP=yes)
+        AC_CHECK_LIB(netsnmp, snmp_sess_init, HAVE_LIBSNMP=yes)
         if test "${HAVE_LIBSNMP}" = ""; then
            AC_MSG_ERROR([cannot find the net-snmp library, cannot continue with build!])
         fi
@@ -879,7 +879,7 @@ elif test "$with_snmp" != "no"; then
            AC_MSG_ERROR([not found, please make sure you have the net-snmp include files installed])
         fi
         AC_MSG_CHECKING(for net-snmp library)
-        AC_CHECK_LIB(snmp, snmp_sess_init, HAVE_LIBSNMP=yes)
+        AC_CHECK_LIB(netsnmp, snmp_sess_init, HAVE_LIBSNMP=yes)
         if test "${HAVE_LIBSNMP}" = ""; then
            AC_MSG_ERROR([cannot find the net-snmp library, cannot continue with build!])
         fi
