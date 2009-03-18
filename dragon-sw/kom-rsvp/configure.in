@@ -847,36 +847,51 @@ AC_ARG_WITH(snmp,
 	[ --with-snmp[=DIR]		use SNMP in DIR (enabled by default)],
 	with_snmp=$withval,
 	with_snmp=yes)
-if test "$BUILD_NS2" = "yes"; then with-snmp=no; fi
 if test "$with_snmp" = "yes"; then
-	with_snmp=/usr
-	LDFLAGS="-L$with_snmp/lib -lcrypto -lm -lnetsnmp"
-elif test "$with_snmp" != "no"; then
-         LDFLAGS="-L$with_snmp/lib -lcrypto -lm -lnetsnmp"
-fi
-if test "$with_snmp" != "no"; then
-	AC_CHECK_FILE($with_snmp/include/net-snmp/net-snmp-config.h,,\
-	[ AC_MSG_ERROR(didn't find net-snmp-config.h in $with_snmp/include/net-snmp...is Net-SNMP installed?)
-	with_snmp=no ])
-	AC_CHECK_FILE($with_snmp/include/net-snmp/net-snmp-includes.h,,\
-	[ AC_MSG_ERROR(didn't find net-snmp-includes.h in $with_snmp/include/net-snmp...is Net-SNMP installed?)
-	with_snmp=no ])
-	AC_CHECK_FILE($with_snmp/include/net-snmp/session_api.h,,\
-	[ AC_MSG_ERROR(didn't find session_api.h in $with_snmp/include/net-snmp...is Net-SNMP installed?)
-	with_snmp=no ])
-fi
-AC_MSG_CHECKING(for SNMP library files)
-if test "$with_snmp" != "no"; then
+        AC_MSG_CHECKING(for net-snmp include files)
+        if test -e "/usr/include/net-snmp/net-snmp-config.h"; then
+           LDFLAGS="-L/usr/lib -lcrypto -lm -lnetsnmp"
+           SNMP_INCLUDE="-I/usr/include"
+           SNMP_LIB="$LDFLAGS $LIBS"
+           AC_MSG_RESULT([enabled, found in /usr])
+        elif test -e "/usr/local/include/net-snmp/net-snmp-config.h"; then
+           LDFLAGS="-L/usr/local/lib -lcrypto -lm -lnetsnmp"
+           SNMP_INCLUDE="-I/usr/local/include"
+           SNMP_LIB="$LDFLAGS $LIBS"
+           AC_MSG_RESULT([enabled, found in /usr/local])
+        else
+           AC_MSG_ERROR([not found, please make sure you have the net-snmp include files installed])
+        fi
+        AC_MSG_CHECKING(for net-snmp library)
+        AC_CHECK_LIB(snmp, snmp_sess_init, HAVE_LIBSNMP=yes)
+        if test "${HAVE_LIBSNMP}" = ""; then
+           AC_MSG_ERROR([cannot find the net-snmp library, cannot continue with build!])
+        fi
 	AC_DEFINE(ENABLE_SNMP)
-	SNMP_INCLUDE="-I$with_snmp/include"
-	LIBS="$LDFLAGS $LIBS"
-	AC_MSG_RESULT(enabled in $with_snmp)
+elif test "$with_snmp" != "no"; then
+        AC_MSG_CHECKING(for net-snmp include files)
+        if test -e "$with_snmp/include/net-snmp/net-snmp-config.h"; then
+           LDFLAGS="-L$with_snmp/lib -lcrypto -lm -lnetsnmp"
+           SNMP_INCLUDE="-I$with_snmp/include"
+           SNMP_LIB="$LDFLAGS $LIBS"
+           AC_MSG_RESULT([enabled, found in $with_snmp])
+        else
+           AC_MSG_ERROR([not found, please make sure you have the net-snmp include files installed])
+        fi
+        AC_MSG_CHECKING(for net-snmp library)
+        AC_CHECK_LIB(snmp, snmp_sess_init, HAVE_LIBSNMP=yes)
+        if test "${HAVE_LIBSNMP}" = ""; then
+           AC_MSG_ERROR([cannot find the net-snmp library, cannot continue with build!])
+        fi
+	AC_DEFINE(ENABLE_SNMP)
 else
-	AC_MSG_RESULT(disabled)
-	SNMP_INCLUDE=""
+	AC_MSG_ERROR([Sorry, the dragon-sw package cannot currently be built without net-snmp])
+	XML_INCLUDE=""
+	XML_LIB=""
 fi
 
-AC_SUBST(SNMP_INCLUDE)
+LDFLAGS=
+LIBS=$SAVE_LIBS
 
 SAVE_LIBS=$LIBS
 LIBS=
@@ -906,9 +921,9 @@ if test "$with_libxml" = "yes"; then
         fi
 elif test "$with_libxml" != "no"; then
 	AC_MSG_CHECKING(for libxml2 include files)
-	if test -e "/usr/include/libxml2/libxml/parser.h"; then
+	if test -e "$with_libxml/include/libxml2/libxml/parser.h"; then
 	   LDFLAGS="-L$with_libxml/lib -lxml2"
-	   XML_INCLUDE="-I/usr/include/libxml2"
+	   XML_INCLUDE="-I$with_libxml/include/libxml2"
 	   XML_LIB="$LDFLAGS $LIBS"
 	   AC_MSG_RESULT([enabled, found in $with_libxml])
 	else
@@ -922,6 +937,7 @@ elif test "$with_libxml" != "no"; then
 else
 	AC_MSG_ERROR([Sorry, the dragon-sw package cannot currently be built without libxml2])
 	XML_INCLUDE=""
+	XML_LIB=""
 fi
 
 LDFLAGS=
@@ -1005,6 +1021,8 @@ fi
 
 AC_SUBST(XML_INCLUDE)
 AC_SUBST(XML_LIB)
+AC_SUBST(SNMP_INCLUDE)
+AC_SUBST(SNMP_LIB)
 AC_SUBST(DMALLOC_INCLUDE)
 AC_SUBST(DMALLOC_LIB)
 AC_SUBST(NEWMAT_INCLUDE)

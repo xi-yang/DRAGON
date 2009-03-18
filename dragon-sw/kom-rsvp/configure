@@ -699,9 +699,10 @@ ALTQ_INCLUDE
 MPLS_INCLUDE
 MPLS_LIB
 NS2_DIR
-SNMP_INCLUDE
 XML_INCLUDE
 XML_LIB
+SNMP_INCLUDE
+SNMP_LIB
 DMALLOC_INCLUDE
 DMALLOC_LIB
 NEWMAT_INCLUDE
@@ -7968,120 +7969,202 @@ else
   with_snmp=yes
 fi
 
-if test "$BUILD_NS2" = "yes"; then with-snmp=no; fi
 if test "$with_snmp" = "yes"; then
-	with_snmp=/usr
-	LDFLAGS="-L$with_snmp/lib -lcrypto -lm -lnetsnmp"
-elif test "$with_snmp" != "no"; then
-         LDFLAGS="-L$with_snmp/lib -lcrypto -lm -lnetsnmp"
-fi
-if test "$with_snmp" != "no"; then
-	as_ac_File=`echo "ac_cv_file_$with_snmp/include/net-snmp/net-snmp-config.h" | $as_tr_sh`
-{ echo "$as_me:$LINENO: checking for $with_snmp/include/net-snmp/net-snmp-config.h" >&5
-echo $ECHO_N "checking for $with_snmp/include/net-snmp/net-snmp-config.h... $ECHO_C" >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+        { echo "$as_me:$LINENO: checking for net-snmp include files" >&5
+echo $ECHO_N "checking for net-snmp include files... $ECHO_C" >&6; }
+        if test -e "/usr/include/net-snmp/net-snmp-config.h"; then
+           LDFLAGS="-L/usr/lib -lcrypto -lm -lnetsnmp"
+           SNMP_INCLUDE="-I/usr/include"
+           SNMP_LIB="$LDFLAGS $LIBS"
+           { echo "$as_me:$LINENO: result: enabled, found in /usr" >&5
+echo "${ECHO_T}enabled, found in /usr" >&6; }
+        elif test -e "/usr/local/include/net-snmp/net-snmp-config.h"; then
+           LDFLAGS="-L/usr/local/lib -lcrypto -lm -lnetsnmp"
+           SNMP_INCLUDE="-I/usr/local/include"
+           SNMP_LIB="$LDFLAGS $LIBS"
+           { echo "$as_me:$LINENO: result: enabled, found in /usr/local" >&5
+echo "${ECHO_T}enabled, found in /usr/local" >&6; }
+        else
+           { { echo "$as_me:$LINENO: error: not found, please make sure you have the net-snmp include files installed" >&5
+echo "$as_me: error: not found, please make sure you have the net-snmp include files installed" >&2;}
+   { (exit 1); exit 1; }; }
+        fi
+        { echo "$as_me:$LINENO: checking for net-snmp library" >&5
+echo $ECHO_N "checking for net-snmp library... $ECHO_C" >&6; }
+        { echo "$as_me:$LINENO: checking for snmp_sess_init in -lsnmp" >&5
+echo $ECHO_N "checking for snmp_sess_init in -lsnmp... $ECHO_C" >&6; }
+if test "${ac_cv_lib_snmp_snmp_sess_init+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$with_snmp/include/net-snmp/net-snmp-config.h"; then
-  eval "$as_ac_File=yes"
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsnmp  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char snmp_sess_init ();
+int
+main ()
+{
+return snmp_sess_init ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_snmp_snmp_sess_init=yes
 else
-  eval "$as_ac_File=no"
-fi
-fi
-ac_res=`eval echo '${'$as_ac_File'}'`
-	       { echo "$as_me:$LINENO: result: $ac_res" >&5
-echo "${ECHO_T}$ac_res" >&6; }
-if test `eval echo '${'$as_ac_File'}'` = yes; then
-  :
-else
-  \
-	 { { echo "$as_me:$LINENO: error: didn't find net-snmp-config.h in $with_snmp/include/net-snmp...is Net-SNMP installed?" >&5
-echo "$as_me: error: didn't find net-snmp-config.h in $with_snmp/include/net-snmp...is Net-SNMP installed?" >&2;}
-   { (exit 1); exit 1; }; }
-	with_snmp=no
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_snmp_snmp_sess_init=no
 fi
 
-	as_ac_File=`echo "ac_cv_file_$with_snmp/include/net-snmp/net-snmp-includes.h" | $as_tr_sh`
-{ echo "$as_me:$LINENO: checking for $with_snmp/include/net-snmp/net-snmp-includes.h" >&5
-echo $ECHO_N "checking for $with_snmp/include/net-snmp/net-snmp-includes.h... $ECHO_C" >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "$with_snmp/include/net-snmp/net-snmp-includes.h"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
 fi
-fi
-ac_res=`eval echo '${'$as_ac_File'}'`
-	       { echo "$as_me:$LINENO: result: $ac_res" >&5
-echo "${ECHO_T}$ac_res" >&6; }
-if test `eval echo '${'$as_ac_File'}'` = yes; then
-  :
-else
-  \
-	 { { echo "$as_me:$LINENO: error: didn't find net-snmp-includes.h in $with_snmp/include/net-snmp...is Net-SNMP installed?" >&5
-echo "$as_me: error: didn't find net-snmp-includes.h in $with_snmp/include/net-snmp...is Net-SNMP installed?" >&2;}
-   { (exit 1); exit 1; }; }
-	with_snmp=no
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_snmp_snmp_sess_init" >&5
+echo "${ECHO_T}$ac_cv_lib_snmp_snmp_sess_init" >&6; }
+if test $ac_cv_lib_snmp_snmp_sess_init = yes; then
+  HAVE_LIBSNMP=yes
 fi
 
-	as_ac_File=`echo "ac_cv_file_$with_snmp/include/net-snmp/session_api.h" | $as_tr_sh`
-{ echo "$as_me:$LINENO: checking for $with_snmp/include/net-snmp/session_api.h" >&5
-echo $ECHO_N "checking for $with_snmp/include/net-snmp/session_api.h... $ECHO_C" >&6; }
-if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+        if test "${HAVE_LIBSNMP}" = ""; then
+           { { echo "$as_me:$LINENO: error: cannot find the net-snmp library, cannot continue with build!" >&5
+echo "$as_me: error: cannot find the net-snmp library, cannot continue with build!" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "$with_snmp/include/net-snmp/session_api.h"; then
-  eval "$as_ac_File=yes"
-else
-  eval "$as_ac_File=no"
-fi
-fi
-ac_res=`eval echo '${'$as_ac_File'}'`
-	       { echo "$as_me:$LINENO: result: $ac_res" >&5
-echo "${ECHO_T}$ac_res" >&6; }
-if test `eval echo '${'$as_ac_File'}'` = yes; then
-  :
-else
-  \
-	 { { echo "$as_me:$LINENO: error: didn't find session_api.h in $with_snmp/include/net-snmp...is Net-SNMP installed?" >&5
-echo "$as_me: error: didn't find session_api.h in $with_snmp/include/net-snmp...is Net-SNMP installed?" >&2;}
-   { (exit 1); exit 1; }; }
-	with_snmp=no
-fi
-
-fi
-{ echo "$as_me:$LINENO: checking for SNMP library files" >&5
-echo $ECHO_N "checking for SNMP library files... $ECHO_C" >&6; }
-if test "$with_snmp" != "no"; then
+        fi
 	cat >>confdefs.h <<\_ACEOF
 #define ENABLE_SNMP 1
 _ACEOF
 
-	SNMP_INCLUDE="-I$with_snmp/include"
-	LIBS="$LDFLAGS $LIBS"
-	{ echo "$as_me:$LINENO: result: enabled in $with_snmp" >&5
-echo "${ECHO_T}enabled in $with_snmp" >&6; }
+elif test "$with_snmp" != "no"; then
+        { echo "$as_me:$LINENO: checking for net-snmp include files" >&5
+echo $ECHO_N "checking for net-snmp include files... $ECHO_C" >&6; }
+        if test -e "$with_snmp/include/net-snmp/net-snmp-config.h"; then
+           LDFLAGS="-L$with_snmp/lib -lcrypto -lm -lnetsnmp"
+           SNMP_INCLUDE="-I$with_snmp/include"
+           SNMP_LIB="$LDFLAGS $LIBS"
+           { echo "$as_me:$LINENO: result: enabled, found in $with_snmp" >&5
+echo "${ECHO_T}enabled, found in $with_snmp" >&6; }
+        else
+           { { echo "$as_me:$LINENO: error: not found, please make sure you have the net-snmp include files installed" >&5
+echo "$as_me: error: not found, please make sure you have the net-snmp include files installed" >&2;}
+   { (exit 1); exit 1; }; }
+        fi
+        { echo "$as_me:$LINENO: checking for net-snmp library" >&5
+echo $ECHO_N "checking for net-snmp library... $ECHO_C" >&6; }
+        { echo "$as_me:$LINENO: checking for snmp_sess_init in -lsnmp" >&5
+echo $ECHO_N "checking for snmp_sess_init in -lsnmp... $ECHO_C" >&6; }
+if test "${ac_cv_lib_snmp_snmp_sess_init+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-	{ echo "$as_me:$LINENO: result: disabled" >&5
-echo "${ECHO_T}disabled" >&6; }
-	SNMP_INCLUDE=""
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsnmp  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char snmp_sess_init ();
+int
+main ()
+{
+return snmp_sess_init ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_snmp_snmp_sess_init=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_snmp_snmp_sess_init=no
 fi
 
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_snmp_snmp_sess_init" >&5
+echo "${ECHO_T}$ac_cv_lib_snmp_snmp_sess_init" >&6; }
+if test $ac_cv_lib_snmp_snmp_sess_init = yes; then
+  HAVE_LIBSNMP=yes
+fi
 
+        if test "${HAVE_LIBSNMP}" = ""; then
+           { { echo "$as_me:$LINENO: error: cannot find the net-snmp library, cannot continue with build!" >&5
+echo "$as_me: error: cannot find the net-snmp library, cannot continue with build!" >&2;}
+   { (exit 1); exit 1; }; }
+        fi
+	cat >>confdefs.h <<\_ACEOF
+#define ENABLE_SNMP 1
+_ACEOF
+
+else
+	{ { echo "$as_me:$LINENO: error: Sorry, the dragon-sw package cannot currently be built without net-snmp" >&5
+echo "$as_me: error: Sorry, the dragon-sw package cannot currently be built without net-snmp" >&2;}
+   { (exit 1); exit 1; }; }
+	XML_INCLUDE=""
+	XML_LIB=""
+fi
+
+LDFLAGS=
+LIBS=$SAVE_LIBS
 
 SAVE_LIBS=$LIBS
 LIBS=
@@ -8188,9 +8271,9 @@ echo "$as_me: error: cannot find the libxml2 library, cannot continue with build
 elif test "$with_libxml" != "no"; then
 	{ echo "$as_me:$LINENO: checking for libxml2 include files" >&5
 echo $ECHO_N "checking for libxml2 include files... $ECHO_C" >&6; }
-	if test -e "/usr/include/libxml2/libxml/parser.h"; then
+	if test -e "$with_libxml/include/libxml2/libxml/parser.h"; then
 	   LDFLAGS="-L$with_libxml/lib -lxml2"
-	   XML_INCLUDE="-I/usr/include/libxml2"
+	   XML_INCLUDE="-I$with_libxml/include/libxml2"
 	   XML_LIB="$LDFLAGS $LIBS"
 	   { echo "$as_me:$LINENO: result: enabled, found in $with_libxml" >&5
 echo "${ECHO_T}enabled, found in $with_libxml" >&6; }
@@ -8276,6 +8359,7 @@ else
 echo "$as_me: error: Sorry, the dragon-sw package cannot currently be built without libxml2" >&2;}
    { (exit 1); exit 1; }; }
 	XML_INCLUDE=""
+	XML_LIB=""
 fi
 
 LDFLAGS=
@@ -8601,6 +8685,8 @@ echo "${ECHO_T}enabled in $with_newmat" >&6; }
 echo "${ECHO_T}disabled" >&6; }
 	fi
 fi
+
+
 
 
 
@@ -9324,9 +9410,10 @@ ALTQ_INCLUDE!$ALTQ_INCLUDE$ac_delim
 MPLS_INCLUDE!$MPLS_INCLUDE$ac_delim
 MPLS_LIB!$MPLS_LIB$ac_delim
 NS2_DIR!$NS2_DIR$ac_delim
-SNMP_INCLUDE!$SNMP_INCLUDE$ac_delim
 XML_INCLUDE!$XML_INCLUDE$ac_delim
 XML_LIB!$XML_LIB$ac_delim
+SNMP_INCLUDE!$SNMP_INCLUDE$ac_delim
+SNMP_LIB!$SNMP_LIB$ac_delim
 DMALLOC_INCLUDE!$DMALLOC_INCLUDE$ac_delim
 DMALLOC_LIB!$DMALLOC_LIB$ac_delim
 NEWMAT_INCLUDE!$NEWMAT_INCLUDE$ac_delim
@@ -9335,7 +9422,6 @@ INCLUDES!$INCLUDES$ac_delim
 PTHREAD_LIB!$PTHREAD_LIB$ac_delim
 RSVP_BUILD_DIR!$RSVP_BUILD_DIR$ac_delim
 PKG_BASEDIR!$PKG_BASEDIR$ac_delim
-LIBOBJS!$LIBOBJS$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -9377,10 +9463,11 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 1; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 2; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
