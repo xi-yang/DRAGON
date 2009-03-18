@@ -13,7 +13,7 @@ static char *jsCreateVlan = "<rpc>\
       <configuration>\
          <vlans>\
             <vlan>\
-		<name>dyanmic_vlan_XXXX</name>\
+		<name>dynamic_vlan_XXXX</name>\
 		<description>DRAGON VLSR Created Dynamic VLAN (VID=XXXX)</description>\
 		<vlan-id>300</vlan-id>\
             </vlan>\
@@ -27,7 +27,7 @@ static char * jsDeleteVlan = "<rpc>\
       <configuration>\
          <vlans>\
             <vlan delete=\"delete\">\
-		<name>dyanmic_vlan_XXXX</name>\
+		<name>dynamic_vlan_XXXX</name>\
             </vlan>\
          </vlans>\
        </configuration>\
