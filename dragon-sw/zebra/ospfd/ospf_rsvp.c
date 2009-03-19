@@ -676,7 +676,7 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 {
 	struct ospf_interface *oi, *in_oi = NULL, *out_oi = NULL;
 	struct listnode *node1, *node2, *node3;
-	struct te_link_subtlv_link_ifswcap *ifswcap_subnet;
+	struct te_link_subtlv_link_ifswcap *ifswcap;
 	struct ospf *ospf;
 	struct stream *s;
 	u_int8_t length = 0;
@@ -709,29 +709,28 @@ ospf_get_vlsr_route(struct in_addr * inRtId, struct in_addr * outRtId, u_int32_t
 		{
 			if (ospf->oiflist)
 			LIST_LOOP(ospf->oiflist, oi, node2){
-			if (!INTERFACE_MPLS_ENABLED(oi) || oi->te_para.link_ifswcap_list == NULL)
-				continue;
-
-				ifswcap_subnet = NULL;
-				LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_subnet, node3)
+				if (!INTERFACE_MPLS_ENABLED(oi) || oi->te_para.link_ifswcap_list == NULL)
+					continue;
+				ifswcap = NULL;
+				LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap, node3)
 				{
-					if (ifswcap_subnet->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && (ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+					if (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC && ntohs(ifswcap->header.length) > STD_ISCD_LENGTH)
 						break;
-					ifswcap_subnet = NULL;
+					ifswcap = NULL;
 				}
 				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(inRtId->s_addr)
-				    && ifswcap_subnet != NULL && ifswcap_subnet->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC
-				    && (ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
-				    && HAS_VLAN(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
+				    && ifswcap != NULL && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC
+				    && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
+				    && HAS_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
         			    	/*TODO @@@@ if !HAS_VLAN --> should return empty vlsr_route */
 				        inPort &= 0xffff0000;
                                     inPort |= oi->vlsr_if.switch_port;
 					 in_oi = oi;
                                }
 				if (INTERFACE_GMPLS_ENABLED(oi) && ntohl(oi->te_para.lclif_ipaddr.value.s_addr) == ntohl(outRtId->s_addr)
-				    && ifswcap_subnet != NULL && ifswcap_subnet->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC
-				    && (ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
-				    && HAS_VLAN(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
+				    && ifswcap != NULL && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC
+				    && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) 
+				    && HAS_VLAN(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, (u_int16_t)vlan)) {
         			    	/*TODO @@@@ if !HAS_VLAN --> should return empty vlsr_route */
 				        outPort &= 0xffff0000;
                                     outPort |= oi->vlsr_if.switch_port;

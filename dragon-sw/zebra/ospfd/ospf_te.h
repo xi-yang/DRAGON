@@ -249,7 +249,7 @@ struct link_ifswcap_specific_tdm {
 	u_char		padding[3];
 };
 
-#define STD_ISCD_LENGTH 44
+#define STD_ISCD_LENGTH 44 // without header
 
 /* Link Sub-TLV / Switching Capability-specific information: VLAN/Ethernet*/
 #define MAX_VLAN_NUM 4096 /* Maximum number of available vlan's that a port/IP is assigned to */
