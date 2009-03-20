@@ -249,7 +249,7 @@ bool JUNOScriptVlanComposer::setVlan(uint32 vlanId, bool isToDelete)
     xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)vlanName);
     if (isToDelete)
     {
-        xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
+        xmlNewProp(xpathObj->nodesetval->nodeTab[0]->parent, (xmlChar*)"delete", (xmlChar*)"delete");
     }
     else 
     {
