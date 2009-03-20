@@ -90,7 +90,7 @@ bool SwitchCtrl_Session_JuniperEX3200::postAction()
     }
     else if (!unlockReplyParser.isSuccessful())
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postAction failed to unlock configuration database");
+        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postAction failed to unlock configuration database: ", unlockReplyParser.getErrorMessage());
         return false;
     }
     return true;
@@ -116,7 +116,7 @@ bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
     }
     else if (!commitReplyParser.isSuccessful())
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to commit configuration");
+        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to commit configuration: ", commitReplyParser.getErrorMessage());
     }
     
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>\n", 5)) ;
@@ -135,7 +135,7 @@ bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
     }
     else if (!unlockReplyParser.isSuccessful())
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to unlock configuration database");
+        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to unlock configuration database: ", unlockReplyParser.getErrorMessage());
         return false;
     }
 
@@ -308,6 +308,7 @@ bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_u
     bool ret = false;
     JUNOScriptBandwidthPolicyComposer jsComposer(bufScript, LINELEN*3);
     JUNOScriptLoadConfigReplyParser jsParser(bufScript);
+    if (burst_size < 32)  burst_size = 32; // 32K bytes
     if (!(ret = jsComposer.setVlanPolicier(vlan_id, committed_rate, burst_size, do_undo?false:true)))
         goto _out;
     DIE_IF_NEGATIVE(n = writeShell(jsComposer.getScript(), 5)) ;
