@@ -1332,6 +1332,8 @@ Optional Packages:
  --with-switch-ctrl-port=#      set VLSR control port (prompt by default)
  --with-switch-snmp-community=X set SNMP community string for switch control (prompt by default)
  --with-switch-cli-type=X       set VLSR switch CLI type (prompt by default)
+ --with-switch-cli-username=X   set VLSR switch CLI username (prompt by default)
+ --with-switch-cli-password=X   set VLSR switch CLI password (prompt by default)
  --with-mpls=PATH		path to MPLS library (disabled by default)
  --with-mpls-includes=DIR	mpls include files are in non-standard DIR/mpls
  --with-ns2dir=DIR		ns2-allinone in DIR (disabled by default)
@@ -7552,13 +7554,46 @@ fi
 
 
 
-if test "$enable_switch_cli_access" = "yes"; then
+# Check whether --with-switch-cli-username was given.
+if test "${with_switch_cli_username+set}" = set; then
+  withval=$with_switch_cli_username; with_switch_cli_username=$withval
+else
+  with_switch_cli_username=""
+fi
+
+if test "$with_switch_cli_username" != ""; then
+	cat >>confdefs.h <<_ACEOF
+#define CLI_USERNAME "$with_switch_cli_username"
+_ACEOF
+
+fi
+
+
+# Check whether --with-switch-cli-password was given.
+if test "${with_switch_cli_password+set}" = set; then
+  withval=$with_switch_cli_password; with_switch_cli_password=$withval
+else
+  with_switch_cli_password=""
+fi
+
+if test "$with_switch_cli_password" != ""; then
+	cat >>confdefs.h <<_ACEOF
+#define CLI_PASSWORD "$with_switch_cli_password"
+_ACEOF
+
+fi
+
+if test "$enable_switch_cli_access" = "yes" &&
+   test "$with_switch_cli_username" = "" &&
+   test "$with_switch_cli_password" = ""; then
 	echo $ECHO_N "
 
 *** Setting username and password to access switch via CLI:
 
 With the --enable-switch-cli-access option,
 you need to provide the username and password.
+This can also be specified by --with-switch-cli-username=user
+and --with-switch-cli-password=pass
 
 Username (Default: unknown): $ECHO_C"
 
