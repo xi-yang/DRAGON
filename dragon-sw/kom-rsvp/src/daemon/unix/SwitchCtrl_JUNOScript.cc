@@ -83,7 +83,7 @@ bool JUNOScriptComposer::makeScript()
     xmlChar* xmlScriptNew = NULL;
     int scriptLenNew = 0;
     xmlDocDumpFormatMemory(xmlDoc, &xmlScriptNew, &scriptLenNew, 1);
-    if (xmlScriptNew == NULL && scriptLenNew <= 0)
+    if (xmlScriptNew == NULL || scriptLenNew <= 0)
         return false;
     if (isScriptBufInternal)
     {
@@ -100,6 +100,7 @@ bool JUNOScriptComposer::makeScript()
             scriptLenNew = scriptLen;
         }
         memcpy((char*)xmlScript, (char*)xmlScriptNew, scriptLenNew);
+        xmlScript[scriptLenNew] = (xmlChar*)'\0';
     }
     return true;
 }
