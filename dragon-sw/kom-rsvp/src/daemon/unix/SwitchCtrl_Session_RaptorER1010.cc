@@ -37,7 +37,7 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::postAction()
     int n;
     do {
         DIE_IF_NEGATIVE(writeShell("exit\n", 5));
-        n = readShell(RAPTOR_ERROR_PROMPT, SWITCH_PROMPT, 1, 10);
+        n = readShell("Invalid", SWITCH_PROMPT, true, 1, 10);
     } while (n != 1);
     return true;
 }
