@@ -683,7 +683,7 @@ AC_ARG_ENABLE(switch-cli-access,
 	enable_switch_cli_access=no)
 
 AC_MSG_CHECKING(for VLSR switch CLI access)
-if test "$enable_switch_cli_access" = "yes"; then
+if test "$enable_switch_cli_access" = "yes" && test "$with_switch_cli_type" = "no"; then
 	AC_MSG_RESULT(enabled)
         echo $ECHO_N "
 
@@ -697,6 +697,8 @@ CLI Session Type (Default: none): $ECHO_C"
 
        read tmpinput <&AS_ORIGINAL_STDIN_FD
        eval with_switch_cli_type=\$tmpinput
+elif test "$enable_switch_cli_access" = "yes" && test "$with_switch_cli_type" != "no"; then
+	AC_MSG_RESULT(enabled)
 else
 	AC_MSG_RESULT(disabled)
 fi
