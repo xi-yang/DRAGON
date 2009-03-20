@@ -82,16 +82,6 @@ case "$target" in
   ;;
 esac
 
-# determine a valid path for net-snmp header files
-if test -f /usr/local/include/net-snmp/net-snmp-config.h; then
-    SNMP_PATH=/usr/local
-elif test -f /usr/include/net-snmp/net-snmp-config.h; then
-    SNMP_PATH=/usr
-else
-    echo 'dragon-sw: could not find net-snmp header files -- is Net-SNMP installed?'
-    exit 1
-fi
-
 case `uname` in
   *BSD)
     echo This is BSD Unix
@@ -102,7 +92,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring kom-rsvp...'
     cd kom-rsvp
-    $CONFIG_SHELL ./configure --prefix=$PREFIX --disable-java-api --disable-altq --with-snmp=$SNMP_PATH $rsvpconf CFLAGS=-g CPPFLAGS=-g
+    $CONFIG_SHELL ./configure --prefix=$PREFIX --disable-java-api --disable-altq $rsvpconf CFLAGS=-g CPPFLAGS=-g
     if test $? != 0; then
 	echo "dragon-sw: kom-rsvp configure error!"
 	exit 1
@@ -146,7 +136,7 @@ case `uname` in
     echo '' && \
 	echo 'configuring kom-rsvp...'
     cd kom-rsvp
-    ./configure --prefix=$PREFIX --disable-java-api --disable-altq --with-snmp=$SNMP_PATH $rsvpconf CFLAGS=-g CPPFLAGS=-g
+    ./configure --prefix=$PREFIX --disable-java-api --disable-altq $rsvpconf CFLAGS=-g CPPFLAGS=-g
     if test $? != 0; then
 	echo "dragon-sw: kom-rsvp configure error!"
 	exit 1
@@ -196,7 +186,7 @@ case `uname` in
     echo '' && \
         echo 'configuring kom-rsvp...'
     cd kom-rsvp
-    ./configure --prefix=$PREFIX --disable-java-api --disable-altq --with-snmp=$SNMP_PATH --disable-cbq --disable-traffgen $rsvpconf CFLAGS=-g CPPFLAGS=-g
+    ./configure --prefix=$PREFIX --disable-java-api --disable-altq --disable-cbq --disable-traffgen $rsvpconf CFLAGS=-g CPPFLAGS=-g
     if test $? != 0; then
         echo "dragon-sw: kom-rsvp configure error!"
         exit 1
