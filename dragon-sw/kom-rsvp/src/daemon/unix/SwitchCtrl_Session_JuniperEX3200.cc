@@ -355,7 +355,16 @@ _out:
         return (false && postAction()); // without commit
     }
 
-    return postActionWithCommit();
+    if ((ret = postActionWithCommit()) == true)
+    {
+        //add the new *empty* vlan into PortMapListAll and portMapListUntagged
+        vlanPortMap vpm;
+        memset(&vpm, 0, sizeof(vlanPortMap));
+        vpm.vid = vlanID;
+        vlanPortMapListAll.push_back(vpm);
+        vlanPortMapListUntagged.push_back(vpm);
+    }
+    return ret;
 }
 
 bool SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN(const uint32 vlanID)
@@ -392,6 +401,7 @@ _out:
     }
 
     return postActionWithCommit();
+    //PortMapList cleanup by caller (SwitchCtrl_Session::removeVLAN())
 }
 
 bool SwitchCtrl_Session_JuniperEX3200::hook_isVLANEmpty(const vlanPortMap &vpm)
