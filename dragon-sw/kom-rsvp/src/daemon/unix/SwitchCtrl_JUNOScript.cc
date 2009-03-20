@@ -452,7 +452,7 @@ bool JUNOScriptBandwidthPolicyComposer::setVlanPolicier(uint32 vlanId, float bwL
         freeScriptDoc();
         return false;
     }  
-    xmlNodeSetContent(node2, (xmlChar*)vlanName);
+    xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)vlanName);
     xmlXPathFreeObject(xpathObj);
     xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/filter", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
