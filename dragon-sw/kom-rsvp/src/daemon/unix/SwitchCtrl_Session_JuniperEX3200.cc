@@ -85,12 +85,12 @@ bool SwitchCtrl_Session_JuniperEX3200::postAction()
     JUNOScriptUnlockReplyParser unlockReplyParser(bufScript);
     if (!unlockReplyParser.loadAndVerifyScript())
     {
-        //$$$$LOG::
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postAction failed to unlock configuration database");
         return false;
     }
     else if (!unlockReplyParser.isSuccessful())
     {
-        //$$$$LOG::
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postAction failed to unlock configuration database");
         return false;
     }
     return true;
@@ -112,11 +112,11 @@ bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
     JUNOScriptCommitReplyParser commitReplyParser(bufScript);
     if (!commitReplyParser.loadAndVerifyScript())
     {
-        //$$$$LOG::
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to commit configuration");
     }
     else if (!commitReplyParser.isSuccessful())
     {
-        //$$$$LOG::
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to commit configuration");
     }
     
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>\n", 5)) ;
@@ -130,12 +130,12 @@ bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
     JUNOScriptUnlockReplyParser unlockReplyParser(bufScript);
     if (!unlockReplyParser.loadAndVerifyScript())
     {
-        //$$$$LOG::
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to unlock configuration database");
         return false;
     }
     else if (!unlockReplyParser.isSuccessful())
     {
-        //$$$$LOG::
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to unlock configuration database");
         return false;
     }
 
