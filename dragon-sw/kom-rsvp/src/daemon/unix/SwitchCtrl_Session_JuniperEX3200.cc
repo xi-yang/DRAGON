@@ -51,7 +51,7 @@ bool SwitchCtrl_Session_JuniperEX3200::preAction()
     if (!active || vendor!=JuniperEX3200 || !pipeAlive())
         return false;
     int n;
-    DIE_IF_NEGATIVE(n= writeShell( "<rpc><lock-configuration /></rpc>", 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "<rpc><lock-configuration /></rpc>\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
@@ -74,7 +74,7 @@ bool SwitchCtrl_Session_JuniperEX3200::postAction()
     if (!active || vendor!=JuniperEX3200 || !pipeAlive())
         return false;
     int n;
-    DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>", 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
@@ -101,7 +101,7 @@ bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
     if (!active || vendor!=JuniperEX3200 || !pipeAlive())
         return false;
     int n;
-    DIE_IF_NEGATIVE(n= writeShell( "<rpc><commit-configuration /></rpc>", 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "<rpc><commit-configuration /></rpc>\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
@@ -119,7 +119,7 @@ bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
         //$$$$LOG::
     }
     
-    DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>", 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
