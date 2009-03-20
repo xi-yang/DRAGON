@@ -185,19 +185,20 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
         xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"trunk");
         if (isToDelete)
             xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
-         //PVID not set for trunk-mode port
-    }
-    else
-    {
-        xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"access");
-        if (isToDelete)
-            xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
+         /*PVID may be set for trunk-mode port
         xmlNodePtr node1 = xmlNewNode(NULL, (xmlChar*)"native-vlan-id");
         char vlanIdStr[8]; sprintf(vlanIdStr, "%d", vlanId);
         xmlNodeSetContent(node1, (xmlChar*)vlanIdStr);
         if (isToDelete)
             xmlNewProp(node1, (xmlChar*)"delete", (xmlChar*)"delete");
         xmlAddNextSibling(xpathObj->nodesetval->nodeTab[0], node1);  // create /rpc/load-configuration/configuration/interfaces/interface/family/ethernet-switching/native-vlan-id
+        */
+    }
+    else
+    {
+        xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"access");
+        if (isToDelete)
+            xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
     }
     
     xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/name", xpathCtx);
