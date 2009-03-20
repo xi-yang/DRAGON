@@ -71,7 +71,18 @@ public:
     
 private:
     static const char* jsTemplate;
+};
 
+class JUNOScriptBandwidthPolicyComposer: public JUNOScriptComposer
+{
+public:
+    JUNOScriptBandwidthPolicyComposer() {}
+    JUNOScriptBandwidthPolicyComposer(char* buf, int len):JUNOScriptComposer(buf, len) {}
+    virtual ~JUNOScriptBandwidthPolicyComposer() {}
+    bool setVlanPolicier(uint32 vlanId, float bwLimit, int burstSize, bool isToDelete);
+    
+private:
+    static const char* jsTemplate;
 };
 
 /////////////////////////////////////////////////////////////////

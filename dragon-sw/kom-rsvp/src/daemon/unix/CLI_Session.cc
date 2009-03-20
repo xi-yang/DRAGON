@@ -109,6 +109,7 @@ bool CLI_Session::engage(const char *loginString)
     strcpy(hostname, convertAddressToString(switchInetAddr).chars());
 
     // setup signals properly
+    //@@@@ use sigaction instead!
     for(n = 1; n < 33; n++)
         if (n != 11)
             signal(n, sigfunct);

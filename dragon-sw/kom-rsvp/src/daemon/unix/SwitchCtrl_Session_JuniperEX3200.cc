@@ -306,8 +306,24 @@ bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_u
     if (committed_rate_int < 1 || !preAction())
         return false;
     bool ret = false;
+    JUNOScriptBandwidthPolicyComposer jsComposer(bufScript, LINELEN*3);
+    JUNOScriptLoadConfigReplyParser jsParser(bufScript);
+    if (!(ret = jsComposer.setVlanPolicier(vlan_id, committed_rate, burst_size, do_undo?false:true)))
+        goto _out;
+    DIE_IF_NEGATIVE(n = writeShell(jsComposer.getScript(), 5)) ;
+    DIE_IF_NEGATIVE(n = writeShell("\n", 5)) ;
 
-    //$TODO:
+    DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
+    if (!(ret = jsParser.loadAndVerifyScript()))
+        goto _out;
+    else if (!(ret = jsParser.isSuccessful()))
+        goto _out;
 
 _out:
     if (ret == false)
@@ -317,7 +333,6 @@ _out:
     }
 
     return postActionWithCommit();
-
 }
 
 ////////-------vendor specific hook procedures------////////////

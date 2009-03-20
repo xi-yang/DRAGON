@@ -50,6 +50,96 @@ const char *JUNOScriptVlanComposer::jsTemplate = "<rpc>\
     </load-configuration>\
 </rpc>";
 
+const char *JUNOScriptBandwidthPolicyComposer::jsTemplate= "<rpc>\
+<load-configuration>\
+<configuration>\
+    <firewall> \
+        <policer>\
+            <name>policier_vlan_300_in</name>\
+        </policer>\
+        <family>\
+            <ethernet-switching>\
+                <filter>\
+                    <name>filter_vlan_300_in</name>\
+                </filter>\
+            </ethernet-switching>\
+        </family> \
+    </firewall>\
+    <vlans>\
+        <vlan>\
+            <name>dynamic_vlan_300</name>\
+            <filter>\
+            </filter>\
+        </vlan>\
+    </vlans>\
+</configuration>\
+</load-configuration>\
+</rpc>";
+/*
+//To add the policy
+<rpc>
+<load-configuration>
+<configuration>
+    <firewall> 
+        <policer>
+            <name>policier_vlan_300_in</name>
+            <if-exceeding>
+                <bandwidth-limit>100m</bandwidth-limit>
+                <burst-size-limit>50k</burst-size-limit>
+            </if-exceeding>
+            <then><discard/></then>
+        </policer>
+        <family>
+            <ethernet-switching>
+                <filter>
+                    <name>filter_vlan_300_in</name>
+                    <term>
+                        <name>traffic-limit</name>
+                        <then> <policer>policier_vlan_300_in</policer> </then>
+                    </term>
+                </filter>
+            </ethernet-switching>
+        </family> 
+    </firewall>
+    <vlans>
+        <vlan>
+            <name>dynamic_vlan_300</name>
+            <filter>
+                <input>filter_vlan_300_in</input>
+            </filter>
+        </vlan>
+    </vlans>
+</configuration>
+</load-configuration>
+</rpc>
+
+//To delete the policy
+<rpc>
+<load-configuration>
+<configuration>
+    <firewall> 
+        <policer delete="delete">
+            <name>policier_vlan_300_in</name>
+        </policer>
+        <family>
+            <ethernet-switching>
+                <filter delete="delete">
+                    <name>filter_vlan_300_in</name>
+                </filter>
+            </ethernet-switching>
+        </family> 
+    </firewall>
+    <vlans>
+        <vlan>
+            <name>dynamic_vlan_300</name>
+            <filter delete="delete"/>
+        </vlan>
+    </vlans>
+</configuration>
+</load-configuration>
+</rpc>
+*/
+
 ///////////////////////////////////////////////////////////////////////
 
 
@@ -162,6 +252,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)portName);
     //do not delete this node
 
+    xmlXPathFreeObject(xpathObj);
     xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/interface/unit/family/ethernet-switching/vlan/members", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
@@ -173,6 +264,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     if (isToDelete)
         xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
 
+    xmlXPathFreeObject(xpathObj);
     xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/interface/unit/family/ethernet-switching/port-mode", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
@@ -204,7 +296,8 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
             xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"access");
         }
     }
-    
+
+    xmlXPathFreeObject(xpathObj);
     xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/name", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
@@ -215,6 +308,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)vlanName);
     //do not delete this node
 
+    xmlXPathFreeObject(xpathObj);
     xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/interface", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
@@ -274,6 +368,114 @@ bool JUNOScriptVlanComposer::setVlan(uint32 vlanId, bool isToDelete)
     return finishScript();
 }
 
+bool JUNOScriptBandwidthPolicyComposer::setVlanPolicier(uint32 vlanId, float bwLimit, int burstSize, bool isToDelete)
+{
+    if (xmlDoc == NULL)
+        if (!initScriptDoc(JUNOScriptBandwidthPolicyComposer::jsTemplate))
+        {
+            LOG(3)(Log::MPLS, "Error: initScriptDoc(JUNOScriptVlanComposer::jsTemplate) failed in JUNOScriptVlanComposer::setVlan(", vlanId, ").");
+            freeScriptDoc();
+            return false;
+        }
+
+    xmlNodePtr node1, node2;
+    char vlanName[32], policierName[32], filterName[32], aValue[32];
+    sprintf(vlanName, "dynamic_vlan_%d", vlanId);
+    sprintf(policierName, "policier_vlan_%d_in", vlanId);
+    sprintf(filterName, "filter_vlan_%d_in_in", vlanId);
+    //set policier
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/firewall/policer/name", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        freeScriptDoc();
+        return false;
+    }  
+    xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)policierName);
+    if (isToDelete)
+    {
+        xmlNewProp(xpathObj->nodesetval->nodeTab[0]->parent, (xmlChar*)"delete", (xmlChar*)"delete");
+    }
+    else
+    {
+        node1 = xmlNewNode(NULL, (xmlChar*)"if-exceeding");
+        xmlAddNextSibling(xpathObj->nodesetval->nodeTab[0], node1);
+        node2 = xmlNewNode(NULL, (xmlChar*)"bandwidth-limit");
+        sprintf(aValue, "%dm", (int)bwLimit);
+        xmlNodeSetContent(node2, (xmlChar*)aValue);
+        xmlAddChild(node1, node2);
+        node2 = xmlNewNode(NULL, (xmlChar*)"burst-size-limit");
+        sprintf(aValue, "%dk", burstSize);
+        xmlNodeSetContent(node2, (xmlChar*)aValue);
+        xmlAddChild(node1, node2);        
+        node2 = xmlNewNode(NULL, (xmlChar*)"then");
+        xmlAddNextSibling(node1, node2);
+        node1 = node2;
+        node2 = xmlNewNode(NULL, (xmlChar*)"discard");
+        xmlAddChild(node1, node2);
+    }
+    //set filter
+    xmlXPathFreeObject(xpathObj);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/firewall/family/ethernet-switching/filter/name", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        freeScriptDoc();
+        return false;
+    }  
+    xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)filterName);
+    if (isToDelete)
+    {
+        xmlNewProp(xpathObj->nodesetval->nodeTab[0]->parent, (xmlChar*)"delete", (xmlChar*)"delete");
+    }
+    else
+    {
+        node1 = xmlNewNode(NULL, (xmlChar*)"term");
+        xmlAddNextSibling(xpathObj->nodesetval->nodeTab[0], node1);
+        node2 = xmlNewNode(NULL, (xmlChar*)"name");
+        sprintf(aValue, "traffic_limit_vlan_%d", vlanId);
+        xmlNodeSetContent(node2, (xmlChar*)aValue);
+        xmlAddChild(node1, node2);
+        node2 = xmlNewNode(NULL, (xmlChar*)"then");
+        xmlAddChild(node1, node2);
+        node1 = node2;
+        node2 = xmlNewNode(NULL, (xmlChar*)"policer");
+        xmlNodeSetContent(node2, (xmlChar*)policierName);
+        xmlAddChild(node1, node2);
+    }
+    //apply filter to vlan
+    xmlXPathFreeObject(xpathObj);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/name", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        freeScriptDoc();
+        return false;
+    }  
+    xmlNodeSetContent(node2, (xmlChar*)vlanName);
+    xmlXPathFreeObject(xpathObj);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/filter", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        freeScriptDoc();
+        return false;
+    }  
+    if (isToDelete)
+    {
+        xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
+    }
+    else
+    {
+        node1 = xpathObj->nodesetval->nodeTab[0];
+        node2 = xmlNewNode(NULL, (xmlChar*)"input");
+        xmlNodeSetContent(node2, (xmlChar*)filterName);
+        xmlAddChild(node1, node2);
+    }
+
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return finishScript();
+}
 
 ////////////////////////////////////////////////////////////////////////////
 
