@@ -193,7 +193,8 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
         if (isToDelete)
             xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
         xmlNodePtr node1 = xmlNewNode(NULL, (xmlChar*)"native-vlan-id");
-        xmlNodeSetContent(node1, (xmlChar*)vlanName);
+        char vlanIdStr[8]; sprintf(vlanIdStr, "%d", vlanId);
+        xmlNodeSetContent(node1, (xmlChar*)vlanIdStr);
         if (isToDelete)
             xmlNewProp(node1, (xmlChar*)"delete", (xmlChar*)"delete");
         xmlAddNextSibling(xpathObj->nodesetval->nodeTab[0], node1);  // create /rpc/load-configuration/configuration/interfaces/interface/family/ethernet-switching/native-vlan-id
