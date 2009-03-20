@@ -180,25 +180,29 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
         freeScriptDoc();
         return false;
     }  
-    if (isTrunking)
+    if (isToDelete)
     {
-        xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"trunk");
-        if (isToDelete)
-            xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
-         /*PVID may be set for trunk-mode port
-        xmlNodePtr node1 = xmlNewNode(NULL, (xmlChar*)"native-vlan-id");
-        char vlanIdStr[8]; sprintf(vlanIdStr, "%d", vlanId);
-        xmlNodeSetContent(node1, (xmlChar*)vlanIdStr);
-        if (isToDelete)
-            xmlNewProp(node1, (xmlChar*)"delete", (xmlChar*)"delete");
-        xmlAddNextSibling(xpathObj->nodesetval->nodeTab[0], node1);  // create /rpc/load-configuration/configuration/interfaces/interface/family/ethernet-switching/native-vlan-id
-        */
+        xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"");
+        xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
     }
-    else
+    else 
     {
-        xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"access");
-        if (isToDelete)
-            xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
+        if (isTrunking)
+        {
+            xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"trunk");
+             /*PVID may be set for trunk-mode port
+            xmlNodePtr node1 = xmlNewNode(NULL, (xmlChar*)"native-vlan-id");
+            char vlanIdStr[8]; sprintf(vlanIdStr, "%d", vlanId);
+            xmlNodeSetContent(node1, (xmlChar*)vlanIdStr);
+            if (isToDelete)
+                xmlNewProp(node1, (xmlChar*)"delete", (xmlChar*)"delete");
+            xmlAddNextSibling(xpathObj->nodesetval->nodeTab[0], node1);  // create /rpc/load-configuration/configuration/interfaces/interface/family/ethernet-switching/native-vlan-id
+            */
+        }
+        else
+        {
+            xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"access");
+        }
     }
     
     xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/name", xpathCtx);
