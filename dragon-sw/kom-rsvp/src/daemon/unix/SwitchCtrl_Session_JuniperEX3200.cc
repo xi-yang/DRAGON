@@ -234,7 +234,7 @@ bool SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript(uint32 portID, uin
         return false;
     bool ret = false;
     JUNOScriptMovePortVlanComposer jsComposer(bufScript, LINELEN*3);
-    JUNOScriptRpcReplyParser jsParser(bufScript);
+    JUNOScriptLoadConfigReplyParser jsParser(bufScript);
     if (!(ret = jsComposer.setPortAndVlan(portID, vlanID, isTagged, false)))
         goto _out;
     DIE_IF_NEGATIVE(n = writeShell(jsComposer.getScript(), 5)) ;
@@ -268,7 +268,7 @@ bool SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript(uint32 portID, 
         return false;
     bool ret = false;
     JUNOScriptMovePortVlanComposer jsComposer(bufScript, LINELEN*3);
-    JUNOScriptRpcReplyParser jsParser(bufScript);
+    JUNOScriptLoadConfigReplyParser jsParser(bufScript);
     if (!(ret = jsComposer.setPortAndVlan(portID, vlanID, isTagged, true)))
         goto _out;
     DIE_IF_NEGATIVE(n = writeShell(jsComposer.getScript(), 5)) ;
@@ -330,7 +330,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_createVLAN(const uint32 vlanID)
     DIE_IF_EQUAL(preAction(), false);
 
     JUNOScriptVlanComposer jsComposer(bufScript, LINELEN*3);
-    JUNOScriptRpcReplyParser jsParser(bufScript);
+    JUNOScriptLoadConfigReplyParser jsParser(bufScript);
     if (!(ret = jsComposer.setVlan(vlanID, false)))
         goto _out;
     DIE_IF_NEGATIVE(n = writeShell(jsComposer.getScript(), 5)) ;
@@ -366,7 +366,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN(const uint32 vlanID)
     DIE_IF_EQUAL(preAction(), false);
 
     JUNOScriptVlanComposer jsComposer(bufScript, LINELEN*3);
-    JUNOScriptRpcReplyParser jsParser(bufScript);
+    JUNOScriptLoadConfigReplyParser jsParser(bufScript);
     if (!(ret = jsComposer.setVlan(vlanID, true)))
         goto _out;
     DIE_IF_NEGATIVE(n = writeShell(jsComposer.getScript(), 5)) ;

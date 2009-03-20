@@ -450,13 +450,13 @@ bool JUNOScriptUnlockReplyParser::isSuccessful()
 }
 
 
-bool JUNOScriptRpcReplyParser::isSuccessful()
+bool JUNOScriptLoadConfigReplyParser::isSuccessful()
 {
     errMessage = "";
     if (xmlDoc == NULL || xpathCtx == NULL)
         return false;
 
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/xnm:error/message |/rpc-reply/xnm:warning/message ", xpathCtx);
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/load-configuration-results/xnm:error/message | /rpc-reply/load-configuration-results/xnm:warning/message ", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);

@@ -123,10 +123,10 @@ public:
     bool isSuccessful();
 };
 
-class JUNOScriptRpcReplyParser: public JUNOScriptParser
+class JUNOScriptLoadConfigReplyParser: public JUNOScriptParser
 {
 public:
-    JUNOScriptRpcReplyParser(char* buf): JUNOScriptParser(buf) {}
+    JUNOScriptLoadConfigReplyParser(char* buf): JUNOScriptParser(buf) {}
     bool isSuccessful();
 };
 
