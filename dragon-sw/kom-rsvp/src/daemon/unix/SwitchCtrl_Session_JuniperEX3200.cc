@@ -53,6 +53,12 @@ bool SwitchCtrl_Session_JuniperEX3200::preAction()
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><lock-configuration /></rpc>", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::preAction failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
     JUNOScriptLockReplyParser lockReplyParser(bufScript);
     if (!lockReplyParser.loadAndVerifyScript())
         return false;   
@@ -70,6 +76,12 @@ bool SwitchCtrl_Session_JuniperEX3200::postAction()
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postAction failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
     JUNOScriptUnlockReplyParser unlockReplyParser(bufScript);
     if (!unlockReplyParser.loadAndVerifyScript())
     {
@@ -91,6 +103,12 @@ bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><commit-configuration /></rpc>", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
     JUNOScriptCommitReplyParser commitReplyParser(bufScript);
     if (!commitReplyParser.loadAndVerifyScript())
     {
@@ -103,6 +121,12 @@ bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
     
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
     JUNOScriptUnlockReplyParser unlockReplyParser(bufScript);
     if (!unlockReplyParser.loadAndVerifyScript())
     {
@@ -217,6 +241,12 @@ bool SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript(uint32 portID, uin
     DIE_IF_NEGATIVE(n = writeShell("\n", 5)) ;
 
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
     if (!(ret = jsParser.loadAndVerifyScript()))
         goto _out;
     else if (!(ret = jsParser.isSuccessful()))
@@ -245,6 +275,12 @@ bool SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript(uint32 portID, 
     DIE_IF_NEGATIVE(n = writeShell("\n", 5)) ;
 
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
     if (!(ret = jsParser.loadAndVerifyScript()))
         goto _out;
     else if (!(ret = jsParser.isSuccessful()))
@@ -301,6 +337,12 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_createVLAN(const uint32 vlanID)
     DIE_IF_NEGATIVE(n = writeShell("\n", 5)) ;
 
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::hook_createVLAN failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
     if (!(ret = jsParser.loadAndVerifyScript()))
         goto _out;
     else if (!(ret = jsParser.isSuccessful()))
@@ -331,6 +373,12 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN(const uint32 vlanID)
     DIE_IF_NEGATIVE(n = writeShell("\n", 5)) ;
 
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
     if (!(ret = jsParser.loadAndVerifyScript()))
         goto _out;
     else if (!(ret = jsParser.isSuccessful()))
