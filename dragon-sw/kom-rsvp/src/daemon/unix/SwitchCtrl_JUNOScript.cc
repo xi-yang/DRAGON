@@ -173,7 +173,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     if (isToDelete)
         xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
 
-    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/interfcae/unit/family/ethernet-switching/port-mode", xpathCtx);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/interface/unit/family/ethernet-switching/port-mode", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
