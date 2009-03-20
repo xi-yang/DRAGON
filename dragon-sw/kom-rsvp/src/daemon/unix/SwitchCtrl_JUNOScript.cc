@@ -100,7 +100,7 @@ bool JUNOScriptComposer::makeScript()
             scriptLenNew = scriptLen;
         }
         memcpy((char*)xmlScript, (char*)xmlScriptNew, scriptLenNew);
-        xmlScript[scriptLenNew] = (xmlChar*)'\0';
+        xmlScript[scriptLenNew] = '\0';
     }
     return true;
 }
