@@ -161,7 +161,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)portName);
     //do not delete this node
 
-    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/unit/family/ethernet-switching/vlan/members", xpathCtx);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/interface/unit/family/ethernet-switching/vlan/members", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -172,7 +172,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     if (isToDelete)
         xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
 
-    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/unit/family/ethernet-switching/port-mode", xpathCtx);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/interfcae/unit/family/ethernet-switching/port-mode", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -195,7 +195,7 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
         xmlNodeSetContent(node1, (xmlChar*)vlanName);
         if (isToDelete)
             xmlNewProp(node1, (xmlChar*)"delete", (xmlChar*)"delete");
-        xmlAddNextSibling(xpathObj->nodesetval->nodeTab[0], node1);  // create /rpc/load-configuration/configuration/interfaces/family/ethernet-switching/native-vlan-id
+        xmlAddNextSibling(xpathObj->nodesetval->nodeTab[0], node1);  // create /rpc/load-configuration/configuration/interfaces/interface/family/ethernet-switching/native-vlan-id
     }
     
     xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/name", xpathCtx);
