@@ -7486,6 +7486,15 @@ else
 fi
 
 
+
+# Check whether --with-switch-cli-type was given.
+if test "${with_switch_cli_type+set}" = set; then
+  withval=$with_switch_cli_type; with_switch_cli_type=$withval
+else
+  with_switch_cli_type="no"
+fi
+
+
 { echo "$as_me:$LINENO: checking for VLSR switch CLI access" >&5
 echo $ECHO_N "checking for VLSR switch CLI access... $ECHO_C" >&6; }
 if test "$enable_switch_cli_access" = "yes" && test "$with_switch_cli_type" = "no"; then
@@ -7542,15 +7551,6 @@ echo setting VLSR switch CLI type to $switch_cli_type
 cat >>confdefs.h <<_ACEOF
 #define CLI_SESSION_TYPE $switch_cli_type
 _ACEOF
-
-
-
-# Check whether --with-switch-cli-type was given.
-if test "${with_switch_cli_type+set}" = set; then
-  withval=$with_switch_cli_type; with_switch_cli_type=$withval
-else
-  with_switch_cli_type="no"
-fi
 
 
 
