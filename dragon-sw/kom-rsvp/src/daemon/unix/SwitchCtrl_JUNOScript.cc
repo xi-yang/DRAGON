@@ -368,6 +368,37 @@ bool JUNOScriptVlanComposer::setVlan(uint32 vlanId, bool isToDelete)
     return finishScript();
 }
 
+
+
+bool JUNOScriptVlanComposer::getVlan(uint32 vlanId)
+{
+    if (xmlDoc == NULL)
+        if (!initScriptDoc(JUNOScriptVlanComposer::jsTemplate))
+        {
+            LOG(3)(Log::MPLS, "Error: initScriptDoc(JUNOScriptVlanComposer::jsTemplate) failed in JUNOScriptVlanComposer::setVlan(", vlanId, ").");
+            freeScriptDoc();
+            return false;
+        }
+
+    char vlanName[32];
+    sprintf(vlanName, "dynamic_vlan_%d", vlanId);
+
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/name", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        freeScriptDoc();
+        return false;
+    }  
+    xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)vlanName);
+    //change "/rpc/load-configuration/..." into "/rpc/get-configuration/..."
+    xmlNodeSetName(xpathObj->nodesetval->nodeTab[0]->parent->parent->parent->parent, (xmlChar*)"set-configuration");
+    
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return finishScript();
+}
+
+
 bool JUNOScriptBandwidthPolicyComposer::setVlanPolicier(uint32 vlanId, float bwLimit, int burstSize, bool isToDelete)
 {
     if (xmlDoc == NULL)
@@ -581,7 +612,7 @@ bool JUNOScriptLoadReplyParser::isSuccessful()
     int count;
     sscanf((const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]), "%d", &count);
     xmlXPathFreeObject(xpathObj);
-    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/load-configuration-results/xnm:error", xpathCtx);
+    xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/load-configuration-results/xnm:error | /rpc-reply/load-configuration-results/xnm:warning", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -596,7 +627,7 @@ bool JUNOScriptLoadReplyParser::isSuccessful()
         if (strstr((char*)node->name, "token") != NULL || strstr((char*)node->name, "edit-path") != NULL)
         {
             i++;
-            sprintf(buf, "Error(%d/%d): --@<", i, count);
+            sprintf(buf, "Error|Warning(%d/%d): --@<", i, count);
             errMessage += (const char*)xmlNodeGetContent(node);
             errMessage += "> --: ";
         }
@@ -629,7 +660,6 @@ bool JUNOScriptCommitReplyParser::isSuccessful()
     return false;
 }
 
-
 bool JUNOScriptUnlockReplyParser::isSuccessful()
 {
     errMessage = "";
@@ -656,13 +686,13 @@ bool JUNOScriptUnlockReplyParser::isSuccessful()
 }
 
 
-bool JUNOScriptLoadConfigReplyParser::isSuccessful()
+bool JUNOScriptVlanConfigParser::isSuccessful()
 {
     errMessage = "";
     if (xmlDoc == NULL || xpathCtx == NULL)
         return false;
 
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/load-configuration-results/xnm:error/message | /rpc-reply/load-configuration-results/xnm:warning/message ", xpathCtx);
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/xnm:error/message | /rpc-reply/xnm:warning/message", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -673,5 +703,49 @@ bool JUNOScriptLoadConfigReplyParser::isSuccessful()
 
     if (xpathObj) xmlXPathFreeObject(xpathObj);
     return false;
+
 }
+
+bool JUNOScriptVlanConfigParser::getInterfaces(SimpleList<String>& interfaces)
+{
+    if (xmlDoc == NULL || xpathCtx == NULL)
+        return false;
+
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/configuration/vlan/interface/name", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return false;
+    }
+    interfaces.clear();
+    for (int i = 0; i < xpathObj->nodesetval->nodeNr; i++)
+    {
+        String anInterface = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[i]);
+        interfaces.push_back(anInterface);
+    }
+
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return true;
+
+}
+
+bool JUNOScriptVlanConfigParser::getFilter(String& filter)
+{
+    if (xmlDoc == NULL || xpathCtx == NULL)
+        return false;
+
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/configuration/vlan/filter", xpathCtx);
+    if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
+    {
+        if (xpathObj) xmlXPathFreeObject(xpathObj);
+        return false;
+    }
+
+    filter = (const char*)xmlNodeGetContent(xpathObj->nodesetval->nodeTab[0]);
+
+    if (xpathObj) xmlXPathFreeObject(xpathObj);
+    return true;
+
+}
+
 

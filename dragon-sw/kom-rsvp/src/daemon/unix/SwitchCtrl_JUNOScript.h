@@ -10,8 +10,8 @@ To be incorporated into KOM-RSVP-TE package
 
 using namespace std;
 
-#include "RSVP_System.h"
 #include "RSVP_String.h"
+#include "RSVP_List.h"
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
@@ -68,7 +68,8 @@ public:
     JUNOScriptVlanComposer(char* buf, int len):JUNOScriptComposer(buf, len) {}
     virtual ~JUNOScriptVlanComposer() {}
     bool setVlan(uint32 vlanId, bool isToDelete);
-    
+    bool getVlan(uint32 vlanId);
+
 private:
     static const char* jsTemplate;
 };
@@ -134,11 +135,13 @@ public:
     bool isSuccessful();
 };
 
-class JUNOScriptLoadConfigReplyParser: public JUNOScriptParser
+class JUNOScriptVlanConfigParser: public JUNOScriptParser
 {
 public:
-    JUNOScriptLoadConfigReplyParser(char* buf): JUNOScriptParser(buf) {}
+    JUNOScriptVlanConfigParser(char* buf): JUNOScriptParser(buf) {}
     bool isSuccessful();
+    bool getInterfaces(SimpleList<String>& interfaces);
+    bool getFilter(String& filter);
 };
 
 
