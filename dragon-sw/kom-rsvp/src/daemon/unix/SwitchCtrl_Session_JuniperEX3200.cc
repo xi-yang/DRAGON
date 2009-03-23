@@ -325,14 +325,16 @@ bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_u
     }
     if (!(ret = jsParserVlan.loadAndVerifyScript()))
         goto _out;
-    else if (!(ret = jsParserVlan.isSuccessful()) || !(ret = jsParserVlan.getFilter(vlanFilterName)))
+    else if (!(ret = jsParserVlan.isSuccessful()))
         goto _out;
-    if (vlanFilterName==filterName)
+    ret = jsParserVlan.getFilter(vlanFilterName);
+    if ((do_undo = true && ret == true && vlanFilterName==filterName) //to create but the policy filter has already existed
+        || (do_undo = false && (ret == false || !(vlanFilterName==filterName))) )  //to delete but the policy filter has already gone
     {
-        LOG(3)(Log::MPLS, "NO-OP: Bandwidth policer/filter ", vlanFilterName, " has alredy been created.");
-        return postAction(); 
+        LOG(4)(Log::MPLS, "NO-OP: Bandwidth policer/filter ", filterName, " has alredy been ", (do_undo? "created.":"deleted."));
+        return postAction();
     }
-    else //creating bandwidth policy / filter for the VLAN
+    else 
     {
         JUNOScriptBandwidthPolicyComposer jsComposerPolicy(bufScript, LINELEN*3);
         JUNOScriptLoadReplyParser jsParserPolicy(bufScript);
