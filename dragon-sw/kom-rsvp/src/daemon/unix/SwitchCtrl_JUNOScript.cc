@@ -413,7 +413,7 @@ bool JUNOScriptBandwidthPolicyComposer::setVlanPolicier(uint32 vlanId, float bwL
     char vlanName[32], policierName[32], filterName[32], aValue[32];
     sprintf(vlanName, "dynamic_vlan_%d", vlanId);
     sprintf(policierName, "policier_vlan_%d_in", vlanId);
-    sprintf(filterName, "filter_vlan_%d_in_in", vlanId);
+    sprintf(filterName, "filter_vlan_%d_in", vlanId);
     //set policier
     xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/firewall/policer/name", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
@@ -734,7 +734,7 @@ bool JUNOScriptVlanConfigParser::getFilter(String& filter)
     if (xmlDoc == NULL || xpathCtx == NULL)
         return false;
 
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/configuration/vlan/filter", xpathCtx);
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/configuration/vlan/filter/input", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);

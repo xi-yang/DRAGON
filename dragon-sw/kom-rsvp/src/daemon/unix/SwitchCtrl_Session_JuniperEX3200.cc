@@ -311,7 +311,7 @@ bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_u
     JUNOScriptVlanConfigParser jsParserVlan(bufScript);
     String vlanFilterName; 
     char filterName[32];
-    sprintf(filterName, "filter_vlan_%d_in_in", vlan_id);
+    sprintf(filterName, "filter_vlan_%d_in", vlan_id);
     if (!(ret = jsComposerVlan.getVlan(vlan_id)))
         goto _out;
     DIE_IF_NEGATIVE(n = writeShell(jsComposerVlan.getScript(), 5)) ;
