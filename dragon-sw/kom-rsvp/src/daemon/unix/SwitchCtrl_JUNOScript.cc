@@ -711,7 +711,7 @@ bool JUNOScriptVlanConfigParser::getInterfaces(SimpleList<String>& interfaces)
     if (xmlDoc == NULL || xpathCtx == NULL)
         return false;
 
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/configuration/vlan/interface/name", xpathCtx);
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/configuration/vlans/vlan/interface/name", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
@@ -734,7 +734,7 @@ bool JUNOScriptVlanConfigParser::getFilter(String& filter)
     if (xmlDoc == NULL || xpathCtx == NULL)
         return false;
 
-    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/configuration/vlan/filter/input", xpathCtx);
+    xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc-reply/configuration/vlans/vlan/filter/input", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
     {
         if (xpathObj) xmlXPathFreeObject(xpathObj);
