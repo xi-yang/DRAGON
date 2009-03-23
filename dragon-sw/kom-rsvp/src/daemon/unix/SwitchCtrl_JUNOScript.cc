@@ -392,7 +392,7 @@ bool JUNOScriptVlanComposer::getVlan(uint32 vlanId)
     }  
     xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)vlanName);
     //change "/rpc/load-configuration/..." into "/rpc/get-configuration/..."
-    xmlNodeSetName(xpathObj->nodesetval->nodeTab[0]->parent->parent->parent->parent, (xmlChar*)"set-configuration");
+    xmlNodeSetName(xpathObj->nodesetval->nodeTab[0]->parent->parent->parent->parent, (xmlChar*)"get-configuration");
     
     if (xpathObj) xmlXPathFreeObject(xpathObj);
     return finishScript();
