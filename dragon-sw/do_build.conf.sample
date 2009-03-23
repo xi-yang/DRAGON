@@ -1,0 +1,71 @@
+#
+# do_build.conf: 
+#
+# Use this file to override default build options for the DRAGON VLSR software.
+#
+# It is intended to be used in environments that have many VLSRs, covering many
+# different types of switches, with each switch having different specifics such
+# as SNMP community string, username/password, CLI type, etc.
+#
+
+#
+# Build target may be one of the following:
+#
+#  default: Default VLSR mode, Autodetect switch type
+#  vlsr-force10-v5: Force10 E-series switches (E300/E600/E1200) with FTOS 5.x
+#  vlsr-force10-v6: Force10 E-series switches (E300/E600/E1200) with FTOS 6.x
+#  vlsr-juniper: Juniper EX series switches
+#  vlsr-raptor: Raptor Ethernet switches without QoS (SNMP only)
+#  vlsr-raptor-qos: Raptor Ethernet switches with QoS (CLI + SNMP)
+#  vlsr-catalyst3750: Cisco Catalyst 3750 series switches without QoS (SNMP only)
+#  vlsr-catalyst3750-qos: Cisco Catalyst 3750 series switches with QoS (CLI + SNMP)
+#  vlsr-catalyst6500: Cisco Catalyst 6500 series switches without QoS (SNMP only)
+#  vlsr-catalyst6500-qos: Cisco Catalyst 6500 series switches with QoS (CLI + SNMP)
+#  vlsr-subnet: Subnet UNI mode for Ciena CoreDirector TDM switches (TL1 CLI)
+#  vlsr-linux: Linux Switch mode (use Linux PC with multiple interfaces as switch)
+#  vlsr-verbose: Interactive mode, VLSR prompts for all questions
+#
+#target="default"
+
+#
+# Switch CLI type may be:
+#
+#  none (do not use CLI access)
+#  telnet
+#  ssh
+#  tl1 (for Subnet UNI mode)
+#  shell (for Linux Switch mode)
+#
+#switch_cli_type="none"
+
+#
+# If the CLI mode is not "none", enter the username here:
+#
+#switch_cli_username="unknown"
+
+#
+# If the CLI mode is not "none", enter the password here:
+#
+#switch_cli_password="unknown"
+
+#
+# Specify the SNMP community string to access the switch:
+#
+#snmp_community="dragon"
+
+#
+# The VLSR will never move the control port set below to a different VLAN:
+#
+# NOTE: If port number is in x/y/z format, convert to [4bit][4bit][8bit] format
+#
+# Example: port 1/2/3 would become 0001b / 0010b / 00000011b, or 4611 in decimal
+#
+#switch_ctrl_port="255"
+
+#
+# Specify whether the VLSR should be built with debugging symbols or not:
+# (necessary for debugging with gdb)
+#
+# It is highly recommended that you leave this option set to "yes".
+#
+#debug_symbols="yes"
