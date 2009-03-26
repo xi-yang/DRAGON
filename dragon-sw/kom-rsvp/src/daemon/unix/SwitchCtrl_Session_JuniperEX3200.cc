@@ -53,6 +53,7 @@ bool SwitchCtrl_Session_JuniperEX3200::startTransaction()
     if (!RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_JUNOS_ONE_COMMIT))
         return true;
     //Continue here only if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
+    LOG(1)(Log::MPLS, "VLSR: SwitchCtrl_Session_JuniperEX3200::startTransaction for LSP setup/teardown");
 
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><lock-configuration /></rpc>\n", 5)) ;
@@ -81,6 +82,7 @@ bool SwitchCtrl_Session_JuniperEX3200::endTransaction()
     if (!RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_JUNOS_ONE_COMMIT))
         return true;
     //Continue here only if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
+    LOG(1)(Log::MPLS, "VLSR: SwitchCtrl_Session_JuniperEX3200::endTransaction for LSP setup/teardown");
 
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><commit-configuration /></rpc>\n", 5)) ;
