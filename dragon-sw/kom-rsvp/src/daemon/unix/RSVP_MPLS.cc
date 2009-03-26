@@ -764,8 +764,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 			NetAddress ethSw = (*iter).switchID;
 			SwitchCtrlSessionList::Iterator sessionIter = (--RSVP_Global::switchController->getSessionList().end());
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); --sessionIter ) {
-
-				 //@@@@ >>Xi2007<<
+				//Subnet SwitchCtrl Session
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ){
 					SimpleList<uint8> ts_list;
 					int vlanLow = -1, vlanTrunk = -1;                    
@@ -914,7 +913,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 					continue;
 				}
 
-				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()){
+				//Ethernet SwitchCtrl Session
+				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession() && (*sessionIter)->startTransaction()) {
                                       PortList portList;
                                       uint32 vlanID;
                                       uint32 inPort = (*iter).inPort;
@@ -1046,7 +1046,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                           LOG(2)(Log::MPLS, "VLSR: Removed the empty VLAN: ",  vlanID);
                                      }
 
- 					  break;
+                                     (*sessionIter)->endTransaction();
+ 					  break; // allowing up to ONE session for Ethernet switchCtrl VLSR
                         }
 			}
 			iter = psb.getVLSR_Route().erase(iter);
