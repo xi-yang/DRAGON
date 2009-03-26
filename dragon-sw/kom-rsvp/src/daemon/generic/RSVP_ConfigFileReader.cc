@@ -262,6 +262,9 @@ void ConfigFileReader::setSwitchVlanOption(String sw_vlan_option)
 	if (sw_vlan_option == "bypass-conflict-check") {
 		RSVP_Global::switchController->setSwitchVlanOption(SW_VLAN_CONFLICT_CHECK_BYPASS);
 	}
+	else if (sw_vlan_option == "junos-one-commit") {
+		RSVP_Global::switchController->setSwitchVlanOption(SW_VLAN_JUNOS_ONE_COMMIT);
+	}
 }
 
 void ConfigFileReader::cleanup() {

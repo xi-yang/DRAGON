@@ -267,8 +267,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			SwitchCtrlSessionList::Iterator sessionIter = RSVP_Global::switchController->getSessionList().begin();
 			bool noError = false;
 			for (; sessionIter != RSVP_Global::switchController->getSessionList().end(); ++sessionIter ) {
-
-				 //@@@@ >>Xi2007<<
+                            //Subnet-UNI Session 
 				if ( (*sessionIter)->getSessionName().leftequal("subnet-uni") ) {
 				    if(((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).switchID.rawAddress() >> 16) == (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()& 0xffff)
 				      || !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).switchID.rawAddress() & 0xffff) == (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getPseudoSwitchID()& 0xffff)) {
@@ -453,9 +452,11 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 				    continue;
  				} 
 
-				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession()){
+                            //Ethernet switchCtrl Session 
+				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession() && (noError = (*sessionIter)->startTransaction())){
 					noError = true;
 					uint32 vlan;
+
                                    if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
                                     {
                                       vlan = (*iter).vlanTag;
@@ -616,7 +617,11 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 						noError = false;
 						LOG(2)( Log::MPLS, "VLSR: Cannot find an empty VLAN on switch : ", ethSw);
 					}
-					break;
+
+					if (!(*sessionIter)->endTransaction())
+						noError = false;
+
+					break; // allowing up to ONE session for Ethernet switchCtrl VLSR
 				}
 			}
 			if (!noError){

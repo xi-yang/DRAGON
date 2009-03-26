@@ -201,6 +201,8 @@ public:
 	virtual uint32 getActiveVlanId(uint32 port) { return getVLANbyUntaggedPort(port); }
 	virtual bool adjustVLANbyLocalId(uint32 vlanID, uint32 lclID, uint32 trunkPort);
 	virtual bool readVlanPortMapListAllBranch(vlanPortMapList &vpmList) { return true; }
+	virtual bool startTransaction() { return true; }
+	virtual bool endTransaction() { return true; }
 
 	bool movePortToDefaultVLAN(uint32 port)	{ // RFC2674
 	    if ((!active) || port==SWITCH_CTRL_PORT)
@@ -290,7 +292,8 @@ struct slot_entry {
 #define	SW_EXCL_L_3 0x0080
 
 //switch VLAN operation options
-#define	SW_VLAN_CONFLICT_CHECK_BYPASS 0x80000
+#define	SW_VLAN_CONFLICT_CHECK_BYPASS 0x10000
+#define   SW_VLAN_JUNOS_ONE_COMMIT 0x20000
 
 struct sw_layer_excl_name_entry {
 	uint32 sw_layer;

@@ -24,6 +24,9 @@ public:
 	virtual bool connectSwitch();
 	virtual void disconnectSwitch();
 
+	virtual bool startTransaction();
+	virtual bool endTransaction();
+
 	virtual bool preAction();
 	virtual bool postAction();
 	virtual bool postActionWithCommit();

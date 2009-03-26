@@ -45,11 +45,95 @@ void SwitchCtrl_Session_JuniperEX3200::disconnectSwitch()
     CLI_Session::disengage("</junoscript>");
 }
 
+bool SwitchCtrl_Session_JuniperEX3200::startTransaction()
+{
+    if (!active || vendor!=JuniperEX3200 || !pipeAlive())
+        return false;
+
+    if (!RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_JUNOS_ONE_COMMIT))
+        return true;
+    //Continue here only if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
+
+    int n;
+    DIE_IF_NEGATIVE(n= writeShell( "<rpc><lock-configuration /></rpc>\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::startTransaction() failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
+    JUNOScriptLockReplyParser lockReplyParser(bufScript);
+    if (!lockReplyParser.loadAndVerifyScript())
+        return false;   
+    else if (!lockReplyParser.isSuccessful())
+        return false;
+    //Try a few more times?
+
+    return true;
+}
+
+bool SwitchCtrl_Session_JuniperEX3200::endTransaction()
+{
+    if (!active || vendor!=JuniperEX3200 || !pipeAlive())
+        return false;
+
+    if (!RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_JUNOS_ONE_COMMIT))
+        return true;
+    //Continue here only if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
+
+    int n;
+    DIE_IF_NEGATIVE(n= writeShell( "<rpc><commit-configuration /></rpc>\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
+    JUNOScriptCommitReplyParser commitReplyParser(bufScript);
+    if (!commitReplyParser.loadAndVerifyScript())
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed to commit configuration");
+    }
+    else if (!commitReplyParser.isSuccessful())
+    {
+        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed to commit configuration: ", commitReplyParser.getErrorMessage());
+    }
+    
+    DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
+    if (n == 2)
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed (junoscript fatal error)");
+        closePipe();
+        return false;
+    }
+    JUNOScriptUnlockReplyParser unlockReplyParser(bufScript);
+    if (!unlockReplyParser.loadAndVerifyScript())
+    {
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed to unlock configuration database");
+        return false;
+    }
+    else if (!unlockReplyParser.isSuccessful())
+    {
+        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed to unlock configuration database: ", unlockReplyParser.getErrorMessage());
+        return false;
+    }
+
+    return true;
+}
+
 
 bool SwitchCtrl_Session_JuniperEX3200::preAction()
 {
     if (!active || vendor!=JuniperEX3200 || !pipeAlive())
         return false;
+
+    //Do not lock/commit/unlock configuration for each command if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
+    if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_JUNOS_ONE_COMMIT))
+        return true;
+
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><lock-configuration /></rpc>\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
@@ -73,6 +157,11 @@ bool SwitchCtrl_Session_JuniperEX3200::postAction()
 {
     if (!active || vendor!=JuniperEX3200 || !pipeAlive())
         return false;
+
+    //Do not lock/commit/unlock configuration for each command if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
+    if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_JUNOS_ONE_COMMIT))
+        return true;
+
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
@@ -100,6 +189,11 @@ bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
 {
     if (!active || vendor!=JuniperEX3200 || !pipeAlive())
         return false;
+
+    //Do not lock/commit/unlock configuration for each command if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
+    if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_JUNOS_ONE_COMMIT))
+        return true;
+
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><commit-configuration /></rpc>\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;

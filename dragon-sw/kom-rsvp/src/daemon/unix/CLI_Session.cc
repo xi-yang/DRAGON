@@ -55,6 +55,8 @@ void sigalrm(int signo)
 {
   got_alarm = 1;
   err_msg("%s: timeout on connection to host '%s'\n", progname, hostname);
+  //$TODO: callback to allow SwitchCtrl_Session to kill CLI child process (from the global 'pid')
+
 }
 
 // our timeout procedure, used to abort malfunctioning connections 
@@ -109,7 +111,6 @@ bool CLI_Session::engage(const char *loginString)
     strcpy(hostname, convertAddressToString(switchInetAddr).chars());
 
     // setup signals properly
-    //@@@@ use sigaction instead!
     for(n = 1; n < 33; n++)
         if (n != 11)
             signal(n, sigfunct);
