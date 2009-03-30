@@ -161,10 +161,11 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "show policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n-------------------\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShellBuffer( bufOutput, "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE (n = getPolicyClassMaps(bufOutput, policyClassMaps, policyCIRs, policyCBSs));
-        DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
 
         // remove service-policy and port policy-map for the interface if this is the last vlan class-map in the policy-map
