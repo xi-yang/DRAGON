@@ -249,6 +249,8 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
                 DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
                 DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
             }            
+            DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         }
         // remove input vlan class-map
         DIE_IF_NEGATIVE(n= writeShell( "no class-map ", 5)) ;
@@ -294,7 +296,7 @@ int SwitchCtrl_Session_RaptorER1010_CLI::getPolicyClassMaps(char* buf, SimpleLis
         pStr += 48;
         sscanf(pStr, "%d", &cbs);
         policyCIRs.push_back(cir);
-        policyCIRs.push_back(cbs);
+        policyCBSs.push_back(cbs);
     }
 
     if (classMaps.size() == 0)
