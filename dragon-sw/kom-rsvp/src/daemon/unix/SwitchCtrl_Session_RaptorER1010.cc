@@ -59,7 +59,7 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
     sprintf(portName, "%d/%d/%d",shelf, slot, port);
     sprintf(vlanNum, "%d", vlan_id);
     sprintf(vlanClassMap, "class-map-vlan-%d", vlan_id);
-    sprintf(portPolicyMap, "policy-map-port-%s", portName);
+    sprintf(portPolicyMap, "policy-map-port-%d", input_port);
     if (do_undo)
     {
         // create vlan class-map for the port
