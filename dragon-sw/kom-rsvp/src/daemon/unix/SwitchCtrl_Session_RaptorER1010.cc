@@ -46,7 +46,7 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::postAction()
 bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     int n;
-    char portName[50], vlanNum[10], action[100], vlanClassMap[50],  vlanPolicyMap[50];
+    char portName[50], vlanNum[10], action[100], vlanClassMap[50],  portPolicyMap[50];
     int committed_rate_int = (int)committed_rate;
 
     if (committed_rate_int < 1 || !preAction())
@@ -59,7 +59,7 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
     sprintf(portName, "%d/%d/%d",shelf, slot, port);
     sprintf(vlanNum, "%d", vlan_id);
     sprintf(vlanClassMap, "class-map-vlan-%d", vlan_id);
-    sprintf(vlanPolicyMap, "policy-map-vlan-%d", vlan_id);
+    sprintf(portPolicyMap, "policy-map-port-%s", portName);
     if (do_undo)
     {
         // create vlan class-map for the port
@@ -90,31 +90,33 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
                 burst_size = 128;  // in KB
             sprintf(action, "police-simple %d %d conform-action transmit violate-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
             DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
-            DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
             DIE_IF_NEGATIVE(n= writeShell( " in\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( "policy-map)#", "This Diffserv class already exists.", true, 1, 10)) ;
+            DIE_IF_NEGATIVE(n= readShell( "policy-map)#", "A Diffserv policy with this name already exists.", true, 1, 10)) ;
             if (n == 2) 
             { // the policy-map already exists
                 readShell( SWITCH_PROMPT, NULL, 1, 10);
-            }
-            else 
-            { // the policy-map is created
-                DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
-                DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
                 DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-                DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
-                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-                DIE_IF_EQUAL(n, 2);
-                DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
-                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-                DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
-                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-                DIE_IF_EQUAL(n, 2);
-                DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
-                DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-                DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
-                DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+                readShell( SWITCH_PROMPT, NULL, 1, 10);
             }
+            //alwasy add class-map
+            DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            DIE_IF_EQUAL(n, 2);
+            DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            DIE_IF_EQUAL(n, 2);
+            DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+            DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         }
         // enter interface
         DIE_IF_NEGATIVE(n= writeShell( "interface  ", 5)) ;
@@ -134,7 +136,7 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "service-policy in ", 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
@@ -144,18 +146,105 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
     }
     else
     {
-        // remove service-policy from interface
-        DIE_IF_NEGATIVE(n= writeShell( "no service-policy in ", 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ; // try port as GigE interface
+        // parse policy-map content
+        char bufOutput[LINELEN+1];
+        SimpleList<String> policyClassMaps;
+        SimpleList<int> policyCIRs;
+        SimpleList<int> policyCBSs;
+        SimpleList<String>::Iterator iterClassMap;
+        SimpleList<int>::Iterator iterPolicyCIR;
+        SimpleList<int>::Iterator iterPolicyCBS;
+
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "show policy-map", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10));
-        // remove vlan-level policy map
-        DIE_IF_NEGATIVE(n= writeShell( "no policy-map ", 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-        DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= readShellBuffer( bufOutput, "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+        DIE_IF_NEGATIVE (n = getPolicyClassMaps(bufOutput, policyClassMaps, policyCIRs, policyCBSs));
+            
+        // remove service-policy and port policy-map for the interface if this is the last vlan class-map in the policy-map
+        if (policyClassMaps.size() == 1)
+        {
+            DIE_IF_NEGATIVE(n= writeShell( "no service-policy in ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ; // try port as GigE interface
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10));
+            DIE_IF_NEGATIVE(n= writeShell( "no policy-map ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            DIE_IF_EQUAL(n, 2);
+        }
+        else if (policyClassMaps.size() > 1)
+        {
+            SimpleList<String> policyClassMaps2;
+            SimpleList<int> policyCIRs2;
+            SimpleList<int> policyCBSs2;
+            
+            iterClassMap = policyClassMaps.begin();
+            iterPolicyCIR = policyCIRs.begin();
+            iterPolicyCBS = policyCBSs.begin();
+            for (; iterClassMap != policyClassMaps.end(); ++iterClassMap, ++iterPolicyCIR, ++iterPolicyCBS)
+            {
+                if ((*iterClassMap) == vlanClassMap)
+                    break;
+            }
+            for ( ; iterClassMap != policyClassMaps.end(); ++iterClassMap, ++iterPolicyCIR, ++iterPolicyCBS)
+            {
+                policyClassMaps2.push_front(*iterClassMap);
+                policyCIRs2.push_front(*iterPolicyCIR);
+                policyCBSs2.push_front(*iterPolicyCBS);
+            }
+
+            // remove the vlan-class-map from policy-map in reverse order until the current one
+            DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            iterClassMap = policyClassMaps2.begin();
+            iterPolicyCIR = policyCIRs2.begin();
+            iterPolicyCBS = policyCBSs2.begin();
+            for (; iterClassMap != policyClassMaps2.end(); ++iterClassMap, ++iterPolicyCIR, ++iterPolicyCBS)
+            {
+                DIE_IF_NEGATIVE(n= writeShell( "no class ", 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( (*iterClassMap).chars(), 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+            }
+
+            // add back the removed vlan-class-maps to policy-map except for the current one
+            policyClassMaps2.pop_front();
+            policyCIRs2.pop_front();
+            policyCBSs2.pop_front();
+            iterClassMap = policyClassMaps2.begin();
+            iterPolicyCIR = policyCIRs2.begin();
+            iterPolicyCBS = policyCBSs2.begin();
+            for (; iterClassMap != policyClassMaps2.end(); ++iterClassMap, ++iterPolicyCIR, ++iterPolicyCBS)
+            {
+                DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( (*iterClassMap).chars(), 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+                DIE_IF_EQUAL(n, 2);
+                if ((*iterPolicyCIR) == 0 ||  (*iterPolicyCBS)== 0)
+                {
+                    DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+                    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+                    continue;
+                }
+                sprintf(action, "police-simple %d %d conform-action transmit violate-action drop", *iterPolicyCIR, *iterPolicyCBS);
+                DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
+                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( "#", RAPTOR_ERROR_PROMPT, true, 1, 10)) ;
+                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+                DIE_IF_EQUAL(n, 2);
+                DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+                DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+            }            
+        }
         // remove input vlan class-map
         DIE_IF_NEGATIVE(n= writeShell( "no class-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
@@ -171,6 +260,43 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
     return true;
 }
 
+int SwitchCtrl_Session_RaptorER1010_CLI::getPolicyClassMaps(char* buf, SimpleList<String>&classMaps, SimpleList<int>& policyCIRs, SimpleList<int>& policyCBSs)
+{
+    char* pStr = buf;
+    char classMapCstr[32];
+    int cir, cbs;
+
+    while ((pStr = strstr(pStr, "Class Name.....................................")) != NULL)
+    {
+        pStr += 48;
+        sscanf(pStr, "%s", classMapCstr);
+        classMaps.push_back(String(classMapCstr));
+        cir = cbs = 0;
+        pStr = strstr(pStr, "Committed Rate.................................");
+        if (!pStr)
+        {
+            LOG(2)( Log::MPLS, "SwitchCtrl_Session_RaptorER1010_CLI::getPolicyClassMaps - failed to parse CIR for policy-class:  ", classMapCstr);
+            return -1;
+        }  
+        pStr += 48;
+        sscanf(pStr, "%d", &cir);
+        pStr = strstr(pStr, "Committed Burst Size...........................");
+        if (!pStr)
+        {
+            LOG(2)( Log::MPLS, "SwitchCtrl_Session_RaptorER1010_CLI::getPolicyClassMaps - failed to parse  CBS for policy-class:  ", classMapCstr);
+            return -1;
+        }  
+        pStr += 48;
+        sscanf(pStr, "%d", &cbs);
+        policyCIRs.push_back(cir);
+        policyCIRs.push_back(cbs);
+    }
+
+    if (classMaps.size() == 0)
+        return -1;
+    return 0;
+}
+    
 bool SwitchCtrl_Session_RaptorER1010_CLI::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     if (!postAction())

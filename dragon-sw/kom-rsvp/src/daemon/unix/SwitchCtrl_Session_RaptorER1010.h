@@ -39,6 +39,8 @@ public:
        virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars) { }
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port) { return false;}
 	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID) { return false;}
+
+	int getPolicyClassMaps(char* buf, SimpleList<String>&classMaps, SimpleList<int>& policyCIRs, SimpleList<int>& policyCBSs);
 	friend class SwitchCtrl_Session_RaptorER1010;
 };
 
