@@ -220,9 +220,9 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
             }
 
             // add back the removed vlan-class-maps to policy-map except for the current one
-            policyClassMaps2.pop_front();
-            policyCIRs2.pop_front();
-            policyCBSs2.pop_front();
+            policyClassMaps2.pop_back();
+            policyCIRs2.pop_back();
+            policyCBSs2.pop_back();
             iterClassMap = policyClassMaps2.begin();
             iterPolicyCIR = policyCIRs2.begin();
             iterPolicyCBS = policyCBSs2.begin();
