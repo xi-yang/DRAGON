@@ -158,6 +158,7 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
 
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "show policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
