@@ -60,6 +60,9 @@ enum SupportedVendor{
 	SMC10G8708 = 10, //SMC 10G 8708 switch
 	SMC1G8848 = 11,  //SMC 1G 8848 switch
 	JuniperEX3200 = 12,
+	PowerConnect6024 = 13,
+	PowerConnect6224 = 14,
+	PowerConnect6248 = 15,
 	CienaSubnet = 100,
 	Illegal = 0xffff,
 };

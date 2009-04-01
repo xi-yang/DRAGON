@@ -242,7 +242,8 @@ bool CLI_Session::engage(const char *loginString)
     fdout = fdpipe[0][1];
 
     if (CLI_SESSION_TYPE == CLI_TELNET) {   
-        if (strcmp(CLI_USERNAME, "unknown") != 0) {
+        if (loginString != NULL)
+        {
             // wait for login (user) prompt 
             n = readShell((const char*) loginString, TELNET_PROMPT, true, 1, 15);
             if (n != 1) {
@@ -250,9 +251,11 @@ bool CLI_Session::engage(const char *loginString)
                 err_msg("%s: connection to host '%s' failed\n", progname, hostname);
               goto _telnet_dead;
             }
-            // send the telnet username
-            if ((n = writeShell(CLI_USERNAME, 5)) < 0) goto _telnet_dead;
-            if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
+            if (strcmp(CLI_USERNAME, "unknown") != 0) {
+                // send the telnet username
+                if ((n = writeShell(CLI_USERNAME, 5)) < 0) goto _telnet_dead;
+                if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
+            }
         }
          // send the telnet password 
         if ((n = readShell( "Password", NULL, 1, 10)) < 0) goto _telnet_dead;
@@ -363,15 +366,17 @@ bool CLI_Session::refresh()
     int n;
     if (!pipeAlive()) {
         fdin = fdout = -1;
+        LOG(1)(Log::Error, "CLI_Session::refresh has broken pipe!");
         return false;
     }
 
-  if (vendor == JuniperEX3200) //JUNOScript in non-interactive mode
-       return true;
-
-    DIE_IF_NEGATIVE(n = writeShell("\n", 5));
-    DIE_IF_NEGATIVE(n = readShell(SWITCH_PROMPT, NULL, 1, 10));
-
+    /*
+    if (vendor == JuniperEX3200) //JUNOScript in non-interactive mode
+         return true;
+  
+      DIE_IF_NEGATIVE(n = writeShell("\n", 5));
+      DIE_IF_NEGATIVE(n = readShell(SWITCH_PROMPT, NULL, 1, 10));
+    */
     return true;
 }
 
@@ -621,7 +626,7 @@ int CLI_Session::writeShell(const char *text, int timeout, bool echo_back)
 
 bool CLI_Session::preAction()
 {
-    if (!active || vendor!=Force10E600 || !pipeAlive())
+    if (!active || !pipeAlive())
         return false;
     DIE_IF_NEGATIVE(writeShell("configure\n", 5));
     DIE_IF_NEGATIVE(readShell(SWITCH_PROMPT, NULL, 1, 10));

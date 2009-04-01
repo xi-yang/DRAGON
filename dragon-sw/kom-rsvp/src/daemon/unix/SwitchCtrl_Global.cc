@@ -25,6 +25,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_SMC10G8708.h"
 #include "SwitchCtrl_Session_SMC1G8848.h"
 #include "SwitchCtrl_Session_JuniperEX3200.h"
+#include "SwitchCtrl_Session_PowerConnect6000.h"
 
 
 #ifdef Linux
@@ -903,6 +904,11 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
             break;
         case JuniperEX3200:
             ssNew = new SwitchCtrl_Session_JuniperEX3200("VLSR-Juniper-EX3200", switchAddr);
+            break;                                        
+        case PowerConnect6024:
+        case PowerConnect6224:
+        case PowerConnect6248:
+            ssNew = new SwitchCtrl_Session_PowerConnect6000("VLSR-Dell-PowerConnect", switchAddr);
             break;                                        
 #ifdef Linux
         case LinuxSwitch:

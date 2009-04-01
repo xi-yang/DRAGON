@@ -148,7 +148,7 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::policeInputBandwidth(bool do_undo, uin
     else
     {
         // parse policy-map content
-        char bufOutput[LINELEN+1];
+        char bufOutput[LINELEN];
         SimpleList<String> policyClassMaps;
         SimpleList<int> policyCIRs;
         SimpleList<int> policyCBSs;
