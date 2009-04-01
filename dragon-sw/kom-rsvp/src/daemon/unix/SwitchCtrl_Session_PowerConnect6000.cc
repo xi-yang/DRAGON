@@ -163,7 +163,7 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::postConnectSwitch()
         if (missingDefaultACL)
         {
             //create default ACL
-            DIE_IF_NEGATIVE(n= writeShell( "ip access-group dragon-default in\n", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( "ip access-list dragon-default\n", 5)) ;
             DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
             DIE_IF_NEGATIVE(n= writeShell( "permit any any any\n", 5)) ;
             DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
