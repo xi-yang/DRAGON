@@ -241,44 +241,46 @@ bool CLI_Session::engage(const char *loginString)
     fdin = fdpipe[1][0];
     fdout = fdpipe[0][1];
 
-    if (CLI_SESSION_TYPE == CLI_TELNET) {
-     // wait for login prompt 
-     n = readShell((const char*) loginString, TELNET_PROMPT, true, 1, 15);
-     if (n != 1) {
-       if (got_alarm == 0)
-         err_msg("%s: connection to host '%s' failed\n", progname, hostname);
-       goto _telnet_dead;
-     }
-     
-     // send the telnet username and password 
-     if ((n = writeShell(CLI_USERNAME, 5)) < 0) goto _telnet_dead;
-     if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
-     if ((n = readShell( "Password", NULL, 1, 10)) < 0) goto _telnet_dead;
-     if (strcmp(CLI_PASSWORD, "unknown") != 0)
-         if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
-     if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
-     //a special case for RaptorER1010 CLI
-     if (SWITCH_VENDOR_MODEL == RaptorER1010) {
-         if ((n = readShell( "Accept (y/n)?", NULL, 1, 10)) < 0) goto _telnet_dead;
-         if ((n = writeShell("y\n", 5)) < 0) goto _telnet_dead;
-     }
-     if ((n = readShell( SWITCH_PROMPT, NULL, 1, 30)) < 0) goto _telnet_dead;
+    if (CLI_SESSION_TYPE == CLI_TELNET) {   
+        if (strcmp(CLI_USERNAME, "unknown") != 0) {
+            // wait for login (user) prompt 
+            n = readShell((const char*) loginString, TELNET_PROMPT, true, 1, 15);
+            if (n != 1) {
+              if (got_alarm == 0)
+                err_msg("%s: connection to host '%s' failed\n", progname, hostname);
+              goto _telnet_dead;
+            }
+            // send the telnet username
+            if ((n = writeShell(CLI_USERNAME, 5)) < 0) goto _telnet_dead;
+            if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
+        }
+         // send the telnet password 
+        if ((n = readShell( "Password", NULL, 1, 10)) < 0) goto _telnet_dead;
+        if (strcmp(CLI_PASSWORD, "unknown") != 0)
+            if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
+        if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
+        //a special case for RaptorER1010 CLI
+        if (SWITCH_VENDOR_MODEL == RaptorER1010) {
+            if ((n = readShell( "Accept (y/n)?", NULL, 1, 10)) < 0) goto _telnet_dead;
+            if ((n = writeShell("y\n", 5)) < 0) goto _telnet_dead;
+        }
+        if ((n = readShell( SWITCH_PROMPT, NULL, 1, 30)) < 0) goto _telnet_dead;
     } 
     else if (CLI_SESSION_TYPE == CLI_SSH) {
-     if ((n = readShell( "The authenticity", CLI_USERNAME, 1, 15)) < 0) {
-       if (got_alarm == 0)
-         err_msg("%s: connection to host '%s' failed\n", progname, hostname);
-       goto _telnet_dead;
-     }
-
-     if (n == 1) {
-         if ((n = writeShell("yes\n", 5)) < 0) goto _telnet_dead;
-         if ((n = readShell(CLI_USERNAME, NULL, 1, 10)) < 0) goto
-    _telnet_dead;
-     }
-     if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
-     if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
-     if ((n = readShell( SWITCH_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
+        if ((n = readShell( "The authenticity", CLI_USERNAME, 1, 15)) < 0) {
+          if (got_alarm == 0)
+            err_msg("%s: connection to host '%s' failed\n", progname, hostname);
+          goto _telnet_dead;
+        }
+   
+        if (n == 1) {
+            if ((n = writeShell("yes\n", 5)) < 0) goto _telnet_dead;
+            if ((n = readShell(CLI_USERNAME, NULL, 1, 10)) < 0) goto
+       _telnet_dead;
+        }
+        if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
+        if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
+        if ((n = readShell( SWITCH_PROMPT, NULL, 1, 10)) < 0) goto _telnet_dead;
     }
     else if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
      // wait for login prompt 
