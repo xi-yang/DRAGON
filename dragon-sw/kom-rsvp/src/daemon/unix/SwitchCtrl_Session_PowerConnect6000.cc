@@ -192,7 +192,7 @@ bool SwitchCtrl_Session_PowerConnect6000::connectSwitch()
     if (SwitchCtrl_Session::connectSwitch() == false)
         return false;
 
-    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    if (CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH)
     {
         cliSession.vendor = this->vendor;
         cliSession.active = true;
