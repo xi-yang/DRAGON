@@ -44,6 +44,7 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
         //create vlan-level class-map
         DIE_IF_NEGATIVE(n= writeShell( "class-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "match access-group dragon-default\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
