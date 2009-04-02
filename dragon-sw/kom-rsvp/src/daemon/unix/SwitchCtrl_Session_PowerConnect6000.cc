@@ -30,7 +30,7 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::postAction()
 bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     int n;
-    char vlanNum[8], action[32], vlanClassMap[32], vlanPolicyMap[32];
+    char vlanNum[8], action[64], vlanClassMap[32], vlanPolicyMap[32];
     int committed_rate_int = (int)committed_rate;
 
     if (committed_rate_int < 1 || !preAction())
@@ -43,10 +43,11 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
     {
         //create vlan-level class-map
         bool hasClassMap = false;
-        DIE_IF_NEGATIVE(n= writeShell( "exit\nshow class-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, true, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "show class-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, true, 1, 10)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, "Match access-group", true, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, true, 1, 10)) ;
