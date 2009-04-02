@@ -23,6 +23,7 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::postAction()
     if (fdout < 0 || fdin < 0)
         return false;
     DIE_IF_NEGATIVE(writeShell("end\n", 5));
+    DIE_IF_NEGATIVE(readShell( SWITCH_PROMPT, NULL, 1, 10));
     return true;
 }
 
