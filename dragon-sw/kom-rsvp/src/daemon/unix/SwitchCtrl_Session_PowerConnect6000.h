@@ -13,7 +13,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "CLI_Session.h"
 
 #ifndef DELL_ERROR_PROMPT 
-#define DELL_ERROR_PROMPT "% "
+#define DELL_ERROR_PROMPT "% Unrecognized"
 #endif
 
 class SwitchCtrl_Session_PowerConnect6000_CLI: public CLI_Session
