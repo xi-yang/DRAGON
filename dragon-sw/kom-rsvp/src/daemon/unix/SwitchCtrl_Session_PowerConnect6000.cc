@@ -43,10 +43,13 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
     {
         //create vlan-level class-map
         bool hasClassMap = false;
-        DIE_IF_NEGATIVE(n= writeShell( "show class-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "exit\nshow class-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, true, 1, 10)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, "Match access-group", true, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, true, 1, 10)) ;
         if (n == 2)
         {
             hasClassMap = true;
