@@ -42,31 +42,27 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
     if (do_undo)
     {
         //create vlan-level class-map
-        bool hasClassMap = false;
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, true, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "show class-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, "Match access-group", true, 1, 10)) ;
+        if (n == 2) // the class-map (and corresponding policy-map) have been defined
+        {
+            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+            return postAction();
+        }
         DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, true, 1, 10)) ;
-        if (n == 2)
-        {
-            hasClassMap = true;
-            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        }
-        if (!hasClassMap)
-        {
-            DIE_IF_NEGATIVE(n= writeShell( "class-map ", 5)) ;
-            DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
-            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-            DIE_IF_NEGATIVE(n= writeShell( "match access-group dragon-default\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-            DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        }
+        DIE_IF_NEGATIVE(n= writeShell( "class-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "match access-group dragon-default\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         // configure vlan-level policy-map
         committed_rate_int *= 1000;
         if (SWITCH_VENDOR_MODEL == PowerConnect6024)
