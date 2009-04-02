@@ -101,7 +101,7 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
         // enter interface vlan configuration mode 
         DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "configure\n\n", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "interface vlan ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
