@@ -109,8 +109,6 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
         // apply vlan-level policy map
-        DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "service-policy input ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
