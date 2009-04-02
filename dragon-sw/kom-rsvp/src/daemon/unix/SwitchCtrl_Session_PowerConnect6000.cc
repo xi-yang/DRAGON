@@ -44,7 +44,7 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
     {
         //create vlan-level class-map
         DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, true, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "show class-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
@@ -55,7 +55,7 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
             return postAction();
         }
         DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, true, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "class-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
