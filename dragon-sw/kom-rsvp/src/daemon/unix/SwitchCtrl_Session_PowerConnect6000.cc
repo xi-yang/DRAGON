@@ -14,7 +14,14 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::preAction()
     if (!active || vendor<PowerConnect6024&&vendor>PowerConnect6024 || !pipeAlive())
         return false;
     DIE_IF_NEGATIVE(writeShell( "configure\n", 5));
-    DIE_IF_NEGATIVE(readShell( SWITCH_PROMPT, NULL, 1, 10));
+    int n;
+    DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) 
+    {
+        LOG(1)(Log::Error, "Error when entering configure mode in SwitchCtrl_Session_PowerConnect6000_CLI::preAction()");
+        readShell( SWITCH_PROMPT, NULL, 1, 10);
+        return false;
+    }
     return true;
 }
 
@@ -23,7 +30,9 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::postAction()
     if (fdout < 0 || fdin < 0)
         return false;
     DIE_IF_NEGATIVE(writeShell("end\n", 5));
-    DIE_IF_NEGATIVE(readShell( SWITCH_PROMPT, NULL, 1, 10));
+    int n;
+    DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
     return true;
 }
 
@@ -143,8 +152,7 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
 
 bool SwitchCtrl_Session_PowerConnect6000_CLI::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
-    if (!postAction())
-        return false;
+    //NO-OP
     return true;
 }
 
