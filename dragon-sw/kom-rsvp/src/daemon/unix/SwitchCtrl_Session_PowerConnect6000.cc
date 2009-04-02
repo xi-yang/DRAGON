@@ -128,6 +128,20 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
     }
     else
     {
+        //check if policy-map and class-map has been removed
+        DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "show class-map ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, "Match access-group", true, 1, 10)) ;
+        if (n == 1) // the class-map (and corresponding policy-map) have already been removed
+        {
+            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+            return postAction();
+        }
+        DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         // remove vlan-level policy map
         DIE_IF_NEGATIVE(n= writeShell( "no policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
