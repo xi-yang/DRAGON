@@ -702,7 +702,7 @@ SwitchCtrl_Global::~SwitchCtrl_Global() {
 }
 
 void SwitchCtrl_Global::startRefreshTimer() {
-	sessionsRefresher = new sessionsRefreshTimer(this, TimeValue(300));
+	sessionsRefresher = new sessionsRefreshTimer(this, TimeValue(270));
 }
 
 bool SwitchCtrl_Global::refreshSessions()
