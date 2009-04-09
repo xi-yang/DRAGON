@@ -113,18 +113,30 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
             DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
             DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
             DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            if (n == 2) 
+            {
+                readShell( SWITCH_PROMPT, NULL, 1, 10);
+                LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth failed (interface 'port')");
+            }
             DIE_IF_EQUAL(n, 2);
         }
         // set mls qos to 'vlan based' for the port
         DIE_IF_NEGATIVE(n= writeShell( "mls qos vlan-based\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth failed (mls qos vlan-based)");
+        }
         DIE_IF_EQUAL(n, 2);
         // set mtu to 9216 for the port
         DIE_IF_NEGATIVE(n= writeShell( "mtu 9216\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth failed (mtu 9216')");
+        }
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
@@ -134,7 +146,11 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth failed (interface vlan)");
+        }
         DIE_IF_EQUAL(n, 2);
         // set mtu to 9216 for the vlan interface
         DIE_IF_NEGATIVE(n= writeShell( "mtu 9216\n", 5)) ;
@@ -148,13 +164,21 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( policyMapName, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth failed (interface vlan --> service-policy input)");
+        }
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "service-policy output ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( policyMapName, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth failed (interface vlan --> service-policy input)");
+        }
         DIE_IF_EQUAL(n, 2);
 
     }
@@ -165,7 +189,11 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( policyMapName, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth failed (no policy-map)");
+        }
         DIE_IF_EQUAL(n, 2);
         // remove interface vlan
         /*
@@ -482,8 +510,10 @@ bool SwitchCtrl_Session_Catalyst6500::isSwitchport(uint32 port)
        if (status == STAT_SUCCESS){
           LOG(4)( Log::MPLS, "VLSR: SNMP: Reading switchport ", port, " information failed. Reason : ", snmp_errstring(response->errstat));
        }
-       else
-      	    snmp_sess_perror("snmpset", snmpSessionHandle);
+       else {
+      	   snmp_sess_perror("snmpset", snmpSessionHandle);
+          LOG(3)( Log::MPLS, "VLSR: SNMP: Reading switchport ", port, " information failed with STAT_ERROR returned");
+       }
        if(response) snmp_free_pdu(response);
        return false;
     }
@@ -527,8 +557,10 @@ bool SwitchCtrl_Session_Catalyst6500::isPortTurnedOn(uint32 port)
        if (status == STAT_SUCCESS){
           LOG(4)( Log::MPLS, "VLSR: SNMP: Reading port ", port, " information failed. Reason : ", snmp_errstring(response->errstat));
        }
-       else
-      	    snmp_sess_perror("snmpset", snmpSessionHandle);
+       else {
+      	   snmp_sess_perror("snmpget", snmpSessionHandle);
+          LOG(3)( Log::MPLS, "VLSR: SNMP: Reading switchport ", port, " information failed with STAT_ERROR returned");
+       }
        if(response) snmp_free_pdu(response);
        return false;
     }
@@ -598,8 +630,10 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
        SetPortBit(vpmAll->portbits, port_bit-1);
         setVlanPortMapById(vlanPortMapListAll, vlanID, &vpmAll->portbits[0]); 
     }
-    else
+    else {
+       LOG(3)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged --> getVlanPortMapById (vlanPortMapListAll, vlan=", vlanID, ") failed.");
        return false;
+    }
 
     activeVlanId = vlanID; //$$
     return ret;
@@ -659,8 +693,10 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged(uint32 port, uint32
        if (status == STAT_SUCCESS){
           LOG(4)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, "failed. Reason : ", snmp_errstring(response->errstat));
        }
-       else
-      	    snmp_sess_perror("snmpset", snmpSessionHandle);
+       else {
+      	   snmp_sess_perror("snmpset", snmpSessionHandle);
+          LOG(3)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, " failed with STAT_ERROR returned");
+       }
        if(response) snmp_free_pdu(response);
        return false;
     }
@@ -686,16 +722,19 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged(uint32 port, uint32
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
         SetBit(vpmAll->portbits, port_bit-1);
-    } else
+    } else {
+        LOG(3)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged --> getVlanPortMapById (vlanPortMapListAll, vlan=", vlanID, ") failed.");
         return false;
+    }
 
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged) {
          //bit==0 means port is untagged
         ResetBit(vpmUntagged->portbits, port_bit-1);
-    }
-    else
+    } else {
+        LOG(3)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged --> getVlanPortMapById (vlanPortMapListUntagged, vlan=", vlanID, ") failed.");
         return false;
+    }
 
     activeVlanId = vlanID;
     return ret;
@@ -771,10 +810,12 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
     }
     else {
        if (status == STAT_SUCCESS){
-          LOG(4)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, "failed. Reason : ", snmp_errstring(response->errstat));
+          LOG(4)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, " failed. Reason : ", snmp_errstring(response->errstat));
        }
-       else
-      	    snmp_sess_perror("snmpset", snmpSessionHandle);
+       else {
+      	   snmp_sess_perror("snmpset", snmpSessionHandle);
+          LOG(3)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, " failed with STAT_ERROR returned");
+       }
        if(response) snmp_free_pdu(response);
        return false;
     }
@@ -1140,6 +1181,7 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createPortToIDRefTable(portRefIDList 
                     }
             }
             else {
+                LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst6500::hook_createPortToIDRefTable SNMP_GETNEXT failed with STAT_ERROR returned");
                 running = false;
             }
             if(response) snmp_free_pdu(response);
@@ -1241,6 +1283,7 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createVlanInterfaceToIDRefTable(vlanR
                     }
             }
             else {
+                LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst6500::hook_createVlanInterfaceToIDRefTable SNMP_GETNEXT failed with STAT_ERROR returned");
                 running = false;
             }
             if(response) snmp_free_pdu(response);
@@ -1322,6 +1365,7 @@ bool SwitchCtrl_Session_Catalyst6500::readTrunkPortVlanMap(portVlanMapList &trun
             }
         }
         else {
+            LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst6500::readTrunkPortVlanMap SNMP_GETNEXT failed with STAT_ERROR returned");
             running = false;
         }
         if(response) snmp_free_pdu(response);
@@ -1423,8 +1467,10 @@ bool SwitchCtrl_Session_Catalyst6500::isPortTrunking(uint32 port)
        if (status == STAT_SUCCESS){
           LOG(6)( Log::MPLS, "VLSR: SNMP: Reading switchport ", port, " information at OID ",  oid_str, " failed. Reason : ", snmp_errstring(response->errstat));
        }
-       else
+       else {
+           LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst6500::isPortTrunking SNMP_GET failed with STAT_ERROR returned");
       	    snmp_sess_perror("snmpset", snmpSessionHandle);
+       }
        if(response) snmp_free_pdu(response);
        return false;
     }

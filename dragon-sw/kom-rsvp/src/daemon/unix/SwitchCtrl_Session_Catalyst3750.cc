@@ -94,19 +94,31 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
                 DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try FastE interface
                 DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
                 DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+                if (n == 2) 
+                {
+                    readShell( SWITCH_PROMPT, NULL, 1, 10);
+                    LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (interface 'portname')");
+                }
                 DIE_IF_EQUAL(n, 2);
             }
         }
         // set mls qos to vlan-based for the port
         DIE_IF_NEGATIVE(n= writeShell( "mls qos vlan-based\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (mls qos vlan-based)");
+        }
         DIE_IF_EQUAL(n, 2);
         // set mtu to 9216 for the port
         DIE_IF_NEGATIVE(n= writeShell( "mtu 9216\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (mtu 9216)");
+        }
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
@@ -116,13 +128,21 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( portClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (class-map match-all ", portClassMap, ")");
+        }
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "match input-interface ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (class-map match-all ", portClassMap, "-->match input-interface 'portname')");
+        }
         DIE_IF_EQUAL(n, 2);
         // add the class-map into port-level policy-map
         committed_rate_int *= 1000000;
@@ -135,18 +155,30 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (policy-map ", portPolicyMap, ")");
+        }
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(5)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (policy-map ", portPolicyMap, "-->class", portClassMap, ")");
+        }
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( action, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(5)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (policy-map ", portPolicyMap, "-->class ... -->", action, ")");
+        }
         DIE_IF_EQUAL(n, 2);
         // configure vlan-level policy
         DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
@@ -157,17 +189,29 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (policy-map ", vlanPolicyMap, ")");
+        }
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "class class-default\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (policy-map-->class class-default)");
+        }
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "service-policy ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (policy-map-->class-->service-policy ", vlanPolicyMap, ")");
+        }
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "set dscp 7\n ", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
@@ -182,7 +226,11 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (interface vlan ", vlanNum, ")");
+        }
         DIE_IF_EQUAL(n, 2);
         // set mtu to 9216 for the vlan interface
         DIE_IF_NEGATIVE(n= writeShell( "mtu 9216\n", 5)) ;
@@ -196,7 +244,11 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (interface vlan-->service-policy input ", vlanPolicyMap, ")");
+        }
         DIE_IF_EQUAL(n, 2);        
     }
     else
@@ -239,14 +291,22 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (no policy-map ", vlanPolicyMap, ")");
+        }
         DIE_IF_EQUAL(n, 2);
         // remove input port policy-map
         DIE_IF_NEGATIVE(n= writeShell( "no policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (no policy-map ", portPolicyMap, ")");
+        }
         DIE_IF_EQUAL(n, 2);
         // remove input port class-map
         sprintf(portClassMap, "class-map-if-%s", portName);
@@ -254,7 +314,11 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( portClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+        if (n == 2) 
+        {
+            readShell( SWITCH_PROMPT, NULL, 1, 10);
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (no class-map ", portClassMap, ")");
+        }
         DIE_IF_EQUAL(n, 2);
         // remove interface vlan
         /*
@@ -597,8 +661,10 @@ bool SwitchCtrl_Session_Catalyst3750::isSwitchport(uint32 port)
        if (status == STAT_SUCCESS){
           LOG(4)( Log::MPLS, "VLSR: SNMP: Reading switchport ", port, " information failed. Reason : ", snmp_errstring(response->errstat));
        }
-       else
-      	    snmp_sess_perror("snmpset", snmpSessionHandle);
+       else {
+           LOG(3)( Log::MPLS, "VLSR: SNMP: Reading switchport ", port, " information failed with STAT_ERROR returned");
+      	    snmp_sess_perror("snmpget", snmpSessionHandle);
+       }
        if(response) snmp_free_pdu(response);
        return false;
     }
@@ -642,8 +708,10 @@ bool SwitchCtrl_Session_Catalyst3750::isPortTurnedOn(uint32 port)
        if (status == STAT_SUCCESS){
           LOG(4)( Log::MPLS, "VLSR: SNMP: Reading port ", port, " information failed. Reason : ", snmp_errstring(response->errstat));
        }
-       else
-      	    snmp_sess_perror("snmpset", snmpSessionHandle);
+       else {
+           LOG(3)( Log::MPLS, "VLSR: SNMP: Reading switchport ", port, " information failed with STAT_ERROR returned");
+      	    snmp_sess_perror("snmpget", snmpSessionHandle);
+       }
        if(response) snmp_free_pdu(response);
        return false;
     }
@@ -713,8 +781,10 @@ bool SwitchCtrl_Session_Catalyst3750::movePortToVLANAsUntagged(uint32 port, uint
        SetPortBit(vpmAll->portbits, port_bit-1);
         setVlanPortMapById(vlanPortMapListAll, vlanID, &vpmAll->portbits[0]); 
     }
-    else
+    else {
+       LOG(3)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::movePortToVLANAsUntagged --> getVlanPortMapById (vlanPortMapListAll, vlan=", vlanID, ") failed.");
        return false;
+    }
 
     activeVlanId = vlanID; //$$
     return ret;
@@ -774,8 +844,10 @@ bool SwitchCtrl_Session_Catalyst3750::movePortToVLANAsTagged(uint32 port, uint32
        if (status == STAT_SUCCESS){
           LOG(4)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, "failed. Reason : ", snmp_errstring(response->errstat));
        }
-       else
-      	    snmp_sess_perror("snmpset", snmpSessionHandle);
+       else {
+           LOG(3)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, " failed with STAT_ERROR returned");
+      	    snmp_sess_perror("snmpget", snmpSessionHandle);
+       }
        if(response) snmp_free_pdu(response);
        return false;
     }
@@ -801,17 +873,20 @@ bool SwitchCtrl_Session_Catalyst3750::movePortToVLANAsTagged(uint32 port, uint32
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
         SetBit(vpmAll->portbits, port_bit-1);
-    } else
+    } else {
+        LOG(3)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::movePortToVLANAsTagged --> getVlanPortMapById (vlanPortMapListAll, vlan=", vlanID, ") failed.");
         return false;
+    }
 
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged) {
          //bit==0 means port is untagged
         ResetBit(vpmUntagged->portbits, port_bit-1);
     }
-    else
+    else {
+        LOG(3)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::movePortToVLANAsTagged --> getVlanPortMapById (vlanPortMapListUntagged, vlan=", vlanID, ") failed.");
         return false;
-
+    }
     activeVlanId = vlanID;
     return ret;
 }
@@ -889,8 +964,10 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
        if (status == STAT_SUCCESS){
           LOG(4)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, "failed. Reason : ", snmp_errstring(response->errstat));
        }
-       else
-      	    snmp_sess_perror("snmpset", snmpSessionHandle);
+       else {
+          LOG(3)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, " failed with STAT_ERROR returned");
+      	   snmp_sess_perror("snmpget", snmpSessionHandle);
+       }
        if(response) snmp_free_pdu(response);
        return false;
     }
@@ -925,8 +1002,10 @@ _update_vpm:
              //bit==1 means port is untagged
              SetBit(vpmUntagged->portbits, port_bit-1);
       	  }
-    	  else
+    	  else {
+            LOG(3)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::removePortFromVLAN --> getVlanPortMapById (vlanPortMapListUntagged, vlan=", vlanID, ") failed.");
             return false;
+    	  }
        } else {
         LOG(2) (Log::MPLS, "Trying to remove port from an invalid VLAN ", vlanID);
        }
@@ -1286,6 +1365,7 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
                     }
             }
             else {
+                LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable SNMP_GETNEXT failed with STAT_ERROR returned");
                 running = false;
             }
             if(response) snmp_free_pdu(response);
@@ -1387,6 +1467,7 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createVlanInterfaceToIDRefTable(vlanR
                     }
             }
             else {
+                LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::hook_createVlanInterfaceToIDRefTable SNMP_GETNEXT failed with STAT_ERROR returned");
                 running = false;
             }
             if(response) snmp_free_pdu(response);
@@ -1468,6 +1549,7 @@ bool SwitchCtrl_Session_Catalyst3750::readTrunkPortVlanMap(portVlanMapList &trun
             }
         }
         else {
+            LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::readTrunkPortVlanMap SNMP_GETNEXT failed with STAT_ERROR returned");
             running = false;
         }
         if(response) snmp_free_pdu(response);
