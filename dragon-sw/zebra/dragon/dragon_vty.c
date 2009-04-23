@@ -1764,7 +1764,7 @@ DEFUN (dragon_commit_lsp_sender,
       {
           if (lsp!=lsp2 && LSP_SAME_SESSION(lsp, lsp2))
           {
-              vty_out(vty, "Cannot commit: another non-subnet-interface LSP with the same session parameters already exists!");
+              vty_out(vty, "Cannot commit: another non-subnet-interface LSP with the same session parameters already exists!%s", VTY_NEWLINE);
               zlog_info("Cannot commit: another non-subnet-interface LSP with the same session parameters already exists!");
               return CMD_WARNING;
           }
