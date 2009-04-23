@@ -2013,9 +2013,14 @@ DEFUN (dragon_delete_lsp,
 	zTearRsvpPathRequest(dmaster.api, &lsp->common);
 	lsp->status = LSP_LISTEN;  	
   }
+  else if (lsp->status == LSP_EDIT)
+  {
+	listnode_delete(dmaster.dragon_lsp_table, lsp);
+	lsp_recycle(lsp);
+  }
   else{
 	DRAGON_TIMER_OFF(lsp->t_lsp_refresh);
-        zlog_info("Initiating RSVP path tear request for LSP %s",
+       zlog_info("Initiating RSVP path tear request for LSP %s",
 		  (lsp->common.SessionAttribute_Para)->sessionName);
 	zTearRsvpPathRequest(dmaster.api, &lsp->common);
 	listnode_delete(dmaster.dragon_lsp_table, lsp);
