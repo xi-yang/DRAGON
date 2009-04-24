@@ -553,7 +553,8 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
                   {
                     tlv = (struct dragon_tlv_header*)(buf+len);
                     tlv->type = htons(MON_TLV_SUBNET_ERO);
-                    len = sizeof(struct dragon_tlv_header);
+                    tlv->length = htons(sizeof(struct _EROAbstractNode_Para)*listcount(lsp->dragon.subnet_ero));
+                    len += sizeof(struct dragon_tlv_header);
                     LIST_LOOP(lsp->dragon.subnet_ero, hop, node)
                       {
                         *(struct _EROAbstractNode_Para*)(buf+len) = *hop;

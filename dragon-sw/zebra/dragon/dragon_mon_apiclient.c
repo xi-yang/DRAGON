@@ -366,7 +366,7 @@ void msg_display(struct mon_api_msg* msg)
         {
         case MON_TLV_GRI:
           gri = (char*)(tlv + 1);
-          printf("\t\t>>LSP: %s\n)", gri);
+          printf("\t\t>>LSP: %s\n", gri);
           break;
         case MON_TLV_SWITCH_INFO:
             switch_info = (struct _Switch_Generic_Info*)(tlv+1);
@@ -453,7 +453,7 @@ void msg_display(struct mon_api_msg* msg)
           printf("UNKNOWN TLV type %d\n", ntohs(tlv->type));          
         }
       tlvlen = sizeof(struct dragon_tlv_header) + ntohs(tlv->length);
-      tlv = (struct dragon_tlv_header*)(msg->body + tlvlen);
+      tlv = (struct dragon_tlv_header*)((char*)tlv + tlvlen);
       bodylen -= tlvlen;
     }
 }
