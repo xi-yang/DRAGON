@@ -1318,10 +1318,11 @@ void  rsvpUpcall(void* para)
                      }
                      /* update LSP baed on DRAGON_EXT_INFO Object */
 			if (p->dragonExtInfoPara && lsp->common.DragonExtInfo_Para) {
-				if (lsp->common.DragonExtInfo_Para->num_mon_nodes == 0)
+				if (lsp->common.DragonExtInfo_Para->num_mon_nodes == 0 && p->dragonExtInfoPara->num_mon_nodes > 0)
 				{
 					lsp->common.DragonExtInfo_Para->num_mon_nodes = p->dragonExtInfoPara->num_mon_nodes;
-					lsp->common.DragonExtInfo_Para->mon_nodes = p->dragonExtInfoPara->mon_nodes; /* no allocation needed, memory reused */
+					lsp->common.DragonExtInfo_Para->mon_nodes = XMALLOC(MTYPE_TMP, sizeof(struct in_addr)*p->dragonExtInfoPara->num_mon_nodes);
+					memcpy(lsp->common.DragonExtInfo_Para->mon_nodes, p->dragonExtInfoPara->mon_nodes,  sizeof(struct in_addr)*p->dragonExtInfoPara->num_mon_nodes);
 				}
 				lsp->common.DragonUni_Para = p->dragonUniPara;
 			}
