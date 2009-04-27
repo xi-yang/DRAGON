@@ -25,7 +25,7 @@
 #  vlsr-linux: Linux Switch mode (use Linux PC with multiple interfaces as switch)
 #  vlsr-verbose: Interactive mode, VLSR prompts for all questions
 #
-#target="default"
+#target='default'
 
 #
 # Switch CLI type may be:
@@ -36,22 +36,22 @@
 #  tl1 (for Subnet UNI mode)
 #  shell (for Linux Switch mode)
 #
-#switch_cli_type="none"
+#switch_cli_type='none'
 
 #
-# If the CLI mode is not "none", enter the username here:
+# If the CLI mode is not 'none', enter the username here:
 #
-#switch_cli_username="unknown"
+#switch_cli_username='unknown'
 
 #
-# If the CLI mode is not "none", enter the password here:
+# If the CLI mode is not 'none', enter the password here:
 #
-#switch_cli_password="unknown"
+#switch_cli_password='unknown'
 
 #
 # Specify the SNMP community string to access the switch:
 #
-#snmp_community="dragon"
+#snmp_community='dragon'
 
 #
 # The VLSR will never move the control port set below to a different VLAN:
@@ -60,12 +60,12 @@
 #
 # Example: port 1/2/3 would become 0001b / 0010b / 00000011b, or 4611 in decimal
 #
-#switch_ctrl_port="255"
+#switch_ctrl_port='255'
 
 #
 # Specify whether the VLSR should be built with debugging symbols or not:
 # (necessary for debugging with gdb)
 #
-# It is highly recommended that you leave this option set to "yes".
+# It is highly recommended that you leave this option set to 'yes'.
 #
-#debug_symbols="yes"
+#debug_symbols='yes'
