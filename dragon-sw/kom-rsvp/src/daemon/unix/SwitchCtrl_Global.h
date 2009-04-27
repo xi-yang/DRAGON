@@ -189,7 +189,7 @@ public:
 	virtual uint32 getVLANbyPort(uint32 port, bool countVlan1=true); // RFC2674
 	virtual uint32 getVLANListbyPort(uint32 port, SimpleList<uint32> &vlan_list); // RFC2674
 	virtual uint32 getVLANbyUntaggedPort(uint32 port); // RFC2674
-	virtual void readVlanPortMapBranch(const char* oid_str, vlanPortMapList &vpmList); // RFC2674
+	virtual bool readVlanPortMapBranch(const char* oid_str, vlanPortMapList &vpmList); // RFC2674
 	virtual bool readVLANFromSwitch(); // RFC2674
 	virtual bool verifyVLAN(uint32 vlanID);// RFC2674
 	virtual bool VLANHasTaggedPort(uint32 vlanID);// RFC2674

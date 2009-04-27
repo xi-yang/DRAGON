@@ -216,7 +216,7 @@ const uint32 SwitchCtrl_Session::findEmptyVLAN()
     return ret;
 }
 
-void SwitchCtrl_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapList &vpmList)
+bool SwitchCtrl_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapList &vpmList)
 {
     struct snmp_pdu *pdu;
     struct snmp_pdu *response;
@@ -233,7 +233,7 @@ void SwitchCtrl_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapL
     // that are not RFC2674 compatible such as Cisco Catalyst
     //if (!rfc2674_compatible || !snmp_enabled)
     if (!snmp_enabled)
-        return;
+        return false;
 
     status = read_objid(oid_str, anOID, &anOID_len);
     rootlen = anOID_len;
@@ -262,16 +262,18 @@ void SwitchCtrl_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapL
                     anOID_len = vars->name_length;
                 }
                 else {
-                    running = 0;
+                    running = false;
                 }
             }
         }
         else {
-            running = false;
             LOG(1)( Log::MPLS, "VLSR: Error while reading VLAN/port mapping from Switch!");
+	        if(response) snmp_free_pdu(response);
+			return false;
         }
         if(response) snmp_free_pdu(response);
     }
+	return true;
 }
 
 bool SwitchCtrl_Session::readVLANFromSwitch()
@@ -286,26 +288,32 @@ bool SwitchCtrl_Session::readVLANFromSwitch()
 
     // Read and record the list of ALL ports and their vlan associations
     if (rfc2674_compatible) {
-    	readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.2", vlanPortMapListAll);
+    	if (!readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.2", vlanPortMapListAll))
+			return false;
     }
     else if (vendor == Catalyst3750 || vendor == Catalyst6500) {
-	readVlanPortMapListAllBranch(vlanPortMapListAll);
+		if (!readVlanPortMapListAllBranch(vlanPortMapListAll))
+			return false;
     }
     else {
-    	readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.2", vlanPortMapListAll);
+    	if (!readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.2", vlanPortMapListAll))
+			return false;
     }
     if (vlanPortMapListAll.size() == 0)
         ret = false;
 
     // Read and record the list of UNTAGGED/NON-TRUNK ports and their vlan associations
     if (rfc2674_compatible) {
-    	readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.4", vlanPortMapListUntagged);
+    	if (!readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.4", vlanPortMapListUntagged))
+			return false;
     }
     else if (vendor == Catalyst3750 || vendor == Catalyst6500) {
-    	readVlanPortMapBranch(".1.3.6.1.4.1.9.9.68.1.2.1.1.3", vlanPortMapListUntagged);
+    	if (!readVlanPortMapBranch(".1.3.6.1.4.1.9.9.68.1.2.1.1.3", vlanPortMapListUntagged))
+			return false;
     }
     else {
-    	readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.4", vlanPortMapListUntagged);
+    	if (!readVlanPortMapBranch(".1.3.6.1.2.1.17.7.1.4.3.1.4", vlanPortMapListUntagged))
+			return false;
     }
     if (vlanPortMapListUntagged.size() == 0)
         ret = false;
@@ -320,8 +328,8 @@ bool SwitchCtrl_Session::readVLANFromSwitch()
     if (String("Ethernet Switch") == vendorSystemDescription ||
         String("Neyland 24T") == vendorSystemDescription ||
         String("Ethernet Routing Switch") == vendorSystemDescription) {
-      if (vlanPortMapListAll.size() == 0 || vlanPortMapListUntagged.size() == 0)
-	ret = true;
+		if (vlanPortMapListAll.size() == 0 || vlanPortMapListUntagged.size() == 0)
+			ret = true;
     }
 
     LOG(4)( Log::MPLS, "VLSR: received VLAN/port mapping from Switch, total VLANs=", 
