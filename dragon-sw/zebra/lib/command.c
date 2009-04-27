@@ -54,7 +54,7 @@ char *dragon_motd =
 (G)MPLS (O)ptical (N)etworks\r\n\
 Based on Zebra (version " ZEBRA_VERSION ").\r\n\
 Copyright 1996-2002 Kunihiro Ishiguro.\r\n\
-Copyright 2003-2004 the Dragon Team.\r\n\
+Copyright 2003-2008 the Dragon Team.\r\n\
 \r\n";
 
 /* Standard command node structures. */
