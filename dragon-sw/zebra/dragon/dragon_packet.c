@@ -324,9 +324,9 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   if (lsp->dragon.lspVtag == 0)
   	vlan_tag[0] = 0;
   else if (lsp->dragon.lspVtag == ANY_VTAG)
-  	strcpy(vlan_tag, " : Vlan 'any'");
+  	strcpy(vlan_tag, ": Vlan 'any'");
   else
-  	sprintf(vlan_tag, " : Vlan %d", lsp->dragon.lspVtag);
+  	sprintf(vlan_tag, ": Vlan %d", lsp->dragon.lspVtag);
   zlog_info("Source %s <--> Destination %s : Bandwidth %4.1f %s", src, dst, bandwidth, vlan_tag);
 
   /* Create a stream for topology request. */
@@ -1332,6 +1332,7 @@ void  rsvpUpcall(void* para)
 		case ResvConf:
 			/* Update the status of the LSP */
 			lsp->status = LSP_IS;
+			zlog_info("LSP %s is In Service at source/sender", lsp->common.SessionAttribute_Para->sessionName);
                      /* update LSP baed on DRAGON UNI Object */
 			if (p->dragonUniPara) {
 				lsp->common.DragonUni_Para = p->dragonUniPara;
@@ -1395,6 +1396,7 @@ void  rsvpUpcall(void* para)
 		case PathErr:
 		case ResvErr:
 			lsp->status = LSP_ERROR;
+			zlog_info("LSP %s is in Error state", lsp->common.SessionAttribute_Para->sessionName);
 			if (p->errorSpecPara != NULL)
 				lsp->error_spec = *p->errorSpecPara;
 			break;
