@@ -312,20 +312,20 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   if (lsp->dragon.srcLocalId)
   	sprintf(src_lid, "/0x%x", lsp->dragon.srcLocalId);
   else
-  	strcpy(src_lid, " ");
+  	src_lid[0] = 0;
   if (lsp->dragon.destLocalId)
   	sprintf(dst_lid, "/0x%x", lsp->dragon.destLocalId);
   else
-  	strcpy(dst_lid, " ");
+  	dst_lid[0] = 0;
   bandwidth = *(float*)&(lsp->common.GenericTSpec_Para)->R;
   bandwidth = Bps2Mbps(bandwidth);
   if (lsp->dragon.lspVtag == 0)
-  	strcpy(vlan_tag, " ");
+  	vlan_tag[0] = 0;
   else if (lsp->dragon.lspVtag == ANY_VTAG)
   	strcpy(vlan_tag, " : Vlan 'any'");
   else
   	sprintf(vlan_tag, " : Vlan %d", lsp->dragon.lspVtag);
-  zlog_info("Source %s-%s <--> Destination %s-%s : Bandwidth %4.1f %s", src_ip, src_lid, dst_ip, dst_lid, bandwidth, vlan_tag);
+  zlog_info("Source %s%s <--> Destination %s%s : Bandwidth %4.1f %s", src_ip, src_lid, dst_ip, dst_lid, bandwidth, vlan_tag);
 
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
