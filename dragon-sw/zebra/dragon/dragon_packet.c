@@ -303,8 +303,26 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   struct dragon_fifo_elt *packet;
   int msglen;
   u_int32_t narb_extra_options_mask = 0;
+  char src_ip[16], dst_ip[16], src_lid[8], dst_lid[8], vlan_tag[16];
 
   zlog_info("Creating path computation request message for NARB");
+  inet_ntop(AF_INET, &lsp->common.Session_Para.srcAddr, src_ip, 16);
+  inet_ntop(AF_INET, &lsp->common.Session_Para.destAddr, dst_ip, 16);
+  if (lsp->dragon.srcLocalId)
+  	sprintf(src_lid, " :%d", lsp->dragon.srcLocalId);
+  else
+  	strcpy(src_lid, " ");
+  if (lsp->dragon.destLocalId)
+  	sprintf(dst_lid, " :%d", lsp->dragon.destLocalId);
+  else
+  	strcpy(dst_lid, " ");
+  if (lsp->dragon.lspVtag == 0)
+  	strcpy(vlan_tag, " ");
+  else (lsp->dragon.lspVtag == ANY_VTAG)
+  	strcpy(vlan_tag, " : Vlan 'any'");
+  else
+  	sprintf(vlan_tag, " : Vlan %d", lsp->dragon.lspVtag);
+  zlog_info("-- Source %s%s <--> Destination %s%s : Bandwidth %d%s --", src_ip, src_lid, dst_ip, dst_lid, lsp->common.GenericTSpec_Para)->R, vlan_tag);
 
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
@@ -910,7 +928,9 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
                             lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_SUBNET_DTL;
 				break;
 			}
-
+			case DRAGON_TLV_ERR:
+				zlog_info("##NARB replied path computation error message (error code %d)##", ntohl(*(u_int32_t*)(tlvh+1)));
+				break;
 			default: /* Unrecognized tlv from NARB, just ignore it */
 				break;
 		}
