@@ -303,20 +303,22 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   struct dragon_fifo_elt *packet;
   int msglen;
   u_int32_t narb_extra_options_mask = 0;
-  char src_ip[20], dst_ip[20], src_lid[10], dst_lid[10], vlan_tag[10];
+  char src[32], dst[32], src_lid[10], dst_lid[10], vlan_tag[10];
   float bandwidth;
 
   zlog_info("Creating path computation request message for NARB");
-  inet_ntop(AF_INET, &lsp->common.Session_Para.srcAddr, src_ip, 20);
-  inet_ntop(AF_INET, &lsp->common.Session_Para.destAddr, dst_ip, 20);
-  if (lsp->dragon.srcLocalId)
+  inet_ntop(AF_INET, &lsp->common.Session_Para.srcAddr, src, 20);
+  inet_ntop(AF_INET, &lsp->common.Session_Para.destAddr, dst, 20);
+  if (lsp->dragon.srcLocalId) 
+  {
   	sprintf(src_lid, "/0x%x", lsp->dragon.srcLocalId);
-  else
-  	src_lid[0] = 0;
+	strcat(src, src_lid);
+  }
   if (lsp->dragon.destLocalId)
+  {
   	sprintf(dst_lid, "/0x%x", lsp->dragon.destLocalId);
-  else
-  	dst_lid[0] = 0;
+	strcat(dst, dst_lid);
+  }
   bandwidth = *(float*)&(lsp->common.GenericTSpec_Para)->R;
   bandwidth = Bps2Mbps(bandwidth);
   if (lsp->dragon.lspVtag == 0)
@@ -325,7 +327,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   	strcpy(vlan_tag, " : Vlan 'any'");
   else
   	sprintf(vlan_tag, " : Vlan %d", lsp->dragon.lspVtag);
-  zlog_info("Source %s%s <--> Destination %s%s : Bandwidth %4.1f %s", src_ip, src_lid, dst_ip, dst_lid, bandwidth, vlan_tag);
+  zlog_info("Source %s <--> Destination %s : Bandwidth %4.1f %s", src, dst, bandwidth, vlan_tag);
 
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
