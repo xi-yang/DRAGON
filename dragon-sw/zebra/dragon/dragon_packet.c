@@ -303,12 +303,12 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   struct dragon_fifo_elt *packet;
   int msglen;
   u_int32_t narb_extra_options_mask = 0;
-  char src_ip[16], dst_ip[16], src_lid[8], dst_lid[8], vlan_tag[16];
+  char src_ip[20], dst_ip[20], src_lid[10], dst_lid[10], vlan_tag[10];
   float bandwidth;
 
   zlog_info("Creating path computation request message for NARB");
-  inet_ntop(AF_INET, &lsp->common.Session_Para.srcAddr, src_ip, 16);
-  inet_ntop(AF_INET, &lsp->common.Session_Para.destAddr, dst_ip, 16);
+  inet_ntop(AF_INET, &lsp->common.Session_Para.srcAddr, src_ip, 20);
+  inet_ntop(AF_INET, &lsp->common.Session_Para.destAddr, dst_ip, 20);
   if (lsp->dragon.srcLocalId)
   	sprintf(src_lid, "/0x%x", lsp->dragon.srcLocalId);
   else
@@ -931,9 +931,6 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
                             lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_SUBNET_DTL;
 				break;
 			}
-			case DRAGON_TLV_ERR:
-				zlog_info("##NARB replied path computation error message (error code %d)##", ntohl(*(u_int32_t*)(tlvh+1)));
-				break;
 			default: /* Unrecognized tlv from NARB, just ignore it */
 				break;
 		}
@@ -998,6 +995,7 @@ dragon_read (struct thread *thread)
 {
   struct stream *ibuf;
   struct api_msg_header *amsgh;
+  struct dragon_tlv_header *tlvh;
   struct lsp *lsp = THREAD_ARG(thread);
   struct lsp *l;
   u_int8_t find = 0;
@@ -1064,8 +1062,8 @@ dragon_read (struct thread *thread)
 		break;
 
 	case DMSG_NARB_TOPO_REJECT: /* Request is rejected by the NARB */
-		/*process_narb_topo_rej();*/
-                zlog_info("NARB failed to return path computation result!");
+		tlvh = DTLV_HDR_TOP(amsgh);
+		zlog_info("##NARB replied path computation error message (error code %d)!", ntohl(*(u_int32_t*)(tlvh+1)));
 		break;
 
 	case DMSG_NARB_TOPO_DELETE_CONF: /* Topology removal request is being confirmed by the NARB */
