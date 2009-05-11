@@ -9,16 +9,16 @@ fi
 ETC_DIR=$PREFIX/etc
 
 ZEBRA_DAEMON=$PREFIX/sbin/zebra
-ZEBRA_ARGS="-d -f $ETC_DIR/zebra.conf"
+ZEBRA_ARGS="-d -A 127.0.0.1 -f $ETC_DIR/zebra.conf"
 
 OSPF_DAEMON=$PREFIX/sbin/ospfd
-OSPF_ARGS="-d -f $ETC_DIR/ospfd.conf"
+OSPF_ARGS="-d -A 127.0.0.1 -f $ETC_DIR/ospfd.conf"
 
 RSVP_DAEMON=$PREFIX/bin/RSVPD
 RSVP_ARGS="-c $ETC_DIR/RSVPD.conf -d -o /var/log/RSVPD.log -L select,ref,packet,timer"
 
 DRAGON_DAEMON=$PREFIX/bin/dragon
-DRAGON_ARGS="-d -f $ETC_DIR/dragon.conf"
+DRAGON_ARGS="-d -A 127.0.0.1 -f $ETC_DIR/dragon.conf"
 
 NODE_AGENT=$PREFIX/bin/node_agent
 NODE_AGENT_ARGS="-d -c $ETC_DIR/node_agent.conf"
@@ -27,10 +27,10 @@ NODE_AGENT_ARGS="-d -c $ETC_DIR/node_agent.conf"
 # OSPF_DAEMON/OSPF_ARGS variables are not used for NARBs:
 
 OSPF_INTER_DAEMON=$PREFIX/sbin/ospfd
-OSPF_INTER_ARGS="-d -I -P 2614 -f $ETC_DIR/ospfd-inter.conf"
+OSPF_INTER_ARGS="-d -A 127.0.0.1 -I -P 2614 -f $ETC_DIR/ospfd-inter.conf"
 
 OSPF_INTRA_DAEMON=$PREFIX/sbin/ospfd
-OSPF_INTRA_ARGS="-d -P 2604 -f $ETC_DIR/ospfd-intra.conf"
+OSPF_INTRA_ARGS="-d -A 127.0.0.1 -P 2604 -f $ETC_DIR/ospfd-intra.conf"
 
 NARB_DAEMON=$PREFIX/bin/run_narb.sh
 NARB_ARGS=""
