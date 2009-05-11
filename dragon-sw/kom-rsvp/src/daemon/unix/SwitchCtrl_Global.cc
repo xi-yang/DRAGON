@@ -848,9 +848,13 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
 		vendor = SMC1G8848;  
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is SMC 8848");
         } else if (vendorSystemDescription.leftequal("Juniper Networks, Inc. ex3200")) {
-		// SMC 8848 Ethernet switch
+		// Juniper EX3200 switch
 		vendor = JuniperEX3200;  
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Juniper EX3200");
+        } else if (vendorSystemDescription.leftequal("Juniper Networks, Inc. ex4200")) {
+		// Juniper EX4200 switch
+		vendor = JuniperEX3200;  
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Juniper EX4200");
         } else {
         	vendor = Illegal;
 		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", vendorSystemDescription);
