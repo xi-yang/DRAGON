@@ -828,7 +828,11 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         } else if (vendorSystemDescription.leftequal("Ether-Raptor")) {
         	vendor = RaptorER1010;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor is Raptor");
-	} else if (vendorSystemDescription.leftequal("Cisco IOS Software, C3750 Software")) {
+        } else if (vendorSystemDescription.leftequal("GSM7224 L2 Managed Gigabit Switch")) {
+                // tested by Praga - UNL (pangu@cse.unl.edu), found to be RFC2674-compliant
+	        vendor = RFC2674;
+	        LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Netgear GSM7224");
+ 	} else if (vendorSystemDescription.leftequal("Cisco IOS Software, C3750 Software")) {
         	vendor = Catalyst3750;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Cisco 3750");
 	} else if (vendorSystemDescription.leftequal("Cisco Internetwork Operating System Software") || 
@@ -842,11 +846,11 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is HP ProCurve 5406");
 	} else if (String("8*10GE L2 Switch") == vendorSystemDescription) {  // SMC 8 ports 10G Ethernet switch
         	vendor = SMC10G8708;
-		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is SMC 8708");
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is SMC 8708L2");
         } else if (vendorSystemDescription.leftequal("24/48 port 10/100/1000 Stackable Managed Switch with 2 X 10G uplinks")) {
 		// SMC 8848 Ethernet switch
 		vendor = SMC1G8848;  
-		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is SMC 8848");
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is SMC 8848M");
         } else if (vendorSystemDescription.leftequal("Juniper Networks, Inc. ex3200")) {
 		// Juniper EX3200 switch
 		vendor = JuniperEX3200;  
