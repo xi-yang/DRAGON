@@ -1,25 +1,25 @@
 /****************************************************************************
 
-CLI Based Switch Control Module header file SwitchCtrl_Session_JuniperEX3200.h
+CLI Based Switch Control Module header file SwitchCtrl_Session_JUNOS.h
 Created by Xi Yang on 03/12/2008
 To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/
 
-#ifndef _SwitchCtrl_Session_JuniperEX3200_H_
-#define _SwitchCtrl_Session_JuniperEX3200_H_
+#ifndef _SwitchCtrl_Session_JUNOS_H_
+#define _SwitchCtrl_Session_JUNOS_H_
 
 #include "SwitchCtrl_Global.h"
 #include "CLI_Session.h"
 
 
-class SwitchCtrl_Session_JuniperEX3200: public CLI_Session
+class SwitchCtrl_Session_JUNOS: public CLI_Session
 {
 
 public:
-	SwitchCtrl_Session_JuniperEX3200(): CLI_Session() { }	
-	SwitchCtrl_Session_JuniperEX3200(const String& sName, const NetAddress& swAddr): CLI_Session(sName, swAddr) { }
-	virtual ~SwitchCtrl_Session_JuniperEX3200() { }
+	SwitchCtrl_Session_JUNOS(): CLI_Session() { }	
+	SwitchCtrl_Session_JUNOS(const String& sName, const NetAddress& swAddr): CLI_Session(sName, swAddr) { }
+	virtual ~SwitchCtrl_Session_JUNOS() { }
 
 	virtual bool connectSwitch();
 	virtual void disconnectSwitch();
@@ -90,5 +90,5 @@ protected:
 	}
 };
 
-#endif //ifndef _SwitchCtrl_Session_JuniperEX3200_H_
+#endif //ifndef _SwitchCtrl_Session_JUNOS_H_
 

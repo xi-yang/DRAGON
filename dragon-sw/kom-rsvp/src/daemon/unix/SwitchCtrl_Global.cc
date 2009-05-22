@@ -650,7 +650,7 @@ bool SwitchCtrl_Session::getMonSwitchInfo(MON_Reply_Subobject& monReply)
                monReply.switch_info.switch_port = 161;
                break;
            case Force10E600:
-           case JuniperEX3200:
+           case JUNOS:
                monReply.switch_info.access_type = CLI_SESSION_TYPE;
                if (CLI_SESSION_TYPE == CLI_TELNET)
                    sscanf(TELNET_PORT, "%d", &monReply.switch_info.switch_port);
@@ -853,12 +853,12 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is SMC 8848M");
         } else if (vendorSystemDescription.leftequal("Juniper Networks, Inc. ex3200")) {
 		// Juniper EX3200 switch
-		vendor = JuniperEX3200;  
-		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Juniper EX3200");
+		vendor = JUNOS;  
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is JUNOS (Juniper EX3200)");
         } else if (vendorSystemDescription.leftequal("Juniper Networks, Inc. ex4200")) {
 		// Juniper EX4200 switch
-		vendor = JuniperEX3200;  
-		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Juniper EX4200");
+		vendor = JUNOS;  
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is JUNOS (Juniper EX4200)");
         } else {
         	vendor = Illegal;
 		LOG(2)( Log::MPLS, "VLSR: SNMP: Unrecognized switch vendor/model description: ", vendorSystemDescription);
@@ -918,8 +918,8 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
         case SMC1G8848:
             ssNew = new SwitchCtrl_Session_SMC1G8848("VLSR-SMC-8848", switchAddr);
             break;
-        case JuniperEX3200:
-            ssNew = new SwitchCtrl_Session_JuniperEX3200("VLSR-Juniper-EX3200", switchAddr);
+        case JUNOS:
+            ssNew = new SwitchCtrl_Session_JUNOS("VLSR-Juniper-EX", switchAddr);
             break;                                        
         case PowerConnect6024:
         case PowerConnect6224:

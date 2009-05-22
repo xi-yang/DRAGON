@@ -1,17 +1,17 @@
 /****************************************************************************
 
-CLI Based Switch Control Module source file SwitchCtrl_Session_JuniperEX3200.cc
+CLI Based Switch Control Module source file SwitchCtrl_Session_JUNOS.cc
 Created by Xi Yang on 03/12/2009
  To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/
 
-#include "SwitchCtrl_Session_JuniperEX3200.h"
+#include "SwitchCtrl_Session_JUNOS.h"
 #include "SwitchCtrl_JUNOScript.h"
 #include "RSVP.h"
 #include "RSVP_Log.h"
 
-bool SwitchCtrl_Session_JuniperEX3200::connectSwitch()
+bool SwitchCtrl_Session_JUNOS::connectSwitch()
 {
     if (SwitchCtrl_Session::connectSwitch() == false)
         return false;
@@ -40,27 +40,27 @@ _abort:
     return false;
 }
 
-void SwitchCtrl_Session_JuniperEX3200::disconnectSwitch()
+void SwitchCtrl_Session_JUNOS::disconnectSwitch()
 {
     CLI_Session::disengage("</junoscript>");
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::startTransaction()
+bool SwitchCtrl_Session_JUNOS::startTransaction()
 {
-    if (!active || vendor!=JuniperEX3200 || !pipeAlive())
+    if (!active || vendor!=JUNOS || !pipeAlive())
         return false;
 
     if (!RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_JUNOS_ONE_COMMIT))
         return true;
     //Continue here only if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
-    LOG(1)(Log::MPLS, "VLSR: SwitchCtrl_Session_JuniperEX3200::startTransaction for LSP setup/teardown");
+    LOG(1)(Log::MPLS, "VLSR: SwitchCtrl_Session_JUNOS::startTransaction for LSP setup/teardown");
 
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><lock-configuration /></rpc>\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::startTransaction() failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::startTransaction() failed (junoscript fatal error)");
         closePipe();
         return false;
     }
@@ -74,52 +74,52 @@ bool SwitchCtrl_Session_JuniperEX3200::startTransaction()
     return true;
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::endTransaction()
+bool SwitchCtrl_Session_JUNOS::endTransaction()
 {
-    if (!active || vendor!=JuniperEX3200 || !pipeAlive())
+    if (!active || vendor!=JUNOS || !pipeAlive())
         return false;
 
     if (!RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_JUNOS_ONE_COMMIT))
         return true;
     //Continue here only if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
-    LOG(1)(Log::MPLS, "VLSR: SwitchCtrl_Session_JuniperEX3200::endTransaction for LSP setup/teardown");
+    LOG(1)(Log::MPLS, "VLSR: SwitchCtrl_Session_JUNOS::endTransaction for LSP setup/teardown");
 
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><commit-configuration /></rpc>\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::endTransaction failed (junoscript fatal error)");
         closePipe();
         return false;
     }
     JUNOScriptCommitReplyParser commitReplyParser(bufScript);
     if (!commitReplyParser.loadAndVerifyScript())
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed to commit configuration");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::endTransaction failed to commit configuration");
     }
     else if (!commitReplyParser.isSuccessful())
     {
-        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed to commit configuration: ", commitReplyParser.getErrorMessage());
+        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::endTransaction failed to commit configuration: ", commitReplyParser.getErrorMessage());
     }
     
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::endTransaction failed (junoscript fatal error)");
         closePipe();
         return false;
     }
     JUNOScriptUnlockReplyParser unlockReplyParser(bufScript);
     if (!unlockReplyParser.loadAndVerifyScript())
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed to unlock configuration database");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::endTransaction failed to unlock configuration database");
         return false;
     }
     else if (!unlockReplyParser.isSuccessful())
     {
-        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::endTransaction failed to unlock configuration database: ", unlockReplyParser.getErrorMessage());
+        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::endTransaction failed to unlock configuration database: ", unlockReplyParser.getErrorMessage());
         return false;
     }
 
@@ -127,9 +127,9 @@ bool SwitchCtrl_Session_JuniperEX3200::endTransaction()
 }
 
 
-bool SwitchCtrl_Session_JuniperEX3200::preAction()
+bool SwitchCtrl_Session_JUNOS::preAction()
 {
-    if (!active || vendor!=JuniperEX3200 || !pipeAlive())
+    if (!active || vendor!=JUNOS || !pipeAlive())
         return false;
 
     //Do not lock/commit/unlock configuration for each command if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
@@ -141,7 +141,7 @@ bool SwitchCtrl_Session_JuniperEX3200::preAction()
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::preAction failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::preAction failed (junoscript fatal error)");
         closePipe();
         return false;
     }
@@ -155,9 +155,9 @@ bool SwitchCtrl_Session_JuniperEX3200::preAction()
     return true;
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::postAction()
+bool SwitchCtrl_Session_JUNOS::postAction()
 {
-    if (!active || vendor!=JuniperEX3200 || !pipeAlive())
+    if (!active || vendor!=JUNOS || !pipeAlive())
         return false;
 
     //Do not lock/commit/unlock configuration for each command if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
@@ -169,27 +169,27 @@ bool SwitchCtrl_Session_JuniperEX3200::postAction()
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postAction failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::postAction failed (junoscript fatal error)");
         closePipe();
         return false;
     }
     JUNOScriptUnlockReplyParser unlockReplyParser(bufScript);
     if (!unlockReplyParser.loadAndVerifyScript())
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postAction failed to unlock configuration database");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::postAction failed to unlock configuration database");
         return false;
     }
     else if (!unlockReplyParser.isSuccessful())
     {
-        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postAction failed to unlock configuration database: ", unlockReplyParser.getErrorMessage());
+        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::postAction failed to unlock configuration database: ", unlockReplyParser.getErrorMessage());
         return false;
     }
     return true;
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
+bool SwitchCtrl_Session_JUNOS::postActionWithCommit()
 {
-    if (!active || vendor!=JuniperEX3200 || !pipeAlive())
+    if (!active || vendor!=JUNOS || !pipeAlive())
         return false;
 
     //Do not lock/commit/unlock configuration for each command if "switch_vlan_options junos-one-commit" appears in RSVPD.conf
@@ -201,44 +201,44 @@ bool SwitchCtrl_Session_JuniperEX3200::postActionWithCommit()
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::postActionWithCommit failed (junoscript fatal error)");
         closePipe();
         return false;
     }
     JUNOScriptCommitReplyParser commitReplyParser(bufScript);
     if (!commitReplyParser.loadAndVerifyScript())
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to commit configuration");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::postActionWithCommit failed to commit configuration");
     }
     else if (!commitReplyParser.isSuccessful())
     {
-        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to commit configuration: ", commitReplyParser.getErrorMessage());
+        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::postActionWithCommit failed to commit configuration: ", commitReplyParser.getErrorMessage());
     }
     
     DIE_IF_NEGATIVE(n= writeShell( "<rpc><unlock-configuration /></rpc>\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::postActionWithCommit failed (junoscript fatal error)");
         closePipe();
         return false;
     }
     JUNOScriptUnlockReplyParser unlockReplyParser(bufScript);
     if (!unlockReplyParser.loadAndVerifyScript())
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to unlock configuration database");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::postActionWithCommit failed to unlock configuration database");
         return false;
     }
     else if (!unlockReplyParser.isSuccessful())
     {
-        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::postActionWithCommit failed to unlock configuration database: ", unlockReplyParser.getErrorMessage());
+        LOG(2)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::postActionWithCommit failed to unlock configuration database: ", unlockReplyParser.getErrorMessage());
         return false;
     }
 
     return true;
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
+bool SwitchCtrl_Session_JUNOS::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 {
     uint32 bit;
     bool ret = false;
@@ -274,7 +274,7 @@ bool SwitchCtrl_Session_JuniperEX3200::movePortToVLANAsUntagged(uint32 port, uin
     return ret;
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
+bool SwitchCtrl_Session_JUNOS::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
 {
     uint32 bit;
     bool ret = false;
@@ -294,7 +294,7 @@ bool SwitchCtrl_Session_JuniperEX3200::movePortToVLANAsTagged(uint32 port, uint3
     return ret;
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::removePortFromVLAN(uint32 port, uint32 vlanID)
+bool SwitchCtrl_Session_JUNOS::removePortFromVLAN(uint32 port, uint32 vlanID)
 {
     uint32 bit;
     bool ret = false;
@@ -323,7 +323,7 @@ bool SwitchCtrl_Session_JuniperEX3200::removePortFromVLAN(uint32 port, uint32 vl
 }
 
 
-bool SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript(uint32 portID, uint32 vlanID, bool isTagged)
+bool SwitchCtrl_Session_JUNOS::addVLANPort_JUNOScript(uint32 portID, uint32 vlanID, bool isTagged)
 {
     int n;
     if (!preAction())
@@ -339,7 +339,7 @@ bool SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript(uint32 portID, uin
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::addVLANPort_JUNOScript failed (junoscript fatal error)");
         closePipe();
         return false;
     }
@@ -351,13 +351,13 @@ bool SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript(uint32 portID, uin
 _out:
     if (ret == false)
     {
-          LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::addVLANPort_JUNOScript failed");
+          LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::addVLANPort_JUNOScript failed");
           return (false && postAction()); // without commit
     }
     return postActionWithCommit();
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript(uint32 portID, uint32 vlanID, bool isTagged)
+bool SwitchCtrl_Session_JUNOS::deleteVLANPort_JUNOScript(uint32 portID, uint32 vlanID, bool isTagged)
 {
     int n;
     if (!preAction())
@@ -373,7 +373,7 @@ bool SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript(uint32 portID, 
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::deleteVLANPort_JUNOScript failed (junoscript fatal error)");
         closePipe();
         return false;
     }
@@ -385,7 +385,7 @@ bool SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript(uint32 portID, 
 _out:
     if (ret == false)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::deleteVLANPort_JUNOScript failed");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::deleteVLANPort_JUNOScript failed");
         return (false && postAction()); // without commit
     }
 
@@ -395,7 +395,7 @@ _out:
 /////--------QoS Functions------/////
 
 //committed_rate and peak_rate are measued in Mbps; burst_size and peak_burst_size are in KB
-bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
+bool SwitchCtrl_Session_JUNOS::policeInputBandwidth_JUNOScript(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     int n;
     int committed_rate_int = (int)committed_rate;
@@ -415,7 +415,7 @@ bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_u
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::policeInputBandwidth_JUNOScript failed (junoscript fatal error)");
         closePipe();
         return false;
     }
@@ -442,7 +442,7 @@ bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_u
         DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
         if (n == 2)
         {
-            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript failed (junoscript fatal error)");
+            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::policeInputBandwidth_JUNOScript failed (junoscript fatal error)");
             closePipe();
             return false;
         }
@@ -455,7 +455,7 @@ bool SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript(bool do_u
 _out:
     if (ret == false)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::policeInputBandwidth_JUNOScript failed");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::policeInputBandwidth_JUNOScript failed");
         return (false && postAction()); // without commit
     }
 
@@ -464,7 +464,7 @@ _out:
 
 ////////-------vendor specific hook procedures------////////////
 
-bool SwitchCtrl_Session_JuniperEX3200::hook_createVLAN(const uint32 vlanID)
+bool SwitchCtrl_Session_JUNOS::hook_createVLAN(const uint32 vlanID)
 {
     int n;
     bool ret = false;
@@ -481,7 +481,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_createVLAN(const uint32 vlanID)
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::hook_createVLAN failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::hook_createVLAN failed (junoscript fatal error)");
         closePipe();
         return false;
     }
@@ -493,7 +493,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_createVLAN(const uint32 vlanID)
 _out:
     if (ret == false)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::hook_createVLAN failed");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::hook_createVLAN failed");
         return (false && postAction()); // without commit
     }
 
@@ -509,7 +509,7 @@ _out:
     return ret;
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN(const uint32 vlanID)
+bool SwitchCtrl_Session_JUNOS::hook_removeVLAN(const uint32 vlanID)
 {
     int n;
     bool ret = false;
@@ -526,7 +526,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN(const uint32 vlanID)
     DIE_IF_NEGATIVE(n= readShellBuffer(bufScript, "</rpc-reply>", "</junoscript>", true, 1, 10)) ;
     if (n == 2)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN failed (junoscript fatal error)");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::hook_removeVLAN failed (junoscript fatal error)");
         closePipe();
         return false;
     }
@@ -538,7 +538,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN(const uint32 vlanID)
 _out:
     if (ret == false)
     {
-        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JuniperEX3200::hook_removeVLAN failed");
+        LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_JUNOS::hook_removeVLAN failed");
         return (false && postAction()); // without commit
     }
 
@@ -546,7 +546,7 @@ _out:
     //PortMapList cleanup by caller (SwitchCtrl_Session::removeVLAN())
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::hook_isVLANEmpty(const vlanPortMap &vpm)
+bool SwitchCtrl_Session_JUNOS::hook_isVLANEmpty(const vlanPortMap &vpm)
 {
     vlanPortMap vpm_empty;
     memset(&vpm_empty, 0, sizeof(vlanPortMap));
@@ -554,7 +554,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_isVLANEmpty(const vlanPortMap &vpm)
     return (memcmp(&vpm.portbits, &vpm_empty.portbits, MAX_VLAN_PORT_BYTES) == 0);
 }
 
-void SwitchCtrl_Session_JuniperEX3200::hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars)
+void SwitchCtrl_Session_JUNOS::hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars)
 {
     memset(&vpm, 0, sizeof(vlanPortMap));
     if (vars->val.bitstring ){
@@ -565,7 +565,7 @@ void SwitchCtrl_Session_JuniperEX3200::hook_getPortMapFromSnmpVars(vlanPortMap &
     vpm.vid = hook_convertVLANInterfaceToID((uint32)vars->name[vars->name_length - 1]);
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::hook_createPortToIDRefTable(portRefIDList &portRefIdConvList)
+bool SwitchCtrl_Session_JUNOS::hook_createPortToIDRefTable(portRefIDList &portRefIdConvList)
 {
     struct snmp_pdu *pdu;
     struct snmp_pdu *response;
@@ -640,7 +640,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_createPortToIDRefTable(portRefIDList
     return true;
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::hook_createVlanInterfaceToIDRefTable(vlanRefIDList &vlanRefIdConvList)
+bool SwitchCtrl_Session_JUNOS::hook_createVlanInterfaceToIDRefTable(vlanRefIDList &vlanRefIdConvList)
 {
     struct snmp_pdu *pdu;
     struct snmp_pdu *response;
@@ -712,14 +712,14 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_createVlanInterfaceToIDRefTable(vlan
     return true;
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
+bool SwitchCtrl_Session_JUNOS::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 {
     if (HasPortBit(vpm.portbits, convertUnifiedPort2JuniperEXBit(port)))
         return true;
     return false;
 }
 
-bool SwitchCtrl_Session_JuniperEX3200::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
+bool SwitchCtrl_Session_JUNOS::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
 {
     uint32 bit;
     uint32 port;
@@ -741,7 +741,7 @@ bool SwitchCtrl_Session_JuniperEX3200::hook_getPortListbyVLAN(PortList& portList
     return true;
 }
 
-uint32 SwitchCtrl_Session_JuniperEX3200::hook_convertPortInterfaceToID(uint32 id)
+uint32 SwitchCtrl_Session_JUNOS::hook_convertPortInterfaceToID(uint32 id)
 {
     portRefIDList::Iterator it;
     for (it = portRefIdConvList.begin(); it != portRefIdConvList.end(); ++it)
@@ -753,7 +753,7 @@ uint32 SwitchCtrl_Session_JuniperEX3200::hook_convertPortInterfaceToID(uint32 id
     return 0;
 }
 
-uint32 SwitchCtrl_Session_JuniperEX3200::hook_convertPortIDToInterface(uint32 id)
+uint32 SwitchCtrl_Session_JUNOS::hook_convertPortIDToInterface(uint32 id)
 {
     portRefIDList::Iterator it;
     for (it = portRefIdConvList.begin(); it != portRefIdConvList.end(); ++it)
@@ -765,7 +765,7 @@ uint32 SwitchCtrl_Session_JuniperEX3200::hook_convertPortIDToInterface(uint32 id
     return 0;
 }
 
-uint32 SwitchCtrl_Session_JuniperEX3200::hook_convertVLANInterfaceToID(uint32 id)
+uint32 SwitchCtrl_Session_JUNOS::hook_convertVLANInterfaceToID(uint32 id)
 {
     vlanRefIDList::Iterator it;
     for (it = vlanRefIdConvList.begin(); it != vlanRefIdConvList.end(); ++it)
@@ -777,7 +777,7 @@ uint32 SwitchCtrl_Session_JuniperEX3200::hook_convertVLANInterfaceToID(uint32 id
     return 0;
 }
 
-uint32 SwitchCtrl_Session_JuniperEX3200::hook_convertVLANIDToInterface(uint32 id)
+uint32 SwitchCtrl_Session_JUNOS::hook_convertVLANIDToInterface(uint32 id)
 {
     vlanRefIDList::Iterator it;
     for (it = vlanRefIdConvList.begin(); it != vlanRefIdConvList.end(); ++it)

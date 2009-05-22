@@ -328,7 +328,7 @@ void CLI_Session::disengage(const char *exitString)
     int n;
     if (pipeAlive()) {
         if (exitString != NULL && (n = writeShell(exitString, 5)) >= 0) {
-          if (vendor != JuniperEX3200)
+          if (vendor != JUNOS)
               n = readShell(SWITCH_PROMPT, NULL, 1, 10);
         }
     }
@@ -370,13 +370,6 @@ bool CLI_Session::refresh()
         return false;
     }
 
-    /*
-    if (vendor == JuniperEX3200) //JUNOScript in non-interactive mode
-         return true;
-  
-      DIE_IF_NEGATIVE(n = writeShell("\n", 5));
-      DIE_IF_NEGATIVE(n = readShell(SWITCH_PROMPT, NULL, 1, 10));
-    */
     return true;
 }
 
@@ -390,7 +383,7 @@ bool CLI_Session::pipeAlive()
   if ((n = writeShell(CLI_SESSION_TYPE == CLI_TL1_TELNET? ";" : "\n", 2)) < 0 || pipe_broken) 
   	return false;
 
-  if (vendor == JuniperEX3200) //JUNOScript in non-interactive mode
+  if (vendor == JUNOS) //JUNOScript in non-interactive mode
        return true;
 
   if ((n = readShell (SWITCH_PROMPT, NULL, 0, 3)) < 0  || pipe_broken) 
