@@ -378,6 +378,7 @@ int mon_query_timer(struct thread *t)
   struct _MON_Reply_Para monReplyPara;
   memset(&monReplyPara, 0, sizeof(struct _MON_Reply_Para));
   monReplyPara.switch_options = MON_ERRCODE_TIMEOUT;
+  apiserv->t_query_timer = NULL;
   mon_apiserver_send_reply(apiserv, MON_API_MSGTYPE_GENERAL, MON_API_ACTION_ERROR, &monReplyPara);
   return 0;
 }
