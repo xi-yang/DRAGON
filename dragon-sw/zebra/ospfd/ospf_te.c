@@ -1432,7 +1432,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
                	top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_tdm.indication);
            }
 	}
-	else if (vty != NULL && (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_SUBNET_UNI))
+	else if (vty != NULL && (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI))
 	{
 	    vty_out (vty, "  -- TDM Subnet-UNI specific information--%s", VTY_NEWLINE);
 	    strcpy (ipv4, inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.tna_ipv4));
@@ -1459,7 +1459,8 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
   }
   else if (top->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
   {
-	if (vty != NULL && (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC)
+	if (vty != NULL && ntohs(tlvh->length) > STD_ISCD_LENGTH 
+		&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC)
 		&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.length) == sizeof(struct link_ifswcap_specific_vlan))) 
 	{
 	    u_char* v = top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask;

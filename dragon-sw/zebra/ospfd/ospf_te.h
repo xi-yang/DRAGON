@@ -272,6 +272,12 @@ struct link_ifswcap_specific_vlan {
 
 /* Link Sub-TLV / Switching Capability-specific information: VLAN/Ethernet via Subnet-UNI */
 #define IFSWCAP_SPECIFIC_SUBNET_UNI 0x4000
+/* The following options depends on IFSWCAP_SPECIFIC_SUBNET_UNI being set */
+#define IFSWCAP_SPECIFIC_SUBNET_CIEN 0x0100
+#define IFSWCAP_SPECIFIC_SUBNET_INFN 0x0200
+#define IFSWCAP_SPECIFIC_SUBNET_JNPR 0x0400
+#define IFSWCAP_SPECIFIC_SUBNET_CSCO 0x0800
+
 #define MAX_TIMESLOTS_NUM 192 /* 192 STS-1 = 10Gbps */
 struct link_ifswcap_specific_subnet_uni {
 	u_int16_t		length;
