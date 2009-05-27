@@ -51,6 +51,7 @@ struct _MON_LSP_Info
   u_int16_t lsp_id;
   u_int16_t tunnel_id;
   u_int32_t status;
+  u_int32_t time_sec;
 };
 
 struct _LSPService_Request

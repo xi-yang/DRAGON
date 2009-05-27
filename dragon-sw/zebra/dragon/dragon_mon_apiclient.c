@@ -442,7 +442,8 @@ void msg_display(struct mon_api_msg* msg)
           lsp_info = (struct _MON_LSP_Info*)(tlv + 1);
           strcpy(src_ip, inet_ntoa(lsp_info->source)); 
           strcpy(dest_ip, inet_ntoa(lsp_info->destination)); 
-          printf("\t\t>>LSP Info: src_ip=%s, lsp_id=%d, dest_ip=%s, tunnel_id=%d, status=0x%x\n)", src_ip,  lsp_info->lsp_id, dest_ip, lsp_info->tunnel_id, lsp_info->status);
+          printf("\t\t>>LSP Info: src_ip=%s, lsp_id=%d, dest_ip=%s, tunnel_id=%d, status=0x%x\n \t\t\t-->Created at %s\n", 
+		  	src_ip,  lsp_info->lsp_id, dest_ip, lsp_info->tunnel_id, lsp_info->status, ctime((time_t*)&lsp_info->time_sec));
           break;
         }
         case MON_TLV_ERROR:

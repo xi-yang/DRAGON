@@ -509,6 +509,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             lsp_info->lsp_id = lsp->common.Session_Para.srcPort;
             lsp_info->tunnel_id = lsp->common.Session_Para.destPort;
             lsp_info->status = lsp->status;
+            lsp_info->time_sec = lsp->timestamp.tv_sec;
             len += sizeof(struct _MON_LSP_Info);
             rmsg = mon_api_msg_new(MON_API_MSGTYPE_LSPINFO, MON_API_ACTION_DATA, len, apiserv->ucid, ntohl(msg->header.seqnum), 0, buf);
             MON_APISERVER_POST_MESSAGE(apiserv, rmsg);
