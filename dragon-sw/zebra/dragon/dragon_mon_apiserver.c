@@ -372,6 +372,16 @@ int mon_apiserver_accept (struct thread *thread)
   return 0;
 }
 
+int mon_query_timer(struct thread *t)
+{
+  struct mon_apiserver* apiserv = (struct mon_apiserver*)t->arg;
+  struct _MON_Reply_Para monReplyPara;
+  memset(&monReplyPara, 0, sizeof(struct _MON_Reply_Para));
+  monReplyPara.switch_options = MON_ERRCODE_TIMEOUT;
+  mon_apiserver_send_reply(apiserv, MON_API_MSGTYPE_GENERAL, MON_API_ACTION_ERROR, &monReplyPara);
+  return 0;
+}
+
 int mon_apiserver_read (struct thread *thread)
 {
   struct mon_apiserver *apiserv;
@@ -620,6 +630,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
           {
           case MON_API_ACTION_RTRV:
             zMonitoringQuery(dmaster.api, ntohl(msg->header.ucid), ntohl(msg->header.seqnum), "none", 0, 0, 0);
+            DRAGON_TIMER_ON(apiserv->t_query_timer, mon_query_timer, apiserv, 2);
             rc = 0;
             break;
           default:
@@ -649,6 +660,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
                 goto _error;
             	}
             zMonitoringQuery(dmaster.api, ntohl(msg->header.ucid), ntohl(msg->header.seqnum), lsp_gri, *(u_int32_t*)(tlv+1), 0, 0);
+            DRAGON_TIMER_ON(apiserv->t_query_timer, mon_query_timer, apiserv, 2);
             rc = 0;
             break;
           default:
@@ -807,6 +819,9 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
   struct dragon_tlv_header* tlv = (struct dragon_tlv_header*)buf;
   u_int16_t bodylen = 0;
 
+  if (apiserv->t_query_timer != NULL)
+        DRAGON_TIMER_OFF(apiserv->t_query_timer);
+
   /*assemble reply tlv's into buffer */
   /* switch_info tlv */
   tlv->type = htons(MON_TLV_SWITCH_INFO);
@@ -860,6 +875,26 @@ int mon_apiserver_send_reply (struct mon_apiserver *apiserv, u_int8_t type, u_in
           default:
             zlog_warn("mon_apiserver_send_reply (message type %d): Unkown action %d for apiserver(ucid=%x)", type, action, apiserv->ucid);
             return -1;	  	
+          }
+        break;
+
+      case MON_API_MSGTYPE_GENERAL:
+	 switch (action)
+          {
+          case MON_API_ACTION_DATA:
+            ; /*noop*/
+            break;
+          case MON_API_ACTION_ERROR:
+            tlv = (struct dragon_tlv_header*)(buf + bodylen);
+            tlv->type = htons(MON_TLV_ERROR);
+            tlv->length = htons(sizeof(u_int32_t));
+            bodylen += sizeof(struct dragon_tlv_header);	
+            *(u_int32_t*)(buf+bodylen) = (reply->switch_options& 0xffff);
+            bodylen += sizeof(u_int32_t);
+            break;
+          default:
+            zlog_warn("mon_apiserver_send_reply (message type %d): Unkown action %d for apiserver(ucid=%x)", type, action, apiserv->ucid);
+            return -1;
           }
         break;
 

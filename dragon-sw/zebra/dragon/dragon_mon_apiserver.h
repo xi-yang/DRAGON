@@ -22,6 +22,7 @@ struct mon_apiserver
   /* Read and write threads */
   struct thread *t_sync_read;
   struct thread *t_sync_write;
+  struct thread *t_query_timer;
 };
 
 
@@ -83,6 +84,7 @@ struct _PCE_Spec
 #define MON_API_MSGTYPE_SWITCH 		0x10 /* Monitoring information for switch */
 #define MON_API_MSGTYPE_CIRCUIT		0x20 /* Monitoring information for circuit */
 #define MON_API_MSGTYPE_LSPPROV		0x30 /* LSP provisioning */
+#define MON_API_MSGTYPE_GENERAL		0xf0 /*  */
 
 #define MON_API_ACTION_RTRV 	0x01 /* Information retrieval/query */
 #define MON_API_ACTION_INSERT 	0x02 /* Insersion/Addition/Provisioning */
@@ -103,6 +105,8 @@ struct _PCE_Spec
 #define MON_TLV_LSP_REQUEST	0x09
 #define MON_TLV_PCE_SPEC		0x0a
 #define MON_TLV_ERROR			0x0f
+
+#define MON_ERRCODE_TIMEOUT	0xf0f0
 
 #define MON_SWITCH_OPTION_SUBNET 			0x0001
 #define MON_SWITCH_OPTION_SUBNET_SRC 		0x0002
