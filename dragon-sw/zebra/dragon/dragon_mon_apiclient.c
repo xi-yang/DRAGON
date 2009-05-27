@@ -337,6 +337,9 @@ void msg_display(struct mon_api_msg* msg)
     case MON_API_MSGTYPE_LSPPROV:
       printf("MON_API_MSGTYPE_LSPPROV\n");
       break;
+    case MON_API_MSGTYPE_GENERAL:
+      printf("MON_API_MSGTYPE_GENERAL\n");
+      break;
     default:
       printf("UNKNOWN (%d)\n", msg->header.type);
     }
