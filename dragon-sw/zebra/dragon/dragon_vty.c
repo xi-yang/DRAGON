@@ -955,10 +955,13 @@ DEFUN (dragon_edit_lsp,
   }
   if (!found)
   {
+  	struct timeval timeNow;
+  	gettimeofday(&timeNow, NULL);
   	lsp = XMALLOC(MTYPE_OSPF_DRAGON, sizeof(struct lsp));
 	memset(lsp, 0, sizeof(struct lsp));
 	set_lsp_default_para(lsp);
 	lsp->status = LSP_EDIT;
+	lsp->timestamp = timeNow.tv_sec;
 	strcpy((lsp->common.SessionAttribute_Para)->sessionName, argv[0]);
 	(lsp->common.SessionAttribute_Para)->nameLength = strlen(argv[0]);
 	listnode_add(dmaster.dragon_lsp_table, lsp);	
@@ -1728,6 +1731,8 @@ DEFUN (dragon_commit_lsp_sender,
   struct lsp *lsp = NULL, *lsp2 = NULL;
   struct dragon_fifo_elt *new;
   int found;
+  struct timeval timeNow;
+  gettimeofday(&timeNow, NULL);
   
   found = 0;
   LIST_LOOP(dmaster.dragon_lsp_table, lsp , node)
@@ -1895,7 +1900,8 @@ DEFUN (dragon_commit_lsp_sender,
   }
   /* Set commit flag */
   lsp->status = LSP_COMMIT;
-  
+  lsp->timestamp = timeNow.tv_sec;
+
   return CMD_SUCCESS;
 }
 

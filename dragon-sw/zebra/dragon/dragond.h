@@ -679,6 +679,7 @@ struct lsp {
 	int narb_fd; /* File descriptor (socket) to-from NARB */
 	struct thread *t_narb_read; /* LSP packet read thread (for NARB) */
 	u_int32_t seqno;  /* Unique sequence number for this LSP request */
+	u_int32_t timestamp; /* Timestamp (secs) for LSP commit/creation */
 };
 
 /* DRAGON fifo element structure. */

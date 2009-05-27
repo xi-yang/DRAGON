@@ -1196,11 +1196,14 @@ struct lsp* lsp_new()
 void rsvpupcall_register_lsp(struct _rsvp_upcall_parameter* p)
 {
 	struct lsp *lsp;
-	
+	struct timeval timeNow;
+	gettimeofday(&timeNow, NULL);
+
   	lsp = lsp_new();
 	set_lsp_default_para(lsp);
 	lsp->status = LSP_LISTEN;
-	 lsp->flag |= LSP_FLAG_REG_BY_RSVP;
+	lsp->flag |= LSP_FLAG_REG_BY_RSVP;
+	lsp->timestamp = timeNow.tv_sec;
 	strcpy((lsp->common.SessionAttribute_Para)->sessionName, p->name);
 	(lsp->common.SessionAttribute_Para)->nameLength = strlen(p->name);
 	lsp->common.Session_Para.destAddr.s_addr = p->destAddr.s_addr;
