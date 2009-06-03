@@ -280,7 +280,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 					case Message::PathTear:
 					case Message::ResvErr:
 					case Message::ResvTear:
-						LOG(2)( Log::MPLS, "VLSR: SubnetUNI session failed with message state : ", ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() );
+						LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: SubnetUNI session failed with message state : ", ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->getUniState() );
 						goto _Exit_Error_Subnet;
 						break;
 					case Message::InitAPI: // inital state for TL1_TELNET only
@@ -288,13 +288,13 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
 							//verify
 							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSourceDestPortConflict()) {
-								LOG(2)( Log::MPLS, "VLSR-Subnet Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
+								LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-Subnet Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
 								goto _Exit_Error_Subnet;
 							}
                                                     
 							//connect
 							if (!(*sessionIter)->connectSwitch()) {
-								LOG(2)( Log::MPLS, "VLSR-Subnet Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
+								LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-Subnet Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
 								goto _Exit_Error_Subnet;
 							}
 
@@ -360,7 +360,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                        {
 			                                        case 0: // child process for delayed waiting-and-deleting procedure
 			                                            if (!(*sessionIter)->connectSwitch()){
-			                                            	LOG(2)( Log::MPLS, "Child-Process:: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
+			                                            	LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "Child-Process:: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
 			                                            	return false;
 			                                            }
 			                                            if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSNCInStableWorkingState() ) {
@@ -373,7 +373,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                            //return true; // exit(0) --> later after a resvRefresh is done
 			                                            break;
 			                                        case -1: // error
-			                                            LOG(1)( Log::MPLS, "VLSR-Subnet Fatal Error: cannot fork a child process for the verifiing SNCInStableWorkingState procedure!");
+			                                            LOG(4)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-Subnet Fatal Error: cannot fork a child process for the verifiing SNCInStableWorkingState procedure!");
 			                                            exit(-1);
 			                                            break;
 			                                        default: // parent (orininal) process back to main logic loop
@@ -488,10 +488,11 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
                                    if (!(*sessionIter)->verifyVLAN(vlan))
                                     {
-        					LOG(5)( Log::MPLS, "VLSR: Cannot verify VLAN ID", vlan, "on Switch:", ethSw, 
-                                                        " >>> Creating a new VLAN...");
+        					LOG(8)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", 
+								"VLSR: Cannot verify VLAN ID", vlan, "on Switch:", ethSw, ">>> Creating a new VLAN...");
                                           if (!(*sessionIter)->createVLAN(vlan)) {
-                					LOG(5)( Log::MPLS, "VLSR: Creating a new VLAN ID:", vlan, "on Switch:", ethSw, " has failed!" );
+                					LOG(8)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", 
+								"VLSR: Creating a new VLAN ID:", vlan, "on Switch:", ethSw, " has failed!" );
                 					noError = false;
                                           }
                                     }
@@ -516,12 +517,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                               portList.clear();
                                           }
                                           else if (portList.size() == 0){
-                                                LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress: ", inPort);
+                                                LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Unrecognized port/localID at ingress: ", inPort);
                                                 noError = false;
                                           }
                                           while (portList.size()) {
                                                  uint32 port = portList.front(); //reuse the variable port
-        						LOG(4)(Log::MPLS, "VLSR: Moving ingress port#",  GetSwitchPortString(port), " to VLAN #", vlan);
+        						LOG(7)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Moving ingress port#",  GetSwitchPortString(port), " to VLAN #", vlan);
                                                  if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
                                                         (*sessionIter)->movePortToVLANAsTagged(port, vlan);
                                                  	//Up to 32 ports supported. Only default RFC2674 switch switch (e.g. Dell, Intel) use this.
@@ -530,7 +531,8 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                  else
                                                     (*sessionIter)->movePortToVLANAsUntagged(port, vlan);
 
-                                                 LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlan);
+                                                 LOG(7)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", 
+								"VLSR: Perform bidirectional bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlan);
 							//Perform rate policing and limitation on the port, which is both input and output port
 							//as the VLAN is duplex.
                                                 (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);
@@ -570,12 +572,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                   portList.clear();
                                               }
                                               else if (portList.size() == 0){
-            					      LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort);
+            					      LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Unrecognized port/localID at egress: ", outPort);
                                                     noError = false;
                                               }
                                               while (portList.size()) {
                                                      uint32 port = portList.front();
-                                                     LOG(4)(Log::MPLS, "VLSR: Moving egress port#",  GetSwitchPortString(port), " to VLAN #", vlan);
+                                                     LOG(7)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Moving egress port#",  GetSwitchPortString(port), " to VLAN #", vlan);
                                                      if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP || ((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL) {
                                                             (*sessionIter)->movePortToVLANAsTagged(port, vlan);
                                                      	//Up to 32 ports supported. Only default RFC2674 switch switch (e.g. Dell, Intel) use this.
@@ -584,7 +586,8 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                      else
                                                             (*sessionIter)->movePortToVLANAsUntagged(port, vlan);
 
-                                                     LOG(4)(Log::MPLS, "VLSR: Perform bidirectional bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlan);
+                                                     LOG(7)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", 
+									"VLSR: Perform bidirectional bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlan);
     							//Perform rate policing and limitation on the port, which is both input and output port
     							//as the VLAN is duplex.
                                                     (*sessionIter)->policeInputBandwidth(true, port, vlan, (*iter).bandwidth);  //$$$$ To be moved into bindUpstreamInAndOut
@@ -606,7 +609,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
                                                  //Only default RFC2674 switch switch (e.g. Dell, Intel) does something; Others simply return true.
 	                                  		(*sessionIter)->setVLANPortsTagged(taggedPorts, vlan);
 							//remove the VTAG that is taken by the LSP
-							LOG(4)(Log::MPLS, "VLSR: Set tagged ports:",  taggedPorts, " in VLAN #", vlan);
+							LOG(7)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Set tagged ports:",  taggedPorts, " in VLAN #", vlan);
 							if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)   //$$$$ To be moved into bindUpstreamInAndOut
 								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort & 0xffff, (*iter).vlanTag, true); //true == hold
 							if (((*iter).outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL)
@@ -615,7 +618,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 					}
 					else{
 						noError = false;
-						LOG(2)( Log::MPLS, "VLSR: Cannot find an empty VLAN on switch : ", ethSw);
+						LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Cannot find an empty VLAN on switch : ", ethSw);
 					}
 
 					if (!(*sessionIter)->endTransaction())
@@ -776,13 +779,13 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 							//verify
 							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSourceDestPortConflict()) {
-								LOG(2)( Log::MPLS, "VLSR-Subnet Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
+								LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-Subnet Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
 								return;
 							}
 
 							//connect
 							if (!(*sessionIter)->connectSwitch()){
-								LOG(2)( Log::MPLS, "VLSR-Subnet Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
+								LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-Subnet Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
 								return;
 							}
 
@@ -857,7 +860,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 										{
 										case 0: // child process for delayed waiting-and-deleting procedure
 											if (!(*sessionIter)->connectSwitch()){
-												LOG(2)( Log::MPLS, "Child-Process:: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
+												LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "Child-Process:: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
 												return;
 											}
 	 										if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->waitUntilSystemSNCDisapear())
@@ -868,7 +871,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 											exit(0);
 											break;
 										case -1: // error
-											LOG(1)( Log::MPLS, "VLSR-Subnet Fatal Error: cannot fork a child process for the waiting-and-deleting procedure!");
+											LOG(4)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-Subnet Fatal Error: cannot fork a child process for the waiting-and-deleting procedure!");
 											exit(-1);
 											break;
 										default: // parent (orininal) process back to main logic loop
@@ -935,7 +938,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                           portList.clear();
                                       }
                                       else if (portList.size() == 0){
-    					       LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at ingress: ", inPort);
+    					       LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Unrecognized port/localID at ingress: ", inPort);
                                           //continue;
                                       }
                                       while (portList.size()) {
@@ -945,10 +948,10 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                 vlanID = (*sessionIter)->getActiveVlanId(port);
                                             if (vlanID != 0) {
                                                 (*sessionIter)->removePortFromVLAN(port, vlanID);
-       						LOG(4)(Log::MPLS, "VLSR: Removing ingress port#",  GetSwitchPortString(port), "from VLAN #", vlanID);
+       						LOG(7)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Removing ingress port#",  GetSwitchPortString(port), "from VLAN #", vlanID);
                                             }
                                             else {
-    						       LOG(1)(Log::MPLS, "VLSR: Cannot identify the VLAN (for ingress port) to be operated.");
+    						       LOG(4)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Cannot identify the VLAN (for ingress port) to be operated.");
                                             }
 
                                             if (vlanID !=  0) {
@@ -963,7 +966,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
              					     //Undo rate policing and limitation on the port, which is both input and output port
             					     //as the VLAN is duplex.
-                                                LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlanID);
+                                                LOG(7)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", 
+                                                    "VLSR: Undo bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlanID);
                                                 (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth); 
                                                 (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);//$$$$ To be moved into deleteUpstreamInLabel
                                             }
@@ -995,7 +999,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                               portList.clear();
                                           }
                                           else if (portList.size() == 0){
-        					      LOG(2)( Log::MPLS, "VLSR: Unrecognized port/localID at egress: ", outPort );
+        					      LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Unrecognized port/localID at egress: ", outPort );
                                              //continue;
                                           }
                                           while (portList.size()) {
@@ -1005,10 +1009,10 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
                                                     vlanID = (*sessionIter)->getActiveVlanId(port);
                                                 if (vlanID != 0) {
                                                     (*sessionIter)->removePortFromVLAN(port, vlanID);
-           						LOG(4)(Log::MPLS, "VLSR: Removing egress port#",  GetSwitchPortString(port), "from VLAN #", vlanID);
+           						LOG(7)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Removing egress port#",  GetSwitchPortString(port), "from VLAN #", vlanID);
                                                 }
                                                 else {
-        						       LOG(1)(Log::MPLS, "VLSR: Cannot identify the VLAN  (for egress port) to be operated.");
+        						       LOG(4)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Cannot identify the VLAN  (for egress port) to be operated.");
                                                 }
 
                                                 if (vlanID !=  0) {
@@ -1022,7 +1026,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
                                                     //Undo rate policing and limitation on the port, which is both input and output port
                                                     //as the VLAN is duplex.
-                                                    LOG(4)(Log::MPLS, "VLSR: Undo bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlanID);
+                                                    LOG(7)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Undo bandwidth policing and limitation on port#",  GetSwitchPortString(port), "for VLAN #", vlanID);
                                                     (*sessionIter)->policeInputBandwidth(false, port, (*iter).vlanTag, (*iter).bandwidth);//$$$$ To be moved into deleteUpstreamInLabel
                                                     (*sessionIter)->limitOutputBandwidth(false, port, (*iter).vlanTag,  (*iter).bandwidth);
                                                 }
@@ -1041,9 +1045,9 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
                                      if ((*sessionIter)->isVLANEmpty(vlanID)) {
                                           if (!(*sessionIter)->removeVLAN(vlanID)) {
-                                              LOG(2)(Log::MPLS, "VLSR: Failed to remove the empty VLAN: ",  vlanID);
+                                              LOG(5)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Failed to remove the empty VLAN: ",  vlanID);
                                           }
-                                          LOG(2)(Log::MPLS, "VLSR: Removed the empty VLAN: ",  vlanID);
+                                          LOG(5)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Removed the empty VLAN: ",  vlanID);
                                      }
 
                                      (*sessionIter)->endTransaction();

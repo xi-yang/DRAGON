@@ -835,13 +835,13 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW has been created successfully.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Ingress-EFLOW has been created successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         // contine to other EFLOW creation ...
     }
     else if (ret == 2)
     {
-        LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW creation has been denied.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Ingress-EFLOW creation has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -859,13 +859,13 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW (untagged multicast) has been created successfully.\n", bufCmd);
+            LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Ingress-EFLOW (untagged multicast) has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             // contine to other EFLOW creation ...
         }
         else if (ret == 2)
         {
-            LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW (untagged multicast) creation has been denied.\n", bufCmd);
+            LOG(6)(Log::MPLS, vcgName, "LSP=", currentLspName, ": ", " Ingress-EFLOW (untagged multicast) creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
@@ -909,7 +909,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW has been created successfully.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Egress-EFLOW has been created successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         if (strncmp(packetType, "pkttype=untagged", 16) != 0)
             return true;
@@ -917,7 +917,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     }
     else if (ret == 2)
     {
-        LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW creation has been denied.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Egress-EFLOW creation has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -936,14 +936,14 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW (untagged multicast) has been created successfully.\n", bufCmd);
+            LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Egress-EFLOW (untagged multicast) has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             // done!
             return true;
         }
         else if (ret == 2)
         {
-            LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW (untagged multicast) creation has been denied.\n", bufCmd);
+            LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Egress-EFLOW (untagged multicast) creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
@@ -952,7 +952,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
     }
 
 _out:
-        LOG(3)(Log::MPLS, vcgName, " EFLOWs creation via TL1_TELNET failed...\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " EFLOWs creation via TL1_TELNET failed...\n", bufCmd);
         return false;
 }
 
@@ -970,13 +970,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasIng
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW has been deleted successfully.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Ingress-EFLOW has been deleted successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         // contine to delete other eflows
     }
     else if (ret == 2)
     {
-        LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW deletion has been denied.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Ingress-EFLOW deletion has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -992,7 +992,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasIng
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW has been deleted successfully.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Egress-EFLOW has been deleted successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         if (!hasIngressUntaggedMulticast&&!hasEgressUntaggedMulticast)
             return true;
@@ -1000,7 +1000,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasIng
     }
     else if (ret == 2)
     {
-        LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW deletion has been denied.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Egress-EFLOW deletion has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -1018,13 +1018,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasIng
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW (untagged multicast) has been deleted successfully.\n", bufCmd);
+            LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Ingress-EFLOW (untagged multicast) has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             // contine to egress untagged multicast EFLOW creation ...
         }
         else if (ret == 2)
         {
-            LOG(3)(Log::MPLS, vcgName, " Ingress-EFLOW (untagged multicast) deletion has been denied.\n", bufCmd);
+            LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Ingress-EFLOW (untagged multicast) deletion has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
@@ -1043,13 +1043,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasIng
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW (untagged multicast) has been deleted successfully.\n", bufCmd);
+            LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Egress-EFLOW (untagged multicast) has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return true;
         }
         else if (ret == 2)
         {
-            LOG(3)(Log::MPLS, vcgName, " Egress-EFLOW (untagged multicast) deletion has been denied.\n", bufCmd);
+            LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Egress-EFLOW (untagged multicast) deletion has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
@@ -1058,7 +1058,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteEFLOWs_TL1(String& vcgName, bool hasIng
     }
 
 _out:
-        LOG(3)(Log::MPLS, vcgName, " EFLOWs deletion via TL1_TELNET failed...\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " EFLOWs deletion via TL1_TELNET failed...\n", bufCmd);
         return false;
 }
 
@@ -1076,13 +1076,13 @@ bool SwitchCtrl_Session_SubnetUNI::hasEFLOW_TL1(String& vcgName, bool ingress, b
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(5)(Log::MPLS, vcgName, (ingress? "_in":"_out"), (untaggedMulticast? "_multicast":"_unicast"), " EFLOW does exist.\n", bufCmd);
+        LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, (ingress? "_in":"_out"), (untaggedMulticast? "_multicast":"_unicast"), " EFLOW does exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(5)(Log::MPLS, vcgName, (ingress? "_in":"_out"), (untaggedMulticast? "_multicast":"_unicast"), " EFLOW does not exist.\n", bufCmd);
+        LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, (ingress? "_in":"_out"), (untaggedMulticast? "_multicast":"_unicast"), " EFLOW does not exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -1090,7 +1090,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasEFLOW_TL1(String& vcgName, bool ingress, b
         goto _out;
 
 _out:
-        LOG(4)(Log::MPLS, vcgName, (ingress? "_in":"_out"), " EFLOW existence checking via TL1_TELNET failed...\n", bufCmd);
+        LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, (ingress? "_in":"_out"), " EFLOW existence checking via TL1_TELNET failed...\n", bufCmd);
         return false;    
 }
 
@@ -1111,7 +1111,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName, bool tunnelMod
     getCienaTimeslotsString(groupMem);
     if ((groupMem).empty())
     {
-        LOG(1)(Log::MPLS, "getCienaTimeslotsString failed to find available time slots...");
+        LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "getCienaTimeslotsString failed to find available time slots...");
         vcgName = "";
         return false;
     }
@@ -1145,13 +1145,13 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName, bool tunnelMod
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, vcgName, " has been created successfully.\n", cmdString);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " has been created successfully.\n", cmdString);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(3)(Log::MPLS, vcgName, " creation has been denied.\n", cmdString);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " creation has been denied.\n", cmdString);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         vcgName = "";
         return false;
@@ -1160,7 +1160,7 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName, bool tunnelMod
         goto _out;
 
 _out:
-        LOG(3)(Log::MPLS, vcgName, " creation via TL1_TELNET failed...\n", cmdString);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " creation via TL1_TELNET failed...\n", cmdString);
         vcgName = "";
         return false;
 }
@@ -1180,13 +1180,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, vcgName, " status has been set to OOS.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " status has been set to OOS.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
 	//continue to next command ...
     }
     else if (ret == 2)
     {
-        LOG(3)(Log::MPLS, vcgName, " status change (to OOS) has been denied.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " status change (to OOS) has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -1204,13 +1204,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, vcgName, " has been deleted successfully.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " has been deleted successfully.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(3)(Log::MPLS, vcgName, " deletion has been denied.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " deletion has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -1218,7 +1218,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteVCG_TL1(String& vcgName)
         goto _out;
 
 _out:
-        LOG(3)(Log::MPLS, vcgName, " change/deletion via TL1_TELNET failed...\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " change/deletion via TL1_TELNET failed...\n", bufCmd);
         return false;
 }
 
@@ -1234,13 +1234,13 @@ bool SwitchCtrl_Session_SubnetUNI::hasVCG_TL1(String& vcgName)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, vcgName, " VCG does exist.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " VCG does exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, "TRUNCATED\"", true, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(3)(Log::MPLS, vcgName, " VCG does not exist.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " VCG does not exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -1248,7 +1248,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasVCG_TL1(String& vcgName)
         goto _out;
 
 _out:
-        LOG(3)(Log::MPLS, vcgName, " VCG existence checking via TL1_TELNET failed...\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " VCG existence checking via TL1_TELNET failed...\n", bufCmd);
         return false;    
 }
 
@@ -1266,7 +1266,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
     getCienaCTPGroupsInVCG(pString, vcgName);
     if (ctpGroupStringArray[0].empty() || numGroups == 0)
     {
-        LOG(1)(Log::MPLS, "getCienaCTPGroupsInVCG returned empty strings");
+        LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "getCienaCTPGroupsInVCG returned empty strings");
         gtpName = "";
         return false;
     }
@@ -1285,12 +1285,12 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, gtpName, "-", group+1, " has been created successfully.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", gtpName, "-", group+1, " has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, gtpName, "-", group+1, " creation has been denied.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", gtpName, "-", group+1, " creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             gtpName = "";
             return false;
@@ -1302,7 +1302,7 @@ bool SwitchCtrl_Session_SubnetUNI::createGTP_TL1(String& gtpName, String& vcgNam
     return true;
     
 _out:
-    LOG(5)(Log::MPLS, gtpName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
+    LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", gtpName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
     gtpName = "";
     return false;    
 }
@@ -1322,12 +1322,12 @@ bool SwitchCtrl_Session_SubnetUNI::deleteGTP_TL1(String& gtpName)
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, gtpName, "-", group+1, " has been deleted successfully.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", gtpName, "-", group+1, " has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, gtpName, "-", group+1, " deletion has been denied.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", gtpName, "-", group+1, " deletion has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
@@ -1338,7 +1338,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteGTP_TL1(String& gtpName)
     return true;
 
 _out:
-    LOG(5)(Log::MPLS, gtpName, "-", group+1, " deletion via TL1_TELNET failed...\n", bufCmd);
+    LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", gtpName, "-", group+1, " deletion via TL1_TELNET failed...\n", bufCmd);
     return false;    
 }
 
@@ -1355,13 +1355,13 @@ bool SwitchCtrl_Session_SubnetUNI::hasGTP_TL1(String& gtpName)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, gtpName, " GTP does exist.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", gtpName, " GTP does exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(3)(Log::MPLS, gtpName, " GTP does not exist.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", gtpName, " GTP does not exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -1369,7 +1369,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasGTP_TL1(String& gtpName)
         goto _out;
 
 _out:
-    LOG(3)(Log::MPLS, gtpName, " GTP existence checking via TL1_TELNET failed...\n", bufCmd);
+    LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", gtpName, " GTP existence checking via TL1_TELNET failed...\n", bufCmd);
     return false;    
 }
 
@@ -1390,7 +1390,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
     getCienaDestTimeslotsString(pString);
     if (destTimeslotsStringArray[0].empty())
     {
-        LOG(1)(Log::MPLS, "getCienaDestTimeslotsString returned empty strings.");
+        LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "getCienaDestTimeslotsString returned empty strings.");
         sncName = "";
         return false;
     }
@@ -1402,7 +1402,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         getDTLString(dtlString);
         if (dtlString.empty())
         {
-            LOG(1)(Log::MPLS, "getDTLString returned empty strings.");
+            LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "getDTLString returned empty strings.");
             sncName = "";
             return false;
         }
@@ -1416,12 +1416,12 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl", " has been created successfully.\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl", " has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl", " creation has been denied.\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl", " creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             sncName = "";
             return false;
@@ -1429,7 +1429,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         }
         else 
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl", " creation via TL1_TELNET failed...\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl", " creation via TL1_TELNET failed...\n", bufCmd);
             return false;
         }
 
@@ -1442,12 +1442,12 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl_set", " has been created successfully.\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl_set", " has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl_set", " creation has been denied.\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl_set", " creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             sncName = "";
             // ? Delete the created DTL ?
@@ -1456,7 +1456,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         }
         else 
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl_set", " deletion via TL1_TELNET failed...\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl_set", " deletion via TL1_TELNET failed...\n", bufCmd);
             return false;
         }
     }
@@ -1481,12 +1481,12 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, sncName, "-", group+1, " has been created successfully.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-", group+1, " has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, sncName, "-", group+1, " creation has been denied.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-", group+1, " creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
 
             // TODO: dlt-snc for other groups; dlt-dlt-set:: ; dlt-dlt::
@@ -1501,7 +1501,7 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
     return true;
 
 _out:
-    LOG(5)(Log::MPLS, sncName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
+    LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
     sncName = "";
     return false;    
 }
@@ -1524,13 +1524,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, sncName, "-", group+1, " state has been changed into OOS.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-", group+1, " state has been changed into OOS.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             //continue to next command ...
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, sncName, "-", group+1, " state change to OOS has been denied.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-", group+1, " state change to OOS has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
@@ -1545,12 +1545,12 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, sncName, "-", group+1, " has been deleted successfully.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-", group+1, " has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, sncName, "-", group+1, " deletion has been denied.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-", group+1, " deletion has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             //continue to delete dtl-set
         }
@@ -1569,18 +1569,18 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl_set", " has been deleted successfully.\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl_set", " has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl_set", " deletion has been denied.\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl_set", " deletion has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             //continue to delete dtl
         }
         else 
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl_set", " deletion via TL1_TELNET failed...\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl_set", " deletion via TL1_TELNET failed...\n", bufCmd);
             return false;
         }
         
@@ -1592,18 +1592,18 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl", " has been deleted successfully.\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl", " has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl", " deletion has been denied.\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl", " deletion has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
         else 
         {
-            LOG(4)(Log::MPLS, sncName, "-dtl", " deletion via TL1_TELNET failed...\n", bufCmd);
+            LOG(7)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-dtl", " deletion via TL1_TELNET failed...\n", bufCmd);
             return false;
         }
     }
@@ -1611,7 +1611,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
     return true;
 
 _out:
-    LOG(5)(Log::MPLS, sncName, "-", group+1, " change/deletion via TL1_TELNET failed...\n", bufCmd);
+    LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, "-", group+1, " change/deletion via TL1_TELNET failed...\n", bufCmd);
     return false;    
 }
 
@@ -1628,13 +1628,13 @@ bool SwitchCtrl_Session_SubnetUNI::hasSNC_TL1(String& sncName)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, sncName, " SNC does exist.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, " SNC does exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(3)(Log::MPLS, sncName, " SNC does not exist.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, " SNC does not exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -1642,7 +1642,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSNC_TL1(String& sncName)
         goto _out;
 
 _out:
-    LOG(3)(Log::MPLS, sncName, " SNC existence checking via TL1_TELNET failed...\n", bufCmd);
+    LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, " SNC existence checking via TL1_TELNET failed...\n", bufCmd);
     return false;    
 }
 
@@ -1683,7 +1683,7 @@ int SwitchCtrl_Session_SubnetUNI::verifySNCInStableWorkingState_TL1(String& sncN
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, "verifySNCWorkingStatus_TL1 found no such SNC:", sncName, '-', group,  "\n");
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", "verifySNCWorkingStatus_TL1 found no such SNC:", sncName, '-', group,  "\n");
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return -(group+1);
         }
@@ -1695,7 +1695,7 @@ int SwitchCtrl_Session_SubnetUNI::verifySNCInStableWorkingState_TL1(String& sncN
    return funcRet;
    
 _out:
-    LOG(3)(Log::MPLS, sncName, " SNC existence checking via TL1_TELNET failed...\n", bufCmd);
+    LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", sncName, " SNC existence checking via TL1_TELNET failed...\n", bufCmd);
     return -(numGroups+1);    
 }
 
@@ -1715,7 +1715,7 @@ bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpNam
     getPeerCRS_GTP(destGtpName);
     if (destGtpName.empty())
     {
-        LOG(1)(Log::MPLS, "createCRS_TL1:getPeerCRS_GTP returned empty string.");
+        LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "createCRS_TL1:getPeerCRS_GTP returned empty string.");
         crsName = "";
         return false;
     }
@@ -1733,12 +1733,12 @@ bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpNam
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, crsName, "-", group+1, " has been created successfully.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", crsName, "-", group+1, " has been created successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, crsName, "-", group+1, " creation has been denied.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", crsName, "-", group+1, " creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             crsName = "";
             return false;
@@ -1750,7 +1750,7 @@ bool SwitchCtrl_Session_SubnetUNI::createCRS_TL1(String& crsName, String& gtpNam
     return true;
 
 _out:
-    LOG(5)(Log::MPLS, crsName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
+    LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", crsName, "-", group+1, " creation via TL1_TELNET failed...\n", bufCmd);
     crsName = "";
     return false;
 }
@@ -1770,13 +1770,13 @@ bool SwitchCtrl_Session_SubnetUNI::deleteCRS_TL1(String& crsName)
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, crsName, "-", group+1, " state has been changed into OOS.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", crsName, "-", group+1, " state has been changed into OOS.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             //continue to next command ...
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, crsName, "-", group+1, " state change to OOS has been denied.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", crsName, "-", group+1, " state change to OOS has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
@@ -1791,12 +1791,12 @@ bool SwitchCtrl_Session_SubnetUNI::deleteCRS_TL1(String& crsName)
         ret = readShell(strCOMPLD, strDENY, 1, 5);
         if (ret == 1) 
         {
-            LOG(5)(Log::MPLS, crsName, "-", group+1, " has been deleted successfully.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", crsName, "-", group+1, " has been deleted successfully.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
         }
         else if (ret == 2)
         {
-            LOG(5)(Log::MPLS, crsName, "-", group+1, " deletion has been denied.\n", bufCmd);
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", crsName, "-", group+1, " deletion has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
@@ -1810,7 +1810,7 @@ bool SwitchCtrl_Session_SubnetUNI::deleteCRS_TL1(String& crsName)
     return true;
 
 _out:
-    LOG(5)(Log::MPLS, crsName, "-", group+1, " change/deletion via TL1_TELNET failed...\n", bufCmd);
+    LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", crsName, "-", group+1, " change/deletion via TL1_TELNET failed...\n", bufCmd);
     return false;
 }
 
@@ -1828,13 +1828,13 @@ bool SwitchCtrl_Session_SubnetUNI::hasCRS_TL1(String& crsName)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, crsName, " XConn does exist.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", crsName, " XConn does exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return true;
     }
     else if (ret == 2)
     {
-        LOG(3)(Log::MPLS, crsName, " XConn does not exist.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", crsName, " XConn does not exist.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -1842,7 +1842,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasCRS_TL1(String& crsName)
         goto _out;
 
 _out:
-        LOG(3)(Log::MPLS, crsName, " Xconn existence checking via TL1_TELNET failed...\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", crsName, " Xconn existence checking via TL1_TELNET failed...\n", bufCmd);
         return false;    
 }
 
@@ -1864,7 +1864,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, OMPortString, " concatenation type has been found.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " concatenation type has been found.\n", bufCmd);
         ret = ReadShellPattern(bufCmd, (char*)"Virtual 50MBPS", (char*)"Virtual 150MBPS", (char*)"OSPFCOST", NULL, 5);
         if (ret == 1)
             funcRet = CATUNIT_50MBPS;
@@ -1875,7 +1875,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
     }
     else if (ret == 2) 
     {
-        LOG(3)(Log::MPLS, OMPortString, " concatenation type checking has been denied.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " concatenation type checking has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return funcRet;
     }
@@ -1885,7 +1885,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
 _out:
     if (CATUNIT_UNKNOWN == funcRet)
     {
-        LOG(3)(Log::MPLS, OMPortString, " concatenation type checking via TL1_TELNET failed...\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " concatenation type checking via TL1_TELNET failed...\n", bufCmd);
     }
     return funcRet;
 }
@@ -1913,7 +1913,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, ui
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapOCN_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " syncTimeslotsMapOCN_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
         ret = ReadShellPattern(bufCmd, NULL, NULL, (char*)",NOACT", NULL, 5);
         if (ret == 0) {
             bufCmd[strlen(bufCmd) - 6] = 0;
@@ -1933,7 +1933,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, ui
     }
     else if (ret == 2) 
     {
-        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapOCN_TL1 retrieving timeslots has been denied.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " syncTimeslotsMapOCN_TL1 retrieving timeslots has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -1941,7 +1941,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, ui
         goto _out;
 
 _out:
-    LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapOCN_TL1 method via TL1_TELNET failed...\n", bufCmd);
+    LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " syncTimeslotsMapOCN_TL1 method via TL1_TELNET failed...\n", bufCmd);
     return false;
 }
 
@@ -1998,7 +1998,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
                 else
                     goto _out; // wrong
             }
-            LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapVCG_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
+            LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " syncTimeslotsMapVCG_TL1 method has retrieved timeslots suceessfully.\n", bufCmd);
             return true;    
         }
         else
@@ -2006,7 +2006,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
     }
     else if (ret == 2) 
     {
-        LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapVCG_TL1 retrieving timeslots has been denied.\n", bufCmd);
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " syncTimeslotsMapVCG_TL1 retrieving timeslots has been denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -2014,7 +2014,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
         goto _out;
 
 _out:
-    LOG(3)(Log::MPLS, OMPortString, " syncTimeslotsMapVCG_TL1 method via TL1_TELNET failed...\n", bufCmd);
+    LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " syncTimeslotsMapVCG_TL1 method via TL1_TELNET failed...\n", bufCmd);
     return false;
 }
 
@@ -2063,7 +2063,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap()
         }
         if (!ts_ok)
         {
-            LOG(1)(Log::MPLS, "Warning (syncTimeslotsMap): insufficient number of contigious time slots for this request.\n");
+            LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "Warning (syncTimeslotsMap): insufficient number of contigious time slots for this request.\n");
         } 
 
     }
@@ -2111,7 +2111,7 @@ bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap()
         }
         if (!ts_ok)
         {
-            LOG(1)(Log::MPLS, "Warning (verifyTimeslotsMap): the range of contigious timeslots suggested by signaling may overlap with existing VCGs.\n");
+            LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "Warning (verifyTimeslotsMap): the range of contigious timeslots suggested by signaling may overlap with existing VCGs.\n");
         } 
     }
     return ret;
@@ -2128,21 +2128,21 @@ bool SwitchCtrl_Session_SubnetUNI::hasSNCInStableWorkingState()
         int ret = verifySNCInStableWorkingState_TL1(currentSNC);
         if (ret == 0)
         {
-            LOG(1)(Log::MPLS, "verifySNCInStableWorkingState confirmed the SNC(s) are in stable working state.\n");
+            LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "verifySNCInStableWorkingState confirmed the SNC(s) are in stable working state.\n");
             return true;
         }
         else if (ret < 0)
         {
-            LOG(3)(Log::MPLS, "verifySNCInStableWorkingState found SNC#", -ret, " in error or unstable state.\n");
+            LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", "verifySNCInStableWorkingState found SNC#", -ret, " in error or unstable state.\n");
             return false;
         }
         else //ret > 0 --> neither working or error wait 10 more seconds
         {
-            LOG(5)(Log::MPLS, "verifySNCInStableWorkingState return ", ret, "...  will continue polling after ", interval, " seconds. \n");
+            LOG(8)(Log::MPLS, "LSP=", currentLspName, ": ", "verifySNCInStableWorkingState return ", ret, "...  will continue polling after ", interval, " seconds. \n");
         }
     }
 
-    LOG(1)(Log::MPLS, "verifySNCInStableWorkingState failed to confirm that all SNCs are in stable working state after 60 seconds.\n");
+    LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "verifySNCInStableWorkingState failed to confirm that all SNCs are in stable working state after 60 seconds.\n");
     return false;
 }
 
@@ -2154,7 +2154,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
     SubnetUNI_Data *pUniData = &subnetUniDest;
     if (pUniData->first_timeslot == 0 || pUniData->first_timeslot > MAX_TIMESLOTS_NUM || pUniData->logical_port == 0)
     {
-        LOG(1)(Log::MPLS, "invalid subnetUniDest information.\n");
+        LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "invalid subnetUniDest information.\n");
         return false;
     }
 
@@ -2176,7 +2176,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
         ret = readShell("   /* Empty", "   \"", 1, 5);
         if (ret == 1)
         {
-            LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 method found no SNC holding the current VCG.\n", bufCmd);
+            LOG(5)(Log::MPLS, "LSP=", currentLspName, ": ", " hasSystemSNCHolindgCurrentVCG_TL1 method found no SNC holding the current VCG.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }
@@ -2216,7 +2216,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
                     //conditions for VCG-owned SNC detection
                     if ((ts1+1 - pUniData->first_timeslot) %48 == 0 && ts1+1 - pUniData->first_timeslot >= 0 && ts1+1 - pUniData->first_timeslot < ts_num)
                     {
-                        LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 method detected an SNC holding the current VCG.\n", bufCmd);
+                        LOG(5)(Log::MPLS, "LSP=", currentLspName, ": ", " hasSystemSNCHolindgCurrentVCG_TL1 method detected an SNC holding the current VCG.\n", bufCmd);
                         ret = readShell(SWITCH_PROMPT, NULL, 1, 5);
                         return true;                        
                     }
@@ -2224,7 +2224,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
                 else
                     goto _out; // wrong
             }
-            LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 method found no SNC holding the current VCG.\n", bufCmd);
+            LOG(5)(Log::MPLS, "LSP=", currentLspName, ": ", " hasSystemSNCHolindgCurrentVCG_TL1 method found no SNC holding the current VCG.\n", bufCmd);
             return false;
         }
         else
@@ -2232,7 +2232,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
     }
     else if (ret == 2) 
     {
-        LOG(2)(Log::MPLS, " hasSystemSNCHolindgCurrentVCG_TL1 retrieving SNC-STSPC list was denied.\n", bufCmd);
+        LOG(5)(Log::MPLS, "LSP=", currentLspName, ": ", " hasSystemSNCHolindgCurrentVCG_TL1 retrieving SNC-STSPC list was denied.\n", bufCmd);
         readShell(SWITCH_PROMPT, NULL, 1, 5);
         return false;
     }
@@ -2241,7 +2241,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
 
 _out:
     noError = false;
-    LOG(3)(Log::MPLS, OMPortString, " hasSystemSNCHolindgCurrentVCG_TL1 method via TL1_TELNET failed...\n", bufCmd);
+    LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " hasSystemSNCHolindgCurrentVCG_TL1 method via TL1_TELNET failed...\n", bufCmd);
     return false;
 }
 
@@ -2252,12 +2252,12 @@ bool SwitchCtrl_Session_SubnetUNI::waitUntilSystemSNCDisapear()
     do {
         if (!noError)
             return false;
-        LOG(3)(Log::MPLS, " Child-Process::waitUntilSystemSNCDisapear ... 2x", counter," seconds left.\n");
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", " Child-Process::waitUntilSystemSNCDisapear ... 2x", counter," seconds left.\n");
         sleep(2); //sleeping two second and try again
         counter--;
         if (counter == 0) //timeout!
         {
-            LOG(3)(Log::MPLS, " ### Child-Process::waitUntilSystemSNCDisapear still sees an SCN holding the VCG after ", counter*2, " seconds --> Child-Process aborted!\n");
+            LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", " ### Child-Process::waitUntilSystemSNCDisapear still sees an SCN holding the VCG after ", counter*2, " seconds --> Child-Process aborted!\n");
             return false;
         }
     } while (hasSystemSNCHolindgCurrentVCG_TL1(noError));

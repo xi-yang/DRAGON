@@ -300,12 +300,14 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		 	if (explicitRoute->getAbstractNodeList().front().getType() != AbstractNode::IPv4 ||
 		 	     explicitRoute->getAbstractNodeList().front().getType() != AbstractNode::UNumIfID)
 			{
-				LOG(2)( Log::MPLS, "MPLS: loose hop ero not supported for abstract node type ", explicitRoute->getAbstractNodeList().front().getType() );
+				LOG(5)( Log::MPLS, "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", 
+					 "MPLS: loose hop ero not supported for abstract node type ", explicitRoute->getAbstractNodeList().front().getType() );
 				return false;
 			}
 			else 
 			{
-				LOG(2)( Log::MPLS, "MPLS: resolving loose hop by local routing module: ", explicitRoute->getAbstractNodeList().front() );
+				LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", 
+					"MPLS: resolving loose hop by local routing module: ", explicitRoute->getAbstractNodeList().front() );
 				EXPLICIT_ROUTE_Object* ero = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 								hop.getLogicalInterface().getAddress(),
 								explicitRoute->getAbstractNodeList().front().getAddress(), 
@@ -317,7 +319,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					}
 				}
 				else{
-					LOG(2)( Log::MPLS, "MPLS: unable to resolve loose hop:", explicitRoute->getAbstractNodeList().front() );
+					LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", 
+						"MPLS: unable to resolve loose hop:", explicitRoute->getAbstractNodeList().front() );
 					return false;
 				}
 			}
@@ -424,7 +427,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
 		{
-			LOG(1)( Log::MPLS, "processERO: Invalid inUnumIfID type LOCAL_ID_TYPE_SUBNET_UNI_DEST.");
+			LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"processERO: Invalid inUnumIfID type LOCAL_ID_TYPE_SUBNET_UNI_DEST.");
 			memset(&vlsr, 0, sizeof(VLSR_Route)); 
 			vLSRoute.push_back(vlsr);                    
 			return false;
@@ -434,7 +438,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			memset(&subnetUniDataSrc, 0, sizeof(subnetUniDataSrc));
 			if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(inRtId, (uint8)(inUnumIfID >> 8), subnetUniDataSrc) ) {
 				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
-                            LOG(1)( Log::MPLS, "processERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataSrc from OSPFd.");
+				LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+                            	"processERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataSrc from OSPFd.");
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::SubnetUNISessionFailed);
 				vLSRoute.push_back(vlsr);
@@ -450,7 +455,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			//subnetUniDataSrc.upstream_label= ntohl(subnetUniDataSrc.upstream_label);
 
 			if (!pSubnetUniSrc){
-				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Ingress) for ", vlsr.switchID);
+				LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+					"Now creating new session (Subnet UNI Ingress) for ", vlsr.switchID);
 				//Create SubnetUNI Session (as Source)
 				SwitchCtrl_Session_SubnetUNI::getSessionNameString(sName, subnetUniDataSrc.tna_ipv4, msg.getSESSION_ATTRIBUTE_Object().getSessionName(), getDestAddress().rawAddress(), true);
 				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(const_cast<String&>(sName), NetAddress(subnetUniDataSrc.uni_nid_ipv4), true));
@@ -500,7 +506,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				memset(&subnetUniDataDest, 0, sizeof(subnetUniDataDest));
 				if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(destUniDataIf, destUniId, subnetUniDataDest) ) {
 					//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
-	                            LOG(1)( Log::MPLS, "processERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
+					LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+						"processERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
 					vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::SubnetUNISessionFailed);
 					vLSRoute.push_back(vlsr);                    
@@ -522,7 +529,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		//creating destination G_UNI client session
 		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
 		{
-			LOG(1)( Log::MPLS, "processERO: Invalid outUnumIfID type LOCAL_ID_TYPE_SUBNET_UNI_SRC.");
+			LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"processERO: Invalid outUnumIfID type LOCAL_ID_TYPE_SUBNET_UNI_SRC.");
 			memset(&vlsr, 0, sizeof(VLSR_Route)); 
 			vLSRoute.push_back(vlsr);                    
 			return false;
@@ -533,7 +541,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				memset(&subnetUniDataDest, 0, sizeof(subnetUniDataDest));
 				if ( !RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(outRtId, (uint8)(outUnumIfID>>8), subnetUniDataDest) ) {
 					//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
-	                            LOG(1)( Log::MPLS, "processERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
+					LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+						"processERO: getSubnetUNIDatabyOSPF failed to get subnetUniDataDest from OSPFd.");
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
 					vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::SubnetUNISessionFailed);
 					vLSRoute.push_back(vlsr);                    
@@ -549,7 +558,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				//subnetUniDataDest.upstream_label= ntohl(subnetUniDataDest.upstream_label);
 			}
 			if (!pSubnetUniDest){
-				LOG(2)( Log::MPLS, "Now creating new session (Subnet UNI Egress) for ", vlsr.switchID);
+				LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+					"Now creating new session (Subnet UNI Egress) for ", vlsr.switchID);
 				//Create SubnetUNI Session (as Destination)
 				SwitchCtrl_Session_SubnetUNI::getSessionNameString(sName, subnetUniDataDest.tna_ipv4, msg.getSESSION_ATTRIBUTE_Object().getSessionName(), getDestAddress().rawAddress(), false);
 				ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_SubnetUNI(const_cast<String&>(sName), NetAddress(subnetUniDataDest.uni_nid_ipv4), false));
@@ -591,11 +601,12 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				}
 			}
 			if (!foundSession){
-				LOG(2)( Log::MPLS, "VLSR: SwitchCtrl Session not found. Now creating new session for ", vlsr.switchID);
-
+				LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+					"VLSR: SwitchCtrl Session not found. Now creating new session for ", vlsr.switchID);
                             ssNew = RSVP_Global::switchController->createSession(vlsr.switchID);
                             if (!ssNew) {
-                                   LOG(1)( Log::MPLS, "Failed to create VLSR SwitchCtrl Session: Unknown switch Vendor/Model -- verify switch-ip is correct in ospfd.conf");
+					LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+						"Failed to create VLSR SwitchCtrl Session: Unknown switch Vendor/Model -- verify switch-ip is correct in ospfd.conf");
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
 					vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::SwitchSessionFailed);
 					vLSRoute.push_back(vlsr);                    
@@ -603,7 +614,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
                             }
 
 				if (!ssNew->connectSwitch()){
-					LOG(2)( Log::MPLS, "VLSR: Cannot connect to Ethernet switch : ", vlsr.switchID);
+					LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+						"VLSR: Cannot connect to Ethernet switch : ", vlsr.switchID);
 					delete(ssNew);
 					memset(&vlsr, 0, sizeof(VLSR_Route)); 
 					vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::RSVPSwitchConnectFailure);
@@ -623,7 +635,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			
 			if (!ssNew || !ssNew->readVLANFromSwitch()) { //Read/Synchronize to Ethernet switch
 			       //syncWithSwitch ... !
-				LOG(2)( Log::MPLS, "VLSR: Cannot read from Ethernet switch : ", vlsr.switchID);
+				LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+					"VLSR: Cannot read from Ethernet switch : ", vlsr.switchID);
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::RSVPSwitchSNMPFailure);
 				vLSRoute.push_back(vlsr);                    
@@ -633,7 +646,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			//Check for VLAN/ports availability based on vlsr (vlsr_route)... (First PATH message only)
 			//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 			if (shouldCheckVlanConflict && ssNew->hasVLSRouteConflictonSwitch(vlsr)) {
-                            LOG(1)( Log::MPLS, "processERO: hasVLSRouteConflictonSwitch returned true.");
+                            LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+					"processERO: hasVLSRouteConflictonSwitch returned true.");
 				memset(&vlsr, 0, sizeof(VLSR_Route)); 
 				vlsr.errCode = (ERROR_SPEC_Object::RoutingProblem << 16 | ERROR_SPEC_Object::MPLSLabelAllocationFailure);
 				vLSRoute.push_back(vlsr);
@@ -739,7 +753,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 	GENERALIZED_UNI_Object* generalizedUni = ((Message*)&msg)->getGENERALIZED_UNI_Object();
 	if (dragonUni != NULL && generalizedUni != NULL)
 	{
-		LOG(1)(Log::Routing, "Routing Error: Cannot have both DRAGON_UNI and GENERALIZED_UNI at the same time.");
+		LOG(4)(Log::Routing, "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+			"Routing Error: Cannot have both DRAGON_UNI and GENERALIZED_UNI at the same time.");
 		RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::ErrorAPI, ERROR_SPEC_Object::InvalidUNIObject);
 		return;
 	}
@@ -763,7 +778,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 
 	if (fromLocalAPI && !isDragonUniIngressClient && !isGeneralizedUniIngressClient &&  Session::ospfRouterID.rawAddress() != msg.getSESSION_Object().getExtendedTunnelId()) {
-		LOG(4)(Log::Routing, "Routing Error: srcRouterID from API ", Session::ospfRouterID, " does not match OSPF RouterID ", NetAddress(msg.getSESSION_Object().getExtendedTunnelId()));
+		LOG(7)(Log::Routing,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+			"Routing Error: srcRouterID from API ", Session::ospfRouterID, " does not match OSPF RouterID ", NetAddress(msg.getSESSION_Object().getExtendedTunnelId()));
 		RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
 		return;
 	}
@@ -822,7 +838,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			if (vLSRoute.size() > 0) {
 				VLSR_Route& vlsr = vLSRoute.back();
 				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID.rawAddress() == 0) {
-					LOG(1)(Log::MPLS, "MPLS: Cannot find VLSR route... Possible reason: conflicts with existing VLAN or edge port PVID.");
+					LOG(4)(Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+						"MPLS: Cannot find VLSR route... Possible reason: conflicts with existing VLAN or edge port PVID.");
 					if (vlsr.errCode == 0)
 						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
 					else
@@ -831,7 +848,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					return;
 				}				
 			}
-			LOG(2)(Log::MPLS, "MPLS: Excusable internal error in the ERO (PATH processing continued):", explicitRoute->getAbstractNodeList().front().getAddress());
+			LOG(5)(Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"MPLS: Excusable internal error in the ERO (PATH processing continued):", explicitRoute->getAbstractNodeList().front().getAddress());
 			explicitRoute = NULL;
 		}
 		if (explicitRoute && explicitRoute->getAbstractNodeList().empty()) {
@@ -840,7 +858,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		}
 		else if (explicitRoute)
 		{
-			LOG(2)(Log::MPLS, "WARNING ! ERO at egress to UNI client should he empty but - ", *explicitRoute);
+			LOG(5)(Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"WARNING ! ERO at egress to UNI client should he empty but - ", *explicitRoute);
 		}
 		RtOutL.insert_unique( defaultOutLif );
 		RSVP_Global::rsvp->getRoutingService().getPeerIPAddr(defaultOutLif->getLocalAddress(), gateway);
@@ -867,7 +886,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			}
 		}
 		if (!defaultOutLif) {
-			LOG(1)(Log::Routing, "MPLS: cannot find default outgoing interface for UNI client (PATH processing stopped)!");
+			LOG(4)(Log::Routing,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"MPLS: cannot find default outgoing interface for UNI client (PATH processing stopped)!");
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest); //UNI ERROR ??
 			return;
 		}
@@ -894,7 +914,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 
 		//No GENERALIZED UNI supported at VLSR UNI-N side
 		if (generalizedUni){
-			LOG(1)(Log::Routing, "Warning: GENERALIZED UNI Object at VLSR UNI-N is not supported!");
+			LOG(4)(Log::Routing,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"Warning: GENERALIZED UNI Object at VLSR UNI-N is not supported!");
 		}
 
 		if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()){
@@ -903,14 +924,16 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					RSVP_Global::rsvp->getRoutingService().disableOspfSocket();
 			}
 			if (!RSVP_Global::rsvp->getRoutingService().getOspfSocket()) {
-				LOG(1)(Log::Routing, "Error: cannot open a socket connection to local OSPFd (PATH processing stopped)!");
+				LOG(4)(Log::Routing,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+					"Error: cannot open a socket connection to local OSPFd (PATH processing stopped)!");
 				RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::NoRouteAvailToDest);
 				return;
 			}
 		}
 
 		if ( destAddress.isMulticast() ) {
-			LOG(2)( Log::MPLS, "MPLS: explicit routing not allowed for multicast sessions:", destAddress );
+			LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"MPLS: explicit routing not allowed for multicast sessions:", destAddress );
 			explicitRoute = NULL;
 		} 
 		else{
@@ -926,7 +949,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				explicitRoute = NULL;
 			}
 			if (!explicitRoute) {
-				LOG(2)( Log::MPLS, "MPLS: requesting ERO from local routing module...", *static_cast<SESSION_Object*>(this));
+				LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+					"MPLS: requesting ERO from local routing module...", *static_cast<SESSION_Object*>(this));
 
 	                     //explicit routing using local configuration
 	                    	explicitRoute = RSVP_Global::rsvp->getMPLS().getExplicitRoute(destAddress);
@@ -945,33 +969,39 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			                            //@@@@ push_front ... those TE addreses of local interfaces not in the new ERO
 							if (explicitRoute) {
 								if (!narbClient->handleRsvpMessage(msg)) {
-									LOG(3)( Log::Routing, "The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");
+									LOG(6)( Log::Routing,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+										"The message type ", (uint8)msg.getMsgType(), " is not supposed handled by NARB API client here!");
                        					}
 							}
 							else {
-								LOG(1)( Log::Routing, "NARB failed to find a path for this request!");
+								LOG(4)( Log::Routing,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+									"NARB failed to find a path for this request!");
 							}
 						}
 					}
 					else {
-						LOG(5)( Log::MPLS, "MPLS: NARB server ", NARB_APIClient::_host, ":", NARB_APIClient::_port, " is down...");
+						LOG(8)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+							"MPLS: NARB server ", NARB_APIClient::_host, ":", NARB_APIClient::_port, " is down...");
 					}
 
 					if (!explicitRoute && hasReceivedExplicitRoute) //Should recompute ERO via NARB but failed
 					{
-						LOG(1)(Log::MPLS, "MPLS: Tried recomputing ERO (invalid or loose hops). Request ERO from NARB failed (PATH processing stopped)!");
+						LOG(4)(Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+							"MPLS: Tried recomputing ERO (invalid or loose hops). Request ERO from NARB failed (PATH processing stopped)!");
 						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
 						return;
 					}
 					else if (!explicitRoute)//explicit routing using OSPFd
 					{
-						LOG(1)( Log::MPLS, "MPLS: requesting ERO from OSPF daemon...");
+						LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+							"MPLS: requesting ERO from OSPF daemon...");
 						explicitRoute = RSVP_Global::rsvp->getRoutingService().getExplicitRouteByOSPF(
 							hop.getLogicalInterface().getAddress(),
 							destAddress, msg.getSENDER_TSPEC_Object(), msg.getLABEL_REQUEST_Object());
 					}
 					if (!explicitRoute) {
-						LOG(1)( Log::MPLS, "MPLS: getExplicitRouteByOSPF failed!");
+						LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+							"MPLS: getExplicitRouteByOSPF failed!");
 					}
                	}
 			}
@@ -981,7 +1011,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				if (explicitRoute->getAbstractNodeList().front().getType() != AbstractNode::IPv4 &&
 	 			     explicitRoute->getAbstractNodeList().front().getType() != AbstractNode::UNumIfID)
 				{
-					LOG(2)( Log::MPLS, "MPLS: abstract node type not supported yet:", explicitRoute->getAbstractNodeList().front().getType() );
+					LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+						"MPLS: abstract node type not supported yet:", explicitRoute->getAbstractNodeList().front().getType() );
 					explicitRoute = NULL;
 				}
 			}
@@ -1008,7 +1039,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				VLSR_Route& vlsr = vLSRoute.back();
 				if (vlsr.inPort == 0 && vlsr.outPort == 0 && vlsr.switchID.rawAddress() == 0) {
 					if ( vlsr.errCode == 0 || ((vlsr.errCode >> 16) == ERROR_SPEC_Object::RoutingProblem && (vlsr.errCode&0xffff) == ERROR_SPEC_Object::MPLSLabelAllocationFailure) )
-						LOG(1)(Log::MPLS, "MPLS: Cannot find VLSRRoute: (possibly VLSR route conflicts with existing VLAN or edge port PVID... PATH processing stopped)!");
+						LOG(4)(Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+						"MPLS: Cannot find VLSRRoute: (possibly VLSR route conflicts with existing VLAN or edge port PVID... PATH processing stopped)!");
 					if (vlsr.errCode == 0)
 						RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::MPLSLabelAllocationFailure );
 					else
@@ -1017,7 +1049,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 					return;
 				}				
 			}
-			LOG(2)(Log::MPLS, "MPLS: Excusable internal error in the ERO (PATH processing continued):", explicitRoute->getAbstractNodeList().front().getAddress());
+			LOG(5)(Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"MPLS: Excusable internal error in the ERO (PATH processing continued):", explicitRoute->getAbstractNodeList().front().getAddress());
 			explicitRoute = NULL;
 		}
 
@@ -1029,7 +1062,8 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 			destAddress = Session::ospfRouterID;
 			explicitRoute->pushFront(AbstractNode(false, destAddress, (uint8)32));
 		} else {
-			ERROR(2)( Log::Error, "MPLS: Can't determine data interfaces (PATH processing stopped)!", *static_cast<SESSION_Object*>(this));
+			ERROR(5)( Log::Error,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"MPLS: Can't determine data interfaces (PATH processing stopped)!", *static_cast<SESSION_Object*>(this));
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::BadExplicitRoute );
 			return;
 		}
@@ -1070,19 +1104,22 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 				|| senderTemplate.getSrcAddress() == LogicalInterface::loopbackAddress 
 				|| senderTemplate.getSrcAddress() == Session::ospfRouterID ) {
 				if (defaultOutLif) {
-					LOG(2)( Log::API, "default out interface is", defaultOutLif->getName() );
+					LOG(5)( Log::API,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+						"default out interface is", defaultOutLif->getName() );
 					//senderTemplate.setSrcAddress( defaultOutLif->getLocalAddress() );
 					senderTemplate.setSrcAddress( dataOutRsvpHop.getAddress());
 #if !defined(BETWEEN_APIS)
 				} else {
-					ERROR(3)( Log::Error, "Can't find out interface for", *static_cast<SESSION_Object*>(this), "for PATH message from API" );
+					ERROR(6)( Log::Error,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+						"Can't find out interface for", *static_cast<SESSION_Object*>(this), "for PATH message from API" );
 		// should probably return an error to the api
 		return;
 #endif
 				}
 			} else {
 				if ( !RSVP_Global::rsvp->findInterfaceByAddress( senderTemplate.getSrcAddress() ) ) {
-					ERROR(3)( Log::Error, "Unknown interface", senderTemplate.getSrcAddress(), "in PATH message from API" );
+					ERROR(6)( Log::Error,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+						"Unknown interface", senderTemplate.getSrcAddress(), "in PATH message from API" );
 		// should probably return an error to the api
 		return;
 				}
@@ -1170,7 +1207,8 @@ search_psb:
 #endif
 
 	if ( RtOutL.empty() ) {
-		LOG(2)( Log::Process, "no routing information for dest:", destAddress );
+		LOG(5)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+			"no routing information for dest:", destAddress );
 	return;
 	}
 
@@ -1188,7 +1226,8 @@ search_psb:
 				|| (*psbIter)->getPHopSB().checkPHOP_Data( hop, phopLIH ) ) {
 				cPSB = *psbIter;
 			} else if ( !localOnly ) {
-				LOG(2)( Log::Process, "setting local only:", **psbIter );
+				LOG(5)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+					"setting local only:", **psbIter );
 				(*psbIter)->setLocalOnly( true );
 			}
 			++psbIter;
@@ -1223,7 +1262,8 @@ search_psb:
 	PSB_List::Iterator psbUpIter = RelationshipSession_PSB::followRelationship().lower_bound( &upSenderTemplate );
 	if ( psbUpIter != RelationshipSession_PSB::followRelationship().end() && **psbUpIter == upSenderTemplate &&
 	     (*psbUpIter)->hasUPSTREAM_OUT_LABEL_Object()){
-		ERROR(2)( Log::Error, "Bi-directional LSP has already been established!", *static_cast<SESSION_Object*>(this));
+		ERROR(5)( Log::Error,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+			"Bi-directional LSP has already been established!", *static_cast<SESSION_Object*>(this));
 		RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RSVPSystemError, 0);
 		return;
 	}
@@ -1234,7 +1274,7 @@ search_psb:
 		cPSB = new PSB( senderTemplate );
 		RelationshipSession_PSB::setRelationshipFull( this, cPSB, psbIter );
 	} else {
-		LOG(2)( Log::Process, "found", *cPSB );
+		LOG(5)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "found", *cPSB );
 	}
 
 	// if the PSB is not new and the PHOP has changed -> send reservations upstream
@@ -1243,13 +1283,13 @@ search_psb:
 #if defined(ONEPASS_RESERVATINS)
 	// if this a duplex PSB and a regular already exists -> ignore
 	if ( !psbIsNew && RSVP_Global::messageProcessor->getOnepassPSB() ) {
-		LOG(2)( Log::Process, "partially ignoring DUPLEX request, b/c original PSB exists:", *cPSB );
+		LOG(5)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ","partially ignoring DUPLEX request, b/c original PSB exists:", *cPSB );
 	goto update_basic_psb;
 	}
 #endif
 	PHopSB* phop = findOrCreatePHopSB( hop, phopLIH );
 	if ( cPSB->RelationshipPSB_PHopSB::changeRelationshipFull( cPSB, phop ) ) {
-		LOG(2)( Log::Process, "setting new PHOP", *phop );
+		LOG(5)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ","setting new PHOP", *phop );
 		if ( !psbIsNew ) {
 #if defined(ONEPASS_RESERVATINS)
 			if ( msg.getMsgType() != Message::PathResv )
@@ -1270,7 +1310,8 @@ search_psb:
 			cPSB->setInLabelRequested();
 		}
 		else if (&hop.getLogicalInterface() != RSVP::getApiLif()){
-			LOG(3)( Log::MPLS, "##Warning## MPLS disabled on hop interface ", hop, " -> make sure you have configured this control channel interface in RSVPD.conf...");
+			LOG(6)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"##Warning## MPLS disabled on hop interface ", hop, " -> make sure you have configured this control channel interface in RSVPD.conf...");
 			RSVP_Global::messageProcessor->sendPathErrMessage( ERROR_SPEC_Object::RoutingProblem, ERROR_SPEC_Object::ControlChannelUnconfigured );
 			return;
 		}
@@ -1351,7 +1392,8 @@ goto update_basic_psb;
 
 	// check for non-RSVP clouds
 	if ( TTL != msg.getTTL() ) {
-		LOG(2)( Log::Process, "detected TTL mismatch, packet ttl:", (uint32)TTL );
+		LOG(5)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", 
+			"detected TTL mismatch, packet ttl:", (uint32)TTL );
 #if defined(WITH_API)
 		if ( &hop.getLogicalInterface() != RSVP_Global::rsvp->getApiLif() )
 #endif
@@ -1372,7 +1414,7 @@ goto update_basic_psb;
 
 #if defined(WITH_API)
 	if (localOnly) {
-		LOG(2)( Log::Process, "setting local only:", *cPSB );
+		LOG(5)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "setting local only:", *cPSB );
 		cPSB->setLocalOnly(true);
 	}
 	cPSB->setFromAPI( &hop.getLogicalInterface() == RSVP_Global::rsvp->getApiLif() );
@@ -1398,7 +1440,7 @@ update_basic_psb:
 		if ( ( style != SE || style != WF ) ) {
 			style = FF;
 		} else {
-			LOG(2)( Log::Error, "style ERROR:", style );
+			LOG(5)( Log::Error,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "style ERROR:", style );
 			// TODO: ERROR
 		}
 		cPSB->updateRoutingInfo( RtOutL, gateway, Path_Refresh_Needed, false, msg.getMsgType() == Message::PathResv, msg.getTIME_VALUES_Object().getRefreshPeriod() );
@@ -1454,7 +1496,7 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 		}
 	}
 	if ( psbIter == RelationshipSession_PSB::followRelationship().end() || **psbIter != sender ) {
-		LOG(1)( Log::Process, "no PSB found -> ignoring PTEAR message" );
+		LOG(4)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "no PSB found -> ignoring PTEAR message" );
 		return;
 	}
 	/* ieee32float bandwidth = ((const TSpec &)(*psbIter)->getSENDER_TSPEC_Object()).get_r(); */
@@ -1496,7 +1538,8 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 	//$$$$ DRAGON update NARB client state (e.g., reply to NARB server with reservation release)
 	if (narbClient && narbClient->active())
         	if (!narbClient->handleRsvpMessage(msg)) {
-             		LOG(3)( Log::Routing, "The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
+             		LOG(6)( Log::Routing,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
               }
 	//$$$$ End
 
@@ -1510,7 +1553,7 @@ void Session::processPERR( Message& msg, const LogicalInterface& inLif ) {
 	const SENDER_Object& sender = msg.getSENDER_TEMPLATE_Object();
 	PSB_List::ConstIterator psbIter = RelationshipSession_PSB::followRelationship().find( const_cast<SENDER_Object*>(&sender)  );
 	if ( psbIter == RelationshipSession_PSB::followRelationship().end() || **psbIter != sender ) {
-		LOG(1)( Log::Process, "no PSB found -> ignoring PERR message" );
+		LOG(4)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "no PSB found -> ignoring PERR message" );
 		return;
 	}
 	const LogicalInterface& sendLif = (*psbIter)->getPHopSB().getHop().getLogicalInterface();
@@ -1538,7 +1581,8 @@ inline ERROR_SPEC_Object::ErrorCode Session::processRESV_FDesc( const FLOWSPEC_O
 		matchPSBsAndSCOPEandOutInterface( msg.getSCOPE_Object()->getAddressList(),
 			nhop.getLogicalInterface(), matchingPSB_List, currentOutISB );
 		if ( matchingPSB_List.empty() ) {
-			LOG(1)( Log::Process, "no PSB for SCOPE list found -> ignoring RESV/RTEAR" );
+			LOG(4)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+				"no PSB for SCOPE list found -> ignoring RESV/RTEAR" );
 	return ERROR_SPEC_Object::Confirmation;
 		}
 	} else
@@ -1580,7 +1624,7 @@ inline ERROR_SPEC_Object::ErrorCode Session::processRESV_FDesc( const FLOWSPEC_O
 
 		// change or create RSB
 		if ( currentRSB != NULL ) {
-			LOG(2)( Log::Process, "found RSB:", *currentRSB );
+			LOG(5)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "found RSB:", *currentRSB );
 			oldRSB = currentRSB->createBackup();
 			if ( rsbCount == 1 ) style = msgStyle;
 		} else {
@@ -1686,7 +1730,7 @@ inline ERROR_SPEC_Object::ErrorCode Session::processRESV_FDesc( const FLOWSPEC_O
 #endif
 		} else {
 			confirmImmediately = true;
-			LOG(1)( Log::Process, "no TC update for flow descriptor" );
+			LOG(4)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "no TC update for flow descriptor" );
 		}
 		if ( msg.hasRESV_CONFIRM_Object() ) {
 			if ( confirmImmediately ) {
@@ -1724,7 +1768,7 @@ inline ERROR_SPEC_Object::ErrorCode Session::processRESV_FDesc( const FLOWSPEC_O
 	return ERROR_SPEC_Object::Confirmation;
 			}
 		}
-		LOG(1)( Log::Process, "ignoring RTEAR flow descriptor" );
+		LOG(4)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "ignoring RTEAR flow descriptor" );
 	} // RESV vs. RTEAR
 	return tcResult.error;
 }
@@ -1751,7 +1795,7 @@ void Session::processRESV( const Message& msg, Hop& nhop ) {
 	const FlowDescriptorList& flowDescriptorList = msg.getFlowDescriptorList();
 	FlowDescriptorList::ConstIterator flowdescIter = flowDescriptorList.begin();
 	for ( ; flowdescIter != flowDescriptorList.end() ; ++flowdescIter ) {
-		LOG(2)( Log::Process, "processing flow descriptor", *flowdescIter );
+		LOG(5)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "processing flow descriptor", *flowdescIter );
 		/* ieee32float bandwidth = ((*flowdescIter).getFlowspec())? ((*flowdescIter).getFlowspec())->getEffectiveRate():0; */
 		ERROR_SPEC_Object::ErrorCode result = processRESV_FDesc( *(*flowdescIter).getFlowspec(), (*flowdescIter).filterSpecList, msg, nhop );
 		if ( result != ERROR_SPEC_Object::Confirmation ) {
@@ -1767,7 +1811,7 @@ void Session::processRESV( const Message& msg, Hop& nhop ) {
 			// update NARB client state (e.g., reply to NARB server with reservation confirmation)
 			if (narbClient && narbClient->active())
 				if (!narbClient->handleRsvpMessage(msg)) {
-                        		LOG(3)( Log::Routing, "The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
+                        		LOG(6)( Log::Routing, "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
                                }
 
 		}
@@ -1786,7 +1830,8 @@ void Session::processRERR( Message& msg, Hop& hop ) {
 	PHopSBKey key( hop, msg.getRSVP_HOP_Object().getLIH() );
 	PHOP_List::Iterator pIter = RelationshipSession_PHopSB::followRelationship().find( &key );
 	if ( pIter == RelationshipSession_PHopSB::followRelationship().end() ) {
-		LOG(3)( Log::Process, "no PHOP state found for:", msg.getRSVP_HOP_Object().getAddress(), "-> ignoring RERR" );
+		LOG(6)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", 
+			"no PHOP state found for:", msg.getRSVP_HOP_Object().getAddress(), "-> ignoring RERR" );
 	return;
 	}
 	PSB_List matchingPSB_List;
@@ -1852,7 +1897,8 @@ void Session::processRERR( Message& msg, Hop& hop ) {
 				//@@@@ update NARB client state (e.g., reply to NARB server with reservation release)
 				if (narbClient && narbClient->active())
 					if (!narbClient->handleRsvpMessage(msg)) {
-                            		LOG(3)( Log::Routing, "The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
+                            		LOG(6)( Log::Routing,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+							"The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
                                    }
 			}
 		}
