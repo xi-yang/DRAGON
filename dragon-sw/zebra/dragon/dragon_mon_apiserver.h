@@ -106,6 +106,8 @@ struct _PCE_Spec
 #define MON_TLV_PCE_SPEC		0x0a
 #define MON_TLV_ERROR			0x0f
 
+#define MON_QUERY_EXPIRATION  2  /*in seconds*/
+
 #define MON_ERRCODE_TIMEOUT	0xf0f0
 
 #define MON_SWITCH_OPTION_SUBNET 			0x0001

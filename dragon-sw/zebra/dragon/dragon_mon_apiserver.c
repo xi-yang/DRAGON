@@ -631,7 +631,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
           {
           case MON_API_ACTION_RTRV:
             zMonitoringQuery(dmaster.api, ntohl(msg->header.ucid), ntohl(msg->header.seqnum), "none", 0, 0, 0);
-            DRAGON_TIMER_ON(apiserv->t_query_timer, mon_query_timer, apiserv, 2);
+            DRAGON_TIMER_ON(apiserv->t_query_timer, mon_query_timer, apiserv, MON_QUERY_EXPIRATION);
             rc = 0;
             break;
           default:
@@ -661,7 +661,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
                 goto _error;
             	}
             zMonitoringQuery(dmaster.api, ntohl(msg->header.ucid), ntohl(msg->header.seqnum), lsp_gri, *(u_int32_t*)(tlv+1), 0, 0);
-            DRAGON_TIMER_ON(apiserv->t_query_timer, mon_query_timer, apiserv, 2);
+            DRAGON_TIMER_ON(apiserv->t_query_timer, mon_query_timer, apiserv, MON_QUERY_EXPIRATION);
             rc = 0;
             break;
           default:
