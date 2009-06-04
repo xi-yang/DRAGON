@@ -768,11 +768,11 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 	struct lsp *lsp = NULL;
 	struct _EROAbstractNode_Para *srcLocalId=NULL, *destLocalId=NULL;
 
-	zlog_info("LSP=%s: Received path computation response message from NARB", lsp->common.SessionAttribute_Para->sessionName);
-
 	/* Look for the corresponding LSP request according to the sequence number */
 	if (!(lsp = dragon_find_lsp_by_seqno(ntohl(amsgh->seqnum))))
 		return;
+
+	zlog_info("LSP=%s: Received path computation response message from NARB", lsp->common.SessionAttribute_Para->sessionName);
 	
 	/* Parse message */
 	read_len = 0;
