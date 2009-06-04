@@ -24,7 +24,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_HP5406.h"
 #include "SwitchCtrl_Session_SMC10G8708.h"
 #include "SwitchCtrl_Session_SMC1G8848.h"
-#include "SwitchCtrl_Session_JuniperEX3200.h"
+#include "SwitchCtrl_Session_JUNOS.h"
 #include "SwitchCtrl_Session_PowerConnect6000.h"
 
 
