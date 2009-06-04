@@ -1496,7 +1496,7 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 		}
 	}
 	if ( psbIter == RelationshipSession_PSB::followRelationship().end() || **psbIter != sender ) {
-		LOG(4)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "no PSB found -> ignoring PTEAR message" );
+		LOG(1)( Log::Process, "no PSB found -> ignoring PTEAR message" );
 		return;
 	}
 	/* ieee32float bandwidth = ((const TSpec &)(*psbIter)->getSENDER_TSPEC_Object()).get_r(); */
@@ -1538,8 +1538,7 @@ void Session::processPTEAR( const Message& msg, const PacketHeader& hdr, const L
 	//$$$$ DRAGON update NARB client state (e.g., reply to NARB server with reservation release)
 	if (narbClient && narbClient->active())
         	if (!narbClient->handleRsvpMessage(msg)) {
-             		LOG(6)( Log::Routing,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
-				"The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
+             		LOG(3)( Log::Routing, "The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
               }
 	//$$$$ End
 
@@ -1553,7 +1552,7 @@ void Session::processPERR( Message& msg, const LogicalInterface& inLif ) {
 	const SENDER_Object& sender = msg.getSENDER_TEMPLATE_Object();
 	PSB_List::ConstIterator psbIter = RelationshipSession_PSB::followRelationship().find( const_cast<SENDER_Object*>(&sender)  );
 	if ( psbIter == RelationshipSession_PSB::followRelationship().end() || **psbIter != sender ) {
-		LOG(4)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "no PSB found -> ignoring PERR message" );
+		LOG(1)( Log::Process, "no PSB found -> ignoring PERR message" );
 		return;
 	}
 	const LogicalInterface& sendLif = (*psbIter)->getPHopSB().getHop().getLogicalInterface();
@@ -1581,8 +1580,7 @@ inline ERROR_SPEC_Object::ErrorCode Session::processRESV_FDesc( const FLOWSPEC_O
 		matchPSBsAndSCOPEandOutInterface( msg.getSCOPE_Object()->getAddressList(),
 			nhop.getLogicalInterface(), matchingPSB_List, currentOutISB );
 		if ( matchingPSB_List.empty() ) {
-			LOG(4)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
-				"no PSB for SCOPE list found -> ignoring RESV/RTEAR" );
+			LOG(1)( Log::Process, "no PSB for SCOPE list found -> ignoring RESV/RTEAR" );
 	return ERROR_SPEC_Object::Confirmation;
 		}
 	} else
@@ -1624,7 +1622,7 @@ inline ERROR_SPEC_Object::ErrorCode Session::processRESV_FDesc( const FLOWSPEC_O
 
 		// change or create RSB
 		if ( currentRSB != NULL ) {
-			LOG(5)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "found RSB:", *currentRSB );
+			LOG(2)( Log::Process,  "found RSB:", *currentRSB );
 			oldRSB = currentRSB->createBackup();
 			if ( rsbCount == 1 ) style = msgStyle;
 		} else {
@@ -1730,7 +1728,7 @@ inline ERROR_SPEC_Object::ErrorCode Session::processRESV_FDesc( const FLOWSPEC_O
 #endif
 		} else {
 			confirmImmediately = true;
-			LOG(4)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "no TC update for flow descriptor" );
+			LOG(1)( Log::Process, "no TC update for flow descriptor" );
 		}
 		if ( msg.hasRESV_CONFIRM_Object() ) {
 			if ( confirmImmediately ) {
@@ -1768,7 +1766,7 @@ inline ERROR_SPEC_Object::ErrorCode Session::processRESV_FDesc( const FLOWSPEC_O
 	return ERROR_SPEC_Object::Confirmation;
 			}
 		}
-		LOG(4)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "ignoring RTEAR flow descriptor" );
+		LOG(1)( Log::Process, "ignoring RTEAR flow descriptor" );
 	} // RESV vs. RTEAR
 	return tcResult.error;
 }
@@ -1795,7 +1793,7 @@ void Session::processRESV( const Message& msg, Hop& nhop ) {
 	const FlowDescriptorList& flowDescriptorList = msg.getFlowDescriptorList();
 	FlowDescriptorList::ConstIterator flowdescIter = flowDescriptorList.begin();
 	for ( ; flowdescIter != flowDescriptorList.end() ; ++flowdescIter ) {
-		LOG(5)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "processing flow descriptor", *flowdescIter );
+		LOG(2)( Log::Process,  "processing flow descriptor", *flowdescIter );
 		/* ieee32float bandwidth = ((*flowdescIter).getFlowspec())? ((*flowdescIter).getFlowspec())->getEffectiveRate():0; */
 		ERROR_SPEC_Object::ErrorCode result = processRESV_FDesc( *(*flowdescIter).getFlowspec(), (*flowdescIter).filterSpecList, msg, nhop );
 		if ( result != ERROR_SPEC_Object::Confirmation ) {
@@ -1811,7 +1809,7 @@ void Session::processRESV( const Message& msg, Hop& nhop ) {
 			// update NARB client state (e.g., reply to NARB server with reservation confirmation)
 			if (narbClient && narbClient->active())
 				if (!narbClient->handleRsvpMessage(msg)) {
-                        		LOG(6)( Log::Routing, "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
+                        		LOG(3)( Log::Routing, "The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
                                }
 
 		}
@@ -1830,8 +1828,7 @@ void Session::processRERR( Message& msg, Hop& hop ) {
 	PHopSBKey key( hop, msg.getRSVP_HOP_Object().getLIH() );
 	PHOP_List::Iterator pIter = RelationshipSession_PHopSB::followRelationship().find( &key );
 	if ( pIter == RelationshipSession_PHopSB::followRelationship().end() ) {
-		LOG(6)( Log::Process,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", 
-			"no PHOP state found for:", msg.getRSVP_HOP_Object().getAddress(), "-> ignoring RERR" );
+		LOG(3)( Log::Process, "no PHOP state found for:", msg.getRSVP_HOP_Object().getAddress(), "-> ignoring RERR" );
 	return;
 	}
 	PSB_List matchingPSB_List;
@@ -1897,8 +1894,7 @@ void Session::processRERR( Message& msg, Hop& hop ) {
 				//@@@@ update NARB client state (e.g., reply to NARB server with reservation release)
 				if (narbClient && narbClient->active())
 					if (!narbClient->handleRsvpMessage(msg)) {
-                            		LOG(6)( Log::Routing,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
-							"The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
+                            		LOG(3)( Log::Routing, "The message type ", (int)msg.getMsgType(), " is not supposed handled by NARB API client here!");
                                    }
 			}
 		}
