@@ -1002,7 +1002,7 @@ DEFUN (dragon_set_lsp_name,
   if (find)
   {
   	vty_out(vty, "Another LSP with the same name already exists.\n");
-  	zlog_info("LSP=%s: Another LSP with the same name already exists.", l->common.SessionAttribute_Para->sessionName);
+  	zlog_info("LSP= %s : Another LSP with the same name already exists.", l->common.SessionAttribute_Para->sessionName);
 	return CMD_WARNING;
   }
   if (strlen(argv[0]))
@@ -1768,7 +1768,7 @@ DEFUN (dragon_commit_lsp_sender,
           if (lsp!=lsp2 && LSP_SAME_SESSION(lsp, lsp2))
           {
               vty_out(vty, "Cannot commit: another non-subnet-interface LSP with the same session parameters already exists!%s", VTY_NEWLINE);
-              zlog_info("LSP=%s: Cannot commit: another non-subnet-interface LSP with the same session parameters already exists!", lsp->common.SessionAttribute_Para->sessionName);
+              zlog_info("LSP= %s : Cannot commit: another non-subnet-interface LSP with the same session parameters already exists!", lsp->common.SessionAttribute_Para->sessionName);
               return CMD_WARNING;
           }
       }
@@ -1816,7 +1816,7 @@ DEFUN (dragon_commit_lsp_sender,
 	lsp->common.DragonExtInfo_Para->flags |= EXT_INFO_FLAG_SUBNET_DTL;
   }
 
-  zlog_info("LSP=%s: Committing LSP at sender/source.", (lsp->common.SessionAttribute_Para)->sessionName);
+  zlog_info("LSP= %s : Committing LSP at sender/source.", (lsp->common.SessionAttribute_Para)->sessionName);
   
   if (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr && lsp->common.Session_Para.srcAddr.s_addr != 0
   	&& !((lsp->dragon.srcLocalId >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID || (lsp->dragon.destLocalId >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID))
@@ -1850,7 +1850,7 @@ DEFUN (dragon_commit_lsp_sender,
 	  destLocalId->data.uNumIfID.interfaceID = lsp->dragon.destLocalId;
 	  destLocalId->isLoose = 0;
 	  /* call RSVPD to set up the path */
-	  zlog_info("LSP=%s: Initiating RSVP path request in source and destination co-located provisioning mode.",
+	  zlog_info("LSP= %s : Initiating RSVP path request in source and destination co-located provisioning mode.",
 		    (lsp->common.SessionAttribute_Para)->sessionName);
 	  zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
   }
@@ -1865,7 +1865,7 @@ DEFUN (dragon_commit_lsp_sender,
         	return CMD_WARNING;
          }
 	  /* call RSVPD to set up the path */
-	  zlog_info("LSP=%s: Initiating RSVP path request without NARB address/port configured (sending PATH without ERO)",
+	  zlog_info("LSP= %s : Initiating RSVP path request without NARB address/port configured (sending PATH without ERO)",
 		    (lsp->common.SessionAttribute_Para)->sessionName);
 	  zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
   }
@@ -1893,7 +1893,7 @@ DEFUN (dragon_commit_lsp_sender,
 	  DRAGON_TIMER_ON (lsp->t_lsp_refresh, dragon_lsp_refresh_timer, lsp, DRAGON_LSP_REFRESH_INTERVAL);
 
 	  /* Write packet to socket */
-          zlog_info("LSP=%s: Sending topology create message to NARB", lsp->common.SessionAttribute_Para->sessionName);
+          zlog_info("LSP= %s : Sending topology create message to NARB", lsp->common.SessionAttribute_Para->sessionName);
 	  DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
   }
   /* Set commit flag */
@@ -1950,7 +1950,7 @@ DEFUN (dragon_commit_lsp_receiver,
 	return CMD_WARNING;
   }
 
-  zlog_info("LSP=%s: Committing LSP at receiver/destination", (lsp->common.SessionAttribute_Para)->sessionName);
+  zlog_info("LSP= %s : Committing LSP at receiver/destination", (lsp->common.SessionAttribute_Para)->sessionName);
 
   /* call RSVPD to set up the path */
   zInitRsvpPathRequest(dmaster.api, &lsp->common, 0);
@@ -2005,14 +2005,14 @@ DEFUN (dragon_delete_lsp,
 	dragon_fifo_push(dmaster.dragon_packet_fifo, new);
 
 	/* Write packet to socket */
-	zlog_info("LSP=%s: Sending topology removal message to NARB", lsp->common.SessionAttribute_Para->sessionName);
+	zlog_info("LSP= %s : Sending topology removal message to NARB", lsp->common.SessionAttribute_Para->sessionName);
 	DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
 	/* Set DELETE flag */
 	lsp->status = LSP_DELETE;
   }
   else if ((lsp->status == LSP_IS || lsp->status == LSP_ERROR) && (lsp->flag & LSP_FLAG_RECEIVER))
   {
-        zlog_info("LSP=%s: Initiating RSVP path tear request",
+        zlog_info("LSP= %s : Initiating RSVP path tear request",
 		  (lsp->common.SessionAttribute_Para)->sessionName);
 	zTearRsvpPathRequest(dmaster.api, &lsp->common);
 	lsp->status = LSP_LISTEN;  	
@@ -2024,7 +2024,7 @@ DEFUN (dragon_delete_lsp,
   }
   else{
 	DRAGON_TIMER_OFF(lsp->t_lsp_refresh);
-       zlog_info("LSP=%s: Initiating RSVP path tear request",
+       zlog_info("LSP= %s : Initiating RSVP path tear request",
 		  (lsp->common.SessionAttribute_Para)->sessionName);
 	zTearRsvpPathRequest(dmaster.api, &lsp->common);
 	listnode_delete(dmaster.dragon_lsp_table, lsp);
@@ -2128,11 +2128,11 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 	{
 		strcpy(temp1, inet_ntoa(lsp->common.Session_Para.srcAddr));
 		strcpy(temp2, inet_ntoa(lsp->common.Session_Para.destAddr));
-		zlog_info("LSP=%s: Src %s/%d, dest %s/%d", lsp->common.SessionAttribute_Para->sessionName, temp1, 
+		zlog_info("LSP= %s : Src %s/%d, dest %s/%d", lsp->common.SessionAttribute_Para->sessionName, temp1, 
 			lsp->common.Session_Para.srcPort, temp2, lsp->common.Session_Para.destPort);
 		if (lsp->common.GenericTSpec_Para)
 		{
-			zlog_info("LSP=%s: Generic TSPEC R=%s, B=%s, P=%s, m=%d, M=%d", lsp->common.SessionAttribute_Para->sessionName, 
+			zlog_info("LSP= %s : Generic TSPEC R=%s, B=%s, P=%s, m=%d, M=%d", lsp->common.SessionAttribute_Para->sessionName, 
 					  bandwidth_value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->R),
 					  bandwidth_value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->B),
 					  bandwidth_value_to_string (&conv_bandwidth, (lsp->common.GenericTSpec_Para)->P),
@@ -2141,7 +2141,7 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 		}
 		else if (lsp->common.SonetTSpec_Para)
 		{
-			zlog_info("LSP=%s: SONET TSPEC ST=%d, RCC=%d, NCC=%d, NVC=%d, MT=%d, T=%d, P=%d", lsp->common.SessionAttribute_Para->sessionName, 
+			zlog_info("LSP= %s : SONET TSPEC ST=%d, RCC=%d, NCC=%d, NVC=%d, MT=%d, T=%d, P=%d", lsp->common.SessionAttribute_Para->sessionName, 
 					  (lsp->common.SonetTSpec_Para)->Sonet_ST,
 					  (lsp->common.SonetTSpec_Para)->Sonet_RCC,
 					  (lsp->common.SonetTSpec_Para)->Sonet_NCC,
@@ -2150,15 +2150,15 @@ dragon_show_lsp_detail(struct lsp *lsp, struct vty* vty)
 					  (lsp->common.SonetTSpec_Para)->Sonet_T,
 					  (lsp->common.SonetTSpec_Para)->Sonet_P);
 		}
-		zlog_info("LSP=%s: Encoding %s, Switching %s, G-Pid %s", lsp->common.SessionAttribute_Para->sessionName, 
+		zlog_info("LSP= %s : Encoding %s, Switching %s, G-Pid %s", lsp->common.SessionAttribute_Para->sessionName, 
 				    value_to_string (&conv_encoding, lsp->common.LabelRequest_Para.data.gmpls.lspEncodingType),
 				    value_to_string (&conv_swcap, lsp->common.LabelRequest_Para.data.gmpls.switchingType),
 				    value_to_string (&conv_gpid, lsp->common.LabelRequest_Para.data.gmpls.gPid));
 
-		zlog_info("LSP=%s: Status: %s", lsp->common.SessionAttribute_Para->sessionName, value_to_string(&conv_lsp_status, lsp->status));
+		zlog_info("LSP= %s : Status: %s", lsp->common.SessionAttribute_Para->sessionName, value_to_string(&conv_lsp_status, lsp->status));
 		if (lsp->error_spec.errCode != 0)
 		{
-			zlog_info("LSP=%s: Error Spec: node=%s, flags=%d, code=%d, value=%d", lsp->common.SessionAttribute_Para->sessionName, 
+			zlog_info("LSP= %s : Error Spec: node=%s, flags=%d, code=%d, value=%d", lsp->common.SessionAttribute_Para->sessionName, 
 				inet_ntoa(lsp->error_spec.nodeAddress), lsp->error_spec.errFlags, lsp->error_spec.errCode, lsp->error_spec.errValue); 
 		}
 	}

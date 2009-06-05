@@ -306,7 +306,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   char src[32], dst[32], src_lid[10], dst_lid[10], vlan_tag[10];
   float bandwidth;
 
-  zlog_info("LSP=%s: Creating path computation request message for NARB", lsp->common.SessionAttribute_Para->sessionName);
+  zlog_info("LSP= %s : Creating path computation request message for NARB", lsp->common.SessionAttribute_Para->sessionName);
   inet_ntop(AF_INET, &lsp->common.Session_Para.srcAddr, src, 20);
   inet_ntop(AF_INET, &lsp->common.Session_Para.destAddr, dst, 20);
   if (lsp->dragon.srcLocalId) 
@@ -327,7 +327,7 @@ dragon_topology_create_msg_new(struct lsp *lsp)
   	strcpy(vlan_tag, ": Vlan 'any'");
   else
   	sprintf(vlan_tag, ": Vlan %d", lsp->dragon.lspVtag);
-  zlog_info("LSP=%s: Source %s <--> Destination %s : Bandwidth %4.1f %s", lsp->common.SessionAttribute_Para->sessionName, src, dst, bandwidth, vlan_tag);
+  zlog_info("LSP= %s : Source %s <--> Destination %s : Bandwidth %4.1f %s", lsp->common.SessionAttribute_Para->sessionName, src, dst, bandwidth, vlan_tag);
 
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
@@ -526,7 +526,7 @@ dragon_topology_remove_msg_new(struct lsp *lsp)
   char ero_buf[DRAGON_MAX_PACKET_SIZE];
   int ero_len = build_dragon_tlv_ero(ero_buf, lsp);
   
-  zlog_info("LSP=%s: Creating topology removal message for NARB", lsp->common.SessionAttribute_Para->sessionName);
+  zlog_info("LSP= %s : Creating topology removal message for NARB", lsp->common.SessionAttribute_Para->sessionName);
 
   /* Create a stream for topology request. */
   packet = dragon_packet_new(DRAGON_MAX_PACKET_SIZE);
@@ -560,11 +560,11 @@ dragon_lsp_refresh_timer(struct thread *t)
    {
        if (lsp->common.ERONodeNumber == 0)
        {
-            zlog_info("LSP=%s: still in commit state (no response from NARB (No Route?)), retrying", 
+            zlog_info("LSP= %s : still in commit state (no response from NARB (No Route?)), retrying", 
                 (lsp->common.SessionAttribute_Para)->sessionName);
        }
        else 
-            zlog_info("LSP=%s: still in commit state (no response from RSVD (RERR?)), retrying", 
+            zlog_info("LSP= %s : still in commit state (no response from RSVD (RERR?)), retrying", 
                 (lsp->common.SessionAttribute_Para)->sessionName);
 
         /* Construct topology create message */
@@ -577,7 +577,7 @@ dragon_lsp_refresh_timer(struct thread *t)
         DRAGON_TIMER_ON (lsp->t_lsp_refresh, dragon_lsp_refresh_timer, lsp, DRAGON_LSP_REFRESH_INTERVAL);
         
         /* Write packet to socket */
-        zlog_info("LSP=%s: Sending topology create message to NARB", lsp->common.SessionAttribute_Para->sessionName);
+        zlog_info("LSP= %s : Sending topology create message to NARB", lsp->common.SessionAttribute_Para->sessionName);
         DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
    	
    }
@@ -772,7 +772,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 	if (!(lsp = dragon_find_lsp_by_seqno(ntohl(amsgh->seqnum))))
 		return;
 
-	zlog_info("LSP=%s: Received path computation response message from NARB", lsp->common.SessionAttribute_Para->sessionName);
+	zlog_info("LSP= %s : Received path computation response message from NARB", lsp->common.SessionAttribute_Para->sessionName);
 	
 	/* Parse message */
 	read_len = 0;
@@ -941,7 +941,7 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 	}
 	
 	/* call RSVPD to set up the path */
-	zlog_info("LSP=%s: Initiating RSVP path request for LSP %s (with ERO)", lsp->common.SessionAttribute_Para->sessionName,
+	zlog_info("LSP= %s : Initiating RSVP path request for LSP %s (with ERO)", lsp->common.SessionAttribute_Para->sessionName,
                     (lsp->common.SessionAttribute_Para)->sessionName);
 	zInitRsvpPathRequest(dmaster.api, &lsp->common, 1);
 
@@ -1065,12 +1065,12 @@ dragon_read (struct thread *thread)
 
 	case DMSG_NARB_TOPO_REJECT: /* Request is rejected by the NARB */
 		tlvh = DTLV_HDR_TOP(amsgh);
-		zlog_info("LSP=%s: NARB replied path computation error message (error code %d)!", lsp->common.SessionAttribute_Para->sessionName, ntohl(*(u_int32_t*)(tlvh+1)));
+		zlog_info("LSP= %s : NARB replied path computation error message (error code %d)!", lsp->common.SessionAttribute_Para->sessionName, ntohl(*(u_int32_t*)(tlvh+1)));
 		break;
 
 	case DMSG_NARB_TOPO_DELETE_CONF: /* Topology removal request is being confirmed by the NARB */
 	        if (lsp->status==LSP_DELETE && dmaster.api) {
-		        zlog_info("LSP=%s: Initiating RSVP path tear request for LSP %s", lsp->common.SessionAttribute_Para->sessionName,
+		        zlog_info("LSP= %s : Initiating RSVP path tear request for LSP %s", lsp->common.SessionAttribute_Para->sessionName,
 				  (lsp->common.SessionAttribute_Para)->sessionName);
 			zTearRsvpPathRequest(dmaster.api, &lsp->common);
 		}
@@ -1220,7 +1220,7 @@ void rsvpupcall_register_lsp(struct _rsvp_upcall_parameter* p)
 	lsp->common.LabelRequest_Para.data.gmpls.switchingType = p->switchingType;
 	lsp->common.LabelRequest_Para.data.gmpls.gPid = p->gPid;
 	listnode_add(dmaster.dragon_lsp_table, lsp);	
-	zlog_info("LSP=%s: Register API in RSVPD.",
+	zlog_info("LSP= %s : Register API in RSVPD.",
 		  (lsp->common.SessionAttribute_Para)->sessionName);
 	zInitRsvpPathRequest(dmaster.api, &lsp->common, 0); /* register this api in RSVPD */
 	if (p->code == Path){
@@ -1311,7 +1311,7 @@ void  rsvpUpcall(void* para)
 				&& lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr) )
 			{
 				/* send RESV message to RSVPD to set up the path */
-			        zlog_info("LSP=%s: Send RESV message to RSVPD.",
+			        zlog_info("LSP= %s : Send RESV message to RSVPD.",
 					  (lsp->common.SessionAttribute_Para)->sessionName);
 				zInitRsvpResvRequest(dmaster.api, para);
 				if (lsp->status == LSP_LISTEN && (lsp->flag & LSP_FLAG_RECEIVER)) /* otherwise: src-dest colocated w/ local-id --> stay in commit status */
@@ -1333,7 +1333,7 @@ void  rsvpUpcall(void* para)
 		case ResvConf:
 			/* Update the status of the LSP */
 			lsp->status = LSP_IS;
-			zlog_info("LSP=%s: is In Service at source/sender", lsp->common.SessionAttribute_Para->sessionName);
+			zlog_info("LSP= %s : is In Service at source/sender", lsp->common.SessionAttribute_Para->sessionName);
                      /* update LSP baed on DRAGON UNI Object */
 			if (p->dragonUniPara) {
 				lsp->common.DragonUni_Para = p->dragonUniPara;
@@ -1360,7 +1360,7 @@ void  rsvpUpcall(void* para)
 				dragon_fifo_push(dmaster.dragon_packet_fifo, new);
 
 				/* Write packet to socket */
-				zlog_info("LSP=%s: Sending topology confirmation message to NARB", lsp->common.SessionAttribute_Para->sessionName);
+				zlog_info("LSP= %s : Sending topology confirmation message to NARB", lsp->common.SessionAttribute_Para->sessionName);
 				DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
 			}
 			break;
@@ -1385,7 +1385,7 @@ void  rsvpUpcall(void* para)
 					dragon_fifo_push(dmaster.dragon_packet_fifo, new);
 
 					/* Write packet to socket */
-					zlog_info("LSP=%s: Sending topology removal message to NARB", lsp->common.SessionAttribute_Para->sessionName);
+					zlog_info("LSP= %s : Sending topology removal message to NARB", lsp->common.SessionAttribute_Para->sessionName);
 					DRAGON_WRITE_ON(dmaster.t_write, NULL, lsp->narb_fd);
 				}
 				lsp->status = LSP_EDIT; 
@@ -1397,7 +1397,7 @@ void  rsvpUpcall(void* para)
 		case PathErr:
 		case ResvErr:
 			lsp->status = LSP_ERROR;
-			zlog_info("LSP=%s: is in Error state", lsp->common.SessionAttribute_Para->sessionName);
+			zlog_info("LSP= %s : is in Error state", lsp->common.SessionAttribute_Para->sessionName);
 			if (p->errorSpecPara != NULL)
 				lsp->error_spec = *p->errorSpecPara;
 			break;
