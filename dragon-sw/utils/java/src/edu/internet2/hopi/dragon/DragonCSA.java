@@ -154,7 +154,15 @@ public class DragonCSA {
             String cmdResult = "";
             ArrayList<String> ero = lsp.getEro();
             ArrayList<String> subnetEro = lsp.getSubnetEro();
-
+            
+            /* Verify 'override-narb-ero' set if ERO given */
+            if(ero != null || subnetEro != null){
+                String options = command("show narb-extra-options");
+                if(!options.contains("override-narb-ero")){
+                    command("set narb-extra-options override-narb-ero");
+                }
+            }
+            
             /* Enter edit mode */
             command("edit lsp " + lsp.getLSPName());
 
@@ -187,6 +195,8 @@ public class DragonCSA {
             }else if(destVtag > 0){
                 id += destVtag;
             }
+            
+            /* ERO settings */
             if(!lsp.getSrcLocalID().getType().equals(DragonLocalID.SUBNET_INTERFACE)){
                 unumInterfaceId = " interface-id " + id;
             }else{
@@ -198,7 +208,6 @@ public class DragonCSA {
                             " strict ip-address " + hop + unumInterfaceId);
                 }
             }
-
             /* Set Subnet ERO */
             if(subnetEro != null){
                 for(String hop : subnetEro){
