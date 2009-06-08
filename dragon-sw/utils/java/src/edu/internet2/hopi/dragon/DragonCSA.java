@@ -28,6 +28,10 @@ public class DragonCSA {
     protected String passwordPromptPattern;
     private boolean uniMode;
     private Logger log;
+    private int timeout;
+    
+    final private int DEFAULT_TIMEOUT = 30000;
+    
     /**
      * Constructor that creates telnet client and sets default values (UNI is set to false)
      *
@@ -42,6 +46,7 @@ public class DragonCSA {
      */
     public DragonCSA(boolean uni){
         tc = new TelnetClient();
+        this.timeout = DEFAULT_TIMEOUT;
         in = null;
         out = null;
         uniMode = uni;
@@ -60,6 +65,7 @@ public class DragonCSA {
     public boolean login(String host, int port, String password){
         try {
             tc.connect(host, port);
+            tc.setSoTimeout(this.timeout);
             in = new BufferedReader(new InputStreamReader(tc.getInputStream()));
             out = new PrintStream(tc.getOutputStream());
             this.readUntil(passwordPromptPattern);
@@ -640,5 +646,20 @@ public class DragonCSA {
         }
 
         return buffer;
+    }
+
+    /**
+     * @return the timeout
+     */
+    public int getTimeout() {
+        return this.timeout;
+    }
+
+    /**
+     * @param timeout the timeout to set
+     */
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+        this.tc.setDefaultTimeout(this.timeout);
     }
 }
