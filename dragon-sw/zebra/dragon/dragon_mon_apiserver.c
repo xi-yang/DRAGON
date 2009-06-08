@@ -522,6 +522,15 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             lsp_info->status = lsp->status;
             lsp_info->time_sec = lsp->timestamp.tv_sec;
             len += sizeof(struct _MON_LSP_Info);
+            if (lsp->status == LSP_ERROR)
+            	{
+                tlv = (struct dragon_tlv_header*)(buf+len);
+                tlv->type = htons(MON_TLV_LSP_ERRSPEC);
+                tlv->length = htons(sizeof(struct _Error_Spec_Para));
+                len += sizeof(struct dragon_tlv_header);
+                memcpy(tlv+1, &lsp->error_spec, sizeof(struct _Error_Spec_Para));
+                len += sizeof(struct _Error_Spec_Para);
+            	}
             rmsg = mon_api_msg_new(MON_API_MSGTYPE_LSPINFO, MON_API_ACTION_DATA, len, apiserv->ucid, ntohl(msg->header.seqnum), 0, buf);
             MON_APISERVER_POST_MESSAGE(apiserv, rmsg);
             rc = 0;

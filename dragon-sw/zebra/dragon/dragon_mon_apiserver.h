@@ -104,6 +104,7 @@ struct _PCE_Spec
 #define MON_TLV_IPv4_ADDR		0x08
 #define MON_TLV_LSP_REQUEST	0x09
 #define MON_TLV_PCE_SPEC		0x0a
+#define MON_TLV_LSP_ERRSPEC	0x0b
 #define MON_TLV_ERROR			0x0f
 
 #define MON_QUERY_EXPIRATION  2  /*in seconds*/
