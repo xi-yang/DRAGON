@@ -517,6 +517,7 @@ int mon_apiserver_handle_msg (struct mon_apiserver *apiserv, struct mon_api_msg 
             lsp_info = (struct _MON_LSP_Info*)(buf+len);
             lsp_info->source.s_addr = lsp->common.Session_Para.srcAddr.s_addr;
             lsp_info->destination.s_addr = lsp->common.Session_Para.destAddr.s_addr;
+            lsp_info->narb.s_addr = dmaster.module[MODULE_NARB_INTRA].ip_addr.s_addr;
             lsp_info->lsp_id = lsp->common.Session_Para.srcPort;
             lsp_info->tunnel_id = lsp->common.Session_Para.destPort;
             lsp_info->status = lsp->status;

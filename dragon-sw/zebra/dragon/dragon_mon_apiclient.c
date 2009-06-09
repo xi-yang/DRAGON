@@ -441,12 +441,13 @@ void msg_display(struct mon_api_msg* msg)
           break;
         case MON_TLV_LSP_INFO:
         {
-          char src_ip[20], dest_ip[20];
+          char src_ip[20], dest_ip[20], narb_ip[20];
           lsp_info = (struct _MON_LSP_Info*)(tlv + 1);
           strcpy(src_ip, inet_ntoa(lsp_info->source)); 
           strcpy(dest_ip, inet_ntoa(lsp_info->destination)); 
-          printf("\t\t>>LSP Info: src_ip=%s, lsp_id=%d, dest_ip=%s, tunnel_id=%d, status=0x%x -- created at %s\n", 
-		  	src_ip,  lsp_info->lsp_id, dest_ip, lsp_info->tunnel_id, lsp_info->status, ctime((time_t*)&lsp_info->time_sec));
+          strcpy(narb_ip, inet_ntoa(lsp_info->narb)); 
+          printf("\t\t>>LSP Info: src_ip=%s, lsp_id=%d, dest_ip=%s, tunnel_id=%d, narb_ip=%s, status=0x%x -- created at %s\n", 
+		  	src_ip,  lsp_info->lsp_id, dest_ip, lsp_info->tunnel_id, narb_ip, lsp_info->status, ctime((time_t*)&lsp_info->time_sec));
           if (lsp_info->status == LSP_ERROR)
           {
               struct _Error_Spec_Para *errspec = (struct _Error_Spec_Para *)((char*)tlv + sizeof(struct dragon_tlv_header) + ntohs(tlv->length));

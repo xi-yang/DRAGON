@@ -49,6 +49,7 @@ struct _MON_LSP_Info
 {
   struct in_addr source;
   struct in_addr destination;
+  struct in_addr narb;
   u_int16_t lsp_id;
   u_int16_t tunnel_id;
   u_int32_t status;
