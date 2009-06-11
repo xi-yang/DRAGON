@@ -865,7 +865,7 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         }
         else if (ret == 2)
         {
-            LOG(6)(Log::MPLS, vcgName, "LSP=", currentLspName, ": ", " Ingress-EFLOW (untagged multicast) creation has been denied.\n", bufCmd);
+            LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", vcgName, " Ingress-EFLOW (untagged multicast) creation has been denied.\n", bufCmd);
             readShell(SWITCH_PROMPT, NULL, 1, 5);
             return false;
         }

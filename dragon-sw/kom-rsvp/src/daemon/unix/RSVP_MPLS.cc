@@ -285,6 +285,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 						break;
 					case Message::InitAPI: // inital state for TL1_TELNET only
 						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
+							LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": setup -", "starting subnet control session with switch", (*sessionIter)->getSwitchInetAddr());
 
 							//verify
 							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSourceDestPortConflict()) {
@@ -397,6 +398,8 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                            }
 			                            //disconnect
 			                            (*sessionIter)->disconnectSwitch();
+
+							LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": setup -", "finished subnet control session successfully with switch", (*sessionIter)->getSwitchInetAddr());
 						}
 
 						// NO break; continue to next case clauses !
@@ -646,6 +649,7 @@ _Exit_Error_Subnet:
 	//$$$$ DRAGON specific
 	RSVP_Global::messageProcessor->sendResvErrMessage( 0, ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed );
 	psb.setVLSRError(ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed);
+	LOG(4)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": setup -", "finished subnet control session with error!");
 	return false;
 }
 
@@ -776,6 +780,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 						if (CLI_SESSION_TYPE == CLI_TL1_TELNET) {
 							bool noErr = true;
+
+							LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": teardown -", "starting subnet control session with switch", (*sessionIter)->getSwitchInetAddr());
 
 							//verify
 							if (((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasSourceDestPortConflict()) {
@@ -908,6 +914,8 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 										RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanTrunk, false); //false == release
 								}
 						    }
+
+						    LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": teardown -", "finished subnet control session successfully with switch", (*sessionIter)->getSwitchInetAddr());
 
 						    if (!noErr) return; // otherwise, continue to update bandwidth and timeslots.
 						}
