@@ -75,9 +75,9 @@ sub usage() {
 	print("  Long options:\n");
 	print("  \n");
 	print("  Example runs:\n");
-	print("   /usr/local/dragon/mtk-agent/mtk-agent.pl query-dragon-cli -L test1\n");
-	print("   /usr/local/dragon/mtk-agent/mtk-agent.pl query-rce-topology\n");
-	print("   /usr/local/dragon/mtk-agent/mtk-agent.pl query-mon-api -m '\-l'\n");
+	print("   /usr/local/dragon/bin/mtk-agent.pl query-dragon-cli -L test1\n");
+	print("   /usr/local/dragon/bin/mtk-agent.pl query-rce-topology\n");
+	print("   /usr/local/dragon/bin/mtk-agent.pl query-mon-api -m '\-l'\n");
 	print("  \n");
 	exit;
 }
