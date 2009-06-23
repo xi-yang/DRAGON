@@ -360,7 +360,7 @@ sub do_task_tunnel_ping($) {
                 if ($output =~ /inet\s[^\d]*(\d+\.\d+\.\d+\.\d+)\s/){
                         my $tunnel_peer = get_slash30_peer($1);
                         $output = `ping -c3 $tunnel_peer`;
-                        unless ($output =~ /3 received, 0% packet loss/) {
+                        unless ($output =~ /0% packet loss/) {
                                 print ("Detected unpingable control channel $tunnel!\n");
                                 log_print ("err", "Detected unpingable control channel $tunnel!\n");
                                 return 0;
@@ -372,7 +372,7 @@ sub do_task_tunnel_ping($) {
 }
 
 sub get_slash30_peer($) {
-        my ($A, $B, $C, $D) = split(/./, shift);
+        my ($A, $B, $C, $D) = split(/\./, shift);
         if ($D % 4 == 1) {
                 $D += 1;
         } elsif ($D % 4 == 2) {
