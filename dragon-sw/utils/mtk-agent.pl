@@ -12,7 +12,7 @@ use Net::Telnet;
 
 use lib "$FindBin::Bin/lib";
 use strict;
-use warnings;
+#use warnings;
 
 ##############################
 ### Begin of main process
@@ -504,7 +504,7 @@ sub disconnect_tl1 {
 
 ######### LOG Functions ######
 
-sub log_open($;$$) {
+sub log_open {
   my ($mask, $file);
   ($log_dest, $mask, $file) = @_;
   # set mask value(s)
@@ -539,14 +539,14 @@ sub log_open($;$$) {
   return 1;
 }
 
-sub log_close () {
+sub log_close {
   # close syslog and log file, if we were using them
   if($log_dest & SYSLOG) { closelog; }
   if($log_dest & FILELOG) { close $log_fh or die "Log::close"; }
   return 1;
 }
 
-sub log_print ($@) {
+sub log_print {
   my ($level, @args) = @_;
   my $sublevel = 0;
   my $at = $@;
