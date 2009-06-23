@@ -451,8 +451,8 @@ void msg_display(struct mon_api_msg* msg)
           if (lsp_info->status == LSP_ERROR)
           {
               struct _Error_Spec_Para *errspec = (struct _Error_Spec_Para *)((char*)tlv + sizeof(struct dragon_tlv_header) + ntohs(tlv->length));
-              strcpy(src_ip, inet_ntoa(errspec->nodeAddress)); 
               u_int32_t xef = errspec->errFlags, xec = errspec->errCode, xev = errspec->errValue;
+              strcpy(src_ip, inet_ntoa(errspec->nodeAddress)); 
               printf("\t\t\t: Error Spec: err_node=%s, err_flag=0x%x, err_code=0x%x, err_value=0x%x\n", src_ip, xef, xec, xev);
           }
           break;
