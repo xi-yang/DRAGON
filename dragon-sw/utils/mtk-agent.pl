@@ -212,7 +212,7 @@ sub grep_logging_msgs {
         my @lines = grep { /LSP= $lsp_name :/ } <FILE>;
         foreach my $line (reverse @lines) {
                 $line =~ /(\d{2}:\d{2}:\d{2})/;
-                if ($1 gt $start_time && $1 lt $end_time) {
+                if ($1 ge $start_time && $1 lt $end_time) {
                         print $line;
                 }
         }
