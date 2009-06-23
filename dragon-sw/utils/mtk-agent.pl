@@ -203,20 +203,20 @@ sub do_task_rsvpd_log($) {
 
 sub grep_logging_msgs {
         my ($file_name, $lsp_name, $start_time, $end_time) = @_;
-        my $ok = open(FILELOG, "<$file_name");
+        my $ok = open(FILE, "<$file_name");
         unless ($ok) {
                 print "###Cannot open : $file_name ###\n";
                 log_print ("err", "cannot open log file ( $file_name ) for parsing.\n");
                 return 0;
         }
-        my @lines = grep { /LSP= $lsp_name :/ } <FILELOG>;
+        my @lines = grep { /LSP= $lsp_name :/ } <FILE>;
         foreach my $line (reverse @lines) {
                 $line =~ /(\d{2}:\d{2}:\d{2})/;
                 if ($1 gt $start_time && $1 lt $end_time) {
                         print $line;
                 }
         }
-        close FILELOG;
+        close FILE;
         return 1;
 }
 
@@ -296,19 +296,19 @@ sub do_task_narb_crash($) {
 # check tl1 connectivity for all core directors configured with the vlsr
 sub do_task_vlsr_tl1($) {
         my ($cfg) = @_;
-        my $ok = open(FILELOG, '/usr/local/dragon/etc/ospfd.conf');
+        my $ok = open(FILE, '/usr/local/dragon/etc/ospfd.conf');
         unless ($ok) {
                 print "###Cannot open : /usr/local/dragon/etc/ospfd.conf ###\n";
                 log_print ("err", "cannot open /usr/local/dragon/etc/ospfd.conf \n");
                 return 0;
         }
         my %CDs;
-        foreach my $line (<FILELOG>) {
+        foreach my $line (<FILE>) {
                 if ($line =~ /subnet-uni\s(\d)+\s(\w+)\s.+uni-n-ipv4\s([^\s]+)\s/){
                         $CDs{$1} = $2;
                 }
         }
-        close FILELOG;
+        close FILE;
 
         foreach my $cd_name (keys %CDs) {
                 my $cd_ip = $CDs{$cd_name};
@@ -330,18 +330,18 @@ sub do_task_tunnel_ping($) {
         my ($cfg) = @_;
         my @tunnels;
         if (lc($cfg->{'gre_tunnel'}) eq 'all') {
-                my $ok = open(FILELOG, '/usr/local/dragon/etc/RSVPD.conf');
+                my $ok = open(FILE, '/usr/local/dragon/etc/RSVPD.conf');
                 unless ($ok) {
                         print "###Cannot open : /usr/local/dragon/etc/RSVPD.conf ###\n";
                         log_print ("err", "cannot open /usr/local/dragon/etc/RSVPD.conf \n");
                         return 0;
                 }
-                foreach my $line (<FILELOG>) {
+                foreach my $line (<FILE>) {
                         if ($line =~ /interface\s([^\s]+)\s/) {
                                 push @tunnels, $1;
                         }
                 }
-                close FILELOG;
+                close FILE;
         }
         else {
 
