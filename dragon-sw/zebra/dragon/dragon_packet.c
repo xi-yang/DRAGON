@@ -1219,6 +1219,17 @@ void rsvpupcall_register_lsp(struct _rsvp_upcall_parameter* p)
 	lsp->common.LabelRequest_Para.data.gmpls.lspEncodingType = p->lspEncodingType;
 	lsp->common.LabelRequest_Para.data.gmpls.switchingType = p->switchingType;
 	lsp->common.LabelRequest_Para.data.gmpls.gPid = p->gPid;
+	if (p->dragonExtInfoPara) {
+		lsp->common.DragonExtInfo_Para = XMALLOC(MTYPE_TMP, sizeof(struct _Dragon_ExtInfo_Para));
+		memcpy(lsp->common.DragonExtInfo_Para, p->dragonExtInfoPara, sizeof(struct _Dragon_ExtInfo_Para));
+		if (p->dragonExtInfoPara->num_mon_nodes > 0)
+		{
+			lsp->common.DragonExtInfo_Para->num_mon_nodes = p->dragonExtInfoPara->num_mon_nodes;
+			lsp->common.DragonExtInfo_Para->mon_nodes = XMALLOC(MTYPE_TMP, sizeof(struct in_addr)*p->dragonExtInfoPara->num_mon_nodes);
+			memcpy(lsp->common.DragonExtInfo_Para->mon_nodes, p->dragonExtInfoPara->mon_nodes,  sizeof(struct in_addr)*p->dragonExtInfoPara->num_mon_nodes);
+		}
+	}
+
 	listnode_add(dmaster.dragon_lsp_table, lsp);	
 	zlog_info("LSP= %s : Register API in RSVPD.",
 		  (lsp->common.SessionAttribute_Para)->sessionName);
