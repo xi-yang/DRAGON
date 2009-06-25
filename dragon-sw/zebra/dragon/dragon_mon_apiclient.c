@@ -86,7 +86,7 @@ int mon_apiclient_connect (char* host, int port)
     ret = connect (fd, (struct sockaddr *) &addr, sizeof (struct sockaddr_in));
     if (ret < 0)
     {
-        printf( "narbapi_connect: connect(): %s\n", strerror (errno));
+        printf( "mon_apiclient_connect: connect(): %s\n", strerror (errno));
         close (fd);
         exit(1);
     }
