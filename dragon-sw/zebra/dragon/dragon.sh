@@ -385,6 +385,8 @@ case $1 in
 
         if test "$ospf_intra_pid" != ""; then
 	    echo "dragon-sw: intra-domain ospf daemon is running, pid=$ospf_intra_pid."
+	else
+	    echo "dragon-sw: intra-domain ospf daemon is NOT running."
 	fi
 
         if test "$dragon_pid" != ""; then
