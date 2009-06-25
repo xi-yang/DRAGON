@@ -143,8 +143,9 @@ foreach my $task (@tasks) {
 		print "\n###Unknown task name: $task! ###\n";
 		next;
 	}
-	print "\n===Starting Task: '$task' ===\n";
+	print "\n===Start Task: '$task' ===\n";
 	$TASK_DOERs{$task}(\%cfg);
+	print "\n===End Task: '$task' ===\n";
 }
 
 
@@ -373,7 +374,6 @@ sub do_task_tunnel_ping($) {
                         return 0;
 		}
         }
-
         return 1;
 }
 
