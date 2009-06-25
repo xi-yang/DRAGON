@@ -35,6 +35,10 @@ case `uname` in
     fi
 
     echo '' && \
+        echo "installing mtk-agent..."
+    cp -f utils/mtk-agent.pl $PREFIX/bin
+
+    echo '' && \
      echo "dragon-sw install finished."
 
     echo '' && \
@@ -79,6 +83,10 @@ case `uname` in
     fi
 
     echo '' && \
+        echo "installing mtk-agent..."
+    cp -f utils/mtk-agent.pl $PREFIX/bin
+
+    echo '' && \
      echo "dragon-sw install finished."
     ;;
   *Darwin)
@@ -101,6 +109,10 @@ case `uname` in
 	echo "dragon-sw: zebra make install error!"
 	exit 1
     fi
+
+    echo '' && \
+        echo "installing mtk-agent..."
+    cp -f utils/mtk-agent.pl $PREFIX/bin
 
     echo '' && \
      echo "dragon-sw install finished."
