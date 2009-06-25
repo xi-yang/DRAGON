@@ -365,7 +365,13 @@ sub do_task_tunnel_ping($) {
                                 log_print ("err", "Detected unpingable control channel $tunnel!\n");
                                 return 0;
                         }
-                }
+                        print ("cntrol channel $tunnel passed ping_test!\n");
+                        log_print ("info", "cntrol channel $tunnel passed ping_test!\n");
+                } else {
+                        print ("Unknown error when trying control channel $tunnel!\n");
+                        log_print ("err", "Unknown error when trying control channel $tunnel!\n");
+                        return 0;
+		}
         }
 
         return 1;
