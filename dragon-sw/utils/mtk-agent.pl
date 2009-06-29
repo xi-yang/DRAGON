@@ -297,6 +297,11 @@ sub do_task_narb_crash($) {
 # check tl1 connectivity for all core directors configured with the vlsr
 sub do_task_vlsr_tl1($) {
         my ($cfg) = @_;
+	unless (defined($cfg->{'tl1_user'}) && defined($cfg->{'tl1_passwd'})){
+                print "### TL1 user and password unknown ###\n";
+                log_print ("err", "TL1 user and password unknown \n");
+                return 0;
+        }
         my $ok = open(FILE, '/usr/local/dragon/etc/ospfd.conf');
         unless ($ok) {
                 print "###Cannot open : /usr/local/dragon/etc/ospfd.conf ###\n";
@@ -305,7 +310,7 @@ sub do_task_vlsr_tl1($) {
         }
         my %CDs;
         foreach my $line (<FILE>) {
-                if ($line =~ /subnet-uni\s(\d)+\s(\w+)\s.+uni-n-ipv4\s([^\s]+)\s/){
+                if ($line =~ /subnet-uni\s+\d+\s+node-name\s+(\w+)\s+tna-ipv4\s+[^\s]+\s+uni-n-ipv4\s+([^\s]+)/){
                         $CDs{$1} = $2;
                 }
         }
@@ -413,9 +418,10 @@ sub do_task_test($) {
 
 ######### CLI Functions ######
 
-my $global_ctag = 123; #Globally unique CMD CTAG
+my $global_ctag = 0; #Globally unique CMD CTAG
 sub get_ctag {
-        return $global_ctag++;
+	++$global_ctag;
+        return $global_ctag;
 }
 
 sub connect {
@@ -443,8 +449,8 @@ sub connect {
                 my $ctag = get_ctag();
                 read_shell($t, '/;.*$/', 5) or return 0;
                 $t->print("act-user::$user:" . $ctag . "::$pass;");
-                my $r = read_shell($t, '/;.*$/', 10) or return 0;
-                unless ($r =~ /Successful/) {
+                my $r = read_shell($t, '/Successful/', 10) or return 0;
+                unless ($r) {
                         log_print ("err", "failed in TL1 login -- wrong user/password?\n");
                         return 0;
                 }
