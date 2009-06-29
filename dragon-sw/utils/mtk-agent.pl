@@ -34,6 +34,7 @@ my %TASK_DOERs = (
 my %cfg = (
 	"config" => "/etc/dcn-mtk-agent.conf", 
 	"cli_passwd" => 'dragon', 
+	"tl1_port" => '10201', 
 	"mon_apiclient" => '/usr/local/dragon/bin/mon_apiclient', 
 	"log" => "/var/log/dcn-mtk-agent.log"
 );
@@ -70,8 +71,9 @@ sub log_print;
 # Get the command-line arguments:
 sub usage() {
 	print("usage: mtk-agent.pl [task1, task2 ...] (example tasks: 'query-dragon-cli', 'query-mon-api'\n");
-	print("       [-h] [-u <username>] [-c <config_file>] [-p <password>]\n");
 	print("       -L: <lsp_name> -M: <mon_api_cmd> -S: <start_time> -T: <end_time>\n");
+	print("       [--tl1_user <username>] [--tl1_passwd <password>] [--tl1_port <port>] \n");
+	print("       [-h] [-u <username>] [-c <config_file>] [-p <password>]\n");
 	print("  Long options:\n");
 	print("  \n");
 	print("  Example runs:\n");
@@ -92,6 +94,9 @@ sub process_opts($$) {
 	if(($n eq "S") || ($n eq "start_time"))	{$k1 = "start_time";}
 	if(($n eq "T") || ($n eq "end_time")) 	{$k1 = "end_time";}
 	if(($n eq "G") || ($n eq "gre_tunnel"))	{$k1 = "gre_tunnel";}
+	if($n eq "tl1_user")	{$k1 = "tl1_user";}
+	if($n eq "tl1_passwd")	{$k1 = "tl1_passwd";}
+	if($n eq "tl1_port")	{$k1 = "tl1_port";}
 
 	if(defined($k1)) {
 		$cfg{$k1} = $v;
@@ -131,6 +136,9 @@ if(!GetOptions ('c=s' =>		\&process_opts,
 		'G=s' =>		\&process_opts,
 		'gre_tunnel=s' =>	\&process_opts,
 		'h' => 			\&usage,
+		'tl1_user=s' =>		\&process_opts,
+		'tl1_passwd=s' =>	\&process_opts,
+		'tl1_port=s' =>		\&process_opts,
 		'help' => 		\&usage,
 		'<>' =>			\&process_tasks,)) {
 	usage();
@@ -449,7 +457,7 @@ sub connect {
                 my $ctag = get_ctag();
                 read_shell($t, '/;.*$/', 5) or return 0;
                 $t->print("act-user::$user:" . $ctag . "::$pass;");
-                my $r = read_shell($t, '/Successful/', 10) or return 0;
+                my $r = read_shell($t, '/Successful/', 5) or return 0;
                 unless ($r) {
                         log_print ("err", "failed in TL1 login -- wrong user/password?\n");
                         return 0;
