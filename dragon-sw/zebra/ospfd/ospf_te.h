@@ -277,6 +277,8 @@ struct link_ifswcap_specific_vlan {
 #define IFSWCAP_SPECIFIC_SUBNET_INFN 0x0200
 #define IFSWCAP_SPECIFIC_SUBNET_JNPR 0x0400
 #define IFSWCAP_SPECIFIC_SUBNET_CSCO 0x0800
+/* When this option set, timeslots on the interface has to be allocated contiguously for each circuit. */
+#define IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS 0x1000
 
 #define MAX_TIMESLOTS_NUM 192 /* 192 STS-1 = 10Gbps */
 struct link_ifswcap_specific_subnet_uni {

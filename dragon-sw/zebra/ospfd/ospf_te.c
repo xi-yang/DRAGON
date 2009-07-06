@@ -2869,7 +2869,7 @@ DEFUN (ospf_te_interface_ifsw_cap7,
     {
 	SET_TIMESLOT(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, ts1);
     }
-  else if (argc == 2 ) 
+  else if (argc >= 2 && argc <= 3 ) 
     {
 	  if (sscanf (argv[1], "%d", &ts2) != 1)
 	    {
@@ -2883,6 +2883,9 @@ DEFUN (ospf_te_interface_ifsw_cap7,
 	    }
 	  for(ts = ts1; ts <= ts2; ts++)
 	      SET_TIMESLOT(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask, ts);
+
+	  if (strncmp(argv[2], "cont", 4) == 0)
+	  	ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version |= IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS;
     }
   else
     {
@@ -2895,11 +2898,18 @@ DEFUN (ospf_te_interface_ifsw_cap7,
 
 ALIAS (ospf_te_interface_ifsw_cap7,
        ospf_te_interface_ifsw_cap7a_cmd,
-       "timeslot <1-192> to <2-192>",
+       "timeslot <1-192> to <2-192> ",
        "Assign timeslots\n"
        "TimeSlot ID1 in the range [1, 192]\n"
        "TimeSlot ID2 in the range [2, 192]\n");
 
+ALIAS (ospf_te_interface_ifsw_cap7,
+       ospf_te_interface_ifsw_cap7bcmd,
+       "timeslot <1-192> to <2-192> (contiguous|vcat|default)",
+       "Assign timeslots\n"
+       "TimeSlot ID1 in the range [1, 192]\n"
+       "TimeSlot ID2 in the range [2, 192]\n"
+       "TimeSlot allocation in contiguous or vcat mode (vcat by default)\n");
 
 DEFUN (show_ospf_te_router,
        show_ospf_te_router_cmd,
