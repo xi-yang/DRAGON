@@ -2904,7 +2904,7 @@ ALIAS (ospf_te_interface_ifsw_cap7,
        "TimeSlot ID2 in the range [2, 192]\n");
 
 ALIAS (ospf_te_interface_ifsw_cap7,
-       ospf_te_interface_ifsw_cap7bcmd,
+       ospf_te_interface_ifsw_cap7b_cmd,
        "timeslot <1-192> to <2-192> (contiguous|vcat|default)",
        "Assign timeslots\n"
        "TimeSlot ID1 in the range [1, 192]\n"
@@ -3215,6 +3215,7 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap6_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7a_cmd);
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7b_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_te_lambda_cmd);
 
   set_config_end_call_back_func(ospf_te_interface_config_update);
