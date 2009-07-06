@@ -1452,7 +1452,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
             swcap = val2str(&str_val_conv_swcap, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.swcap_ext);
             enc = val2str(&str_val_conv_encoding, top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.encoding_ext);
             vty_out (vty, "      -> Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
-            vty_out (vty, "      -> Available TimeSlots:");
+            vty_out (vty, "      -> Available TimeSlots%s:", (top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) ? " (Contiguous)": "");
             SHOW_TIMESLOTS(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask);
             vty_out (vty, "%s", VTY_NEWLINE);
 	}
@@ -1580,7 +1580,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             swcap = val2str(&str_val_conv_swcap, subnet_uni->swcap_ext);
             enc = val2str(&str_val_conv_encoding, subnet_uni->encoding_ext);
             vty_out (vty, "      -> Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
-            vty_out (vty, "      -> Available TimeSlots:");
+            vty_out (vty, "      -> Available TimeSlots%s:", (subnet_uni->version & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) ? " (Contiguous)":"");
             SHOW_TIMESLOTS(subnet_uni->timeslot_bitmask);
             vty_out (vty, "%s", VTY_NEWLINE);
 	}
