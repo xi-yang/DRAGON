@@ -448,7 +448,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			subnetUniDataSrc.ethernet_bw = vlsr.bandwidth;
 			subnetUniDataSrc.first_timeslot = (uint8)inUnumIfID;
 			if (subnetUniDataSrc.first_timeslot == ANY_TIMESLOT)
-				subnetUniDataSrc.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataSrc.timeslot_bitmask, subnetUniDataSrc.ethernet_bw);
+				subnetUniDataSrc.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataSrc);
 			subnetUniDataSrc.tunnel_id = msg.getSESSION_Object().getTunnelId();
 			//subnetUniDataSrc.logical_port = ntohl(subnetUniDataSrc.logical_port);
 			//subnetUniDataSrc.egress_label= ntohl(subnetUniDataSrc.egress_label);
@@ -515,7 +515,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				}
 				subnetUniDataDest.ethernet_bw = vlsr.bandwidth;
 				if (destTimeSlot == ANY_TIMESLOT) //@@@@ This first timeslot based on OSPF TE info may not be accurate as compared to RCE computation...
-					subnetUniDataDest.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataDest.timeslot_bitmask, subnetUniDataDest.ethernet_bw);
+					subnetUniDataDest.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataDest);
 				else
 					subnetUniDataDest.first_timeslot = destTimeSlot;
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
@@ -551,7 +551,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				subnetUniDataDest.ethernet_bw = vlsr.bandwidth;
 				subnetUniDataDest.first_timeslot = (uint8)outUnumIfID;
 				if (subnetUniDataDest.first_timeslot == ANY_TIMESLOT)
-					subnetUniDataDest.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataDest.timeslot_bitmask, subnetUniDataDest.ethernet_bw);
+					subnetUniDataDest.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataDest);
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
 				//subnetUniDataDest.logical_port = ntohl(subnetUniDataDest.logical_port);
 				//subnetUniDataDest.egress_label= ntohl(subnetUniDataDest.egress_label);

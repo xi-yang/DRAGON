@@ -528,8 +528,35 @@ void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemStrin
         groupMemString = "";
         return;
     }
-    
-    sprintf(bufCmd, "%d&&%d", ts, ts+ts_num-1);
+
+	
+	if ((pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
+	{
+	    sprintf(bufCmd, "%d", ts);
+		++ts;
+		int ts_count = 1;
+		char sts[8];
+		for (; ts_count < ts_num, ts <= MAX_TIMESLOTS_NUM; ts++)
+		{
+			if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
+			{
+
+				sprintf(sts, "&%d", ts);
+				strcat(bufCmd, sts);
+				ts_count++;
+			}
+		}
+		if (ts_count < ts_num)
+		{
+			groupMemString = "";
+			return;
+		}
+			
+	}
+	else
+	{
+	    sprintf(bufCmd, "%d&&%d", ts, ts+ts_num-1);
+	}
     groupMemString = (const char*)bufCmd;
 }
 
@@ -739,10 +766,32 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String*& destTime
         return;
     }
 
-    for (group = 0; group < numGroups; group++)
-    {
-        sprintf(bufCmd, "%d-%c-%d-%d-%d&&%d", bay, shelf_alpha, slot, subslot, ts+group*48, (group == numGroups-1? ts+ts_num-1 : ts+group*48+47));
-        destTimeslotsStringArray[group] = (const char*)bufCmd;
+	for (group = 0; group < numGroups; group++)
+	{
+		if ((subnetUniDest.options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
+		{
+			sprintf(bufCmd, "%d-%c-%d-%d-%d", bay, shelf_alpha, slot, subslot, ts);
+			++ts;
+			int ts_count = 1;
+			char sts[8];
+			for (; ts_count < ts_num, ts <= MAX_TIMESLOTS_NUM; ts++)
+			{
+				if (HAS_TIMESLOT(subnetUniDest.timeslot_bitmask, ts))
+				{
+					sprintf(sts, "&%d", ts);
+					strcat(bufCmd, sts);
+					ts_count++;
+					if (ts_count%48 == 0) 
+						break;
+				}
+			}				
+			destTimeslotsStringArray[group] = (const char*)bufCmd;
+		}
+		else 
+		{
+	        sprintf(bufCmd, "%d-%c-%d-%d-%d&&%d", bay, shelf_alpha, slot, subslot, ts+group*48, (group == numGroups-1? ts+ts_num-1 : ts+group*48+47));
+		    destTimeslotsStringArray[group] = (const char*)bufCmd;
+		}
     }
 }
 
@@ -2051,25 +2100,41 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap()
         uint8 ts, ts_count;
         bool ts_ok = false;
         for (ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
-        {
+        {				
             if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
             {
-                ts_count = 1; ts++;
-                for ( ; HAS_TIMESLOT(pUniData->timeslot_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
-                    ts_count++;
-                if (ts_count >= ts_num)
-                {
-                    pUniData->first_timeslot = ts-ts_count;
-                    ts_ok = true;
-                    break;
-                }
+				if (pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
+				{
+					ts_count = 1;
+                    pUniData->first_timeslot = ts;				
+					for ( ; ts <= MAX_TIMESLOTS_NUM; ts++)
+						if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
+							ts_count++;
+	                if (ts_count >= ts_num)
+	                {
+	                    pUniData->first_timeslot = ts-ts_count;
+	                    ts_ok = true;
+	                }
+					break;
+				}
+				else
+				{
+	                ts_count = 1; ts++;
+	                for ( ; HAS_TIMESLOT(pUniData->timeslot_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
+	                    ts_count++;
+	                if (ts_count >= ts_num)
+	                {
+	                    pUniData->first_timeslot = ts-ts_count;
+	                    ts_ok = true;
+	                    break;
+	                }
+				}
             }
         }
         if (!ts_ok)
         {
             LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "Warning (syncTimeslotsMap): insufficient number of contigious time slots for this request.\n");
-        } 
-
+        }
     }
     return ret;
 }
@@ -2104,15 +2169,28 @@ bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap()
     {
         uint8 ts, ts_count = 0;
         bool ts_ok = false;
-        for (ts = pUniData->first_timeslot; ts <= MAX_TIMESLOTS_NUM && HAS_TIMESLOT(timeslots, ts); ts++)
-        {
-            ts_count++;
-            if (ts_count >=  ts_num)
-            {
-                ts_ok = true;
-                break;
-            }
-        }
+		if (pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
+		{
+			for (ts = pUniData->first_timeslot; ts <= MAX_TIMESLOTS_NUM; ts++)
+				if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts)
+					ts_count++;
+			if (ts_count >= ts_num)
+			{
+				ts_ok = true;
+			}
+		}
+		else
+		{
+			for (ts = pUniData->first_timeslot; ts <= MAX_TIMESLOTS_NUM && HAS_TIMESLOT(timeslots, ts); ts++)
+	        {
+	            ts_count++;
+	            if (ts_count >=  ts_num)
+	            {
+	                ts_ok = true;
+	                break;
+	            }
+	        }
+		}
         if (!ts_ok)
         {
             LOG(4)(Log::MPLS, "LSP=", currentLspName, ": ", "Warning (verifyTimeslotsMap): the range of contigious timeslots suggested by signaling may overlap with existing VCGs.\n");

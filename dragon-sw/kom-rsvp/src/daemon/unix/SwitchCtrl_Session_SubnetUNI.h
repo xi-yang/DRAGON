@@ -28,6 +28,7 @@ To be incorporated into KOM-RSVP-TE package
 #define CTRL_CHAN_NAME_LEN 12
 #define NODE_NAME_LEN 16
 #define MAX_TIMESLOTS_NUM 192  //STS-1 x 192 = 10 G
+#define IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS 0x1000
 typedef struct SubnetUNI_Data_struct {
 	uint8 subnet_id;
 	uint8 first_timeslot;
@@ -259,23 +260,38 @@ public:
 
 	static SwitchCtrl_Session_SubnetUNI_List* subnetUniApiClientList ;
 
-	static uint8 getFirstAvailableTimeslotByBandwidth(uint8* ts_bitmask, float bw)
+	static uint8 getFirstAvailableTimeslotByBandwidth(SubnetUNI_Data& subnetUniData)
 	{
-	        uint8 ts, ts_count;
-	        for (ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
-	        {
-	            if (HAS_TIMESLOT(ts_bitmask, ts))
-	            {
-	                ts_count = 1; ts++;
-	                for ( ;  HAS_TIMESLOT(ts_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
-	                    ts_count++;
-	                if (ts_count >= bw/49.536)
-	                {
-	                    return (ts-ts_count);
-	                }
-	            }
-	        }
-		return 0;
+        uint8 ts, ts_count;
+		if ((subnetUniData.options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
+		{
+			for (ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
+			{
+				if (HAS_TIMESLOT(subnetUniData.timeslot_bitmask, ts))
+				{
+					ts_count = 1; ts++;
+					for ( ; ts <= MAX_TIMESLOTS_NUM; ts++)
+						if (HAS_TIMESLOT(subnetUniData.timeslot_bitmask, ts))
+							ts_count++;
+					if (ts_count >= subnetUniData.ethernet_bw/49.536)
+						return ts;
+					else
+						return 0;
+				}
+			}
+		}
+		else for (ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
+		{
+			if (HAS_TIMESLOT(subnetUniData.timeslot_bitmask, ts))
+			{
+				ts_count = 1; ts++;
+				for ( ;  HAS_TIMESLOT(subnetUniData.timeslot_bitmask, ts) && ts <= MAX_TIMESLOTS_NUM; ts++)
+					ts_count++;
+				if (ts_count >= subnetUniData.ethernet_bw/49.536)
+					return (ts-ts_count);
+			}
+		}
+        return 0;
 	}
 
 	static void getSessionNameString(String& ssName, uint32 uni_tna_ip, const String& mainSessionName, uint32 main_ss_ip, bool isSource = true) {
