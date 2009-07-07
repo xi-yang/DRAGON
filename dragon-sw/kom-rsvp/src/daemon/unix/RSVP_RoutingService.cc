@@ -506,7 +506,7 @@ const void RoutingService::holdTimeslotsbyOSPF(u_int32_t port, SimpleList<uint8>
 	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 }
 
-// @@@@ we may use port number instead of uniID @@@@
+// @@@@ we may use port number instead of uniID
 bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint8 uniID, SubnetUNI_Data& uniData) {
 	uint8 message = GetSubnetUNIDataByOSPF;
 	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32) + sizeof(uint8);
@@ -529,6 +529,7 @@ bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint
 	int i = 0;
 	for ( ; i < 12; i++) ibuffer >> uniData.control_channel_name[i];
 	for (i = 0; i < 16; i++) ibuffer >> uniData.node_name[i];
+	ibuffer >> uniData.options;
 	for (i = 0; i < MAX_TIMESLOTS_NUM/8; i++) ibuffer >> uniData.timeslot_bitmask[i];
 
 	return true;
