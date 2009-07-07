@@ -536,7 +536,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemStrin
 		++ts;
 		int ts_count = 1;
 		char sts[8];
-		for (; ts_count < ts_num, ts <= MAX_TIMESLOTS_NUM; ts++)
+		for (; ts_count < ts_num && ts <= MAX_TIMESLOTS_NUM; ts++)
 		{
 			if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
 			{
@@ -774,7 +774,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String*& destTime
 			++ts;
 			int ts_count = 1;
 			char sts[8];
-			for (; ts_count < ts_num, ts <= MAX_TIMESLOTS_NUM; ts++)
+			for (; ts_count < ts_num && ts <= MAX_TIMESLOTS_NUM; ts++)
 			{
 				if (HAS_TIMESLOT(subnetUniDest.timeslot_bitmask, ts))
 				{
@@ -2103,7 +2103,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap()
         {				
             if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
             {
-				if (pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
+				if ((pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
 				{
 					ts_count = 1;
                     pUniData->first_timeslot = ts;				
@@ -2169,10 +2169,10 @@ bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap()
     {
         uint8 ts, ts_count = 0;
         bool ts_ok = false;
-		if (pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
+		if ((pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
 		{
 			for (ts = pUniData->first_timeslot; ts <= MAX_TIMESLOTS_NUM; ts++)
-				if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts)
+				if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
 					ts_count++;
 			if (ts_count >= ts_num)
 			{
