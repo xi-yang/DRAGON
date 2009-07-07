@@ -466,9 +466,13 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
         break;
     }
 
-    for (uint8 x = 0; x < ts_num && ts+x <= MAX_TIMESLOTS_NUM; x++)
+    for (uint8 x = 0; x < ts_num && ts <= MAX_TIMESLOTS_NUM; ts++)
     {
-        timeslots.push_back(ts + x);
+    	if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
+   		{
+	        timeslots.push_back(ts);
+			x++;
+   		}
     }
 }
 

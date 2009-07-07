@@ -42,6 +42,7 @@ typedef struct SubnetUNI_Data_struct {
 	uint32 upstream_label;
 	uint8 control_channel_name[CTRL_CHAN_NAME_LEN];
 	uint8 node_name[NODE_NAME_LEN];
+	uint32 options;
 	uint8 timeslot_bitmask[MAX_TIMESLOTS_NUM/8]; //bitmask
 } SubnetUNI_Data;
 
