@@ -466,6 +466,8 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
         break;
     }
 
+    //Handling both contiguous and non-contiguous modes
+    //As first_timeslot has been calculated by NARB or syncTimslots(), no more calculation here.
     for (uint8 x = 0; x < ts_num && ts <= MAX_TIMESLOTS_NUM; ts++)
     {
     	if (HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
@@ -613,15 +615,20 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
     uint8 first_ts = ts;
     group = 0; 
     numGroups = 0;
+    int ts_offset = 0;
     if (ptpCatUnit == CATUNIT_150MBPS)
     {
         sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts/3+1);
         ts_num += ts;
         ts += 3;
-
-        for ( ; ts < ts_num; ts += 3)
+        for ( ; ts < ts_num + ts_offset; ts += 3)
         {
-            if (ts - first_ts == 48)
+            if ((pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0 && !HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
+            {
+			ts_offset += 3;
+			continue;
+            }
+            if (ts - first_ts - ts_offset == 48)
             {
                 ctpGroupStringArray[group] = (const char*)bufCmd;
                 group++;
@@ -642,9 +649,14 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
         sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts);
         ts_num += ts;
         ts += 1;
-        for ( ; ts < ts_num; ts++)
+        for ( ; ts < ts_num + ts_offset; ts++)
         {
-            if (ts - first_ts == 48)
+            if ((pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0 && !HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
+            {
+			ts_offset ++;
+			continue;
+            }
+            if (ts - first_ts - ts_offset== 48)
             {
                 ctpGroupStringArray[group] = (const char*)bufCmd;
                 group++;
@@ -782,7 +794,10 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String*& destTime
 					strcat(bufCmd, sts);
 					ts_count++;
 					if (ts_count%48 == 0) 
+					{
+						ts++;
 						break;
+					}
 				}
 			}				
 			destTimeslotsStringArray[group] = (const char*)bufCmd;
