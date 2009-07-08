@@ -778,35 +778,35 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String*& destTime
         return;
     }
 
-	for (group = 0; group < numGroups; group++)
+    int ts_count = 1;
+    for (group = 0; group < numGroups; group++)
+    {
+	if ((subnetUniDest.options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
 	{
-		if ((subnetUniDest.options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
+		sprintf(bufCmd, "%d-%c-%d-%d-%d", bay, shelf_alpha, slot, subslot, ts);
+		++ts;
+		char sts[8];
+		for (; ts_count < ts_num && ts <= MAX_TIMESLOTS_NUM; ts++)
 		{
-			sprintf(bufCmd, "%d-%c-%d-%d-%d", bay, shelf_alpha, slot, subslot, ts);
-			++ts;
-			int ts_count = 1;
-			char sts[8];
-			for (; ts_count < ts_num && ts <= MAX_TIMESLOTS_NUM; ts++)
+			if (HAS_TIMESLOT(subnetUniDest.timeslot_bitmask, ts))
 			{
-				if (HAS_TIMESLOT(subnetUniDest.timeslot_bitmask, ts))
+				sprintf(sts, "&%d", ts);
+				strcat(bufCmd, sts);
+				ts_count++;
+				if (ts_count%48 == 0) 
 				{
-					sprintf(sts, "&%d", ts);
-					strcat(bufCmd, sts);
-					ts_count++;
-					if (ts_count%48 == 0) 
-					{
-						ts++;
-						break;
-					}
+					ts++;
+					break;
 				}
-			}				
-			destTimeslotsStringArray[group] = (const char*)bufCmd;
-		}
-		else 
-		{
-	        sprintf(bufCmd, "%d-%c-%d-%d-%d&&%d", bay, shelf_alpha, slot, subslot, ts+group*48, (group == numGroups-1? ts+ts_num-1 : ts+group*48+47));
-		    destTimeslotsStringArray[group] = (const char*)bufCmd;
-		}
+			}
+		}				
+		destTimeslotsStringArray[group] = (const char*)bufCmd;
+	}
+	else 
+	{
+	    sprintf(bufCmd, "%d-%c-%d-%d-%d&&%d", bay, shelf_alpha, slot, subslot, ts+group*48, (group == numGroups-1? ts+ts_num-1 : ts+group*48+47));
+	    destTimeslotsStringArray[group] = (const char*)bufCmd;
+	}
     }
 }
 
@@ -2311,11 +2311,34 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
                         break;
                     }
                     //conditions for VCG-owned SNC detection
-                    if ((ts1+1 - pUniData->first_timeslot) %48 == 0 && ts1+1 - pUniData->first_timeslot >= 0 && ts1+1 - pUniData->first_timeslot < ts_num)
+                    bool detected = false;
+                    if ((pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) != 0)
+                    {
+                        if ((ts1+1 - pUniData->first_timeslot) %48 == 0 && ts1+1 - pUniData->first_timeslot >= 0 && ts1+1 - pUniData->first_timeslot < ts_num)
+                            detected = true;
+                    }
+                    else
+                    {
+                        int ts_count = 0;
+                        for (int ts = pUniData->first_timeslot; ts <= MAX_TIMESLOTS_NUM; ts++)
+                        {
+                            if (!HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
+                                continue;
+                            ts_count++;
+                            if (ts_count > ts_num)
+                                break;
+                            if (ts1+1 == ts)
+                            {
+                                detected = true;
+                                break;				
+                            }
+                        }
+                    }
+                    if (detected)
                     {
                         LOG(5)(Log::MPLS, "LSP=", currentLspName, ": ", " hasSystemSNCHolindgCurrentVCG_TL1 method detected an SNC holding the current VCG.\n", bufCmd);
                         ret = readShell(SWITCH_PROMPT, NULL, 1, 5);
-                        return true;                        
+                        return true;
                     }
                 }
                 else
