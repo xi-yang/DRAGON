@@ -778,13 +778,14 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String*& destTime
         return;
     }
 
-    int ts_count = 1;
+    int ts_count = 0;
     for (group = 0; group < numGroups; group++)
     {
 	if ((subnetUniDest.options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
 	{
 		sprintf(bufCmd, "%d-%c-%d-%d-%d", bay, shelf_alpha, slot, subslot, ts);
 		++ts;
+		++ts_count;
 		char sts[8];
 		for (; ts_count < ts_num && ts <= MAX_TIMESLOTS_NUM; ts++)
 		{
