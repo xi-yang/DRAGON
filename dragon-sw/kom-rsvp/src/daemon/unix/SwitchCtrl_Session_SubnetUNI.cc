@@ -634,6 +634,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
                 group++;
                 numGroups++;
                 first_ts = ts;
+                ts_num += ts_offset;
                 ts_offset = 0;
                 sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts/3+1);
                 continue;
@@ -663,6 +664,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
                 group++;
                 numGroups++;
                 first_ts = ts;
+                ts_num += ts_offset;
                 ts_offset = 0;
                 sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts);
                 continue;
