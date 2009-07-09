@@ -621,7 +621,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
         sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts/3+1);
         ts_num += ts;
         ts += 3;
-        for ( ; ts < ts_num + ts_offset; ts += 3)
+        for ( ; ts < ts_num + ts_offset && ts <= MAX_TIMESLOTS_NUM; ts += 3)
         {
             if ((pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0 && !HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
             {
@@ -650,18 +650,19 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
         sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts);
         ts_num += ts;
         ts += 1;
-        for ( ; ts < ts_num + ts_offset; ts++)
+        for ( ; ts < ts_num + ts_offset && ts <= MAX_TIMESLOTS_NUM; ts++)
         {
             if ((pUniData->options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0 && !HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
             {
 			ts_offset ++;
 			continue;
             }
-            if (ts - first_ts - ts_offset== 48)
+            if (ts - first_ts - ts_offset == 48)
             {
                 ctpGroupStringArray[group] = (const char*)bufCmd;
                 group++;
                 numGroups++;
+                first_ts = ts;
                 ts_offset = 0;
                 sprintf(bufCmd, "%s-CTP-%d", vcgName.chars(), ts);
                 continue;
