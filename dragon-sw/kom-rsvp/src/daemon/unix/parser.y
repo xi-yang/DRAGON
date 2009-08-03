@@ -54,7 +54,7 @@ static String yy_swLayer;
 %token TC_C NONE CBQ_C HFSC_C RATE PEER
 %token TIMER SESSION_HASH API_HASH ID_HASH_SEND ID_HASH_RECV LIST_ALLOC SB_ALLOC
 %token EXPLICIT_ROUTE_ MPLS_C NOMPLS MPLS_ALL NOMPLS_ALL LABEL_HASH LOCAL_ID UPSTREAM_LABEL_ INTEGER_RANGE
-%token NARB SLOTS EXCLUDE NARB_EXTRA_OPTIONS NARB_VTAGS_ALLOWED
+%token NARB SLOTS SLOT EXCLUDE NARB_EXTRA_OPTIONS NARB_VTAGS_ALLOWED
 %token EOS_MAP VLAN_OPTIONS
 %%
 
@@ -102,8 +102,10 @@ if_type:
 	STRING		{ yy_ifType = yy_string; }
 	;
 slot:
-	slot INTEGER	{ cfr->addSlot(yy_ifType, yy_int); }
-	| INTEGER	{ cfr->addSlot(yy_ifType, yy_int); }
+	slot SLOT	{ cfr->addSlotInfo(yy_ifType, yy_string); }
+	| slot INTEGER 	{ cfr->addSlotNum(yy_ifType, yy_int); }
+	| SLOT	{ cfr->addSlotInfo(yy_ifType, yy_string); }
+	| INTEGER	{ cfr->addSlotNum(yy_ifType, yy_int); }
 	;
 sw_layer:
 	STRING		{ yy_swLayer = yy_string; }

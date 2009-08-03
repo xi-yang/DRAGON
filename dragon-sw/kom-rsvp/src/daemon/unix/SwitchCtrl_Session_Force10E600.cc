@@ -114,10 +114,10 @@ bool SwitchCtrl_Session_Force10E600::addVLANPort_ShellScript(uint32 portID, uint
     slot_part=(portID>>8)&0xf;
     switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
     case SLOT_TYPE_GIGE:
-        sprintf(portName, "gi%d/%d",slot_part-RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET),port_part);
+        sprintf(portName, "gi%d/%d",slot_part,port_part);
         break;
     case SLOT_TYPE_TENGIGE:
-        sprintf(portName, "te%d/%d",slot_part-RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET),port_part);
+        sprintf(portName, "te%d/%d",slot_part,port_part);
         break;
     case SLOT_TYPE_ILLEGAL:
     default:
@@ -187,10 +187,10 @@ bool SwitchCtrl_Session_Force10E600::deleteVLANPort_ShellScript(uint32 portID, u
     slot_part=(portID>>8)&0xf;
     switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
     case SLOT_TYPE_GIGE:
-        sprintf(portName, "gi%d/%d",slot_part-RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET),port_part);
+        sprintf(portName, "gi%d/%d",slot_part,port_part);
         break;
     case SLOT_TYPE_TENGIGE:
-        sprintf(portName, "te%d/%d",slot_part-RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET),port_part);
+        sprintf(portName, "te%d/%d",slot_part,port_part);
         break;
     case SLOT_TYPE_ILLEGAL:
     default:
@@ -261,10 +261,10 @@ bool SwitchCtrl_Session_Force10E600::policeInputBandwidth_ShellScript(bool do_un
     slot_part=(input_port>>8)&0xf;
     switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
     case SLOT_TYPE_GIGE:
-        sprintf(portName, "gi%d/%d",slot_part-RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET),port_part);
+        sprintf(portName, "gi%d/%d", slot_part, port_part);
         break;
     case SLOT_TYPE_TENGIGE:
-        sprintf(portName, "te%d/%d",slot_part-RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET),port_part);
+        sprintf(portName, "te%d/%d", slot_part, port_part);
         break;
     case SLOT_TYPE_ILLEGAL:
     default:
@@ -334,10 +334,10 @@ bool SwitchCtrl_Session_Force10E600::limitOutputBandwidth_ShellScript(bool do_un
     slot_part=(output_port>>8)&0xf;
     switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
     case SLOT_TYPE_GIGE:
-        sprintf(portName, "gi%d/%d",slot_part-RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET),port_part);
+        sprintf(portName, "gi%d/%d",slot_part,port_part);
         break;
     case SLOT_TYPE_TENGIGE:
-        sprintf(portName, "te%d/%d",slot_part-RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET),port_part);
+        sprintf(portName, "te%d/%d",slot_part,port_part);
         break;
     case SLOT_TYPE_ILLEGAL:
     default:

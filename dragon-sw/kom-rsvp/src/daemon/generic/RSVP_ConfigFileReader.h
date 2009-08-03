@@ -94,7 +94,8 @@ public:
 	void warn( const String& );
 	const SimpleList<Hop>& getHopList() { return hopList; }
 	void setNarbApiClient(String host, int port);
-	void addSlot(String slot_type, String slot_info);
+	void addSlotNum(String slot_type, uint16 slot_num);
+	void addSlotInfo(String slot_type, String slot_info);
 	void addLayerExclusion(String sw_layer, String excl_name);
 	void setNarbExtraOption(String option_name) { NARB_APIClient::setExtraOption(option_name); }
 	void setAllowedVtag(int vtag);

@@ -90,6 +90,8 @@ upstream\-label\=[0-9]+	{ yy_string = yytext; return UPSTREAM_LABEL_; }
 
 [A-Za-z0-9\-\+]+	{ yy_string = yytext; return STRING; }
 
+([0-9]+|[0-9]+\([0-9]+\-[0-9]+\))	{ yy_string = yytext; return SLOT; }
+
 [ \t\n]+	;	/* ignore whitespace */
 [#;].*\n	;	/* ignore comments: from '#' or ';' to end of line */
 .		yyerror("Unknown character");
