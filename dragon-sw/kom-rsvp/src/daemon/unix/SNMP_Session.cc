@@ -32,7 +32,7 @@ bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
             if (vpmUntagged) ret&=setVLANPortTag(vpmUntagged->ports , old_vlan); 
         }
         //remove THIS untagged port out of the old VLAN
-        if (vpmUntagged) ret&=setVLANPort(vpmUntagged->ports, old_vlan); 
+        if (vpmUntagged) ret&=setVLANPort(vpmAll->ports, old_vlan); 
    }
 
     mask = 1<<(32-port);

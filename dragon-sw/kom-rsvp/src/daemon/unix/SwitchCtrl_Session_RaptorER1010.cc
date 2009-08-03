@@ -387,7 +387,7 @@ bool SwitchCtrl_Session_RaptorER1010::movePortToVLANAsUntagged(uint32 port, uint
         //Set original ports back to their "tagged" or "untagged" states
         if (vpmUntagged) ret&=setVLANPortTag(vpmUntagged->ports , old_vlan); 
         //remove THIS untagged port out of the old VLAN
-        if (vpmUntagged) ret&=setVLANPort(vpmUntagged->ports, old_vlan); 
+        if (vpmUntagged) ret&=setVLANPort(vpmAll->ports, old_vlan); 
    }
     */
 
