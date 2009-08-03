@@ -66,10 +66,9 @@ public:
 
 };
 
-
 inline uint32 Port2BitForce10(uint32 port)
 {
-#ifdef FORCE10_SOFTWARE_V6
+ #ifdef FORCE10_SOFTWARE_V6
     return ((port>>8)&0xf)*96 + ((port)&0xff); //FTOS-ED-6.2.1
 
 //@@@@special patch for S50v
@@ -83,15 +82,16 @@ inline uint32 Port2BitForce10(uint32 port)
 inline uint32 Bit2PortForce10(uint32 bit)
 {
 #ifdef FORCE10_SOFTWARE_V6
-    return ((bit/96)<<8) | ((bit%96)&0xff); //FTOS-ED-6.2.1
+    return (((bit/96)<<8) | ((bit%96)&0xff); //FTOS-ED-6.2.1
 
 //@@@@special patch for S50v
     //return (((bit+1)/96)<<8) | (((bit+1)%96)&0xff); //FTOS-ED-6.2.1
 
 #else
-    return (((bit-1)/24)<<8) | (((bit-1)%24) & 0xff) ; //FTOS-ED-5.3.1
+    return (((bit-1)/24)<<8) | (((bit-1)%24) & 0xff); //FTOS-ED-5.3.1
 #endif
 }
+
 
 #endif //ifndef _SwitchCtrl_Session_Force10E600_H_
 

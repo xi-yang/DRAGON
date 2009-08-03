@@ -1183,11 +1183,11 @@ bool SwitchCtrl_Global::hasLocalId(uint16 type, uint16 value, uint16  tag)
         return false;
 }
 
-uint16 SwitchCtrl_Global::getSlotType(uint16 slot_num)
+uint16 SwitchCtrl_Global::getSlotType(uint16 slot_num, uint16 port_num)
 {
     SimpleList<slot_entry>::Iterator it = slotList.begin();
     for (; it != slotList.end(); ++it) {
-        if ((*it).slot_num == slot_num)
+        if ((*it).slot_num == slot_num && port_num >= (*it).from_port && port_num <= (*it).to_port)
             return (*it).slot_type;
     }
 

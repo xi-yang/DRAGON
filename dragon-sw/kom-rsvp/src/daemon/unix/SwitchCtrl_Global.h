@@ -286,6 +286,8 @@ typedef SimpleList<SwitchCtrl_Session*> SwitchCtrlSessionList;
 struct slot_entry {
 	uint16 slot_type;
 	uint16 slot_num;
+	uint16 from_port;
+	uint16 to_port;
 };
 
 //manual configured exclusion of certain switching layers from routing computation based on session_name matching
@@ -344,7 +346,7 @@ public:
 
 	/*RSVPD.conf*/
 	void addSlotEntry(slot_entry &se) { slotList.push_back(se); }
-	uint16 getSlotType(uint16 slot_num);
+	uint16 getSlotType(uint16 slot_num, uint16 port_num);
 	uint16 getSlotOffset(uint16 slot_type);
 	void addExclEntry(sw_layer_excl_name_entry &ee) { exclList.push_back(ee); }
 	uint32 getExclEntry(String session_name);

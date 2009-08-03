@@ -188,7 +188,7 @@ void ConfigFileReader::setNarbApiClient(String host, int port) {
     NARB_APIClient::setHostPort(host.chars(), port);
 }
 
-void ConfigFileReader::addSlot(String slot_type, uint16 slot_num) {
+void ConfigFileReader::addSlot(String slot_type, String slot_info) {
 	slot_entry se;
 	if (slot_type == "gi") {
 		se.slot_type = SLOT_TYPE_GIGE;
@@ -207,7 +207,11 @@ void ConfigFileReader::addSlot(String slot_type, uint16 slot_num) {
 	}
 	else
 		return;
-	se.slot_num = slot_num;
+	int slot_num=0, from_port=0, to_port=0;
+       sscanf(slot_info.chars(), "%d(%d-%d)", &slot_num, &from_port, to_port);
+       se.slot_num = slot_num;
+	se.from_port = from_port;
+	se.from_port = to_port;
 	RSVP_Global::switchController->addSlotEntry(se);
 }
 
