@@ -1266,7 +1266,7 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
     while (running) {
             // Create the PDU for the data for our request.
             pdu = snmp_pdu_create(SNMP_MSG_GETBULK);
-            //pdu->non_repeaters = 0;
+            pdu->non_repeaters = 0;
             pdu->max_repetitions = 100; 
             snmp_add_null_var(pdu, anOID, anOID_len);
             // Send the Request out.
@@ -1429,7 +1429,7 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createVlanInterfaceToIDRefTable(vlanR
     while (running) {
             // Create the PDU for the data for our request.
             pdu = snmp_pdu_create(SNMP_MSG_GETBULK);
-            //pdu->non_repeaters = 0;
+            pdu->non_repeaters = 0;
             pdu->max_repetitions = 100; 
             snmp_add_null_var(pdu, anOID, anOID_len);
             // Send the Request out.
@@ -1521,7 +1521,7 @@ bool SwitchCtrl_Session_Catalyst3750::readTrunkPortVlanMap(portVlanMapList &trun
     while (running) {
         // Create the PDU for the data for our request.
         pdu = snmp_pdu_create(SNMP_MSG_GETBULK);
-        //pdu->non_repeaters = 0;
+        pdu->non_repeaters = 0;
         pdu->max_repetitions = 100; 
         snmp_add_null_var(pdu, anOID, anOID_len);
         // Send the Request out.

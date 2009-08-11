@@ -592,7 +592,7 @@ bool SwitchCtrl_Session_JUNOS::hook_createPortToIDRefTable(portRefIDList &portRe
     while (running) {
             // Create the PDU for the data for our request.
             pdu = snmp_pdu_create(SNMP_MSG_GETBULK);
-            //pdu->non_repeaters = 0;
+            pdu->non_repeaters = 0;
             pdu->max_repetitions = 100; 
             snmp_add_null_var(pdu, anOID, anOID_len);
             // Send the Request out.
@@ -666,7 +666,7 @@ bool SwitchCtrl_Session_JUNOS::hook_createVlanInterfaceToIDRefTable(vlanRefIDLis
     while (running) {
             // Create the PDU for the data for our request.
             pdu = snmp_pdu_create(SNMP_MSG_GETBULK);
-            //pdu->non_repeaters = 0;
+            pdu->non_repeaters = 0;
             pdu->max_repetitions = 100; 
             snmp_add_null_var(pdu, anOID, anOID_len);
             // Send the Request out.
