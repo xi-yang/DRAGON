@@ -241,7 +241,9 @@ bool SwitchCtrl_Session::readVlanPortMapBranch(const char* oid_str, vlanPortMapL
     vpmList.clear();
     while (running) {
         // Create the PDU for the data for our request.
-        pdu = snmp_pdu_create(SNMP_MSG_GETNEXT);
+        pdu = snmp_pdu_create(SNMP_MSG_GETBULK);
+        //pdu->non_repeaters = 0;
+        pdu->max_repetitions = 100; 
         snmp_add_null_var(pdu, anOID, anOID_len);
         // Send the Request out.
         status = snmp_synch_response(snmpSessionHandle, pdu, &response);
@@ -738,7 +740,7 @@ bool SwitchCtrl_Global::static_connectSwitch(struct snmp_session* &sessionHandle
     //session.remote_port = 3161;  
     session.peername = str;  
     // set the SNMP version number   
-    session.version = SNMP_VERSION_1;  
+    session.version = SNMP_VERSION_2c;  
     // set the SNMPv1 community name used for authentication   
     session.community = (u_char*)community;  
     session.community_len = strlen((const char*)session.community);  

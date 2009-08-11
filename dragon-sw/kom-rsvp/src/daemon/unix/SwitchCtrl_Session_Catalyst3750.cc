@@ -1265,7 +1265,9 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
     portRefIdConvList.clear();
     while (running) {
             // Create the PDU for the data for our request.
-            pdu = snmp_pdu_create(SNMP_MSG_GETNEXT);
+            pdu = snmp_pdu_create(SNMP_MSG_GETBULK);
+            //pdu->non_repeaters = 0;
+            pdu->max_repetitions = 100; 
             snmp_add_null_var(pdu, anOID, anOID_len);
             // Send the Request out.
             status = snmp_synch_response(snmpSessionHandle, pdu, &response);
@@ -1360,12 +1362,12 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
                                 anOID_len = vars->name_length;
                             }
                             else {
-                                running = 0;
+                                running = false;
                             }
                     }
             }
             else {
-                LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable SNMP_GETNEXT failed with STAT_ERROR returned");
+                LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable SNMP_GETBULK failed with STAT_ERROR returned");
                 running = false;
             }
             if(response) snmp_free_pdu(response);
@@ -1426,7 +1428,9 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createVlanInterfaceToIDRefTable(vlanR
     vlanRefIdConvList.clear();
     while (running) {
             // Create the PDU for the data for our request.
-            pdu = snmp_pdu_create(SNMP_MSG_GETNEXT);
+            pdu = snmp_pdu_create(SNMP_MSG_GETBULK);
+            //pdu->non_repeaters = 0;
+            pdu->max_repetitions = 100; 
             snmp_add_null_var(pdu, anOID, anOID_len);
             // Send the Request out.
             status = snmp_synch_response(snmpSessionHandle, pdu, &response);
@@ -1462,12 +1466,12 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createVlanInterfaceToIDRefTable(vlanR
                                 anOID_len = vars->name_length;
                             }
                             else {
-                                running = 0;
+                                running = false;
                             }
                     }
             }
             else {
-                LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::hook_createVlanInterfaceToIDRefTable SNMP_GETNEXT failed with STAT_ERROR returned");
+                LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::hook_createVlanInterfaceToIDRefTable SNMP_GETBULK failed with STAT_ERROR returned");
                 running = false;
             }
             if(response) snmp_free_pdu(response);
@@ -1516,7 +1520,9 @@ bool SwitchCtrl_Session_Catalyst3750::readTrunkPortVlanMap(portVlanMapList &trun
     memcpy(root, anOID, rootlen*sizeof(oid));
     while (running) {
         // Create the PDU for the data for our request.
-        pdu = snmp_pdu_create(SNMP_MSG_GETNEXT);
+        pdu = snmp_pdu_create(SNMP_MSG_GETBULK);
+        //pdu->non_repeaters = 0;
+        pdu->max_repetitions = 100; 
         snmp_add_null_var(pdu, anOID, anOID_len);
         // Send the Request out.
         status = snmp_synch_response(snmpSessionHandle, pdu, &response);
@@ -1544,12 +1550,12 @@ bool SwitchCtrl_Session_Catalyst3750::readTrunkPortVlanMap(portVlanMapList &trun
                     anOID_len = vars->name_length;
                 }
                 else {
-                    running = 0;
+                    running = false;
                 }
             }
         }
         else {
-            LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::readTrunkPortVlanMap SNMP_GETNEXT failed with STAT_ERROR returned");
+            LOG(1)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::readTrunkPortVlanMap SNMP_GETBULK failed with STAT_ERROR returned");
             running = false;
         }
         if(response) snmp_free_pdu(response);

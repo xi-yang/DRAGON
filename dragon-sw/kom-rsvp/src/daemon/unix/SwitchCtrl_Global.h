@@ -299,6 +299,7 @@ struct slot_entry {
 //switch VLAN operation options
 #define	SW_VLAN_CONFLICT_CHECK_BYPASS 0x10000
 #define   SW_VLAN_JUNOS_ONE_COMMIT 0x20000
+#define   SW_VLAN_REDUCE_SNMP_SYNC 0x40000
 
 struct sw_layer_excl_name_entry {
 	uint32 sw_layer;

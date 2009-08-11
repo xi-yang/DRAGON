@@ -629,11 +629,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			else {
 				ssNew = (*sessionIter);
 			}
-
-			if (ssNew)
-				ssNew->addRsvpSessionReference(this); // Add this RSVP_Session into a reference list in SwitchControl session (reference for deleteion)
-			
-			if (!ssNew || !ssNew->readVLANFromSwitch()) { //Read/Synchronize to Ethernet switch
+			bool vlanSyncSuccessful = (ssNew && !RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_REDUCE_SNMP_SYNC)) ? ssNew->readVLANFromSwitch() : true;
+			if (!ssNew || !vlanSyncSuccessful) { //Read/Sync to Ethernet switch
 			       //syncWithSwitch ... !
 				LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
 					"VLSR: Cannot read from Ethernet switch : ", vlsr.switchID);
@@ -642,6 +639,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				vLSRoute.push_back(vlsr);                    
 				return false;
 			}
+
+			if (ssNew)
+				ssNew->addRsvpSessionReference(this); // Add this RSVP_Session into a reference list in SwitchControl session (reference for deleteion)
 
 			//Check for VLAN/ports availability based on vlsr (vlsr_route)... (First PATH message only)
 			//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.

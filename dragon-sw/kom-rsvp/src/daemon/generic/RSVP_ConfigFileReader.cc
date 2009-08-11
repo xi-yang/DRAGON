@@ -287,11 +287,15 @@ void ConfigFileReader::addEoSMap(String spe, int ncc)
 
 void ConfigFileReader::setSwitchVlanOption(String sw_vlan_option)
 {
+	//switch_vlan_options <option1> <option2> ...
 	if (sw_vlan_option == "bypass-conflict-check") {
 		RSVP_Global::switchController->setSwitchVlanOption(SW_VLAN_CONFLICT_CHECK_BYPASS);
 	}
 	else if (sw_vlan_option == "junos-one-commit") {
 		RSVP_Global::switchController->setSwitchVlanOption(SW_VLAN_JUNOS_ONE_COMMIT);
+	}
+	else if (sw_vlan_option == "reduce-snmp-sync") {
+		RSVP_Global::switchController->setSwitchVlanOption(SW_VLAN_REDUCE_SNMP_SYNC);
 	}
 }
 

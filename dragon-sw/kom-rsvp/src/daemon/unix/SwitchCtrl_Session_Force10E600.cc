@@ -479,7 +479,9 @@ bool SwitchCtrl_Session_Force10E600::hook_createVlanInterfaceToIDRefTable(vlanRe
     vlanRefIdConvList.clear();
     while (running) {
             // Create the PDU for the data for our request.
-            pdu = snmp_pdu_create(SNMP_MSG_GETNEXT);
+            pdu = snmp_pdu_create(SNMP_MSG_GETBULK);
+            //pdu->non_repeaters = 0;
+            pdu->max_repetitions = 100; 
             snmp_add_null_var(pdu, anOID, anOID_len);
             // Send the Request out.
             status = snmp_synch_response(snmpSessionHandle, pdu, &response);
