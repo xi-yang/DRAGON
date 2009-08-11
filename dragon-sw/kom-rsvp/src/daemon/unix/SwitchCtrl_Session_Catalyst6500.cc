@@ -1071,9 +1071,13 @@ bool SwitchCtrl_Session_Catalyst6500::verifyVLAN(uint32 vlanID)
     // Send the Request out. 
     status = snmp_synch_response(snmpSessionHandle, pdu, &response);
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) {
-        	snmp_free_pdu(response);
-                return true;
-    	}
+            if (response->variables->type == 128 || response->variables->type == 129) { //NoSuchObject or NoSuchInstance
+                snmp_free_pdu(response);
+                return false;
+            }     
+            snmp_free_pdu(response);
+            return true;
+    }
     if(response) 
         snmp_free_pdu(response);
     return false;
