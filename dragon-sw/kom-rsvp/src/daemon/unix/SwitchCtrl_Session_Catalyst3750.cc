@@ -934,7 +934,7 @@ bool SwitchCtrl_Session_Catalyst3750::removePortFromVLAN(uint32 port, uint32 vla
         if (!SNMPSet(oid_str, type, value)) 
         {
             LOG(3)( Log::MPLS, "VLSR: SNMP: Removing port ", port, " failed: cannot set access VLAN# to 1");
-            //return false; //turning off anyway
+            return false;
         }
         // Turn off the port
         SwitchPortOnOff(port, false); //Trun off the switch port
@@ -1628,7 +1628,7 @@ bool SwitchCtrl_Session_Catalyst3750::isPortTrunking(uint32 port)
     if (!active)  return false; 
     if (!isSwitchport(port)) return false;
 
-    String tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.6.1.1.13";
+    String tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.6.1.1.14";
     port_id = hook_convertPortIDToInterface(port);
     sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
     status = read_objid(oid_str, anOID, &anOID_len);
@@ -1641,7 +1641,7 @@ bool SwitchCtrl_Session_Catalyst3750::isPortTrunking(uint32 port)
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
        vars = response->variables;
-       bool ret = ((*(vars->val.integer)) ==5);
+       bool ret = ((*(vars->val.integer)) ==1);
     	snmp_free_pdu(response);
 	return ret;
     }
