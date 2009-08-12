@@ -59,7 +59,7 @@ public:
 		{ rfc2674_compatible = false; snmp_enabled = true; activeVlanId = 0; }
 	virtual ~SwitchCtrl_Session_Catalyst6500() { }
 
-	virtual bool refresh() { return cliSession.refresh(); }
+	virtual bool refresh() { if (CLI_SESSION_TYPE == CLI_NONE) return true; return cliSession.refresh(); }
 	virtual bool connectSwitch();
 	virtual void disconnectSwitch();
 
