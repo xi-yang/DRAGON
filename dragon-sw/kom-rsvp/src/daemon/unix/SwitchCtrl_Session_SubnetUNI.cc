@@ -456,8 +456,8 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
-        if (ptpCatUnit == CATUNIT_150MBPS)
-            ts_num = ((ts_num+2)/3)*3;
+        //if (ptpCatUnit == CATUNIT_150MBPS)
+        //    ts_num = ((ts_num+2)/3)*3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
@@ -515,8 +515,8 @@ void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemStrin
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
-        if (ptpCatUnit == CATUNIT_150MBPS)
-            ts_num = ((ts_num+2)/3)*3;
+        //if (ptpCatUnit == CATUNIT_150MBPS)
+        //    ts_num = ((ts_num+2)/3)*3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
@@ -597,8 +597,8 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
-        if (ptpCatUnit == CATUNIT_150MBPS)
-            ts_num = (ts_num+2)/3;
+        //if (ptpCatUnit == CATUNIT_150MBPS)
+        //    ts_num = (ts_num+2)/3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
@@ -768,8 +768,8 @@ void SwitchCtrl_Session_SubnetUNI::getCienaDestTimeslotsString(String*& destTime
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
-        if (ptpCatUnit == CATUNIT_150MBPS)
-            ts_num = ((ts_num+2)/3)*3;
+        //if (ptpCatUnit == CATUNIT_150MBPS)
+        //    ts_num = ((ts_num+2)/3)*3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
@@ -2105,8 +2105,8 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMap()
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
-        if (ptpCatUnit == CATUNIT_150MBPS)
-            ts_num = ((ts_num+2)/3)*3;
+        //if (ptpCatUnit == CATUNIT_150MBPS)
+        //    ts_num = ((ts_num+2)/3)*3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
@@ -2175,8 +2175,8 @@ bool SwitchCtrl_Session_SubnetUNI::verifyTimeslotsMap()
     case SONET_TSpec::S_STS1SPE_VC3:
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
-        if (ptpCatUnit == CATUNIT_150MBPS)
-            ts_num = ((ts_num+2)/3)*3;
+        //if (ptpCatUnit == CATUNIT_150MBPS)
+        //    ts_num = ((ts_num+2)/3)*3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
@@ -2306,8 +2306,8 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
                     case SONET_TSpec::S_STS1SPE_VC3:
                     case SONET_TSpec::S_STS1_STM0:
                         ts_num = sonet_tb1->getNCC();
-                        if (ptpCatUnit == CATUNIT_150MBPS)
-                            ts_num = ((ts_num+2)/3)*3;
+                        //if (ptpCatUnit == CATUNIT_150MBPS)
+                        //    ts_num = ((ts_num+2)/3)*3;
                         break;
 
                     case SONET_TSpec::S_STS3CSPE_VC4:
