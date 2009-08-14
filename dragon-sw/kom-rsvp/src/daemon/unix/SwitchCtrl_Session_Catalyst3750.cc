@@ -652,7 +652,11 @@ bool SwitchCtrl_Session_Catalyst3750::isSwitchport(uint32 port)
     status = snmp_synch_response(snmpSessionHandle, pdu, &response);
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
-        vars = response->variables;
+       if (response->variables->type == 128 || response->variables->type == 129) { //NoSuchObject or NoSuchInstance
+           snmp_free_pdu(response);
+           return false;
+       }     
+       vars = response->variables;
        bool ret = ((*(vars->val.integer)) ==2);
     	snmp_free_pdu(response);
 	return ret;
@@ -699,7 +703,11 @@ bool SwitchCtrl_Session_Catalyst3750::isPortTurnedOn(uint32 port)
     status = snmp_synch_response(snmpSessionHandle, pdu, &response);
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
-        vars = response->variables;
+       if (response->variables->type == 128 || response->variables->type == 129) { //NoSuchObject or NoSuchInstance
+           snmp_free_pdu(response);
+           return false;
+       }     
+       vars = response->variables;
     	snmp_free_pdu(response);
 	if ((*(vars->val.integer)) ==1) return true;
 	else if ((*(vars->val.integer)) ==1) return false;
@@ -1650,6 +1658,10 @@ bool SwitchCtrl_Session_Catalyst3750::isPortTrunking(uint32 port)
     status = snmp_synch_response(snmpSessionHandle, pdu, &response);
     if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
     {
+       if (response->variables->type == 128 || response->variables->type == 129) { //NoSuchObject or NoSuchInstance
+           snmp_free_pdu(response);
+           return false;
+       }     
        vars = response->variables;
        bool ret = ((*(vars->val.integer)) ==1);
     	snmp_free_pdu(response);
