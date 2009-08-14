@@ -601,7 +601,10 @@ bool SwitchCtrl_Session::hasVLSRouteConflictonSwitch(VLSR_Route& vlsr)
     vlanPortMapList::Iterator iter = vlanPortMapListAll.begin();
     for (; iter != vlanPortMapListAll.end(); ++iter) {
         if ((*iter).vid == vlsr.vlanTag && !hook_isVLANEmpty(*iter))
+        {
+            LOG(2)( Log::MPLS, "hasVLSRouteConflictonSwitch: switch already has non-empty VLAN", vlsr.vlanTag);
             return true;
+        }
     }
 
     if (vlsr.vlanTag == 0 || vlsr.vlanTag > MAX_VLAN)
@@ -613,7 +616,10 @@ bool SwitchCtrl_Session::hasVLSRouteConflictonSwitch(VLSR_Route& vlsr)
         for (itPort = portList.begin(); itPort != portList.end(); ++itPort) {
             vlan = getVLANbyPort(*itPort, false);
             if (vlan > 1 && vlan <= MAX_VLAN && vlan != vlsr.vlanTag)
+            {
+                LOG(4)( Log::MPLS, "hasVLSRouteConflictonSwitch: ingress port", *itPort, "is already in another VLAN", vlan);
                 return true;
+            }
         }
     }
     
@@ -622,7 +628,10 @@ bool SwitchCtrl_Session::hasVLSRouteConflictonSwitch(VLSR_Route& vlsr)
         for (itPort = portList.begin(); itPort != portList.end(); ++itPort) {
             vlan = getVLANbyPort(*itPort, false);
             if (vlan > 1 && vlan <= MAX_VLAN && vlan != vlsr.vlanTag)
+            {
+                LOG(4)( Log::MPLS, "hasVLSRouteConflictonSwitch: eggress port", *itPort, "is already in another VLAN", vlan);
                 return true;
+            }
         }
     }
 	

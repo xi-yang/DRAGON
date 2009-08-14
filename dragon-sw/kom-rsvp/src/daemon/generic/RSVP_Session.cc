@@ -409,7 +409,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				(const_cast<Message&>(msg)).getDRAGON_EXT_INFO_Object()->HasSubobj(DRAGON_EXT_SUBOBJ_EDGE_VLAN_MAPPING)) {
 				vlsr.vlanTag = (const_cast<Message&>(msg)).getDRAGON_EXT_INFO_Object()->getEdgeVlanMapping().ingress_outer_vlantag;
 			}
-			else { // otherwise extract VLAN tag from later ERO subobject for end-to-end tagged VLAN provisioning
+			else if (explicitRoute->getAbstractNodeList().size() > 0) { // otherwise extract VLAN tag from later ERO subobject for end-to-end tagged VLAN provisioning
 				AbstractNodeList::ConstIterator iter = explicitRoute->getAbstractNodeList().begin();
 		    		for ( ; iter != explicitRoute->getAbstractNodeList().end(); ++iter) {
 		    			if ( ((*iter).getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL 
@@ -418,6 +418,12 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		    				break;
 		    			}
 		    		}
+			}
+			else if ((vlsr.inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||(vlsr.inPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP) {
+                 		vlsr.vlanTag = (vlsr.inPort & 0x0000ffff);
+			}
+			else if ((vlsr.outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL ||(vlsr.outPort >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP) {
+                 		vlsr.vlanTag = (vlsr.outPort & 0x0000ffff);
 			}
 		}
 		//creating source G_UNI client session
