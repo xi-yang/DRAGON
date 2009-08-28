@@ -24,8 +24,11 @@ public:
 	virtual ~SwitchCtrl_Session_Force10E600() { }
 
 	///////////------QoS Functions ------/////////
-	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0) 
-		{ return policeInputBandwidth_ShellScript(do_undo, input_port, vlan_id, committed_rate, burst_size, peak_rate, peak_burst_size) ; }
+	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0) {
+		if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_FORCE10_NO_QOS)) 
+			return true;
+		return policeInputBandwidth_ShellScript(do_undo, input_port, vlan_id, committed_rate, burst_size, peak_rate, peak_burst_size);
+	}
 	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0) { return true; }
 		//{ return limitOutputBandwidth_ShellScript(do_undo, output_port, vlan_id, committed_rate, burst_size, peak_rate, peak_burst_size) ; }
 
