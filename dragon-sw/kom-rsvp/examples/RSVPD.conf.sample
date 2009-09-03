@@ -2,3 +2,34 @@ interface gre1 tc none mpls
 interface gre2 tc none mpls
 interface gre3 tc none mpls
 api 4000
+#
+#Example optional configurations:
+#1. for NARB server
+#  narb 65.114.168.168 2609
+#
+#2. for Force10 and cisco switch
+#slot type mapping
+#  slots gi 1(0,23) 2
+#  slots te 0 1(24,47)
+#slot offset
+#  slots te+ 10
+#  slots fa+ 15
+#
+#3. special switch vlan options (any combination of the following)
+#  switch_vlan_options bypass-conflict-check junos-one-commit reduce-snmp-sync force10-no-qos
+#
+#4. for Ciena subnet VLSR
+#  eos_map 2500 sts-3c 16
+#  eos_map 3000 sts-3c 20
+#  eos_map 5000 sts-1 95
+#  eos_map 10000 sts-1 190
+#
+#5. for layer exclusion (any combination of the following)
+#  exclue l-1 tdm l-2 l-3
+#
+#6. for RSVPD--NARB path expansion query only (rarely used)
+#  narb_vtags_allowed 100:200 3000 3001
+#  narb_extra_options query-with-holding 
+#  narb_extra_options query-with-confirmation
+#  narb_extra_options via-movas
+#
