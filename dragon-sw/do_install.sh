@@ -34,6 +34,7 @@ case `uname` in
 	exit 1
     fi
 
+    cd ..
     echo '' && \
         echo "installing mtk-agent..."
     cp -f utils/mtk-agent.pl $PREFIX/bin
@@ -73,10 +74,10 @@ case `uname` in
         exit 1
     fi
 
+    cd ..
     echo '' && \
         echo "installing log file rotation scripts..."
     if test -x /etc/cron.hourly; then
-        cd ..
         cp utils/logrotate4dragon /etc/cron.hourly
         chmod 744 /etc/cron.hourly/logrotate4dragon
         cp utils/logrotate4dragon.conf /usr/local/etc
@@ -110,6 +111,7 @@ case `uname` in
 	exit 1
     fi
 
+    cd ..
     echo '' && \
         echo "installing mtk-agent..."
     cp -f utils/mtk-agent.pl $PREFIX/bin
