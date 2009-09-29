@@ -2,7 +2,7 @@
 
 CLI Based Linux Switch Control Module header file SwitchCtrl_Session_Linux.h
 Created by Lars Persson Fink @ 11/21/2006
-Extended from SwitchCtrl_Session_Force10E600.h by Xi Yang, 2006
+Modified by Xi Yang, 2006
 
 ****************************************************************************/
 

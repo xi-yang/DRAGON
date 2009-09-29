@@ -791,7 +791,7 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
         if (!SNMPSet(oid_str, type, value)) 
         {
             LOG(3)( Log::MPLS, "VLSR: SNMP: Removing port ", port, " failed: cannot set access VLAN# to 1");
-            return false;
+            return false; //turning off anyway
         }
         // Turn off the port
         SwitchPortOnOff(port, false); //Trun off the switch port
