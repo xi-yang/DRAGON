@@ -598,7 +598,7 @@ void SwitchCtrl_Session_SubnetUNI::getCienaCTPGroupsInVCG(String*& ctpGroupStrin
     case SONET_TSpec::S_STS1_STM0:
         ts_num = sonet_tb1->getNCC();
         if (ptpCatUnit == CATUNIT_150MBPS)
-            ts_num = (ts_num+2)/3;
+            ts_num = ((ts_num+2)/3)*3;
         break;
 
     case SONET_TSpec::S_STS3CSPE_VC4:
