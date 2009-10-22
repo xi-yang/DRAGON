@@ -860,9 +860,9 @@ _update_vpm:
       	  }
     	  else
             return false;
-       } else {
-        LOG(2) (Log::MPLS, "Trying to remove port from an invalid VLAN ", vlanID);
        }
+    } else {
+        LOG(2) (Log::MPLS, "Trying to remove port from an invalid VLAN ", vlanID);
     }
 
     return ret;
@@ -1092,7 +1092,8 @@ bool SwitchCtrl_Session_Catalyst6500::verifyVLAN(uint32 vlanID)
 }
 
 
-
+//Note: By default the port number starts from 0 and slot number starts from 1. There may be cases that slot number starts from 0,
+//for which we have to adjust the slot_id value to align with bitmap. (We may make this externally configurable if this variation is often seen.)
 bool SwitchCtrl_Session_Catalyst6500::hook_createPortToIDRefTable(portRefIDList &portRefIdConvList)
 {
     struct snmp_pdu *pdu;

@@ -1014,9 +1014,9 @@ _update_vpm:
             LOG(3)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst3750::removePortFromVLAN --> getVlanPortMapById (vlanPortMapListUntagged, vlan=", vlanID, ") failed.");
             return false;
     	  }
-       } else {
-        LOG(2) (Log::MPLS, "Trying to remove port from an invalid VLAN ", vlanID);
        }
+    } else {
+        LOG(2) (Log::MPLS, "Trying to remove port from an invalid VLAN ", vlanID);
     }
 
     return ret;
