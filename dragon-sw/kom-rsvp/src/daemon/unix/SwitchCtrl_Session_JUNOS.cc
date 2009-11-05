@@ -618,6 +618,11 @@ bool SwitchCtrl_Session_JUNOS::hook_createPortToIDRefTable(portRefIDList &portRe
 	                                      ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
 	                                      portRefIdConvList.push_back(ref_id);
       				    }
+                                else if (sscanf(ref_str, "xe-%d/%d/%d.%d", &tmp_mod_id, &tmp_slot_id, &tmp_port_id, &tmp0) == 3) {
+	                                      ref_id.port_bit = ref_id.ref_id; //port bit is zero-based
+	                                      ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
+	                                      portRefIdConvList.push_back(ref_id);
+      				    }
                             }
                             if ((vars->type != SNMP_ENDOFMIBVIEW) &&
                                 (vars->type != SNMP_NOSUCHOBJECT) &&

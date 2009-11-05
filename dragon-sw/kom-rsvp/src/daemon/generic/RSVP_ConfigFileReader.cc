@@ -190,16 +190,16 @@ void ConfigFileReader::setNarbApiClient(String host, int port) {
 
 void ConfigFileReader::addSlotNum(String slot_type, uint16 slot_num) {
         slot_entry se;
-        if (slot_type == "gi") {
+        if (slot_type == "gi" || slot_type == "ge") {
                 se.slot_type = SLOT_TYPE_GIGE;
         }
-        else if (slot_type == "te") {
+        else if (slot_type == "te" || slot_type == "xe") {
                 se.slot_type = SLOT_TYPE_TENGIGE;
         }
-        else if (slot_type == "gi+") {
+        else if (slot_type == "gi+" || slot_type == "ge+") {
                 se.slot_type = SLOT_TYPE_GIGE_OFFSET;
         }
-        else if (slot_type == "te+") {
+        else if (slot_type == "te+" || slot_type == "xe+") {
                 se.slot_type = SLOT_TYPE_TENGIGE_OFFSET;
         }
         else if (slot_type == "fa+") {

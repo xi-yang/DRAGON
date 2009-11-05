@@ -1206,7 +1206,7 @@ uint16 SwitchCtrl_Global::getSlotType(uint16 slot_num, uint16 port_num)
             return (*it).slot_type;
     }
 
-    //returning default types
+    //returning default types (Force10)
     if (slot_num < 2)
         return SLOT_TYPE_TENGIGE;
     else

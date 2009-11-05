@@ -7,6 +7,7 @@ To be incorporated into KOM-RSVP-TE package
 ****************************************************************************/
 
 #include "SwitchCtrl_JUNOScript.h"
+#include "SwitchCtrl_Global.h"
 #include "RSVP_Log.h"
 
 //	set interfaces ge-0/0/0 unit 0 family ethernet-switching vlan members dynamic_vlan_300
@@ -239,7 +240,24 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
         }
 
     char portName[32], vlanName[32];
-    sprintf(portName, "ge-%d/%d/%d", (portId & 0xf000)>>12, (portId & 0x0f00)>>8, portId&0xff);
+
+    uint32 port_part=(portId)&0xff;
+    uint32 slot_part=(portId & 0x0f00)>>8;
+    uint32 chasis_part=(portId & 0xf000)>>12;
+    switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
+    case SLOT_TYPE_GIGE:
+        sprintf(portName, "ge-%d/%d/%d", chasis_part, slot_part, port_part);
+        break;
+    case SLOT_TYPE_TENGIGE:
+        sprintf(portName, "xe-%d/%d/%d", chasis_part, slot_part, port_part);
+        break;
+    case SLOT_TYPE_ILLEGAL:
+    default:
+        LOG(5)(Log::MPLS, "Error: unrecognzied slot/port type in JUNOScriptMovePortVlanComposer::setPortAndVlan(", portId, ", ", vlanId, ").");
+        freeScriptDoc();
+        return false;
+    }
+
     sprintf(vlanName, "dynamic_vlan_%d", vlanId);
 
     xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/interface/name", xpathCtx);

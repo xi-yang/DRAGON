@@ -7,13 +7,14 @@ api 4000
 #1. for NARB server
 #  narb 65.114.168.168 2609
 #
-#2. for Force10 and cisco switch
+#2. for some Force10, Cisco and Juniper switches
 #slot type mapping
 #  slots gi 1(0,23) 2
 #  slots te 0 1(24,47)
 #slot offset
 #  slots te+ 10
 #  slots fa+ 15
+#one may use 'ge' instead of 'gi' and 'xe' instead of 'te'
 #
 #3. special switch vlan options (any combination of the following)
 #  switch_vlan_options bypass-conflict-check junos-one-commit reduce-snmp-sync force10-no-qos
