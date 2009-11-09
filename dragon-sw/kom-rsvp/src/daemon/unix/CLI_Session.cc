@@ -325,12 +325,16 @@ bool CLI_Session::engage(const char *loginString)
 
 void CLI_Session::disengage(const char *exitString)
 {
-    int n;
+    int n = 0;
     if (pipeAlive()) {
         if (exitString != NULL && (n = writeShell(exitString, 5)) >= 0) {
+          sleep(1);
           if (vendor != JUNOS)
               n = readShell(SWITCH_PROMPT, NULL, 1, 10);
         }
+    }
+    else {
+        LOG(1)(Log::Error, "CLI_Session::disengage encountered broken pipe!");
     }
 
     closePipe();
