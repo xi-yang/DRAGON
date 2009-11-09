@@ -167,9 +167,10 @@ bool SwitchCtrl_Session_Force10E600::addVLANPort_ShellScript(uint32 portID, uint
     DIE_IF_NEGATIVE(n = readShell( SWITCH_PROMPT, FORCE10_ERROR_PROMPT, 1, 10)) ;
     DIE_IF_EQUAL(n, 2);
 
-    if (!endWithShowVLAN(vlanNum)) //postAction() embedded
-        return false;
-    return true;
+    //if (!endWithShowVLAN(vlanNum)) //postAction() embedded
+    //    return false;
+    //return true;
+    return postAction();
 }
 
 bool SwitchCtrl_Session_Force10E600::deleteVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool isTagged)
@@ -238,9 +239,10 @@ bool SwitchCtrl_Session_Force10E600::deleteVLANPort_ShellScript(uint32 portID, u
     DIE_IF_NEGATIVE(n = readShell( SWITCH_PROMPT, FORCE10_ERROR_PROMPT, 1, 10));
     DIE_IF_EQUAL(n, 2);
 
-    if (!endWithShowVLAN(vlanNum)) //postAction embedded
-        return false;
-    return true;
+    //if (!endWithShowVLAN(vlanNum)) //postAction embedded
+    //    return false;
+    //return true;
+    return postAction();
 }
 
 /////--------QoS Functions------/////
