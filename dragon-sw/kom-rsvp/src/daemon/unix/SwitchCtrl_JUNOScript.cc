@@ -31,7 +31,7 @@ const char *JUNOScriptMovePortVlanComposer::jsTemplate = "<rpc>\
          </interfaces>\
          <vlans>\
             <vlan>\
-		<name>dyanmic_vlan_300</name>\
+		<name>dynamic_vlan_300</name>\
 		<interface>ge-0/0/1.0</interface>\
             </vlan>\
          </vlans>\
@@ -44,7 +44,7 @@ const char *JUNOScriptVlanComposer::jsTemplate = "<rpc>\
       <configuration>\
          <vlans>\
             <vlan>\
-		<name>dyanmic_vlan_300</name>\
+		<name>dynamic_vlan_300</name>\
             </vlan>\
          </vlans>\
        </configuration>\
