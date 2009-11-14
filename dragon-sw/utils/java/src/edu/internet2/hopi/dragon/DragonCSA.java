@@ -97,6 +97,7 @@ public class DragonCSA {
         result = this.readUntil(promptPattern);
 
         /* Remove command from output */
+        cmd = cmd.replaceAll("([\\[\\]$^()])", "\\\\$1");
         result = result.replaceFirst(cmd + "\n", "");
         /* Remove prompt from output */
         result = result.replaceFirst(promptPattern + "\n*", "");
