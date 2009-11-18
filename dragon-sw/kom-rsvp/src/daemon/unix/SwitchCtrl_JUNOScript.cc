@@ -22,6 +22,7 @@ const char *JUNOScriptMovePortVlanComposer::jsTemplate = "<rpc>\
 		  <name>0</name>\
 		  <family>\
 		      <ethernet-switching>\
+				<port-mode>trunk</port-mode>\
 			    <vlan><members>dynamic_vlan_300</members></vlan>\
 		      </ethernet-switching>\
 		  </family>\
@@ -281,7 +282,6 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     if (isToDelete)
         xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
 
-    /*
     xmlXPathFreeObject(xpathObj);
     xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/interfaces/interface/unit/family/ethernet-switching/port-mode", xpathCtx);
     if (xpathObj == NULL || xpathObj->nodesetval == NULL ||xpathObj->nodesetval->nodeNr == 0)
@@ -292,8 +292,8 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
     }  
     if (isToDelete)
     {
-        xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"");
-        xmlNewProp(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"delete", (xmlChar*)"delete");
+        //remove the <port-mode> node, which is not needed to appear in 'delete' operation
+        xmlUnlinkNode(xpathObj->nodesetval->nodeTab[0]);
     }
     else {
 		if (isTrunking)
@@ -305,7 +305,6 @@ bool JUNOScriptMovePortVlanComposer::setPortAndVlan(uint32 portId, uint32 vlanId
 			xmlNodeSetContent(xpathObj->nodesetval->nodeTab[0], (xmlChar*)"access");
 		}
    	}
-   	*/
    	
     xmlXPathFreeObject(xpathObj);
     xpathObj = xmlXPathEvalExpression((xmlChar*)"/rpc/load-configuration/configuration/vlans/vlan/name", xpathCtx);
