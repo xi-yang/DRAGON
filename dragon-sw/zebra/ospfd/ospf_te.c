@@ -292,7 +292,7 @@ const char* otnx_logical_port_number2string(u_int32_t port_id)
 	char* subslot_str;
 
 	shelf = ((port_id)>>28)+1;
-	slot = ((port_id)>>24)+1;
+	slot = (((port_id)>>24)&0xf)+1;
 	subslot = (((port_id)>>16)&0xff);
 	port = (((port_id)>>12)& 0x0f)+1;
 	pport = (((port_id)>>8)&0x0f)+1;
@@ -329,7 +329,7 @@ u_int32_t otnx_logical_port_string2number(const char* port_str)
 	{
 		shelf = 1;
 	}
-	else if (sscanf(port_str, "%d-%d%c-%d-%d-%d", &shelf, &subslot_alpha, &port, &pport, &lport) == 6)
+	else if (sscanf(port_str, "%d-%d%c-%d-%d-%d", &shelf, &slot, &subslot_alpha, &port, &pport, &lport) == 6)
 	{
 		switch (subslot_alpha)
 		{
@@ -1670,21 +1670,6 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             vty_out (vty, "%s", VTY_NEWLINE);
 	}
 	else if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_CIENA_OPVCX)) {
-            vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
-            vty_out (vty, "      -> Subnet-UNI ID: %d TNA-IPv4 %s via ControlChannel %s%s", 
-				subnet_uni->subnet_uni_id, ipv4, subnet_uni->control_channel, VTY_NEWLINE);
-            vty_out (vty, "      -> UNI-N NodeName %s NodeID: %s, Data IP: %s%s", subnet_uni->node_name, ipv4_a, ipv4_b, VTY_NEWLINE);
-            vty_out (vty, "      -> LogicalPort: %s, EgressLabel: %d, UpstreamLabel: %d%s",
-				logical_port_number2string(ntohl(subnet_uni->logical_port_number)),
-				(unsigned int)ntohl(subnet_uni->egress_label_downstream), (unsigned int)ntohl(subnet_uni->egress_label_upstream), VTY_NEWLINE);
-
-            swcap = val2str(&str_val_conv_swcap, subnet_uni->swcap_ext);
-            enc = val2str(&str_val_conv_encoding, subnet_uni->encoding_ext);
-            vty_out (vty, "      -> Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
-            vty_out (vty, "      -> Available TimeSlots%s:", (subnet_uni->version & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) ? " (Contiguous)":"");
-            SHOW_TIMESLOTS(subnet_uni->timeslot_bitmask);
-            vty_out (vty, "%s", VTY_NEWLINE);
-
             opvcx_data = (struct link_ifswcap_specific_ciena_opvcx *)v;
             strcpy (ipv4, inet_ntoa (*(struct in_addr*)&opvcx_data->switch_ip));
             strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&opvcx_data->data_ipv4));
@@ -2793,7 +2778,7 @@ DEFUN (ospf_te_interface_ifsw_cap4,
 
 ALIAS (ospf_te_interface_ifsw_cap4,
        ospf_te_interface_ifsw_cap4a_cmd,
-       "vlan <1-4093> to <2-4094>",
+       "vlan <1-4094> to <2-4094>",
        "Assign this port/IP to a tagged VLAN\n"
        "Tagged VLAN ID1 in the range [1, 4093]\n"
        "Tagged VLAN ID2 in the range [2, 4094]\n");
@@ -3034,18 +3019,12 @@ ALIAS (ospf_te_interface_ifsw_cap7,
 
 DEFUN (ospf_te_interface_ifsw_cap8,
        ospf_te_interface_ifsw_cap8_cmd,
-       "otnx-interface ID type (1ge|10ge|10g|40g) switch-ip A.B.C.D tl1-port <0-65535> data-interface A.B.C.D port ID",
+       "otnx-interface ID type (1ge|10ge|10g|40g) port NAME",
        "Bandwidth\n"
        "1G Ethernet port\n"
        "10G Ethernet port\n"
        "10G Optical port\n"
        "40G Optical port\n"
-       "Switch IP\n"
-       "IPv4\n"
-       "TL1 telnet port\n"
-       "Port number\n"
-       "Data Interface IP\n"
-       "IPv4\n"
        "Logical data port\n"
        "Port number in bay-shelf-slot-subslot-port format\n" )
 {
@@ -3057,9 +3036,9 @@ DEFUN (ospf_te_interface_ifsw_cap8,
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.length = htons(sizeof(struct link_ifswcap_specific_ciena_opvcx));
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version = htons(IFSWCAP_SPECIFIC_CIENA_OPVCX);
 
-  if (argc != 6) 
+  if (argc != 3) 
   {
-	vty_out (vty, "ospf_te_interface_ifsw_cap8: only %d parameters present%s (needing 6)", argc, VTY_NEWLINE);
+	vty_out (vty, "ospf_te_interface_ifsw_cap8: total of %d parameters present%s (requiring five)", argc, VTY_NEWLINE);
 	return CMD_WARNING;
   }
 
@@ -3082,34 +3061,17 @@ DEFUN (ospf_te_interface_ifsw_cap8,
       ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.num_chans = 256;
   }
 
-  if (inet_aton (argv[2], (struct in_addr*)&switch_ip) != 1)
-    {
-      vty_out (vty, "ospf_te_interface_ifsw_cap8: inet_aton switch_ip: %s%s", strerror (errno), VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.switch_ip = switch_ip;
-
-  if (sscanf (argv[3], "%d", &tl1_port) != 1)
-    {
-      vty_out (vty, "ospf_te_interface_ifsw_cap8: invalid tl1_port: %s%s", argv[3], VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.tl1_port = (u_int16_t)tl1_port;
-
-  if (inet_aton (argv[4], (struct in_addr*)&data_if) != 1)
-    {
-      vty_out (vty, "ospf_te_interface_ifsw_cap8: inet_aton data_if: %s%s", strerror (errno), VTY_NEWLINE);
-      return CMD_WARNING;
-    }
-  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.data_ipv4 = data_if;
-
-  logical_port = otnx_logical_port_string2number((const char*)argv[5]);
+  logical_port = otnx_logical_port_string2number((const char*)argv[2]);
   if (logical_port == 0)
     {
-      vty_out (vty, "ospf_te_interface_ifsw_cap8: unacceptable logical_port: %s%s", argv[5], VTY_NEWLINE);
+      vty_out (vty, "ospf_te_interface_ifsw_cap8: unacceptable logical_port: %s%s", argv[2], VTY_NEWLINE);
       return CMD_WARNING;
     }
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.logical_port_number = htonl(logical_port);
+
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.switch_ip =  te_config.vlsr_if.switch_ip.s_addr;
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.tl1_port = (u_int16_t)te_config.vlsr_if.switch_port;
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.data_ipv4 = te_config.vlsr_if.data_ip.s_addr;
   
   return CMD_SUCCESS;
 }
@@ -3120,8 +3082,8 @@ DEFUN (ospf_te_interface_ifsw_cap8,
    */
 DEFUN (ospf_te_interface_ifsw_cap9,
        ospf_te_interface_ifsw_cap9_cmd,
-       "opvc-timeslot <1-64>",
-       "Assign OPVC timeslots\n"
+       "otnx-timeslot <1-64>",
+       "Assign OTNX OPVC timeslots\n"
        "TimeSlot ID in the range [1, 64]\n")
 {
   u_int32_t ts, ts1, ts2;
@@ -3180,8 +3142,8 @@ DEFUN (ospf_te_interface_ifsw_cap9,
 
 ALIAS (ospf_te_interface_ifsw_cap9,
        ospf_te_interface_ifsw_cap9a_cmd,
-       "opvc-timeslot <1-63> to <2-64> ",
-       "Assign OPVC timeslots\n"
+       "otnx-timeslot <1-64> to <2-64>",
+       "Assign OTNX OPVC timeslots\n"
        "TimeSlot ID1 in the range [1, 63]\n"
        "TimeSlot ID2 in the range [2, 64]\n");
 
