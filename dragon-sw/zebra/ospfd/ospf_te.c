@@ -181,6 +181,7 @@ static void ospf_te_show_info (struct vty *vty, struct ospf_lsa *lsa);
 static void ospf_te_show_bitmask(struct vty *vty, char* bitmask, int max_bits);
 #define SHOW_TIMESLOTS(BMASK) ospf_te_show_bitmask(vty, BMASK, MAX_TIMESLOTS_NUM)
 #define SHOW_VLANS(BMASK) ospf_te_show_bitmask(vty, BMASK, MAX_VLAN_NUM)
+#define SHOW_OPVCS(BMASK) ospf_te_show_bitmask(vty, BMASK, MAX_SUBWAVE_CHANNELS)
 
 #ifndef _str2val_funcs_
 #define _str2val_funcs_
@@ -281,6 +282,76 @@ u_int32_t logical_port_string2number(const char* port_str)
 		break;
 	}
 	return ((bay<<24) | (shelf <<16) | (slot << 12) | (subslot<<8) | (port&0xff) );
+}
+
+/*typical OTN port 1-7b-3-1-1*/
+const char* otnx_logical_port_number2string(u_int32_t port_id)
+{
+	static char buf[10];
+	int shelf, slot, subslot, port, pport, lport;
+	char* subslot_str;
+
+	shelf = ((port_id)>>28)+1;
+	slot = ((port_id)>>24)+1;
+	subslot = (((port_id)>>16)&0xff);
+	port = (((port_id)>>12)& 0x0f)+1;
+	pport = (((port_id)>>8)&0x0f)+1;
+	lport = ((port_id)&0xff)+1;
+
+	switch (subslot)
+	{
+	case 1:
+		subslot_str = "main";
+		break;
+	case 2:
+		subslot_str = "a";
+		break;
+	case 3:
+		subslot_str = "b";
+		break;
+	case 4:
+		subslot_str = "c";
+		break;
+	default:
+		subslot_str = "x";
+		break;
+	}
+	sprintf(buf, "%d-%d%s-%d-%d-%d", shelf, slot, subslot_str, port, pport, lport);
+	return (const char*)buf;
+}
+
+u_int32_t otnx_logical_port_string2number(const char* port_str)
+{
+	int shelf, slot, subslot=0, port, pport, lport;
+	char subslot_alpha, s1, s2, s3, s4;
+
+	if (sscanf(port_str, "%d-%d%c%c%c%c-%d-%d-%d", &shelf, &slot, &s1, &s2, &s3, &s4, &port, &pport, &lport) == 9)
+	{
+		shelf = 1;
+	}
+	else if (sscanf(port_str, "%d-%d%c-%d-%d-%d", &shelf, &subslot_alpha, &port, &pport, &lport) == 6)
+	{
+		switch (subslot_alpha)
+		{
+		case 'a':
+		case 'A':
+			subslot = 2;
+			break;
+		case 'b':
+		case 'B':
+			subslot = 3;
+			break;
+		case 'c':
+		case 'C':
+			subslot = 4;
+			break;
+		default:
+			return 0;
+			break;
+		}
+	}
+	shelf--; slot--; port--; pport--; lport--;
+	return ((shelf<<28) | (slot <<24) | (subslot <<16) | (port << 12) | (pport<<8) | (lport&0xff) );
 }
 
 static void
@@ -1456,6 +1527,19 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
             SHOW_TIMESLOTS(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask);
             vty_out (vty, "%s", VTY_NEWLINE);
 	}
+	else if (vty != NULL && top->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK 
+		&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX))
+	{
+	    vty_out (vty, "  -- OTN Ciena-OPVCX specific information--%s", VTY_NEWLINE);
+	    strcpy (ipv4, inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.switch_ip));
+	    strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.data_ipv4));
+
+	    vty_out (vty, "      -> Switch IP: %s, DataInterface IP: %s, LogicalPort: %s%s", 
+			ipv4, ipv4_b, otnx_logical_port_number2string(ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.logical_port_number)), VTY_NEWLINE);
+            vty_out (vty, "      -> Available OPVCs (STS3c's):");
+            SHOW_OPVCS(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.wave_opvc_map[0].opvc_bitmask);
+            vty_out (vty, "%s", VTY_NEWLINE);
+	}
   }
   else if (top->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)
   {
@@ -1494,6 +1578,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   u_char *v;
   u_int16_t *dc;
   struct link_ifswcap_specific_subnet_uni *subnet_uni;
+  struct link_ifswcap_specific_ciena_opvcx*opvcx_data;
   char ipv4[20], ipv4_a[20], ipv4_b[20];
 
   v = (u_char *)(tlvh+1);
@@ -1584,7 +1669,35 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             SHOW_TIMESLOTS(subnet_uni->timeslot_bitmask);
             vty_out (vty, "%s", VTY_NEWLINE);
 	}
+	else if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_CIENA_OPVCX)) {
+            vty_out (vty, "  -- L2SC Subnet-UNI specific information--%s", VTY_NEWLINE);
+            vty_out (vty, "      -> Subnet-UNI ID: %d TNA-IPv4 %s via ControlChannel %s%s", 
+				subnet_uni->subnet_uni_id, ipv4, subnet_uni->control_channel, VTY_NEWLINE);
+            vty_out (vty, "      -> UNI-N NodeName %s NodeID: %s, Data IP: %s%s", subnet_uni->node_name, ipv4_a, ipv4_b, VTY_NEWLINE);
+            vty_out (vty, "      -> LogicalPort: %s, EgressLabel: %d, UpstreamLabel: %d%s",
+				logical_port_number2string(ntohl(subnet_uni->logical_port_number)),
+				(unsigned int)ntohl(subnet_uni->egress_label_downstream), (unsigned int)ntohl(subnet_uni->egress_label_upstream), VTY_NEWLINE);
 
+            swcap = val2str(&str_val_conv_swcap, subnet_uni->swcap_ext);
+            enc = val2str(&str_val_conv_encoding, subnet_uni->encoding_ext);
+            vty_out (vty, "      -> Extended SwitchingType: %s, EncodingType: %s%s", swcap, enc, VTY_NEWLINE);
+            vty_out (vty, "      -> Available TimeSlots%s:", (subnet_uni->version & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) ? " (Contiguous)":"");
+            SHOW_TIMESLOTS(subnet_uni->timeslot_bitmask);
+            vty_out (vty, "%s", VTY_NEWLINE);
+
+            opvcx_data = (struct link_ifswcap_specific_ciena_opvcx *)v;
+            strcpy (ipv4, inet_ntoa (*(struct in_addr*)&opvcx_data->switch_ip));
+            strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&opvcx_data->data_ipv4));
+            vty_out (vty, "  -- OTN Ciena-OPVCX specific information--%s", VTY_NEWLINE);
+            strcpy (ipv4, inet_ntoa (*(struct in_addr*)&opvcx_data->switch_ip));
+            strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&opvcx_data->data_ipv4));
+
+	    vty_out (vty, "      -> Switch IP: %s, DataInterface IP: %s, LogicalPort: %s%s", 
+			ipv4, ipv4_b, otnx_logical_port_number2string(ntohl(opvcx_data->logical_port_number)), VTY_NEWLINE);
+            vty_out (vty, "      -> Available OPVCs (STS3c's):");
+            SHOW_OPVCS(opvcx_data->wave_opvc_map[0].opvc_bitmask);
+            vty_out (vty, "%s", VTY_NEWLINE);
+	}
   }
   else if (strncmp(swcap, "l2sc", 4) == 0)
   {
@@ -2457,7 +2570,7 @@ DEFUN (ospf_te_interface_srlg,
 
 DEFUN (ospf_te_interface_ifsw_cap1,
        ospf_te_interface_ifsw_cap1_cmd,
-       "swcap (psc1|psc2|psc3|psc4|l2sc|tdm|lsc|fsc) encoding (packet|ethernet|pdh|sdh|dwrapper|lambda|fiber|fchannel)",
+       "swcap (psc1|psc2|psc3|psc4|l2sc|tdm|lsc|fsc) encoding (packet|ethernet|pdh|sdh|dwrapper|lambda|fiber|fchannel|oduk|och)",
        "Link switching capability and encoding type for OSPF-TE purpose\n"
        "Packet-Switch Capable-1\n"
        "Packet-Switch Capable-2\n"
@@ -2475,7 +2588,9 @@ DEFUN (ospf_te_interface_ifsw_cap1,
        "Digital Wrapper\n"
        "Lambda (photonic)\n"
        "Fiber\n"
-       "FiberChannel\n" )
+       "FiberChannel\n" 
+       "G709 ODUk - OTN\n"
+       "G709 OCh - OTN\n" )
 {
   u_char swcap = 0, encoding = 0;
 
@@ -2606,26 +2721,30 @@ DEFUN (ospf_te_interface_ifsw_cap4,
        ospf_te_interface_ifsw_cap4_cmd,
        "vlan <1-4094>",
        "Assign this port/IP to a tagged VLAN\n"
-       "Tagged VLAN ID in the range [1, 4095]\n")
+       "Tagged VLAN ID in the range [1, 4094]\n")
 {
   u_int32_t vlan, vlan1, vlan2;
   listnode node;
   struct te_link_subtlv_link_ifswcap *ifswcap;
   struct te_link_subtlv_link_ifswcap *ifswcap_vlan = NULL;
   int has_subnet_iscd = 0;
+  int has_opvcx_iscd = 0;
 
   LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
     {
-	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
+	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_SONETSDH
 		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
 		has_subnet_iscd = 1;
+	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0)
+		has_opvcx_iscd = 1;
 	if (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_ETH)
 	{
 		ifswcap_vlan = ifswcap;
 		break;
 	}
     }
-  if (!ifswcap_vlan && has_subnet_iscd == 1)
+  if (!ifswcap_vlan && (has_subnet_iscd == 1 || has_opvcx_iscd ==1))
   {
 	ifswcap_vlan = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_L2SC, LINK_IFSWCAP_SUBTLV_ENC_ETH);
   }
@@ -2674,10 +2793,10 @@ DEFUN (ospf_te_interface_ifsw_cap4,
 
 ALIAS (ospf_te_interface_ifsw_cap4,
        ospf_te_interface_ifsw_cap4a_cmd,
-       "vlan <1-4094> to <2-4095>",
+       "vlan <1-4093> to <2-4094>",
        "Assign this port/IP to a tagged VLAN\n"
-       "Tagged VLAN ID1 in the range [1, 4094]\n"
-       "Tagged VLAN ID2 in the range [2, 4095]\n");
+       "Tagged VLAN ID1 in the range [1, 4093]\n"
+       "Tagged VLAN ID2 in the range [2, 4094]\n");
 
 DEFUN (ospf_te_interface_ifsw_cap5,
        ospf_te_interface_ifsw_cap5_cmd,
@@ -2896,6 +3015,7 @@ DEFUN (ospf_te_interface_ifsw_cap7,
   return CMD_SUCCESS;
 }
 
+
 ALIAS (ospf_te_interface_ifsw_cap7,
        ospf_te_interface_ifsw_cap7a_cmd,
        "timeslot <1-192> to <2-192> ",
@@ -2910,6 +3030,155 @@ ALIAS (ospf_te_interface_ifsw_cap7,
        "TimeSlot ID1 in the range [1, 192]\n"
        "TimeSlot ID2 in the range [2, 192]\n"
        "TimeSlot allocation in contiguous or vcat mode (vcat by default)\n");
+
+
+DEFUN (ospf_te_interface_ifsw_cap8,
+       ospf_te_interface_ifsw_cap8_cmd,
+       "otn-opvcx (1ge|10ge|10g|40g) switch-ip A.B.C.D tl1-port <0-65535> data-interface A.B.C.D port ID",
+       "Bandwidth\n"
+       "1G Ethernet port\n"
+       "10G Ethernet port\n"
+       "10G Optical port\n"
+       "40G Optical port\n"
+       "Switch IP\n"
+       "IPv4\n"
+       "TL1 telnet port\n"
+       "Port number\n"
+       "Data Interface IP\n"
+       "IPv4\n"
+       "Logical data port\n"
+       "Port number in bay-shelf-slot-subslot-port format\n" )
+{
+  u_int32_t switch_ip, tl1_port, data_if, logical_port;
+  u_int16_t ;
+  struct te_link_subtlv_link_ifswcap *ifswcap;
+
+  ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_TDM, LINK_IFSWCAP_SUBTLV_ENC_G709ODUK);
+  ifswcap->header.length = htons(36 + sizeof(struct link_ifswcap_specific_ciena_opvcx)); /* the default length is 36 + sizeof(struct link_ifswcap_specific_tdm */
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.length = htons(sizeof(struct link_ifswcap_specific_ciena_opvcx));
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version = htons(IFSWCAP_SPECIFIC_CIENA_OPVCX);
+
+  if (argc != 5) 
+  {
+	vty_out (vty, "ospf_te_interface_ifsw_cap8: only %d parameters present%s (needing 5)", argc, VTY_NEWLINE);
+	return CMD_WARNING;
+  }
+
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.eth_edge = 0;
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.num_waves = 1;
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.num_chans = 64;
+  if (strcmp(argv[0], "1ge") == 0 || strcmp(argv[0], "10ge") == 0)
+  {
+      ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.eth_edge = 1;
+  }
+  if (strcmp(argv[0], "40g") == 0)
+  {
+      ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.num_chans = 256;
+  }
+
+  if (inet_aton (argv[1], (struct in_addr*)&switch_ip) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap8: inet_aton switch_ip: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.switch_ip = switch_ip;
+
+  if (sscanf (argv[2], "%d", &tl1_port) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap8: sscanf tl1_port: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.tl1_port = (u_int16_t)tl1_port;
+
+  if (inet_aton (argv[3], (struct in_addr*)&data_if) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap8: inet_aton data_if: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.data_ipv4 = data_if;
+
+  logical_port = otnx_logical_port_string2number((const char*)argv[4]);
+  if (logical_port == 0)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap8: unacceptable logical_port: %s%s", argv[4], VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.logical_port_number = htonl(logical_port);
+  
+  return CMD_SUCCESS;
+}
+
+
+/** Single wavelength TDM with OPVC timeslots only
+   *  Command for OPVC timeslots and ODUk map for multiple WDM wavelengths will be added later 
+   */
+DEFUN (ospf_te_interface_ifsw_cap9,
+       ospf_te_interface_ifsw_cap9_cmd,
+       "opvc-timeslot <1-64>",
+       "Assign OPVC timeslots\n"
+       "TimeSlot ID in the range [1, 64]\n")
+{
+  u_int32_t ts, ts1, ts2;
+  struct te_link_subtlv_link_ifswcap* ifswcap;
+  listnode node;
+  int has_opvcx_iscd = 0;
+  LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
+    {
+	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0)
+	{
+		has_opvcx_iscd = 1;
+		break;
+	}
+    }
+  if (has_opvcx_iscd == 0)
+  {
+      vty_out (vty, "'otnx...' must be defined first ... %s", VTY_NEWLINE);
+      return CMD_ERR_INCOMPLETE;
+  }
+
+  	
+  if (sscanf (argv[0], "%d", &ts1) != 1)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap9: fscanf ts1: %s%s", strerror (errno), VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+
+  if (argc == 1) 
+    {
+	SET_TIMESLOT(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.wave_opvc_map[0].opvc_bitmask, ts1);
+    }
+  else if (argc == 2) 
+    {
+	  if (sscanf (argv[1], "%d", &ts2) != 1)
+	    {
+	      vty_out (vty, "ospf_te_interface_ifsw_cap9: fscanf ts2: %s%s", strerror (errno), VTY_NEWLINE);
+	      return CMD_WARNING;
+	    }
+	  else if (ts2 < ts1)
+	    {
+	      vty_out (vty, "ospf_te_interface_ifsw_cap9: OPVC TimeSlot ID2 < ID1%s", VTY_NEWLINE);
+	      return CMD_WARNING;
+	    }
+	  for(ts = ts1; ts <= ts2; ts++)
+	      SET_TIMESLOT(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.wave_opvc_map[0].opvc_bitmask, ts);
+    }
+  else
+    {
+        vty_out (vty, "ospf_te_interface_ifsw_cap9: invalid command%s", VTY_NEWLINE);
+	 return CMD_WARNING;
+    }
+
+  return CMD_SUCCESS;
+}
+
+ALIAS (ospf_te_interface_ifsw_cap9,
+       ospf_te_interface_ifsw_cap9a_cmd,
+       "opvc-timeslot <1-63> to <2-64> ",
+       "Assign OPVC timeslots\n"
+       "TimeSlot ID1 in the range [1, 63]\n"
+       "TimeSlot ID2 in the range [2, 64]\n");
+
 
 DEFUN (show_ospf_te_router,
        show_ospf_te_router_cmd,
@@ -3216,6 +3485,9 @@ ospf_te_register_vty (void)
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7a_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap7b_cmd);
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap8_cmd);
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap9_cmd);
+  install_element (OSPF_TE_IF_NODE, &ospf_te_interface_ifsw_cap9a_cmd);
   install_element (OSPF_TE_IF_NODE, &ospf_te_interface_te_lambda_cmd);
 
   set_config_end_call_back_func(ospf_te_interface_config_update);

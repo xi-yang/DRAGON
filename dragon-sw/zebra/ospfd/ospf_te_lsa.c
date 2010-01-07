@@ -241,7 +241,6 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 				/*memcpy(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.bitmask, z_buffer, z_len);*/
                 
 				/* change total TE link TLV length to indicate a compress operation*/
-				/* initial length: ntohs(lp->header.length) == 36 + sizeof(struct link_ifswcap_specific_subnet_uni) */
 				swcap_len_adjustment = (z_len + 40) - ntohs(lp->header.length);
 				lp->header.length = htons(z_len + 40);  /*adjust the TLV length*/
 				tlvh_s->length = lp->header.length;

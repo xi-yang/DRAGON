@@ -120,6 +120,8 @@ typedef SimpleList<LocalId> LocalIdList;
 #define LOCAL_ID_TYPE_SUBNET_IF_ID (uint16)0x5
 #define LOCAL_ID_TYPE_SUBNET_UNI_SRC (uint16)0x10 	//Source (sender)
 #define LOCAL_ID_TYPE_SUBNET_UNI_DEST (uint16)0x11	//Destination (Recv)
+#define LOCAL_ID_TYPE_CIENA_OTNX (uint16)0x12
+#define LOCAL_ID_TYPE_CIENA_OTNX_ETH (uint16)0x13 //No use
 
 #define SET_LOCALID_REFRESH(X) X.type |= 0x80
 #define RESET_LOCALID_REFRESH(X) X.type &= (~0x80)

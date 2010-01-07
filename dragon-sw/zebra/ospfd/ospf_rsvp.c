@@ -75,8 +75,9 @@ enum OspfRsvpMessage {
 	GetLoopbackAddress = 133,		/* Get its loopback address*/
 	HoldVtagbyOSPF = 134,		/* Hold or release a VLAN Tag*/
 	HoldBandwidthbyOSPF = 135, 		/* Hold or release a portion of bandwidth*/
-	GetSubnetUNIDataByOSPF = 136,	/* Get Subnet UNI data associated with a OSPF interface*/
+	GetSubnetUNIDataByOSPF = 136,	/* Get Subnet UNI data associated with an OSPF interface*/
 	HoldTimeslotsbyOSPF = 137,		/* Hold or release timeslots*/
+	GetCienaOPVCXDataByOSPF = 138, /* Get Ciena OTN OPVCX data associated with an OSPF interface */
 };
 
 
@@ -594,7 +595,7 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag, u_int32_t ucid
 					break;
 				ifswcap_subnet = NULL;
 			}
-			/* the interface contains a subnet_uni ISCD if ifswcap_subne != NULL*/
+			/* the interface contains a subnet_uni ISCD if ifswcap_subnet != NULL*/
 
 			if (oi && INTERFACE_MPLS_ENABLED(oi) && (oi->vlsr_if.switch_port == port
 				|| ( ( (port>>16) == 0x10 || (port>>16) == 0x11 ) 
@@ -668,6 +669,13 @@ ospf_hold_timeslots(u_int32_t port, list ts_list, u_int8_t hold_flag)
 			}
 		}
 	}
+
+}
+
+/*@@@@ TODO */
+void
+ospf_hold_opvcx(u_int32_t port, list opvc_list, u_int8_t hold_flag)
+{
 
 }
 
@@ -1081,6 +1089,76 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int8_t uni_id, int fd)
 	return;
 }
 
+
+
+void
+ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, int fd)
+{
+	struct ospf_area *area;
+	listnode node;
+	struct route_node *rn;
+	struct ospf_lsa *lsa;
+	struct in_addr area_id;
+	struct te_link_subtlv_link_ifswcap* ifswcap;
+	struct link_ifswcap_specific_ciena_opvcx* opvcx_data = NULL;
+	struct stream *s = NULL;
+	u_int8_t length;
+	int i, j;
+		
+	area = NULL;
+	if (om->ospf){
+		area_id.s_addr = OSPF_AREA_BACKBONE;
+		area = ospf_area_lookup_by_area_id(getdata(listhead(om->ospf)), area_id);
+	}
+	if (area)
+	  {
+		LSDB_LOOP (area->te_lsdb->db, rn, lsa)
+		{ /*matching the data_if with either a te link local if addr or a link's originating end's loopback*/
+		  if (lsa->tepara_ptr && lsa->tepara_ptr->p_lclif_ipaddr && lsa->tepara_ptr->p_lclif_ipaddr->value.s_addr == data_if->s_addr)
+		   {
+		   	LIST_LOOP(lsa->tepara_ptr->p_link_ifswcap_list, ifswcap, node)
+	   		{
+	   			if (ifswcap && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
+				    && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+				    && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0)
+   				{
+					opvcx_data = &ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx;
+					break;
+   				}
+			
+	   		}
+			if (opvcx_data != NULL)
+				break;
+		   }
+		}
+	}
+
+	length = sizeof(u_int8_t)*2 + (opvcx_data == NULL ? 0 : sizeof(u_int32_t)*5+(sizeof(struct wavelength_grid_label)+MAX_SUBWAVE_CHANNELS/8)*opvcx_data->num_waves);
+	s = stream_new(length);
+	stream_putc(s, length);
+	stream_putc(s, GetCienaOPVCXDataByOSPF);
+	if (opvcx_data)
+	{
+		stream_putl(s, opvcx_data->switch_ip);
+		stream_putw(s, opvcx_data->tl1_port);
+		stream_putc(s, opvcx_data->eth_edge);
+		stream_putc(s, opvcx_data->reserved);
+		stream_putl(s, opvcx_data->data_ipv4);
+		stream_putl(s, opvcx_data->logical_port_number);
+		stream_putw(s, opvcx_data->num_waves);
+		stream_putw(s, opvcx_data->num_chans);
+		for (i = 0; i < opvcx_data->num_chans; i++)
+		{
+			stream_putl(s, *(u_int32_t*)&opvcx_data->wave_opvc_map[i].wave_id);
+			for (j = 0; j < MAX_SUBWAVE_CHANNELS/8; j++)
+				stream_putc(s, opvcx_data->wave_opvc_map[i].opvc_bitmask[j]);
+		}
+	}
+	write (fd, STREAM_DATA(s), length);
+	stream_free(s);
+	return;
+}
+
 /* Handler of RSVP request. */
 int
 ospf_rsvp_read (struct thread *thread)
@@ -1212,6 +1290,11 @@ ospf_rsvp_read (struct thread *thread)
 	addr.s_addr = stream_get_ipv4(s);
 	uni_id = stream_getc (s);
 	ospf_rsvp_get_subnet_uni_data(&addr, uni_id, sock);
+	break;
+
+   case GetCienaOPVCXDataByOSPF:
+	addr.s_addr = stream_get_ipv4(s);
+	ospf_rsvp_get_ciena_opvcx_data(&addr, sock);
 	break;
 
     default:
