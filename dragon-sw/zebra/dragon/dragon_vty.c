@@ -1082,7 +1082,7 @@ DEFUN (dragon_set_label_set,
 
 DEFUN (dragon_set_lsp_ip,
        dragon_set_lsp_ip_cmd,
-       "set source ip-address A.B.C.D (port|group|tagged-group|subnet-interface|lsp-id) ID destination ip-address A.B.C.D  (port|group|tagged-group|subnet-interface|tunnel-id) ID",
+       "set source ip-address A.B.C.D (port|group|tagged-group|subnet-interface|otnx-interface|lsp-id) ID destination ip-address A.B.C.D  (port|group|tagged-group|subnet-interface|tunnel-id) ID",
        "Set LSP parameters\n"
        "Source and destination nodes\n"
        "Source node IP address\n"
@@ -1091,6 +1091,7 @@ DEFUN (dragon_set_lsp_ip,
        "group LocalID (must be registered at source)\n"
        "tagged-group LocalID (must be registered at source)\n"
        "subnet-interface LocalID (must be registered at source)\n"
+       "ontx-interface LocalID (must be registered at source)\n"
        "lsp-id\n"
        "LSP ID, integer between 1 and 65535, or any (for localID)\n"
        "Destination node IP address\n"
@@ -1120,6 +1121,8 @@ DEFUN (dragon_set_lsp_ip,
         type_src = LOCAL_ID_TYPE_TAGGED_GROUP;
     else if (strcmp(argv[1], "subnet-interface") == 0)
         type_src = LOCAL_ID_TYPE_SUBNET_IF_ID;
+    else if (strcmp(argv[1], "otnx-interface") == 0)
+        type_src = LOCAL_ID_TYPE_OTNX_IF_ID;
     else
         type_src = LOCAL_ID_TYPE_NONE;
   
@@ -1161,6 +1164,8 @@ DEFUN (dragon_set_lsp_ip,
     else if (strcmp(argv[4], "tagged-group") == 0)
         type_dest = LOCAL_ID_TYPE_TAGGED_GROUP;
     else if (strcmp(argv[4], "subnet-interface") == 0)
+        type_dest = LOCAL_ID_TYPE_SUBNET_IF_ID;
+    else if (strcmp(argv[4], "otnx-interface") == 0)
         type_dest = LOCAL_ID_TYPE_SUBNET_IF_ID;
     else
         type_dest = LOCAL_ID_TYPE_NONE;
@@ -1324,9 +1329,10 @@ DEFUN (dragon_set_lsp_vtag,
     
     lsp->dragon.lspVtag = vtag;
 
-    /* Mandate a VLAN via DragonExtInfo::edgeVlanMapping subobject for (1) subnet-interface local-id provisioning,
-        or (2) source-destination colocated local-id provisioning*/
+    /* Mandate a VLAN via DragonExtInfo::edgeVlanMapping subobject for (1) subnet-interface local-id provisioning, (2) ontx-interface local-id provisioning,
+        or (3) source-destination colocated local-id provisioning*/
     if ( ((lsp->dragon.srcLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID || (lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID)
+	|| ((lsp->dragon.srcLocalId>> 16)  == LOCAL_ID_TYPE_OTNX_IF_ID || (lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_OTNX_IF_ID)
 	|| (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr && lsp->common.Session_Para.srcAddr.s_addr != 0
 		&& lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE && lsp->dragon.destLocalId>>16 != LOCAL_ID_TYPE_NONE) )
     {
@@ -1762,13 +1768,13 @@ DEFUN (dragon_commit_lsp_sender,
   }
 
   /* Check if there is another non-subnet-interface LSP with the same session parameter */
-  if ((lsp->dragon.destLocalId >> 16) != LOCAL_ID_TYPE_SUBNET_IF_ID && dmaster.dragon_lsp_table)
+  if ((lsp->dragon.destLocalId >> 16) != LOCAL_ID_TYPE_SUBNET_IF_ID && (lsp->dragon.destLocalId >> 16) != LOCAL_ID_TYPE_OTNX_IF_ID && dmaster.dragon_lsp_table)
       LIST_LOOP(dmaster.dragon_lsp_table, lsp2 , node)
       {
           if (lsp!=lsp2 && LSP_SAME_SESSION(lsp, lsp2))
           {
-              vty_out(vty, "Cannot commit: another non-subnet-interface LSP with the same session parameters already exists!%s", VTY_NEWLINE);
-              zlog_info("LSP= %s : Cannot commit: another non-subnet-interface LSP with the same session parameters already exists!", lsp->common.SessionAttribute_Para->sessionName);
+              vty_out(vty, "Cannot commit: another non-subnet-interface/non-otnx-interface LSP with the same session parameters already exists!%s", VTY_NEWLINE);
+              zlog_info("LSP= %s : Cannot commit: another non-subnet-interface/non-otnx-interface LSP with the same session parameters already exists!", lsp->common.SessionAttribute_Para->sessionName);
               return CMD_WARNING;
           }
       }
@@ -1823,6 +1829,7 @@ DEFUN (dragon_commit_lsp_sender,
   {
   	  struct _EROAbstractNode_Para *srcLocalId, *destLocalId;
 	  /* NARB is not required for source and destination co-located local ID provisioning, unless one of the local-ids is subnet-interface */
+	  /* For co-located otnx-interface local-ids, NARB is also not contacted */
 	  if (lsp->dragon.srcLocalId>>16 == LOCAL_ID_TYPE_NONE || lsp->dragon.destLocalId>>16 == LOCAL_ID_TYPE_NONE)
 	  {
 		  vty_out (vty, "### Both source and destation must use true local ID for source and destination co-located provisioning.%s", VTY_NEWLINE);
@@ -2528,6 +2535,52 @@ DEFUN (dragon_set_local_id_group,
     return CMD_SUCCESS;
 }
 
+DEFUN (dragon_set_local_id_otnx_if,
+       dragon_set_local_id_otnx_if_cmd,
+       "set local-id otnx-interface ID",
+       SET_STR
+       "A local ingress/egress subnet interface identifier\n"
+       "OTNX interface ID in subet_id/first_timeslot format\n"
+       "ID number in the range <0-255>, see otnx-if-id in ospfd.conf\n")
+{
+    u_int16_t type = LOCAL_ID_TYPE_OTNX_IF_ID;
+    u_int32_t tag = 0, otnx_if_id = 0, first_timeslot = ANY_TIMESLOT;
+    struct local_id * lid = NULL;
+    listnode node;
+
+    if (strstr(argv[0], "-") != NULL)
+        sscanf(argv[0], "%d-%d", &otnx_if_id, &first_timeslot);
+    else if (strstr(argv[0], "/") != NULL)
+        sscanf(argv[0], "%d/%d", &otnx_if_id, &first_timeslot);
+    else
+        sscanf(argv[0], "%d", &otnx_if_id);
+
+    if (otnx_if_id == 0 || otnx_if_id >= 255)
+    {
+        vty_out (vty, "###Wrong  otnx-interface localID %s, format should be ID, ID-TS or ID/TS (0 < ID, TS <255)...%s", argv[0], VTY_NEWLINE);
+        return CMD_WARNING;
+    }
+    tag = (((otnx_if_id&0xff) << 8) | (first_timeslot&0xff));
+
+    LIST_LOOP(registered_local_ids, lid, node)
+    {
+        if (lid->type == type && lid->value == (u_int16_t)tag)
+        {
+            vty_out (vty, "###The localID %s (otnx-interface) has already existed... %s", argv[0], VTY_NEWLINE);
+            return CMD_WARNING;
+        }
+    }
+
+    lid = XMALLOC(MTYPE_TMP, sizeof(struct local_id));
+    memset(lid, 0, sizeof(struct local_id));
+    lid->type = type;
+    lid->value = tag;
+    listnode_add(registered_local_ids, lid);
+    zAddLocalId(dmaster.api, type, tag, 0xffff);
+    preserve_local_ids();
+    return CMD_SUCCESS;
+}
+
 DEFUN (dragon_set_local_id_subnet_if,
        dragon_set_local_id_subnet_if_cmd,
        "set local-id subnet-interface ID",
@@ -2574,10 +2627,9 @@ DEFUN (dragon_set_local_id_subnet_if,
     return CMD_SUCCESS;
 }
 
-
 DEFUN (dragon_delete_local_id,
        dragon_delete_local_id_cmd,
-       "delete local-id (port|group|tagged-group|subnet-interface) NAME",
+       "delete local-id (port|group|tagged-group|subnet-interface|otnx-interface) NAME",
        SET_STR
        "A local ingress/egress port identifier\n"
        "Pick a LocalId type\n"
@@ -2610,6 +2662,11 @@ DEFUN (dragon_delete_local_id,
     else if (strcmp(argv[0], "subnet-interface") == 0)
     {
         type = LOCAL_ID_TYPE_SUBNET_IF_ID;
+        sscanf(argv[1], "%d", &tag);
+    }
+    else if (strcmp(argv[0], "otnx-interface") == 0)
+    {
+        type = LOCAL_ID_TYPE_OTNX_IF_ID;
         sscanf(argv[1], "%d", &tag);
     }
     else
@@ -2809,6 +2866,8 @@ dragon_supp_vty_init ()
   install_element(CONFIG_NODE, &dragon_set_local_id_group_cmd);
   install_element(VIEW_NODE, &dragon_set_local_id_subnet_if_cmd);
   install_element(CONFIG_NODE, &dragon_set_local_id_subnet_if_cmd);
+  install_element(VIEW_NODE, &dragon_set_local_id_otnx_if_cmd);
+  install_element(CONFIG_NODE, &dragon_set_local_id_otnx_if_cmd);
   install_element(VIEW_NODE, &dragon_delete_local_id_cmd);
   install_element(CONFIG_NODE, &dragon_delete_local_id_cmd);
   install_element(VIEW_NODE, &dragon_delete_local_id_all_cmd);

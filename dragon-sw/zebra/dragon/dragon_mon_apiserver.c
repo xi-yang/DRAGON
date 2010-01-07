@@ -1013,6 +1013,9 @@ int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req
     case LOCAL_ID_TYPE_SUBNET_IF_ID:
       strcpy(argv[1], "subnet-interface");
       break;
+    case LOCAL_ID_TYPE_OTNX_IF_ID:
+      strcpy(argv[1], "otnx-interface");
+      break;
     default:
       zlog_warn("mon_apiserver_lsp_commit: Unkown source local-id type %d for lsp %s", lsp_req->src_lclid>>16, lsp_gri);
       rc = -1;
@@ -1036,6 +1039,9 @@ int mon_apiserver_lsp_commit(char* lsp_gri, struct _LSPService_Request * lsp_req
       break;
     case LOCAL_ID_TYPE_SUBNET_IF_ID:
       strcpy(argv[4], "subnet-interface");
+      break;
+    case LOCAL_ID_TYPE_OTNX_IF_ID:
+      strcpy(argv[4], "otnx-interface");
       break;
     default:
       zlog_warn("mon_apiserver_lsp_commit: Unkown destination local-id type %d for lsp %s", lsp_req->dest_lclid>>16, lsp_gri);

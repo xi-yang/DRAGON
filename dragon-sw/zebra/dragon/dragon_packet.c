@@ -805,9 +805,10 @@ dragon_narb_topo_rsp_proc(struct api_msg_header *amsgh)
 					}
 				}
 
-				/* Mandate a VLAN via DragonExtInfo::edgeVlanMapping subobject for (1) subnet-interface local-id provisioning,
-				  or (2) source-destination colocated local-id provisioning*/
+				/* Mandate a VLAN via DragonExtInfo::edgeVlanMapping subobject for (1) subnet-interface local-id provisioning, (2) otnx-interface local-id provisioing
+				  or (3) source-destination colocated local-id provisioning*/
 				if ( (((lsp->dragon.srcLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID || (lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID)
+				|| ((lsp->dragon.srcLocalId>> 16)  == LOCAL_ID_TYPE_OTNX_IF_ID || (lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_OTNX_IF_ID)
 				|| (lsp->common.Session_Para.srcAddr.s_addr == lsp->common.Session_Para.destAddr.s_addr && lsp->common.Session_Para.srcAddr.s_addr != 0
 					&& lsp->dragon.srcLocalId>>16 != LOCAL_ID_TYPE_NONE && lsp->dragon.destLocalId>>16 != LOCAL_ID_TYPE_NONE)))
 				{
