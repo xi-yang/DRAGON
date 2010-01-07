@@ -322,14 +322,14 @@ const char* otnx_logical_port_number2string(u_int32_t port_id)
 
 u_int32_t otnx_logical_port_string2number(const char* port_str)
 {
-	int shelf, slot, subslot=0, port, pport, lport;
+	int shelf, slot, subslot=0, port, pport, lport=0;
 	char subslot_alpha, s1, s2, s3, s4;
 
-	if (sscanf(port_str, "%d-%d%c%c%c%c-%d-%d-%d", &shelf, &slot, &s1, &s2, &s3, &s4, &port, &pport, &lport) == 9)
+	if (sscanf(port_str, "%d-%d%c%c%c%c-%d-%d-%d", &shelf, &slot, &s1, &s2, &s3, &s4, &port, &pport, &lport) >= 8)
 	{
 		shelf = 1;
 	}
-	else if (sscanf(port_str, "%d-%d%c-%d-%d-%d", &shelf, &slot, &subslot_alpha, &port, &pport, &lport) == 6)
+	else if (sscanf(port_str, "%d-%d%c-%d-%d-%d", &shelf, &slot, &subslot_alpha, &port, &pport, &lport) >= 5)
 	{
 		switch (subslot_alpha)
 		{
