@@ -3034,7 +3034,7 @@ ALIAS (ospf_te_interface_ifsw_cap7,
 
 DEFUN (ospf_te_interface_ifsw_cap8,
        ospf_te_interface_ifsw_cap8_cmd,
-       "otn-opvcx (1ge|10ge|10g|40g) switch-ip A.B.C.D tl1-port <0-65535> data-interface A.B.C.D port ID",
+       "otnx-interface ID type (1ge|10ge|10g|40g) switch-ip A.B.C.D tl1-port <0-65535> data-interface A.B.C.D port ID",
        "Bandwidth\n"
        "1G Ethernet port\n"
        "10G Ethernet port\n"
@@ -3049,7 +3049,7 @@ DEFUN (ospf_te_interface_ifsw_cap8,
        "Logical data port\n"
        "Port number in bay-shelf-slot-subslot-port format\n" )
 {
-  u_int32_t switch_ip, tl1_port, data_if, logical_port;
+  u_int32_t otnx_ifid, switch_ip, tl1_port, data_if, logical_port;
   struct te_link_subtlv_link_ifswcap *ifswcap;
 
   ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_TDM, LINK_IFSWCAP_SUBTLV_ENC_G709ODUK);
@@ -3057,49 +3057,56 @@ DEFUN (ospf_te_interface_ifsw_cap8,
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.length = htons(sizeof(struct link_ifswcap_specific_ciena_opvcx));
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version = htons(IFSWCAP_SPECIFIC_CIENA_OPVCX);
 
-  if (argc != 5) 
+  if (argc != 6) 
   {
-	vty_out (vty, "ospf_te_interface_ifsw_cap8: only %d parameters present%s (needing 5)", argc, VTY_NEWLINE);
+	vty_out (vty, "ospf_te_interface_ifsw_cap8: only %d parameters present%s (needing 6)", argc, VTY_NEWLINE);
 	return CMD_WARNING;
   }
+
+  if (sscanf (argv[0], "%d", &otnx_ifid) != 1 || otnx_ifid > 255)
+    {
+      vty_out (vty, "ospf_te_interface_ifsw_cap8: invalid otnx-if-id: %s%s", argv[0], VTY_NEWLINE);
+      return CMD_WARNING;
+    }
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.ontx_if_id = (u_int8_t)otnx_ifid;
 
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.eth_edge = 0;
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.num_waves = 1;
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.num_chans = 64;
-  if (strcmp(argv[0], "1ge") == 0 || strcmp(argv[0], "10ge") == 0)
+  if (strcmp(argv[1], "1ge") == 0 || strcmp(argv[0], "10ge") == 0)
   {
       ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.eth_edge = 1;
   }
-  if (strcmp(argv[0], "40g") == 0)
+  if (strcmp(argv[1], "40g") == 0)
   {
       ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.num_chans = 256;
   }
 
-  if (inet_aton (argv[1], (struct in_addr*)&switch_ip) != 1)
+  if (inet_aton (argv[2], (struct in_addr*)&switch_ip) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap8: inet_aton switch_ip: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.switch_ip = switch_ip;
 
-  if (sscanf (argv[2], "%d", &tl1_port) != 1)
+  if (sscanf (argv[3], "%d", &tl1_port) != 1)
     {
-      vty_out (vty, "ospf_te_interface_ifsw_cap8: sscanf tl1_port: %s%s", strerror (errno), VTY_NEWLINE);
+      vty_out (vty, "ospf_te_interface_ifsw_cap8: invalid tl1_port: %s%s", argv[3], VTY_NEWLINE);
       return CMD_WARNING;
     }
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.tl1_port = (u_int16_t)tl1_port;
 
-  if (inet_aton (argv[3], (struct in_addr*)&data_if) != 1)
+  if (inet_aton (argv[4], (struct in_addr*)&data_if) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap8: inet_aton data_if: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.data_ipv4 = data_if;
 
-  logical_port = otnx_logical_port_string2number((const char*)argv[4]);
+  logical_port = otnx_logical_port_string2number((const char*)argv[5]);
   if (logical_port == 0)
     {
-      vty_out (vty, "ospf_te_interface_ifsw_cap8: unacceptable logical_port: %s%s", argv[4], VTY_NEWLINE);
+      vty_out (vty, "ospf_te_interface_ifsw_cap8: unacceptable logical_port: %s%s", argv[5], VTY_NEWLINE);
       return CMD_WARNING;
     }
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.logical_port_number = htonl(logical_port);

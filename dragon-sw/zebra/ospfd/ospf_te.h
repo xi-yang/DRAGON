@@ -317,7 +317,10 @@ struct link_ifswcap_specific_ciena_opvcx {
 	u_int32_t		switch_ip;
 	u_int16_t		tl1_port;
 	u_int8_t		eth_edge; /* 1 = true, 0 = false */
-	u_int8_t		reserved;
+	union {
+	    u_int8_t		reserved;
+	    u_int8_t		ontx_if_id;
+	};
 	u_int32_t		data_ipv4;
 	u_int32_t		logical_port_number;
 	u_int16_t 	num_waves; /*number of wavelengths*/

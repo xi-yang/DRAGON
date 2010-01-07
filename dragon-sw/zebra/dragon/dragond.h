@@ -756,6 +756,7 @@ struct local_id {
 #define LOCAL_ID_TYPE_SUBNET_IF_ID (u_int16_t)0x05 //subnet-if-id
 #define LOCAL_ID_TYPE_SUBNET_UNI_SRC (u_int16_t)0x10
 #define LOCAL_ID_TYPE_SUBNET_UNI_DEST (u_int16_t)0x11
+#define LOCAL_ID_TYPE_OTNX_IF_ID (u_int16_t)0x12 //otnx-if
 
 /* local_id_group_mapping operators */
 void local_id_group_add(struct local_id *lid, u_int16_t  tag);
