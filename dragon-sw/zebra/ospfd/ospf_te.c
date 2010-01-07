@@ -3050,13 +3050,12 @@ DEFUN (ospf_te_interface_ifsw_cap8,
        "Port number in bay-shelf-slot-subslot-port format\n" )
 {
   u_int32_t switch_ip, tl1_port, data_if, logical_port;
-  u_int16_t ;
   struct te_link_subtlv_link_ifswcap *ifswcap;
 
   ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_TDM, LINK_IFSWCAP_SUBTLV_ENC_G709ODUK);
   ifswcap->header.length = htons(36 + sizeof(struct link_ifswcap_specific_ciena_opvcx)); /* the default length is 36 + sizeof(struct link_ifswcap_specific_tdm */
-  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.length = htons(sizeof(struct link_ifswcap_specific_ciena_opvcx));
-  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version = htons(IFSWCAP_SPECIFIC_CIENA_OPVCX);
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.length = htons(sizeof(struct link_ifswcap_specific_ciena_opvcx));
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version = htons(IFSWCAP_SPECIFIC_CIENA_OPVCX);
 
   if (argc != 5) 
   {
