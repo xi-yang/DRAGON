@@ -1082,7 +1082,7 @@ DEFUN (dragon_set_label_set,
 
 DEFUN (dragon_set_lsp_ip,
        dragon_set_lsp_ip_cmd,
-       "set source ip-address A.B.C.D (port|group|tagged-group|subnet-interface|otnx-interface|lsp-id) ID destination ip-address A.B.C.D  (port|group|tagged-group|subnet-interface|tunnel-id) ID",
+       "set source ip-address A.B.C.D (port|group|tagged-group|subnet-interface|otnx-interface|lsp-id) ID destination ip-address A.B.C.D  (port|group|tagged-group|subnet-interface|otnx-interface|tunnel-id) ID",
        "Set LSP parameters\n"
        "Source and destination nodes\n"
        "Source node IP address\n"
@@ -1091,7 +1091,7 @@ DEFUN (dragon_set_lsp_ip,
        "group LocalID (must be registered at source)\n"
        "tagged-group LocalID (must be registered at source)\n"
        "subnet-interface LocalID (must be registered at source)\n"
-       "ontx-interface LocalID (must be registered at source)\n"
+       "otnx-interface LocalID (must be registered at source)\n"
        "lsp-id\n"
        "LSP ID, integer between 1 and 65535, or any (for localID)\n"
        "Destination node IP address\n"
@@ -1329,7 +1329,7 @@ DEFUN (dragon_set_lsp_vtag,
     
     lsp->dragon.lspVtag = vtag;
 
-    /* Mandate a VLAN via DragonExtInfo::edgeVlanMapping subobject for (1) subnet-interface local-id provisioning, (2) ontx-interface local-id provisioning,
+    /* Mandate a VLAN via DragonExtInfo::edgeVlanMapping subobject for (1) subnet-interface local-id provisioning, (2) otnx-interface local-id provisioning,
         or (3) source-destination colocated local-id provisioning*/
     if ( ((lsp->dragon.srcLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID || (lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_SUBNET_IF_ID)
 	|| ((lsp->dragon.srcLocalId>> 16)  == LOCAL_ID_TYPE_OTNX_IF_ID || (lsp->dragon.destLocalId>> 16)  == LOCAL_ID_TYPE_OTNX_IF_ID)

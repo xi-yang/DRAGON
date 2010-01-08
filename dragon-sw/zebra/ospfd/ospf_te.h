@@ -318,15 +318,18 @@ struct link_ifswcap_specific_ciena_opvcx {
 	u_int16_t		tl1_port;
 	u_int8_t		eth_edge; /* 1 = true, 0 = false */
 	union {
-	    u_int8_t		reserved;
-	    u_int8_t		ontx_if_id;
+		u_int8_t	reserved;
+		u_int8_t	otnx_if_id;
 	};
 	u_int32_t		data_ipv4;
 	u_int32_t		logical_port_number;
 	u_int16_t 	num_waves; /*number of wavelengths*/
 	u_int16_t 	num_chans; /*number of sub-wavelength channels = NUM_SUBWAVE_CHANNELS*/
 	struct {
-		struct wavelength_grid_label wave_id; /* default = all 0 for single-wave TDM (non-WDM) */
+		union {
+			struct wavelength_grid_label wave_label; 
+			u_int32_t wave_id; /* default = 0 for single-wave TDM (non-WDM) */
+		};
 		u_int8_t opvc_bitmask[MAX_SUBWAVE_CHANNELS/8]; /* bit =1 means available */
 	} wave_opvc_map[1]; /* num_waves blocks */
 };

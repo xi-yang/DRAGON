@@ -327,7 +327,7 @@ u_int32_t otnx_logical_port_string2number(const char* port_str)
 
 	if (sscanf(port_str, "%d-%d%c%c%c%c-%d-%d-%d", &shelf, &slot, &s1, &s2, &s3, &s4, &port, &pport, &lport) >= 8)
 	{
-		shelf = 1;
+		subslot = 1;
 	}
 	else if (sscanf(port_str, "%d-%d%c-%d-%d-%d", &shelf, &slot, &subslot_alpha, &port, &pport, &lport) >= 5)
 	{
@@ -3047,7 +3047,7 @@ DEFUN (ospf_te_interface_ifsw_cap8,
       vty_out (vty, "ospf_te_interface_ifsw_cap8: invalid otnx-if-id: %s%s", argv[0], VTY_NEWLINE);
       return CMD_WARNING;
     }
-  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.ontx_if_id = (u_int8_t)otnx_ifid;
+  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.otnx_if_id = (u_int8_t)otnx_ifid;
 
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.eth_edge = 0;
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.num_waves = 1;

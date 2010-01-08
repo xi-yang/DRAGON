@@ -1149,7 +1149,7 @@ ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, int fd)
 		stream_putw(s, opvcx_data->num_chans);
 		for (i = 0; i < opvcx_data->num_chans; i++)
 		{
-			stream_putl(s, *(u_int32_t*)&opvcx_data->wave_opvc_map[i].wave_id);
+			stream_putl(s, &opvcx_data->wave_opvc_map[i].wave_id);
 			for (j = 0; j < MAX_SUBWAVE_CHANNELS/8; j++)
 				stream_putc(s, opvcx_data->wave_opvc_map[i].opvc_bitmask[j]);
 		}
