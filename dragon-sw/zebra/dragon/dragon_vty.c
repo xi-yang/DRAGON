@@ -2746,6 +2746,9 @@ DEFUN (dragon_show_local_id,
          else if (lid->type == LOCAL_ID_TYPE_SUBNET_IF_ID)
 	     vty_out(vty, "%-4d(%d/%d) [%-12s]    %s", lid->value, (lid->value >> 8), (lid->value & 0xff),  lid_types[lid->type]
 	        , (lid->value & 0xff) == 255 ? ": 255 means ANY timeslots" : "" );
+         else if (lid->type == LOCAL_ID_TYPE_OTNX_IF_ID)
+	     vty_out(vty, "%-4d(%d/%d) [%-12s]    %s", lid->value, (lid->value >> 8), (lid->value & 0xff),  "otnx interface id"
+	        , (lid->value & 0xff) == 255 ? ": 255 means ANY timeslots" : "" );
 
          if (lid->type == LOCAL_ID_TYPE_GROUP || lid->type == LOCAL_ID_TYPE_TAGGED_GROUP)
             local_id_group_show(vty, lid);
