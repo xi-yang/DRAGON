@@ -1534,7 +1534,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
 	    strcpy (ipv4, inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.switch_ip));
 	    strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.data_ipv4));
 
-	    vty_out (vty, "      -> Switch IP: %s, DataInterface IP: %s, LogicalPort: %s%s", 
+	    vty_out (vty, "      -> Interface ID: %d, Switch IP: %s, DataInterface IP: %s, LogicalPort: %s%s", top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.otnx_if_id, 
 			ipv4, ipv4_b, otnx_logical_port_number2string(ntohl(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.logical_port_number)), VTY_NEWLINE);
             vty_out (vty, "      -> Available OPVCs (STS3c's):");
             SHOW_OPVCS(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.wave_opvc_map[0].opvc_bitmask);
@@ -1677,8 +1677,8 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             strcpy (ipv4, inet_ntoa (*(struct in_addr*)&opvcx_data->switch_ip));
             strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&opvcx_data->data_ipv4));
 
-	    vty_out (vty, "      -> Switch IP: %s, DataInterface IP: %s, LogicalPort: %s%s", 
-			ipv4, ipv4_b, otnx_logical_port_number2string(ntohl(opvcx_data->logical_port_number)), VTY_NEWLINE);
+	    vty_out (vty, "      -> Interface ID: %d, Switch IP: %s, DataInterface IP: %s, LogicalPort: %s%s", 
+			opvcx_data->otnx_if_id, ipv4, ipv4_b, otnx_logical_port_number2string(ntohl(opvcx_data->logical_port_number)), VTY_NEWLINE);
             vty_out (vty, "      -> Available OPVCs (STS3c's):");
             SHOW_OPVCS(opvcx_data->wave_opvc_map[0].opvc_bitmask);
             vty_out (vty, "%s", VTY_NEWLINE);
