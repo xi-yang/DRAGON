@@ -35,6 +35,7 @@
 #include "RSVP_Lists.h"
 #include "RSVP_LogicalInterfaceSet.h"
 #include "SwitchCtrl_Session_SubnetUNI.h"
+#include "SwitchCtrl_Session_CienaCN4200.h"
 
 class RoutingEntry {
 	NetAddress	dest;
@@ -101,6 +102,7 @@ public:
 		HoldBandwidthbyOSPF = 135, 		// Hold or release a portion of bandwidth
 		GetSubnetUNIDataByOSPF = 136,	// Get Subnet UNI data associated with a OSPF interface
 		HoldTimeslotsbyOSPF = 137, 		// Hold or release timeslots
+		GetCienaOPVCXDataByOSPF = 138, /* Get Ciena OTN OPVCX data associated with an OSPF interface */
 	};
 	RoutingService();
 	~RoutingService();
@@ -123,6 +125,7 @@ public:
 	const void holdTimeslotsbyOSPF(u_int32_t port, SimpleList<uint8>& timeslots, bool hold);
 	NetAddress getLoopbackAddress();
 	bool getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint8 uniID, SubnetUNI_Data& uniData);
+	bool getCienaOPVCXDatabyOSPF(const NetAddress& dataIf, const uint8 otnxID, OTNX_Data& opvcxData);
 	const LogicalInterface* getUnicastRoute( const NetAddress&, NetAddress& );
 	const LogicalInterface* getMulticastRoute( const NetAddress&, const NetAddress&, LogicalInterfaceSet& );
 	bool getAsyncMulticastRoutingEvent( NetAddress&, NetAddress&, const LogicalInterface*&, LogicalInterfaceSet& );

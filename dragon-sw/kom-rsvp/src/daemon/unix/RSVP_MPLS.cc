@@ -352,7 +352,6 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                            goto _Exit_Error_Subnet;
 			                                        }
 
-			                                        //@@@@ Xi2008 >>
 			                                        //$$$$ verifying SNC(s) are in stable working state
 			                                        (*sessionIter)->disconnectSwitch();
 			                                        signal(SIGCHLD, SIG_IGN);
@@ -396,6 +395,15 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                    }
 			                                }
 			                            }
+			                            else if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX ) {
+								//@@@@ TODO
+								if (psb.getDRAGON_EXT_INFO_Object()) {
+									if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isIngressNode()) //translation (if any) occurs at ingress
+										vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().ingress_outer_vlantag;
+									else if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isEgressNode()) //translation (if any) occurs at egress
+										vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().egress_outer_vlantag;
+								}
+      			       	              }
 			                            //disconnect
 			                            (*sessionIter)->disconnectSwitch();
 
@@ -852,7 +860,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
         							(*sessionIter)->disconnectSwitch();
 						    }
 						    else if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
-						                //delete GTP (for SNC: source only; for CRS: both source and dest interfaces)
+						               //delete GTP (for SNC: source only; for CRS: both source and dest interfaces)
 						                if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() && ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasGTP()) {
 						                    noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteGTP() && noErr;
                                                                 }
@@ -912,6 +920,15 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 										RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanLow, false); //false == release
 									if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanTrunk != vlanLow)
 										RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanTrunk, false); //false == release
+								}
+						    }
+						    else if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX ) {
+								//@@@@ TODO
+								if (psb.getDRAGON_EXT_INFO_Object()) {
+									if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isIngressNode()) //translation (if any) occurs at ingress
+										vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().ingress_outer_vlantag;
+									else if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isEgressNode()) //translation (if any) occurs at egress
+										vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().egress_outer_vlantag;
 								}
 						    }
 

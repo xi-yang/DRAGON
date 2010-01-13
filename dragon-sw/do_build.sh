@@ -70,6 +70,9 @@ case "$target" in
   vlsr-subnet|VLSR-SUBNET)
     rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=AutoDetect --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community"
   ;;
+  vlsr-cn4200|VLSR-CN4200)
+    rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=AutoDetect --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community"
+  ;;
   vlsr-linux|VLSR-LINUX)
     rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=LinuxSwitch --with-switch-ctrl-port=1 --with-switch-snmp-community=$snmp_community"
   ;;

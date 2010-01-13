@@ -579,7 +579,8 @@ public:
 		SubnetUNISessionFailed = 10,
 		InvalidUNIObject = 11,
 		RSVPSwitchConnectFailure = 12,
-		RSVPSwitchSNMPFailure = 13
+		RSVPSwitchSNMPFailure = 13,
+		CienaOTNXSessionFailed = 14
 	};
 private:
 	NetAddress nodeAddress;

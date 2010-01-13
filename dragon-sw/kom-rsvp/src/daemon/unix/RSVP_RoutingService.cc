@@ -506,7 +506,7 @@ const void RoutingService::holdTimeslotsbyOSPF(u_int32_t port, SimpleList<uint8>
 	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 }
 
-// @@@@ we may use port number instead of uniID
+// we may use port number instead of uniID
 bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint8 uniID, SubnetUNI_Data& uniData) {
 	uint8 message = GetSubnetUNIDataByOSPF;
 	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32) + sizeof(uint8);
@@ -531,6 +531,38 @@ bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint
 	for (i = 0; i < 16; i++) ibuffer >> uniData.node_name[i];
 	ibuffer >> uniData.options;
 	for (i = 0; i < MAX_TIMESLOTS_NUM/8; i++) ibuffer >> uniData.timeslot_bitmask[i];
+
+	return true;
+}
+
+bool RoutingService::getCienaOPVCXDatabyOSPF(const NetAddress& dataIf, const uint8 otnxID, OTNX_Data& opvcxData) {
+	uint8 message = GetCienaOPVCXDataByOSPF;
+	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32) + sizeof(uint8);
+	ONetworkBuffer obuffer(msgLength);
+	obuffer << msgLength << message <<dataIf << otnxID;
+	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+
+	//Read response from OSPF
+	read(ospf_socket, (void *)&msgLength, sizeof(uint8));
+	read(ospf_socket, (void *)&message, sizeof(uint8));
+	if (msgLength <= sizeof(uint8)*2)
+		return false;
+	INetworkBuffer ibuffer(msgLength-sizeof(uint8));
+	msgLength = read(ospf_socket, ibuffer.getWriteBuffer(), ibuffer.getSize());
+	ibuffer.setWriteLength(msgLength);
+	//Process response messages
+
+	ibuffer >> opvcxData.switch_ip >> opvcxData.tl1_port >> opvcxData.eth_edge >> opvcxData.reserved 
+		>> opvcxData.logical_port_number >>opvcxData.num_waves >> opvcxData.num_chans;
+	opvcxData.otnx_if_id = otnxID;
+
+	int i, j;
+	for (i = 0; i < (int)opvcxData.num_waves; i++)
+	{
+		ibuffer >> opvcxData.wave_opvc_map[i].wave_id;
+		for (j = 0; j < (int)opvcxData.num_chans/8; j++)
+			ibuffer >> opvcxData.wave_opvc_map[i].opvc_bitmask[j];
+	}
 
 	return true;
 }

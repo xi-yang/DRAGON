@@ -47,6 +47,7 @@
 #include "NARB_APIClient.h"
 #include "SwitchCtrl_Global.h"
 #include "SwitchCtrl_Session_SubnetUNI.h"
+#include "SwitchCtrl_Session_CienaCN4200.h"
 
 // #define BETWEEN_APIS 1
 
@@ -205,6 +206,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 	NetAddress outRtId = NetAddress(0);
 	NetAddress gw;
 	SubnetUNI_Data subnetUniDataSrc, subnetUniDataDest;
+	OTNX_Data otnxDataSrc, otnxDataDest;
 	String sName;
 
 	if (Session::ospfRouterID.rawAddress() == 0)
@@ -232,7 +234,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 		&& ( (explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
 			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
-			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) )
+			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST
+			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_CIENA_OTNX) )
 		{
 			inUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
                      //   RSVP_HOP_TLV_SUB_Object t(inRtId);
@@ -245,7 +248,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			}
 			else { //un-numbered interface
 				//tlv = msg.getRSVP_HOP_Object().getTLV();
-                        }
+			}
 		}
 		//dataInRsvpHop = RSVP_HOP_Object(hop.getLogicalInterface().getAddress(), msg.getRSVP_HOP_Object().getLIH(), tlv);
 		dataInRsvpHop = RSVP_HOP_Object(hop.getLogicalInterface().getAddress(), msg.getRSVP_HOP_Object().getLIH(), (RSVP_HOP_TLV_SUB_Object&)msg.getRSVP_HOP_Object().getTLV());
@@ -265,7 +268,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		ifId = explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::IPv4?0:explicitRoute->getAbstractNodeList().front().getInterfaceID();
 		if ( (ifId >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
 			|| (ifId >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
-			|| (ifId >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST )
+			|| (ifId >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST 
+			|| (ifId >> 16) == LOCAL_ID_TYPE_CIENA_OTNX)
 		{
 			ifId = 0;
 		}
@@ -287,9 +291,10 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		&& explicitRoute->getAbstractNodeList().front().getType() == AbstractNode::UNumIfID 
 		&& ( (explicitRoute->getAbstractNodeList().front().getInterfaceID() >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
 			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
-			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST) )
+			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST
+			|| (explicitRoute->getAbstractNodeList().front().getInterfaceID()>>16) == LOCAL_ID_TYPE_CIENA_OTNX) )
 		{
-			if (outUnumIfID == 0) //>>Xi2007<<
+			if (outUnumIfID == 0)
 				outUnumIfID = explicitRoute->getAbstractNodeList().front().getInterfaceID();
 		}
 	}
@@ -329,7 +334,8 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 		ifId = explicitRoute->getAbstractNodeList().front().getType()==AbstractNode::IPv4?0:explicitRoute->getAbstractNodeList().front().getInterfaceID();
 		if ( (ifId >> 16) == LOCAL_ID_TYPE_TAGGED_GROUP_GLOBAL
 			|| (ifId >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC
-			|| (ifId >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST )
+			|| (ifId >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST
+			|| (ifId >> 16) == LOCAL_ID_TYPE_CIENA_OTNX )
 		{
 			ifId = 0;
 		}
@@ -426,11 +432,11 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
                  		vlsr.vlanTag = (vlsr.outPort & 0x0000ffff);
 			}
 		}
-		//creating source G_UNI client session
+
+		//creating source SubnetUNI  session
 		NetAddress destUniDataIf(0);
 		uint8 destUniId = 0; // valid: > 0
 		uint8 destTimeSlot = 0; //valid: > 0; one-based
-
 		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_DEST)
 		{
 			LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
@@ -456,9 +462,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			if (subnetUniDataSrc.first_timeslot == ANY_TIMESLOT)
 				subnetUniDataSrc.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataSrc);
 			subnetUniDataSrc.tunnel_id = msg.getSESSION_Object().getTunnelId();
-			//subnetUniDataSrc.logical_port = ntohl(subnetUniDataSrc.logical_port);
-			//subnetUniDataSrc.egress_label= ntohl(subnetUniDataSrc.egress_label);
-			//subnetUniDataSrc.upstream_label= ntohl(subnetUniDataSrc.upstream_label);
 
 			if (!pSubnetUniSrc){
 				LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
@@ -520,19 +523,16 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 					return false;
 				}
 				subnetUniDataDest.ethernet_bw = vlsr.bandwidth;
-				if (destTimeSlot == ANY_TIMESLOT) //@@@@ This first timeslot based on OSPF TE info may not be accurate as compared to RCE computation...
+				if (destTimeSlot == ANY_TIMESLOT) //$$ Note: This first timeslot based on OSPF TE info may not be accurate as compared to RCE computation...
 					subnetUniDataDest.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataDest);
 				else
 					subnetUniDataDest.first_timeslot = destTimeSlot;
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
-				//subnetUniDataDest.logical_port = ntohl(subnetUniDataDest.logical_port);
-				//subnetUniDataDest.egress_label= ntohl(subnetUniDataDest.egress_label);
-				//subnetUniDataDest.upstream_label= ntohl(subnetUniDataDest.upstream_label);
 				pSubnetUniSrc->setSubnetUniDest(subnetUniDataDest);
 			}
 		} 
 
-		//creating destination G_UNI client session
+		//creating destination SubnetUNI session
 		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC)
 		{
 			LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
@@ -559,9 +559,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				if (subnetUniDataDest.first_timeslot == ANY_TIMESLOT)
 					subnetUniDataDest.first_timeslot = SwitchCtrl_Session_SubnetUNI::getFirstAvailableTimeslotByBandwidth(subnetUniDataDest);
 				subnetUniDataDest.tunnel_id = msg.getSESSION_Object().getTunnelId();
-				//subnetUniDataDest.logical_port = ntohl(subnetUniDataDest.logical_port);
-				//subnetUniDataDest.egress_label= ntohl(subnetUniDataDest.egress_label);
-				//subnetUniDataDest.upstream_label= ntohl(subnetUniDataDest.upstream_label);
 			}
 			if (!pSubnetUniDest){
 				LOG(5)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
@@ -576,7 +573,6 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				pSubnetUniDest = (SwitchCtrl_Session_SubnetUNI*)ssNew;
 				//Pass SubnetUNI data
 				pSubnetUniDest->setSubnetUniDest(subnetUniDataDest);
-				//@@@@ if (!pSubnetUniSrc)
 				pSubnetUniDest->setSubnetUniSrc(subnetUniDataSrc);
 				//kickoff UNI session
 				if (CLI_SESSION_TYPE != CLI_TL1_TELNET) {
@@ -586,16 +582,61 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			}
 		}
 
-		if ( (inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC || (outUnumIfID >> 16)  == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
+		//creating OTNX session (Ciena CN-4200)
+		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_CIENA_OTNX || (outUnumIfID >> 16) == LOCAL_ID_TYPE_CIENA_OTNX) {
+			//$$$$ assure both inUnumIfID and outUnumIfID have LOCAL_ID_TYPE_CIENA_OTNX
+			if ((inUnumIfID >> 16) != LOCAL_ID_TYPE_CIENA_OTNX || (outUnumIfID >> 16) != LOCAL_ID_TYPE_CIENA_OTNX)
+			{
+				LOG(6)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+					"processERO: Invalid", ((inUnumIfID >> 16) != LOCAL_ID_TYPE_CIENA_OTNX?"inUnumIfID":"outUnumIfID"), "type: LOCAL_ID_TYPE_CIENA_OTNX");
+				memset(&vlsr, 0, sizeof(VLSR_Route)); 
+				vLSRoute.push_back(vlsr);  
+				return false;
+			}
+			//$$$$ retrieve OTNX data for both interfaces
+			memset(&otnxDataSrc, 0, sizeof(otnxDataSrc));
+			if ( !RSVP_Global::rsvp->getRoutingService().getCienaOPVCXDatabyOSPF(inRtId, (uint8)(inUnumIfID>>8), otnxDataSrc) ) {
+				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
+				LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+					"processERO: getCienaOTNXDatabyOSPF failed to get otnxDataSrc from OSPFd.");
+				memset(&vlsr, 0, sizeof(VLSR_Route)); 
+				vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::CienaOTNXSessionFailed);
+				vLSRoute.push_back(vlsr);                    
+				return false;
+			}
+			memset(&otnxDataDest, 0, sizeof(otnxDataDest));
+			if ( !RSVP_Global::rsvp->getRoutingService().getCienaOPVCXDatabyOSPF(outRtId, (uint8)(outUnumIfID>>8), otnxDataDest) ) {
+				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
+				LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
+					"processERO: getCienaOTNXDatabyOSPF failed to get otnxDataDest from OSPFd.");
+				memset(&vlsr, 0, sizeof(VLSR_Route)); 
+				vlsr.errCode = (ERROR_SPEC_Object::Notify << 16 | ERROR_SPEC_Object::CienaOTNXSessionFailed);
+				vLSRoute.push_back(vlsr);                    
+				return false;
+			}
+
+			//$$$$ new OTNX switch_ctrl_session
+			ssNew = (SwitchCtrl_Session*)(new SwitchCtrl_Session_CienaCN4200(const_cast<String&>(sName), NetAddress(otnxDataSrc.switch_ip)));
+			((SwitchCtrl_Session_CienaCN4200*)ssNew)->setLspName(msg.getSESSION_ATTRIBUTE_Object().getSessionName());
+			RSVP_Global::switchController->addSession(ssNew);
+			ssNew->addRsvpSessionReference(this); // Add this RSVP_Session into a reference list in SwitchControl session (reference for deleteion)
+			//$$$$ pass OTNX data to switch_ctrl_session
+			((SwitchCtrl_Session_CienaCN4200*)ssNew)->setOTNXDataSrc(otnxDataSrc);
+			((SwitchCtrl_Session_CienaCN4200*)ssNew)->setOTNXDataDest(otnxDataDest);
+			((SwitchCtrl_Session_CienaCN4200*)ssNew)->setEthernetBandwidth(vlsr.bandwidth);
+			vLSRoute.push_back(vlsr);
+		}
+		//Ciena SubnetUNI session(s) have been created. Only vlsr data is composed here.
+		else if ( (inUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC || (outUnumIfID >> 16)  == LOCAL_ID_TYPE_SUBNET_UNI_DEST) {
 			// Note that vlsr.switchID or getPseudoSwitchID() will be different that than ssNew->switchInetAddr.
 			// The former is used to distinguish different sessions on the same physical switch. The later is the physical address needed for TL1 connection.
 			if (pSubnetUniSrc)
 	              		vlsr.switchID = (pSubnetUniSrc->getPseudoSwitchID() << 16);
 			if (pSubnetUniDest)
 	              		vlsr.switchID = vlsr.switchID.rawAddress() | (pSubnetUniDest->getPseudoSwitchID() & 0xffff);
-
 			vLSRoute.push_back(vlsr);
 		}
+		//creating Ethernet switch session
 		else if (vlsr.inPort && vlsr.outPort && vlsr.switchID != NetAddress(0)) {
 			//prepare SwitchCtrl session connection
 			sessionIter = RSVP_Global::switchController->getSessionList().begin();
@@ -665,6 +706,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			vLSRoute.push_back(vlsr);                    
 		}
 	}
+
        // local-id processing for ingress => allocation of inLabel for local ingress port(s) @@@@ hacked
 	if (fromLocalAPI && inUnumIfID!= 0 && outRtId != NetAddress(0))
        {   
@@ -875,7 +917,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		RtOutL.insert_unique( defaultOutLif );
 		gateway = LogicalInterface::noGatewayAddress;
 	}
-	// >>Xi2007
 	else if (isGeneralizedUniEgressClient ) {
 		defaultOutLif = RSVP_Global::rsvp->getApiLif();
 		RtOutL.insert_unique( defaultOutLif );
@@ -915,7 +956,6 @@ void Session::processPATH( const Message& msg, Hop& hop, uint8 TTL ) {
 		senderTemplate.setSrcAddress(Session::ospfRouterID);
 		(*uniSessionIter)->getSubnetUniSrc()->uni_cid_ipv4 = Session::ospfRouterID.rawAddress();
 	}
-	// Xi2007<<
 	else { //regular RSVP (network) Path message
 
 		//No GENERALIZED UNI supported at VLSR UNI-N side
@@ -1432,13 +1472,12 @@ update_basic_psb:
 
 	cPSB->setTimeoutTime( msg.getTIME_VALUES_Object().getRefreshPeriod() );
 
-	//@@@@ >>Xi2007<<
-    if (CLI_SESSION_TYPE != CLI_TL1_TELNET) { // Do not use UNI for TL1_TELNET session
+	if (CLI_SESSION_TYPE != CLI_TL1_TELNET) { // Do not use UNI for TL1_TELNET session
 	//Kicking off SubnetUNI PATH message here!!!!
-	if (pSubnetUniSrc){
-		pSubnetUniSrc->createRsvpUniPath();
+		if (pSubnetUniSrc){
+			pSubnetUniSrc->createRsvpUniPath();
+		}
 	}
-    }
 	// update outgoing interfaces of PSB and maintain relations
 	// between PSBs, RSBs, and OutISBs; update TC, if necessary
 #if defined(ONEPASS_RESERVATION)

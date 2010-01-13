@@ -231,27 +231,6 @@ public:
 	}
 	bool waitUntilSystemSNCDisapear();
 
-
-/*
-	bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOspf()
-	{
-		SubnetUNI_Data* pUniData = (isSource ? &subnetUniSrc : &subnetUniDest);
-		bool ret = RSVP_Global::rsvp->getRoutingService().getSubnetUNIDatabyOSPF(pUniData->data_if_ipv4, pUniData->subnet_id, *pUniData);
-		if (ret)
-		{
-			uint8 ts = 1;
-			for ( ; ts <= MAX_TIMESLOTS_NUM; ts++)
-			{
-				if (!HAS_TIMESLOT(pUniData->timeslot_bitmask, ts))
-				{
-					pUniData->first_timeslot = ts;
-					break;
-				}
-			}
-		}
-		return ret;	    
-	}
-*/
 	//////////////// TL1 related functions << end //////////////
 
 	//Upcall for source/destination client
@@ -262,7 +241,7 @@ public:
 
 	static uint8 getFirstAvailableTimeslotByBandwidth(SubnetUNI_Data& subnetUniData)
 	{
-        uint8 ts, ts_count;
+            uint8 ts, ts_count;
 		if ((subnetUniData.options & IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS) == 0)
 		{
 			for (ts = 1; ts <= MAX_TIMESLOTS_NUM; ts++)
@@ -291,7 +270,7 @@ public:
 					return (ts-ts_count);
 			}
 		}
-        return 0;
+            return 0; //0 == failure
 	}
 
 	static void getSessionNameString(String& ssName, uint32 uni_tna_ip, const String& mainSessionName, uint32 main_ss_ip, bool isSource = true) {
@@ -365,13 +344,12 @@ private:
 	char strDENY[20];
 };
 
-//@@@@ Xi2008 >>
+//SNC stability checking callbacks via system signal
 #define NSIG_SNC_STABLE 30
 #define SIG_SNC_STABLE_BASE 34
 extern PSB* psbArrayWaitingForStableSNC[NSIG_SNC_STABLE];
 int alloc_snc_stable_psb_slot(PSB* psb);
 void free_snc_stable_psb_slot(PSB* psb);
 void sigfunc_snc_stable(int signo);
-//@@@@ Xi2008 <<
 
 #endif

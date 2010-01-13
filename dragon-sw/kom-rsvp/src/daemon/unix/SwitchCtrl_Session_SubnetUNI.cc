@@ -2488,7 +2488,7 @@ bool SwitchCtrl_Session_SubnetUNI::getMonCircuitInfo(MON_Reply_Subobject& monRep
 
 //// For monitoring service API
 
-// Xi2008 >>
+// SNC stability checking callback via signal
 
 PSB* psbArrayWaitingForStableSNC[NSIG_SNC_STABLE];
 
@@ -2525,7 +2525,7 @@ void sigfunc_snc_stable(int signo)
 	signal(signo, SIG_IGN);
 	SignalHandling::userSignal = true;
 }
-// Xi2008 <<
+
 
 bool SwitchCtrl_Session_SubnetUNI::IsSubnetTransitERO(const EXPLICIT_ROUTE_Object * explicitRoute)
 {
