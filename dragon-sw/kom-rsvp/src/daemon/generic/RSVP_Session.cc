@@ -401,11 +401,11 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			outUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_DEST << 16) | (outUnumIfID & 0xffff));
 		}
 		//$$$$special handling for otnx-interface local-ids
-		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && inRtId == 0) 
+		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && inRtId.rawAddress() == 0) 
 		{
 			inRtId = Session::ospfRouterID;
 		}
-		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && outRtId == 0) 
+		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && outRtId.rawAddress() == 0)
 		{
 			outRtId = Session::ospfRouterID;
 		}
