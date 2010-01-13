@@ -400,11 +400,14 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			outRtId = Session::ospfRouterID;
 			outUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_DEST << 16) | (outUnumIfID & 0xffff));
 		}
-		//$$$$converting from the local id to true destination subnet-if-id
-		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_SUBNET_IF_ID) 
+		//$$$$special handling for otnx-interface local-ids
+		if ((inUnumIfID >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && inRtId == 0) 
+		{
+			inRtId = Session::ospfRouterID;
+		}
+		if ((outUnumIfID >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && outRtId == 0) 
 		{
 			outRtId = Session::ospfRouterID;
-			outUnumIfID = ((LOCAL_ID_TYPE_SUBNET_UNI_DEST << 16) | (outUnumIfID & 0xffff));
 		}
 
 		RSVP_Global::rsvp->getRoutingService().getVLSRRoutebyOSPF(inRtId, outRtId, inUnumIfID, outUnumIfID, vlsr);

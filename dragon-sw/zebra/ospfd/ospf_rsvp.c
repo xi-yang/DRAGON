@@ -1092,7 +1092,7 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int8_t uni_id, int fd)
 
 
 void
-ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, int fd)
+ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, u_int8_t otnx_if_id, int fd)
 {
 	struct ospf_area *area;
 	listnode node;
@@ -1114,13 +1114,14 @@ ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, int fd)
 	  {
 		LSDB_LOOP (area->te_lsdb->db, rn, lsa)
 		{ /*matching the data_if with either a te link local if addr or a link's originating end's loopback*/
-		  if (lsa->tepara_ptr && lsa->tepara_ptr->p_lclif_ipaddr && lsa->tepara_ptr->p_lclif_ipaddr->value.s_addr == data_if->s_addr)
+		  if (lsa->tepara_ptr && lsa->tepara_ptr->p_lclif_ipaddr && lsa->tepara_ptr->p_lclif_ipaddr->value.s_addr == data_if->s_addr || lsa->data->adv_router.s_addr == data_if->s_addr)
 		   {
 		   	LIST_LOOP(lsa->tepara_ptr->p_link_ifswcap_list, ifswcap, node)
 	   		{
 	   			if (ifswcap && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
 				    && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
-				    && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0)
+				    && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0
+				    && ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.otnx_if_id == otnx_if_id)
    				{
 					opvcx_data = &ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx;
 					break;
@@ -1142,7 +1143,7 @@ ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, int fd)
 		stream_putl(s, opvcx_data->switch_ip);
 		stream_putw(s, opvcx_data->tl1_port);
 		stream_putc(s, opvcx_data->eth_edge);
-		stream_putc(s, opvcx_data->reserved);
+		stream_putc(s, opvcx_data->otnx_if_id);
 		stream_putl(s, opvcx_data->data_ipv4);
 		stream_putl(s, opvcx_data->logical_port_number);
 		stream_putw(s, opvcx_data->num_waves);
@@ -1175,6 +1176,7 @@ ospf_rsvp_read (struct thread *thread)
   u_int32_t vtag;
   u_int8_t hold_flag;
   u_int8_t uni_id;
+  u_int8_t otnx_if_id;
   u_int8_t* ts;
   list ts_list;
   int i;
@@ -1294,7 +1296,8 @@ ospf_rsvp_read (struct thread *thread)
 
    case GetCienaOPVCXDataByOSPF:
 	addr.s_addr = stream_get_ipv4(s);
-	ospf_rsvp_get_ciena_opvcx_data(&addr, sock);
+	otnx_if_id = stream_getc (s);
+	ospf_rsvp_get_ciena_opvcx_data(&addr, otnx_if_id, sock);
 	break;
 
     default:
