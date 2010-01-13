@@ -552,9 +552,8 @@ bool RoutingService::getCienaOPVCXDatabyOSPF(const NetAddress& dataIf, const uin
 	ibuffer.setWriteLength(msgLength);
 	//Process response messages
 
-	ibuffer >> opvcxData.switch_ip >> opvcxData.tl1_port >> opvcxData.eth_edge >> opvcxData.reserved 
+	ibuffer >> opvcxData.switch_ip >> opvcxData.tl1_port >> opvcxData.eth_edge >> opvcxData.otnx_if_id >> opvcxData.data_ipv4
 		>> opvcxData.logical_port_number >>opvcxData.num_waves >> opvcxData.num_chans;
-	opvcxData.otnx_if_id = otnxID;
 
 	int i, j;
 	for (i = 0; i < (int)opvcxData.num_waves; i++)
