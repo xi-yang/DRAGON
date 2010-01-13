@@ -381,7 +381,6 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                         	  signal(SIG_SNC_STABLE_BASE+slot_psb_to_verify, sigfunc_snc_stable);
 			                                            break;
 			                                        }
-			                                        //@@@@ Xi2008 <<
 			                                    }
 			                                }
 			                                else if ( !((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() 
@@ -395,15 +394,6 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 			                                    }
 			                                }
 			                            }
-			                            else if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX ) {
-								//@@@@ TODO
-								if (psb.getDRAGON_EXT_INFO_Object()) {
-									if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isIngressNode()) //translation (if any) occurs at ingress
-										vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().ingress_outer_vlantag;
-									else if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isEgressNode()) //translation (if any) occurs at egress
-										vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().egress_outer_vlantag;
-								}
-      			       	              }
 			                            //disconnect
 			                            (*sessionIter)->disconnectSwitch();
 
@@ -462,9 +452,36 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 
 				    continue;
  				} 
+				//Ciena CN4200 OTNX Session
+                            else if ( ((*iter).inPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX ) {
+					int vlanLow = -1, vlanTrunk = (*iter).vlanTag;
+					LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": setup -", "starting CN4200 control session with switch", (*sessionIter)->getSwitchInetAddr());
+					//verify
+					if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->hasSourceDestPortConflict()) {
+						LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-CN4200 Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
+						goto _Exit_Error_Subnet;
+					}                                            
+					//connect
+					if (CLI_SESSION_TYPE != CLI_TL1_TELNET || !(*sessionIter)->connectSwitch()) {
+						LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-CN4200 Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
+						goto _Exit_Error_Subnet;
+					}
+					//prepare VLAN
+					if (psb.getDRAGON_EXT_INFO_Object()) {
+						if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isIngressNode()) //translation (if any) occurs at ingress
+							vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().ingress_outer_vlantag;
+						else if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isEgressNode()) //translation (if any) occurs at egress
+							vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().egress_outer_vlantag;
+					}
+	                            //disconnect
+	                            (*sessionIter)->disconnectSwitch();
+					LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": setup -", "finished CN4200 control session successfully with switch", (*sessionIter)->getSwitchInetAddr());
+					noError = true;
 
+					continue;
+       	              }
                             //Ethernet switchCtrl Session 
-				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession() && (noError = (*sessionIter)->startTransaction())){
+				else if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession() && (noError = (*sessionIter)->startTransaction())){
 					noError = true;
 					uint32 vlan;
 
@@ -922,15 +939,6 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 										RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanTrunk, false); //false == release
 								}
 						    }
-						    else if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX ) {
-								//@@@@ TODO
-								if (psb.getDRAGON_EXT_INFO_Object()) {
-									if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isIngressNode()) //translation (if any) occurs at ingress
-										vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().ingress_outer_vlantag;
-									else if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isEgressNode()) //translation (if any) occurs at egress
-										vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().egress_outer_vlantag;
-								}
-						    }
 
 						    LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": teardown -", "finished subnet control session successfully with switch", (*sessionIter)->getSwitchInetAddr());
 
@@ -940,9 +948,37 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 
 					continue;
 				}
+				//Ciena CN4200 OTNX Session
+				else if (((*iter).inPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX && ((*iter).outPort >> 16) == LOCAL_ID_TYPE_CIENA_OTNX ) {
+					int vlanLow = -1, vlanTrunk = (*iter).vlanTag;
+					LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": teardown -", "starting CN4200 control session with switch", (*sessionIter)->getSwitchInetAddr());
+					//verify
+					if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->hasSourceDestPortConflict()) {
+						LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-CN4200 Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
+						return;
+					}                                            
+					//connect
+					if (CLI_SESSION_TYPE != CLI_TL1_TELNET || !(*sessionIter)->connectSwitch()) {
+						LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-CN4200 Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
+						return;
+					}
+					//prepare VLAN
+					if (psb.getDRAGON_EXT_INFO_Object()) {
+						if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isIngressNode()) { //translation (if any) occurs at ingress
+							vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().ingress_outer_vlantag;
+						}
+						else if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isEgressNode()) { //translation (if any) occurs at egress
+							vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().egress_outer_vlantag;
+						}
+					}
+					//disconnect
+					(*sessionIter)->disconnectSwitch();
+					LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": teardown -", "finished CN4200 control session successfully with switch", (*sessionIter)->getSwitchInetAddr());
 
+					continue;
+				}
 				//Ethernet SwitchCtrl Session
-				if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession() && (*sessionIter)->startTransaction()) {
+				else if ((*sessionIter)->getSwitchInetAddr()==ethSw && (*sessionIter)->isValidSession() && (*sessionIter)->startTransaction()) {
                                       PortList portList;
                                       uint32 vlanID;
                                       uint32 inPort = (*iter).inPort;
