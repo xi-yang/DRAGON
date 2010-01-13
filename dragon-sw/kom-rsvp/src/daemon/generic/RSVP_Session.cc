@@ -627,6 +627,9 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			((SwitchCtrl_Session_CienaCN4200*)ssNew)->setOTNXDataSrc(otnxDataSrc);
 			((SwitchCtrl_Session_CienaCN4200*)ssNew)->setOTNXDataDest(otnxDataDest);
 			((SwitchCtrl_Session_CienaCN4200*)ssNew)->setEthernetBandwidth(vlsr.bandwidth);
+			vlsr.switchID = NetAddress(otnxDataSrc.switch_ip);
+			vlsr.inPort = inUnumIfID;
+			vlsr.outPort = outUnumIfID;
 			vLSRoute.push_back(vlsr);
 		}
 		//Ciena SubnetUNI session(s) have been created. Only vlsr data is composed here.
