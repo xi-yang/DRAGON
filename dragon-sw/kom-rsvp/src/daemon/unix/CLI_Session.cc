@@ -301,9 +301,17 @@ bool CLI_Session::engage(const char *loginString)
      if ((n = writeShell(";", 5)) < 0) goto _telnet_dead;
      // turn off 'A xxx REPT ...' notification messages
      if ((n = writeShell("inh-msg-all:::123;", 5)) < 0) goto _telnet_dead;
-     if ((n = readShell( "   /* Local Authentication Successful.", NULL, 1, 5)) < 0) {
-       err_msg("%s: authentication to host '%s' failed\n", progname, hostname);	 
-	goto _telnet_dead;
+     if (SWITCH_VENDOR_MODEL == CienaCN4200) {
+         if ((n = readShell( "/* NOTICE: This is a private", NULL, 1, 5)) < 0) {
+           err_msg("%s: authentication to host '%s' failed\n", progname, hostname);	 
+    	    goto _telnet_dead;
+         }
+     }
+     else {//Ciena Subnet
+         if ((n = readShell( "   /* Local Authentication Successful.", NULL, 1, 5)) < 0) {
+           err_msg("%s: authentication to host '%s' failed\n", progname, hostname);	 
+    	    goto _telnet_dead;
+         }
      }
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 5)) < 0) goto _telnet_dead;
      if ((n = readShell( SWITCH_PROMPT, NULL, 1, 5)) < 0) goto _telnet_dead;

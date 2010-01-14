@@ -64,7 +64,12 @@ public:
 		return ((otnxDataSrc.logical_port_number >> 12) == (otnxDataDest.logical_port_number>>12));
 	}
 	//Backward compatibility with general SwitchCtrl_Session operations
-	virtual bool connectSwitch() { return CLI_Session::engage(); }
+	virtual bool connectSwitch() 
+	{
+		if (otnxDataSrc.tl1_port > 0) 
+			CLI_Session::setPort((int)otnxDataSrc.tl1_port);
+		return CLI_Session::engage(); 
+	}
 	virtual void disconnectSwitch() 
 	{
 		char canc_user[50];
