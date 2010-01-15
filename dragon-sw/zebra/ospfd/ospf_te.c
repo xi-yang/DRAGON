@@ -109,7 +109,7 @@ struct str_val_conv str_val_conv_swcap =
 
 struct str_val_conv str_val_conv_encoding = 
 {
-	8,
+	10,
 	{{ "packet", 	LINK_IFSWCAP_SUBTLV_ENC_PKT, 			2}, 
 	{ "ethernet", 	LINK_IFSWCAP_SUBTLV_ENC_ETH, 			1}, 
 	{ "pdh", 		LINK_IFSWCAP_SUBTLV_ENC_PDH, 			2}, 

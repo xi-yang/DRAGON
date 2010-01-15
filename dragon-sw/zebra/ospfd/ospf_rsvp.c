@@ -685,7 +685,7 @@ ospf_hold_opvc_timeslots(u_int32_t port, u_int32_t opvcx_range, u_int8_t hold_fl
 	struct ospf *ospf;
 	struct te_link_subtlv_link_ifswcap *ifswcap_opvcx;
 	int updated = 0;
-	u_int8_t ts, ts1= (opvcx_range & 0xf), ts2 = ((opvcx_range >> 16) & 0xf);
+	u_int8_t ts, ts1= (opvcx_range & 0xff), ts2 = ((opvcx_range >> 16) & 0xff);
 
 	if (om->ospf)
 	LIST_LOOP(om->ospf, ospf, node1)
@@ -703,10 +703,10 @@ ospf_hold_opvc_timeslots(u_int32_t port, u_int32_t opvcx_range, u_int8_t hold_fl
 					break;
 				ifswcap_opvcx = NULL;
 			}
-			/* the interface contains a subnet_opvcx ISCD if ifswcap_opvcx != NULL*/
+			/* the interface contains a ciena_opvcx ISCD if ifswcap_opvcx != NULL*/
 
 			if ( (port>>16) == 0x12 && ifswcap_opvcx != NULL
-					&& ifswcap_opvcx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) {
+					&& ifswcap_opvcx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.otnx_if_id == (u_int8_t)(port>>8) ) {
 				if (hold_flag == 1)
 				{
 					for (ts = ts1; ts <= ts2; ts++)
