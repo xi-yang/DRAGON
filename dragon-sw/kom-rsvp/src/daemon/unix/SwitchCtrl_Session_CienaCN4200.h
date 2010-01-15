@@ -87,6 +87,14 @@ public:
 	float getEthernetBandwidth(float bw) { return ethernetBw; }
 	bool isIngressNode() { return (otnxDataSrc.eth_edge == 1); }
 	bool isEgressNode() { return (otnxDataDest.eth_edge == 1); }
+	bool isResourceHeld() { return resourceHeld; }
+	void setResourceHeld(bool hold) { resourceHeld = hold; }
+	uint32 getOPVCX(bool isSrc)
+	{
+		if (ethernetBw < 0.001)
+			return 0;
+		return getOPVCXByBandwidth(isSrc?otnxDataSrc:otnxDataDest, ethernetBw);
+	}
 
 	//////////////// TL1 related functions >> begin  //////////////
 	uint32 getNewCtag() { ++ctagNum; return ctagNum; }
@@ -156,6 +164,7 @@ protected:
 	float ethernetBw;
 	OTNX_Data otnxDataSrc;
 	OTNX_Data otnxDataDest;
+	bool resourceHeld;
 
 private:	
 	void internalInit ();
@@ -168,4 +177,3 @@ private:
 };
 
 #endif
-

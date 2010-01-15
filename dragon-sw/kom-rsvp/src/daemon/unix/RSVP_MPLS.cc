@@ -459,12 +459,12 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 					//verify
 					if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->hasSourceDestPortConflict()) {
 						LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-CN4200 Control: hasSourceDestPortConflict() == True: cannot crossconnect from to to the same ETTP on ", (*sessionIter)->getSwitchInetAddr());
-						goto _Exit_Error_Subnet;
+						goto _Exit_Error_CN4200;
 					}                                            
 					//connect
 					if (CLI_SESSION_TYPE != CLI_TL1_TELNET || !(*sessionIter)->connectSwitch()) {
 						LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR-CN4200 Connect: Cannot connect to switch via TL1_TELNET: ", (*sessionIter)->getSwitchInetAddr());
-						goto _Exit_Error_Subnet;
+						goto _Exit_Error_CN4200;
 					}
 					//prepare VLAN
 					if (psb.getDRAGON_EXT_INFO_Object()) {
@@ -473,10 +473,43 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 						else if ( ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isEgressNode()) //translation (if any) occurs at egress
 							vlanLow = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getEdgeVlanMapping().egress_outer_vlantag;
 					}
+
+					//@@@@ TODO TL1 ...
+					
 	                            //disconnect
 	                            (*sessionIter)->disconnectSwitch();
-					LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": setup -", "finished CN4200 control session successfully with switch", (*sessionIter)->getSwitchInetAddr());
+
+					u_int32_t ucid = 0, seqnum = 0;
+					if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+						ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+						seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+					}
+					//update ingress interface
+                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, true, ucid, seqnum); //true == decrease
+					uint32 opvcx_range = ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->getOPVCX(true); //ingress or source
+					RSVP_Global::rsvp->getRoutingService().holdOPVCTimeslotsbyOSPF((*iter).inPort, opvcx_range, true);
+					if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isIngressNode()) {
+	                                   // Update vlan tag if applicable
+						if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
+							RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanLow, true); //tue == hold
+						if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanTrunk != vlanLow)
+							RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanTrunk, true); //tue == hold
+					}
+					//update egress interface
+                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, true, ucid, seqnum); //true == decrease
+					opvcx_range = ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->getOPVCX(false); //egress or destination
+					RSVP_Global::rsvp->getRoutingService().holdOPVCTimeslotsbyOSPF((*iter).outPort, opvcx_range, true);
+					if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isEgressNode()) {
+	                                   // Update vlan tag if applicable
+						if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
+							RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanLow, true); //tue == hold
+						if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanTrunk != vlanLow)
+							RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanTrunk, true); //tue == hold
+					}
+					((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->setResourceHeld(true);
+
 					noError = true;
+					LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": setup -", "finished CN4200 control session successfully with switch", (*sessionIter)->getSwitchInetAddr());
 
 					continue;
        	              }
@@ -676,6 +709,14 @@ _Exit_Error_Subnet:
 	psb.setVLSRError(ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::SubnetUNISessionFailed);
 	LOG(4)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": setup -", "finished subnet control session with error!");
 	return false;
+
+_Exit_Error_CN4200:
+	//$$$$ DRAGON specific
+	RSVP_Global::messageProcessor->sendResvErrMessage( 0, ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::CienaOTNXSessionFailed );
+	psb.setVLSRError(ERROR_SPEC_Object::Notify, ERROR_SPEC_Object::CienaOTNXSessionFailed);
+	LOG(4)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": setup -", "finished CN4200 control session with error!");
+	return false;
+
 }
 
 bool MPLS::refreshVLSRbyLocalId( PSB& psb, uint32 lclid) {
@@ -973,6 +1014,38 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 					}
 					//disconnect
 					(*sessionIter)->disconnectSwitch();
+
+					if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isResourceHeld()) {
+						u_int32_t ucid = 0, seqnum = 0;
+						if (psb.getDRAGON_EXT_INFO_Object() != NULL && ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->HasSubobj(DRAGON_EXT_SUBOBJ_SERVICE_CONF_ID)) {
+							ucid = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().ucid;
+							seqnum = ((DRAGON_EXT_INFO_Object*)psb.getDRAGON_EXT_INFO_Object())->getServiceConfirmationID().seqnum;
+						}
+						//update ingress interface
+	                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false, ucid, seqnum); //true == decrease
+						uint32 opvcx_range = ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->getOPVCX(true); //ingress or source
+						RSVP_Global::rsvp->getRoutingService().holdOPVCTimeslotsbyOSPF((*iter).inPort, opvcx_range, false);
+						if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isIngressNode()) {
+		                                   // Update vlan tag if applicable
+							if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanLow, false); //tue == hold
+							if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanTrunk != vlanLow)
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).inPort, vlanTrunk, false); //tue == hold
+						}
+						//update egress interface
+	                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, false, ucid, seqnum); //true == decrease
+						opvcx_range = ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->getOPVCX(false); //egress or destination
+						RSVP_Global::rsvp->getRoutingService().holdOPVCTimeslotsbyOSPF((*iter).outPort, opvcx_range, false);
+						if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isEgressNode()) {
+		                                   // Update vlan tag if applicable
+							if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanLow, false); //tue == hold
+							if (vlanLow > 0 && vlanLow <= MAX_VLAN && vlanTrunk > 0 && vlanTrunk <= MAX_VLAN && vlanTrunk != vlanLow)
+								RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort, vlanTrunk, false); //tue == hold
+						}
+						((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->setResourceHeld(false);
+					}
+
 					LOG(5)( Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": teardown -", "finished CN4200 control session successfully with switch", (*sessionIter)->getSwitchInetAddr());
 
 					continue;

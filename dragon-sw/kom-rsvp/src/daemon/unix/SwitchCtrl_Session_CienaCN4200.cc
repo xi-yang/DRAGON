@@ -25,6 +25,7 @@ void SwitchCtrl_Session_CienaCN4200::internalInit ()
 	snmpSessionHandle = NULL; 
 	ctagNum = 4200;
 	ethernetBw = 0;
+	resourceHeld = false;
 }
 
 void SwitchCtrl_Session_CienaCN4200::setOTNXData(OTNX_Data& data, uint32 switch_ip, uint16 tl1_port, uint8 eth_edge, uint8 otnx_if_id, uint32 data_if, 
