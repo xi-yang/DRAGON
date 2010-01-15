@@ -78,8 +78,8 @@ enum OspfRsvpMessage {
 	GetSubnetUNIDataByOSPF = 136,	/* Get Subnet UNI data associated with an OSPF interface*/
 	HoldTimeslotsbyOSPF = 137,		/* Hold or release timeslots*/
 	GetCienaOPVCXDataByOSPF = 138, /* Get Ciena OTN OPVCX data associated with an OSPF interface */
+	HoldOPVCTimeslotsbyOSPF = 139, /* Hold or release Ciena OTN OPVC timeslots */
 };
-
 
 static u_int32_t get_slash30_peer_address(u_int32_t addr)
 {
@@ -434,7 +434,7 @@ ospf_hold_vtag(u_int32_t port, u_int32_t vtag, u_int8_t hold_flag)
 	struct listnode *node1, *node2, *node3;
 	struct ospf *ospf;
 	struct te_link_subtlv_link_ifswcap *ifswcap0, *ifswcap=NULL;
-	int updated = 0, found_subnet_iscd = 0;
+	int updated = 0, found_iscd_x = 0;
 	int i;
 	
 	if (om->ospf)
@@ -456,29 +456,32 @@ ospf_hold_vtag(u_int32_t port, u_int32_t vtag, u_int8_t hold_flag)
 				if (ifswcap != NULL)
 					break;
 			}
-			else if ( (port>>16) == 0x10 || (port>>16) == 0x11 ) {
+			else if ( (port>>16) == 0x10 || (port>>16) == 0x11 || (port>>16) == 0x12) {
 				LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap0, node3)
 				{
 					if (ifswcap0->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC 
 						&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_VLAN_BASIC) != 0) {
 						ifswcap = ifswcap0;
 					}						
-					if (ifswcap0->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
-						&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_vlan.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0) {
-						found_subnet_iscd = 1;
+					if ( (ifswcap0->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
+							&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+						|| (ifswcap0->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
+							&& ifswcap0->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+							&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0) ) {
+						found_iscd_x = 1;
 					}						
 				}
-				if (found_subnet_iscd == 1 && ifswcap != NULL)
+				if (found_iscd_x == 1 && ifswcap != NULL)
 					break;
 				else {
 					ifswcap = NULL;
-					found_subnet_iscd = 0;
+					found_iscd_x = 0;
 				}
 			}
 		}
 		if (ifswcap != NULL) {
 			updated = 0;
-			if (found_subnet_iscd == 1 && (vtag == 0 || vtag == 0xffff) ) //oxffff == ANY_VTAG
+			if (found_iscd_x == 1 && (vtag == 0 || vtag == 0xffff) ) //oxffff == ANY_VTAG
 			{
 				if (hold_flag == 1) /*holding all allocable vtags for the subnetUNI interface*/
 				{
@@ -572,7 +575,7 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag, u_int32_t ucid
 	struct ospf_interface *oi;
 	struct listnode *node1, *node2, *node3;
 	struct ospf *ospf;
-	struct te_link_subtlv_link_ifswcap *ifswcap_subnet;
+	struct te_link_subtlv_link_ifswcap *ifswcap;
 	int updated = 0;
 
 	if (bw == 0)
@@ -588,19 +591,22 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag, u_int32_t ucid
 			if (!INTERFACE_MPLS_ENABLED(oi) || oi->te_para.link_ifswcap_list == NULL)
 				continue;
 
-			ifswcap_subnet = NULL;
-			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_subnet, node3)
+			ifswcap = NULL;
+			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap, node3)
 			{
-				if (ifswcap_subnet->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && (ntohs(ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+				if ( (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
+					|| (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+						&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0) )
 					break;
-				ifswcap_subnet = NULL;
+				ifswcap = NULL;
 			}
-			/* the interface contains a subnet_uni ISCD if ifswcap_subnet != NULL*/
+			/* the interface contains a subnet_uni or ciena_opvcx ISCD if ifswcap != NULL*/
 
 			if (oi && INTERFACE_MPLS_ENABLED(oi) && (oi->vlsr_if.switch_port == port
-				|| ( ( (port>>16) == 0x10 || (port>>16) == 0x11 ) 
-					&& ifswcap_subnet != NULL 
-					&& (ifswcap_subnet->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) ) ) ) {
+				|| ( ( (port>>16) == 0x10 || (port>>16) == 0x11 ) && ifswcap != NULL 
+					&& ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) )
+				|| ( (port>>16) == 0x12 && ifswcap != NULL 
+					&& ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.otnx_if_id == (u_int8_t)(port>>8) ) ) ){
 				if (hold_flag == 1)
 				{
 					updated = hold_bandwidth(oi, bw, ucid, seqnum);
@@ -669,14 +675,58 @@ ospf_hold_timeslots(u_int32_t port, list ts_list, u_int8_t hold_flag)
 			}
 		}
 	}
-
 }
 
-/*@@@@ TODO */
 void
-ospf_hold_opvcx(u_int32_t port, list opvc_list, u_int8_t hold_flag)
+ospf_hold_opvc_timeslots(u_int32_t port, u_int32_t opvcx_range, u_int8_t hold_flag)
 {
+	struct ospf_interface *oi;
+	struct listnode *node1, *node2, *node3;
+	struct ospf *ospf;
+	struct te_link_subtlv_link_ifswcap *ifswcap_opvcx;
+	int updated = 0;
+	u_int8_t ts, ts1= (opvcx_range & 0xf), ts2 = ((opvcx_range >> 16) & 0xf);
 
+	if (om->ospf)
+	LIST_LOOP(om->ospf, ospf, node1)
+	{
+		if (ospf->oiflist)
+		LIST_LOOP(ospf->oiflist, oi, node2){
+			if (!INTERFACE_MPLS_ENABLED(oi) || oi->te_para.link_ifswcap_list == NULL)
+				continue;
+
+			ifswcap_opvcx = NULL;
+			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_opvcx, node3)
+			{
+				if (ifswcap_opvcx->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM &&ifswcap_opvcx->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+					&& (ntohs(ifswcap_opvcx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0)
+					break;
+				ifswcap_opvcx = NULL;
+			}
+			/* the interface contains a subnet_opvcx ISCD if ifswcap_opvcx != NULL*/
+
+			if ( (port>>16) == 0x12 && ifswcap_opvcx != NULL
+					&& ifswcap_opvcx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) ) {
+				if (hold_flag == 1)
+				{
+					for (ts = ts1; ts <= ts2; ts++)
+						RESET_VLAN(ifswcap_opvcx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.wave_opvc_map[0].opvc_bitmask, ts);
+					updated = 1;
+				}
+				else 
+				{
+					for (ts = ts1; ts <= ts2; ts++)
+						SET_VLAN(ifswcap_opvcx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.wave_opvc_map[0].opvc_bitmask, ts);
+					updated = 1;
+				}
+				if (updated && oi->t_te_area_lsa_link_self)
+				{
+					OSPF_TIMER_OFF (oi->t_te_area_lsa_link_self);
+					OSPF_INTERFACE_TIMER_ON (oi->t_te_area_lsa_link_self, ospf_te_area_lsa_link_timer, OSPF_MIN_LS_INTERVAL);
+				}
+			}
+		}
+	}
 }
 
 void
@@ -1181,7 +1231,8 @@ ospf_rsvp_read (struct thread *thread)
   list ts_list;
   int i;
   float bandwidth, tmpbw;
-  
+  u_int32_t opvcx_range;
+
   /* Get thread data.  Reset reading thread because I'm running. */
   sock = THREAD_FD (thread);
 
@@ -1272,6 +1323,16 @@ ospf_rsvp_read (struct thread *thread)
 		listnode_add(ts_list, ts);
 	}
 	ospf_hold_timeslots(port, ts_list, hold_flag);
+	list_delete(ts_list);
+     break;
+
+    case HoldOPVCTimeslotsbyOSPF:
+	port = stream_getl(s);	
+	opvcx_range = stream_getl(s);	
+	hold_flag = stream_getc(s);
+	length -= 5;
+	assert (length > 0);
+	ospf_hold_opvc_timeslots(port, opvcx_range, hold_flag);
 	list_delete(ts_list);
      break;
 
