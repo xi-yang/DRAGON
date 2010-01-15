@@ -495,7 +495,7 @@ const void RoutingService::holdVtagbyOSPF(u_int32_t port, u_int32_t vtag, bool h
 //Hold or release SONET/SDH TimeSlots
 const void RoutingService::holdTimeslotsbyOSPF(u_int32_t port, SimpleList<uint8>& timeslots, bool hold) {
 	uint8 message = HoldTimeslotsbyOSPF;
-	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32) + timeslots.size()+1;
+	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32) + timeslots.size() + sizeof(uint8);
 	uint8 c_hold = hold ? 1 : 0;
 	ONetworkBuffer obuffer(msgLength);
 	obuffer << msgLength << message <<port << c_hold;
@@ -503,6 +503,16 @@ const void RoutingService::holdTimeslotsbyOSPF(u_int32_t port, SimpleList<uint8>
 	for (; it != timeslots.end(); ++it) {
 		obuffer << *it;
 	}
+	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
+}
+
+
+const void RoutingService::holdOPVCTimeslotsbyOSPF(u_int32_t port, uint32 opvcx_range, bool hold) {
+	uint8 message = HoldOPVCTimeslotsbyOSPF;
+	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32)*2 + sizeof(uint8);
+	uint8 c_hold = hold ? 1 : 0;
+	ONetworkBuffer obuffer(msgLength);
+	obuffer << msgLength << message <<port <<opvcx_range << c_hold;
 	CheckOspfSocket(write(ospf_socket, obuffer.getContents(), obuffer.getUsedSize()));
 }
 
