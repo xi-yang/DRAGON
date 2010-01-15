@@ -1333,7 +1333,6 @@ ospf_rsvp_read (struct thread *thread)
 	length -= 5;
 	assert (length > 0);
 	ospf_hold_opvc_timeslots(port, opvcx_range, hold_flag);
-	list_delete(ts_list);
      break;
 
     case OspfPathTear:

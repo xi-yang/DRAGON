@@ -117,7 +117,9 @@ struct str_val_conv str_val_conv_encoding =
 	{ "dwrapper", LINK_IFSWCAP_SUBTLV_ENC_DIGIWRAP, 		1}, 
 	{ "lambda", 	LINK_IFSWCAP_SUBTLV_ENC_LAMBDA, 		1}, 
 	{ "fiber", 		LINK_IFSWCAP_SUBTLV_ENC_FIBER, 			2}, 
-	{ "fchannel", 	LINK_IFSWCAP_SUBTLV_ENC_FIBRCHNL, 		2}}
+	{ "fchannel", 	LINK_IFSWCAP_SUBTLV_ENC_FIBRCHNL, 		2},
+	{ "oduk", 	LINK_IFSWCAP_SUBTLV_ENC_G709ODUK, 		3},
+	{ "och", 		LINK_IFSWCAP_SUBTLV_ENC_G709OCH, 		3}}
 };
 
 
