@@ -3084,7 +3084,12 @@ DEFUN (ospf_te_interface_ifsw_cap8,
    */
 DEFUN (ospf_te_interface_ifsw_cap9,
        ospf_te_interface_ifsw_cap9_cmd,
-       "otnx-timeslot <1-64>",
+       "otnx-timeslot (odu1_1|odu1_2|odu1_3|odu1_4|odu2) <1-64>",
+       "ODU1 #1\n"
+       "ODU1 #2\n"
+       "ODU1 #3\n"
+       "ODU1 #4\n"
+       "ODU2\n"
        "Assign OTNX OPVC timeslots\n"
        "TimeSlot ID in the range [1, 64]\n")
 {
@@ -3114,11 +3119,28 @@ DEFUN (ospf_te_interface_ifsw_cap9,
       return CMD_WARNING;
     }
 
-  if (argc == 1) 
+  if (strcmp(argv[1], "odu1_1") == 0 || strcmp(argv[1], "odu2") == 0)
+    {
+        ; /*offset 0*/
+    }
+  else if (strcmp(argv[1], "odu1_2") == 0)
+    {
+        ts1 += 16; /*offset 16*/
+    }
+  else if (strcmp(argv[1], "odu1_3") == 0)
+    {
+        ts1 += 32; /*offset 32*/
+    }
+  else if (strcmp(argv[1], "odu1_4") == 0)
+    {
+        ts1 += 48; /*offset 16*/
+    }
+
+  if (argc == 2) 
     {
 	SET_TIMESLOT(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.wave_opvc_map[0].opvc_bitmask, ts1);
     }
-  else if (argc == 2) 
+  else if (argc == 3)
     {
 	  if (sscanf (argv[1], "%d", &ts2) != 1)
 	    {
@@ -3144,8 +3166,13 @@ DEFUN (ospf_te_interface_ifsw_cap9,
 
 ALIAS (ospf_te_interface_ifsw_cap9,
        ospf_te_interface_ifsw_cap9a_cmd,
-       "otnx-timeslot <1-64> to <2-64>",
+       "otnx-timeslot (odu1_1|odu1_2|odu1_3|odu1_4|odu2) <1-64> to <2-64>",
        "Assign OTNX OPVC timeslots\n"
+       "ODU1 #1\n"
+       "ODU1 #2\n"
+       "ODU1 #3\n"
+       "ODU1 #4\n"
+       "ODU2\n"
        "TimeSlot ID1 in the range [1, 63]\n"
        "TimeSlot ID2 in the range [2, 64]\n");
 
