@@ -3113,25 +3113,25 @@ DEFUN (ospf_te_interface_ifsw_cap9,
   }
 
   	
-  if (sscanf (argv[0], "%d", &ts1) != 1)
+  if (sscanf (argv[1], "%d", &ts1) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap9: fscanf ts1: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
 
-  if (strcmp(argv[1], "odu1_1") == 0 || strcmp(argv[1], "odu2") == 0)
+  if (strcmp(argv[0], "odu1_1") == 0 || strcmp(argv[1], "odu2") == 0)
     {
         ; /*offset 0*/
     }
-  else if (strcmp(argv[1], "odu1_2") == 0)
+  else if (strcmp(argv[0], "odu1_2") == 0)
     {
         ts1 += 16; /*offset 16*/
     }
-  else if (strcmp(argv[1], "odu1_3") == 0)
+  else if (strcmp(argv[0], "odu1_3") == 0)
     {
         ts1 += 32; /*offset 32*/
     }
-  else if (strcmp(argv[1], "odu1_4") == 0)
+  else if (strcmp(argv[0], "odu1_4") == 0)
     {
         ts1 += 48; /*offset 16*/
     }
@@ -3142,38 +3142,38 @@ DEFUN (ospf_te_interface_ifsw_cap9,
     }
   else if (argc == 3)
     {
-	  if (sscanf (argv[1], "%d", &ts2) != 1)
+	  if (sscanf (argv[2], "%d", &ts2) != 1)
 	    {
 	      vty_out (vty, "ospf_te_interface_ifsw_cap9: fscanf ts2: %s%s", strerror (errno), VTY_NEWLINE);
 	      return CMD_WARNING;
 	    }
 	  else
            {
-             if (strcmp(argv[1], "odu1_1") == 0 || strcmp(argv[1], "odu2") == 0)
+             if (strcmp(argv[0], "odu1_1") == 0 || strcmp(argv[1], "odu2") == 0)
                {
                    ; /*offset 0*/
                }
-             else if (strcmp(argv[1], "odu1_2") == 0)
+             else if (strcmp(argv[0], "odu1_2") == 0)
                {
                    ts2 += 16; /*offset 16*/
                }
-             else if (strcmp(argv[1], "odu1_3") == 0)
+             else if (strcmp(argv[0], "odu1_3") == 0)
                {
                    ts2 += 32; /*offset 32*/
                }
-             else if (strcmp(argv[1], "odu1_4") == 0)
+             else if (strcmp(argv[0], "odu1_4") == 0)
                {
                    ts2 += 48; /*offset 16*/
                }
            }
          if (ts2 < ts1)
 	    {
-	      vty_out (vty, "ospf_te_interface_ifsw_cap9: OPVC TimeSlot %s ID2(%s %s) < ID1(%s %s) %s", argv[1], argv[2], argv[1], argv[3], VTY_NEWLINE);
+	      vty_out (vty, "ospf_te_interface_ifsw_cap9: OPVC TimeSlot %s ID2(%s %s) < ID1(%s %s) %s", argv[0], argv[1], argv[0], argv[2], VTY_NEWLINE);
 	      return CMD_WARNING;
 	    }
          else if (ts2 > 64)
 	    {
-	      vty_out (vty, "ospf_te_interface_ifsw_cap9: invalid OPVC TimeSlot ID2(%s %s) %s", argv[1], argv[2], VTY_NEWLINE);
+	      vty_out (vty, "ospf_te_interface_ifsw_cap9: invalid OPVC TimeSlot ID2(%s %s) %s", argv[0], argv[1], VTY_NEWLINE);
 	      return CMD_WARNING;
 	    }
 	  for(ts = ts1; ts <= ts2; ts++)
