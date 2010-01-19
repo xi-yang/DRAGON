@@ -118,7 +118,7 @@ struct str_val_conv str_val_conv_encoding =
 	{ "lambda", 	LINK_IFSWCAP_SUBTLV_ENC_LAMBDA, 		1}, 
 	{ "fiber", 		LINK_IFSWCAP_SUBTLV_ENC_FIBER, 			2}, 
 	{ "fchannel", 	LINK_IFSWCAP_SUBTLV_ENC_FIBRCHNL, 		2},
-	{ "oduk", 	LINK_IFSWCAP_SUBTLV_ENC_G709ODUK, 		3},
+	{ "odu_k", 	LINK_IFSWCAP_SUBTLV_ENC_G709ODUK, 		3},
 	{ "och", 		LINK_IFSWCAP_SUBTLV_ENC_G709OCH, 		3}}
 };
 
@@ -2557,7 +2557,7 @@ DEFUN (ospf_te_interface_srlg,
 
 DEFUN (ospf_te_interface_ifsw_cap1,
        ospf_te_interface_ifsw_cap1_cmd,
-       "swcap (psc1|psc2|psc3|psc4|l2sc|tdm|lsc|fsc) encoding (packet|ethernet|pdh|sdh|dwrapper|lambda|fiber|fchannel|oduk|och)",
+       "swcap (psc1|psc2|psc3|psc4|l2sc|tdm|lsc|fsc) encoding (packet|ethernet|pdh|sdh|dwrapper|lambda|fiber|fchannel|odu_k|och)",
        "Link switching capability and encoding type for OSPF-TE purpose\n"
        "Packet-Switch Capable-1\n"
        "Packet-Switch Capable-2\n"
@@ -3147,9 +3147,33 @@ DEFUN (ospf_te_interface_ifsw_cap9,
 	      vty_out (vty, "ospf_te_interface_ifsw_cap9: fscanf ts2: %s%s", strerror (errno), VTY_NEWLINE);
 	      return CMD_WARNING;
 	    }
-	  else if (ts2 < ts1)
+	  else
+           {
+             if (strcmp(argv[1], "odu1_1") == 0 || strcmp(argv[1], "odu2") == 0)
+               {
+                   ; /*offset 0*/
+               }
+             else if (strcmp(argv[1], "odu1_2") == 0)
+               {
+                   ts2 += 16; /*offset 16*/
+               }
+             else if (strcmp(argv[1], "odu1_3") == 0)
+               {
+                   ts2 += 32; /*offset 32*/
+               }
+             else if (strcmp(argv[1], "odu1_4") == 0)
+               {
+                   ts2 += 48; /*offset 16*/
+               }
+           }
+         if (ts2 < ts1)
 	    {
-	      vty_out (vty, "ospf_te_interface_ifsw_cap9: OPVC TimeSlot ID2 < ID1%s", VTY_NEWLINE);
+	      vty_out (vty, "ospf_te_interface_ifsw_cap9: OPVC TimeSlot %s ID2(%s %s) < ID1(%s %s) %s", argv[1], argv[2], argv[1], argv[3], VTY_NEWLINE);
+	      return CMD_WARNING;
+	    }
+         else if (ts2 > 64)
+	    {
+	      vty_out (vty, "ospf_te_interface_ifsw_cap9: invalid OPVC TimeSlot ID2(%s %s) %s", argv[1], argv[2], VTY_NEWLINE);
 	      return CMD_WARNING;
 	    }
 	  for(ts = ts1; ts <= ts2; ts++)
