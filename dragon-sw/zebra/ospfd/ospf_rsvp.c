@@ -466,7 +466,7 @@ ospf_hold_vtag(u_int32_t port, u_int32_t vtag, u_int8_t hold_flag)
 					if ( (ifswcap0->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
 							&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
 						|| (ifswcap0->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
-							&& ifswcap0->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+							&& ifswcap0->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
 							&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0) ) {
 						found_iscd_x = 1;
 					}						
@@ -595,7 +595,7 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag, u_int32_t ucid
 			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap, node3)
 			{
 				if ( (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
-					|| (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+					|| (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
 						&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0) )
 					break;
 				ifswcap = NULL;
@@ -698,7 +698,7 @@ ospf_hold_opvc_timeslots(u_int32_t port, u_int32_t opvcx_range, u_int8_t hold_fl
 			ifswcap_opvcx = NULL;
 			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_opvcx, node3)
 			{
-				if (ifswcap_opvcx->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM &&ifswcap_opvcx->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+				if (ifswcap_opvcx->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM &&ifswcap_opvcx->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
 					&& (ntohs(ifswcap_opvcx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0)
 					break;
 				ifswcap_opvcx = NULL;
@@ -1169,7 +1169,7 @@ ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, u_int8_t otnx_if_id, int
 		   	LIST_LOOP(lsa->tepara_ptr->p_link_ifswcap_list, ifswcap, node)
 	   		{
 	   			if (ifswcap && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
-				    && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+				    && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
 				    && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0
 				    && ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.otnx_if_id == otnx_if_id)
    				{
@@ -1198,7 +1198,7 @@ ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, u_int8_t otnx_if_id, int
 		stream_putl(s, opvcx_data->logical_port_number);
 		stream_putw(s, opvcx_data->num_waves);
 		stream_putw(s, opvcx_data->num_chans);
-		for (i = 0; i < opvcx_data->num_chans; i++)
+		for (i = 0; i < opvcx_data->num_waves; i++)
 		{
 			stream_putl(s, &opvcx_data->wave_opvc_map[i].wave_id);
 			for (j = 0; j < MAX_SUBWAVE_CHANNELS/8; j++)

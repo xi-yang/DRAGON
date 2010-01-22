@@ -118,7 +118,7 @@ struct str_val_conv str_val_conv_encoding =
 	{ "lambda", 	LINK_IFSWCAP_SUBTLV_ENC_LAMBDA, 		1}, 
 	{ "fiber", 		LINK_IFSWCAP_SUBTLV_ENC_FIBER, 			2}, 
 	{ "fchannel", 	LINK_IFSWCAP_SUBTLV_ENC_FIBRCHNL, 		2},
-	{ "odu_k", 	LINK_IFSWCAP_SUBTLV_ENC_G709ODUK, 		3},
+	{ "otu_k", 	LINK_IFSWCAP_SUBTLV_ENC_G709OTUK, 		3},
 	{ "och", 		LINK_IFSWCAP_SUBTLV_ENC_G709OCH, 		3}}
 };
 
@@ -1529,7 +1529,7 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
             SHOW_TIMESLOTS(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.timeslot_bitmask);
             vty_out (vty, "%s", VTY_NEWLINE);
 	}
-	else if (vty != NULL && top->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK 
+	else if (vty != NULL && top->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK 
 		&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX))
 	{
 	    vty_out (vty, "  -- OTN Ciena-OPVCX specific information--%s", VTY_NEWLINE);
@@ -2557,7 +2557,7 @@ DEFUN (ospf_te_interface_srlg,
 
 DEFUN (ospf_te_interface_ifsw_cap1,
        ospf_te_interface_ifsw_cap1_cmd,
-       "swcap (psc1|psc2|psc3|psc4|l2sc|tdm|lsc|fsc) encoding (packet|ethernet|pdh|sdh|dwrapper|lambda|fiber|fchannel|odu_k|och)",
+       "swcap (psc1|psc2|psc3|psc4|l2sc|tdm|lsc|fsc) encoding (packet|ethernet|pdh|sdh|dwrapper|lambda|fiber|fchannel|otu_k|och)",
        "Link switching capability and encoding type for OSPF-TE purpose\n"
        "Packet-Switch Capable-1\n"
        "Packet-Switch Capable-2\n"
@@ -2576,7 +2576,7 @@ DEFUN (ospf_te_interface_ifsw_cap1,
        "Lambda (photonic)\n"
        "Fiber\n"
        "FiberChannel\n" 
-       "G709 ODUk - OTN\n"
+       "G709 OTUk - OTN\n"
        "G709 OCh - OTN\n" )
 {
   u_char swcap = 0, encoding = 0;
@@ -2722,7 +2722,7 @@ DEFUN (ospf_te_interface_ifsw_cap4,
 	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_SONETSDH
 		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
 		has_subnet_iscd = 1;
-	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
 		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0)
 		has_opvcx_iscd = 1;
 	if (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_ETH)
@@ -3033,7 +3033,7 @@ DEFUN (ospf_te_interface_ifsw_cap8,
   u_int32_t otnx_ifid, switch_ip, tl1_port, data_if, logical_port;
   struct te_link_subtlv_link_ifswcap *ifswcap;
 
-  ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_TDM, LINK_IFSWCAP_SUBTLV_ENC_G709ODUK);
+  ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_TDM, LINK_IFSWCAP_SUBTLV_ENC_G709OTUK);
   ifswcap->header.length = htons(36 + sizeof(struct link_ifswcap_specific_ciena_opvcx)); /* the default length is 36 + sizeof(struct link_ifswcap_specific_tdm */
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.length = htons(sizeof(struct link_ifswcap_specific_ciena_opvcx));
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version = htons(IFSWCAP_SPECIFIC_CIENA_OPVCX);
@@ -3080,16 +3080,16 @@ DEFUN (ospf_te_interface_ifsw_cap8,
 
 
 /** Single wavelength TDM with OPVC timeslots only
-   *  Command for OPVC timeslots and ODUk map for multiple WDM wavelengths will be added later 
+   *  Command for OPVC timeslots and OTUk map for multiple WDM wavelengths will be added later 
    */
 DEFUN (ospf_te_interface_ifsw_cap9,
        ospf_te_interface_ifsw_cap9_cmd,
-       "otnx-timeslot (odu1_1|odu1_2|odu1_3|odu1_4|odu2) <1-64>",
-       "ODU1 #1\n"
-       "ODU1 #2\n"
-       "ODU1 #3\n"
-       "ODU1 #4\n"
-       "ODU2\n"
+       "otnx-timeslot (otu1_1|otu1_2|otu1_3|otu1_4|otu2) <1-64>",
+       "OTU1 #1\n"
+       "OTU1 #2\n"
+       "OTU1 #3\n"
+       "OTU1 #4\n"
+       "OTU2\n"
        "Assign OTNX OPVC timeslots\n"
        "TimeSlot ID in the range [1, 64]\n")
 {
@@ -3099,7 +3099,7 @@ DEFUN (ospf_te_interface_ifsw_cap9,
   int has_opvcx_iscd = 0;
   LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
     {
-	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709ODUK
+	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
 		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0)
 	{
 		has_opvcx_iscd = 1;
@@ -3119,19 +3119,19 @@ DEFUN (ospf_te_interface_ifsw_cap9,
       return CMD_WARNING;
     }
 
-  if (strcmp(argv[0], "odu1_1") == 0 || strcmp(argv[1], "odu2") == 0)
+  if (strcmp(argv[0], "otu1_1") == 0 || strcmp(argv[1], "otu2") == 0)
     {
         ; /*offset 0*/
     }
-  else if (strcmp(argv[0], "odu1_2") == 0)
+  else if (strcmp(argv[0], "otu1_2") == 0)
     {
         ts1 += 16; /*offset 16*/
     }
-  else if (strcmp(argv[0], "odu1_3") == 0)
+  else if (strcmp(argv[0], "otu1_3") == 0)
     {
         ts1 += 32; /*offset 32*/
     }
-  else if (strcmp(argv[0], "odu1_4") == 0)
+  else if (strcmp(argv[0], "otu1_4") == 0)
     {
         ts1 += 48; /*offset 16*/
     }
@@ -3149,19 +3149,19 @@ DEFUN (ospf_te_interface_ifsw_cap9,
 	    }
 	  else
            {
-             if (strcmp(argv[0], "odu1_1") == 0 || strcmp(argv[1], "odu2") == 0)
+             if (strcmp(argv[0], "otu1_1") == 0 || strcmp(argv[1], "otu2") == 0)
                {
                    ; /*offset 0*/
                }
-             else if (strcmp(argv[0], "odu1_2") == 0)
+             else if (strcmp(argv[0], "otu1_2") == 0)
                {
                    ts2 += 16; /*offset 16*/
                }
-             else if (strcmp(argv[0], "odu1_3") == 0)
+             else if (strcmp(argv[0], "otu1_3") == 0)
                {
                    ts2 += 32; /*offset 32*/
                }
-             else if (strcmp(argv[0], "odu1_4") == 0)
+             else if (strcmp(argv[0], "otu1_4") == 0)
                {
                    ts2 += 48; /*offset 16*/
                }
@@ -3190,13 +3190,13 @@ DEFUN (ospf_te_interface_ifsw_cap9,
 
 ALIAS (ospf_te_interface_ifsw_cap9,
        ospf_te_interface_ifsw_cap9a_cmd,
-       "otnx-timeslot (odu1_1|odu1_2|odu1_3|odu1_4|odu2) <1-64> to <2-64>",
+       "otnx-timeslot (otu1_1|otu1_2|otu1_3|otu1_4|otu2) <1-64> to <2-64>",
        "Assign OTNX OPVC timeslots\n"
-       "ODU1 #1\n"
-       "ODU1 #2\n"
-       "ODU1 #3\n"
-       "ODU1 #4\n"
-       "ODU2\n"
+       "OTU1 #1\n"
+       "OTU1 #2\n"
+       "OTU1 #3\n"
+       "OTU1 #4\n"
+       "OTU2\n"
        "TimeSlot ID1 in the range [1, 63]\n"
        "TimeSlot ID2 in the range [2, 64]\n");
 
