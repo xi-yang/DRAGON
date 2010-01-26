@@ -286,7 +286,7 @@ u_int32_t logical_port_string2number(const char* port_str)
 	return ((bay<<24) | (shelf <<16) | (slot << 12) | (subslot<<8) | (port&0xff) );
 }
 
-/*typical OTN port 1-7b-3-1-1*/
+/*typical OTN port 1-7b-3-1-1: shelf-slot-port-pport-lport*/
 const char* otnx_logical_port_number2string(u_int32_t port_id)
 {
 	static char buf[10];
@@ -294,8 +294,8 @@ const char* otnx_logical_port_number2string(u_int32_t port_id)
 	char* subslot_str;
 
 	shelf = ((port_id)>>28)+1;
-	slot = (((port_id)>>24)&0xf)+1;
-	subslot = (((port_id)>>16)&0xff);
+	slot = (((port_id)>>20)&0xff)+1;
+	subslot = (((port_id)>>16)&0xf);
 	port = (((port_id)>>12)& 0x0f)+1;
 	pport = (((port_id)>>8)&0x0f)+1;
 	lport = ((port_id)&0xff)+1;
@@ -353,7 +353,7 @@ u_int32_t otnx_logical_port_string2number(const char* port_str)
 		}
 	}
 	shelf--; slot--; port--; pport--; lport--;
-	return ((shelf<<28) | (slot <<24) | (subslot <<16) | (port << 12) | (pport<<8) | (lport&0xff) );
+	return ((shelf<<28) | (slot <<20) | (subslot <<16) | (port << 12) | (pport<<8) | (lport&0xff) );
 }
 
 static void

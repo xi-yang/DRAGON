@@ -59,9 +59,9 @@ public:
 		//Replace colon, semicolon and comma with dash
 		currentLspName.replacechar(';', '-');	currentLspName.replacechar(':', '-');	currentLspName.replacechar(',', '-');
 	}
-	bool hasSourceDestPortConflict() // Source and Dest ports should not be on the same ETTP 
+	bool hasSourceDestPortConflict() // Source and Dest ports should not be on the same ETTP
 	{ 
-		return ((otnxDataSrc.logical_port_number >> 12) == (otnxDataDest.logical_port_number>>12));
+		return ((otnxDataSrc.logical_port_number >> 16) == (otnxDataDest.logical_port_number>>16));
 	}
 	//Backward compatibility with general SwitchCtrl_Session operations
 	virtual bool connectSwitch() 
