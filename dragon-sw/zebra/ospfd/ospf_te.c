@@ -1725,8 +1725,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
   }
   else if (strncmp(swcap, "lsc", 3) == 0)
   {
-       if (vty != NULL && ntohs(tlvh->length) > STD_ISCD_LENGTH
-           && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_CIENA_OTNX))
+       if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_CIENA_OTNX))
 	{
            opvcx_data = (struct link_ifswcap_specific_ciena_otnx *)v;
            strcpy (ipv4, inet_ntoa (*(struct in_addr*)&opvcx_data->switch_ip));
@@ -3304,7 +3303,7 @@ DEFUN (ospf_te_interface_ifsw_cap10,
       if (opvcx_ifid != 0) 
       {
           ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_LSC, LINK_IFSWCAP_SUBTLV_ENC_G709OCH);
-          ifswcap->header.length = htons(36 + sizeof(struct link_ifswcap_specific_ciena_otnx)); /* the default length is 36 + sizeof(struct link_ifswcap_specific_tdm */
+          ifswcap->header.length = htons(36 + sizeof(struct link_ifswcap_specific_ciena_otnx)); /* the default length is 36 + sizeof(struct link_ifswcap_specific_otnx) */
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.length = htons(sizeof(struct link_ifswcap_specific_ciena_otnx));
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version = htons(IFSWCAP_SPECIFIC_CIENA_OTNX);
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.otnx_if_id = (u_int8_t)opvcx_ifid;        
