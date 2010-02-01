@@ -223,9 +223,9 @@ build_link_subtlv_link_ifswcap (struct stream *s, struct te_link_subtlv_link_ifs
 			{ /*Ciena subnet UNI info process*/
 				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni,  sizeof(struct link_ifswcap_specific_subnet_uni));
 			}
-			else if (lp->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK && ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) 
-			{ /*Ciena OTN OPVCx process, @@@@ TODO: WDM*/
-				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx,  sizeof(struct link_ifswcap_specific_ciena_opvcx));
+			else if (lp->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK && ntohs(lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version) & IFSWCAP_SPECIFIC_CIENA_OTNX) 
+			{ /*Ciena OTNX process*/
+				stream_put(s, &lp->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx,  sizeof(struct link_ifswcap_specific_ciena_otnx));
 			}
 		}
 		else if (lp->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_L2SC)

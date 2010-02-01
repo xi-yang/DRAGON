@@ -487,7 +487,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 					//update ingress interface
                                    RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, true, ucid, seqnum); //true == decrease
 					uint32 opvcx_range = ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->getOPVCX(true); //ingress or source
-					RSVP_Global::rsvp->getRoutingService().holdOPVCTimeslotsbyOSPF((*iter).inPort, opvcx_range, true);
+					RSVP_Global::rsvp->getRoutingService().holdOTNXChannelsByOSPF((*iter).inPort, opvcx_range, true);
 					if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isIngressNode()) {
 	                                   // Update vlan tag if applicable
 						if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
@@ -498,7 +498,7 @@ bool MPLS::bindInAndOut( PSB& psb, const MPLS_InLabel& il, const MPLS_OutLabel& 
 					//update egress interface
                                    RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, true, ucid, seqnum); //true == decrease
 					opvcx_range = ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->getOPVCX(false); //egress or destination
-					RSVP_Global::rsvp->getRoutingService().holdOPVCTimeslotsbyOSPF((*iter).outPort, opvcx_range, true);
+					RSVP_Global::rsvp->getRoutingService().holdOTNXChannelsByOSPF((*iter).outPort, opvcx_range, true);
 					if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isEgressNode()) {
 	                                   // Update vlan tag if applicable
 						if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
@@ -1024,7 +1024,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 						//update ingress interface
 	                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).inPort, (*iter).bandwidth, false, ucid, seqnum); //true == decrease
 						uint32 opvcx_range = ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->getOPVCX(true); //ingress or source
-						RSVP_Global::rsvp->getRoutingService().holdOPVCTimeslotsbyOSPF((*iter).inPort, opvcx_range, false);
+						RSVP_Global::rsvp->getRoutingService().holdOTNXChannelsByOSPF((*iter).inPort, opvcx_range, false);
 						if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isIngressNode()) {
 		                                   // Update vlan tag if applicable
 							if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)
@@ -1035,7 +1035,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 						//update egress interface
 	                                   RSVP_Global::rsvp->getRoutingService().holdBandwidthbyOSPF((*iter).outPort, (*iter).bandwidth, false, ucid, seqnum); //true == decrease
 						opvcx_range = ((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->getOPVCX(false); //egress or destination
-						RSVP_Global::rsvp->getRoutingService().holdOPVCTimeslotsbyOSPF((*iter).outPort, opvcx_range, false);
+						RSVP_Global::rsvp->getRoutingService().holdOTNXChannelsByOSPF((*iter).outPort, opvcx_range, false);
 						if (((SwitchCtrl_Session_CienaCN4200*)(*sessionIter))->isEgressNode()) {
 		                                   // Update vlan tag if applicable
 							if (vlanLow >= 0 && vlanLow <= MAX_VLAN || vlanLow == ANY_VTAG)

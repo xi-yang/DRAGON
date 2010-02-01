@@ -103,7 +103,7 @@ public:
 		GetSubnetUNIDataByOSPF = 136,	// Get Subnet UNI data associated with a OSPF interface
 		HoldTimeslotsbyOSPF = 137, 		// Hold or release timeslots
 		GetCienaOPVCXDataByOSPF = 138, /* Get Ciena OTN OPVCX data associated with an OSPF interface */
-		HoldOPVCTimeslotsbyOSPF = 139, 		// Hold or release Ciena OTN OPVC timeslots
+		HoldOTNXChannelsbyOSPF = 139, 		// Hold or release Ciena OTN OPVC timeslots
 	};
 	RoutingService();
 	~RoutingService();
@@ -124,10 +124,10 @@ public:
 	const void holdBandwidthbyOSPF(u_int32_t port, float bw, bool hold = true, u_int32_t ucid = 0, u_int32_t seqnum = 0);
 	const void holdVtagbyOSPF(u_int32_t port, u_int32_t vtag, bool hold = true);
 	const void holdTimeslotsbyOSPF(u_int32_t port, SimpleList<uint8>& timeslots, bool hold);
-	const void holdOPVCTimeslotsbyOSPF(u_int32_t port, uint32 opvcx_range, bool hold);
+	const void holdOTNXChannelsByOSPF(u_int32_t port, uint32 opvcx_range, bool hold);
 	NetAddress getLoopbackAddress();
 	bool getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint8 uniID, SubnetUNI_Data& uniData);
-	bool getCienaOPVCXDatabyOSPF(const NetAddress& dataIf, const uint8 otnxID, OTNX_Data& opvcxData);
+	bool getCienaOTNXDatabyOSPF(const NetAddress& dataIf, const uint8 otnxID, OTNX_Data& opvcxData);
 	const LogicalInterface* getUnicastRoute( const NetAddress&, NetAddress& );
 	const LogicalInterface* getMulticastRoute( const NetAddress&, const NetAddress&, LogicalInterfaceSet& );
 	bool getAsyncMulticastRoutingEvent( NetAddress&, NetAddress&, const LogicalInterface*&, LogicalInterfaceSet& );

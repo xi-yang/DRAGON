@@ -270,6 +270,10 @@ struct link_ifswcap_specific_vlan {
 #define SET_TIMESLOT SET_VLAN
 #define RESET_TIMESLOT RESET_VLAN
 
+#define HAS_CHANNEL HAS_VLAN
+#define SET_CHANNEL SET_VLAN
+#define RESET_CHANNEL RESET_VLAN
+
 /* Link Sub-TLV / Switching Capability-specific information: VLAN/Ethernet via Subnet-UNI */
 #define IFSWCAP_SPECIFIC_SUBNET_UNI 0x4000
 
@@ -281,7 +285,7 @@ struct link_ifswcap_specific_vlan {
 /* When this option set, timeslots on the interface has to be allocated contiguously for each circuit. */
 #define IFSWCAP_SPECIFIC_SUBNET_CONTIGUOUS 0x1000
 /* Ciena  Switching Capability-specific */
-#define IFSWCAP_SPECIFIC_CIENA_OPVCX 0x0010
+#define IFSWCAP_SPECIFIC_CIENA_OTNX 0x0010
 
 #define MAX_TIMESLOTS_NUM 192 /* 192 STS-1 = 10Gbps */
 struct link_ifswcap_specific_subnet_uni {
@@ -302,18 +306,18 @@ struct link_ifswcap_specific_subnet_uni {
 	u_int8_t		timeslot_bitmask[MAX_TIMESLOTS_NUM/8]; /*time slots available = 1*/
 };
 
-struct wavelength_grid_label {
-	u_int32_t		grid_type:3; /*Grid type: 1=ITU-T_DWDM 2=ITU-T_CWDM*/
-	u_int32_t	 	spacing:3; /*Channel spacing: 1=100, 2=50*/
-	u_int32_t	 	reserved:9;
-	int			wavelength:17; /*Wavelength channel number*/
-};
+/*CIENA OTNX definitions*/
+#define MAX_OTNX_CHANNELS 256 /*64: 10G with OPVCX; 40: WDM */
+#define CIENA_OTNX_OTU1		1
+#define CIENA_OTNX_OTU2		2
+#define CIENA_OTNX_OTU3		4
+#define CIENA_OTNX_OPVC		8
+#define CIENA_OTNX_WDM10G		16
+#define CIENA_OTNX_WDM40G		32
 
-#define MAX_SUBWAVE_CHANNELS 256 /*64: 10G with OPVCX; 256: 40G OPVCX */
-/*TODO: make NUM_SUBWAVE_CHANNELS a configurable constant*/
-struct link_ifswcap_specific_ciena_opvcx {
+struct link_ifswcap_specific_ciena_otnx {
 	u_int16_t		length;
-	u_int16_t	 	version;       /*IFSWCAP_SPECIFIC_CIENA_OPVCX*/
+	u_int16_t	 	version;       /*IFSWCAP_SPECIFIC_CIENA_OTNX*/
 	u_int32_t		switch_ip;
 	u_int16_t		tl1_port;
 	u_int8_t		eth_edge; /* 1 = true, 0 = false */
@@ -323,15 +327,9 @@ struct link_ifswcap_specific_ciena_opvcx {
 	};
 	u_int32_t		data_ipv4;
 	u_int32_t		logical_port_number;
-	u_int16_t 	num_waves; /*number of wavelengths*/
-	u_int16_t 	num_chans; /*number of sub-wavelength channels = NUM_SUBWAVE_CHANNELS*/
-	struct {
-		union {
-			struct wavelength_grid_label wave_label; 
-			u_int32_t wave_id; /* default = 0 for single-wave TDM (non-WDM) */
-		};
-		u_int8_t opvc_bitmask[MAX_SUBWAVE_CHANNELS/8]; /* bit =1 means available */
-	} wave_opvc_map[1]; /* num_waves blocks */
+	u_int16_t 	channel_type; /*40g WDM, 10g WDM, OTU1x, OTU2x, 10g OPVCX*/
+	u_int16_t 	num_chans; /*number of wavelength/opvc channels = MAX_OTN_CHANNELS*/
+	u_int8_t  		wave_opvc_bitmask[MAX_OTNX_CHANNELS/8]; /* bit =1 means available */
 };
 
 /*#define NUM_ONTCG_GROUPS 12*/
@@ -376,7 +374,7 @@ struct te_link_subtlv_link_ifswcap
 		struct link_ifswcap_specific_tdm ifswcap_specific_tdm; 
        	struct link_ifswcap_specific_vlan ifswcap_specific_vlan; 
        	struct link_ifswcap_specific_subnet_uni ifswcap_specific_subnet_uni;
-		struct link_ifswcap_specific_ciena_opvcx ifswcap_specific_ciena_opvcx;
+		struct link_ifswcap_specific_ciena_otnx ifswcap_specific_ciena_otnx;
        } ifswcap_specific_info;
   } link_ifswcap_data;
   /* More Switching Capability-specific information, defined below */

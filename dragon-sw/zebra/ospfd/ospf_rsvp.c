@@ -77,8 +77,8 @@ enum OspfRsvpMessage {
 	HoldBandwidthbyOSPF = 135, 		/* Hold or release a portion of bandwidth*/
 	GetSubnetUNIDataByOSPF = 136,	/* Get Subnet UNI data associated with an OSPF interface*/
 	HoldTimeslotsbyOSPF = 137,		/* Hold or release timeslots*/
-	GetCienaOPVCXDataByOSPF = 138, /* Get Ciena OTN OPVCX data associated with an OSPF interface */
-	HoldOPVCTimeslotsbyOSPF = 139, /* Hold or release Ciena OTN OPVC timeslots */
+	GetCienaOTNXDataByOSPF = 138, /* Get Ciena OTN OPVCX data associated with an OSPF interface */
+	HoldOTNXChennelsByOSPF = 139, /* Hold or release Ciena OTN OPVC timeslots */
 };
 
 static u_int32_t get_slash30_peer_address(u_int32_t addr)
@@ -467,7 +467,7 @@ ospf_hold_vtag(u_int32_t port, u_int32_t vtag, u_int8_t hold_flag)
 							&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
 						|| (ifswcap0->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
 							&& ifswcap0->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
-							&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0) ) {
+							&& (ntohs(ifswcap0->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version) & IFSWCAP_SPECIFIC_CIENA_OTNX) != 0) ) {
 						found_iscd_x = 1;
 					}						
 				}
@@ -596,7 +596,7 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag, u_int32_t ucid
 			{
 				if ( (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.version) & IFSWCAP_SPECIFIC_SUBNET_UNI) != 0)
 					|| (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
-						&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0) )
+						&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version) & IFSWCAP_SPECIFIC_CIENA_OTNX) != 0) )
 					break;
 				ifswcap = NULL;
 			}
@@ -606,7 +606,7 @@ ospf_hold_bandwidth(u_int32_t port, float bw, u_int8_t hold_flag, u_int32_t ucid
 				|| ( ( (port>>16) == 0x10 || (port>>16) == 0x11 ) && ifswcap != NULL 
 					&& ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_subnet_uni.subnet_uni_id == (u_int8_t)(port>>8) )
 				|| ( (port>>16) == 0x12 && ifswcap != NULL 
-					&& ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.otnx_if_id == (u_int8_t)(port>>8) ) ) ){
+					&& ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.otnx_if_id == (u_int8_t)(port>>8) ) ) ){
 				if (hold_flag == 1)
 				{
 					updated = hold_bandwidth(oi, bw, ucid, seqnum);
@@ -677,13 +677,14 @@ ospf_hold_timeslots(u_int32_t port, list ts_list, u_int8_t hold_flag)
 	}
 }
 
+/* An interface applied with hold_timeslots operaton operations must be single wave TDM interfcae. */
 void
-ospf_hold_opvc_timeslots(u_int32_t port, u_int32_t opvcx_range, u_int8_t hold_flag)
+ospf_hold_otnx_channels(u_int32_t port, u_int32_t opvcx_range, u_int8_t hold_flag)
 {
 	struct ospf_interface *oi;
 	struct listnode *node1, *node2, *node3;
 	struct ospf *ospf;
-	struct te_link_subtlv_link_ifswcap *ifswcap_opvcx;
+	struct te_link_subtlv_link_ifswcap *ifswcap_otnx;
 	int updated = 0;
 	u_int8_t ts, ts1= (opvcx_range & 0xff), ts2 = ((opvcx_range >> 16) & 0xff);
 
@@ -695,28 +696,28 @@ ospf_hold_opvc_timeslots(u_int32_t port, u_int32_t opvcx_range, u_int8_t hold_fl
 			if (!INTERFACE_MPLS_ENABLED(oi) || oi->te_para.link_ifswcap_list == NULL)
 				continue;
 
-			ifswcap_opvcx = NULL;
-			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_opvcx, node3)
+			ifswcap_otnx = NULL;
+			LIST_LOOP(oi->te_para.link_ifswcap_list, ifswcap_otnx, node3)
 			{
-				if (ifswcap_opvcx->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM &&ifswcap_opvcx->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
-					&& (ntohs(ifswcap_opvcx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0)
+				if (ifswcap_otnx->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM &&ifswcap_otnx->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
+					&& (ntohs(ifswcap_otnx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version) & IFSWCAP_SPECIFIC_CIENA_OTNX) != 0)
 					break;
-				ifswcap_opvcx = NULL;
+				ifswcap_otnx = NULL;
 			}
 			/* the interface contains a ciena_opvcx ISCD if ifswcap_opvcx != NULL*/
 
-			if ( (port>>16) == 0x12 && ifswcap_opvcx != NULL
-					&& ifswcap_opvcx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.otnx_if_id == (u_int8_t)(port>>8) ) {
+			if ( (port>>16) == 0x12 && ifswcap_otnx != NULL
+					&& ifswcap_otnx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.otnx_if_id == (u_int8_t)(port>>8) ) {
 				if (hold_flag == 1)
 				{
 					for (ts = ts1; ts <= ts2; ts++)
-						RESET_VLAN(ifswcap_opvcx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.wave_opvc_map[0].opvc_bitmask, ts);
+						RESET_CHANNEL(ifswcap_otnx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.wave_opvc_bitmask, ts);
 					updated = 1;
 				}
 				else 
 				{
 					for (ts = ts1; ts <= ts2; ts++)
-						SET_VLAN(ifswcap_opvcx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.wave_opvc_map[0].opvc_bitmask, ts);
+						SET_CHANNEL(ifswcap_otnx->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.wave_opvc_bitmask, ts);
 					updated = 1;
 				}
 				if (updated && oi->t_te_area_lsa_link_self)
@@ -1142,7 +1143,7 @@ ospf_rsvp_get_subnet_uni_data(struct in_addr* data_if, u_int8_t uni_id, int fd)
 
 
 void
-ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, u_int8_t otnx_if_id, int fd)
+ospf_rsvp_get_ciena_otnx_data(struct in_addr* data_if, u_int8_t otnx_if_id, int fd)
 {
 	struct ospf_area *area;
 	listnode node;
@@ -1150,7 +1151,7 @@ ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, u_int8_t otnx_if_id, int
 	struct ospf_lsa *lsa;
 	struct in_addr area_id;
 	struct te_link_subtlv_link_ifswcap* ifswcap;
-	struct link_ifswcap_specific_ciena_opvcx* opvcx_data = NULL;
+	struct link_ifswcap_specific_ciena_otnx* otnx_data = NULL;
 	struct stream *s = NULL;
 	u_int8_t length;
 	int i, j;
@@ -1161,7 +1162,7 @@ ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, u_int8_t otnx_if_id, int
 		area = ospf_area_lookup_by_area_id(getdata(listhead(om->ospf)), area_id);
 	}
 	if (area)
-	  {
+	{
 		LSDB_LOOP (area->te_lsdb->db, rn, lsa)
 		{ /*matching the data_if with either a te link local if addr or a link's originating end's loopback*/
 		  if (lsa->tepara_ptr && lsa->tepara_ptr->p_lclif_ipaddr && lsa->tepara_ptr->p_lclif_ipaddr->value.s_addr == data_if->s_addr || lsa->data->adv_router.s_addr == data_if->s_addr)
@@ -1170,40 +1171,36 @@ ospf_rsvp_get_ciena_opvcx_data(struct in_addr* data_if, u_int8_t otnx_if_id, int
 	   		{
 	   			if (ifswcap && ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM 
 				    && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
-				    && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.version) & IFSWCAP_SPECIFIC_CIENA_OPVCX) != 0
-				    && ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx.otnx_if_id == otnx_if_id)
+				    && (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version) & IFSWCAP_SPECIFIC_CIENA_OTNX) != 0
+				    && ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.otnx_if_id == otnx_if_id)
    				{
-					opvcx_data = &ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_opvcx;
+					otnx_data = &ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx;
 					break;
    				}
 			
 	   		}
-			if (opvcx_data != NULL)
+			if (otnx_data != NULL)
 				break;
 		   }
 		}
 	}
 
-	length = sizeof(u_int8_t)*2 + (opvcx_data == NULL ? 0 : sizeof(u_int32_t)*5+(sizeof(struct wavelength_grid_label)+MAX_SUBWAVE_CHANNELS/8)*opvcx_data->num_waves);
+	length = sizeof(u_int8_t)*2 + (otnx_data == NULL ? 0 : sizeof(u_int32_t)*5+MAX_OTNX_CHANNELS/8);
 	s = stream_new(length);
 	stream_putc(s, length);
-	stream_putc(s, GetCienaOPVCXDataByOSPF);
-	if (opvcx_data)
+	stream_putc(s, GetCienaOTNXDataByOSPF);
+	if (otnx_data)
 	{
-		stream_putl(s, opvcx_data->switch_ip);
-		stream_putw(s, opvcx_data->tl1_port);
-		stream_putc(s, opvcx_data->eth_edge);
-		stream_putc(s, opvcx_data->otnx_if_id);
-		stream_putl(s, opvcx_data->data_ipv4);
-		stream_putl(s, opvcx_data->logical_port_number);
-		stream_putw(s, opvcx_data->num_waves);
-		stream_putw(s, opvcx_data->num_chans);
-		for (i = 0; i < opvcx_data->num_waves; i++)
-		{
-			stream_putl(s, &opvcx_data->wave_opvc_map[i].wave_id);
-			for (j = 0; j < MAX_SUBWAVE_CHANNELS/8; j++)
-				stream_putc(s, opvcx_data->wave_opvc_map[i].opvc_bitmask[j]);
-		}
+		stream_putl(s, otnx_data->switch_ip);
+		stream_putw(s, otnx_data->tl1_port);
+		stream_putc(s, otnx_data->eth_edge);
+		stream_putc(s, otnx_data->otnx_if_id);
+		stream_putl(s, otnx_data->data_ipv4);
+		stream_putl(s, otnx_data->logical_port_number);
+		stream_putw(s, otnx_data->channel_type);
+		stream_putw(s, otnx_data->num_chans);
+		for (j = 0; j < MAX_OTNX_CHANNELS/8; j++)
+			stream_putc(s, otnx_data->wave_opvc_bitmask[j]);
 	}
 	write (fd, STREAM_DATA(s), length);
 	stream_free(s);
@@ -1326,13 +1323,13 @@ ospf_rsvp_read (struct thread *thread)
 	list_delete(ts_list);
      break;
 
-    case HoldOPVCTimeslotsbyOSPF:
+    case HoldOTNXChennelsByOSPF:
 	port = stream_getl(s);	
 	opvcx_range = stream_getl(s);	
 	hold_flag = stream_getc(s);
 	length -= 5;
 	assert (length > 0);
-	ospf_hold_opvc_timeslots(port, opvcx_range, hold_flag);
+	ospf_hold_otnx_channels(port, opvcx_range, hold_flag);
      break;
 
     case OspfPathTear:
@@ -1354,10 +1351,10 @@ ospf_rsvp_read (struct thread *thread)
 	ospf_rsvp_get_subnet_uni_data(&addr, uni_id, sock);
 	break;
 
-   case GetCienaOPVCXDataByOSPF:
+   case GetCienaOTNXDataByOSPF:
 	addr.s_addr = stream_get_ipv4(s);
 	otnx_if_id = stream_getc (s);
-	ospf_rsvp_get_ciena_opvcx_data(&addr, otnx_if_id, sock);
+	ospf_rsvp_get_ciena_otnx_data(&addr, otnx_if_id, sock);
 	break;
 
     default:

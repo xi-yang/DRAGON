@@ -15,14 +15,15 @@ To be incorporated into KOM-RSVP-TE package
 #include "CLI_Session.h"
 #include "RSVP_ProtocolObjects.h"
 
-struct wavelength_grid_label {
-	uint32		grid_type:3; //Grid type: 1=ITU-T_DWDM 2=ITU-T_CWDM
-	uint32	 	spacing:3; //Channel spacing: 1=100, 2=50
-	uint32	 	reserved:9;
-	int			wavelength:17; //Wavelength channel number
-};
+//CIENA OTNX definitions
+#define MAX_OTNX_CHANNELS 256 //64: 10G with OPVCX; 40: WDM
+#define CIENA_OTNX_OTU1		1
+#define CIENA_OTNX_OTU2		2
+#define CIENA_OTNX_OTU3		4
+#define CIENA_OTNX_OPVC		8
+#define CIENA_OTNX_WDM10G		16
+#define CIENA_OTNX_WDM40G		32
 
-#define MAX_SUBWAVE_CHANNELS 256
 typedef struct Ciena_OTNX_Data_struct {
 	uint32		switch_ip;
 	uint16		tl1_port;
@@ -33,15 +34,9 @@ typedef struct Ciena_OTNX_Data_struct {
 	};
 	uint32		data_ipv4;
 	uint32		logical_port_number;
-	uint16 	num_waves; //number of wavelengths
+	uint16 	channel_type;
 	uint16 	num_chans; //number of sub-wavelength channels
-	struct {
-		union {
-			struct wavelength_grid_label wave_label; 
-			uint32 wave_id; // default = 0 for single-wave TDM (non-WDM)
-		};
-		uint8 opvc_bitmask[MAX_SUBWAVE_CHANNELS/8]; // bit =1 means available
-	} wave_opvc_map[1]; // num_waves blocks
+	uint8 wave_opvc_bitmask[MAX_OTNX_CHANNELS/8]; // bit =1 means available
 } OTNX_Data;
 
 class SwitchCtrl_Session_CienaCN4200: public CLI_Session
@@ -126,7 +121,7 @@ public:
 		{
 			for (ts = 1; ts <= 64; ts++)
 			{
-				if (!HAS_TIMESLOT(otnxData.wave_opvc_map[0].opvc_bitmask, ts))
+				if (!HAS_TIMESLOT(otnxData.wave_opvc_bitmask, ts))
 					return 0;
 			}
 			ts1 =1; ts2 = 64;
@@ -137,11 +132,11 @@ public:
 			{
 				for (ts = i*16+1, ts1 = i*16+1; ts < (i+1)*16; ts++)
 				{
-					if (!HAS_TIMESLOT(otnxData.wave_opvc_map[0].opvc_bitmask, ts))
+					if (!HAS_TIMESLOT(otnxData.wave_opvc_bitmask, ts))
 					{
 						ts1 = ts+1;
 					}
-					if (HAS_TIMESLOT(otnxData.wave_opvc_map[0].opvc_bitmask, ts))
+					if (HAS_TIMESLOT(otnxData.wave_opvc_bitmask, ts))
 					{
 						if (ts-ts1+1 >= num_opvcx) //unsatisfying blocks
 						{
@@ -169,7 +164,7 @@ protected:
 private:	
 	void internalInit ();
 	void setOTNXData(OTNX_Data& data, uint32 switch_ip, uint16 tl1_port, uint8 eth_edge, uint8 otnx_if_id, uint32 data_if, 
-		uint32 logical_port, uint16 num_chans, uint32 wave_id, uint8* bitmask);
+		uint32 logical_port, uint16 channel_type, uint16 num_chans, uint8* bitmask);
 
 	char bufCmd[LINELEN+1];
 	char strCOMPLD[20];

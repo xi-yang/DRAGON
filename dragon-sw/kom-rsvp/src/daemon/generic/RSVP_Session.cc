@@ -598,7 +598,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 			}
 			//$$$$ retrieve OTNX data for both interfaces
 			memset(&otnxDataSrc, 0, sizeof(otnxDataSrc));
-			if ( !RSVP_Global::rsvp->getRoutingService().getCienaOPVCXDatabyOSPF(inRtId, (uint8)(inUnumIfID>>8), otnxDataSrc) ) {
+			if ( !RSVP_Global::rsvp->getRoutingService().getCienaOTNXDatabyOSPF(inRtId, (uint8)(inUnumIfID>>8), otnxDataSrc) ) {
 				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 				LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
 					"processERO: getCienaOTNXDatabyOSPF failed to get otnxDataSrc from OSPFd.");
@@ -608,7 +608,7 @@ bool Session::processERO(const Message& msg, Hop& hop, EXPLICIT_ROUTE_Object* ex
 				return false;
 			}
 			memset(&otnxDataDest, 0, sizeof(otnxDataDest));
-			if ( !RSVP_Global::rsvp->getRoutingService().getCienaOPVCXDatabyOSPF(outRtId, (uint8)(outUnumIfID>>8), otnxDataDest) ) {
+			if ( !RSVP_Global::rsvp->getRoutingService().getCienaOTNXDatabyOSPF(outRtId, (uint8)(outUnumIfID>>8), otnxDataDest) ) {
 				//If checking fails, make empty vlsr, which will trigger a PERR (mpls label alloc failure) in processPATH.
 				LOG(4)( Log::MPLS,  "LSP=", msg.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ",
 					"processERO: getCienaOTNXDatabyOSPF failed to get otnxDataDest from OSPFd.");

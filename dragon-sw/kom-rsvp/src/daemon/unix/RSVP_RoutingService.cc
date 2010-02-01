@@ -507,8 +507,8 @@ const void RoutingService::holdTimeslotsbyOSPF(u_int32_t port, SimpleList<uint8>
 }
 
 
-const void RoutingService::holdOPVCTimeslotsbyOSPF(u_int32_t port, uint32 opvcx_range, bool hold) {
-	uint8 message = HoldOPVCTimeslotsbyOSPF;
+const void RoutingService::holdOTNXChannelsByOSPF(u_int32_t port, uint32 opvcx_range, bool hold) {
+	uint8 message = HoldOTNXChannelsbyOSPF;
 	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32)*2 + sizeof(uint8);
 	uint8 c_hold = hold ? 1 : 0;
 	ONetworkBuffer obuffer(msgLength);
@@ -545,7 +545,7 @@ bool RoutingService::getSubnetUNIDatabyOSPF(const NetAddress& dataIf, const uint
 	return true;
 }
 
-bool RoutingService::getCienaOPVCXDatabyOSPF(const NetAddress& dataIf, const uint8 otnxID, OTNX_Data& opvcxData) {
+bool RoutingService::getCienaOTNXDatabyOSPF(const NetAddress& dataIf, const uint8 otnxID, OTNX_Data& opvcxData) {
 	uint8 message = GetCienaOPVCXDataByOSPF;
 	uint8 msgLength = sizeof(uint8)*2 + sizeof(uint32) + sizeof(uint8);
 	ONetworkBuffer obuffer(msgLength);
@@ -561,17 +561,12 @@ bool RoutingService::getCienaOPVCXDatabyOSPF(const NetAddress& dataIf, const uin
 	msgLength = read(ospf_socket, ibuffer.getWriteBuffer(), ibuffer.getSize());
 	ibuffer.setWriteLength(msgLength);
 	//Process response messages
-
 	ibuffer >> opvcxData.switch_ip >> opvcxData.tl1_port >> opvcxData.eth_edge >> opvcxData.otnx_if_id >> opvcxData.data_ipv4
-		>> opvcxData.logical_port_number >>opvcxData.num_waves >> opvcxData.num_chans;
+		>> opvcxData.logical_port_number >>opvcxData.channel_type >> opvcxData.num_chans;
 
-	int i, j;
-	for (i = 0; i < (int)opvcxData.num_waves; i++)
-	{
-		ibuffer >> opvcxData.wave_opvc_map[i].wave_id;
-		for (j = 0; j < (int)opvcxData.num_chans/8; j++)
-			ibuffer >> opvcxData.wave_opvc_map[i].opvc_bitmask[j];
-	}
+	int j;
+	for (j = 0; j < (int)opvcxData.num_chans/8; j++)
+		ibuffer >> opvcxData.wave_opvc_bitmask[j];
 
 	return true;
 }
