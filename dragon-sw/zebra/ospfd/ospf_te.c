@@ -3053,7 +3053,7 @@ ALIAS (ospf_te_interface_ifsw_cap7,
 
 DEFUN (ospf_te_interface_ifsw_cap8,
        ospf_te_interface_ifsw_cap8_cmd,
-       "otnx-interface ID type (1ge|10ge|10g|otu2|40g|otu3|wdm10g|wdm40g) port NAME",
+       "otnx-interface ID type (1ge|10ge|10g|otu2|40g|otu3|wdm-10g|wdm-otu2|wdm-40g|wdm-otu3) port NAME",
        "Bandwidth\n"
        "1G Ethernet port\n"
        "10G Ethernet port\n"
@@ -3295,7 +3295,6 @@ DEFUN (ospf_te_interface_ifsw_cap10,
 	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_LSC && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OCH
 		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version) & IFSWCAP_SPECIFIC_CIENA_OTNX) != 0)
 	{
-		opvcx_ifid = ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.otnx_if_id;
 		has_wdm_iscd = 1;
 		break;
 	}
