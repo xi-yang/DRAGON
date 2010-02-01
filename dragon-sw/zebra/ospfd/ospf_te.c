@@ -1565,7 +1565,10 @@ show_vty_link_subtlv_ifsw_cap_local (struct vty *vty, struct te_tlv_header *tlvh
            SHOW_VLANS(v);
 	    vty_out (vty, "%s", VTY_NEWLINE);
 	}
-	else if (vty != NULL && top->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OCH
+    }
+  else if (top->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_LSC)
+    {
+	if (vty != NULL && top->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OCH
 		&& (ntohs(top->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version) & IFSWCAP_SPECIFIC_CIENA_OTNX))
 	{
 	    vty_out (vty, "  -- OTN Ciena-OCHX specific information--%s", VTY_NEWLINE);
@@ -3143,7 +3146,8 @@ DEFUN (ospf_te_interface_ifsw_cap9,
   u_int32_t ts, ts1, ts2;
   struct te_link_subtlv_link_ifswcap* ifswcap;
   listnode node;
-  int has_opvcx_iscd = 0, otnx_ifid = 0;
+  int has_opvcx_iscd = 0, otnx_ifid = 0, i;
+  float bw;
   LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
     {
 	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
@@ -3170,6 +3174,9 @@ DEFUN (ospf_te_interface_ifsw_cap9,
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.eth_edge = 0;
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.channel_type = CIENA_OTNX_OPVC;
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.num_chans = 64;
+          bw = 1250000000;
+          for (i = 0; i < LINK_MAX_PRIORITY; i++)
+              htonf (&bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[i]);
       }
       else 
       {
@@ -3276,7 +3283,8 @@ DEFUN (ospf_te_interface_ifsw_cap10,
   u_int32_t ts, ts1, ts2;
   struct te_link_subtlv_link_ifswcap* ifswcap;
   listnode node;
-  int has_wdm_iscd = 0, opvcx_ifid = 0;
+  int has_wdm_iscd = 0, opvcx_ifid = 0, i;
+  float bw;
   LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
     {
 	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
@@ -3303,10 +3311,19 @@ DEFUN (ospf_te_interface_ifsw_cap10,
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.otnx_if_id = (u_int8_t)opvcx_ifid;        
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.eth_edge = 0;
           if (strcmp(argv[0], "40g") == 0)
+          {
 	          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.channel_type = CIENA_OTNX_OTU3;
+                 bw = 1250000000*4*40;
+          }
           else 
+          {
 	          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.channel_type = CIENA_OTNX_OTU2;
+                 bw = 1250000000*40;
+          }
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.num_chans = 40;
+          for (i = 0; i < LINK_MAX_PRIORITY; i++)
+              htonf (&bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[i]);
+
       }
       else 
       {
@@ -3358,7 +3375,7 @@ DEFUN (ospf_te_interface_ifsw_cap10,
 
 ALIAS (ospf_te_interface_ifsw_cap10,
        ospf_te_interface_ifsw_cap10a_cmd,
-       "otnx-wavelength <1-64> to <2-64>",
+       "otnx-wavelength (10g|40g) <1-64> to <2-64>",
        "Assign OTNX Wavelength channel range\n"
        "Wavelength channel ID1 in the range [1, 63]\n"
        "Wavelength channel ID2 in the range [2, 64]\n");
