@@ -1687,7 +1687,7 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
             SHOW_TIMESLOTS(subnet_uni->timeslot_bitmask);
             vty_out (vty, "%s", VTY_NEWLINE);
 	}
-	else if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_CIENA_OTNX)) {
+	else if (vty != NULL && strncmp(enc, "otu", 3) == 0 && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_CIENA_OTNX)) {
             opvcx_data = (struct link_ifswcap_specific_ciena_otnx *)v;
             strcpy (ipv4, inet_ntoa (*(struct in_addr*)&opvcx_data->switch_ip));
             strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&opvcx_data->data_ipv4));
@@ -1698,6 +1698,21 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	    vty_out (vty, "      -> Interface ID: %d, Switch IP: %s, DataInterface IP: %s, LogicalPort: %s%s", 
 			opvcx_data->otnx_if_id, ipv4, ipv4_b, otnx_logical_port_number2string(ntohl(opvcx_data->logical_port_number)), VTY_NEWLINE);
             vty_out (vty, "      -> Available OPVCs (STS3c's):");
+            SHOW_OTNX_CHANS(opvcx_data->wave_opvc_bitmask);
+            vty_out (vty, "%s", VTY_NEWLINE);
+	}
+  }
+  else if (strncmp(swcap, "lsc", 3) == 0)
+  {
+       if (vty != NULL && strncmp(enc, "och", 3) == 0 && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_CIENA_OTNX))
+	{
+           opvcx_data = (struct link_ifswcap_specific_ciena_otnx *)v;
+           strcpy (ipv4, inet_ntoa (*(struct in_addr*)&opvcx_data->switch_ip));
+           strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&opvcx_data->data_ipv4));
+           vty_out (vty, "  -- OTN Ciena-OCHX specific information--%s", VTY_NEWLINE);
+	    vty_out (vty, "      -> Interface ID: %d, Switch IP: %s, DataInterface IP: %s, LogicalPort: %s%s", 
+			opvcx_data->otnx_if_id, ipv4, ipv4_b, otnx_logical_port_number2string(ntohl(opvcx_data->logical_port_number)), VTY_NEWLINE);
+            vty_out (vty, "      -> Available OCHs:");
             SHOW_OTNX_CHANS(opvcx_data->wave_opvc_bitmask);
             vty_out (vty, "%s", VTY_NEWLINE);
 	}
@@ -1721,21 +1736,6 @@ show_vty_link_subtlv_ifsw_cap_network (struct vty *vty, struct te_tlv_header *tl
 	    vty_out (vty, "    --> Allocated VLAN tag set:");
            SHOW_VLANS(v);
 	    vty_out (vty, "%s", VTY_NEWLINE);
-	}
-  }
-  else if (strncmp(swcap, "lsc", 3) == 0)
-  {
-       if (vty != NULL && (ntohs(*(u_int16_t*)(v+2)) & IFSWCAP_SPECIFIC_CIENA_OTNX))
-	{
-           opvcx_data = (struct link_ifswcap_specific_ciena_otnx *)v;
-           strcpy (ipv4, inet_ntoa (*(struct in_addr*)&opvcx_data->switch_ip));
-           strcpy (ipv4_b, inet_ntoa (*(struct in_addr*)&opvcx_data->data_ipv4));
-           vty_out (vty, "  -- OTN Ciena-OCHX specific information--%s", VTY_NEWLINE);
-	    vty_out (vty, "      -> Interface ID: %d, Switch IP: %s, DataInterface IP: %s, LogicalPort: %s%s", 
-			opvcx_data->otnx_if_id, ipv4, ipv4_b, otnx_logical_port_number2string(ntohl(opvcx_data->logical_port_number)), VTY_NEWLINE);
-            vty_out (vty, "      -> Available OCHs:");
-            SHOW_OTNX_CHANS(opvcx_data->wave_opvc_bitmask);
-            vty_out (vty, "%s", VTY_NEWLINE);
 	}
   }
 
