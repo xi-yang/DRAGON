@@ -3278,7 +3278,7 @@ DEFUN (ospf_te_interface_ifsw_cap10,
        ospf_te_interface_ifsw_cap10_cmd,
        "otnx-wavelength (10g|40g) <15-64>",
        "Assign OTNX Wavelength channels\n"
-       "Wavelength channel ID in the range [1, 64]\n")
+       "Wavelength channel ID in the range [15, 64]\n")
 {
   u_int32_t ts, ts1, ts2;
   struct te_link_subtlv_link_ifswcap* ifswcap;
@@ -3375,10 +3375,10 @@ DEFUN (ospf_te_interface_ifsw_cap10,
 
 ALIAS (ospf_te_interface_ifsw_cap10,
        ospf_te_interface_ifsw_cap10a_cmd,
-       "otnx-wavelength (10g|40g) <1-64> to <2-64>",
+       "otnx-wavelength (10g|40g) <15-64> to <16-64>",
        "Assign OTNX Wavelength channel range\n"
-       "Wavelength channel ID1 in the range [1, 63]\n"
-       "Wavelength channel ID2 in the range [2, 64]\n");
+       "Wavelength channel ID1 in the range [15, 63]\n"
+       "Wavelength channel ID2 in the range [16, 64]\n");
 
 DEFUN (show_ospf_te_router,
        show_ospf_te_router_cmd,
