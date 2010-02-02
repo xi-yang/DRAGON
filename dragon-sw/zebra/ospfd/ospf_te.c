@@ -3064,8 +3064,11 @@ DEFUN (ospf_te_interface_ifsw_cap8,
   u_int32_t otnx_ifid, switch_ip, tl1_port, data_if, logical_port;
   struct te_link_subtlv_link_ifswcap *ifswcap;
 
-  ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_TDM, LINK_IFSWCAP_SUBTLV_ENC_G709OTUK);
-  ifswcap->header.length = htons(36 + sizeof(struct link_ifswcap_specific_ciena_otnx)); /* the default length is 36 + sizeof(struct link_ifswcap_specific_tdm */
+  if (strcmp(argv[1], "wdm-10g") == 0 || strcmp(argv[1], "wdm-otu2") == 0 || strcmp(argv[1], "wdm-10g") == 0 || strcmp(argv[1], "wdm-otu2") == 0)
+      ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_LSC, LINK_IFSWCAP_SUBTLV_ENC_G709OCH);
+  else
+      ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_TDM, LINK_IFSWCAP_SUBTLV_ENC_G709OTUK);
+  ifswcap->header.length = htons(36 + sizeof(struct link_ifswcap_specific_ciena_otnx)); /* the default length is 36 + sizeof(struct link_ifswcap_specific_tdm) */
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.length = htons(sizeof(struct link_ifswcap_specific_ciena_otnx));
   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version = htons(IFSWCAP_SPECIFIC_CIENA_OTNX);
 
@@ -3145,7 +3148,8 @@ DEFUN (ospf_te_interface_ifsw_cap9,
   u_int32_t ts, ts1, ts2;
   struct te_link_subtlv_link_ifswcap* ifswcap;
   listnode node;
-  int has_opvcx_iscd = 0, otnx_ifid = 0, i;
+  int has_opvcx_iscd = 0, i;
+  struct link_ifswcap_specific_ciena_otnx* wdm_otnx = NULL;
   float bw;
   LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
     {
@@ -3158,24 +3162,23 @@ DEFUN (ospf_te_interface_ifsw_cap9,
 	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_LSC && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OCH
 		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version) & IFSWCAP_SPECIFIC_CIENA_OTNX) != 0)
 	{
-		otnx_ifid = ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.otnx_if_id;
+		wdm_otnx = &ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx;
 	}
     }
   if (has_opvcx_iscd == 0)
   {
-      if (otnx_ifid != 0) 
+      if (wdm_otnx != NULL) 
       {
           ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_TDM, LINK_IFSWCAP_SUBTLV_ENC_G709OTUK);
           ifswcap->header.length = htons(36 + sizeof(struct link_ifswcap_specific_ciena_otnx)); /* the default length is 36 + sizeof(struct link_ifswcap_specific_tdm */
-          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.length = htons(sizeof(struct link_ifswcap_specific_ciena_otnx));
-          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version = htons(IFSWCAP_SPECIFIC_CIENA_OTNX);
-          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.otnx_if_id = (u_int8_t)otnx_ifid;        
-          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.eth_edge = 0;
-          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.channel_type = CIENA_OTNX_OPVC;
-          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.num_chans = 64;
           bw = 1250000000;
           for (i = 0; i < LINK_MAX_PRIORITY; i++)
               htonf (&bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[i]);
+          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx = *wdm_otnx;
+          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.eth_edge = 0;
+          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.channel_type = CIENA_OTNX_OPVC;
+          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.num_chans = 64;
+          memset(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.wave_opvc_bitmask, 0, MAX_OTNX_CHANNELS/8);
       }
       else 
       {
@@ -3282,14 +3285,15 @@ DEFUN (ospf_te_interface_ifsw_cap10,
   u_int32_t ts, ts1, ts2;
   struct te_link_subtlv_link_ifswcap* ifswcap;
   listnode node;
-  int has_wdm_iscd = 0, opvcx_ifid = 0, i;
+  int has_wdm_iscd = 0, i;
+  struct link_ifswcap_specific_ciena_otnx *opvcx_otnx = NULL;
   float bw;
   LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
     {
 	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
 		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version) & IFSWCAP_SPECIFIC_CIENA_OTNX) != 0)
 	{
-		opvcx_ifid = ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.otnx_if_id;
+		opvcx_otnx = &ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx;
 	}
 	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_LSC && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OCH
 		&& (ntohs(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version) & IFSWCAP_SPECIFIC_CIENA_OTNX) != 0)
@@ -3300,28 +3304,26 @@ DEFUN (ospf_te_interface_ifsw_cap10,
     }
   if (has_wdm_iscd == 0)
   {
-      if (opvcx_ifid != 0) 
+      if (opvcx_otnx != NULL) 
       {
           ifswcap = set_linkparams_ifsw_cap1(&te_config.te_para.link_ifswcap_list, LINK_IFSWCAP_SUBTLV_SWCAP_LSC, LINK_IFSWCAP_SUBTLV_ENC_G709OCH);
           ifswcap->header.length = htons(36 + sizeof(struct link_ifswcap_specific_ciena_otnx)); /* the default length is 36 + sizeof(struct link_ifswcap_specific_otnx) */
-          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.length = htons(sizeof(struct link_ifswcap_specific_ciena_otnx));
-          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.version = htons(IFSWCAP_SPECIFIC_CIENA_OTNX);
-          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.otnx_if_id = (u_int8_t)opvcx_ifid;        
+          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx = *opvcx_otnx;
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.eth_edge = 0;
           if (strcmp(argv[0], "40g") == 0)
           {
-	          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.channel_type = CIENA_OTNX_OTU3;
-                 bw = 1250000000*4*40;
+              ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.channel_type = CIENA_OTNX_OTU3;
+              bw = 1250000000*4*40;
           }
           else 
           {
-	          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.channel_type = CIENA_OTNX_OTU2;
-                 bw = 1250000000*40;
+              ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.channel_type = CIENA_OTNX_OTU2;
+              bw = 1250000000*40;
           }
-          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.num_chans = 40;
           for (i = 0; i < LINK_MAX_PRIORITY; i++)
               htonf (&bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[i]);
-
+          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.num_chans = 40;
+          memset(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.wave_opvc_bitmask, 0, MAX_OTNX_CHANNELS/8);
       }
       else 
       {
