@@ -307,7 +307,7 @@ struct link_ifswcap_specific_subnet_uni {
 };
 
 /*CIENA OTNX definitions*/
-#define MAX_OTNX_CHANNELS 256 /*64: 10G with OPVCX; 40: WDM */
+#define MAX_OTNX_CHAN_NUM 256 /*64: 10G with OPVCX; 40: WDM */
 #define CIENA_OTNX_OTU1		1
 #define CIENA_OTNX_OTU2		2
 #define CIENA_OTNX_OTU3		4
@@ -329,7 +329,7 @@ struct link_ifswcap_specific_ciena_otnx {
 	u_int32_t		logical_port_number;
 	u_int16_t 	channel_type; /*40g WDM, 10g WDM, OTU1x, OTU2x, 10g OPVCX*/
 	u_int16_t 	num_chans; /*number of wavelength/opvc channels = MAX_OTN_CHANNELS*/
-	u_int8_t  		wave_opvc_bitmask[MAX_OTNX_CHANNELS/8]; /* bit =1 means available */
+	u_int8_t  		wave_opvc_bitmask[MAX_OTNX_CHAN_NUM/8]; /* bit =1 means available */
 };
 
 /*#define NUM_ONTCG_GROUPS 12*/

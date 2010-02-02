@@ -16,7 +16,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP_ProtocolObjects.h"
 
 //CIENA OTNX definitions
-#define MAX_OTNX_CHANNELS 256 //64: 10G with OPVCX; 40: WDM
+#define MAX_OTNX_CHAN_NUM 256 //64: 10G with OPVCX; 40: WDM
 #define CIENA_OTNX_OTU1		1
 #define CIENA_OTNX_OTU2		2
 #define CIENA_OTNX_OTU3		4
@@ -36,7 +36,7 @@ typedef struct Ciena_OTNX_Data_struct {
 	uint32		logical_port_number;
 	uint16 	channel_type;
 	uint16 	num_chans; //number of sub-wavelength channels
-	uint8 wave_opvc_bitmask[MAX_OTNX_CHANNELS/8]; // bit =1 means available
+	uint8 wave_opvc_bitmask[MAX_OTNX_CHAN_NUM/8]; // bit =1 means available
 } OTNX_Data;
 
 class SwitchCtrl_Session_CienaCN4200: public CLI_Session

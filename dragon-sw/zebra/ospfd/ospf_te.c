@@ -183,7 +183,7 @@ static void ospf_te_show_info (struct vty *vty, struct ospf_lsa *lsa);
 static void ospf_te_show_bitmask(struct vty *vty, char* bitmask, int max_bits);
 #define SHOW_TIMESLOTS(BMASK) ospf_te_show_bitmask(vty, BMASK, MAX_TIMESLOTS_NUM)
 #define SHOW_VLANS(BMASK) ospf_te_show_bitmask(vty, BMASK, MAX_VLAN_NUM)
-#define SHOW_OTNX_CHANS(BMASK) ospf_te_show_bitmask(vty, BMASK, MAX_OTNX_CHANNELS)
+#define SHOW_OTNX_CHANS(BMASK) ospf_te_show_bitmask(vty, BMASK, MAX_OTNX_CHAN_NUM)
 
 #ifndef _str2val_funcs_
 #define _str2val_funcs_
@@ -3178,7 +3178,7 @@ DEFUN (ospf_te_interface_ifsw_cap9,
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.eth_edge = 0;
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.channel_type = CIENA_OTNX_OPVC;
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.num_chans = 64;
-          memset(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.wave_opvc_bitmask, 0, MAX_OTNX_CHANNELS/8);
+          memset(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.wave_opvc_bitmask, 0, MAX_OTNX_CHAN_NUM/8);
       }
       else 
       {
@@ -3323,7 +3323,7 @@ DEFUN (ospf_te_interface_ifsw_cap10,
           for (i = 0; i < LINK_MAX_PRIORITY; i++)
               htonf (&bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[i]);
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.num_chans = 40;
-          memset(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.wave_opvc_bitmask, 0, MAX_OTNX_CHANNELS/8);
+          memset(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.wave_opvc_bitmask, 0, MAX_OTNX_CHAN_NUM/8);
       }
       else 
       {

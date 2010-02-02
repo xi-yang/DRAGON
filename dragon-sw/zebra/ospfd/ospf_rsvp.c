@@ -1185,7 +1185,7 @@ ospf_rsvp_get_ciena_otnx_data(struct in_addr* data_if, u_int8_t otnx_if_id, int 
 		}
 	}
 
-	length = sizeof(u_int8_t)*2 + (otnx_data == NULL ? 0 : sizeof(u_int32_t)*5+MAX_OTNX_CHANNELS/8);
+	length = sizeof(u_int8_t)*2 + (otnx_data == NULL ? 0 : sizeof(u_int32_t)*5+MAX_OTNX_CHAN_NUM/8);
 	s = stream_new(length);
 	stream_putc(s, length);
 	stream_putc(s, GetCienaOTNXDataByOSPF);
@@ -1199,7 +1199,7 @@ ospf_rsvp_get_ciena_otnx_data(struct in_addr* data_if, u_int8_t otnx_if_id, int 
 		stream_putl(s, otnx_data->logical_port_number);
 		stream_putw(s, otnx_data->channel_type);
 		stream_putw(s, otnx_data->num_chans);
-		for (j = 0; j < MAX_OTNX_CHANNELS/8; j++)
+		for (j = 0; j < MAX_OTNX_CHAN_NUM/8; j++)
 			stream_putc(s, otnx_data->wave_opvc_bitmask[j]);
 	}
 	write (fd, STREAM_DATA(s), length);
