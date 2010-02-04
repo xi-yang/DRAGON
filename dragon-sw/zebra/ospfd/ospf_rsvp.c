@@ -1197,7 +1197,8 @@ ospf_rsvp_get_ciena_otnx_data(struct in_addr* data_if, u_int8_t otnx_if_id, int 
 		stream_putc(s, otnx_data->otnx_if_id);
 		stream_putl(s, otnx_data->data_ipv4);
 		stream_putl(s, otnx_data->logical_port_number);
-		stream_putw(s, otnx_data->channel_type);
+		stream_putc(s, otnx_data->channel_type);
+		stream_putc(s, otnx_data->add_to_wdm);
 		stream_putw(s, otnx_data->num_chans);
 		for (j = 0; j < MAX_OTNX_CHAN_NUM/8; j++)
 			stream_putc(s, otnx_data->wave_opvc_bitmask[j]);

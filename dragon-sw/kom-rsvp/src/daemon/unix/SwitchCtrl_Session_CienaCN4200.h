@@ -34,7 +34,11 @@ typedef struct Ciena_OTNX_Data_struct {
 	};
 	uint32		data_ipv4;
 	uint32		logical_port_number;
-	uint16 	channel_type;
+	uint8 	channel_type;
+	union {
+		uint8	add_to_wdm; //  0 = n/a, 0xff = tunable, 0x15~0x40 = CH# 
+		uint8	drop_to_otu2; // 0 = n/a; > 0 = otu2: otnx-if-id
+	};
 	uint16 	num_chans; //number of sub-wavelength channels
 	uint8 wave_opvc_bitmask[MAX_OTNX_CHAN_NUM/8]; // bit =1 means available
 } OTNX_Data;
@@ -164,7 +168,7 @@ protected:
 private:	
 	void internalInit ();
 	void setOTNXData(OTNX_Data& data, uint32 switch_ip, uint16 tl1_port, uint8 eth_edge, uint8 otnx_if_id, uint32 data_if, 
-		uint32 logical_port, uint16 channel_type, uint16 num_chans, uint8* bitmask);
+		uint32 logical_port, uint8 channel_type, uint8 add_drop, uint16 num_chans, uint8* bitmask);
 
 	char bufCmd[LINELEN+1];
 	char strCOMPLD[20];

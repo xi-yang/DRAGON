@@ -29,7 +29,7 @@ void SwitchCtrl_Session_CienaCN4200::internalInit ()
 }
 
 void SwitchCtrl_Session_CienaCN4200::setOTNXData(OTNX_Data& data, uint32 switch_ip, uint16 tl1_port, uint8 eth_edge, uint8 otnx_if_id, uint32 data_if, 
-		uint32 logical_port, uint16 chan_type, uint16 num_chans, uint8* bitmask)
+		uint32 logical_port, uint8 chan_type, uint8 add_drop, uint16 num_chans, uint8* bitmask)
 {
 	memset(&data, 0, sizeof(data));
 	data.switch_ip = switch_ip;
@@ -39,6 +39,7 @@ void SwitchCtrl_Session_CienaCN4200::setOTNXData(OTNX_Data& data, uint32 switch_
 	data.data_ipv4 = data_if;
 	data.logical_port_number = logical_port;
 	data.channel_type = chan_type;
+	data.add_to_wdm = add_drop;
 	data.num_chans = num_chans;
 	memcpy(data.wave_opvc_bitmask, bitmask, num_chans/8);
 }
@@ -46,13 +47,13 @@ void SwitchCtrl_Session_CienaCN4200::setOTNXData(OTNX_Data& data, uint32 switch_
 void SwitchCtrl_Session_CienaCN4200::setOTNXDataSrc(OTNX_Data& data)
 {
 	setOTNXData(otnxDataSrc, data.switch_ip, data.tl1_port, data.eth_edge, data.otnx_if_id, data.data_ipv4, data.logical_port_number, 
-		data.channel_type, data.num_chans, data.wave_opvc_bitmask);
+		data.channel_type, data.add_to_wdm, data.num_chans, data.wave_opvc_bitmask);
 }
 
 void SwitchCtrl_Session_CienaCN4200::setOTNXDataDest(OTNX_Data& data)
 {
 	setOTNXData(otnxDataDest, data.switch_ip, data.tl1_port, data.eth_edge, data.otnx_if_id, data.data_ipv4, data.logical_port_number, 
-		data.channel_type, data.num_chans, data.wave_opvc_bitmask);
+		data.channel_type, data.add_to_wdm, data.num_chans, data.wave_opvc_bitmask);
 }
 
 
