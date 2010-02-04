@@ -329,8 +329,8 @@ struct link_ifswcap_specific_ciena_otnx {
 	u_int32_t		logical_port_number;
 	u_int8_t 	channel_type; /*40g WDM, 10g WDM, OTU1x, OTU2x, 10g OPVCX*/
 	union {
-		u_int8_t	add_to_wdm; /* 0xff = tunable, 0x15~0x40 = CH#, 0 = n/a */
-		u_int8_t	drop_to_otu2; /*0 = n/a; > 0 = otu2: otnx-if-id*/
+		u_int8_t	add_to_wdm; /*  0 = n/a, 0xff = tunable, 0x15~0x40 = CH#*/
+		u_int8_t	drop_to_otu2; /*0 = otu2 network; 0xff = wdm-otu2-on-same-if; other = otu2: otnx-if-id*/
 	};
 	u_int16_t 	num_chans; /*number of wavelength/opvc channels = MAX_OTN_CHANNELS*/
 	u_int8_t  		wave_opvc_bitmask[MAX_OTNX_CHAN_NUM/8]; /* bit =1 means available */

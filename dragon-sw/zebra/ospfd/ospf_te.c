@@ -3133,15 +3133,12 @@ DEFUN (ospf_te_interface_ifsw_cap8,
 }
 
 
-/* Single wavelength TDM with OPVC timeslots */
+
+/* Single wavelength TDM with OPVC timeslots*/
 DEFUN (ospf_te_interface_ifsw_cap9,
        ospf_te_interface_ifsw_cap9_cmd,
-       "otnx-timeslot (otu1_1|otu1_2|otu1_3|otu1_4|otu2) <1-64>",
-       "OTU1 #1\n"
-       "OTU1 #2\n"
-       "OTU1 #3\n"
-       "OTU1 #4\n"
-       "OTU2\n"
+       "otnx-timeslot CHTYPE <1-64>",
+       "Channel Type: (otu1_1|otu1_2|otu1_3|otu1_4|otu2|och_xx|och_tunable)\n"
        "Assign OTNX OPVC timeslots\n"
        "TimeSlot ID in the range [1, 64]\n")
 {
@@ -3150,7 +3147,7 @@ DEFUN (ospf_te_interface_ifsw_cap9,
   listnode node;
   int has_opvcx_iscd = 0, i;
   struct link_ifswcap_specific_ciena_otnx* wdm_otnx = NULL;
-  float bw;
+  float bw; int och_xx;
   LIST_LOOP(te_config.te_para.link_ifswcap_list, ifswcap, node)
     {
 	if  (ifswcap->link_ifswcap_data.switching_cap == LINK_IFSWCAP_SUBTLV_SWCAP_TDM && ifswcap->link_ifswcap_data.encoding == LINK_IFSWCAP_SUBTLV_ENC_G709OTUK
@@ -3179,6 +3176,14 @@ DEFUN (ospf_te_interface_ifsw_cap9,
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.channel_type = CIENA_OTNX_OPVC;
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.num_chans = 64;
           memset(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.wave_opvc_bitmask, 0, MAX_OTNX_CHAN_NUM/8);
+          if (strncmp(argv[0], "och_", 4) ==0)
+          {
+              if (sscanf(argv[0], "och_%d", &och_xx) == 1)
+                  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.add_to_wdm = (0xff & och_xx); /*channel#*/
+              else
+                   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.add_to_wdm = 0xff; /*tunable*/
+              wdm_otnx->drop_to_otu2 = 0xff; /*wdm+odu2 on same OSPF interface*/
+          }
       }
       else 
       {
@@ -3187,18 +3192,13 @@ DEFUN (ospf_te_interface_ifsw_cap9,
       }
   }
 
-  	
   if (sscanf (argv[1], "%d", &ts1) != 1)
     {
       vty_out (vty, "ospf_te_interface_ifsw_cap9: fscanf ts1: %s%s", strerror (errno), VTY_NEWLINE);
       return CMD_WARNING;
     }
 
-  if (strcmp(argv[0], "otu1_1") == 0 || strcmp(argv[1], "otu2") == 0)
-    {
-        ; /*offset 0*/
-    }
-  else if (strcmp(argv[0], "otu1_2") == 0)
+  if (strcmp(argv[0], "otu1_2") == 0)
     {
         ts1 += 16; /*offset 16*/
     }
@@ -3209,6 +3209,10 @@ DEFUN (ospf_te_interface_ifsw_cap9,
   else if (strcmp(argv[0], "otu1_4") == 0)
     {
         ts1 += 48; /*offset 16*/
+    }
+  else /* otu1_1, otu2, och_xx */
+    {
+        ; /*offset 0*/
     }
 
   if (argc == 2) 
@@ -3224,11 +3228,7 @@ DEFUN (ospf_te_interface_ifsw_cap9,
 	    }
 	  else
            {
-             if (strcmp(argv[0], "otu1_1") == 0 || strcmp(argv[1], "otu2") == 0)
-               {
-                   ; /*offset 0*/
-               }
-             else if (strcmp(argv[0], "otu1_2") == 0)
+             if (strcmp(argv[0], "otu1_2") == 0)
                {
                    ts2 += 16; /*offset 16*/
                }
@@ -3240,6 +3240,11 @@ DEFUN (ospf_te_interface_ifsw_cap9,
                {
                    ts2 += 48; /*offset 16*/
                }
+             else /* otu1_1, otu2, och_xx */
+               {
+                   ; /*offset 0*/
+  	        }
+
            }
          if (ts2 < ts1)
 	    {
@@ -3265,13 +3270,9 @@ DEFUN (ospf_te_interface_ifsw_cap9,
 
 ALIAS (ospf_te_interface_ifsw_cap9,
        ospf_te_interface_ifsw_cap9a_cmd,
-       "otnx-timeslot (otu1_1|otu1_2|otu1_3|otu1_4|otu2) <1-64> to <2-64>",
+       "otnx-timeslot CHTYPE <1-64> to <2-64>",
        "Assign OTNX OPVC timeslots\n"
-       "OTU1 #1\n"
-       "OTU1 #2\n"
-       "OTU1 #3\n"
-       "OTU1 #4\n"
-       "OTU2\n"
+       "Channel Type: \n"
        "TimeSlot ID1 in the range [1, 63]\n"
        "TimeSlot ID2 in the range [2, 64]\n");
 
@@ -3324,6 +3325,7 @@ DEFUN (ospf_te_interface_ifsw_cap10,
               htonf (&bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[i]);
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.num_chans = 40;
           memset(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.wave_opvc_bitmask, 0, MAX_OTNX_CHAN_NUM/8);
+          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.drop_to_otu2 = 0xff; /*wdm+odu2 on same OSPF interface*/
       }
       else 
       {
