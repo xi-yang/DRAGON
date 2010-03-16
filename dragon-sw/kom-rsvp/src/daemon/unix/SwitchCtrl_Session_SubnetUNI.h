@@ -124,12 +124,14 @@ public:
 
 	uint32 getNewCtag() { ++ctagNum; return (getPseudoSwitchID()+ctagNum+(isSource?0:500000))%999999+1; }
 	uint32 getCurrentCtag() { return (getPseudoSwitchID()+ctagNum+(isSource?0:500000))%999999+1; }
+	String& getCienaSoftwareVersion();
 	void getCienaTimeslotsString(String& groupMemString);
 	void getCienaLogicalPortString(String& OMPortString, String& ETTPString, uint32 logicalPort=0);
 	void getCienaCTPGroupsInVCG(String*& ctpGroupStringArray, String& vcgName);
 	void getCienaDestTimeslotsString(String*& destTimeslotsStringArray);
 	void getPeerCRS_GTP(String& gtpName);
 
+	void getCienaSoftwareVersion_TL1(String &swVer);
 	bool hasEFLOW_TL1(String& vcgName, bool ingress = true, bool untaggedMulticast = false);
 	bool createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh = 0, int vlanTrunk = 0);
 	bool deleteEFLOWs_TL1(String& vcgName, bool hasIngressUntaggedMulticast = false, bool hasEgressUntaggedMulticast = false);
@@ -324,6 +326,7 @@ protected:
 	bool resourceHeld;
 	bool isTunnelMode;
 
+	String swVersion;
 	uint32 ctagNum;
 	String currentVCG;
 	String currentGTP;

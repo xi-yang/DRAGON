@@ -28,6 +28,7 @@ void SwitchCtrl_Session_SubnetUNI::internalInit ()
     snmpSessionHandle = NULL; 
     uniSessionId = NULL; 
     uniState = 0; //Message::initApi
+    swVersion = "";
     ctagNum = 0;
     numGroups = 0;
     ptpCatUnit = CATUNIT_UNKNOWN;
@@ -482,6 +483,13 @@ void SwitchCtrl_Session_SubnetUNI::getTimeslots(SimpleList<uint8>& timeslots)
 /////// TL1 related commands  //////
 /////////////////////////////////
 
+String& SwitchCtrl_Session_SubnetUNI::getCienaSoftwareVersion()
+{
+    if (swVersion.empty())
+        getCienaSoftwareVersion_TL1(swVersion);
+    return swVersion;
+}
+
 void SwitchCtrl_Session_SubnetUNI::getCienaTimeslotsString(String& groupMemString)
 {
     SubnetUNI_Data* pUniData = isSource ? &subnetUniSrc : &subnetUniDest;
@@ -856,7 +864,49 @@ void SwitchCtrl_Session_SubnetUNI::getDTLString(String& dtlStr)
     return;
 }
 
-//ent-eflow::myeflow1:123:::ingressporttype=ettp,ingressportname=1-A-3-1-1, 
+//rtrv-eqpt::com:234;
+void getCienaSoftwareVersion_TL1(String &swVer)
+{
+    int ret = 0;
+    
+    sprintf(bufCmd, "rtrv-eqpt::com:234;", getNewCtag());
+    
+    if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
+    
+    sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
+    sprintf(strDENY, "M  %d DENY", getCurrentCtag());
+    ret = readShell(strCOMPLD, strDENY, 1, 5);
+    if (ret == 1)
+    {
+        ret = ReadShellPattern(bufCmd, (char*)",VRSN=", NULL, (char*)"PRDCTNAME=CoreDirector", NULL, 5);
+        if (ret != 1)
+            goto _out;
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", "getCienaSoftwareVersion_TL1", " retrieved Core Director version number.\n", bufCmd);
+        char* pVrsn = strstr(bufCmd, "VRSN="); 
+        pVsrn += 5;
+        *(pVsrn+8) = '\0';
+        swVersion = pVsrn;
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return true;
+    }
+    else if (ret == 2)
+    {
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", "getCienaSoftwareVersion_TL1", " failed to get Core Director version number.\n", bufCmd);
+        swVersion = "";
+        readShell(SWITCH_PROMPT, NULL, 1, 5);
+        return false;
+    }
+    else
+        goto _out;
+
+_out:
+        LOG(5)(Log::MPLS, "LSP=", currentLspName, ": ", "getCienaSoftwareVersion_TL1 via TL1_TELNET failed...\n", bufCmd);
+        swVersion = "";
+        return false;
+}
+
+//v5: ent-eflow::myeflow1:123:::ingressporttype=ettp,ingressportname=1-A-3-1-1, 
+//v6: ent-eflow::myeflow1:123::ingressporttype=ettp,ingressportname=1-A-3-1-1, 
 //pkttype=single_vlan_tag,outervlanidrange=1&&5,,priority=1&&8,egressporttype=vcg, 
 //egressportname=vcg02,cosmapping=cos_port_default;
 //
@@ -865,9 +915,22 @@ void SwitchCtrl_Session_SubnetUNI::getDTLString(String& dtlStr)
 bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow, int vlanHigh, int vlanTrunk)
 {
     int ret = 0;
+    char colonPadding[10];
     char packetType[100];
     char modificationRule[100];
     String suppTtp, ettpName;
+
+
+    String &swVrsn = getCienaSoftwareVersion();
+    if (swVrsn.empty())
+        goto _out;
+
+    if (swVrsn.leftequal("5."))
+        sprintf(colonPadding, ":::");
+    else if (swVrsn.leftequal("6."))
+        sprintf(colonPadding, "::");
+    else
+        goto _out;
 
     if (vlanLow == 0)
         sprintf(packetType, "pkttype=untagged_unicast,,");
@@ -898,8 +961,10 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_none,");
     }
 
-    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in:%d:::ingressporttype=ettp,ingressportname=%s,%s,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
-        vcgName.chars(), getNewCtag(), ettpName.chars(), packetType, vcgName.chars(), modificationRule);
+    if (swVrsn.leftequal("5")
+        
+    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in:%d%singressporttype=ettp,ingressportname=%s,%s,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
+        vcgName.chars(), getNewCtag(), colonPadding, ettpName.chars(), packetType, vcgName.chars(), modificationRule);
 
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
@@ -923,8 +988,8 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
 
     if (strncmp(packetType, "pkttype=untagged", 16) == 0)
     {
-        sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in_multicast:%d:::ingressporttype=ettp,ingressportname=%s,pkttype=untagged_multicast,,,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
-            vcgName.chars(), getNewCtag(), ettpName.chars(), vcgName.chars(), modificationRule);
+        sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in_multicast:%d%singressporttype=ettp,ingressportname=%s,pkttype=untagged_multicast,,,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
+            vcgName.chars(), getNewCtag(), colonPadding, ettpName.chars(), vcgName.chars(), modificationRule);
         if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
     
         sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
@@ -972,8 +1037,8 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_none,");
     }
 
-    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out:%d:::ingressporttype=vcg,ingressportname=%s,%s,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
-        vcgName.chars(), getNewCtag(), vcgName.chars(), packetType, ettpName.chars(), modificationRule);
+    sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out:%d%singressporttype=vcg,ingressportname=%s,%s,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
+        vcgName.chars(), getNewCtag(), colonPadding, vcgName.chars(), packetType, ettpName.chars(), modificationRule);
 
     if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
 
@@ -999,8 +1064,8 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
 
     if (strncmp(packetType, "pkttype=untagged", 16) == 0)
     {
-        sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out_multicast:%d:::ingressporttype=vcg,ingressportname=%s,pkttype=untagged_multicast,,,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
-            vcgName.chars(), getNewCtag(), vcgName.chars(), ettpName.chars(), modificationRule);
+        sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_out_multicast:%d%singressporttype=vcg,ingressportname=%s,pkttype=untagged_multicast,,,egressporttype=ettp,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
+            vcgName.chars(), getNewCtag(), colonPadding, vcgName.chars(), ettpName.chars(), modificationRule);
     
         if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
     
@@ -1920,16 +1985,26 @@ _out:
 }
 
 
-//rtrv-ocn::1-A-3-1:mytag;
+//v5: rtrv-ocn::1-A-3-1:mytag;
+//v6: rtrv-map::1-A-5-1:mytag;
+
 SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logicalPort)
 {
     int ret = 0;
     SONET_CATUNIT funcRet = CATUNIT_UNKNOWN;
     String OMPortString, ETTPString;
 
-    getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
+    String &swVrsn = getCienaSoftwareVersion();
+    if (swVrsn.empty())
+        goto _out;
 
-    sprintf(bufCmd, "rtrv-ocn::%s:%d;", OMPortString.chars(), getCurrentCtag());
+    getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
+    if (swVrsn.leftequal("5."))
+        sprintf(bufCmd, "rtrv-ocn::%s:%d;", OMPortString.chars(), getCurrentCtag());
+    else if (swVrsn.leftequal("6."))
+        sprintf(bufCmd, "rtrv-map::%s:%d;", OMPortString.chars(), getCurrentCtag());
+    else 
+        goto _out;
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
@@ -1938,7 +2013,13 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
     if (ret == 1) 
     {
         LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " concatenation type has been found.\n", bufCmd);
-        ret = ReadShellPattern(bufCmd, (char*)"Virtual 50MBPS", (char*)"Virtual 150MBPS", (char*)"OSPFCOST", NULL, 5);
+        if (swVrsn.leftequal("5."))
+            ret = ReadShellPattern(bufCmd, (char*)"Virtual 50MBPS", (char*)"Virtual 150MBPS", (char*)"OSPFCOST", NULL, 5);
+        else if(swVrsn.leftequal("6."))
+            ret = ReadShellPattern(bufCmd, (char*)"VIRTUAL_50MBPS", (char*)"VIRTUAL_150MBPS", (char*)"MAXETHERFRAMESIZE", NULL, 5);
+        else 
+            goto _out;
+
         if (ret == 1)
             funcRet = CATUNIT_50MBPS;
         else if (ret == 2)
