@@ -865,11 +865,11 @@ void SwitchCtrl_Session_SubnetUNI::getDTLString(String& dtlStr)
 }
 
 //rtrv-eqpt::com:234;
-void getCienaSoftwareVersion_TL1(String &swVer)
+void SwitchCtrl_Session_SubnetUNI::getCienaSoftwareVersion_TL1(String &swVrsn)
 {
     int ret = 0;
     
-    sprintf(bufCmd, "rtrv-eqpt::com:234;", getNewCtag());
+    sprintf(bufCmd, "rtrv-eqpt::com:%d;", getNewCtag());
     
     if ( (ret = writeShell((char*)bufCmd, 5)) < 0 ) goto _out;
     
@@ -883,18 +883,18 @@ void getCienaSoftwareVersion_TL1(String &swVer)
             goto _out;
         LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", "getCienaSoftwareVersion_TL1", " retrieved Core Director version number.\n", bufCmd);
         char* pVrsn = strstr(bufCmd, "VRSN="); 
-        pVsrn += 5;
-        *(pVsrn+8) = '\0';
-        swVersion = pVsrn;
+        pVrsn += 5;
+        *(pVrsn+8) = '\0';
+        swVersion = pVrsn;
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-        return true;
+        return;
     }
     else if (ret == 2)
     {
         LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", "getCienaSoftwareVersion_TL1", " failed to get Core Director version number.\n", bufCmd);
         swVersion = "";
         readShell(SWITCH_PROMPT, NULL, 1, 5);
-        return false;
+        return;
     }
     else
         goto _out;
@@ -902,7 +902,7 @@ void getCienaSoftwareVersion_TL1(String &swVer)
 _out:
         LOG(5)(Log::MPLS, "LSP=", currentLspName, ": ", "getCienaSoftwareVersion_TL1 via TL1_TELNET failed...\n", bufCmd);
         swVersion = "";
-        return false;
+        return;
 }
 
 //v5: ent-eflow::myeflow1:123:::ingressporttype=ettp,ingressportname=1-A-3-1-1, 
@@ -961,8 +961,6 @@ bool SwitchCtrl_Session_SubnetUNI::createEFLOWs_TL1(String& vcgName, int vlanLow
         sprintf(modificationRule+strlen(modificationRule), "tagstoadd=add_none,");
     }
 
-    if (swVrsn.leftequal("5")
-        
     sprintf(bufCmd, "ent-eflow::dcs_eflow_%s_in:%d%singressporttype=ettp,ingressportname=%s,%s,egressporttype=vcg,egressportname=%s,cosmapping=cos_port_default,%scollectpm=yes;",
         vcgName.chars(), getNewCtag(), colonPadding, ettpName.chars(), packetType, vcgName.chars(), modificationRule);
 
