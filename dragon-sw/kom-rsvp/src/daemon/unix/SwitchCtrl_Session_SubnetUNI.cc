@@ -878,15 +878,14 @@ void SwitchCtrl_Session_SubnetUNI::getCienaSoftwareVersion_TL1(String &swVrsn)
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1)
     {
-        ret = ReadShellPattern(bufCmd, (char*)",VRSN=", NULL, (char*)"PRDCTNAME=CoreDirector", NULL, 5);
+        ret = ReadShellPattern(bufCmd, (char*)",VRSN=", NULL, (char*)";", NULL, 5);
         if (ret != 1)
             goto _out;
         LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", "getCienaSoftwareVersion_TL1", " retrieved Core Director version number.\n", bufCmd);
         char* pVrsn = strstr(bufCmd, "VRSN="); 
         pVrsn += 5;
-        *(pVrsn+8) = '\0';
+        *(pVrsn+7) = '\0';
         swVersion = pVrsn;
-        readShell(SWITCH_PROMPT, NULL, 1, 5);
         return;
     }
     else if (ret == 2)
@@ -1238,11 +1237,6 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName, bool tunnelMod
     char ctag[10];
     String suppTtp, tunnelPeerName, groupMem;
 
-    sprintf(ctag, "%d", getNewCtag());
-
-    vcgName = "dcs_vcg_";
-    vcgName += (const char*)ctag;
-
     getCienaLogicalPortString(suppTtp, tunnelPeerName);
     getCienaTimeslotsString(groupMem);
     if ((groupMem).empty())
@@ -1251,6 +1245,10 @@ bool SwitchCtrl_Session_SubnetUNI::createVCG_TL1(String& vcgName, bool tunnelMod
         vcgName = "";
         return false;
     }
+
+    sprintf(ctag, "%d", getNewCtag());
+    vcgName = "dcs_vcg_";
+    vcgName += (const char*)ctag;
 
     String cmdString = "ent-vcg::name=";
     cmdString += vcgName;
@@ -1998,9 +1996,9 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
 
     getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
     if (swVrsn.leftequal("5."))
-        sprintf(bufCmd, "rtrv-ocn::%s:%d;", OMPortString.chars(), getCurrentCtag());
+        sprintf(bufCmd, "rtrv-ocn::%s:%d;", OMPortString.chars(), getNewCtag());
     else if (swVrsn.leftequal("6."))
-        sprintf(bufCmd, "rtrv-map::%s:%d;", OMPortString.chars(), getCurrentCtag());
+        sprintf(bufCmd, "rtrv-map::%s:%d;", OMPortString.chars(), getNewCtag());
     else 
         goto _out;
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
@@ -2010,7 +2008,6 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
     ret = readShell(strCOMPLD, strDENY, 1, 5);
     if (ret == 1) 
     {
-        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " concatenation type has been found.\n", bufCmd);
         if (swVrsn.leftequal("5."))
             ret = ReadShellPattern(bufCmd, (char*)"Virtual 50MBPS", (char*)"Virtual 150MBPS", (char*)"OSPFCOST", NULL, 5);
         else if(swVrsn.leftequal("6."))
@@ -2018,6 +2015,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
         else 
             goto _out;
 
+        LOG(6)(Log::MPLS, "LSP=", currentLspName, ": Get ", OMPortString, " concatenation type.\n", bufCmd);
         if (ret == 1)
             funcRet = CATUNIT_50MBPS;
         else if (ret == 2)
@@ -2035,7 +2033,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
         goto _out;
 
 _out:
-    if (CATUNIT_UNKNOWN == funcRet)
+    if (funcRet == CATUNIT_UNKNOWN)
     {
         LOG(6)(Log::MPLS, "LSP=", currentLspName, ": ", OMPortString, " concatenation type checking via TL1_TELNET failed...\n", bufCmd);
     }
@@ -2057,7 +2055,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapOCN_TL1(uint8 *ts_bitmask, ui
 
     getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
 
-    sprintf(bufCmd, "rtrv-ocn::%s:%d;", OMPortString.chars(), getCurrentCtag());
+    sprintf(bufCmd, "rtrv-ocn::%s:%d;", OMPortString.chars(), getNewCtag());
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
@@ -2112,7 +2110,7 @@ bool SwitchCtrl_Session_SubnetUNI::syncTimeslotsMapVCG_TL1(uint8 *ts_bitmask, ui
 
     getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
 
-    sprintf(bufCmd, "rtrv-vcg::all:%d;\r", getCurrentCtag());
+    sprintf(bufCmd, "rtrv-vcg::all:%d;\r", getNewCtag());
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
@@ -2346,7 +2344,7 @@ bool SwitchCtrl_Session_SubnetUNI::hasSystemSNCHolindgCurrentVCG_TL1(bool& noErr
     getCienaLogicalPortString(OMPortString, ETTPString, ntohl(pUniData->logical_port));
     sprintf(fromEndPointPattern2, "_%s_S", OMPortString.chars());
 
-    sprintf(bufCmd, "rtrv-snc-stspc::all:%d;\r", getCurrentCtag());
+    sprintf(bufCmd, "rtrv-snc-stspc::all:%d;\r", getNewCtag());
     if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
     sprintf(strCOMPLD, "M  %d COMPLD", getCurrentCtag());
