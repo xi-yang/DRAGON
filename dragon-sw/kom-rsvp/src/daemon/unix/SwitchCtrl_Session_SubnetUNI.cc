@@ -716,7 +716,11 @@ void SwitchCtrl_Session_SubnetUNI::getCienaLogicalPortString(String& OMPortStrin
         shelf_alpha = 'X';
         break;
     }
-    sprintf(bufCmd, "%d-%c-%d-%d", bay, shelf_alpha, slot, subslot);
+    String &swVrsn = getCienaSoftwareVersion();
+    if (swVrsn.leftequal("5."))
+        sprintf(bufCmd, "%d-%c-%d-%d", bay, shelf_alpha, slot, subslot);
+    else //CD v6 or higher
+        sprintf(bufCmd, "%d-%c-%d-1", bay, shelf_alpha, slot);
     OMPortString = (const char*)bufCmd;
     sprintf(bufCmd, "%d-%c-%d-%d-%d", bay, shelf_alpha, slot, subslot, port);
     ETTPString = (const char*)bufCmd;
@@ -1981,7 +1985,7 @@ _out:
 }
 
 
-//v5: rtrv-ocn::1-A-3-1:mytag;
+//v5: rtrv-ocn::1-A-5-1:mytag;
 //v6: rtrv-map::1-A-5-1:mytag;
 
 SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logicalPort)
@@ -1997,7 +2001,7 @@ SONET_CATUNIT SwitchCtrl_Session_SubnetUNI::getConcatenationUnit_TL1(uint32 logi
     getCienaLogicalPortString(OMPortString, ETTPString, logicalPort);
     if (swVrsn.leftequal("5."))
         sprintf(bufCmd, "rtrv-ocn::%s:%d;", OMPortString.chars(), getNewCtag());
-    else if (swVrsn.leftequal("6."))
+    else if (swVrsn.leftequal("6.")) 
         sprintf(bufCmd, "rtrv-map::%s:%d;", OMPortString.chars(), getNewCtag());
     else 
         goto _out;
