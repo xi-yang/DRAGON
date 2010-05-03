@@ -49,7 +49,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
 {
     int n;
     char portName[50], vlanNum[10], action[50], portClassMap[50], portPolicyMap[50], vlanPolicyMap[50];
-    int committed_rate_int = (int)committed_rate;
+    long long committed_rate_int = (long long)committed_rate;
 
     if (committed_rate_int < 1 || !preAction())
         return false;
@@ -150,7 +150,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
             burst_size = 500000;
         else
             burst_size *= 1000;
-        sprintf(action, "police %d %d exceed-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
+        sprintf(action, "police %lld %d exceed-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
         DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
@@ -341,7 +341,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::limitOutputBandwidth(bool do_undo,  ui
 {
     int n;
     char vlanPolicyMap[50];
-    int committed_rate_int = (int)committed_rate;
+    long long committed_rate_int = (long long)committed_rate;
     if (committed_rate_int < 1 || !preAction())
         return false;
 

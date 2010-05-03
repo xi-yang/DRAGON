@@ -49,7 +49,7 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
     int n;
     uint32 port,slot, shelf;
     char portName[50], vlanNum[10], action[100], policyMapName[100];
-    int committed_rate_int = (int)committed_rate;
+    long long committed_rate_int = (long long)committed_rate;
 
     if (committed_rate_int < 1 || !preAction())
         return false;
@@ -74,7 +74,7 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
             burst_size *= 1000;
         if (peak_burst_size <= 500) 
             peak_burst_size = burst_size;
-        sprintf(action, "police %d %d %d conform-action transmit exceed-action drop violate-action drop", 
+        sprintf(action, "police %lld %d %d conform-action transmit exceed-action drop violate-action drop", 
     		committed_rate_int, burst_size, peak_burst_size); //excess burst size = peak_burst_size -burst_size
         DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( policyMapName, 5)) ;
