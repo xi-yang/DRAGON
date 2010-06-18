@@ -33,18 +33,18 @@ public:
 
 	virtual bool preAction();
 	virtual bool postAction();
+	///////////------VLAN Functions ------/////////
+	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID);
+	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
+	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID);
+	virtual bool hook_createVLAN(const uint32 vlanID);
+	virtual bool hook_removeVLAN(const uint32 vlanID);
+    virtual bool hook_isVLANEmpty(const vlanPortMap &vpm);
 	///////////------QoS Functions ------/////////
 	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
-
 	//Vendor/Model specific hook functions --> not used (for compile only)
-	virtual bool movePortToVLANAsTagged(uint32 port, uint32 vlanID)  { return false;}
-	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID)  { return false;}
-	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID)  { return false;}
-	virtual bool hook_createVLAN(const uint32 vlanID) { return false;}
-	virtual bool hook_removeVLAN(const uint32 vlanID) { return false;}
-	virtual bool hook_isVLANEmpty(const vlanPortMap &vpm) { return false;}
-       virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars) { }
+    virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars) { }
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port) { return false;}
 	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID) { return false;}
 	friend class SwitchCtrl_Session_Catalyst6500;

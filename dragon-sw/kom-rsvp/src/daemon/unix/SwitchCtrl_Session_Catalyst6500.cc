@@ -43,6 +43,197 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::postAction()
     return true;
 }
 
+virtual bool SwitchCtrl_Session_Catalyst6500_CLI::movePortToVLANAsTagged(uint32 portID, uint32 vlanID)
+{
+    int n;
+    uint32 port_part,slot_part;
+    char portName[16], vlanNum[16];
+
+    port_part=(portID)&0xff;     
+    slot_part=(portID>>8)&0xf;
+    switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
+    case SLOT_TYPE_GIGE:
+        sprintf(portName, "gi%d/%d",slot_part,port_part);
+        break;
+    case SLOT_TYPE_TENGIGE:
+        sprintf(portName, "te%d/%d",slot_part,port_part);
+        break;
+    case SLOT_TYPE_ILLEGAL:
+    default:
+        return false;
+    }
+
+    if (!preAction())
+        return false;
+
+    sprintf(vlanNum, "%d", vlanID);
+    
+    DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( portName, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_EQUAL(n, 2);
+    
+    DIE_IF_NEGATIVE(n = writeShell( "switchport trunk allowed vlan add ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_EQUAL(n, 2);
+
+    return postAction();
+}
+
+
+virtual bool SwitchCtrl_Session_Catalyst6500_CLI::movePortToVLANAsUntagged(uint32 portID, uint32 vlanID)
+{
+    int n;
+    uint32 port_part,slot_part;
+    char portName[16], vlanNum[16];
+    
+    port_part=(portID)&0xff;     
+    slot_part=(portID>>8)&0xf;
+    switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
+    case SLOT_TYPE_GIGE:
+        sprintf(portName, "gi%d/%d",slot_part,port_part);
+        break;
+    case SLOT_TYPE_TENGIGE:
+        sprintf(portName, "te%d/%d",slot_part,port_part);
+        break;
+    case SLOT_TYPE_ILLEGAL:
+    default:
+        return false;
+    }
+
+    if (!preAction())
+        return false;
+
+    sprintf(vlanNum, "%d", vlanID);
+    
+    DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( portName, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_EQUAL(n, 2);
+    
+    DIE_IF_NEGATIVE(n = writeShell( "switchport access vlan ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_EQUAL(n, 2);
+
+    return postAction();
+
+}
+
+// for trunk/tagged port only
+virtual bool SwitchCtrl_Session_Catalyst6500_CLI::removePortFromVLAN(uint32 portID, uint32 vlanID)
+{
+    int n;
+    uint32 port_part,slot_part;
+    char portName[16], vlanNum[16];
+    
+    // add port to VLAN
+    port_part=(portID)&0xff;     
+    slot_part=(portID>>8)&0xf;
+    switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
+    case SLOT_TYPE_GIGE:
+        sprintf(portName, "gi%d/%d",slot_part,port_part);
+        break;
+    case SLOT_TYPE_TENGIGE:
+        sprintf(portName, "te%d/%d",slot_part,port_part);
+        break;
+    case SLOT_TYPE_ILLEGAL:
+    default:
+        return false;
+    }
+
+    if (!preAction())
+        return false;
+
+    sprintf(vlanNum, "%d", vlanID);
+    
+    DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( portName, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_EQUAL(n, 2);
+    
+    DIE_IF_NEGATIVE(n = writeShell( "switchport trunk allowed vlan remove ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_EQUAL(n, 2);
+
+    return postAction();
+}
+
+virtual bool SwitchCtrl_Session_Catalyst6500_CLI::hook_createVLAN(const uint32 vlanID)
+{
+    int n;
+    char vlanNum[16];
+
+    if (!preAction())
+        return false;
+
+    sprintf(vlanNum, "%d", vlanID);
+    
+    DIE_IF_NEGATIVE(n = writeShell( "vlan ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_EQUAL(n, 2);
+
+    return postAction();
+}
+virtual bool SwitchCtrl_Session_Catalyst6500_CLI::hook_removeVLAN(const uint32 vlanID)
+{
+    int n;
+    char vlanNum[16];
+
+    if (!preAction())
+        return false;
+
+    sprintf(vlanNum, "%d", vlanID);
+    
+    DIE_IF_NEGATIVE(n = writeShell( "no vlan ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_EQUAL(n, 2);
+
+    return postAction();
+}
+
+virtual bool SwitchCtrl_Session_Catalyst6500_CLI::hook_isVLANEmpty(const vlanPortMap &vpm)
+{
+    int n;
+    char vlanNum[16];
+    char buf[1024];
+
+    if (!preAction())
+        return false;
+
+    sprintf(vlanNum, "%d", vlanID);
+    
+    DIE_IF_NEGATIVE(n = writeShell( "exit\n", 5));
+    DIE_IF_NEGATIVE(n = writeShell( "show vlan ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    n= ReadShellPattern(buf, "active    Gi",  "active    Te", "#", CISCO_ERROR_PROMPT, 5);
+    if (n == 0)
+        return true;
+    //no postAction()
+    return false; //matching pattern 1 or 2 or there is error
+}
+
 //committed_rate in bit/second, burst_size in bytes
 bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
@@ -588,27 +779,34 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
 
     if (isPortTrunking(port))
         PortTrunkingOff(port);
-
+    
     PortStaticAccessOn(port);
 
-    port_id = hook_convertPortIDToInterface(port);
-    port_bit = convertUnifiedPort2Catalyst6500(port);
-    if (port_bit == 0)
-    {
-        LOG(2)( Log::MPLS, "VLSR: SNMP: Unknown port ", port);
-        return false;
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {    
+        if (!cliSession.movePortToVLANAsUntagged(port, vlanID))
+            return false;
     }
-
-    String tag_oid_str = ".1.3.6.1.4.1.9.9.68.1.2.2.1.2";
-    sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
-    type='i'; 
-    sprintf(value, "%d", vlanID);
-    if (!SNMPSet(oid_str, type, value)) 
+    else // SNMP
     {
-        LOG(3)( Log::MPLS, "VLSR: SNMP: Moving port ", port, "failed.");
-        return false;
-    }
+        port_id = hook_convertPortIDToInterface(port);
+        port_bit = convertUnifiedPort2Catalyst6500(port);
+        if (port_bit == 0)
+        {
+            LOG(2)( Log::MPLS, "VLSR: SNMP: Unknown port ", port);
+            return false;
+        }
 
+        String tag_oid_str = ".1.3.6.1.4.1.9.9.68.1.2.2.1.2";
+        sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
+        type='i'; 
+        sprintf(value, "%d", vlanID);
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+            LOG(3)( Log::MPLS, "VLSR: SNMP: Moving port ", port, "failed.");
+            return false;
+        }
+    }
     int old_vlan = getVLANbyUntaggedPort(port);
     if (old_vlan) { //Remove untagged port from old VLAN
         //uint32 mask=(~(1<<(32-port))) & 0xFFFFFFFF;
@@ -672,61 +870,70 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged(uint32 port, uint32
           PortTrunkingOn(port);
        }
     }
-    else PortTrunkingOn(port);
-        
-    // Get the current vlan mapping for the port
-    port_id = hook_convertPortIDToInterface(port);
-    port_bit = convertUnifiedPort2Catalyst6500(port);
-    if (port_bit == 0)
+    else 
+        PortTrunkingOn(port);
+
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {
-        LOG(2)( Log::MPLS, "VLSR: SNMP: Unknown port ", port);
-        return false;
+        if (!cliSession.movePortToVLANAsTagged(port, vlanID))
+            return false;
     }
-
-    sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
-    status = read_objid(oid_str, anOID, &anOID_len);
-
-    // Create the PDU for the data for our request.
-    pdu = snmp_pdu_create(SNMP_MSG_GET);
-    snmp_add_null_var(pdu, anOID, anOID_len);
-    // Send the Request out.
-    status = snmp_synch_response(snmpSessionHandle, pdu, &response);
-    if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
+    else // SNMP
     {
-       vars = response->variables;
-	hook_getVlanMapFromSnmpVars(vlanmap, vars);
-    	snmp_free_pdu(response);
-    }
-    else {
-       if (status == STAT_SUCCESS){
-          LOG(4)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, "failed. Reason : ", snmp_errstring(response->errstat));
-       }
-       else {
-      	   snmp_sess_perror("snmpset", snmpSessionHandle);
-          LOG(3)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, " failed with STAT_ERROR returned");
-       }
-       if(response) snmp_free_pdu(response);
-       return false;
-    }
-   
-    uint8 mask=((1<<(7-(vlanID%8)))) & 0xFF;
-    vlanmap.vlanbits[vlanID/8 - ((uint32)(vlanID-1)/1024)*128] |= mask;
+        // Get the current vlan mapping for the port
+        port_id = hook_convertPortIDToInterface(port);
+        port_bit = convertUnifiedPort2Catalyst6500(port);
+        if (port_bit == 0)
+        {
+            LOG(2)( Log::MPLS, "VLSR: SNMP: Unknown port ", port);
+            return false;
+        }
 
-    // Set the vlan mapping for the port
-    sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
-    value[0] = 0;
-    for (i = 0; i < 128; i++) {
-        snprintf(oct, 3, "%.2x", vlanmap.vlanbits[i]);
-	strcat(value,oct);
-    }
-    type='x';
+        sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
+        status = read_objid(oid_str, anOID, &anOID_len);
 
-    if (!SNMPSet(oid_str, type, value)) 
-    {
-       LOG(3)( Log::MPLS, "VLSR: SNMP: Setting Vlan map of Trunk port ", port, "failed.");
-       return false;
+        // Create the PDU for the data for our request.
+        pdu = snmp_pdu_create(SNMP_MSG_GET);
+        snmp_add_null_var(pdu, anOID, anOID_len);
+        // Send the Request out.
+        status = snmp_synch_response(snmpSessionHandle, pdu, &response);
+        if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
+        {
+           vars = response->variables;
+    	hook_getVlanMapFromSnmpVars(vlanmap, vars);
+        	snmp_free_pdu(response);
+        }
+        else {
+           if (status == STAT_SUCCESS){
+              LOG(4)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, "failed. Reason : ", snmp_errstring(response->errstat));
+           }
+           else {
+          	   snmp_sess_perror("snmpset", snmpSessionHandle);
+              LOG(3)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, " failed with STAT_ERROR returned");
+           }
+           if(response) snmp_free_pdu(response);
+           return false;
+        }
+       
+        uint8 mask=((1<<(7-(vlanID%8)))) & 0xFF;
+        vlanmap.vlanbits[vlanID/8 - ((uint32)(vlanID-1)/1024)*128] |= mask;
+
+        // Set the vlan mapping for the port
+        sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
+        value[0] = 0;
+        for (i = 0; i < 128; i++) {
+            snprintf(oct, 3, "%.2x", vlanmap.vlanbits[i]);
+    	strcat(value,oct);
+        }
+        type='x';
+
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+           LOG(3)( Log::MPLS, "VLSR: SNMP: Setting Vlan map of Trunk port ", port, "failed.");
+           return false;
+        }
     }
-   
+
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
         SetBit(vpmAll->portbits, port_bit-1);
@@ -781,7 +988,7 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
         return false;
     }
 
-    // We only need the remove the port if the port is Trunkport	
+    // We only need to "remove" the port if the port is Trunkport	
     if (!isPortTrunking(port)) {
         // Set access VLAN ID to 1 (default)
         String tag_oid_str = ".1.3.6.1.4.1.9.9.68.1.2.2.1.2";
@@ -801,49 +1008,57 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
     if (!isSwitchport(port))
         return false;
 
-    // Get the current vlan mapping for the port
-    sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
-    status = read_objid(oid_str, anOID, &anOID_len);
-
-    // Create the PDU for the data for our request.
-    pdu = snmp_pdu_create(SNMP_MSG_GET);
-    snmp_add_null_var(pdu, anOID, anOID_len);
-    // Send the Request out.
-    status = snmp_synch_response(snmpSessionHandle, pdu, &response);
-    if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {
-       vars = response->variables;
-	hook_getVlanMapFromSnmpVars(vlanmap, vars);
-    	snmp_free_pdu(response);
+        if (!cliSession.removePortFromVLAN(port, vlanID))
+            return false;
     }
-    else {
-       if (status == STAT_SUCCESS){
-          LOG(4)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, " failed. Reason : ", snmp_errstring(response->errstat));
-       }
-       else {
-      	   snmp_sess_perror("snmpset", snmpSessionHandle);
-          LOG(3)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, " failed with STAT_ERROR returned");
-       }
-       if(response) snmp_free_pdu(response);
-       return false;
-    }
-   
-    mask =(~(1<<(7-(vlanID%8)))) & 0xFF;
-    vlanmap.vlanbits[vlanID/8 - ((uint32)(vlanID-1)/1024)*128] &= mask;
-
-    // Set the vlan mapping for the port
-    sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
-    value[0] = 0;
-    for (i = 0; i < 128; i++) {
-        snprintf(oct, 3, "%.2x", vlanmap.vlanbits[i]);
-	strcat(value,oct);
-    }
-    type='x';
-
-    if (!SNMPSet(oid_str, type, value)) 
+    else // SNMP
     {
-       LOG(3)( Log::MPLS, "VLSR: SNMP: Setting Vlan map of Trunk port ", port, "failed.");
-       return false;
+        // Get the current vlan mapping for the port
+        sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
+        status = read_objid(oid_str, anOID, &anOID_len);
+
+        // Create the PDU for the data for our request.
+        pdu = snmp_pdu_create(SNMP_MSG_GET);
+        snmp_add_null_var(pdu, anOID, anOID_len);
+        // Send the Request out.
+        status = snmp_synch_response(snmpSessionHandle, pdu, &response);
+        if (status == STAT_SUCCESS && response->errstat == SNMP_ERR_NOERROR) 
+        {
+           vars = response->variables;
+    	hook_getVlanMapFromSnmpVars(vlanmap, vars);
+        	snmp_free_pdu(response);
+        }
+        else {
+           if (status == STAT_SUCCESS){
+              LOG(4)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, " failed. Reason : ", snmp_errstring(response->errstat));
+           }
+           else {
+          	   snmp_sess_perror("snmpset", snmpSessionHandle);
+              LOG(3)( Log::MPLS, "VLSR: SNMP: Reading Vlan map of Trunk port ", port, " failed with STAT_ERROR returned");
+           }
+           if(response) snmp_free_pdu(response);
+           return false;
+        }
+       
+        mask =(~(1<<(7-(vlanID%8)))) & 0xFF;
+        vlanmap.vlanbits[vlanID/8 - ((uint32)(vlanID-1)/1024)*128] &= mask;
+
+        // Set the vlan mapping for the port
+        sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
+        value[0] = 0;
+        for (i = 0; i < 128; i++) {
+            snprintf(oct, 3, "%.2x", vlanmap.vlanbits[i]);
+    	strcat(value,oct);
+        }
+        type='x';
+
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+           LOG(3)( Log::MPLS, "VLSR: SNMP: Setting Vlan map of Trunk port ", port, "failed.");
+           return false;
+        }
     }
 
 _update_vpm:
@@ -880,50 +1095,56 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createVLAN(const uint32 vlanID)
 
     if (!active) //not initialized or session has been disconnected
         return false;
-
-    String tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
-    sprintf(oid_str, "%s", tag_oid_str.chars());
-    strcpy(value, "2");
-    type='i'; 
-    if (!SNMPSet(oid_str, type, value)) 
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {
-        LOG(3)( Log::MPLS, "VLSR: SNMP: Creating rows in the vtpVlanEditTable for the new VLAN ", vlanID, "failed.");
-        return false;
+        if (!cliSession.hook_createVLAN(vlanID))
+            return false;
     }
-
-    // Create the VLAN using SNMP request
-    tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.2.1.11.1";
-    sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
-    strcpy(value, "4");
-    type='i'; 
-    if (!SNMPSet(oid_str, type, value)) 
+    else // SNMP
     {
-        LOG(3)( Log::MPLS, "VLSR: SNMP: Creating VLAN ", vlanID, "failed. ");
-        return false;
-    } 
+        String tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
+        sprintf(oid_str, "%s", tag_oid_str.chars());
+        strcpy(value, "2");
+        type='i'; 
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+            LOG(3)( Log::MPLS, "VLSR: SNMP: Creating rows in the vtpVlanEditTable for the new VLAN ", vlanID, "failed.");
+            return false;
+        }
 
-    // Set the type of VLAN to 'ethernet' 
-    tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.2.1.3.1";
-    sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
-    strcpy(value, "1");
-    type='i'; 
-    if (!SNMPSet(oid_str, type, value)) 
-    {
-        LOG(3)( Log::MPLS, "VLSR: SNMP: Setting the type of VLAN ", vlanID, "to 'ethernet' failed. ");
-        return false;
-    } 
+        // Create the VLAN using SNMP request
+        tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.2.1.11.1";
+        sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
+        strcpy(value, "4");
+        type='i'; 
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+            LOG(3)( Log::MPLS, "VLSR: SNMP: Creating VLAN ", vlanID, "failed. ");
+            return false;
+        } 
 
-    // Apply the VLAN creation request 
-    tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
-    sprintf(oid_str, "%s", tag_oid_str.chars());
-    strcpy(value, "3");
-    type='i'; 
-    if (!SNMPSet(oid_str, type, value)) 
-    {
-        LOG(1)( Log::MPLS, "VLSR: SNMP: Applying the VLAN creation request failed.");
-        return false;
+        // Set the type of VLAN to 'ethernet' 
+        tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.2.1.3.1";
+        sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
+        strcpy(value, "1");
+        type='i'; 
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+            LOG(3)( Log::MPLS, "VLSR: SNMP: Setting the type of VLAN ", vlanID, "to 'ethernet' failed. ");
+            return false;
+        } 
+
+        // Apply the VLAN creation request 
+        tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
+        sprintf(oid_str, "%s", tag_oid_str.chars());
+        strcpy(value, "3");
+        type='i'; 
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+            LOG(1)( Log::MPLS, "VLSR: SNMP: Applying the VLAN creation request failed.");
+            return false;
+        }
     }
-
     //add the new *empty* vlan into PortMapListAll and portMapListUntagged
     vlanPortMap vpm;
     memset(&vpm, 0, sizeof(vlanPortMap));
@@ -952,53 +1173,58 @@ bool SwitchCtrl_Session_Catalyst6500::hook_removeVLAN(const uint32 vlanID)
     if (!active) //not initialized or session has been disconnected
         return false;
 
-    // Create a rows in the vtpVlanEditTable for the new VLAN using SNMP request
-    String tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
-    sprintf(oid_str, "%s", tag_oid_str.chars());
-    strcpy(value, "2");
-    type='i'; 
-    if (!SNMPSet(oid_str, type, value)) 
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {
-        LOG(3)( Log::MPLS, "VLSR: SNMP: Locking the vtpVlanEditTable for editing to remove VLAN ", vlanID , "failed. ");
-        return false;
+        if (!cliSession.hook_removeVLAN(vlanID))
+            return false;
     }
-
-
-    // Delete the VLAN using SNMP request
-    tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.2.1.11.1";
-    sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
-    strcpy(value, "6");
-    type='i'; 
-    if (!SNMPSet(oid_str, type, value)) 
+    else // SNMP
     {
-        LOG(3)( Log::MPLS, "VLSR: SNMP: Removing VLAN ", vlanID , "failed. ");
-        return false;
+        // Create a rows in the vtpVlanEditTable for the new VLAN using SNMP request
+        String tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
+        sprintf(oid_str, "%s", tag_oid_str.chars());
+        strcpy(value, "2");
+        type='i'; 
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+            LOG(3)( Log::MPLS, "VLSR: SNMP: Locking the vtpVlanEditTable for editing to remove VLAN ", vlanID , "failed. ");
+            return false;
+        }
+
+
+        // Delete the VLAN using SNMP request
+        tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.2.1.11.1";
+        sprintf(oid_str, "%s.%d", tag_oid_str.chars(), vlanID);
+        strcpy(value, "6");
+        type='i'; 
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+            LOG(3)( Log::MPLS, "VLSR: SNMP: Removing VLAN ", vlanID , "failed. ");
+            return false;
+        }
+
+        // Apply the VLAN removal  request 
+        tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
+        sprintf(oid_str, "%s", tag_oid_str.chars());
+        strcpy(value, "3");
+        type='i'; 
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+            LOG(1)( Log::MPLS, "VLSR: SNMP: Applying the VLAN removal request failed.");
+            return false;
+        }
+        
+        // Release the Lock of the VLAN table 
+        tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
+        sprintf(oid_str, "%s", tag_oid_str.chars());
+        strcpy(value, "4");
+        type='i'; 
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+            LOG(1)( Log::MPLS, "VLSR: SNMP: Releasing the Lock of the VLAN table after VLAN removal failed.");
+            return false;
+        } 
     }
-
-    // Apply the VLAN removal  request 
-    tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
-    sprintf(oid_str, "%s", tag_oid_str.chars());
-    strcpy(value, "3");
-    type='i'; 
-    if (!SNMPSet(oid_str, type, value)) 
-    {
-        LOG(1)( Log::MPLS, "VLSR: SNMP: Applying the VLAN removal request failed.");
-        return false;
-    }
-
-    // Removal of vlan info from PortMapListAll and portMapListUntagged is performed in removeVLAN (caller)
-
-    // Release the Lock of the VLAN table 
-    tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
-    sprintf(oid_str, "%s", tag_oid_str.chars());
-    strcpy(value, "4");
-    type='i'; 
-    if (!SNMPSet(oid_str, type, value)) 
-    {
-        LOG(1)( Log::MPLS, "VLSR: SNMP: Releasing the Lock of the VLAN table after VLAN removal failed.");
-        return false;
-    } 
-
     return true;
 }
 
@@ -1006,6 +1232,13 @@ bool SwitchCtrl_Session_Catalyst6500::hook_isVLANEmpty(const vlanPortMap &vpm)
 {
     uint8 portbits[MAX_VLAN_PORT_BYTES];
     memset(portbits, 0, MAX_VLAN_PORT_BYTES);
+
+
+    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
+    {
+        if (!cliSession.hook_isVLANEmpty(vpm))
+            return false;
+    }
     return (memcmp(vpm.portbits, portbits, MAX_VLAN_PORT_BYTES) == 0);
 }
 
