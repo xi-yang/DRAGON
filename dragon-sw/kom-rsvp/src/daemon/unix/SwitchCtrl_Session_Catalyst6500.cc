@@ -43,7 +43,7 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::postAction()
     return true;
 }
 
-virtual bool SwitchCtrl_Session_Catalyst6500_CLI::movePortToVLANAsTagged(uint32 portID, uint32 vlanID)
+bool SwitchCtrl_Session_Catalyst6500_CLI::movePortToVLANAsTagged(uint32 portID, uint32 vlanID)
 {
     int n;
     uint32 port_part,slot_part;
@@ -86,7 +86,7 @@ virtual bool SwitchCtrl_Session_Catalyst6500_CLI::movePortToVLANAsTagged(uint32 
 }
 
 
-virtual bool SwitchCtrl_Session_Catalyst6500_CLI::movePortToVLANAsUntagged(uint32 portID, uint32 vlanID)
+bool SwitchCtrl_Session_Catalyst6500_CLI::movePortToVLANAsUntagged(uint32 portID, uint32 vlanID)
 {
     int n;
     uint32 port_part,slot_part;
@@ -130,7 +130,7 @@ virtual bool SwitchCtrl_Session_Catalyst6500_CLI::movePortToVLANAsUntagged(uint3
 }
 
 // for trunk/tagged port only
-virtual bool SwitchCtrl_Session_Catalyst6500_CLI::removePortFromVLAN(uint32 portID, uint32 vlanID)
+bool SwitchCtrl_Session_Catalyst6500_CLI::removePortFromVLAN(uint32 portID, uint32 vlanID)
 {
     int n;
     uint32 port_part,slot_part;
@@ -173,7 +173,7 @@ virtual bool SwitchCtrl_Session_Catalyst6500_CLI::removePortFromVLAN(uint32 port
     return postAction();
 }
 
-virtual bool SwitchCtrl_Session_Catalyst6500_CLI::hook_createVLAN(const uint32 vlanID)
+bool SwitchCtrl_Session_Catalyst6500_CLI::hook_createVLAN(const uint32 vlanID)
 {
     int n;
     char vlanNum[16];
@@ -192,7 +192,7 @@ virtual bool SwitchCtrl_Session_Catalyst6500_CLI::hook_createVLAN(const uint32 v
 
     return postAction();
 }
-virtual bool SwitchCtrl_Session_Catalyst6500_CLI::hook_removeVLAN(const uint32 vlanID)
+bool SwitchCtrl_Session_Catalyst6500_CLI::hook_removeVLAN(const uint32 vlanID)
 {
     int n;
     char vlanNum[16];
@@ -212,7 +212,7 @@ virtual bool SwitchCtrl_Session_Catalyst6500_CLI::hook_removeVLAN(const uint32 v
     return postAction();
 }
 
-virtual bool SwitchCtrl_Session_Catalyst6500_CLI::hook_isVLANEmpty(const vlanPortMap &vpm)
+bool SwitchCtrl_Session_Catalyst6500_CLI::hook_isVLANEmpty(const vlanPortMap &vpm)
 {
     int n;
     char vlanNum[16];
@@ -221,13 +221,13 @@ virtual bool SwitchCtrl_Session_Catalyst6500_CLI::hook_isVLANEmpty(const vlanPor
     if (!preAction())
         return false;
 
-    sprintf(vlanNum, "%d", vlanID);
+    sprintf(vlanNum, "%d", vpm.vid);
     
     DIE_IF_NEGATIVE(n = writeShell( "exit\n", 5));
     DIE_IF_NEGATIVE(n = writeShell( "show vlan ", 5));
     DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
-    n= ReadShellPattern(buf, "active    Gi",  "active    Te", "#", CISCO_ERROR_PROMPT, 5);
+    n= ReadShellPattern(buf, (char*)"active    Gi",  (char*)"active    Te", (char*)"#", (char*)CISCO_ERROR_PROMPT, 5);
     if (n == 0)
         return true;
     //no postAction()
@@ -1144,7 +1144,19 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createVLAN(const uint32 vlanID)
             LOG(1)( Log::MPLS, "VLSR: SNMP: Applying the VLAN creation request failed.");
             return false;
         }
-    }
+
+        // Release the Lock of the VLAN table 
+        tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
+        sprintf(oid_str, "%s", tag_oid_str.chars());
+        strcpy(value, "4");
+        type='i'; 
+        if (!SNMPSet(oid_str, type, value)) 
+        {
+            LOG(1)( Log::MPLS, "VLSR: SNMP: Releasing the Lock of the VLAN table creation failed.");
+            return false;
+        } 
+   }
+
     //add the new *empty* vlan into PortMapListAll and portMapListUntagged
     vlanPortMap vpm;
     memset(&vpm, 0, sizeof(vlanPortMap));
@@ -1152,17 +1164,6 @@ bool SwitchCtrl_Session_Catalyst6500::hook_createVLAN(const uint32 vlanID)
     vlanPortMapListAll.push_back(vpm);
     memset(vpm.portbits, 0, MAX_VLAN_PORT_BYTES);
     vlanPortMapListUntagged.push_back(vpm);
-
-    // Release the Lock of the VLAN table 
-    tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.4.1.1.1.1";
-    sprintf(oid_str, "%s", tag_oid_str.chars());
-    strcpy(value, "4");
-    type='i'; 
-    if (!SNMPSet(oid_str, type, value)) 
-    {
-        LOG(1)( Log::MPLS, "VLSR: SNMP: Releasing the Lock of the VLAN table creation failed.");
-        return false;
-    } 
 
     return true;
 }
