@@ -1237,8 +1237,7 @@ bool SwitchCtrl_Session_Catalyst6500::hook_isVLANEmpty(const vlanPortMap &vpm)
 
     if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {
-        if (!cliSession.hook_isVLANEmpty(vpm))
-            return false;
+        return cliSession.hook_isVLANEmpty(vpm);
     }
     return (memcmp(vpm.portbits, portbits, MAX_VLAN_PORT_BYTES) == 0);
 }
