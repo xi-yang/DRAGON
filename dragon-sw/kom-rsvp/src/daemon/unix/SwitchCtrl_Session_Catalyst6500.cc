@@ -782,6 +782,14 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
     
     PortStaticAccessOn(port);
 
+    port_id = hook_convertPortIDToInterface(port);
+    port_bit = convertUnifiedPort2Catalyst6500(port);
+    if (port_bit == 0)
+    {
+        LOG(2)( Log::MPLS, "VLSR: SNMP: Unknown port ", port);
+        return false;
+    }
+    
     if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {    
         if (!cliSession.movePortToVLANAsUntagged(port, vlanID))
@@ -789,21 +797,13 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged(uint32 port, uint
     }
     else // SNMP
     {
-        port_id = hook_convertPortIDToInterface(port);
-        port_bit = convertUnifiedPort2Catalyst6500(port);
-        if (port_bit == 0)
-        {
-            LOG(2)( Log::MPLS, "VLSR: SNMP: Unknown port ", port);
-            return false;
-        }
-
         String tag_oid_str = ".1.3.6.1.4.1.9.9.68.1.2.2.1.2";
         sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
         type='i'; 
         sprintf(value, "%d", vlanID);
         if (!SNMPSet(oid_str, type, value)) 
         {
-            LOG(3)( Log::MPLS, "VLSR: SNMP: Moving port ", port, "failed.");
+            LOG(2)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst6500::movePortToVLANAsUntagged: Unknown port ", port);
             return false;
         }
     }
@@ -873,6 +873,15 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged(uint32 port, uint32
     else 
         PortTrunkingOn(port);
 
+    // Get the current vlan mapping for the port
+    port_id = hook_convertPortIDToInterface(port);
+    port_bit = convertUnifiedPort2Catalyst6500(port);
+    if (port_bit == 0)
+    {
+        LOG(2)( Log::MPLS, "VLSR: SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged: Unknown port ", port);
+        return false;
+    }
+
     if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {
         if (!cliSession.movePortToVLANAsTagged(port, vlanID))
@@ -880,15 +889,6 @@ bool SwitchCtrl_Session_Catalyst6500::movePortToVLANAsTagged(uint32 port, uint32
     }
     else // SNMP
     {
-        // Get the current vlan mapping for the port
-        port_id = hook_convertPortIDToInterface(port);
-        port_bit = convertUnifiedPort2Catalyst6500(port);
-        if (port_bit == 0)
-        {
-            LOG(2)( Log::MPLS, "VLSR: SNMP: Unknown port ", port);
-            return false;
-        }
-
         sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
         status = read_objid(oid_str, anOID, &anOID_len);
 
