@@ -136,7 +136,6 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::removePortFromVLAN(uint32 portID, uint
     uint32 port_part,slot_part;
     char portName[16], vlanNum[16];
     
-    // add port to VLAN
     port_part=(portID)&0xff;     
     slot_part=(portID>>8)&0xf;
     switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
@@ -165,6 +164,52 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::removePortFromVLAN(uint32 portID, uint
     
     DIE_IF_NEGATIVE(n = writeShell( "switchport trunk allowed vlan remove ", 5));
     DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_EQUAL(n, 2);
+
+    return postAction();
+}
+
+bool SwitchCtrl_Session_Catalyst6500_CLI::removeUntaggedPortFromVLAN(uint32 portID)
+{
+    int n;
+    uint32 port_part,slot_part;
+    char portName[16];
+    
+    port_part=(portID)&0xff;     
+    slot_part=(portID>>8)&0xf;
+    switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
+    case SLOT_TYPE_GIGE:
+        sprintf(portName, "gi%d/%d",slot_part,port_part);
+        break;
+    case SLOT_TYPE_TENGIGE:
+        sprintf(portName, "te%d/%d",slot_part,port_part);
+        break;
+    case SLOT_TYPE_ILLEGAL:
+    default:
+        return false;
+    }
+
+    if (!preAction())
+        return false;
+
+    
+    DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( portName, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_EQUAL(n, 2);
+    
+    DIE_IF_NEGATIVE(n = writeShell( "switchport access vlan 1", 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_EQUAL(n, 2);
+
+    DIE_IF_NEGATIVE(n = writeShell( "no switchport", 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
     DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
     if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
@@ -1005,33 +1050,38 @@ bool SwitchCtrl_Session_Catalyst6500::removePortFromVLAN(uint32 port, uint32 vla
         return false;
     }
 
-    // We only need to "remove" the port if the port is Trunkport	
-    if (!isPortTrunking(port)) {
-        // Set access VLAN ID to 1 (default)
-        String tag_oid_str = ".1.3.6.1.4.1.9.9.68.1.2.2.1.2";
-        sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
-        type='i'; 
-        sprintf(value, "%d", 1);
-        if (!SNMPSet(oid_str, type, value)) 
-        {
-            LOG(3)( Log::MPLS, "VLSR: SNMP: Removing port ", port, " failed: cannot set access VLAN# to 1");
-            return false; //turning off anyway
-        }
-        // Turn off the port
-        SwitchPortOnOff(port, false); //Trun off the switch port
-        goto _update_vpm;
-    }
-
-    if (!isSwitchport(port))
-        return false;
-
     if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {
-        if (!cliSession.removePortFromVLAN(port, vlanID))
-            return false;
+        if (isPortTrunking(port)) {
+            if (!cliSession.removePortFromVLAN(port, vlanID))
+                return false;
+        } else {
+            if (!cliSession.removeUntaggedPortFromVLAN(port))
+                return false;
+        }
     }
     else // SNMP
     {
+        // We only need to "remove" the port if the port is Trunkport   
+        if (!isPortTrunking(port)) {
+            // Set access VLAN ID to 1 (default)
+            String tag_oid_str = ".1.3.6.1.4.1.9.9.68.1.2.2.1.2";
+            sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
+            type='i'; 
+            sprintf(value, "%d", 1);
+            if (!SNMPSet(oid_str, type, value)) 
+            {
+                LOG(3)( Log::MPLS, "VLSR: SNMP: Removing port ", port, " failed: cannot set access VLAN# to 1");
+                return false; //turning off anyway
+            }
+            // Turn off the port
+            SwitchPortOnOff(port, false); //Trun off the switch port
+            goto _update_vpm;
+        }
+        
+        if (!isSwitchport(port))
+            return false;
+
         // Get the current vlan mapping for the port
         sprintf(oid_str, "%s.%d", tag_oid_str[(vlanID-1)/1024].chars(), port_id);
         status = read_objid(oid_str, anOID, &anOID_len);

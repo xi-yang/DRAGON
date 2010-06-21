@@ -40,6 +40,7 @@ public:
 	virtual bool hook_createVLAN(const uint32 vlanID);
 	virtual bool hook_removeVLAN(const uint32 vlanID);
     virtual bool hook_isVLANEmpty(const vlanPortMap &vpm);
+    bool removeUntaggedPortFromVLAN(uint32 port);
 	///////////------QoS Functions ------/////////
 	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
