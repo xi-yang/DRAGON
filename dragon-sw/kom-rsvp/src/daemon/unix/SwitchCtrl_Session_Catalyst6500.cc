@@ -228,9 +228,11 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::hook_isVLANEmpty(const vlanPortMap &vp
     DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
     n= ReadShellPattern(buf, (char*)"active    Gi",  (char*)"active    Te", (char*)"#", (char*)CISCO_ERROR_PROMPT, 5);
-    if (n != 0) readShell( SWITCH_PROMPT, NULL, 1, 10);
     if (n == 0)
         return true;
+
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
     //no postAction()
     return false; //matching pattern 1 or 2 or there is error
 }
