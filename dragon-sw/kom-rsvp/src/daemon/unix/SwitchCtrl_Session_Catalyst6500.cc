@@ -36,10 +36,12 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::preAction()
 
 bool SwitchCtrl_Session_Catalyst6500_CLI::postAction()
 {
+    int n;
     if (fdout < 0 || fdin < 0)
         return false;
     DIE_IF_NEGATIVE(writeShell("end\n", 5));
-    readShell(SWITCH_PROMPT, NULL, 1, 10);
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
     return true;
 }
 
