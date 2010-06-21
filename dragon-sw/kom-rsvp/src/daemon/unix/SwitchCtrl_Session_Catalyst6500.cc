@@ -251,10 +251,24 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
     port=(input_port)&0xff;
     slot=(input_port>>8)&0xf;
     shelf = (input_port>>12)&0xf;
-    if (shelf == 0)
-        sprintf(portName, "gi%d/%d", slot, port);
-    else
-        sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
+
+    switch(RSVP_Global::switchController->getSlotType(slot, port)) {
+    case SLOT_TYPE_GIGE:
+        if (shelf == 0)
+            sprintf(portName, "gi%d/%d", slot, port);
+        else
+            sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
+        break;
+    case SLOT_TYPE_TENGIGE:
+        if (shelf == 0)
+            sprintf(portName, "te%d/%d", slot, port);
+        else
+            sprintf(portName, "te%d/%d/%d",shelf, slot, port);
+        break;
+    case SLOT_TYPE_ILLEGAL:
+    default:
+        return false;
+    }
 
     // create or delete policy
     sprintf(vlanNum, "%d", vlan_id);
@@ -391,13 +405,13 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_EQUAL(n, 2);
         // remove interface vlan
         /*
-        DIE_IF_NEGATIVE(n= writeShell( "no interface vlan ", 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-        DIE_IF_EQUAL(n, 2);
-        */
+            DIE_IF_NEGATIVE(n= writeShell( "no interface vlan ", 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( vlanNum, 5)) ;
+            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+            if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
+            DIE_IF_EQUAL(n, 2);
+            */
     }
 
     // end
