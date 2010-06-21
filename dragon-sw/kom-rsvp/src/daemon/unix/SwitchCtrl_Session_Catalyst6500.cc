@@ -263,12 +263,10 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::hook_isVLANEmpty(const vlanPortMap &vp
     char vlanNum[16];
     char buf[1024];
 
-    if (!preAction())
+    if (!pipeAlive())
         return false;
 
     sprintf(vlanNum, "%d", vpm.vid);
-    
-    DIE_IF_NEGATIVE(n = writeShell( "exit\n", 5));
     DIE_IF_NEGATIVE(n = writeShell( "show vlan id ", 5));
     DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
