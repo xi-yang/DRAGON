@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*** To automate version string generation from SVN, CHANGE HERE into ANYTHING before each 'commit' --> "07/08/2009" ***/
+/*** To automate version string generation from SVN, CHANGE HERE into ANYTHING before each 'commit' --> "06/21/2010" ***/
 
 const char* dragon_version_string() {
     static char dvString[100];

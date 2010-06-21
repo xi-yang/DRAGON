@@ -6,7 +6,7 @@ const char* VersionString() {
 	return "Release 3.1pre - " BUILD_DATE;
 }
 
-/*** To automate version string generation from SVN, CHANGE HERE into ANYTHING before each 'commit' --> "07/09/2009" ***/
+/*** To automate version string generation from SVN, CHANGE HERE into ANYTHING before each 'commit' --> "06/21/2010" ***/
 
 const char* DragonVersionString() {
     static char dvString[100];
