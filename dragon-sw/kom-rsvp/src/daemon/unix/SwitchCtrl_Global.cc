@@ -828,6 +828,10 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         } else if (vendorSystemDescription.leftequal("Dell 24 Port Gigabit Ethernet, 2.1.1.4, VxWorks5.5.1")) {  // Dell PowerConnect 6224 running 2.1.1.4
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 6224 (2.1.1.4 firmware)");
+        } else if (vendorSystemDescription.leftequal("PowerConnect 6248")) {  // Dell PowerConnect 6200 series
+        	vendor = RFC2674; // $$$$ To be changed into PowerConnect xxx
+        } else if (vendorSystemDescription.leftequal("Powerconnect 8024")) {  // Dell PowerConnect 8000 series
+        	vendor = RFC2674; // $$$$ To be changed into PowerConnect xxx
         } else if (vendorSystemDescription.leftequal("Summit1") || vendorSystemDescription.leftequal("Summit5")) {
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Extreme Summit");
