@@ -85,9 +85,9 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
     if(vendorSystemDescription.leftequal("PowerConnect 6248")) {
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
         if (vpmUntagged)
-             //bit==0 means port is tagged
+             //bit==0 means port is tagged; also true for other switch models but may not be necessary
             ResetBit(vpmUntagged->portbits, port-1);
-	    ret&=setVLANPort(vpmUntagged->portbits, vlanID);
+	    ret&=setVLANPortTag(vpmUntagged->portbits, vlanID);
     }
 
 	return ret;
@@ -186,7 +186,7 @@ bool SNMP_Session::setVLANPortTag(uint8* portbits, int bitlen, uint32 vlanID)
 	struct snmp_pdu *response;
 	oid anOID[MAX_OID_LEN];
 	size_t anOID_len = MAX_OID_LEN;
-	char type, value[128], oid_str[128], oct[3];
+	char type, value[512], oid_str[128], oct[3];
 	int status, i;
 	String tag_oid_str = ".1.3.6.1.2.1.17.7.1.4.3.1.4";
 
@@ -249,7 +249,7 @@ bool SNMP_Session::setVLANPort(uint8* portbits, int bitlen, uint32 vlanID)
 	struct snmp_pdu *response;
 	oid anOID[MAX_OID_LEN];
 	size_t anOID_len = MAX_OID_LEN;
-	char type, value[128], oid_str[128], oct[3];
+	char type, value[512], oid_str[128], oct[3];
 	int status, i;
 
 	if (!active || !rfc2674_compatible) //not initialized or session has been disconnected
