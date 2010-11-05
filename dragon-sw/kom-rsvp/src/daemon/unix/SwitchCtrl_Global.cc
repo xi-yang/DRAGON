@@ -88,6 +88,10 @@ bool SwitchCtrl_Session::getSwitchVendorInfo()
      	rfc2674_compatible = false;
     }
 
+    if(vendorSystemDescription.leftequal("PowerConnect 6248")) {
+        ((SNMP_Session*)this)->setUntaggedPortBitReverse(true);
+    }
+
     return ret;
 }
 

@@ -67,17 +67,17 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
 	if ((!active) || !rfc2674_compatible || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
 		return false; //don't touch the control port!
 
-       //there is no need to remove a to-be-tagged-in-new-VLAN port from old VLAN
+    //there is no need to remove a to-be-tagged-in-new-VLAN port from old VLAN
 	//mask = 1<<(32-port);
 	vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
 	if (vpmAll) {
 	    //vpmAll->ports |=mask;
 	    SetBit(vpmAll->portbits,port-1);
 	    ret&=setVLANPort(vpmAll->portbits, vlanID) ;
-       }
-       else
-            return false;
-          //no need of setVLANPVID for PowerConnect 5224
+    }
+    else
+        return false;
+    //no need of setVLANPVID for PowerConnect 5224
 	if (vendor == RFC2674 && vendorSystemDescription !="PowerConnect 5224"){
 		ret&=setVLANPVID(port, vlanID); //Set pvid
 	}
