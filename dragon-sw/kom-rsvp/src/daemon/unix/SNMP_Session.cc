@@ -85,8 +85,9 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
     if(vendorSystemDescription.leftequal("PowerConnect 6248")) {
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
         if (vpmUntagged)
-             //bit==0 means port is untagged
+             //bit==0 means port is tagged
             ResetBit(vpmUntagged->portbits, port-1);
+	    ret&=setVLANPort(vpmUntagged->portbits, vlanID);
     }
 
 	return ret;
@@ -174,7 +175,7 @@ bool SNMP_Session::setVLANPortTag(uint8* portbits, uint32 vlanID)
 {
     //RevertWordBytes(portListNew);
     if(vendorSystemDescription.leftequal("PowerConnect 6248"))
-        return setVLANPortTag(portbits, 64, vlanID);
+        return setVLANPortTag(portbits, 800, vlanID);
     return setVLANPortTag(portbits, 32, vlanID);
 }
 
@@ -236,7 +237,7 @@ bool SNMP_Session::setVLANPort(uint8* portbits, uint32 vlanID)
         return setVLANPort(value, 96, vlanID);
     }
     else if(vendorSystemDescription.leftequal("PowerConnect 6248"))
-    	return setVLANPort(portbits, 64, vlanID);
+    	return setVLANPort(portbits, 800, vlanID);
     else 
     	return setVLANPort(portbits, 32, vlanID);
 }
@@ -436,7 +437,7 @@ void SNMP_Session::hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variabl
     memset(&vpm, 0, sizeof(vlanPortMap));
     if(vendorSystemDescription.leftequal("PowerConnect 6248")) {
         if (vars->val.bitstring ){
-            for (unsigned int i = 0; i < vars->val_len && i < 8; i++) { //64 bits
+            for (unsigned int i = 0; i < vars->val_len && i < 100; i++) { //800 bits
                 vpm.portbits[i] = vars->val.bitstring[i];
            }
         }
@@ -475,7 +476,7 @@ bool SNMP_Session::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
 
     portList.clear();
     if(vendorSystemDescription.leftequal("PowerConnect 6248"))
-        portNum = 64;
+        portNum = 52;
     else
         portNum = 32;
         

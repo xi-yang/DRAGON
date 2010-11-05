@@ -888,7 +888,6 @@ bool SwitchCtrl_Session_Catalyst3750::movePortToVLANAsTagged(uint32 port, uint32
 
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged) {
-         //bit==0 means port is untagged
         ResetBit(vpmUntagged->portbits, port_bit-1);
     }
     else {
