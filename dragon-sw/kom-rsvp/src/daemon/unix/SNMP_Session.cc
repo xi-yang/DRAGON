@@ -126,6 +126,14 @@ bool SNMP_Session::removePortFromVLAN(uint32 port, uint32 vlanID)
     return ret;
 }
 
+bool SNMP_Session::setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID)
+{
+    if(vendorSystemDescription.leftequal("PowerConnect 6248"))
+        return true;
+
+    return SwitchCtrl_Session::setVLANPortsTagged(taggedPorts, vlanID);
+}
+
 /////////--------Vendor specific functions------///////////
 
 bool SNMP_Session::setVLANPVID(uint32 port, uint32 vlanID)
