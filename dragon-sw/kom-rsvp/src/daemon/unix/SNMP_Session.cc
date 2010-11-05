@@ -62,7 +62,7 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
 {
 	//uint32 mask;
 	bool ret = true;
-	vlanPortMap * vpmAll = NULL;
+	vlanPortMap * vpmAll = NULL, *vpmUntagged = NULL;
 
 	if ((!active) || !rfc2674_compatible || port==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
 		return false; //don't touch the control port!
@@ -81,6 +81,13 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
 	if (vendor == RFC2674 && vendorSystemDescription !="PowerConnect 5224"){
 		ret&=setVLANPVID(port, vlanID); //Set pvid
 	}
+
+    if(vendorSystemDescription.leftequal("PowerConnect 6248")) {
+        vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
+        if (vpmUntagged)
+             //bit==0 means port is untagged
+            ResetBit(vpmUntagged->portbits, port-1);
+    }
 
 	return ret;
 }
