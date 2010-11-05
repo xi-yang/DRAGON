@@ -11,6 +11,36 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP.h"
 #include "RSVP_Log.h"
 
+bool SwitchCtrl_Session_Force10E600::preAction()
+{
+    if (!active || !pipeAlive())
+        return false;
+    int n;
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( ">", "#", true, 1, 10)) ;
+    if (n == 1)
+    {
+        DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
+        if (strcmp(CLI_PASSWORD, "unknown") != 0)
+            DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    }
+    DIE_IF_NEGATIVE(writeShell("configure\n", 5));
+    DIE_IF_NEGATIVE(readShell(SWITCH_PROMPT, NULL, 1, 10));
+    return true;
+}
+
+bool SwitchCtrl_Session_Force10E600::postAction()
+{
+    if (fdout < 0 || fdin < 0)
+        return false;
+    DIE_IF_NEGATIVE(writeShell("end\n", 5));
+    readShell(SWITCH_PROMPT, NULL, 1, 10);
+    return true;
+}
+
 bool SwitchCtrl_Session_Force10E600::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 {
     uint32 bit;
