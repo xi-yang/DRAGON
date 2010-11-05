@@ -40,11 +40,11 @@ public:
 	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID);
 
 	///////------Vendor/model specific functions--------///////
-	bool setVLANPortTag(uint32 portListNew, uint32 vlanID);
-	bool setVLANPort(uint32 portListNew, uint32 vlanID);
+	bool setVLANPortTag(uint8 * portbits, uint32 vlanID);
+	bool setVLANPort(uint8 * portbits, uint32 vlanID);
 	bool setVLANPortTag(uint8 * portbits, int bitlen, uint32 vlanID);	
 	bool setVLANPort(uint8 * portbits, int bitlen, uint32 vlanID);	
-	//  Dell 5324 switch
+	//  Dell 5324 switch only
 	bool setVLANPVID(uint32 port, uint32 vlanID); 
 	// RFC2674 (DELL and Extreme)
 	bool movePortToDefaultVLAN(uint32 port); 

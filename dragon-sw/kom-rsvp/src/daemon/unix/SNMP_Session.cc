@@ -12,7 +12,7 @@ To be incorporated into KOM-RSVP-TE package
 
 bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 {
-    uint32 mask;
+    //uint32 mask;
     bool ret = true;
     vlanPortMap * vpmAll = NULL, *vpmUntagged = NULL;
 
@@ -45,9 +45,9 @@ bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
         //vpmAll->ports |=mask;
-        SetBit(vpmAll->portbits,port-1)
-        ret&=setVLANPort(vpmAll->portbits, vlanID) ;
-        }
+        SetBit(vpmAll->portbits,port-1);
+        ret&=setVLANPort(vpmAll->portbits, vlanID);
+    }
 
     if (vendor == RFC2674) {
         if (vpmUntagged)
@@ -60,7 +60,7 @@ bool SNMP_Session::movePortToVLANAsUntagged(uint32 port, uint32 vlanID)
 
 bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
 {
-	uint32 mask;
+	//uint32 mask;
 	bool ret = true;
 	vlanPortMap * vpmAll = NULL;
 
@@ -426,11 +426,11 @@ bool SNMP_Session::hook_isVLANEmpty(const vlanPortMap &vpm)
 
 void SNMP_Session::hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars)
 {
-    memset(&vpm, 0, sizeof(portVlanMap));
+    memset(&vpm, 0, sizeof(vlanPortMap));
     if(vendorSystemDescription.leftequal("PowerConnect 6248")) {
         if (vars->val.bitstring ){
             for (unsigned int i = 0; i < vars->val_len && i < 8; i++) { //64 bits
-                vpm.vlanbits[i] = vars->val.bitstring[i];
+                vpm.portbits[i] = vars->val.bitstring[i];
            }
         }
     }
@@ -449,7 +449,11 @@ void SNMP_Session::hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variabl
 
 bool SNMP_Session::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 {
-    if ((vpm.ports)&(1<<(32-port)))
+    if(vendorSystemDescription.leftequal("PowerConnect 6248")) {
+        if (HasPortBit(vpm.portbits, port-1))
+            return true;
+    }
+    else if ((vpm.ports)&(1<<(32-port)))
         return true;;
 
     return false;
