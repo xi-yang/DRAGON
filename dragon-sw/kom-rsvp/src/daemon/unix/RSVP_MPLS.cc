@@ -1177,7 +1177,7 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 	                                        RSVP_Global::rsvp->getRoutingService().holdVtagbyOSPF((*iter).outPort & 0xffff, (*iter).vlanTag, false); //false == release
                                       }
 
-                                     if ((*sessionIter)->isVLANEmpty(vlanID)) {
+                                     if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_EMPTY_CHECK_BYPASS) || (*sessionIter)->isVLANEmpty(vlanID)) {
                                           if (!(*sessionIter)->removeVLAN(vlanID)) {
                                               LOG(5)(Log::MPLS, "LSP=", psb.getSESSION_ATTRIBUTE_Object().getSessionName(), ": ", "VLSR: Failed to remove the empty VLAN: ",  vlanID);
                                           }
