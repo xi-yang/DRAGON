@@ -855,9 +855,10 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
                 // tested by Praga - UNL (pangu@cse.unl.edu), found to be RFC2674-compliant
 	        vendor = RFC2674;
 	        LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Netgear GSM7224");
- 	} else if (vendorSystemDescription.leftequal("Cisco IOS Software, C3750 Software")) {
+ 	} else if (vendorSystemDescription.leftequal("Cisco IOS Software, C3750")
+ 	        || vendorSystemDescription.leftequal("Cisco IOS Software, C3560")) {
         	vendor = Catalyst3750;
-		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Cisco 3750");
+		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Cisco 3750(E)/3560(E)");
 	} else if (vendorSystemDescription.leftequal("Cisco Internetwork Operating System Software") || 
 		   vendorSystemDescription.leftequal("Cisco IOS Software,")) {
 	        // Originally, the Catalyst 65xx switches used the same code as Catalyst 3750 

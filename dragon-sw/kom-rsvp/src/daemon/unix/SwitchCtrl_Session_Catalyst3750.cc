@@ -111,15 +111,15 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
             LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (mls qos vlan-based)");
         }
         DIE_IF_EQUAL(n, 2);
-        // set mtu to 9216 for the port
-        DIE_IF_NEGATIVE(n= writeShell( "mtu 9216\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) 
-        {
-            readShell( SWITCH_PROMPT, NULL, 1, 10);
-            LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (mtu 9216)");
-        }
-        DIE_IF_EQUAL(n, 2);
+        // set system mtu to 9198 for the port --> let user do this manually
+        //DIE_IF_NEGATIVE(n= writeShell( "system mtu 9198\n", 5)) ;
+        //DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+        //if (n == 2) 
+        //{
+        //    readShell( SWITCH_PROMPT, NULL, 1, 10);
+        //    LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (mtu 9216)");
+        //}
+        //DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         // create interface class-map for the port
@@ -231,11 +231,6 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
             readShell( SWITCH_PROMPT, NULL, 1, 10);
             LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (interface vlan ", vlanNum, ")");
         }
-        DIE_IF_EQUAL(n, 2);
-        // set mtu to 9216 for the vlan interface
-        DIE_IF_NEGATIVE(n= writeShell( "mtu 9216\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-        if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
         // apply vlan-level policy map
         DIE_IF_NEGATIVE(n= writeShell( "no shutdown\n", 5)) ;

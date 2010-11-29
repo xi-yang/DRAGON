@@ -270,7 +270,7 @@ bool CLI_Session::engage(const char *loginString)
         if ((n = readShell( SWITCH_PROMPT, NULL, 1, 30)) < 0) goto _telnet_dead;
     } 
     else if (CLI_SESSION_TYPE == CLI_SSH) {
-        if ((n = readShell( "The authenticity", CLI_USERNAME, 1, 15)) < 0) {
+        if ((n = readShell( "The authenticity", "assword:", true, 1, 15)) < 0) {
           if (got_alarm == 0)
             err_msg("%s: connection to host '%s' failed\n", progname, hostname);
           goto _telnet_dead;
@@ -278,8 +278,7 @@ bool CLI_Session::engage(const char *loginString)
    
         if (n == 1) {
             if ((n = writeShell("yes\n", 5)) < 0) goto _telnet_dead;
-            if ((n = readShell(CLI_USERNAME, NULL, 1, 10)) < 0) goto
-       _telnet_dead;
+            if ((n = readShell("assword:", NULL, true, 1, 10)) < 0) goto _telnet_dead;
         }
         if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
         if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
