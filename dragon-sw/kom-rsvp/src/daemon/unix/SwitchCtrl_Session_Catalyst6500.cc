@@ -1763,7 +1763,7 @@ bool SwitchCtrl_Session_Catalyst6500::isPortTrunking(uint32 port)
     if (!active)  return false; 
     if (!isSwitchport(port)) return false;
 
-    String tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.6.1.1.14";
+    String tag_oid_str = ".1.3.6.1.4.1.9.9.46.1.6.1.1.13";
     port_id = hook_convertPortIDToInterface(port);
     sprintf(oid_str, "%s.%d", tag_oid_str.chars(), port_id);
     status = read_objid(oid_str, anOID, &anOID_len);
@@ -1780,7 +1780,7 @@ bool SwitchCtrl_Session_Catalyst6500::isPortTrunking(uint32 port)
            return false;
        }     
        vars = response->variables;
-       bool ret = ((*(vars->val.integer)) ==1);
+       bool ret = ((*(vars->val.integer)) ==5);
     	snmp_free_pdu(response);
 	return ret;
     }
