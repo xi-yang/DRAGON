@@ -48,6 +48,8 @@ public:
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port) { return false;}
 	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID) { return false;}
 	friend class SwitchCtrl_Session_Catalyst3750;
+private:
+	bool getPortNameById(char* portName, uint32 portID);
 };
 
 class SwitchCtrl_Session_Catalyst3750: public SNMP_Session
@@ -113,7 +115,6 @@ private:
 
 	SwitchCtrl_Session_Catalyst3750_CLI cliSession;
 
-    bool getPortNameById(char* portName, uint32 portID);
 
 	uint32 convertUnifiedPort2Catalyst3750(uint32 port)
 	{

@@ -289,36 +289,12 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10));
-        if (n ==2) // try port again as TenGigE interface
+        if (n ==2)
         {
             readShell( SWITCH_PROMPT, NULL, 1, 10);
-            if (shelf == 0)
-                sprintf(portName, "te%d/%d", slot, port);
-            else
-                sprintf(portName, "te%d/%d/%d",shelf, slot, port);
-            DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
-            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try TenGigE interface
-            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10));
-            if (n ==2) // try port again as FastE interface
-            {
-                readShell( SWITCH_PROMPT, NULL, 1, 10);
-                if (shelf == 0)
-                    sprintf(portName, "fa%d/%d", slot, port);
-                else
-                    sprintf(portName, "fa%d/%d/%d",shelf, slot, port);
-                DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
-                DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try FastE interface
-                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-                DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-                if (n == 2) 
-                {
-                    readShell( SWITCH_PROMPT, NULL, 1, 10);
-                    LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (interface ", portName, ")");
-                }
-                DIE_IF_EQUAL(n, 2);
-            }
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (interface ", portName, ")");
         }
+        DIE_IF_EQUAL(n, 2);
         // set mls qos to vlan-based for the port
         DIE_IF_NEGATIVE(n= writeShell( "mls qos vlan-based\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
@@ -470,32 +446,12 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try port as GigE interface
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10));
-        if (n ==2) // try port again as TenGigE interface
+        if (n ==2) 
         {
             readShell( SWITCH_PROMPT, NULL, 1, 10);
-            if (shelf == 0)
-                sprintf(portName, "te%d/%d", slot, port);
-            else
-                sprintf(portName, "te%d/%d/%d",shelf, slot, port);
-            DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
-            DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try GigE interface
-            DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-            if (n ==2) // try port again as FastE interface
-            {
-                readShell( SWITCH_PROMPT, NULL, 1, 10);
-                if (shelf == 0)
-                    sprintf(portName, "fa%d/%d", slot, port);
-                else
-                    sprintf(portName, "fa%d/%d/%d",shelf, slot, port);
-                DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
-                DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ; // try FastE interface
-                DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-                DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
-                if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
-                DIE_IF_EQUAL(n, 2);
-            }
+            LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (interface ", portName, ")");
         }
+        DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;        
         // remove vlan-level policy map
