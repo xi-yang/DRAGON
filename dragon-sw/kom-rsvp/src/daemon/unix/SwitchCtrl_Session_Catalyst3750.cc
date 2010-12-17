@@ -47,27 +47,48 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::postAction()
 }
 
 
+bool SwitchCtrl_Session_Catalyst3750_CLI::getPortNameById(char* portName, uint32 portID)
+{
+	uint32 port_part,slot_part, shelf_part, offset;
+	port_part=(portID)&0xff;     
+	slot_part=(portID>>8)&0xf;
+	shelf_part=(portID>>12)&0xf;
+	char shelf[5];
+	if (shelf_part > 0) 
+		sprintf(shelf, "%d/", shelf_part);
+	else
+		strncpy(shelf, "", 4);
+
+    switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
+		case SLOT_TYPE_FASTETH:
+			offset = RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_FASTETH_OFFSET);
+			sprintf(portName, "fa%s%d/%d",shelf,slot_part-offset,port_part);
+			break;
+		case SLOT_TYPE_GIGE:
+			offset = RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_GIGE_OFFSET);
+			sprintf(portName, "gi%s%d/%d",shelf,slot_part-offset,port_part);
+			break;
+		case SLOT_TYPE_TENGIGE:
+			offset = RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_TENGIGE_OFFSET);
+			sprintf(portName, "te%s%d/%d",shelf,slot_part-offset,port_part);
+			break;
+		case SLOT_TYPE_ILLEGAL:
+		default:
+			return false;
+    }	
+	return true;
+}
+
+
 bool SwitchCtrl_Session_Catalyst3750_CLI::movePortToVLANAsTagged(uint32 portID, uint32 vlanID)
 {
     int n;
-    uint32 port_part,slot_part;
     char portName[16], vlanNum[16];
 
-    port_part=(portID)&0xff;     
-    slot_part=(portID>>8)&0xf;
-    switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
-    case SLOT_TYPE_GIGE:
-        sprintf(portName, "gi%d/%d",slot_part,port_part);
-        break;
-    case SLOT_TYPE_TENGIGE:
-        sprintf(portName, "te%d/%d",slot_part,port_part);
-        break;
-    case SLOT_TYPE_ILLEGAL:
-    default:
-        return false;
-    }
-
     if (!preAction())
+        return false;
+	
+    if (!getPortNameById(portName, portID))
         return false;
 
     sprintf(vlanNum, "%d", vlanID);
@@ -93,26 +114,14 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::movePortToVLANAsTagged(uint32 portID, 
 bool SwitchCtrl_Session_Catalyst3750_CLI::movePortToVLANAsUntagged(uint32 portID, uint32 vlanID)
 {
     int n;
-    uint32 port_part,slot_part;
     char portName[16], vlanNum[16];
     
-    port_part=(portID)&0xff;     
-    slot_part=(portID>>8)&0xf;
-    switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
-    case SLOT_TYPE_GIGE:
-        sprintf(portName, "gi%d/%d",slot_part,port_part);
-        break;
-    case SLOT_TYPE_TENGIGE:
-        sprintf(portName, "te%d/%d",slot_part,port_part);
-        break;
-    case SLOT_TYPE_ILLEGAL:
-    default:
-        return false;
-    }
-
     if (!preAction())
         return false;
-
+	
+    if (!getPortNameById(portName, portID))
+        return false;
+	
     sprintf(vlanNum, "%d", vlanID);
     
     DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
@@ -137,26 +146,14 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::movePortToVLANAsUntagged(uint32 portID
 bool SwitchCtrl_Session_Catalyst3750_CLI::removePortFromVLAN(uint32 portID, uint32 vlanID)
 {
     int n;
-    uint32 port_part,slot_part;
     char portName[16], vlanNum[16];
     
-    port_part=(portID)&0xff;     
-    slot_part=(portID>>8)&0xf;
-    switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
-    case SLOT_TYPE_GIGE:
-        sprintf(portName, "gi%d/%d",slot_part,port_part);
-        break;
-    case SLOT_TYPE_TENGIGE:
-        sprintf(portName, "te%d/%d",slot_part,port_part);
-        break;
-    case SLOT_TYPE_ILLEGAL:
-    default:
-        return false;
-    }
-
     if (!preAction())
         return false;
 
+    if (!getPortNameById(portName, portID))
+        return false;
+	
     sprintf(vlanNum, "%d", vlanID);
     
     DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
@@ -179,27 +176,14 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::removePortFromVLAN(uint32 portID, uint
 bool SwitchCtrl_Session_Catalyst3750_CLI::removeUntaggedPortFromVLAN(uint32 portID)
 {
     int n;
-    uint32 port_part,slot_part;
     char portName[16];
     
-    port_part=(portID)&0xff;     
-    slot_part=(portID>>8)&0xf;
-    switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
-    case SLOT_TYPE_GIGE:
-        sprintf(portName, "gi%d/%d",slot_part,port_part);
-        break;
-    case SLOT_TYPE_TENGIGE:
-        sprintf(portName, "te%d/%d",slot_part,port_part);
-        break;
-    case SLOT_TYPE_ILLEGAL:
-    default:
-        return false;
-    }
-
     if (!preAction())
         return false;
 
-    
+    if (!getPortNameById(portName, portID))
+        return false;
+	    
     DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
     DIE_IF_NEGATIVE(n = writeShell( portName, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
@@ -292,14 +276,9 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
     if (committed_rate_int < 1 || !preAction())
         return false;
 
-    uint32 port,slot, shelf;
-    port=(input_port)&0xff;
-    slot=(input_port>>8)&0xf;
-    shelf = (input_port>>12)&0xf;
-    if (shelf == 0)
-        sprintf(portName, "gi%d/%d", slot, port);
-    else
-        sprintf(portName, "gi%d/%d/%d",shelf, slot, port);
+    if (!getPortNameById(portName, input_port))
+        return false;
+
     sprintf(vlanNum, "%d", vlan_id);
     sprintf(portPolicyMap, "policy-map-if-%d", vlan_id);
     sprintf(vlanPolicyMap, "policy-map-vlan-%d", vlan_id);
@@ -335,7 +314,7 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth(bool do_undo, uin
                 if (n == 2) 
                 {
                     readShell( SWITCH_PROMPT, NULL, 1, 10);
-                    LOG(1)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (interface 'portname')");
+                    LOG(3)(Log::MPLS, "Error: SwitchCtrl_Session_Catalyst3750_CLI::policeInputBandwidth failed (interface ", portName, ")");
                 }
                 DIE_IF_EQUAL(n, 2);
             }
@@ -1627,16 +1606,13 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
                                 }
                                 /*
                                 The switch card/slot with a mixture of gigabitEthernet and fastEthernet has two gigabitEthernet ports gi1/0/1 and gi1/0/2, 
-                                followed by fa1/0/1 through fa1/0/24. They are coded as port number 1 through 26 in the SNMP MIB. So when assigning 
-                                port number in ospfd,conf (interface switch-port) or on DRAGON CLI, use the following rule:
-                                --  1/0/1 and 1/0/2 for gi1/0/1 and gi1/0/2, and
-                                --  1/0/3, 1/0/4 бн 1/0/K+2 for fa1/0/1, fa1/0/2 ...  fa1/0/K.
-                                */
+                                followed by fa1/0/1 through fa1/0/24. They are coded as port number 1 through 26 in the SNMP MIB. 
+								 */
                                 else if (sscanf(ref_str, "FastEthernet%d/%d/%d", &tmp_mod_id, &tmp_slot_id, &tmp_port_id) == 3) {
     				      if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
 	                                    ref_id.port_bit = (tmp_slot_id&0xf)*128 + ((tmp_port_id+2)&0xff);
 	                                    tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_FASTETH_OFFSET);
-	                                    ref_id.port_id = (((tmp_mod_id&0xf) << 12) | (((tmp_slot_id+2)&0xf) << 8) | (tmp_port_id&0xff));
+	                                    ref_id.port_id = (((tmp_mod_id&0xf) << 12) | ((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
 	                                    portRefIdConvList.push_back(ref_id);
         				    } else {
             				    LOG(2) (Log::Error, "Illegal Port ID: ", tmp_port_id);
@@ -1646,7 +1622,7 @@ bool SwitchCtrl_Session_Catalyst3750::hook_createPortToIDRefTable(portRefIDList 
     				      if (tmp_port_id>=CATALYST3750_MIN_PORT_ID && tmp_port_id<= CATALYST3750_MAX_PORT_ID ) {
 	                                    ref_id.port_bit = (tmp_slot_id&0xf)*128 + ((tmp_port_id+2)&0xff);
 	                                    tmp_slot_id += RSVP_Global::switchController->getSlotOffset(SLOT_TYPE_FASTETH_OFFSET);
-	                                    ref_id.port_id = (((tmp_slot_id&0xf) << 8) | ((tmp_port_id+2)&0xff));
+	                                    ref_id.port_id = (((tmp_slot_id&0xf) << 8) | (tmp_port_id&0xff));
 	                                    portRefIdConvList.push_back(ref_id);
         				    } else {
             				    LOG(2) (Log::Error, "Illegal Port ID: ", tmp_port_id);

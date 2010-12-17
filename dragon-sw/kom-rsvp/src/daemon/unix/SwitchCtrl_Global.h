@@ -282,9 +282,10 @@ typedef SimpleList<SwitchCtrl_Session*> SwitchCtrlSessionList;
 #define		SLOT_TYPE_ILLEGAL 0
 #define		SLOT_TYPE_GIGE 1
 #define		SLOT_TYPE_TENGIGE 2
-#define		SLOT_TYPE_GIGE_OFFSET 3
-#define		SLOT_TYPE_TENGIGE_OFFSET 4
-#define		SLOT_TYPE_FASTETH_OFFSET 5
+#define		SLOT_TYPE_FASTETH 3
+#define		SLOT_TYPE_GIGE_OFFSET 4
+#define		SLOT_TYPE_TENGIGE_OFFSET 5
+#define		SLOT_TYPE_FASTETH_OFFSET 6
 struct slot_entry {
 	uint16 slot_type;
 	uint16 slot_num;

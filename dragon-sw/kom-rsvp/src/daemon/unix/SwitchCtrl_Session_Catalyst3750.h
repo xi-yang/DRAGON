@@ -113,6 +113,8 @@ private:
 
 	SwitchCtrl_Session_Catalyst3750_CLI cliSession;
 
+    bool getPortNameById(char* portName, uint32 portID);
+
 	uint32 convertUnifiedPort2Catalyst3750(uint32 port)
 	{
 	    portRefIDList::Iterator it;
