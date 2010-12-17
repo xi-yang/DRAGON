@@ -11,13 +11,16 @@ api 4000
 #slot type mapping
 #  slots gi 1(0-23) 2
 #  slots te 0 1(24-47)
+#  slots fa 15
+#  slots te 11
 #slot offset
-#  slots te+ 10
-#  slots fa+ 15
+#must be defined after slot type
+#  slots fa+ 15 --> this corresponds to 'slots fa 15' for fa1/0/x
+#  slots te+ 10 --> this corresponds to 'slots te 11' for te1/1/x
 #one may use 'ge' instead of 'gi' and 'xe' instead of 'te'
 #
 #3. special switch vlan options (any combination of the following)
-#  switch_vlan_options bypass-conflict-check junos-one-commit reduce-snmp-sync force10-no-qos
+#  switch_vlan_options bypass-conflict-check bypass-empty-check junos-one-commit reduce-snmp-sync force10-no-qos
 #
 #4. for Ciena subnet VLSR
 #  eos_map 2500 sts-3c 16
