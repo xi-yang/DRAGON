@@ -1884,7 +1884,7 @@ bool SwitchCtrl_Session_Catalyst3750::isPortTrunking(uint32 port)
            return false;
        }     
        vars = response->variables;
-       bool ret = ((*(vars->val.integer)) ==5);
+       bool ret = ((*(vars->val.integer)) ==1 || (*(vars->val.integer)) ==5);
     	snmp_free_pdu(response);
 	return ret;
     }
