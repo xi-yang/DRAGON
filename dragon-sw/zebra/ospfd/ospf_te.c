@@ -3179,10 +3179,10 @@ DEFUN (ospf_te_interface_ifsw_cap9,
           if (strncmp(argv[0], "och_", 4) ==0)
           {
               if (sscanf(argv[0], "och_%d", &och_xx) == 1)
-                  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.add_to_wdm = (0xff & och_xx); /*channel#*/
+                  ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.a_n_d.add_to_wdm = (0xff & och_xx); /*channel#*/
               else
-                   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.add_to_wdm = 0xff; /*tunable*/
-              wdm_otnx->drop_to_otu2 = 0xff; /*wdm+odu2 on same OSPF interface*/
+                   ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.a_n_d.add_to_wdm = 0xff; /*tunable*/
+              wdm_otnx->a_n_d.drop_to_otu2 = 0xff; /*wdm+odu2 on same OSPF interface*/
           }
       }
       else 
@@ -3325,7 +3325,7 @@ DEFUN (ospf_te_interface_ifsw_cap10,
               htonf (&bw, &ifswcap->link_ifswcap_data.max_lsp_bw_at_priority[i]);
           ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.num_chans = 40;
           memset(ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.wave_opvc_bitmask, 0, MAX_OTNX_CHAN_NUM/8);
-          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.drop_to_otu2 = 0xff; /*wdm+odu2 on same OSPF interface*/
+          ifswcap->link_ifswcap_data.ifswcap_specific_info.ifswcap_specific_ciena_otnx.a_n_d.drop_to_otu2 = 0xff; /*wdm+odu2 on same OSPF interface*/
       }
       else 
       {
