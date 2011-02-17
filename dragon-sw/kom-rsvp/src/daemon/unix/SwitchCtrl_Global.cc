@@ -788,7 +788,7 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
     pdu = snmp_pdu_create(SNMP_MSG_GET);
 
     // vlan port list 
-    char* oid_str = (char*)"system.sysDescr.0";
+    char* oid_str = (char*)".1.3.6.1.2.1.1.1.0";
     if (!snmp_parse_oid(oid_str, anOID, &anOID_len)) {
         	snmp_perror(oid_str);
 		LOG(1)( Log::MPLS, "VLSR: snmp_get system.sysDescr.0 failed");

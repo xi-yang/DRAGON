@@ -265,7 +265,7 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::hook_isVLANEmpty(const vlanPortMap &vp
     char vlanNum[16];
     char buf[1024];
 
-    if (!pipeAlive())
+    if (!preAction())
         return false;
 
     sprintf(vlanNum, "%d", vpm.vid);
@@ -274,9 +274,12 @@ bool SwitchCtrl_Session_Catalyst6500_CLI::hook_isVLANEmpty(const vlanPortMap &vp
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
     n= ReadShellPattern(buf, (char*)"active    Gi",  (char*)"active    Te", (char*)"#", (char*)CISCO_ERROR_PROMPT, 5);
     if (n == 0)
+    {
+        postAction();
         return true;
+    }
     if (n == READ_STOP) readShell( SWITCH_PROMPT, NULL, 1, 10);
-    //no postAction()
+    postAction();
     return false; //matching pattern 1 or 2 or there is error
 }
 
@@ -1780,7 +1783,7 @@ bool SwitchCtrl_Session_Catalyst6500::isPortTrunking(uint32 port)
            return false;
        }     
        vars = response->variables;
-       bool ret = ((*(vars->val.integer)) ==5);
+       bool ret = ((*(vars->val.integer)) ==1 || (*(vars->val.integer)) ==5);
     	snmp_free_pdu(response);
 	return ret;
     }
