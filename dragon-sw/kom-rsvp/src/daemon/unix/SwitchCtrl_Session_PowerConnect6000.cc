@@ -1,7 +1,7 @@
 /****************************************************************************
 
 Dell (vendor) PowerConnect 6024/6224/6248 (model) Control Module source file SwitchCtrl_Session_PowerConnect6000.cc
-Created by Xi Yang 04/01/2009
+Created by Xi Yang 04/01/2009 (modified 2010, 2011)
 To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/
@@ -75,19 +75,9 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         // configure vlan-level policy-map
         committed_rate_int *= 1000;
-        if (SWITCH_VENDOR_MODEL == PowerConnect6024)
-        {
-            burst_size *= 1000; // in bytes
-            if (burst_size < 3000) burst_size = 3000;
-            sprintf(action, "police %d %d exceed-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
-        }
-        else if (SWITCH_VENDOR_MODEL == PowerConnect6224 ||SWITCH_VENDOR_MODEL == PowerConnect6248)
-        {
-            if (burst_size < 32) burst_size = 32; //in Kbytes
-            sprintf(action, "police-siimple %d %d conform-action transmit violate-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
-        }
-        else
-            return (false&&postAction());
+        burst_size *= 1000; // in bytes
+        if (burst_size < 3000) burst_size = 3000;
+        sprintf(action, "police %d %d exceed-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
         DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
@@ -95,8 +85,6 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::policeInputBandwidth(bool do_undo,
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
         DIE_IF_NEGATIVE(n= writeShell( "class ", 5)) ;
-        if (SWITCH_VENDOR_MODEL == PowerConnect6224 ||SWITCH_VENDOR_MODEL == PowerConnect6248)
-            DIE_IF_NEGATIVE(n= writeShell( "match-all ", 5)); //madatory option
         DIE_IF_NEGATIVE(n= writeShell( vlanClassMap, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
@@ -185,36 +173,26 @@ bool SwitchCtrl_Session_PowerConnect6000_CLI::postConnectSwitch()
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     }
-    if (SWITCH_VENDOR_MODEL == PowerConnect6024)
+    DIE_IF_NEGATIVE(n= writeShell( "show access-lists dragon-default\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( "permit  any any any", "does not exist", true, 1, 10)) ;
+    if (n == 2)
+        missingDefaultACL = true;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10));
+    //configure default QoS mode
+    DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10));
+    DIE_IF_NEGATIVE(n= writeShell( "qos advanced\n", 5)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+    if (missingDefaultACL)
     {
-        DIE_IF_NEGATIVE(n= writeShell( "show access-lists dragon-default\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "permit  any any any", "does not exist", true, 1, 10)) ;
-        if (n == 2)
-            missingDefaultACL = true;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10));
-        //configure default QoS mode
-        DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5));
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10));
-        DIE_IF_NEGATIVE(n= writeShell( "qos advanced\n", 5)) ;
+        //create default ACL
+        DIE_IF_NEGATIVE(n= writeShell( "ip access-list dragon-default\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        if (missingDefaultACL)
-        {
-            //create default ACL
-            DIE_IF_NEGATIVE(n= writeShell( "ip access-list dragon-default\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-            DIE_IF_NEGATIVE(n= writeShell( "permit any any any\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-            DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
-            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        }
+        DIE_IF_NEGATIVE(n= writeShell( "permit any any any\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     }
-    else if (SWITCH_VENDOR_MODEL == PowerConnect6224 ||SWITCH_VENDOR_MODEL == PowerConnect6248)
-    {
-        DIE_IF_NEGATIVE(n= writeShell( "show ip access-lists dragon-default\n", 5)) ;
-        //$TODO: find out output patterns and following-up commands when we have access to a real 62xx switch
-    }
-    else
-        return false;
     
     DIE_IF_NEGATIVE(n= writeShell( "end\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;

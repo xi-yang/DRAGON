@@ -1,7 +1,7 @@
 /****************************************************************************
 
-Dell (vendor) PowerConnect 6024/6224/6248 (model) Control Module header file SwitchCtrl_Session_PowerConnect6000.h
-Created by  Xi Yang, 2009
+Dell (vendor) PowerConnect 6024(model) Control Module header file SwitchCtrl_Session_PowerConnect6000.h
+Created by  Xi Yang, 2009 (modified 2011)
 To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/
@@ -13,7 +13,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "CLI_Session.h"
 
 #ifndef DELL_ERROR_PROMPT 
-#define DELL_ERROR_PROMPT "% Unrecognized"
+#define DELL_ERROR_PROMPT "% "
 #endif
 
 class SwitchCtrl_Session_PowerConnect6000_CLI: public CLI_Session
@@ -30,7 +30,7 @@ public:
 	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
 
-	// Dell PowerConnect specific
+	// Dell PowerConnect6024 specific
 	bool postConnectSwitch();
 
 	// Vendor/Model specific hook functions --> not used (for compile only)

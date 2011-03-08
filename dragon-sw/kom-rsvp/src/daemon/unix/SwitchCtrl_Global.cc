@@ -26,6 +26,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_SMC1G8848.h"
 #include "SwitchCtrl_Session_JUNOS.h"
 #include "SwitchCtrl_Session_PowerConnect6000.h"
+#include "SwitchCtrl_Session_PowerConnect6200_8000.h"
 
 
 #ifdef Linux
@@ -827,15 +828,15 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 5324 (2.0.x.x firmware)");
         } else if (String("Ethernet Routing Switch") == vendorSystemDescription) {  // Dell PowerConnect 6024/6024F
-        	vendor = RFC2674;
+        	vendor = PowerConnect6024;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 6024/6024F");
         } else if (vendorSystemDescription.leftequal("Dell 24 Port Gigabit Ethernet, 2.1.1.4, VxWorks5.5.1")) {  // Dell PowerConnect 6224 running 2.1.1.4
-        	vendor = RFC2674;
+        	vendor = PowerConnect6224;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 6224 (2.1.1.4 firmware)");
         } else if (vendorSystemDescription.leftequal("PowerConnect 6248")) {  // Dell PowerConnect 6200 series
-        	vendor = RFC2674; // $$$$ To be changed into PowerConnect xxx
+        	vendor = PowerConnect6248;
         } else if (vendorSystemDescription.leftequal("Powerconnect 8024")) {  // Dell PowerConnect 8000 series
-        	vendor = RFC2674; // $$$$ To be changed into PowerConnect xxx
+        	vendor = PowerConnect8024;
         } else if (vendorSystemDescription.leftequal("Summit1") || vendorSystemDescription.leftequal("Summit5")) {
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Extreme Summit");
@@ -946,9 +947,16 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
             ssNew = new SwitchCtrl_Session_JUNOS("VLSR-Juniper-EX", switchAddr);
             break;                                        
         case PowerConnect6024:
+            ssNew = new SwitchCtrl_Session_PowerConnect6000("VLSR-Dell-PowerConnect6024", switchAddr);
+            break;                                        
         case PowerConnect6224:
+            ssNew = new SwitchCtrl_Session_PowerConnect6200("VLSR-Dell-PowerConnect6224", switchAddr);
+            break;                                        
         case PowerConnect6248:
-            ssNew = new SwitchCtrl_Session_PowerConnect6000("VLSR-Dell-PowerConnect", switchAddr);
+            ssNew = new SwitchCtrl_Session_PowerConnect6200("VLSR-Dell-PowerConnect6248", switchAddr);
+            break;                                        
+        case PowerConnect8024:
+            ssNew = new SwitchCtrl_Session_PowerConnect8000("VLSR-Dell-PowerConnect8024", switchAddr);
             break;                                        
 #ifdef Linux
         case LinuxSwitch:

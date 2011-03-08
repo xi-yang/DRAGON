@@ -63,6 +63,7 @@ enum SupportedVendor{
 	PowerConnect6024 = 13,
 	PowerConnect6224 = 14,
 	PowerConnect6248 = 15,
+	PowerConnect8024 = 16,
 	CienaSubnet = 100,
 	CienaCN4200 = 101,
 	Illegal = 0xffff,
