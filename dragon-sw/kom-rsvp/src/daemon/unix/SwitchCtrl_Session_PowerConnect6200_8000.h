@@ -26,6 +26,8 @@ public:
 
 	virtual bool connectSwitch();
 	virtual void disconnectSwitch();
+	virtual bool preAction();
+	virtual bool postAction();
 
 	// Dell PowerConnect specific
 	// Port name convention: all 1/xgN named 1/1/N and 1/gN named 1/0/N in ospfd.conf
@@ -36,12 +38,6 @@ public:
             else
                 sprintf(buf, "1/xg%d", port&0xff);             
 		}
-
-	uint32 portToBit(uint32 port)
-		{ return (port&0xff); }
-	uint32 bitToPort(uint32 bit)
-		{ return (0x0011<<8)|(bit&0x00ff); }
-
 	uint32 portToBit(uint32 port)
 		{
             uint32 offset;

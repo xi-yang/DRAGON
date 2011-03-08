@@ -52,8 +52,17 @@ case "$target" in
   vlsr-raptor-qos|VLSR-RAPTOR-QOS)
     rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=RaptorER1010 --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community --enable-switch-port-shutdown"
   ;;
-  vlsr-dell6024-qos|VLSR-DELL6024-QOS)
+  vlsr-dell6024|VLSR-DELL6024)
     rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=PowerConnect6024 --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community --enable-switch-port-shutdown"
+  ;;
+  vlsr-dell6224|VLSR-DELL6224)
+    rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=PowerConnect6224 --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community --enable-switch-port-shutdown"
+  ;;
+  vlsr-dell6248|VLSR-DELL6248)
+    rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=PowerConnect6248 --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community --enable-switch-port-shutdown"
+  ;;
+  vlsr-dell8024|VLSR-DELL8024)
+    rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=PowerConnect8024 --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community --enable-switch-port-shutdown"
   ;;
   vlsr-cat3750|vlsr-catalyst3750|VLSR-CATALYST3750|VLSR-Catalyst3750)
     rsvpconf="$rsvpconf --with-switch-vendor-model=Catalyst3750 --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community"

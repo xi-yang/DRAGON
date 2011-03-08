@@ -11,7 +11,7 @@ To be incorporated into KOM-RSVP-TE package
 
 bool SwitchCtrl_Session_PowerConnect6000_CLI::preAction()
 {
-    if (!active || vendor<PowerConnect6024&&vendor>PowerConnect6024 || !pipeAlive())
+    if (!active || vendor!=PowerConnect6024 || !pipeAlive())
         return false;
     DIE_IF_NEGATIVE(writeShell( "configure\n", 5));
     int n;

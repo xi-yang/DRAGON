@@ -11,37 +11,22 @@ To be incorporated into KOM-RSVP-TE package
 
 bool SwitchCtrl_Session_PowerConnect8000::connectSwitch()
 {
-    if (SwitchCtrl_Session::connectSwitch() == false)
-        return false;
-
-    if (CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH)
-    {
-        cliSession.vendor = this->vendor;
-        cliSession.active = true;
-        LOG(2)( Log::MPLS, "VLSR: CLI connecting to PowerConnect8000 Switch: ", switchInetAddr);
-        if (!cliSession.engage(NULL)) //CLI login password-only (w/ prompt for username)
-            return false;
-    }
-
-    return true;
+    bool ret = SwitchCtrl_Session::connectSwitch();
+    ret = (ret && CLI_Session::engage(NULL));
+    if (ret) active = true;
+    return ret;
 }
 
 void SwitchCtrl_Session_PowerConnect8000::disconnectSwitch()
 {
-    if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
-    {
-        char logout[50];
-        sprintf (logout, "end\nend\nlogout\n"); //logout without saving 'n' 
-        LOG(2)( Log::MPLS, "VLSR: CLI disconnecting from PowerConnect8000 Switch: ", switchInetAddr);
-        cliSession.disengage(logout);
-        cliSession.active = false;
-    }
+    CLI_Session::disengage("end\nend\nlogout\n");
+    SwitchCtrl_Session::disconnectSwitch();
+    active = false;
 }
-
 
 bool SwitchCtrl_Session_PowerConnect8000::preAction()
 {
-    if (!active || vendor != PowerConnect8024 || !pipeAlive())
+    if (!active || (vendor != PowerConnect8024 && vendor != PowerConnect6224 && vendor != PowerConnect6248) || !pipeAlive())
         return false;
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
@@ -120,7 +105,7 @@ bool SwitchCtrl_Session_PowerConnect8000::movePortToVLANAsUntagged(uint32 portID
         ret &= deleteVLANPort_ShellScript(portID, old_vlan, false);
     }
 
-    bit = Port2BitForce10(port);
+    bit = portToBit(portID);
     assert(bit < MAX_VLAN_PORT_BYTES*8);
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged)
@@ -297,7 +282,7 @@ bool SwitchCtrl_Session_PowerConnect8000::addVLANPort_ShellScript(uint32 portID,
     if (!preAction())
         return false;
 
-    portToName(uint32 portID, portName)
+    portToName(portID, portName);
     sprintf(vlanNum, "%d", vlanID);
     
     DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
@@ -341,7 +326,7 @@ bool SwitchCtrl_Session_PowerConnect8000::deleteVLANPort_ShellScript(uint32 port
     if (!preAction())
         return false;
 
-    portToName(uint32 portID, portName)
+    portToName(portID, portName);
     sprintf(vlanNum, "%d", vlanID);
     
     DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
@@ -428,7 +413,7 @@ bool SwitchCtrl_Session_PowerConnect8000::hook_isVLANEmpty(const vlanPortMap &vp
     DIE_IF_NEGATIVE(n = writeShell( "show vlan id ", 5));
     DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
-    n= ReadShellPattern(buf, (char*)"1/xg",  (char*)"1/g", (char*)"#", (char*)CISCO_ERROR_PROMPT, 5);
+    n= ReadShellPattern(buf, (char*)"1/xg",  (char*)"1/g", (char*)"#", (char*)DELL_ERROR_PROMPT, 5);
     if (n == 0)
     {
         postAction();
