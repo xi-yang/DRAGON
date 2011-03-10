@@ -306,8 +306,8 @@ void ConfigFileReader::setSwitchVlanOption(String sw_vlan_option)
 	else if (sw_vlan_option == "reduce-snmp-sync") {
 		RSVP_Global::switchController->setSwitchVlanOption(SW_VLAN_REDUCE_SNMP_SYNC);
 	}
-	else if (sw_vlan_option == "force10-no-qos") {
-		RSVP_Global::switchController->setSwitchVlanOption(SW_VLAN_FORCE10_NO_QOS);
+	else if (sw_vlan_option == "force10-no-qos" || sw_vlan_option == "switch-no-qos") {
+		RSVP_Global::switchController->setSwitchVlanOption(SW_VLAN_NO_QOS);
 	}
 }
 

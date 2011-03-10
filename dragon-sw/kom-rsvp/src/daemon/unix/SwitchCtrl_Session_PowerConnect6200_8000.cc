@@ -9,6 +9,8 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_PowerConnect6200_8000.h"
 #include "RSVP_Log.h"
 
+extern bool pipe_broken;
+
 bool SwitchCtrl_Session_PowerConnect8000::connectSwitch()
 {
     bool ret = SwitchCtrl_Session::connectSwitch();
