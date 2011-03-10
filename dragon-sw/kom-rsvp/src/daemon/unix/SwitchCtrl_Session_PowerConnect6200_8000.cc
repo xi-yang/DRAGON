@@ -19,9 +19,26 @@ bool SwitchCtrl_Session_PowerConnect8000::connectSwitch()
 
 void SwitchCtrl_Session_PowerConnect8000::disconnectSwitch()
 {
-    CLI_Session::disengage("end\nend\nlogout\n");
+    CLI_Session::disengage("end\nlogout\n");
     SwitchCtrl_Session::disconnectSwitch();
     active = false;
+}
+
+
+bool SwitchCtrl_Session_PowerConnect8000::pipeAlive()
+{
+  int n;
+  if (fdin < 0 || fdout < 0)
+    return false;
+
+  pipe_broken = false;
+  if ((n = writeShell("end\n", 2)) < 0 || pipe_broken) 
+  	return false;
+
+  if ((n = readShell (SWITCH_PROMPT, NULL, 0, 3)) < 0  || pipe_broken) 
+  	return false;
+
+  return true;
 }
 
 bool SwitchCtrl_Session_PowerConnect8000::preAction()
@@ -57,7 +74,7 @@ bool SwitchCtrl_Session_PowerConnect8000::postAction()
         return false;
     DIE_IF_NEGATIVE(writeShell("end\n", 5));
     int n;
-    DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
+    DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, DELL_ERROR_PROMPT, true, 1, 10)) ;
     if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
     return true;
 }
@@ -153,6 +170,9 @@ bool SwitchCtrl_Session_PowerConnect8000::removePortFromVLAN(uint32 portID, uint
 //committed_rate mbps--> kbps, burst_size kbyes-> bytes
 bool SwitchCtrl_Session_PowerConnect8000::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
+    if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_NO_QOS)) 
+        return true;
+
     int n;
     char vlanNum[8], portName[8], action[64], vlanClassMap[32], vlanPolicyMap[32];
     int committed_rate_int = (int)committed_rate;

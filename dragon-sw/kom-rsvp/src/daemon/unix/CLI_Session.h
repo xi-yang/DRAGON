@@ -76,7 +76,7 @@ protected:
 	int fdin;
 	int fdout;
 
-	inline bool pipeAlive();
+	virtual bool pipeAlive();
 	int readShellBuffer(char* buffer, const char *text1, const char *text2, const bool matchAnyWhere, int verbose, int timeout);
 	int readShell(const char *text1, const char *text2, const bool matchAnyWhere, int verbose, int timeout);
 	int readShell(const char *text1, const char *text2, int verbose, int timeout);

@@ -304,7 +304,7 @@ struct slot_entry {
 #define	SW_VLAN_CONFLICT_CHECK_BYPASS 0x10000
 #define SW_VLAN_JUNOS_ONE_COMMIT 0x20000
 #define SW_VLAN_REDUCE_SNMP_SYNC 0x40000
-#define SW_VLAN_FORCE10_NO_QOS 0x80000
+#define SW_VLAN_NO_QOS 0x80000
 #define	SW_VLAN_EMPTY_CHECK_BYPASS 0x100000
 
 struct sw_layer_excl_name_entry {

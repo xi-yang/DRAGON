@@ -1219,7 +1219,7 @@ uint16 SwitchCtrl_Global::getSlotType(uint16 slot_num, uint16 port_num)
 {
     SimpleList<slot_entry>::Iterator it = slotList.begin();
     for (; it != slotList.end(); ++it) {
-        if ((*it).slot_num == slot_num && ((*it).to_port == 0 || port_num >= (*it).from_port && port_num <= (*it).to_port))
+        if (((*it).slot_num == slot_num && ((*it).to_port == 0) || (port_num >= (*it).from_port && port_num <= (*it).to_port)))
             return (*it).slot_type;
     }
 
