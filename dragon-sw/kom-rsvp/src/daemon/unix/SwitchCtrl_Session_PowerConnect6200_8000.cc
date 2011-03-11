@@ -26,39 +26,44 @@ void SwitchCtrl_Session_PowerConnect8000::disconnectSwitch()
     active = false;
 }
 
-
 bool SwitchCtrl_Session_PowerConnect8000::pipeAlive()
 {
-  int n;
-  if (fdin < 0 || fdout < 0)
-    return false;
-
-  pipe_broken = false;
-  if ((n = writeShell("end\n", 2)) < 0 || pipe_broken) 
+    if (fdin < 0 || fdout < 0)
+        return false;
+    int n;
+    pipe_broken = false;
+    DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
+    n = readShell( "Password:", DELL_ERROR_PROMPT, 0, 10) ;
+    if (n < 0 || pipe_broken)
+        return false;
+    if (n == 1)
+    {
+        if (strcmp(CLI_PASSWORD, "unknown") != 0)
+            DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    }   
+    if ((n = readShell (SWITCH_PROMPT, NULL, 0, 3)) < 0  || pipe_broken) 
   	return false;
-
-  if ((n = readShell (SWITCH_PROMPT, NULL, 0, 3)) < 0  || pipe_broken) 
-  	return false;
-
-  return true;
+    return true;
 }
 
 bool SwitchCtrl_Session_PowerConnect8000::preAction()
 {
-    if (!active || (vendor != PowerConnect8024 && vendor != PowerConnect6224 && vendor != PowerConnect6248) || !pipeAlive())
+    if (!active || (vendor != PowerConnect8024 && vendor != PowerConnect6224 && vendor != PowerConnect6248) || fdin < 0 || fdout < 0)
         return false;
     int n;
-    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-    DIE_IF_NEGATIVE(n= readShell( ">", "#", true, 1, 10)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
+    n = readShell( "Password:", DELL_ERROR_PROMPT, 0, 10) ;
+    if (n < 0 || pipe_broken)
+        return false;
     if (n == 1)
     {
-        DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( "Password:", NULL, 0, 10)) ;
         if (strcmp(CLI_PASSWORD, "unknown") != 0)
             DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
-        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     }   
+    if ((n = readShell (SWITCH_PROMPT, NULL, 0, 3)) < 0  || pipe_broken) 
+  	return false;
     DIE_IF_NEGATIVE(writeShell( "configure\n", 5));
     DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
     if (n == 2) 
@@ -238,7 +243,7 @@ bool SwitchCtrl_Session_PowerConnect8000::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "interface ethernet ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
@@ -308,7 +313,7 @@ bool SwitchCtrl_Session_PowerConnect8000::addVLANPort_ShellScript(uint32 portID,
     portToName(portID, portName);
     sprintf(vlanNum, "%d", vlanID);
     
-    DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( "interface ethernet ", 5));
     DIE_IF_NEGATIVE(n = writeShell( portName, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
     DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
@@ -352,7 +357,7 @@ bool SwitchCtrl_Session_PowerConnect8000::deleteVLANPort_ShellScript(uint32 port
     portToName(portID, portName);
     sprintf(vlanNum, "%d", vlanID);
     
-    DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( "interface ethernet ", 5));
     DIE_IF_NEGATIVE(n = writeShell( portName, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
     DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
@@ -397,6 +402,13 @@ bool SwitchCtrl_Session_PowerConnect8000::hook_createVLAN(const uint32 vlanID)
     DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
     if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
     DIE_IF_EQUAL(n, 2);
+
+    //add the new *empty* vlan into PortMapListAll and portMapListUntagged
+    vlanPortMap vpm;
+    memset(&vpm, 0, sizeof(vlanPortMap));
+    vpm.vid = vlanID;
+    vlanPortMapListAll.push_back(vpm);
+    vlanPortMapListUntagged.push_back(vpm);
 
     return postAction();
 }

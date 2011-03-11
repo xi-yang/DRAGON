@@ -26,8 +26,8 @@ public:
 
 	virtual bool connectSwitch();
 	virtual void disconnectSwitch();
-    virtual bool pipeAlive();
-    virtual bool preAction();
+	virtual bool pipeAlive();
+	virtual bool preAction();
 	virtual bool postAction();
 
 	// Dell PowerConnect specific
@@ -49,12 +49,13 @@ public:
             else // PowerConnect8024
                 offset = 0;
             if (((port>>8)&0x000f) == 0)
-                return (port&0x00ff); 
+                return (port&0x00ff)-1; 
             else
-                return (port&0x00ff)+offset; 
+                return (port&0x00ff)+offset-1; 
 		}
 	uint32 bitToPort(uint32 bit)
 		{
+            bit++;
             if (SWITCH_VENDOR_MODEL == PowerConnect6024 || SWITCH_VENDOR_MODEL == PowerConnect6224)
             {
                 if (bit <= 24)
