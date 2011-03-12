@@ -876,8 +876,10 @@ void MPLS::deleteInLabel(PSB& psb, const MPLS_InLabel* il ) {
 							if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceClient() && ((*iter).inPort >> 16) == LOCAL_ID_TYPE_SUBNET_UNI_SRC ) {
         						        if ( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->isSourceDestSame() ) {
         						            //delete CRS for Source == Destination
-        						            if( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasCRS() )
+        						            if( ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->hasCRS() ) {
         						                noErr = ((SwitchCtrl_Session_SubnetUNI*)(*sessionIter))->deleteCRS() && noErr;
+        						                sleep(2); // making sure locks on depending objects (GTP) are released
+        						            }
         						        }
         						        else {
         						            //delete SNC
