@@ -20,8 +20,8 @@ To be incorporated into KOM-RSVP-TE package
 class SwitchCtrl_Session_PowerConnect8000: public CLI_Session
 {
 public:
-	SwitchCtrl_Session_PowerConnect8000(): CLI_Session() { }	
-	SwitchCtrl_Session_PowerConnect8000(const String& sName, const NetAddress& swAddr): CLI_Session(sName, swAddr) { }
+	SwitchCtrl_Session_PowerConnect8000(): CLI_Session(22) { }
+	SwitchCtrl_Session_PowerConnect8000(const String& sName, const NetAddress& swAddr): CLI_Session(sName, swAddr, 22) { }
 	virtual ~SwitchCtrl_Session_PowerConnect8000() { this->disconnectSwitch(); }
 
 	virtual bool connectSwitch();

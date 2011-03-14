@@ -82,7 +82,7 @@ bool SNMP_Session::movePortToVLANAsTagged(uint32 port, uint32 vlanID)
 		ret&=setVLANPVID(port, vlanID); //Set pvid
 	}
 
-    if(vendorSystemDescription.leftequal("PowerConnect 6248")) {
+    if(vendorSystemDescription.leftequal("Powerconnect 6248")) {
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
         if (vpmUntagged)
              //bit==0 means port is tagged; also true for other switch models but may not be necessary

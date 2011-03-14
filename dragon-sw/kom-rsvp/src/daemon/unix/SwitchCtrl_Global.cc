@@ -89,10 +89,6 @@ bool SwitchCtrl_Session::getSwitchVendorInfo()
      	rfc2674_compatible = false;
     }
 
-    if(vendorSystemDescription.leftequal("PowerConnect 6248")) {
-        ((SNMP_Session*)this)->setUntaggedPortBitReverse(true);
-    }
-
     return ret;
 }
 
@@ -833,7 +829,7 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         } else if (vendorSystemDescription.leftequal("Dell 24 Port Gigabit Ethernet, 2.1.1.4, VxWorks5.5.1")) {  // Dell PowerConnect 6224 running 2.1.1.4
         	vendor = PowerConnect6224;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Dell PowerConnect 6224 (2.1.1.4 firmware)");
-        } else if (vendorSystemDescription.leftequal("PowerConnect 6248")) {  // Dell PowerConnect 6200 series
+        } else if (vendorSystemDescription.leftequal("Powerconnect 6248")) {  // Dell PowerConnect 6200 series
         	vendor = PowerConnect6248;
         } else if (vendorSystemDescription.leftequal("Powerconnect 8024")) {  // Dell PowerConnect 8000 series
         	vendor = PowerConnect8024;
