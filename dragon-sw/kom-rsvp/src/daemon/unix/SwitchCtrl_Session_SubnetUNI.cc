@@ -1603,14 +1603,21 @@ bool SwitchCtrl_Session_SubnetUNI::createSNC_TL1(String& sncName, String& gtpNam
     for (group = 0; group < numGroups; group++)
     {
         char dtl_cstr[40];
+        char supptptype_cstr[10];
         dtl_cstr[0] = 0;
         if (!dtlString.empty())
         {
             sprintf(dtl_cstr, "dtlsn=%s-dtl_set, dtlexcl=yes,", sncName.chars());
         }
-        sprintf( bufCmd, "ent-snc-stspc:%s:%s-%d,%s:%s::name=%s-%d,type=dynamic,rmnode=%s,lep=gtp_nametype,alias=%s,%sconndir=bi_direction,meshrst=no,prtt=aps_vlsr_unprotected,pst=is;",
+        supptptype_cstr[0] = 0;
+        String &swVrsn = getCienaSoftwareVersion();
+        if (swVrsn.leftequal("6.2"))
+        {
+            sprintf(supptptype_cstr,"supptptype=sttp,");
+        }
+        sprintf( bufCmd, "ent-snc-stspc:%s:%s-%d,%s:%s::name=%s-%d,type=dynamic,rmnode=%s,%slep=gtp_nametype,alias=%s,%sconndir=bi_direction,meshrst=no,prtt=aps_vlsr_unprotected,pst=is;",
             (const char*)subnetUniSrc.node_name, gtpName.chars(), group+1, destTimeslotsStringArray[group].chars(), ctag, sncName.chars(), group+1, 
-                (const char*)subnetUniDest.node_name, currentLspName.chars(), dtl_cstr);
+                (const char*)subnetUniDest.node_name, supptptype_cstr, currentLspName.chars(), dtl_cstr);
 
         if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
 
@@ -1674,6 +1681,9 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         }
         else 
             goto _out;
+
+        //sleep five second to let finish status change into OOS  
+        sleep(5);
 
         sprintf( bufCmd, "dlt-snc-stspc::%s-%d:%d;", sncName.chars(), group+1, getNewCtag() );
         if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;
