@@ -203,6 +203,8 @@ bool SwitchCtrl_Session_PowerConnect8000::policeInputBandwidth(bool do_undo, uin
         if (n == 2) // the class-map (and corresponding policy-map) have been defined
         {
             DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+            DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
+            DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
             goto _apply_service_policy;
         }
         DIE_IF_NEGATIVE(n= writeShell( "configure\n", 5)) ;
@@ -243,13 +245,13 @@ bool SwitchCtrl_Session_PowerConnect8000::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
+_apply_service_policy:
         DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
-_apply_service_policy:
         // apply vlan-level service policy to interface
         DIE_IF_NEGATIVE(n= writeShell( "service-policy in ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
@@ -287,6 +289,8 @@ _apply_service_policy:
         DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
         if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
         DIE_IF_EQUAL(n, 2);
+        DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
+        DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         // remove vlan-level policy map
         DIE_IF_NEGATIVE(n= writeShell( "no policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
