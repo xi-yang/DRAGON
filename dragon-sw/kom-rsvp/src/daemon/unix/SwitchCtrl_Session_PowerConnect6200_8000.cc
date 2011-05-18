@@ -181,7 +181,7 @@ bool SwitchCtrl_Session_PowerConnect8000::policeInputBandwidth(bool do_undo, uin
         return true;
 
     int n;
-    char vlanNum[16], portName[16], action[64], vlanClassMap[32], vlanPolicyMap[32];
+    char vlanNum[16], portName[32], action[64], vlanClassMap[32], vlanPolicyMap[32];
     int committed_rate_int = (int)committed_rate;
 
     if (committed_rate_int < 1 || !preAction())
@@ -305,7 +305,7 @@ bool SwitchCtrl_Session_PowerConnect8000::limitOutputBandwidth(bool do_undo,  ui
 bool SwitchCtrl_Session_PowerConnect8000::addVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool isTagged)
 {
     int n;
-    char portName[16], vlanNum[16];
+    char portName[32], vlanNum[16];
 
     if (!preAction())
         return false;
@@ -349,7 +349,7 @@ bool SwitchCtrl_Session_PowerConnect8000::addVLANPort_ShellScript(uint32 portID,
 bool SwitchCtrl_Session_PowerConnect8000::deleteVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool isTagged)
 {
     int n;
-    char portName[16], vlanNum[16];
+    char portName[32], vlanNum[16];
 
     if (!preAction())
         return false;
