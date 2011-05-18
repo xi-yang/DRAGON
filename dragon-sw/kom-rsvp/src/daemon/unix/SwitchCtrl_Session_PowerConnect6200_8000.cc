@@ -181,7 +181,7 @@ bool SwitchCtrl_Session_PowerConnect8000::policeInputBandwidth(bool do_undo, uin
         return true;
 
     int n;
-    char vlanNum[8], portName[8], action[64], vlanClassMap[32], vlanPolicyMap[32];
+    char vlanNum[16], portName[16], action[64], vlanClassMap[32], vlanPolicyMap[32];
     int committed_rate_int = (int)committed_rate;
 
     if (committed_rate_int < 1 || !preAction())
