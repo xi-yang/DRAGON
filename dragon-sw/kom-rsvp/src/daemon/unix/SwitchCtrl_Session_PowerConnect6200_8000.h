@@ -38,9 +38,9 @@ public:
             if (vendorSystemDescription < "Powerconnect 8024F, 4.0.0.0")
             {
                 if (((port>>8)&0x000f) == 0)
-                    sprintf(buf, "1/g%d", port&0xff); 
+                    sprintf(buf, "ethernet 1/g%d", port&0xff); 
                 else
-                    sprintf(buf, "1/xg%d", port&0xff);             
+                    sprintf(buf, "ethernet 1/xg%d", port&0xff);             
             }
             else
             {
@@ -54,9 +54,8 @@ public:
                 case SLOT_TYPE_TENGIGE:
                     sprintf(buf, "Te%d/%d/%d", shelf_part,slot_part,port_part);
                     break;
-                case SLOT_TYPE_ILLEGAL:
                 default:
-                    return false;
+                    sprintf(buf, "Te%d/%d/%d", shelf_part,slot_part,port_part);
                 }
             }
 		}

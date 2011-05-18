@@ -243,7 +243,7 @@ bool SwitchCtrl_Session_PowerConnect8000::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
-        DIE_IF_NEGATIVE(n= writeShell( "interface ethernet ", 5)) ;
+        DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
@@ -313,7 +313,7 @@ bool SwitchCtrl_Session_PowerConnect8000::addVLANPort_ShellScript(uint32 portID,
     portToName(portID, portName);
     sprintf(vlanNum, "%d", vlanID);
     
-    DIE_IF_NEGATIVE(n = writeShell( "interface ethernet ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
     DIE_IF_NEGATIVE(n = writeShell( portName, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
     DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
@@ -357,7 +357,7 @@ bool SwitchCtrl_Session_PowerConnect8000::deleteVLANPort_ShellScript(uint32 port
     portToName(portID, portName);
     sprintf(vlanNum, "%d", vlanID);
     
-    DIE_IF_NEGATIVE(n = writeShell( "interface ethernet ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( "interface ", 5));
     DIE_IF_NEGATIVE(n = writeShell( portName, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
     DIE_IF_NEGATIVE(n= readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
