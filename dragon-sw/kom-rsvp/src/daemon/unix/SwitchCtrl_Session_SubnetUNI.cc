@@ -1682,8 +1682,8 @@ bool SwitchCtrl_Session_SubnetUNI::deleteSNC_TL1(String& sncName)
         else 
             goto _out;
 
-        //sleep five second to let finish status change into OOS  
-        sleep(5);
+        // sleep 7 second to let finish status change into OOS  
+        sleep(7);
 
         sprintf( bufCmd, "dlt-snc-stspc::%s-%d:%d;", sncName.chars(), group+1, getNewCtag() );
         if ( (ret = writeShell(bufCmd, 5)) < 0 ) goto _out;

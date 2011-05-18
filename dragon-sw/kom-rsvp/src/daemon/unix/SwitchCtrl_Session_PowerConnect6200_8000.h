@@ -31,13 +31,34 @@ public:
 	virtual bool postAction();
 
 	// Dell PowerConnect specific
-	// Port name convention: all 1/xgN named 1/1/N and 1/gN named 1/0/N in ospfd.conf
+	// Port name convention for firmware 3.x.y.z: all 1/xgN named 1/1/N and 1/gN named 1/0/N in ospfd.conf
+	// Port name convention for firmware 4.x.y.z: Te1/a/b or Ge1/c/d need "slots te a" and "slots ge c" etc. lines in RSVPD.conf
 	void portToName(uint32 port, char* buf)
 		{
-            if (((port>>8)&0x000f) == 0)
-                sprintf(buf, "1/g%d", port&0xff); 
+            if (vendorSystemDescription < "Powerconnect 8024F, 4.0.0.0")
+            {
+                if (((port>>8)&0x000f) == 0)
+                    sprintf(buf, "1/g%d", port&0xff); 
+                else
+                    sprintf(buf, "1/xg%d", port&0xff);             
+            }
             else
-                sprintf(buf, "1/xg%d", port&0xff);             
+            {
+                uint32 port_part=(port&0xff);     
+                uint32 slot_part=(port>>8)&0xf;
+                uint32 shelf_part=(port>>12)&0xf;
+                switch(RSVP_Global::switchController->getSlotType(slot_part, port_part)) {
+                case SLOT_TYPE_GIGE:
+                    sprintf(buf, "Ge%d/%d/%d", shelf_part,slot_part,port_part);
+                    break;
+                case SLOT_TYPE_TENGIGE:
+                    sprintf(buf, "Te%d/%d/%d", shelf_part,slot_part,port_part);
+                    break;
+                case SLOT_TYPE_ILLEGAL:
+                default:
+                    return false;
+                }
+            }
 		}
 	uint32 portToBit(uint32 port)
 		{
