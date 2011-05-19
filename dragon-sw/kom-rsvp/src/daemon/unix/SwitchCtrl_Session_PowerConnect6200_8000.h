@@ -35,7 +35,7 @@ public:
 	// Port name convention for firmware 4.x.y.z: Te1/a/b or Ge1/c/d need "slots te a" and "slots ge c" etc. lines in RSVPD.conf
 	void portToName(uint32 port, char* buf)
 		{
-            if (vendorSystemDescription < "Powerconnect 8024F, 4.0.0.0")
+            if (strcmp(extracVersion(vendorSystemDescription), "4.0.0.0") < 0)
             {
                 if (((port>>8)&0x000f) == 0)
                     sprintf(buf, "ethernet 1/g%d", port&0xff); 
@@ -115,6 +115,27 @@ public:
 	virtual void hook_getPortMapFromSnmpVars(vlanPortMap &vpm, netsnmp_variable_list *vars);
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port);
 	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID);
+
+private:    
+    char* extracVersion(String str)
+    {
+        char* ret;
+        ret = strstr(str.chars(), "8024");
+        if (ret)
+             goto _found;
+        ret = strstr(str.chars(), "6248");
+        if (ret)
+             goto _found;
+        ret = strstr(str.chars(), "6224");
+        if (ret)
+             goto _found;
+    _found:
+        if (ret[4] == ' ' || ret[4] == ',')
+             return ret+6;
+        else
+             return ret+7;
+        return NULL;
+    }
 };
 
 #endif /*SWITCHCTRL_SESSION_POWERCONNECT6200_8000_H_*/

@@ -466,7 +466,7 @@ bool SwitchCtrl_Session_PowerConnect8000::hook_isVLANEmpty(const vlanPortMap &vp
     DIE_IF_NEGATIVE(n = writeShell( "show vlan id ", 5));
     DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
-    if (vendorSystemDescription < "Powerconnect 8024F, 4.0.0.0")
+    if (strcmp(extracVersion(vendorSystemDescription), "4.0.0.0") < 0)
         n = ReadShellPattern(buf, (char*)"1/xg",  (char*)"1/g", (char*)"#", (char*)DELL_ERROR_PROMPT, 5);
     else
         n = ReadShellPattern(buf, (char*)"Te",  (char*)"Ge", (char*)"#", (char*)DELL_ERROR_PROMPT, 5);
