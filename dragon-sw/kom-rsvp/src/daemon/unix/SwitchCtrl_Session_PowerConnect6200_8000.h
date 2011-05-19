@@ -119,6 +119,7 @@ public:
 private:    
     char* extracVersion(String str)
     {
+        static char version[10];
         char* ret;
         ret = strstr(str.chars(), "8024");
         if (ret)
@@ -130,11 +131,13 @@ private:
         if (ret)
              goto _found;
     _found:
-        if (ret[4] == ' ' || ret[4] == ',')
-             return ret+6;
+        if (ret == NULL)
+            strcpy(version, "4.0.0.1");
+        else if (ret[4] == ' ' || ret[4] == ',')
+             strncpy(version, ret+6, 7);
         else
-             return ret+7;
-        return NULL;
+            strncpy(version, ret+7, 7);
+        return version;
     }
 };
 
