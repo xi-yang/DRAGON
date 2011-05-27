@@ -174,7 +174,7 @@ bool SwitchCtrl_Session_PowerConnect8000::removePortFromVLAN(uint32 portID, uint
 }
 
 
-//committed_rate mbps--> kbps, burst_size kbyes-> bytes
+//committed_rate mbps--> kbps, burst_size kbyes
 bool SwitchCtrl_Session_PowerConnect8000::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
     if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_NO_QOS)) 
@@ -220,8 +220,8 @@ bool SwitchCtrl_Session_PowerConnect8000::policeInputBandwidth(bool do_undo, uin
         DIE_IF_NEGATIVE(n= writeShell( "exit\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
         // configure vlan-level policy-map
-        committed_rate_int *= 1000;
-        if (burst_size < 32) burst_size = 32; //in Kbytes
+        committed_rate_int *= 1000; // convert to Kbps
+        burst_size = 128; //in Kbytes
         sprintf(action, "police-simple %d %d conform-action transmit violate-action drop", committed_rate_int, burst_size); // no excess or peak burst size setting
         DIE_IF_NEGATIVE(n= writeShell( "policy-map ", 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( vlanPolicyMap, 5)) ;
