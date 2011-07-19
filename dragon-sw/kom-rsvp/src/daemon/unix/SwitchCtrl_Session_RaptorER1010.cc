@@ -20,7 +20,19 @@ bool SwitchCtrl_Session_RaptorER1010_CLI::preAction()
     {
         DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "Password:", NULL, 0, 10)) ;
-        if (strcmp(CLI_PASSWORD, "unknown") != 0)
+        if (strcmp(CLI_ENABPASS, "unknown") != 0)
+	{
+    	    char onekey[2];
+	    int len = strlen(CLI_ENABPASS);
+	    for (int i = 0; i < len; i++) 
+	    {
+	        onekey[0] = CLI_ENABPASS[i];
+	        onekey[1] = 0;
+            	DIE_IF_NEGATIVE(n= writeShell( onekey, 2)) ;
+		sleep(1);
+            }
+	}
+        else if (strcmp(CLI_PASSWORD, "unknown") != 0)
 	{
     	    char onekey[2];
 	    int len = strlen(CLI_PASSWORD);

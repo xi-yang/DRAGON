@@ -742,11 +742,21 @@ if test "$with_switch_cli_username" != ""; then
 fi
 
 AC_ARG_WITH(switch-cli-password,
-	[ --with-switch-cli-password[=X]   set VLSR switch CLI password (prompt by default)],
-	with_switch_cli_password=$withval,
-	with_switch_cli_password="")
+        [ --with-switch-cli-password[=X]   set VLSR switch CLI password (prompt by default)],
+        with_switch_cli_password=$withval,
+        with_switch_cli_password="")
 if test "$with_switch_cli_password" != ""; then
-	AC_DEFINE_UNQUOTED(CLI_PASSWORD, "$with_switch_cli_password")
+        AC_DEFINE_UNQUOTED(CLI_PASSWORD, "$with_switch_cli_password")
+fi
+
+AC_ARG_WITH(switch-cli-enabpass,
+	[ --with-switch-cli-enabpass[=X]   set switch CLI enable password (prompt by default)],
+	with_switch_cli_enabpass=$withval,
+	with_switch_cli_enabpass="")
+if test "$with_switch_cli_enabpass" != ""; then
+	AC_DEFINE_UNQUOTED(CLI_ENABPASS, "$with_switch_cli_enabpass")
+else
+	AC_DEFINE_UNQUOTED(CLI_ENABPASS, "$with_switch_cli_password")
 fi
 
 if test "$enable_switch_cli_access" = "yes" && 
@@ -770,16 +780,27 @@ Username (Default: unknown): $ECHO_C"
 	eval switch_cli_username="\$tmpinput"
 
 	stty -echo <&AS_ORIGINAL_STDIN_FD
+
 	echo $ECHO_N "Password (Default: unknown): $ECHO_C"
 	read tmpinput <&AS_ORIGINAL_STDIN_FD
 	if test "$tmpinput" = ""; then
 	    tmpinput="unknown"
 	fi
 	eval switch_cli_password="\$tmpinput"
-	stty echo <&AS_ORIGINAL_STDIN_FD
 	echo \*\*\*\*\*\*\*\*
+
+	echo $ECHO_N "Enable password (Default: same Password): $ECHO_C"
+	read tmpinput <&AS_ORIGINAL_STDIN_FD
+	if test "$tmpinput" = ""; then
+	    tmpinput="$switch_cli_password"
+	fi
+	eval switch_cli_enabpass="\$tmpinput"
+	echo \*\*\*\*\*\*\*\*
+
+	stty echo <&AS_ORIGINAL_STDIN_FD
 	AC_DEFINE_UNQUOTED(CLI_USERNAME, "$switch_cli_username")
 	AC_DEFINE_UNQUOTED(CLI_PASSWORD, "$switch_cli_password")
+	AC_DEFINE_UNQUOTED(CLI_ENABPASS, "$switch_cli_enabpass")
 fi
 
 

@@ -188,6 +188,7 @@
 /* Define CLI username and password for VLSR access to the switch */
 #define CLI_USERNAME "unknown"
 #define CLI_PASSWORD "unknown"
+#define CLI_ENABPASS "unknown"
 
 /* Define TL1 session type for VLSR control */
 #define TL1_SESSION_TYPE TL1_NONE

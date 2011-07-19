@@ -38,7 +38,9 @@ bool SwitchCtrl_Session_PowerConnect8000::pipeAlive()
         return false;
     if (n == 1)
     {
-        if (strcmp(CLI_PASSWORD, "unknown") != 0)
+        if (strcmp(CLI_ENABPASS, "unknown") != 0)
+            DIE_IF_NEGATIVE(n= writeShell( CLI_ENABPASS, 5)) ;
+        else if (strcmp(CLI_PASSWORD, "unknown") != 0)
             DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
     }   
@@ -58,7 +60,9 @@ bool SwitchCtrl_Session_PowerConnect8000::preAction()
         return false;
     if (n == 1)
     {
-        if (strcmp(CLI_PASSWORD, "unknown") != 0)
+        if (strcmp(CLI_ENABPASS, "unknown") != 0)
+            DIE_IF_NEGATIVE(n= writeShell( CLI_ENABPASS, 5)) ;
+        else if (strcmp(CLI_PASSWORD, "unknown") != 0)
             DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
     }   
