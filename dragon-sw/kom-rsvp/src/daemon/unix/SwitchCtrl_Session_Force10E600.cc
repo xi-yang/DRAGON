@@ -22,10 +22,11 @@ bool SwitchCtrl_Session_Force10E600::preAction()
     {
         DIE_IF_NEGATIVE(n= writeShell( "enable\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( "Password: ", NULL, 0, 10)) ;
-        if (strcmp(CLI_ENABPASS, "unknown") != 0)
+        if (strcmp(CLI_ENABPASS, "unknown") != 0) {
             DIE_IF_NEGATIVE(n= writeShell( CLI_ENABPASS, 5)) ;
-        else if (strcmp(CLI_PASSWORD, "unknown") != 0)
+        } else if (strcmp(CLI_PASSWORD, "unknown") != 0) {
             DIE_IF_NEGATIVE(n= writeShell( CLI_PASSWORD, 5)) ;
+        }
         DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
         DIE_IF_NEGATIVE(n= readShell( SWITCH_PROMPT, NULL, 1, 10)) ;
     }
