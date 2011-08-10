@@ -121,13 +121,13 @@ private:
     {
         static char version[10];
         char* ret;
-        ret = strstr(str.chars(), "8024");
+        ret = strstr((char*)str.chars(), "8024");
         if (ret)
              goto _found;
-        ret = strstr(str.chars(), "6248");
+        ret = strstr((char*)str.chars(), "6248");
         if (ret)
              goto _found;
-        ret = strstr(str.chars(), "6224");
+        ret = strstr((char*)str.chars(), "6224");
         if (ret)
              goto _found;
     _found:
