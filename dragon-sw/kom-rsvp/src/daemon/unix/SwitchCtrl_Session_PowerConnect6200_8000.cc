@@ -346,9 +346,9 @@ bool SwitchCtrl_Session_PowerConnect8000::addVLANPort_ShellScript(uint32 portID,
 
     if (isTagged)
     {
-        DIE_IF_NEGATIVE(n = writeShell( "switchport mode general\n", 5));
+        DIE_IF_NEGATIVE(n = writeShell( "switchport mode trunk\n", 5));
         DIE_IF_NEGATIVE(n = readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
-        DIE_IF_NEGATIVE(n = writeShell( "switchport general allowed vlan add ", 5));
+        DIE_IF_NEGATIVE(n = writeShell( "switchport trunk allowed vlan add ", 5));
         DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
         DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
         DIE_IF_NEGATIVE(n = readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
@@ -390,7 +390,7 @@ bool SwitchCtrl_Session_PowerConnect8000::deleteVLANPort_ShellScript(uint32 port
 
     if (isTagged)
     {
-        DIE_IF_NEGATIVE(n = writeShell( "switchport general allowed vlan remove ", 5));
+        DIE_IF_NEGATIVE(n = writeShell( "switchport trunk allowed vlan remove ", 5));
         DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
         DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
         DIE_IF_NEGATIVE(n = readShell( "#", DELL_ERROR_PROMPT, true, 1, 10)) ;
