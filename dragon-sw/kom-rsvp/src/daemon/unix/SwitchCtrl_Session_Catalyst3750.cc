@@ -256,6 +256,10 @@ bool SwitchCtrl_Session_Catalyst3750_CLI::hook_isVLANEmpty(const vlanPortMap &vp
 	
     if (!preAction())
         return false;
+
+    DIE_IF_NEGATIVE(writeShell("end\n", 5));
+    DIE_IF_NEGATIVE(n= readShell( "#", CISCO_ERROR_PROMPT, true, 1, 10)) ;
+    if (n == 2) readShell( SWITCH_PROMPT, NULL, 1, 10);
 	
     sprintf(vlanNum, "%d", vpm.vid);
     DIE_IF_NEGATIVE(n = writeShell( "show vlan id ", 5));
