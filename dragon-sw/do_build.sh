@@ -44,7 +44,7 @@ case "$target" in
     rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=Force10E600 --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community --with-force10-software-v6 --enable-switch-port-shutdown"
   ;;
   vlsr-juniper|VLSR-JUNIPER)
-    rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=JuniperEX3200 --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community --enable-switch-port-shutdown"
+    rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=JUNOS --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community --enable-switch-port-shutdown"
   ;;
   vlsr-raptor|VLSR-RAPTOR)
     rsvpconf="$rsvpconf --with-switch-vendor-model=RaptorER1010 --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community"
