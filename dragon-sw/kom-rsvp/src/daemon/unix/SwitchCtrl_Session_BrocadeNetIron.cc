@@ -55,7 +55,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::movePortToVLANAsTagged(uint32 portID, ui
     if ((!active) || portID==SWITCH_CTRL_PORT || vlanID<MIN_VLAN || vlanID>MAX_VLAN) 
         return ret; //don't touch the control port!
 
-    bit = Port2BitBrocade(portID);
+    bit = Port2Bit(portID);
     assert(bit < MAX_VLAN_PORT_BYTES*8);
     vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
     if (vpmAll) {
@@ -77,7 +77,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::movePortToVLANAsUntagged(uint32 portID, 
         return ret; //don't touch the control port!
 
     int old_vlan = getVLANbyUntaggedPort(portID);
-    bit = Port2BitBrocade(portID);
+    bit = Port2Bit(portID);
     assert(bit < MAX_VLAN_PORT_BYTES*8);
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, old_vlan);
     if (vpmUntagged)
@@ -89,7 +89,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::movePortToVLANAsUntagged(uint32 portID, 
         ret &= deleteVLANPort_ShellScript(portID, old_vlan, false);
     }
 
-    bit = Port2BitBrocade(portID);
+    bit = Port2Bit(portID);
     assert(bit < MAX_VLAN_PORT_BYTES*8);
     vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
     if (vpmUntagged)
@@ -114,7 +114,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::removePortFromVLAN(uint32 portID, uint32
     	return ret; //don't touch the control port!
 
     if (vlanID>=MIN_VLAN && vlanID<=MAX_VLAN){
-        bit = Port2BitBrocade(portID);
+        bit = Port2Bit(portID);
         assert(bit < MAX_VLAN_PORT_BYTES*8);
         vpmUntagged = getVlanPortMapById(vlanPortMapListUntagged, vlanID);
         if (vpmUntagged)
@@ -280,7 +280,7 @@ void SwitchCtrl_Session_BrocadeNetIron::hook_getPortMapFromSnmpVars(vlanPortMap 
 
 bool SwitchCtrl_Session_BrocadeNetIron::hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port)
 {
-    uint32 port_bit = Port2BitBrocade(port);
+    uint32 port_bit = Port2Bit(port);
     if (port_bit == 0)
         return false;
     return HasPortBit(vpm.portbits, port_bit-1);
@@ -300,7 +300,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::hook_getPortListbyVLAN(PortList& portLis
         if (HasPortBit(vpmAll->portbits, bit))
         {
             port = bit+1;
-            port = Bit2PortBrocade(port);
+            port = Bit2Port(port);
             if (port != 0)
                 portList.push_back(port);
         }

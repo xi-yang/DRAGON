@@ -27,6 +27,7 @@ To be incorporated into KOM-RSVP-TE package
 #include "SwitchCtrl_Session_JUNOS.h"
 #include "SwitchCtrl_Session_PowerConnect6000.h"
 #include "SwitchCtrl_Session_PowerConnect6200_8000.h"
+#include "SwitchCtrl_Session_BrocadeNetIron.h"
 
 
 #ifdef Linux
@@ -833,6 +834,8 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         	vendor = PowerConnect6248;
         } else if (vendorSystemDescription.leftequal("Powerconnect 8024") || vendorSystemDescription.leftequal("PowerConnect 8024")) {  // Dell PowerConnect 8000 series
         	vendor = PowerConnect8024;
+        } else if (vendorSystemDescription.leftequal("BrocadeNetIron SysVer string") ) {  // Brocade NetIron PowerConnect MLX 
+        	vendor = BrocadeNetIron;
         } else if (vendorSystemDescription.leftequal("Summit1") || vendorSystemDescription.leftequal("Summit5")) {
         	vendor = RFC2674;
 		LOG(1)( Log::MPLS, "VLSR: SNMP: switch vendor/model is Extreme Summit");
@@ -953,7 +956,10 @@ SwitchCtrl_Session* SwitchCtrl_Global::createSession(uint32 vendor_model, NetAdd
             break;                                        
         case PowerConnect8024:
             ssNew = new SwitchCtrl_Session_PowerConnect8000("VLSR-Dell-PowerConnect8024", switchAddr);
-            break;                                        
+            break; 
+        case BrocadeNetIron:
+            ssNew = new SwitchCtrl_Session_BrocadeNetIron("VLSR-Brocade-NetIron", switchAddr);
+            break;
 #ifdef Linux
         case LinuxSwitch:
             ssNew = new SwitchCtrl_Session_Linux("VLSR-Linux", switchAddr);

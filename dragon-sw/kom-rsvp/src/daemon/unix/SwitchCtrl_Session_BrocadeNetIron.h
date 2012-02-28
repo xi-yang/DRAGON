@@ -30,6 +30,17 @@ public:
 	virtual bool movePortToVLANAsUntagged(uint32 port, uint32 vlanID);
 	virtual bool removePortFromVLAN(uint32 port, uint32 vlanID);
 	virtual bool setVLANPortsTagged(uint32 taggedPorts, uint32 vlanID) { return true; }
+	
+	uint32 Port2Bit(uint32 port)
+	{
+		// TODO: 
+	}
+	
+	uint32 Bit2Port(uint32 bit)
+	{
+		// TODO: 
+	}
+
 	///vendor specific shell scripts
 	bool addVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool tagged);
 	bool deleteVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool tagged);
@@ -50,15 +61,6 @@ public:
 
 };
 
-inline uint32 Port2BitBrocade(uint32 port)
-{
-	// TODO: 
-}
-
-inline uint32 Bit2PortBrocade(uint32 bit)
-{
-	// TODO: 
-}
 
 
 #endif //ifndef _SwitchCtrl_Session_BrocadeNetIron_H_
