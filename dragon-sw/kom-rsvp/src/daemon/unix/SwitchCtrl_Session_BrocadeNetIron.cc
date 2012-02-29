@@ -11,6 +11,22 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP.h"
 #include "RSVP_Log.h"
 
+bool SwitchCtrl_Session_BrocadeNetIron::connectSwitch()
+{
+    bool ret = SwitchCtrl_Session::connectSwitch();
+    ret = (ret && CLI_Session::engage("Login Name:"));
+    if (ret) active = true;
+    return ret;
+}
+
+void SwitchCtrl_Session_BrocadeNetIron::disconnectSwitch()
+{
+    CLI_Session::disengage("end\n\exit\nexit\n");
+    SwitchCtrl_Session::disconnectSwitch();
+    active = false;
+}
+
+
 bool SwitchCtrl_Session_BrocadeNetIron::preAction()
 {
     if (!active || !pipeAlive())

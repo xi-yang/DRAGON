@@ -22,6 +22,8 @@ public:
 	SwitchCtrl_Session_BrocadeNetIron(const String& sName, const NetAddress& swAddr): CLI_Session(sName, swAddr) { }
 	virtual ~SwitchCtrl_Session_BrocadeNetIron() { }
 
+	virtual bool connectSwitch();
+	virtual void disconnectSwitch();
 	virtual bool preAction();
 	virtual bool postAction();
 
