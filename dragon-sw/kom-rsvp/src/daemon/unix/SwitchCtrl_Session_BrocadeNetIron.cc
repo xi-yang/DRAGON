@@ -343,8 +343,9 @@ bool SwitchCtrl_Session_BrocadeNetIron::policeInputBandwidth(bool do_undo, uint3
     int n;
     uint32 port_part,slot_part;
     char portName[100], vlanNum[100], action[100];
-    int committed_rate_int = (int)committed_rate;
 
+    committed_rate *= 1000000;
+    int committed_rate_int = (int)committed_rate;
     if (committed_rate_int < 1 || !preAction())
         return false;
 
@@ -390,8 +391,9 @@ bool SwitchCtrl_Session_BrocadeNetIron::limitOutputBandwidth(bool do_undo, uint3
     int n;
     uint32 port_part,slot_part;
     char portName[100], vlanNum[100], action[100];
-    int committed_rate_int = (int)committed_rate;
 
+    committed_rate *= 1000000;
+    int committed_rate_int = (int)committed_rate;
     if (committed_rate_int < 1 || !preAction())
         return false;
 
