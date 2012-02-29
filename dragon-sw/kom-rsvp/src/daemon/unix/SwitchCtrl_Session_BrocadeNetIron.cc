@@ -277,7 +277,6 @@ bool SwitchCtrl_Session_BrocadeNetIron::hook_isVLANEmpty(const vlanPortMap &vpm)
     n= ReadShellPattern(buf, (char*)"No ports associated",  (char*)"not configured", (char*)"#", (char*)BROCADE_ERROR_PROMPT, 5);
     if (n == 1 || n == 2)
     {
-        readShell(  "#", NULL, true, 1, 10);
         postAction();
         return true;
     }
@@ -361,7 +360,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::policeInputBandwidth(bool do_undo, uint3
     sprintf(action, "%srate-limit input vlan-id %d %d %d", do_undo? "": "no ", vlan_id, committed_rate_int, burst_size);
 
     // enter interface/port configuration mode 
-    DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "interface ethernet ", 5)) ;
     DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 10)) ;
@@ -408,7 +407,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::limitOutputBandwidth(bool do_undo, uint3
     sprintf(action, "%srate-limit output vlan-id %d %d %d", do_undo? "": "no ", vlan_id, committed_rate_int, burst_size);
 
     // enter interface/port configuration mode 
-    DIE_IF_NEGATIVE(n= writeShell( "interface ", 5)) ;
+    DIE_IF_NEGATIVE(n= writeShell( "interface ethernet ", 5)) ;
     DIE_IF_NEGATIVE(n= writeShell( portName, 5)) ;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
     DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 10)) ;
