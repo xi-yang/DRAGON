@@ -336,6 +336,10 @@ bool SwitchCtrl_Session_BrocadeNetIron::policeInputBandwidth(bool do_undo, uint3
     if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_NO_QOS)) 
        return true;
 
+    bool vlanRateLimitConfiuged = this->hasVlanRateLimit(input_port, vlan_id, true);
+    if ((do_undo && vlanRateLimitConfiuged) || (!do_undo && !vlanRateLimitConfiuged))
+        return true;
+
     int n;
     uint32 port_part,slot_part;
     char portName[100], vlanNum[100], action[100];
@@ -350,8 +354,8 @@ bool SwitchCtrl_Session_BrocadeNetIron::policeInputBandwidth(bool do_undo, uint3
     sprintf(portName, "%d/%d", slot_part, port_part);
     sprintf(vlanNum, "%d", vlan_id);
 
-
-    if (burst_size == 0) burst_size = 10000000;
+    burst_size = committed_rate * 0.1;
+    if (burst_size < 10000000) burst_size = 10000000;
     
     sprintf(action, "%srate-limit input vlan-id %d %d %d", do_undo? "": "no ", vlan_id, committed_rate_int, burst_size);
 
@@ -379,10 +383,13 @@ bool SwitchCtrl_Session_BrocadeNetIron::limitOutputBandwidth(bool do_undo, uint3
     if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_NO_QOS)) 
        return true;
 
+    bool vlanRateLimitConfiuged = this->hasVlanRateLimit(output_port, vlan_id, false);
+    if ((do_undo && vlanRateLimitConfiuged) || (!do_undo && !vlanRateLimitConfiuged))
+        return true;
+
     int n;
     uint32 port_part,slot_part;
     char portName[100], vlanNum[100], action[100];
-    char append[20];
     int committed_rate_int = (int)committed_rate;
 
     if (committed_rate_int < 1 || !preAction())
@@ -394,8 +401,8 @@ bool SwitchCtrl_Session_BrocadeNetIron::limitOutputBandwidth(bool do_undo, uint3
     sprintf(portName, "%d/%d", slot_part, port_part);
     sprintf(vlanNum, "%d", vlan_id);
 
-
-    if (burst_size == 0) burst_size = 10000000;
+    burst_size = committed_rate * 0.1;
+    if (burst_size < 10000000) burst_size = 10000000;
     
     sprintf(action, "%srate-limit output vlan-id %d %d %d", do_undo? "": "no ", vlan_id, committed_rate_int, burst_size);
 
@@ -417,3 +424,34 @@ bool SwitchCtrl_Session_BrocadeNetIron::limitOutputBandwidth(bool do_undo, uint3
         return false;
     return true;
 }
+
+bool SwitchCtrl_Session_BrocadeNetIron::hasVlanRateLimit(uint32 port, uint32 vlan, bool is_input)
+{
+    int n;
+    char portName[16], vlanNum[16];
+
+    int port_part=(port)&0xff;
+    int slot_part=(port>>8)&0xf;
+
+    if (!preAction())
+        return false;
+
+    sprintf(portName, "%d/%d", slot_part, port_part);
+    sprintf(vlanNum, "%d", vlan);
+
+    DIE_IF_NEGATIVE(n = writeShell( "show rate-limit interface ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( portName, 5));
+    DIE_IF_NEGATIVE(n = writeShell( is_input ? " input vlan ":" output vlan ", 5));
+    DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
+    n = readShell( "vlan-id",  "#", true, 1, 10) ;
+    if (n == 1)
+    {
+        readShell(  "#", NULL, true, 1, 10);
+        postAction();
+        return true;
+    }
+    postAction();
+    return false;
+}
+

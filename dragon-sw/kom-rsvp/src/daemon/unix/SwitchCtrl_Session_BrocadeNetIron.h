@@ -55,11 +55,11 @@ public:
 	virtual bool hook_hasPortinVlanPortMap(vlanPortMap &vpm, uint32  port);
 	virtual bool hook_getPortListbyVLAN(PortList& portList, uint32  vlanID);
 
-	 ///////////------QoS Functions ------/////////
-	 virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
-	 virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,	int peak_burst_size=0);
+	///////////------QoS Functions ------/////////
+	virtual bool policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,  int peak_burst_size=0);
+	virtual bool limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size=0, float peak_rate=0.0,	int peak_burst_size=0);
 
-	bool hasVlanRateLimit(char* vlanNum);
+ 	bool hasVlanRateLimit(uint32 port, uint32 vlan, bool is_input);
 
 };
 
