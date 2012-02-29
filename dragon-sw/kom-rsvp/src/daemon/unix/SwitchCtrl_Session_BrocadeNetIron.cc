@@ -336,7 +336,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::policeInputBandwidth(bool do_undo, uint3
     if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_NO_QOS)) 
        return true;
 
-    bool vlanRateLimitConfiuged = this->hasVlanRateLimit(input_port, vlan_id, true);
+    bool vlanRateLimitConfiuged = this->hasVlanRateLimit(vlan_id, true);
     if ((do_undo && vlanRateLimitConfiuged) || (!do_undo && !vlanRateLimitConfiuged))
         return true;
 
@@ -383,7 +383,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::limitOutputBandwidth(bool do_undo, uint3
     if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_NO_QOS)) 
        return true;
 
-    bool vlanRateLimitConfiuged = this->hasVlanRateLimit(output_port, vlan_id, false);
+    bool vlanRateLimitConfiuged = this->hasVlanRateLimit(vlan_id, false);
     if ((do_undo && vlanRateLimitConfiuged) || (!do_undo && !vlanRateLimitConfiuged))
         return true;
 
@@ -425,26 +425,17 @@ bool SwitchCtrl_Session_BrocadeNetIron::limitOutputBandwidth(bool do_undo, uint3
     return true;
 }
 
-bool SwitchCtrl_Session_BrocadeNetIron::hasVlanRateLimit(uint32 port, uint32 vlan, bool is_input)
+bool SwitchCtrl_Session_BrocadeNetIron::hasVlanRateLimit(uint32 vlan, bool is_input)
 {
     int n;
-    char portName[16], vlanNum[16];
-
-    int port_part=(port)&0xff;
-    int slot_part=(port>>8)&0xf;
+    char vlanPattern[32];
 
     if (!preAction())
         return false;
 
-    sprintf(portName, "%d/%d", slot_part, port_part);
-    sprintf(vlanNum, "%d", vlan);
-
-    DIE_IF_NEGATIVE(n = writeShell( "show rate-limit interface ", 5));
-    DIE_IF_NEGATIVE(n = writeShell( portName, 5));
-    DIE_IF_NEGATIVE(n = writeShell( is_input ? " input vlan ":" output vlan ", 5));
-    DIE_IF_NEGATIVE(n = writeShell( vlanNum, 5));
-    DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
-    n = readShell( "vlan-id",  "#", true, 1, 10) ;
+    DIE_IF_NEGATIVE(n = writeShell( "show rate-limit\n", 5));
+    sprintf(vlanPattern, "%s vlan-id %d", is_input? "input":"output", vlan);
+    n = readShell( vlanPattern,  "#", true, 1, 10) ;
     if (n == 1)
     {
         readShell(  "#", NULL, true, 1, 10);
