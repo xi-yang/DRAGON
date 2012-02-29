@@ -277,6 +277,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::hook_isVLANEmpty(const vlanPortMap &vpm)
     n= ReadShellPattern(buf, (char*)"No ports associated",  (char*)"not configured", (char*)"#", (char*)BROCADE_ERROR_PROMPT, 5);
     if (n == 1 || n == 2)
     {
+        readShell(  "#", NULL, true, 1, 10);
         postAction();
         return true;
     }
