@@ -33,12 +33,12 @@ public:
 	
 	uint32 Port2Bit(uint32 port)
 	{
-		// TODO: 
+		return (port&0x00ff)+(((port>>8)&0x000f)-1)*48-1;  //zero based bits: 80 00; one based ports: 1/1, 2/1
 	}
 	
 	uint32 Bit2Port(uint32 bit)
 	{
-		// TODO: 
+		return (((bit/48+1)&0x000f)<<8)|(((bit+1)%48)&0xff);
 	}
 
 	///vendor specific shell scripts

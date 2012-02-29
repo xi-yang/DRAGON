@@ -283,7 +283,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::hook_hasPortinVlanPortMap(vlanPortMap &v
     uint32 port_bit = Port2Bit(port);
     if (port_bit == 0)
         return false;
-    return HasPortBit(vpm.portbits, port_bit-1);
+    return HasPortBit(vpm.portbits, port_bit);
 }
 
 bool SwitchCtrl_Session_BrocadeNetIron::hook_getPortListbyVLAN(PortList& portList, uint32  vlanID)
