@@ -834,7 +834,7 @@ bool SwitchCtrl_Global::static_getSwitchVendorInfo(struct snmp_session* &session
         	vendor = PowerConnect6248;
         } else if (vendorSystemDescription.leftequal("Powerconnect 8024") || vendorSystemDescription.leftequal("PowerConnect 8024")) {  // Dell PowerConnect 8000 series
         	vendor = PowerConnect8024;
-        } else if (vendorSystemDescription.leftequal("BrocadeNetIron SysVer string") ) {  // Brocade NetIron PowerConnect MLX 
+        } else if (vendorSystemDescription.leftequal("Brocade MLX") ) {  // Brocade NetIron / MLX 
         	vendor = BrocadeNetIron;
         } else if (vendorSystemDescription.leftequal("Summit1") || vendorSystemDescription.leftequal("Summit5")) {
         	vendor = RFC2674;
