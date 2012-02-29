@@ -170,10 +170,11 @@ bool SwitchCtrl_Session_BrocadeNetIron::addVLANPort_ShellScript(uint32 portID, u
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
     DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 10)) ;
     if (n == 2) readShell(  "#", NULL, true, 1, 10);    
-    if (tagged)
+    if (tagged) {
         DIE_IF_NEGATIVE(n = writeShell( "tagged ethernet ", 5));
-    else
+    } else {
         DIE_IF_NEGATIVE(n = writeShell( "untagged ethernet ", 5));
+    }
     DIE_IF_NEGATIVE(n = writeShell( portName, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
     DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 10)) ;
@@ -203,10 +204,11 @@ bool SwitchCtrl_Session_BrocadeNetIron::deleteVLANPort_ShellScript(uint32 portID
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
     DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 10)) ;
     if (n == 2) readShell(  "#", NULL, true, 1, 10);
-    if (tagged)
+    if (tagged) {
         DIE_IF_NEGATIVE(n = writeShell( "no tagged ethernet ", 5));
-    else
+    } else {
         DIE_IF_NEGATIVE(n = writeShell( "no untagged ethernet ", 5));
+    }
     DIE_IF_NEGATIVE(n = writeShell( portName, 5));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 5));
     DIE_IF_NEGATIVE(n= readShell( "#", "error", true, 1, 10)) ;
