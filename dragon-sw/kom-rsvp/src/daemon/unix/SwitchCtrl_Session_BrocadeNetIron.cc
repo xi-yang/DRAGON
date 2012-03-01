@@ -11,6 +11,8 @@ To be incorporated into KOM-RSVP-TE package
 #include "RSVP.h"
 #include "RSVP_Log.h"
 
+extern bool pipe_broken;
+
 bool SwitchCtrl_Session_BrocadeNetIron::connectSwitch()
 {
     bool ret = SwitchCtrl_Session::connectSwitch();
@@ -27,9 +29,22 @@ void SwitchCtrl_Session_BrocadeNetIron::disconnectSwitch()
 }
 
 
+bool SwitchCtrl_Session_BrocadeNetIron::pipeAlive()
+{
+    if (fdin < 0 || fdout < 0)
+        return false;
+    int n;
+    pipe_broken = false;
+    DIE_IF_NEGATIVE(n= writeShell( "\n", 5)) ;
+    if ((n = readShell ("#", ">", true, 0, 10)) < 0  || pipe_broken)
+        return false;
+    return true;
+}
+
+
 bool SwitchCtrl_Session_BrocadeNetIron::preAction()
 {
-    if (!active || !pipeAlive())
+    if (!active)
         return false;
     int n;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 10)) ;
@@ -241,6 +256,12 @@ bool SwitchCtrl_Session_BrocadeNetIron::hook_createVLAN(const uint32 vlanID)
     DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 20)) ;
     if (n == 2) readShell(  "#", NULL, true, 1, 20);
 
+    vlanPortMap vpm;
+    memset(&vpm, 0, sizeof(vlanPortMap));
+    vpm.vid = vlanID;
+    vlanPortMapListAll.push_back(vpm);
+    vlanPortMapListUntagged.push_back(vpm);
+
     return postAction();
 }
 bool SwitchCtrl_Session_BrocadeNetIron::hook_removeVLAN(const uint32 vlanID)
@@ -340,6 +361,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::policeInputBandwidth(bool do_undo, uint3
     if ((do_undo && vlanRateLimitConfiuged) || (!do_undo && !vlanRateLimitConfiuged))
         return true;
 
+    sleep(2);
     int n;
     uint32 port_part,slot_part;
     char portName[100], vlanNum[100], action[100];
@@ -366,13 +388,11 @@ bool SwitchCtrl_Session_BrocadeNetIron::policeInputBandwidth(bool do_undo, uint3
     DIE_IF_NEGATIVE(n= writeShell( "\n", 10)) ;
     DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 20)) ;
     if (n == 2) readShell(  "#", NULL, true, 1, 20);
-    DIE_IF_EQUAL(n, 2);
 
     DIE_IF_NEGATIVE(n= writeShell( action, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 10)) ;
     DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 20)) ;
     if (n == 2) readShell(  "#", NULL, true, 1, 20);
-    DIE_IF_EQUAL(n, 2);
 
     if (!postAction())
         return false;
@@ -388,6 +408,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::limitOutputBandwidth(bool do_undo, uint3
     if ((do_undo && vlanRateLimitConfiuged) || (!do_undo && !vlanRateLimitConfiuged))
         return true;
 
+    sleep(2);
     int n;
     uint32 port_part,slot_part;
     char portName[100], vlanNum[100], action[100];
@@ -414,13 +435,11 @@ bool SwitchCtrl_Session_BrocadeNetIron::limitOutputBandwidth(bool do_undo, uint3
     DIE_IF_NEGATIVE(n= writeShell( "\n", 10)) ;
     DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 20)) ;
     if (n == 2) readShell(  "#", NULL, true, 1, 20);
-    DIE_IF_EQUAL(n, 2);
 
     DIE_IF_NEGATIVE(n= writeShell( action, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 10)) ;
     DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 20)) ;
     if (n == 2) readShell(  "#", NULL, true, 1, 20);
-    DIE_IF_EQUAL(n, 2);
 
     if (!postAction())
         return false;

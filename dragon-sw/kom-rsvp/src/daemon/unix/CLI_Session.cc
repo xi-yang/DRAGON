@@ -1,4 +1,4 @@
-/****************************************************************************
+/***************************************************************************
 
 CLI Based Switch Control Module source file CLI_Session.cc
 Created by Xi Yang @ 01/17/2006
@@ -258,7 +258,7 @@ bool CLI_Session::engage(const char *loginString)
             }
         }
          // send the telnet password 
-        if ((n = readShell( "Password", NULL, 1, 10)) < 0) goto _telnet_dead;
+        if ((n = readShell( "assword:", NULL, true, 1, 10)) < 0) goto _telnet_dead;
         if (strcmp(CLI_PASSWORD, "unknown") != 0)
             if ((n = writeShell(CLI_PASSWORD, 5)) < 0) goto _telnet_dead;
         if ((n = writeShell("\n", 5)) < 0) goto _telnet_dead;
@@ -374,7 +374,6 @@ void CLI_Session::stop()
 }
 bool CLI_Session::refresh()
 {
-    int n;
     if (!pipeAlive()) {
         fdin = fdout = -1;
         LOG(1)(Log::Error, "CLI_Session::refresh has broken pipe!");
@@ -455,9 +454,11 @@ int CLI_Session::readShellBuffer(char* buffer, const char *text1, const char *te
 	return(-1);
       }
 ///////// debug info ////////
-      if (verbose) fputc(0xff & (int)buffer[n], stdout);
+      fputc(0xff & (int)buffer[n], stdout);
 ///////// debug info ////////
-      if (buffer[n] == '\r') continue;
+      if (buffer[n] == '\r') {
+        continue;
+      }
       if (text1 == SWITCH_PROMPT) {
 	if (isSwitchPrompt(buffer, n+1)) {
 	  // we found the keyword we were searching for
@@ -495,17 +496,16 @@ int CLI_Session::readShellBuffer(char* buffer, const char *text1, const char *te
       n++;
     }
 ///////// debug info ////////
-    if (!verbose) {
-///////// debug info ////////
-//    if (verbose) {
+      /*
       buffer[++n] = '\0';
       if (++count > 1) {
 	// the very first line of information is the remains of  
 	// a previously issued command and should be ignored.    
+        fprintf(stdout, "READ:");
 	fputs(buffer, stdout);
 	fflush(stdout);
       }
-    }
+      */
   }
 }
 
@@ -526,7 +526,7 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
     int n, m, len1, len2, len3, len4;
   
     if (fdin < 0)
-      return (-1);
+        return (-1);
   
     assert(readuntil);
     len1 = (pattern1 != NULL) ? strlen(pattern1) : 0;
@@ -548,6 +548,10 @@ int CLI_Session::ReadShellPattern(char *buf, char *pattern1, char *pattern2, cha
 	return TOO_LONG_LINE;
       }
       m = read(fdin, &buf[n], 1);
+///////// debug info ////////
+      fputc(0xff & (int)buf[n], stdout);
+///////// debug info ////////
+
       buf[n+1] = 0;
       if (m != 1) {
 	alarm(0); // disable alarm
@@ -602,7 +606,12 @@ int CLI_Session::writeShell(const char *text, int timeout, bool echo_back)
   if (fdout < 0)
     return (-1);
  
+///////// debug info ////////
+  echo_back = true;
+///////// debug info ////////
+
   if (echo_back) {
+    fprintf(stdout, "WRITE:");
     fprintf(stdout, text);
     fflush(stdout);
   }

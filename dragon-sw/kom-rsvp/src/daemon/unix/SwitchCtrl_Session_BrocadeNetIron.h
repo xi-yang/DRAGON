@@ -24,6 +24,7 @@ public:
 
 	virtual bool connectSwitch();
 	virtual void disconnectSwitch();
+	virtual bool pipeAlive();
 	virtual bool preAction();
 	virtual bool postAction();
 
