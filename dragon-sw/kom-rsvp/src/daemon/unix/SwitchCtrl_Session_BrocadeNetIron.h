@@ -46,7 +46,7 @@ public:
 
 	///vendor specific shell scripts
 	bool addVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool tagged);
-	bool deleteVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool tagged);
+	bool deleteVLANPort_ShellScript(uint32 portID, uint32 vlanID);
 
 	//Vendor/Model specific hook functions
 	virtual bool hook_createVLAN(const uint32 vlanID);

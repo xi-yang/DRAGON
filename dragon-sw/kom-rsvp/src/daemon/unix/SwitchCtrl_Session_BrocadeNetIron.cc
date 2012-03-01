@@ -117,7 +117,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::movePortToVLANAsUntagged(uint32 portID, 
     if (vpmAll)
         ResetPortBit(vpmAll->portbits, bit);
     if (old_vlan > 1) { //Remove untagged port from old VLAN
-        ret &= deleteVLANPort_ShellScript(portID, old_vlan, false);
+        ret &= deleteVLANPort_ShellScript(portID, old_vlan);
     }
 
     bit = Port2Bit(portID);
@@ -153,9 +153,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::removePortFromVLAN(uint32 portID, uint32
         vpmAll = getVlanPortMapById(vlanPortMapListAll, vlanID);
         if (vpmAll) {
             ResetPortBit(vpmAll->portbits, bit);
-            bool ret2 = this->deleteVLANPort_ShellScript(portID, vlanID, true);
-            bool ret1 = this->deleteVLANPort_ShellScript(portID, vlanID, false);
-            ret &= (ret1 || ret2);
+            ret &= this->deleteVLANPort_ShellScript(portID, vlanID);
         }
     } else {
         LOG(2) (Log::MPLS, "Trying to remove port from an invalid VLAN ", vlanID);
@@ -198,7 +196,7 @@ bool SwitchCtrl_Session_BrocadeNetIron::addVLANPort_ShellScript(uint32 portID, u
     return postAction();
 }
 
-bool SwitchCtrl_Session_BrocadeNetIron::deleteVLANPort_ShellScript(uint32 portID, uint32 vlanID, bool tagged)
+bool SwitchCtrl_Session_BrocadeNetIron::deleteVLANPort_ShellScript(uint32 portID, uint32 vlanID)
 {
 
     int n;
@@ -217,13 +215,15 @@ bool SwitchCtrl_Session_BrocadeNetIron::deleteVLANPort_ShellScript(uint32 portID
     DIE_IF_NEGATIVE(n = writeShell( "vlan ", 10));
     DIE_IF_NEGATIVE(n = writeShell( vlanNum, 10));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 10));
-    DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 20)) ;
+    DIE_IF_NEGATIVE(n = readShell(  "#", NULL, true, 1, 20));
+
+    DIE_IF_NEGATIVE(n = writeShell( "no tagged ethernet ", 10));
+    DIE_IF_NEGATIVE(n = writeShell( portName, 10));
+    DIE_IF_NEGATIVE(n = writeShell( "\n", 10));
+    DIE_IF_NEGATIVE(n= readShell( "#", "error", true, 1, 20)) ;
     if (n == 2) readShell(  "#", NULL, true, 1, 20);
-    if (tagged) {
-        DIE_IF_NEGATIVE(n = writeShell( "no tagged ethernet ", 10));
-    } else {
-        DIE_IF_NEGATIVE(n = writeShell( "no untagged ethernet ", 10));
-    }
+
+    DIE_IF_NEGATIVE(n = writeShell( "no untagged ethernet ", 10));
     DIE_IF_NEGATIVE(n = writeShell( portName, 10));
     DIE_IF_NEGATIVE(n = writeShell( "\n", 10));
     DIE_IF_NEGATIVE(n= readShell( "#", "error", true, 1, 20)) ;
@@ -361,7 +361,6 @@ bool SwitchCtrl_Session_BrocadeNetIron::policeInputBandwidth(bool do_undo, uint3
     if ((do_undo && vlanRateLimitConfiuged) || (!do_undo && !vlanRateLimitConfiuged))
         return true;
 
-    sleep(2);
     int n;
     uint32 port_part,slot_part;
     char portName[100], vlanNum[100], action[100];
@@ -386,13 +385,11 @@ bool SwitchCtrl_Session_BrocadeNetIron::policeInputBandwidth(bool do_undo, uint3
     DIE_IF_NEGATIVE(n= writeShell( "interface ethernet ", 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( portName, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 10)) ;
-    DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 20)) ;
-    if (n == 2) readShell(  "#", NULL, true, 1, 20);
+    DIE_IF_NEGATIVE(n= readShell(  "#", NULL, true, 1, 20));
 
     DIE_IF_NEGATIVE(n= writeShell( action, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 10)) ;
-    DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 20)) ;
-    if (n == 2) readShell(  "#", NULL, true, 1, 20);
+    DIE_IF_NEGATIVE(n= readShell(  "#", NULL, true, 1, 20));
 
     if (!postAction())
         return false;
@@ -408,7 +405,6 @@ bool SwitchCtrl_Session_BrocadeNetIron::limitOutputBandwidth(bool do_undo, uint3
     if ((do_undo && vlanRateLimitConfiuged) || (!do_undo && !vlanRateLimitConfiuged))
         return true;
 
-    sleep(2);
     int n;
     uint32 port_part,slot_part;
     char portName[100], vlanNum[100], action[100];
@@ -433,13 +429,11 @@ bool SwitchCtrl_Session_BrocadeNetIron::limitOutputBandwidth(bool do_undo, uint3
     DIE_IF_NEGATIVE(n= writeShell( "interface ethernet ", 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( portName, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 10)) ;
-    DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 20)) ;
-    if (n == 2) readShell(  "#", NULL, true, 1, 20);
+    DIE_IF_NEGATIVE(n= readShell( "#", NULL, true, 1, 20));
 
     DIE_IF_NEGATIVE(n= writeShell( action, 10)) ;
     DIE_IF_NEGATIVE(n= writeShell( "\n", 10)) ;
-    DIE_IF_NEGATIVE(n= readShell( "#", BROCADE_ERROR_PROMPT, true, 1, 20)) ;
-    if (n == 2) readShell(  "#", NULL, true, 1, 20);
+    DIE_IF_NEGATIVE(n= readShell( "#", NULL, true, 1, 20));
 
     if (!postAction())
         return false;
@@ -451,19 +445,14 @@ bool SwitchCtrl_Session_BrocadeNetIron::hasVlanRateLimit(uint32 vlan, bool is_in
     int n;
     char vlanPattern[32];
 
-    if (!preAction())
-        return false;
-
     DIE_IF_NEGATIVE(n = writeShell( "show rate-limit\n", 10));
     sprintf(vlanPattern, "%s vlan-id %d", is_input? "input":"output", vlan);
     n = readShell( vlanPattern,  "#", true, 1, 20) ;
     if (n == 1)
     {
         readShell(  "#", NULL, true, 1, 20);
-        postAction();
         return true;
     }
-    postAction();
     return false;
 }
 
