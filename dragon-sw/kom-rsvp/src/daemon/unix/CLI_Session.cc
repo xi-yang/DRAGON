@@ -55,6 +55,7 @@ void sigalrm(int signo)
 {
   got_alarm = 1;
   err_msg("%s: timeout on connection to host '%s'\n", progname, hostname);
+  execl("/usr/bin/killall", "killall", "-9", "expect", (char*)NULL);
   //$TODO: callback to allow SwitchCtrl_Session to kill CLI child process (from the global 'pid')
 
 }
