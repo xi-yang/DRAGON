@@ -66,7 +66,7 @@ case "$target" in
   ;;
   vlsr-brocade|VLSR-BROCADE)
     rsvpconf="$rsvpconf --enable-switch-cli-access --with-switch-vendor-model=BrocadeNetIron --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community --enable-switch-port-shutdown"
-    sed -i.orig "s/\\\n/\\\r/g" kom-rsvp/src/daemon/unix/CLI_Session.*
+    sed -i.orig "s/\\\n/\\\r/g" kom-rsvp/src/daemon/unix/CLI_Session.cc
   ;;
   vlsr-cat3750|vlsr-catalyst3750|VLSR-CATALYST3750|VLSR-Catalyst3750)
     rsvpconf="$rsvpconf --with-switch-vendor-model=Catalyst3750 --with-switch-ctrl-port=$switch_ctrl_port --with-switch-snmp-community=$snmp_community"
