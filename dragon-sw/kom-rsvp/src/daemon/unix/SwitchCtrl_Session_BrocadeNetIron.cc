@@ -6,7 +6,7 @@ To be incorporated into KOM-RSVP-TE package
 
 ****************************************************************************/
 
-/* !!! manual patch: sed -i "s/\\\n/\\\r/g" src/daemon/unix/CLI_Session.*  */
+/* !!! need manual patch: sed -i.orig "s/\\\n/\\\r/g" src/daemon/unix/CLI_Session.*  */
 
 #include "SwitchCtrl_Global.h"
 #include "SwitchCtrl_Session_BrocadeNetIron.h"
