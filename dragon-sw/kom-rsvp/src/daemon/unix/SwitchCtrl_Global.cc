@@ -79,6 +79,11 @@ bool SwitchCtrl_Session::getSwitchVendorInfo()
         return ret;
 
     ret = SwitchCtrl_Global::static_getSwitchVendorInfo(snmpSessionHandle, vendor, vendorSystemDescription); 
+    if (ret == false && SWITCH_VENDOR_MODEL != AutoDetect && SWITCH_VENDOR_MODEL != Illegal 
+        && RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_MODEL_VERIFY_BYPASS)) {
+        ret = true;
+        vendor = SWITCH_VENDOR_MODEL;
+    }
     switch (vendor) {
     case RFC2674:
     case IntelES530:
