@@ -21,7 +21,7 @@ api 4000
 #
 #3. special switch vlan options (any combination of the following)
 #  switch_vlan_options bypass-conflict-check bypass-empty-check bypass-model-verify \
-#                      junos-one-commit reduce-snmp-sync force10-no-qos
+#                      junos-one-commit reduce-snmp-sync switch-no-qos
 #
 #4. for Ciena subnet VLSR
 #  eos_map 2500 sts-3c 16

@@ -508,6 +508,8 @@ void SwitchCtrl_Session_Catalyst6500::disconnectSwitch()
 
 bool SwitchCtrl_Session_Catalyst6500::policeInputBandwidth(bool do_undo, uint32 input_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
+    if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_NO_QOS)) 
+        return true;
     if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {
         return cliSession.policeInputBandwidth(do_undo, input_port, vlan_id, committed_rate, burst_size, peak_rate, peak_burst_size); 
@@ -517,6 +519,8 @@ bool SwitchCtrl_Session_Catalyst6500::policeInputBandwidth(bool do_undo, uint32 
 
 bool SwitchCtrl_Session_Catalyst6500::limitOutputBandwidth(bool do_undo,  uint32 output_port, uint32 vlan_id, float committed_rate, int burst_size, float peak_rate,  int peak_burst_size)
 {
+    if (RSVP_Global::switchController->hasSwitchVlanOption(SW_VLAN_NO_QOS)) 
+        return true;
     if ((CLI_SESSION_TYPE == CLI_TELNET || CLI_SESSION_TYPE == CLI_SSH) && strcmp(CLI_USERNAME, "unknown") != 0)
     {
         return cliSession.limitOutputBandwidth(do_undo, output_port, vlan_id, committed_rate, burst_size, peak_rate, peak_burst_size);
